@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({PinnacleKillShip.class, GrizzlyBears.class})
 class PinnacleKillShipTest extends BaseCardTest {
@@ -27,8 +29,7 @@ class PinnacleKillShipTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PinnacleKillShip()));
         harness.addMana(player1, ManaColor.COLORLESS, 7);
         harness.castArtifact(player1, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(target.getMarkedDamage()).isEqualTo(10);
     }
@@ -40,8 +41,7 @@ class PinnacleKillShipTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 7);
 
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanent(player1, "Pinnacle Kill-Ship")).isNotNull();
     }
@@ -80,5 +80,76 @@ class PinnacleKillShipTest extends BaseCardTest {
 
     private int battlefieldIndex(Permanent permanent) {
         return gd.playerBattlefields.get(player1.getId()).indexOf(permanent);
+    }
+
+    @Test
+    void enteringCanDeclineAnAvailableCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new PinnacleKillShip());
+        creature.setCounterCount(CounterType.CHARGE, 7);
+        harness.setHand(player1, List.of(new PinnacleKillShip()));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Pinnacle Kill-Ship");
+        harness.assertOnBattlefield(player2, "Pinnacle Kill-Ship");
+        assertThat(creature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void enteringDestroysAnAnimatedSpacecraftWithLethalDamage() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new PinnacleKillShip());
+        creature.setCounterCount(CounterType.CHARGE, 7);
+        harness.setHand(player1, List.of(new PinnacleKillShip()));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        harness.castArtifact(player1, 0, creature.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Pinnacle Kill-Ship");
+        harness.assertInGraveyard(player2, "Pinnacle Kill-Ship");
+    }
+
+    @Test
+    void summoningSickCreatureCanStationAndUnlockFlying() {
+        Permanent ship = harness.addToBattlefieldAndReturn(player1, new PinnacleKillShip());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new PinnacleKillShip());
+        creature.setCounterCount(CounterType.CHARGE, 7);
+        creature.setSummoningSick(true);
+
+        harness.activateAbility(player1, battlefieldIndex(ship), null, null);
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(ship.getCounterCount(CounterType.CHARGE)).isZero();
+        resolveAllTriggers();
+
+        assertThat(ship.getCounterCount(CounterType.CHARGE)).isEqualTo(7);
+        assertThat(gqs.isCreature(gd, ship)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ship, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void animatedShipCannotStationItself() {
+        Permanent ship = harness.addToBattlefieldAndReturn(player1, new PinnacleKillShip());
+        ship.setCounterCount(CounterType.CHARGE, 7);
+        ship.setSummoningSick(false);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(ship), null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(ship.isTapped()).isFalse();
+        assertThat(ship.getCounterCount(CounterType.CHARGE)).isEqualTo(7);
+    }
+
+    @Test
+    void stationCannotBeActivatedDuringCombat() {
+        Permanent ship = harness.addToBattlefieldAndReturn(player1, new PinnacleKillShip());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new PinnacleKillShip());
+        creature.setCounterCount(CounterType.CHARGE, 7);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(ship), null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(ship.getCounterCount(CounterType.CHARGE)).isZero();
     }
 }
