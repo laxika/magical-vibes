@@ -1,13 +1,17 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.Arrest;
+import com.github.laxika.magicalvibes.cards.d.Disperse;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,12 +20,12 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KembaKhaRegent.class, LeoninScimitar.class, GrizzlyBears.class, Disperse.class, Arrest.class})
 class KembaKhaRegentTest extends BaseCardTest {
 
     private Permanent attachEquipment(Player player, LeoninScimitar equipment, UUID attachToId) {
-        Permanent equipPerm = new Permanent(equipment);
+        Permanent equipPerm = harness.addToBattlefieldAndReturn(player, equipment);
         equipPerm.setAttachedTo(attachToId);
-        gd.playerBattlefields.get(player.getId()).add(equipPerm);
         return equipPerm;
     }
 
@@ -154,5 +158,67 @@ class KembaKhaRegentTest extends BaseCardTest {
                 .toList();
 
         assertThat(tokens).hasSize(2);
+    }
+
+    @Test
+    void equipmentControlledByOpponentStillCounts() {
+        Permanent kemba = harness.addToBattlefieldAndReturn(player1, new KembaKhaRegent());
+        attachEquipment(player2, new LeoninScimitar(), kemba.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken()).toList()).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(p -> p.getCard().isToken()).toList()).isEmpty();
+    }
+
+    @Test
+    void auraAttachedToKembaDoesNotCount() {
+        Permanent kemba = harness.addToBattlefieldAndReturn(player1, new KembaKhaRegent());
+        Permanent arrest = harness.addToBattlefieldAndReturn(player2, new Arrest());
+        arrest.setAttachedTo(kemba.getId());
+        attachEquipment(player1, new LeoninScimitar(), kemba.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken()).toList()).hasSize(1);
+    }
+
+    @Test
+    void equipmentRemovedInResponseIsNotCounted() {
+        Permanent kemba = harness.addToBattlefieldAndReturn(player1, new KembaKhaRegent());
+        Permanent equipment = attachEquipment(player1, new LeoninScimitar(), kemba.getId());
+        harness.setHand(player1, List.of(new Disperse()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        advanceToUpkeep(player1);
+        harness.castAndResolveInstant(player1, 0, equipment.getId());
+        harness.assertInHand(player1, "Leonin Scimitar");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken()).toList()).isEmpty();
+    }
+
+    @Test
+    void usesLastKnownEquipmentCountWhenKembaLeavesBeforeResolution() {
+        Permanent kemba = harness.addToBattlefieldAndReturn(player1, new KembaKhaRegent());
+        attachEquipment(player1, new LeoninScimitar(), kemba.getId());
+        attachEquipment(player1, new LeoninScimitar(), kemba.getId());
+        harness.setHand(player1, List.of(new Disperse()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        advanceToUpkeep(player1);
+        harness.castAndResolveInstant(player1, 0, kemba.getId());
+        harness.assertNotOnBattlefield(player1, "Kemba, Kha Regent");
+        harness.assertInHand(player1, "Kemba, Kha Regent");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken()).toList()).hasSize(2);
     }
 }
