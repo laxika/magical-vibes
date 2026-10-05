@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.cards.c.CreepingCorrosion;
+import com.github.laxika.magicalvibes.cards.c.CruelEdict;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
@@ -16,9 +19,10 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MagneticMine.class, MindStone.class, Naturalize.class, GrizzlyBears.class,
+        CruelEdict.class, Memnite.class, CreepingCorrosion.class})
 class MagneticMineTest extends BaseCardTest {
 
-    // ===== Triggering on opponent's artifact =====
 
     @Test
     @DisplayName("Deals 2 damage to opponent when their artifact is destroyed")
@@ -31,8 +35,7 @@ class MagneticMineTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Naturalize()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castInstant(player1, 0, mindStoneId);
-        harness.passBothPriorities(); // Resolve Naturalize
+        harness.castAndResolveInstant(player1, 0, mindStoneId);
 
         // Magnetic Mine's trigger should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -44,7 +47,6 @@ class MagneticMineTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
-    // ===== Triggering on own artifact =====
 
     @Test
     @DisplayName("Deals 2 damage to self when own artifact is destroyed")
@@ -61,8 +63,7 @@ class MagneticMineTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, mindStoneId);
-        harness.passBothPriorities(); // Resolve Naturalize
+        harness.castAndResolveInstant(player2, 0, mindStoneId);
 
         // Trigger on the stack
         assertThat(gd.stack).hasSize(1);
@@ -74,7 +75,6 @@ class MagneticMineTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
 
-    // ===== Does NOT trigger on itself =====
 
     @Test
     @DisplayName("Does not trigger when Magnetic Mine itself is destroyed")
@@ -89,15 +89,13 @@ class MagneticMineTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, mineId);
-        harness.passBothPriorities(); // Resolve Naturalize
+        harness.castAndResolveInstant(player2, 0, mineId);
 
         // Magnetic Mine is gone — no trigger
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
-    // ===== Does NOT trigger on non-artifact =====
 
     @Test
     @DisplayName("Does not trigger when a non-artifact creature dies")
@@ -106,36 +104,26 @@ class MagneticMineTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setLife(player2, 20);
 
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-
-        harness.setHand(player1, List.of(new Naturalize()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        // Naturalize can't target Grizzly Bears (not artifact/enchantment), so let's use a different removal
-        // Instead, use combat or another removal
-        // Actually, let's just directly test: destroy a non-artifact creature via Cruel Edict
-        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.c.CruelEdict()));
+        harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities(); // Resolve Cruel Edict
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Grizzly Bears is not an artifact, so no trigger
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
-    // ===== Triggers on artifact creature =====
 
     @Test
-    @DisplayName("Triggers when an artifact creature is destroyed")
+    @DisplayName("Triggers when an artifact creature is sacrificed")
     void triggersOnArtifactCreature() {
         harness.addToBattlefield(player1, new MagneticMine());
         harness.addToBattlefield(player2, new Memnite());
         harness.setLife(player2, 20);
 
-        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.c.CruelEdict()));
+        harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities(); // Resolve Cruel Edict — Memnite dies
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Magnetic Mine triggers (Memnite is an artifact creature)
         assertThat(gd.stack).anyMatch(se ->
@@ -149,7 +137,6 @@ class MagneticMineTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
-    // ===== Two Magnetic Mines each trigger =====
 
     @Test
     @DisplayName("Two Magnetic Mines each trigger when an artifact is destroyed")
@@ -163,8 +150,7 @@ class MagneticMineTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Naturalize()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castInstant(player1, 0, mindStoneId);
-        harness.passBothPriorities(); // Resolve Naturalize
+        harness.castAndResolveInstant(player1, 0, mindStoneId);
 
         // Both Magnetic Mines should have triggers on the stack
         assertThat(gd.stack).hasSize(2);
@@ -177,7 +163,6 @@ class MagneticMineTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 
-    // ===== Trigger is logged =====
 
     @Test
     @DisplayName("Trigger is logged when it fires")
@@ -189,10 +174,66 @@ class MagneticMineTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Naturalize()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castInstant(player1, 0, mindStoneId);
-        harness.passBothPriorities(); // Resolve Naturalize
+        harness.castAndResolveInstant(player1, 0, mindStoneId);
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("Magnetic Mine") && log.contains("triggers"));
+    }
+
+    @Test
+    @DisplayName("Simultaneous destruction of the Mine alone does not trigger it")
+    void doesNotTriggerForItsOwnDeathInBoardWipe() {
+        harness.addToBattlefield(player1, new MagneticMine());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new CreepingCorrosion()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Magnetic Mine");
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("The Mine triggers for other artifacts destroyed simultaneously with it")
+    void triggersForOtherArtifactInBoardWipe() {
+        harness.addToBattlefield(player1, new MagneticMine());
+        harness.addToBattlefield(player2, new MindStone());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new CreepingCorrosion()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Magnetic Mine");
+        harness.assertInGraveyard(player2, "Mind Stone");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("A pending trigger deals damage after the Mine is destroyed")
+    void pendingTriggerSurvivesSourceRemoval() {
+        harness.addToBattlefield(player1, new MagneticMine());
+        harness.addToBattlefield(player2, new MindStone());
+        harness.setLife(player2, 20);
+        UUID mineId = harness.getPermanentId(player1, "Magnetic Mine");
+        UUID stoneId = harness.getPermanentId(player2, "Mind Stone");
+        harness.setHand(player1, List.of(new Naturalize(), new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveInstant(player1, 0, stoneId);
+        assertThat(gd.stack).hasSize(1);
+        harness.castAndResolveInstant(player1, 0, mineId);
+        assertThat(gd.stack).hasSize(1);
+        harness.assertInGraveyard(player1, "Magnetic Mine");
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
     }
 }
