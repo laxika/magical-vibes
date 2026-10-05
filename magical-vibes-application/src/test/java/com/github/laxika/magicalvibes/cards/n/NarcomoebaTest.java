@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.e.EnhancedSurveillance;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.cards.o.OglorDevotedAssistant;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Narcomoeba.class, Millstone.class, OglorDevotedAssistant.class})
+@CardUsed({Narcomoeba.class, Millstone.class, OglorDevotedAssistant.class, EnhancedSurveillance.class})
 class NarcomoebaTest extends BaseCardTest {
 
     @Test
@@ -74,6 +75,96 @@ class NarcomoebaTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getCard().getId().equals(narcomoeba.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(card -> card.getId().equals(narcomoeba.getId()));
+    }
+
+    @Test
+    @DisplayName("An opponent milling Narcomoeba gives its owner the choice and the creature")
+    void opponentMillingReturnsToOwner() {
+        Card narcomoeba = new Narcomoeba();
+        harness.setLibrary(player1, List.of(narcomoeba));
+        harness.addToBattlefield(player2, new Millstone());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player2, 0, null, player1.getId());
+
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Narcomoeba");
+        harness.assertNotOnBattlefield(player2, "Narcomoeba");
+        harness.assertNotInGraveyard(player1, "Narcomoeba");
+        Permanent returned = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(returned.isTapped()).isFalse();
+        assertThat(returned.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Two Narcomoebas milled together each offer an independent choice")
+    void twoMilledCopiesOfferIndependentChoices() {
+        harness.addToBattlefield(player1, new Millstone());
+        harness.setLibrary(player1, List.of(new Narcomoeba(), new Narcomoeba()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, player1.getId());
+
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Narcomoeba")).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Narcomoeba")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Narcomoeba shuffled out of the graveyard cannot return from the library")
+    void cannotReturnAfterLeavingGraveyard() {
+        Card narcomoeba = setUpMillAndReturnCard();
+        harness.addToBattlefield(player1, new EnhancedSurveillance());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Narcomoeba");
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        harness.assertNotOnBattlefield(player1, "Narcomoeba");
+        harness.assertNotInGraveyard(player1, "Narcomoeba");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(narcomoeba);
+    }
+
+    @Test
+    @DisplayName("An old Narcomoeba trigger cannot return a copy that left and reentered the graveyard")
+    void oldTriggerCannotReturnNewGraveyardObject() {
+        Card narcomoeba = setUpMillAndReturnCard();
+        harness.addToBattlefield(player1, new EnhancedSurveillance());
+        harness.addToBattlefield(player1, new Millstone());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Narcomoeba");
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(narcomoeba);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 1, null, player1.getId());
+        harness.passBothPriorities();
+
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        harness.assertInGraveyard(player1, "Narcomoeba");
+        harness.assertNotOnBattlefield(player1, "Narcomoeba");
     }
 
     private Card setUpMillAndReturnCard() {
