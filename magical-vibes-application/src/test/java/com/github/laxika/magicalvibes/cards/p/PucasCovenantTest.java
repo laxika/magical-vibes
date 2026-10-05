@@ -30,9 +30,7 @@ class PucasCovenantTest extends BaseCardTest {
         Card nonPermanent = new Shock();
         harness.setGraveyard(player1, List.of(eligible, tooExpensive, nonPermanent));
 
-        harness.inMutationScope(() -> harness.getPermanentRemovalService()
-                .removePermanentToGraveyard(gd, dying));
-        harness.passBothPriorities();
+        kill(dying);
 
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
@@ -40,6 +38,7 @@ class PucasCovenantTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(eligible.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInHand(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Scrap Trawler");
@@ -54,9 +53,7 @@ class PucasCovenantTest extends BaseCardTest {
         Card target = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(target));
 
-        harness.inMutationScope(() -> harness.getPermanentRemovalService()
-                .removePermanentToGraveyard(gd, dying));
-        harness.passBothPriorities();
+        kill(dying);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -64,8 +61,8 @@ class PucasCovenantTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Puca's Covenant triggers only once each turn")
-    void triggersOnlyOnceEachTurn() {
+    @DisplayName("Puca's Covenant stops triggering after returning a card that turn")
+    void stopsTriggeringAfterReturningCard() {
         harness.addToBattlefield(player1, new PucasCovenant());
         Permanent firstDying = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         firstDying.setCounterCount(CounterType.CHARGE, 2);
@@ -81,12 +78,92 @@ class PucasCovenantTest extends BaseCardTest {
         assertThat(choice.validCardIds()).containsExactly(firstTarget.getId(), secondTarget.getId());
         harness.handleMultipleCardsChosen(player1, List.of(firstTarget.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         kill(secondDying);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(secondTarget);
+    }
+
+    @Test
+    void mayDeclineReturnWhenAbilityResolves() {
+        harness.addToBattlefield(player1, new PucasCovenant());
+        Permanent dying = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        dying.setCounterCount(CounterType.CHARGE, 2);
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+
+        kill(dying);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(target);
+        harness.assertNotInHand(player1, "Grizzly Bears");
+
+        Permanent nextDying = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        nextDying.setCounterCount(CounterType.CHARGE, 2);
+        kill(nextDying);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+    }
+
+    @Test
+    void deathWithoutEligibleTargetDoesNotConsumeReturnForTurn() {
+        harness.addToBattlefield(player1, new PucasCovenant());
+        Permanent firstDying = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        firstDying.setCounterCount(CounterType.CHARGE, 1);
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+
+        kill(firstDying);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+
+        Permanent secondDying = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        secondDying.setCounterCount(CounterType.CHARGE, 2);
+        kill(secondDying);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).contains(target.getId(), firstDying.getCard().getId())
+                .doesNotContain(secondDying.getCard().getId());
+    }
+
+    @Test
+    void countsCountersOfDifferentTypesAndAllowsNoncreaturePermanents() {
+        harness.addToBattlefield(player1, new PucasCovenant());
+        Permanent dying = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        dying.setCounterCount(CounterType.CHARGE, 1);
+        dying.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Card target = new PucasCovenant();
+        harness.setGraveyard(player1, List.of(target));
+
+        kill(dying);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(target.getId());
+    }
+
+    @Test
+    void opponentsCreatureDeathDoesNotTrigger() {
+        harness.addToBattlefield(player1, new PucasCovenant());
+        Permanent dying = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        dying.setCounterCount(CounterType.CHARGE, 2);
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+
+        kill(dying);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(target);
+        harness.assertNotInHand(player1, "Grizzly Bears");
     }
 
     private void kill(Permanent permanent) {
