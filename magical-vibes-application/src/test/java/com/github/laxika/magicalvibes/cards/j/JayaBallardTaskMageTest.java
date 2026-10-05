@@ -107,4 +107,75 @@ class JayaBallardTaskMageTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Benalish Cavalry");
         assertThat(jaya.isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("The six-damage ability allows regeneration")
+    void massDamageAllowsRegeneration() {
+        addCreatureReady(player1, new JayaBallardTaskMage());
+        Permanent reavers = addCreatureReady(player2, new DrudgeReavers());
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new BenalishCavalry()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Drudge Reavers");
+        harness.assertNotInGraveyard(player2, "Drudge Reavers");
+        assertThat(reavers.getRegenerationShield()).isZero();
+        assertThat(reavers.getMarkedDamage()).isZero();
+        assertThat(reavers.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Jaya Ballard, Task Mage");
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    @DisplayName("Cannot activate without a card to discard")
+    void cannotActivateWithEmptyHand() {
+        addCreatureReady(player1, new JayaBallardTaskMage());
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Cannot activate a tap ability while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new JayaBallardTaskMage());
+        harness.setHand(player1, List.of(new BenalishCavalry()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        harness.assertLife(player2, 20);
+        harness.assertInHand(player1, "Benalish Cavalry");
+    }
+
+    @Test
+    @DisplayName("The second ability can target Jaya herself")
+    void canDealDamageToHerself() {
+        Permanent jaya = addCreatureReady(player1, new JayaBallardTaskMage());
+        harness.setHand(player1, List.of(new BenalishCavalry()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, jaya.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Jaya Ballard, Task Mage");
+        harness.assertInGraveyard(player1, "Benalish Cavalry");
+        harness.assertNotOnBattlefield(player1, "Jaya Ballard, Task Mage");
+    }
 }
