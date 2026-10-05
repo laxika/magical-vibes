@@ -140,6 +140,58 @@ class PoolingVenomTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Dryad Arbor");
     }
 
+    @Test
+    @DisplayName("A pending life-loss trigger still resolves after the enchanted land is destroyed")
+    void lifeLossSurvivesEnchantedLandLeavingBattlefield() {
+        Permanent land = addLand(player2);
+        attachAura(player1, land);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player2);
+
+        harness.tapPermanent(player2, 0);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Dryad Arbor");
+        harness.assertInGraveyard(player2, "Dryad Arbor");
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Tapping a different land does not trigger Pooling Venom")
+    void tappingUnenchantedLandDoesNotCauseLifeLoss() {
+        addLandWithAura(player1);
+        addLand(player1);
+        harness.setLife(player1, 20);
+
+        harness.tapPermanent(player1, 2);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Each Pooling Venom attached to a land triggers separately")
+    void multipleAurasEachCauseLifeLoss() {
+        Permanent land = addLand(player2);
+        attachAura(player1, land);
+        attachAura(player1, land);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.tapPermanent(player2, 0);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 16);
+    }
+
     private Permanent addLand(Player owner) {
         Permanent land = harness.addToBattlefieldAndReturn(owner, new DryadArbor());
         land.setSummoningSick(false);
