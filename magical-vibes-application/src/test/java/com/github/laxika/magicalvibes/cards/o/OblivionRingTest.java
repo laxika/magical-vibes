@@ -39,8 +39,6 @@ class OblivionRingTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    // ===== ETB exile =====
-
     @Test
     @DisplayName("ETB exiles target nonland permanent an opponent controls")
     void etbExilesOpponentPermanent() {
@@ -83,8 +81,9 @@ class OblivionRingTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Rootgrapple()));
         harness.addMana(player2, ManaColor.GREEN, 5);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, ringId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, ringId);
+        harness.passBothPriorities(); // resolve the empty leave trigger
+        harness.passBothPriorities(); // resolve the enter trigger after its source has left
 
         harness.assertNotOnBattlefield(player1, "Oblivion Ring");
         harness.assertNotOnBattlefield(player2, "Goldmeadow Stalwart");
@@ -92,8 +91,6 @@ class OblivionRingTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Goldmeadow Stalwart"));
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
     }
-
-    // ===== LTB return =====
 
     @Test
     @DisplayName("Exiled card returns under owner's control when Oblivion Ring is destroyed")
@@ -109,8 +106,8 @@ class OblivionRingTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 5);
         UUID ringId = harness.getPermanentId(player1, "Oblivion Ring");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, ringId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, ringId);
+        harness.passBothPriorities(); // resolve the return trigger
 
         // Goldmeadow Stalwart returns under player2's (owner's) control
         harness.assertOnBattlefield(player2, "Goldmeadow Stalwart");
@@ -136,8 +133,8 @@ class OblivionRingTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 5);
         UUID ringId = harness.getPermanentId(player1, "Oblivion Ring");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, ringId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, ringId);
+        harness.passBothPriorities(); // resolve the return trigger
 
         harness.assertOnBattlefield(player2, "Goldmeadow Stalwart");
         harness.assertNotOnBattlefield(player1, "Goldmeadow Stalwart");
@@ -156,14 +153,34 @@ class OblivionRingTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 5);
         UUID ringId = harness.getPermanentId(player1, "Oblivion Ring");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, ringId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, ringId);
+        harness.passBothPriorities(); // resolve the return trigger
 
         Permanent returned = findPermanent(player2, "Goldmeadow Stalwart");
         assertThat(returned.isSummoningSick()).isTrue();
     }
 
-    // ===== Illegal targets =====
+    @Test
+    @DisplayName("Exiled card stays in exile until the separate leave trigger resolves")
+    void returnWaitsForLeaveTriggerToResolve() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoldmeadowStalwart());
+        castAndResolveOblivionRing(target.getId());
+
+        resetForFollowUpSpell();
+        harness.setHand(player2, List.of(new Rootgrapple()));
+        harness.addMana(player2, ManaColor.GREEN, 5);
+        UUID ringId = harness.getPermanentId(player1, "Oblivion Ring");
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, ringId);
+
+        harness.assertNotOnBattlefield(player1, "Oblivion Ring");
+        harness.assertNotOnBattlefield(player2, "Goldmeadow Stalwart");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Goldmeadow Stalwart"));
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Goldmeadow Stalwart");
+    }
 
     @Test
     @DisplayName("Cannot target a land")
@@ -178,5 +195,28 @@ class OblivionRingTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, forestId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Enter trigger does nothing when its target leaves before resolution")
+    void targetLeavingBeforeEnterTriggerResolvesIsNotExiled() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MerrowCommerce());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new OblivionRing()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Rootgrapple()));
+        harness.addMana(player2, ManaColor.GREEN, 5);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Oblivion Ring");
+        harness.assertNotOnBattlefield(player2, "Merrow Commerce");
+        harness.assertInGraveyard(player2, "Merrow Commerce");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }
 }
