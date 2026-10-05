@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({LotusRing.class, GrizzlyBears.class, Shatter.class})
 class LotusRingTest extends BaseCardTest {
@@ -68,10 +69,79 @@ class LotusRingTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ring);
     }
 
+    @Test
+    void tappedEquippedCreatureCannotActivateManaAbility() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ring = addRingReady(player1);
+        ring.setAttachedTo(creature.getId());
+        creature.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature, ring);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    void summoningSickEquippedCreatureCannotActivateManaAbility() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ring = addRingReady(player1);
+        ring.setAttachedTo(creature.getId());
+        creature.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature, ring);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    void reequippingMovesAllGrantedBenefitsToNewCreature() {
+        Permanent ring = addRingReady(player1);
+        Permanent original = addCreatureReady(player1, new GrizzlyBears());
+        Permanent replacement = addCreatureReady(player1, new GrizzlyBears());
+        ring.setAttachedTo(original.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, replacement.getId());
+        harness.passBothPriorities();
+
+        assertThat(ring.getAttachedTo()).isEqualTo(replacement.getId());
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, original, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, replacement)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, replacement)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, replacement, Keyword.VIGILANCE)).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.activateAbility(player1, 2, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(original, ring)
+                .doesNotContain(replacement);
+    }
+
+    @Test
+    void manaAbilityResolvesWithoutUsingStackAndSacrificesAsCost() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ring = addRingReady(player1);
+        ring.setAttachedTo(creature.getId());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+        harness.handleListChoice(player1, ManaColor.WHITE.name());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(3);
+    }
+
     private Permanent addRingReady(Player player) {
-        Permanent ring = new Permanent(new LotusRing());
-        ring.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(ring);
-        return ring;
+        return addCreatureReady(player, new LotusRing());
     }
 }
