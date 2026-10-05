@@ -93,4 +93,39 @@ class PineBarrensTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
+
+    @Test
+    @DisplayName("A newly entered Pine Barrens can produce mana after being untapped")
+    void newlyEnteredLandCanProduceManaAfterUntapping() {
+        harness.setLife(player1, 20);
+        Permanent land = harness.enterBattlefieldAndReturn(player1, new PineBarrens());
+        assertThat(land.isTapped()).isTrue();
+        land.setTapped(false);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.damageDealtThisTurnBySource.get(land.getId())).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Green mana production for the other player damages that player only")
+    void otherPlayerProducesGreenManaAndTakesDamage() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 17);
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new PineBarrens());
+        harness.forceActivePlayer(player2);
+
+        harness.activateAbility(player2, 0, 2, null, null);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }
