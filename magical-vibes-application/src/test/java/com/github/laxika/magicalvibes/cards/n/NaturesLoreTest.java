@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GoldenBear;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.t.TropicalIsland;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Forest.class, GoldenBear.class, Island.class, NaturesLore.class, Plains.class})
+@CardUsed({Forest.class, GoldenBear.class, Island.class, NaturesLore.class, Plains.class, TropicalIsland.class})
 class NaturesLoreTest extends BaseCardTest {
 
     @Test
@@ -105,6 +106,44 @@ class NaturesLoreTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.gameLog).anyMatch(entry -> entry.plainText().contains("library but it is empty")
                 && entry.plainText().contains("Library is shuffled"));
+    }
+
+    @Test
+    @DisplayName("A nonbasic Forest can be found and enters untapped")
+    @CardUsed({TropicalIsland.class})
+    void findsNonbasicForest() {
+        TropicalIsland forest = new TropicalIsland();
+        harness.setLibrary(player1, List.of(new Island(), forest));
+        setupAndCast();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        GameData gd = harness.getGameData();
+        assertThat(findPermanent(player1, "Tropical Island").getCard().getId()).isEqualTo(forest.getId());
+        assertThat(findPermanent(player1, "Tropical Island").isTapped()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player2, "Tropical Island");
+    }
+
+    @Test
+    @DisplayName("Only one Forest is put onto the battlefield when several are available")
+    void findsExactlyOneForest() {
+        Forest first = new Forest();
+        Forest second = new Forest();
+        harness.setLibrary(player1, List.of(first, second, new Island()));
+        setupAndCast();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(findPermanent(player1, "Forest").getCard().getId()).isEqualTo(second.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).contains(first).doesNotContain(second).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Nature's Lore");
     }
 
     private void setupAndCast() {
