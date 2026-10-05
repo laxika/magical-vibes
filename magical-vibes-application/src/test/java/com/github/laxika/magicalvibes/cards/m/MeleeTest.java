@@ -38,10 +38,7 @@ class MeleeTest extends BaseCardTest {
     }
 
     private void castMelee() {
-        harness.setHand(player1, List.of(new Melee()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Melee(), "{4}{R}");
         harness.passBothPriorities();
     }
 
@@ -123,6 +120,42 @@ class MeleeTest extends BaseCardTest {
         assertThat(firstAttacker.isAttacking()).isFalse();
         assertThat(secondAttacker.isTapped()).isFalse();
         assertThat(secondAttacker.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Unblocked attackers are removed even when the defender has no creatures")
+    void noAvailableBlockersStillTriggersRemoval() {
+        enterDeclareAttackers();
+        Permanent attacker = addAttacker();
+        castMelee();
+
+        advanceToBlockerDeclaration();
+        resolveAllTriggers();
+
+        assertThat(attacker.isTapped()).isFalse();
+        assertThat(attacker.isAttacking()).isFalse();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Only the unblocked attacker is removed when another attacker is blocked")
+    void mixedBlocksRemoveOnlyUnblockedAttacker() {
+        enterDeclareAttackers();
+        Permanent blockedAttacker = addAttacker();
+        Permanent unblockedAttacker = addAttacker();
+        Permanent blocker = addDefenderCreature();
+        castMelee();
+
+        advanceToBlockerDeclaration();
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(blockedAttacker);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+        resolveAllTriggers();
+
+        assertThat(blockedAttacker.isTapped()).isTrue();
+        assertThat(blockedAttacker.isAttacking()).isTrue();
+        assertThat(unblockedAttacker.isTapped()).isFalse();
+        assertThat(unblockedAttacker.isAttacking()).isFalse();
     }
 
     @Test
