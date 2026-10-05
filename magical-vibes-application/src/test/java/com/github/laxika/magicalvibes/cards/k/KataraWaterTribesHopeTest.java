@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -43,10 +44,8 @@ class KataraWaterTribesHopeTest extends BaseCardTest {
         harness.castFromHand(player1, new KataraWaterTribesHope(), "{2}{W}{U}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-        Permanent katara = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof KataraWaterTribesHope)
-                .findFirst()
-                .orElseThrow();
+        Permanent katara = gqs.findPermanentById(gd,
+                harness.getPermanentId(player1, "Katara, Water Tribe's Hope"));
         Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent allyToken = gd.playerBattlefields.get(player1.getId()).stream()
@@ -91,5 +90,93 @@ class KataraWaterTribesHopeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("during your turn");
+    }
+
+    @Test
+    @DisplayName("A tapped Katara can waterbend using mana during your end step")
+    void tappedKataraCanWaterbendDuringEndStep() {
+        Permanent katara = harness.addToBattlefieldAndReturn(player1, new KataraWaterTribesHope());
+        katara.tap();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 4, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, katara)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, katara)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Waterbend's base power and toughness expire at cleanup")
+    void waterbendExpiresAtCleanup() {
+        Permanent katara = harness.addToBattlefieldAndReturn(player1, new KataraWaterTribesHope());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.activateAbility(player1, 0, 5, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, katara)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, katara)).isEqualTo(5);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+
+        assertThat(gqs.getEffectivePower(gd, katara)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, katara)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Waterbend affects creatures present at resolution, but not later arrivals")
+    void affectedCreaturesAreDeterminedAtResolution() {
+        harness.addToBattlefieldAndReturn(player1, new KataraWaterTribesHope());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, 4, null);
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.passBothPriorities();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The latest resolved waterbend sets base stats and preserves counters")
+    void latestWaterbendWinsWithoutRemovingCounters() {
+        Permanent katara = harness.addToBattlefieldAndReturn(player1, new KataraWaterTribesHope());
+        katara.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.activateAbility(player1, 0, 5, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, katara)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, katara)).isEqualTo(7);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 1, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, katara)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, katara)).isEqualTo(3);
+        assertThat(katara.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Waterbend can combine mana with tapping a summoning-sick creature")
+    void waterbendCombinesManaAndSummoningSickCreature() {
+        Permanent katara = harness.enterBattlefieldAndReturn(player1, new KataraWaterTribesHope());
+        harness.passBothPriorities();
+        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .findFirst().orElseThrow();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 4, null);
+        harness.passBothPriorities();
+
+        assertThat(katara.isTapped() || token.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, katara)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, katara)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
     }
 }
