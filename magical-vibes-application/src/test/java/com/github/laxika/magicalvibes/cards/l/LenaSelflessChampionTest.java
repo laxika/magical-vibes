@@ -4,17 +4,16 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LenaSelflessChampion.class, GrizzlyBears.class, SerraAngel.class})
 class LenaSelflessChampionTest extends BaseCardTest {
 
     @Test
@@ -24,9 +23,7 @@ class LenaSelflessChampionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SerraAngel());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        harness.setHand(player1, List.of(new LenaSelflessChampion()));
-        harness.addMana(player1, ManaColor.WHITE, 6);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new LenaSelflessChampion(), "{4}{W}{W}");
         harness.passBothPriorities(); // resolve Lena
         harness.passBothPriorities(); // resolve the enter trigger
 
@@ -41,9 +38,7 @@ class LenaSelflessChampionTest extends BaseCardTest {
     void tokensAreNotCounted() {
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        harness.setHand(player1, List.of(new LenaSelflessChampion()));
-        harness.addMana(player1, ManaColor.WHITE, 6);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new LenaSelflessChampion(), "{4}{W}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -100,5 +95,102 @@ class LenaSelflessChampionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+    }
+
+    @Test
+    @DisplayName("Creatures with power equal to Lena's do not gain indestructible")
+    void equalPowerIsExcluded() {
+        harness.addToBattlefield(player1, new LenaSelflessChampion());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.assertNotOnBattlefield(player1, "Lena, Selfless Champion");
+        harness.assertInGraveyard(player1, "Lena, Selfless Champion");
+        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Negative power is preserved when comparing creatures with sacrificed Lena")
+    void negativePowerIsNotClampedToZero() {
+        Permanent lena = harness.addToBattlefieldAndReturn(player1, new LenaSelflessChampion());
+        lena.setPowerModifier(-4);
+        Permanent equalPower = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        equalPower.setPowerModifier(-3);
+        Permanent weaker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        weaker.setPowerModifier(-4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, equalPower, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, weaker, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Other creatures' power is compared when the ability resolves")
+    void comparesPowerAtResolution() {
+        harness.addToBattlefield(player1, new LenaSelflessChampion());
+        Permanent growing = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent shrinking = harness.addToBattlefieldAndReturn(player1, new SerraAngel());
+
+        harness.activateAbility(player1, 0, null, null);
+        growing.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        shrinking.setPowerModifier(-2);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, growing, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, shrinking, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Gaining power after resolution does not remove indestructible")
+    void protectionPersistsAfterPowerIncrease() {
+        harness.addToBattlefield(player1, new LenaSelflessChampion());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
+        Permanent lateArrival = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(gqs.hasKeyword(gd, lateArrival, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Existing creature tokens are excluded from subsequent enter triggers")
+    void excludesExistingTokensFromCount() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player1, new LenaSelflessChampion());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getName().equals("Soldier")).count()).isEqualTo(2);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.enterBattlefieldAndReturn(player1, new LenaSelflessChampion());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getName().equals("Soldier")).count()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The enter trigger counts the battlefield at resolution after Lena is sacrificed")
+    void countsCreaturesAtEnterTriggerResolution() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player1, new LenaSelflessChampion());
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getName().equals("Soldier")).count()).isEqualTo(1);
     }
 }
