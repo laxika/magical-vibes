@@ -56,6 +56,7 @@ class PyreZombieTest extends BaseCardTest {
         advanceToUpkeep(player2);
 
         assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -81,9 +82,12 @@ class PyreZombieTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.activateAbility(player1, 0, null, player2.getId());
+        harness.assertNotOnBattlefield(player1, "Pyre Zombie");
+        harness.assertInGraveyard(player1, "Pyre Zombie");
+        harness.assertLife(player2, 20);
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
         harness.assertInGraveyard(player1, "Pyre Zombie");
     }
 
@@ -100,5 +104,64 @@ class PyreZombieTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Pyre Zombie");
         harness.assertInGraveyard(player1, "Pyre Zombie");
+    }
+
+    @Test
+    @DisplayName("Each Pyre Zombie in the graveyard requires its own upkeep payment")
+    void paymentReturnsOnlyOneOfMultipleCopies() {
+        harness.setGraveyard(player1, List.of(new PyreZombie(), new PyreZombie()));
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Pyre Zombie can target itself, but sacrifice makes that target illegal")
+    void targetingItselfDoesNotDealDamage() {
+        harness.addToBattlefield(player1, new PyreZombie());
+        var target = harness.getPermanentId(player1, "Pyre Zombie");
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, null, target);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Pyre Zombie");
+        harness.assertNotOnBattlefield(player1, "Pyre Zombie");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An old upkeep trigger cannot return Pyre Zombie after it leaves and reenters the graveyard")
+    void upkeepTriggerDoesNotFollowCardIntoNewGraveyardIncarnation() {
+        PyreZombie zombie = new PyreZombie();
+        harness.setGraveyard(player1, List.of(zombie));
+        advanceToUpkeep(player1);
+
+        // Simulate returning the card to the battlefield in response to its upkeep trigger.
+        harness.setGraveyard(player1, List.of());
+        harness.addToBattlefield(player1, zombie);
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Pyre Zombie");
+
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Pyre Zombie");
+        harness.assertNotInHand(player1, "Pyre Zombie");
     }
 }
