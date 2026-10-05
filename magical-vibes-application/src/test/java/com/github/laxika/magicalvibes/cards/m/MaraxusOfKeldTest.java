@@ -77,6 +77,40 @@ class MaraxusOfKeldTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, maraxus)).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("Maraxus updates when an artifact creature taps and untaps")
+    void updatesWhenArtifactCreatureTapsAndUntaps() {
+        Permanent maraxus = addMaraxusReady(player1);
+        Permanent automaton = harness.addToBattlefieldAndReturn(player1, new JanglingAutomaton());
+
+        assertThat(gqs.getEffectivePower(gd, maraxus)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, maraxus)).isEqualTo(2);
+
+        automaton.tap();
+        assertThat(gqs.getEffectivePower(gd, maraxus)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, maraxus)).isEqualTo(1);
+
+        automaton.untap();
+        assertThat(gqs.getEffectivePower(gd, maraxus)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, maraxus)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Maraxus in hand counts controlled permanents without counting itself")
+    void characteristicAbilityWorksInHand() {
+        MaraxusOfKeld maraxus = new MaraxusOfKeld();
+        harness.setHand(player1, java.util.List.of(maraxus));
+        Permanent stone = harness.addToBattlefieldAndReturn(player1, new MindStone());
+        harness.addToBattlefield(player1, new WindingCanyons());
+        harness.addToBattlefield(player2, new RedwoodTreefolk());
+
+        assertThat(gqs.getEffectiveCardPower(gd, maraxus)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, maraxus)).isEqualTo(2);
+
+        stone.tap();
+        assertThat(gqs.getEffectiveCardPower(gd, maraxus)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardToughness(gd, maraxus)).isEqualTo(1);
+    }
     private Permanent addMaraxusReady(Player player) {
         return addCreatureReady(player, new MaraxusOfKeld());
     }
