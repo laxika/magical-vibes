@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(LuminousAngel.class)
+@CardUsed({LuminousAngel.class})
 class LuminousAngelTest extends BaseCardTest {
 
     @Test
@@ -57,5 +57,39 @@ class LuminousAngelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Spirit")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The second player's Angel creates a token for its controller")
+    void secondPlayerCreatesSpiritToken() {
+        harness.addToBattlefield(player2, new LuminousAngel());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(findPermanents(player2, "Spirit")).hasSize(1);
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Declining one upkeep does not prevent creating a token on later upkeeps")
+    void choiceIsIndependentOnEachUpkeep() {
+        harness.addToBattlefield(player1, new LuminousAngel());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(findPermanents(player1, "Spirit")).hasSize(2);
     }
 }
