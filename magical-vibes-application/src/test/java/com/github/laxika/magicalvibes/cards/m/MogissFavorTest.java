@@ -117,9 +117,60 @@ class MogissFavorTest extends BaseCardTest {
     }
 
     private Permanent addReadyBear() {
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
         return bears;
+    }
+
+    @Test
+    void canEnchantOpponentsCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MogissFavor()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof MogissFavor
+                        && bears.getId().equals(permanent.getAttachedTo()));
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
+    }
+
+    @Test
+    void escapedAuraReturnsToGraveyardWhenTargetDisappears() {
+        Permanent bears = addReadyBear();
+        MogissFavor aura = new MogissFavor();
+        GrizzlyBears first = new GrizzlyBears();
+        GrizzlyBears second = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(aura, first, second));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        gs.playFlashbackSpell(gd, player1, 0, null, bears.getId(), List.of(), List.of(1, 2), null);
+        gd.playerBattlefields.get(player1.getId()).remove(bears);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(aura);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(first, second);
+        harness.assertNotOnBattlefield(player1, "Mogis's Favor");
+    }
+
+    @Test
+    void cannotExileAuraItselfToPayEscapeCost() {
+        Permanent bears = addReadyBear();
+        MogissFavor aura = new MogissFavor();
+        GrizzlyBears first = new GrizzlyBears();
+        GrizzlyBears second = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(aura, first, second));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        assertThatThrownBy(() -> gs.playFlashbackSpell(
+                gd, player1, 0, null, bears.getId(), List.of(), List.of(0, 1), null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(aura, first, second);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }
