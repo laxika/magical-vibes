@@ -228,6 +228,57 @@ class LandTaxTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(libraryBefore);
     }
 
+    @Test
+    @DisplayName("Accepting the search allows finding zero even when basic lands are available")
+    void canFindZeroBasicLands() {
+        setupLandTax();
+        givePlayerLands(player2, 1);
+        setupLibrary();
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Accepting with an empty library finishes the search without adding cards")
+    void canSearchEmptyLibrary() {
+        setupLandTax();
+        givePlayerLands(player2, 1);
+        harness.setLibrary(player1, List.of());
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Gaining more opposing lands after upkeep begins cannot create a missed trigger")
+    void conditionBecomingTrueAfterUpkeepDoesNotTrigger() {
+        setupLandTax();
+        setupLibrary();
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+        givePlayerLands(player2, 1);
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void setupLandTax() {
         harness.addToBattlefield(player1, new LandTax());
     }
