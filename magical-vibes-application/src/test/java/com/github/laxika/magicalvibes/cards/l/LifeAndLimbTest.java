@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -21,12 +23,11 @@ class LifeAndLimbTest extends BaseCardTest {
     @Test
     @DisplayName("Forests and Saprolings become green 1/1 creature lands")
     void animatesForestsAndSaprolings() {
-        harness.addToBattlefield(player1, new Forest());
-        harness.addToBattlefield(player2, new Forest());
-        harness.addToBattlefield(player1, new Mountain());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent opponentForest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
         harness.addToBattlefield(player1, new LifeAndLimb());
 
-        Permanent forest = findPermanent(player1, "Forest");
         assertThat(gqs.isCreature(gd, forest)).isTrue();
         assertThat(gqs.isLand(gd, forest)).isTrue();
         assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(1);
@@ -35,14 +36,12 @@ class LifeAndLimbTest extends BaseCardTest {
         assertThat(gqs.hasEffectiveSubtype(gd, forest, CardSubtype.FOREST)).isTrue();
         assertThat(gqs.effectiveCreatureSubtypes(gd, forest)).contains(CardSubtype.SAPROLING);
 
-        Permanent opponentForest = findPermanent(player2, "Forest");
         assertThat(gqs.isCreature(gd, opponentForest)).isTrue();
         assertThat(gqs.isLand(gd, opponentForest)).isTrue();
         assertThat(gqs.getEffectivePower(gd, opponentForest)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, opponentForest)).isEqualTo(1);
         assertThat(gqs.getEffectiveColors(gd, opponentForest)).containsExactly(CardColor.GREEN);
 
-        Permanent mountain = findPermanent(player1, "Mountain");
         assertThat(gqs.isCreature(gd, mountain)).isFalse();
     }
 
@@ -110,5 +109,61 @@ class LifeAndLimbTest extends BaseCardTest {
                 .hasMessageContaining("summoning sickness");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
         assertThat(saproling.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A Forest played under Life and Limb cannot tap for mana immediately")
+    void newlyPlayedForestHasSummoningSickness() {
+        harness.addToBattlefield(player1, new LifeAndLimb());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+
+        Permanent forest = findPermanent(player1, "Forest");
+        int forestIndex = gd.playerBattlefields.get(player1.getId()).indexOf(forest);
+
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+        assertThatThrownBy(() -> harness.tapPermanent(player1, forestIndex))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(forest.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("An established Forest can still tap for mana after being animated")
+    void establishedForestCanTapForMana() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.setSummoningSick(false);
+        harness.addToBattlefield(player1, new LifeAndLimb());
+
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(forest));
+
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Forests and Saprolings revert when Life and Limb leaves the battlefield")
+    void animationEndsWhenSourceLeaves() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.castFromHand(player1, new SaprolingMigration(), "{1}{G}");
+        harness.passBothPriorities();
+        Permanent saproling = findPermanent(player1, "Saproling");
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new LifeAndLimb());
+
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+        assertThat(gqs.isLand(gd, saproling)).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, enchantment));
+
+        assertThat(gqs.isCreature(gd, forest)).isFalse();
+        assertThat(gqs.isLand(gd, forest)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, forest, CardSubtype.SAPROLING)).isFalse();
+        assertThat(gqs.getEffectiveColors(gd, forest)).isEmpty();
+        assertThat(gqs.isCreature(gd, saproling)).isTrue();
+        assertThat(gqs.isLand(gd, saproling)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, saproling, CardSubtype.FOREST)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, saproling, CardSubtype.SAPROLING)).isTrue();
     }
 }
