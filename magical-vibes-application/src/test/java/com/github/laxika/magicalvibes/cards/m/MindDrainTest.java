@@ -23,8 +23,7 @@ class MindDrainTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
 
@@ -33,6 +32,70 @@ class MindDrainTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(11);
+    }
+
+    @Test
+    void emptyHandDoesNotPreventMillOrLifeChanges() {
+        MindDrain milledCard = new MindDrain();
+        MindDrain remainingCard = new MindDrain();
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(milledCard, remainingCard));
+        harness.setHand(player1, List.of(new MindDrain()));
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remainingCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(milledCard);
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 11);
+    }
+
+    @Test
+    void singleCardHandDiscardsOnlyAvailableCardAndContinuesResolution() {
+        MindDrain discardedCard = new MindDrain();
+        MindDrain milledCard = new MindDrain();
+        harness.setHand(player2, List.of(discardedCard));
+        harness.setLibrary(player2, List.of(milledCard));
+        harness.setHand(player1, List.of(new MindDrain()));
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discardedCard, milledCard);
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 11);
+    }
+
+    @Test
+    void emptyLibraryDoesNotPreventDiscardOrLifeChanges() {
+        harness.setHand(player2, List.of(new MindDrain(), new MindDrain(), new MindDrain()));
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new MindDrain()));
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 11);
     }
 
     @Test
