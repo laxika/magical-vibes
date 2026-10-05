@@ -52,9 +52,8 @@ class KardumPatronOfFlamesTest extends BaseCardTest {
         assertThat(gd.getCardsExiledByPermanent(kardum.getId())).containsExactly(sought);
 
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.BLACK, 3);
-        harness.castInstant(player1, 1, kardum.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 1, kardum.getId());
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(unrelated, sought);
         gd.turnNumber++;
@@ -66,5 +65,54 @@ class KardumPatronOfFlamesTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(unrelated);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(sought);
+    }
+
+    @Test
+    void attackWithExistingFlameCounterSeeksManaValueTwo() {
+        Permanent kardum = addCreatureReady(player1, new KardumPatronOfFlames());
+        kardum.getCounters().put(CounterType.FLAME, 1);
+        Card sought = new GrizzlyBears();
+        Card wrongManaValue = new LlanowarElves();
+        harness.setLibrary(player1, List.of(wrongManaValue, sought));
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(kardum.getCounterCount(CounterType.FLAME)).isEqualTo(2);
+        assertThat(gd.getCardsExiledByPermanent(kardum.getId())).containsExactly(sought);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(wrongManaValue);
+    }
+
+    @Test
+    void attackStillAddsCounterWhenLibraryHasNoMatchingCard() {
+        Permanent kardum = addCreatureReady(player1, new KardumPatronOfFlames());
+        Card nonmatching = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(nonmatching));
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(kardum.getCounterCount(CounterType.FLAME)).isEqualTo(1);
+        assertThat(gd.getCardsExiledByPermanent(kardum.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonmatching);
+    }
+
+    @Test
+    void attackUsesLastKnownFlameCountersWhenKardumDiesBeforeResolution() {
+        Permanent kardum = addCreatureReady(player1, new KardumPatronOfFlames());
+        kardum.getCounters().put(CounterType.FLAME, 1);
+        Card sought = new LlanowarElves();
+        harness.setLibrary(player1, List.of(sought));
+        harness.setHand(player1, List.of(new Murder()));
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.BLACK, 3);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+        harness.castAndResolveInstant(player1, 0, kardum.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(kardum);
+        assertThat(gd.getCardsExiledByPermanent(kardum.getId())).containsExactly(sought);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(sought);
     }
 }
