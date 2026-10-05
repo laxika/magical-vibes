@@ -3,12 +3,11 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.g.GoldMyr;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PrimeSpeakerVannifar.class, LlanowarElves.class, GoldMyr.class, HillGiant.class})
 class PrimeSpeakerVannifarTest extends BaseCardTest {
 
     @Test
@@ -24,8 +24,7 @@ class PrimeSpeakerVannifarTest extends BaseCardTest {
     void sacrificeCreatureSearchesForCreatureWithOneHigherManaValue() {
         addVannifarReady(player1);
         addCreature(player1, new LlanowarElves());
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(new GoldMyr(), new HillGiant()));
+        harness.setLibrary(player1, List.of(new GoldMyr(), new HillGiant()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -35,7 +34,7 @@ class PrimeSpeakerVannifarTest extends BaseCardTest {
                 .hasSize(1)
                 .allMatch(card -> card.getName().equals("Gold Myr"));
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertInGraveyard(player1, "Llanowar Elves");
         harness.assertOnBattlefield(player1, "Gold Myr");
@@ -73,21 +72,110 @@ class PrimeSpeakerVannifarTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void sacrificeAndTapArePaidBeforeResolution() {
+        addVannifarReady(player1);
+        addCreature(player1, new LlanowarElves());
+        harness.setLibrary(player1, List.of(new GoldMyr()));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player1, "Gold Myr");
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Gold Myr");
+        assertThat(gd.playerBattlefields.get(player1.getId()).getLast().isTapped()).isFalse();
+    }
+
+    @Test
+    void canFailToFindEvenWhenMatchingCreatureExists() {
+        addVannifarReady(player1);
+        addCreature(player1, new LlanowarElves());
+        harness.setLibrary(player1, List.of(new GoldMyr()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Gold Myr");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void searchWithNoMatchingCreatureStillFinishes() {
+        addVannifarReady(player1);
+        addCreature(player1, new LlanowarElves());
+        harness.setLibrary(player1, List.of(new HillGiant()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Hill Giant");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void cannotActivateOutsideMainPhase() {
+        addVannifarReady(player1);
+        addCreature(player1, new LlanowarElves());
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+    }
+
+    @Test
+    void cannotActivateWithNonemptyStack() {
+        addVannifarReady(player1);
+        addCreature(player1, new LlanowarElves());
+        harness.setLibrary(player1, List.of(new GoldMyr()));
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(false);
+        addCreature(player1, new LlanowarElves());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefieldAndReturn(player1, new PrimeSpeakerVannifar()).setSummoningSick(true);
+        addCreature(player1, new LlanowarElves());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        addVannifarReady(player1);
+        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        addCreature(player1, new LlanowarElves());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+    }
+
     private void addVannifarReady(Player player) {
-        harness.addToBattlefield(player, new PrimeSpeakerVannifar());
-        gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Prime Speaker Vannifar"))
-                .findFirst()
-                .orElseThrow()
-                .setSummoningSick(false);
+        harness.addToBattlefieldAndReturn(player, new PrimeSpeakerVannifar()).setSummoningSick(false);
     }
 
     private void addCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        harness.addToBattlefield(player, card);
-        gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals(card.getName()))
-                .reduce((first, second) -> second)
-                .orElseThrow()
-                .setSummoningSick(false);
+        harness.addToBattlefieldAndReturn(player, card).setSummoningSick(false);
     }
 }
