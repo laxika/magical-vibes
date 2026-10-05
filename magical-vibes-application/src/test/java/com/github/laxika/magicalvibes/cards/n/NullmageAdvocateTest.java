@@ -128,7 +128,7 @@ class NullmageAdvocateTest extends BaseCardTest {
 
     @Test
     void returnsTwoCardsFromOpponentsGraveyardAndDestroysEnchantment() {
-        Permanent advocate = addReadyAdvocateForJudReview();
+        Permanent advocate = addCreatureReady(player1, new NullmageAdvocate());
         Card first = new FuneralPyre();
         Card second = new KeepWatch();
         Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new WebOfInertia());
@@ -149,7 +149,7 @@ class NullmageAdvocateTest extends BaseCardTest {
 
     @Test
     void rejectsCardsFromControllerGraveyard() {
-        Permanent advocate = addReadyAdvocateForJudReview();
+        Permanent advocate = addCreatureReady(player1, new NullmageAdvocate());
         Card first = new FuneralPyre();
         Card second = new KeepWatch();
         Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new WebOfInertia());
@@ -160,7 +160,76 @@ class NullmageAdvocateTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReadyAdvocateForJudReview() {
-        return addCreatureReady(player1, new NullmageAdvocate());
+
+    @Test
+    void stillDestroysEnchantmentWhenBothGraveyardTargetsLeave() {
+        Permanent advocate = addCreatureReady(player1, new NullmageAdvocate());
+        Card first = new FuneralPyre();
+        Card second = new KeepWatch();
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new WebOfInertia());
+        harness.setGraveyard(player2, List.of(first, second));
+
+        harness.activateAbilityWithMultiTargets(player1, index(advocate), 0,
+                List.of(first.getId(), second.getId(), enchantment.getId()));
+        harness.setGraveyard(player2, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Web of Inertia");
+        harness.assertInGraveyard(player2, "Web of Inertia");
+        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getId)
+                .doesNotContain(first.getId(), second.getId());
+    }
+
+    @Test
+    void stillReturnsCardsWhenDestructionTargetLeaves() {
+        Permanent advocate = addCreatureReady(player1, new NullmageAdvocate());
+        Card first = new FuneralPyre();
+        Card second = new KeepWatch();
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new WebOfInertia());
+        harness.setGraveyard(player2, List.of(first, second));
+
+        harness.activateAbilityWithMultiTargets(player1, index(advocate), 0,
+                List.of(first.getId(), second.getId(), enchantment.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(enchantment);
+        harness.setHand(player2, List.of(enchantment.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getId)
+                .contains(first.getId(), second.getId(), enchantment.getCard().getId());
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void canDestroyControllersEnchantment() {
+        Permanent advocate = addCreatureReady(player1, new NullmageAdvocate());
+        Card first = new FuneralPyre();
+        Card second = new KeepWatch();
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new WebOfInertia());
+        harness.setGraveyard(player2, List.of(first, second));
+
+        harness.activateAbilityWithMultiTargets(player1, index(advocate), 0,
+                List.of(first.getId(), second.getId(), enchantment.getId()));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Web of Inertia");
+        harness.assertInGraveyard(player1, "Web of Inertia");
+        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getId)
+                .contains(first.getId(), second.getId());
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent advocate = harness.addToBattlefieldAndReturn(player1, new NullmageAdvocate());
+        advocate.setSummoningSick(true);
+        Card first = new FuneralPyre();
+        Card second = new KeepWatch();
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new WebOfInertia());
+        harness.setGraveyard(player2, List.of(first, second));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, index(advocate), 0,
+                List.of(first.getId(), second.getId(), enchantment.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(advocate.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }
