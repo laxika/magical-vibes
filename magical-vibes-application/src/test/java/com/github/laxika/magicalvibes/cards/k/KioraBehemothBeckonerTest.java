@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.o.ObNixilissCruelty;
+import com.github.laxika.magicalvibes.cards.t.TurretOgre;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KioraBehemothBeckoner.class, CrawWurm.class, Forest.class, HillGiant.class})
+@CardUsed({KioraBehemothBeckoner.class, CrawWurm.class, Forest.class, HillGiant.class,
+        ObNixilissCruelty.class, TurretOgre.class})
 class KioraBehemothBeckonerTest extends BaseCardTest {
 
     @Test
@@ -88,6 +91,59 @@ class KioraBehemothBeckonerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Draws for a creature entering with exactly four power")
+    void drawsForExactlyFourPower() {
+        addReadyKiora(player1, 7);
+        harness.setHand(player1, List.of(new TurretOgre()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Draw trigger resolves even if the entering creature leaves the battlefield")
+    void drawsAfterEnteringCreatureLeaves() {
+        addReadyKiora(player1, 7);
+        harness.setHand(player1, List.of(new TurretOgre()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.setHand(player2, List.of(new ObNixilissCruelty()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent ogre = findPermanent(player1, "Turret Ogre");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.castAndResolveInstant(player2, 0, ogre.getId());
+        harness.assertNotOnBattlefield(player1, "Turret Ogre");
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Last loyalty counter can pay for untapping another permanent")
+    void lastLoyaltyCounterPaysForUntap() {
+        addReadyKiora(player1, 1);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.tap();
+
+        harness.activateAbility(player1, 0, 0, null, forest.getId());
+        harness.assertNotOnBattlefield(player1, "Kiora, Behemoth Beckoner");
+        harness.assertInGraveyard(player1, "Kiora, Behemoth Beckoner");
+        harness.passBothPriorities();
+
+        assertThat(forest.isTapped()).isFalse();
     }
 
     private Permanent addReadyKiora(Player player, int loyalty) {
