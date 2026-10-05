@@ -27,12 +27,11 @@ class LimitlessRekindlingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
         Card exiled = gd.getPlayerExiledCards(player1.getId()).getFirst();
-        assertThat(exiled.getName()).isIn("Aquatic Subtlety", "Craterous Stomp", "Limitless Rekindling",
+        assertThat(exiled.getName()).isNotIn("Aquatic Subtlety", "Craterous Stomp", "Limitless Rekindling",
                 "Circadian Struggle", "Elvish Elegy", "Rite of Flame", "Thoughtweft's Call");
         assertThat(gd.exilePlayPermissions).containsEntry(exiled.getId(), player1.getId());
         assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(exiled.getId());
@@ -43,5 +42,23 @@ class LimitlessRekindlingTest extends BaseCardTest {
 
         assertThat(gd.exilePlayPermissions).doesNotContainKey(exiled.getId());
         assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(exiled.getId());
+    }
+
+    @Test
+    void stormConjuresOneAdditionalCardForEachEarlierSpellWithoutCastingTheCopy() {
+        harness.setHand(player1, java.util.List.of(new RiteOfFlame(), new LimitlessRekindling()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.castSorcery(player1, 0, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
+        assertThat(gd.getTotalSpellsCastThisTurnCount()).isEqualTo(2);
+        for (Card exiled : gd.getPlayerExiledCards(player1.getId())) {
+            assertThat(gd.exilePlayPermissions).containsEntry(exiled.getId(), player1.getId());
+            assertThat(gd.exilePlayWithoutPayingManaCost).contains(exiled.getId());
+            assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(exiled.getId());
+        }
     }
 }
