@@ -26,6 +26,18 @@ class LightningElementalTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can attack on the turn its creature spell resolves")
+    void canAttackOnTheTurnItsSpellResolves() {
+        harness.setLife(player2, 20);
+        harness.castFromHand(player1, new LightningElemental(), "{3}{R}");
+        harness.passBothPriorities();
+
+        declareAttackers(List.of(0));
+
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
     @DisplayName("Can activate a tap ability immediately after entering because of haste")
     void canActivateTapAbilityImmediatelyBecauseOfHaste() {
         harness.setLife(player2, 20);
