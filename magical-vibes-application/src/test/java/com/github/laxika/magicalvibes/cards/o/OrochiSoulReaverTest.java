@@ -67,14 +67,84 @@ class OrochiSoulReaverTest extends BaseCardTest {
         harness.setHand(player1, List.of(new OrochiSoulReaver()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.DECLARE_BLOCKERS));
-        harness.activateHandAbility(player1, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            harness.activateHandAbility(player1, 0, attacker.getId());
+            harness.passBothPriorities();
+        });
 
         harness.assertInHand(player1, "Grizzly Bears");
         Permanent orochi = findPermanent(player1, "Orochi Soul-Reaver");
         assertThat(orochi.isTapped()).isTrue();
         assertThat(orochi.isAttacking()).isTrue();
         assertThat(orochi.getAttackTarget()).isEqualTo(player2.getId());
+    }
+
+    @Test
+    void anotherCreatureDealingDamageTriggersNonattackingSoulReaver() {
+        addCreatureReady(player1, new OrochiSoulReaver());
+        addCreatureReady(player1, new OrochiSoulReaver());
+        Card topCard = new OrochiSoulReaver();
+        harness.setLibrary(player2, List.of(topCard));
+
+        declareAttackers(List.of(1));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(Permanent::isManifested)
+                .map(permanent -> permanent.getCard().getId())).containsExactly(topCard.getId());
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void emptyDamagedPlayersLibraryStillCreatesTreasure() {
+        addCreatureReady(player1, new OrochiSoulReaver());
+        harness.setLibrary(player2, List.of());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Treasure")).isOne();
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(Permanent::isManifested);
+    }
+
+    @Test
+    void manifestsLandWithoutTakingCardFromControllersLibrary() {
+        addCreatureReady(player1, new OrochiSoulReaver());
+        Card topCard = new Forest();
+        Card ownCard = new OrochiSoulReaver();
+        harness.setLibrary(player2, List.of(topCard));
+        harness.setLibrary(player1, List.of(ownCard));
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Treasure")).isOne();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.isManifested() && permanent.isFaceDown()
+                        && permanent.getCard().getId().equals(topCard.getId()));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownCard);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void controllerCanTurnOpponentsManifestedCreatureFaceUpForItsManaCost() {
+        addCreatureReady(player1, new OrochiSoulReaver());
+        Card topCard = new OrochiSoulReaver();
+        harness.setLibrary(player2, List.of(topCard));
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        Permanent manifested = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(Permanent::isManifested).findFirst().orElseThrow();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(manifested));
+
+        assertThat(manifested.isFaceDown()).isFalse();
+        assertThat(manifested.getCard().getId()).isEqualTo(topCard.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(manifested);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(manifested);
     }
 }
