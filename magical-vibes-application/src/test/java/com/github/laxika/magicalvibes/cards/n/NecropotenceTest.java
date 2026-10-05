@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.l.LibraryOfLeng;
 import com.github.laxika.magicalvibes.cards.m.MindRavel;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Necropotence.class, Disenchant.class, MindRavel.class})
+@CardUsed({Necropotence.class, Disenchant.class, MindRavel.class, LibraryOfLeng.class})
 class NecropotenceTest extends BaseCardTest {
 
     @Test
@@ -36,8 +37,6 @@ class NecropotenceTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore);
     }
-
-    // ===== Pay 1 life: exile top card face down, return at your next end step =====
 
     @Test
     @DisplayName("Pay 1 life exiles the top card face down and returns it at the controller's end step")
@@ -208,8 +207,6 @@ class NecropotenceTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).noneMatch(c -> c.getId().equals(top.getId()));
     }
 
-    // ===== Whenever you discard a card, exile that card from your graveyard =====
-
     @Test
     @DisplayName("A discarded card is exiled from the controller's graveyard, not left there")
     void discardedCardIsExiledFromGraveyard() {
@@ -221,8 +218,7 @@ class NecropotenceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindRavel(), new Disenchant()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         Card toDiscard = gd.playerHands.get(player1.getId()).get(0);
         harness.handleCardChosen(player1, 0);
@@ -246,12 +242,11 @@ class NecropotenceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindRavel(), new Disenchant()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         Card toDiscard = gd.playerHands.get(player1.getId()).get(0);
-        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.PRECOMBAT_MAIN));
-        harness.handleCardChosen(player1, 0);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,
+                () -> harness.handleCardChosen(player1, 0));
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(toDiscard.getId()));
@@ -275,8 +270,7 @@ class NecropotenceTest extends BaseCardTest {
         harness.setHand(player2, List.of(new MindRavel(), new Disenchant()));
         harness.addMana(player2, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player2, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, player2.getId());
 
         Card toDiscard = gd.playerHands.get(player2.getId()).get(0);
         harness.handleCardChosen(player2, 0);
@@ -287,5 +281,92 @@ class NecropotenceTest extends BaseCardTest {
                 .noneMatch(c -> c.getId().equals(toDiscard.getId()));
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getId().equals(toDiscard.getId()));
+    }
+
+    @Test
+    @DisplayName("Skipping the draw step advances directly from upkeep to the main phase")
+    void skipsEntireDrawStepIncludingPriorityWindow() {
+        harness.addToBattlefield(player1, new Necropotence());
+        harness.forceActivePlayer(player1);
+        gd.turnNumber = 2;
+        harness.forceStep(TurnStep.UPKEEP);
+
+        gs.advanceStep(gd);
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.PRECOMBAT_MAIN);
+    }
+
+    @Test
+    @DisplayName("Discard still triggers when Library of Leng puts the card on top of the library")
+    void discardReplacementDoesNotSuppressTrigger() {
+        harness.addToBattlefield(player1, new Necropotence());
+        harness.addToBattlefield(player1, new LibraryOfLeng());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Card discarded = new Disenchant();
+        harness.setHand(player1, List.of(new MindRavel(), discarded));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.handleCardChosen(player1, 0);
+
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,
+                () -> harness.handleMayAbilityChosen(player1, true));
+
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(discarded);
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() instanceof Necropotence);
+        resolveAllTriggers();
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(discarded);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(discarded.getId()));
+    }
+
+    @Test
+    @DisplayName("Activation during an end step waits until the controller's following end step")
+    void activationAfterEndStepBeginsWaitsForFollowingEndStep() {
+        harness.addToBattlefield(player1, new Necropotence());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        Card top = new Disenchant();
+        harness.setLibrary(player1, List.of(top));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(top);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+        resolveAllTriggers();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(top);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(top);
+    }
+
+    @Test
+    @DisplayName("Returning a face-down card to hand does not reveal it in the public log")
+    void delayedReturnDoesNotRevealCardIdentity() {
+        harness.addToBattlefield(player1, new Necropotence());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Card top = new Disenchant();
+        harness.setLibrary(player1, List.of(top));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gameLogContains("Disenchant")).isFalse();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(top);
+        assertThat(gameLogContains("Disenchant")).isFalse();
     }
 }
