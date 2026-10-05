@@ -146,8 +146,7 @@ class MightOfOaksTest extends BaseCardTest {
         declareAttackers(List.of(0));
 
         // Opponent life should be reduced by 11 (boosted power)
-        int opponentLife = harness.getGameData().playerLifeTotals.get(player2.getId());
-        assertThat(opponentLife).isEqualTo(20 - 11);
+        harness.assertLife(player2, 20 - 11);
     }
 
     @Test
@@ -200,6 +199,24 @@ class MightOfOaksTest extends BaseCardTest {
 
         assertThat(cockroach.getPowerModifier()).isEqualTo(7);
         assertThat(cockroach.getToughnessModifier()).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("Only the targeted creature receives the boost")
+    void onlyTargetedCreatureReceivesBoost() {
+        Permanent target = setupCockroachAndMight();
+        Permanent ally = harness.addToBattlefieldAndReturn(player1, new GiantCockroach());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GiantCockroach());
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getEffectivePower()).isEqualTo(11);
+        assertThat(target.getEffectiveToughness()).isEqualTo(9);
+        assertThat(ally.getEffectivePower()).isEqualTo(4);
+        assertThat(ally.getEffectiveToughness()).isEqualTo(2);
+        assertThat(opponent.getEffectivePower()).isEqualTo(4);
+        assertThat(opponent.getEffectiveToughness()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Might of Oaks");
     }
 
     @Test
