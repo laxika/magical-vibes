@@ -54,4 +54,58 @@ class KherKeepTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
+
+    @Test
+    @DisplayName("Mana ability taps the land and resolves without using the stack")
+    void manaAbilityTapsAndResolvesImmediately() {
+        Permanent keep = harness.addToBattlefieldAndReturn(player1, new KherKeep());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(keep.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Two colorless mana cannot pay the red token activation cost")
+    void tokenAbilityRequiresRedMana() {
+        Permanent keep = harness.addToBattlefieldAndReturn(player1, new KherKeep());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(keep.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(countPermanents(player1, "Kobolds of Kher Keep")).isZero();
+    }
+
+    @Test
+    @DisplayName("Token activation taps and spends mana before creating one untapped token for its controller")
+    void tokenAbilityUsesStackAndCreatesTokenForItsController() {
+        Permanent keep = harness.addToBattlefieldAndReturn(player2, new KherKeep());
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.activateAbility(player2, 0, 1, null, null);
+
+        assertThat(keep.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(countPermanents(player2, "Kobolds of Kher Keep")).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player2, "Kobolds of Kher Keep")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Kobolds of Kher Keep")).isZero();
+        assertThat(findPermanent(player2, "Kobolds of Kher Keep").isTapped()).isFalse();
+        harness.addMana(player2, ManaColor.RED, 2);
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(countPermanents(player2, "Kobolds of Kher Keep")).isEqualTo(1);
+    }
 }
