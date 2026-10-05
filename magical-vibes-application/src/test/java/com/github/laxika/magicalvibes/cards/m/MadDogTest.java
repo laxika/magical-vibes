@@ -72,8 +72,7 @@ class MadDogTest extends BaseCardTest {
     @Test
     @DisplayName("Does not sacrifice when it came under its controller's control this turn")
     void doesNotSacrificeWhenItCameUnderControlThroughControlChange() {
-        Permanent madDog = harness.addToBattlefieldAndReturn(player2, new MadDog());
-        madDog.setSummoningSick(false);
+        Permanent madDog = addCreatureReady(player2, new MadDog());
 
         harness.setHand(player1, List.of(new Persuasion()));
         harness.addMana(player1, ManaColor.BLUE, 5);
@@ -84,6 +83,42 @@ class MadDogTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Mad Dog");
+    }
+
+    @Test
+    @DisplayName("An actual attack satisfies the end-step condition")
+    void survivesEndStepAfterDeclaringAnAttack() {
+        addMadDog(false);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        advanceToEndStep();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Mad Dog");
+    }
+
+    @Test
+    @DisplayName("A newly cast Mad Dog survives its first end step but not a later turn without attacking")
+    void newlyCastDogIsExemptOnlyUntilItsNextTurn() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new MadDog()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        advanceToEndStep();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Mad Dog");
+
+        advanceToUpkeep(player1);
+        advanceToEndStep();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Mad Dog");
+        harness.assertInGraveyard(player1, "Mad Dog");
     }
 
     @Test
