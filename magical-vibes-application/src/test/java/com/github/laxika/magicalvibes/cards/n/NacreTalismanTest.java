@@ -175,4 +175,56 @@ class NacreTalismanTest extends BaseCardTest {
 
         assertThat(bears.isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("An untapped target remains legal if tapped before the ability resolves")
+    void untappedTargetCanBeTappedBeforeResolution() {
+        harness.addToBattlefield(player1, new NacreTalisman());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        setUpOpponentTurn();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castFromHand(player2, new KjeldoranWarrior(), "{W}");
+
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice.validIds()).contains(bears.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+        bears.tap();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(bears.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("An unsuccessful payment does not consume the available two mana")
+    void insufficientManaIsNotPartiallySpent() {
+        harness.addToBattlefield(player1, new NacreTalisman());
+        Permanent bears = addTappedBears(player1);
+        setUpOpponentTurn();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFromHand(player2, new KjeldoranWarrior(), "{W}");
+
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A white creature entering without being cast does not trigger")
+    void whiteCreatureEnteringWithoutCastDoesNotTrigger() {
+        harness.addToBattlefield(player1, new NacreTalisman());
+        addTappedBears(player1);
+
+        harness.enterBattlefieldAndReturn(player2, new KjeldoranWarrior());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 }
