@@ -96,6 +96,47 @@ class NecratogTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Repeated activations pay costs immediately and their boosts accumulate on resolution")
+    void repeatedActivationsPayCostsBeforeResolving() {
+        harness.addToBattlefield(player1, new Necratog());
+        harness.setGraveyard(player1, List.of(
+                new BenalishInfantry(), new StripedBears(), new Vitalize()));
+        Permanent necratog = findPermanent(player1, "Necratog");
+        necratog.setTapped(true);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(graveyardNames(player1)).containsExactly("Benalish Infantry", "Vitalize");
+        assertThat(gd.exiledCards).extracting(e -> e.card().getName()).containsExactly("Striped Bears");
+        assertThat(necratog.getPowerModifier()).isZero();
+        assertThat(necratog.getToughnessModifier()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(graveyardNames(player1)).containsExactly("Vitalize");
+        assertThat(gd.exiledCards).extracting(e -> e.card().getName())
+                .containsExactly("Striped Bears", "Benalish Infantry");
+        assertThat(gd.stack).hasSize(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No card in graveyard to exile");
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+
+        assertThat(necratog.getPowerModifier()).isEqualTo(2);
+        assertThat(necratog.getToughnessModifier()).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(necratog.getPowerModifier()).isEqualTo(4);
+        assertThat(necratog.getToughnessModifier()).isEqualTo(4);
+        assertThat(necratog.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Cannot use an opponent's creature card to pay the ability's cost")
     void cannotUseOpponentsGraveyard() {
         harness.addToBattlefield(player1, new Necratog());
