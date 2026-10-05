@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.c.ClayFiredBricks;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.q.QuicksandWhirlpool;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MarketGnome.class, ClayFiredBricks.class, Plains.class, WrathOfGod.class})
+@CardUsed({MarketGnome.class, ClayFiredBricks.class, Plains.class, WrathOfGod.class, QuicksandWhirlpool.class})
 class MarketGnomeTest extends BaseCardTest {
 
     @Test
@@ -27,8 +28,7 @@ class MarketGnomeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
         harness.setLife(player1, 10);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName).contains("Plains");
@@ -57,5 +57,42 @@ class MarketGnomeTest extends BaseCardTest {
         harness.assertLife(player1, 11);
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName).contains("Plains");
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bricks);
+    }
+
+    @Test
+    @DisplayName("Exiling Market Gnome from the graveyard to craft does not trigger either ability")
+    void graveyardCraftMaterialDoesNotTrigger() {
+        harness.addToBattlefield(player1, new ClayFiredBricks());
+        MarketGnome gnome = new MarketGnome();
+        harness.setGraveyard(player1, List.of(gnome));
+        harness.setLibrary(player1, List.of(new Plains()));
+        harness.setLife(player1, 10);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.findExiledCard(gnome.getId())).isNotNull();
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player1, 10);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ordinary exile from the battlefield does not trigger either ability")
+    void ordinaryExileDoesNotTrigger() {
+        Permanent gnome = harness.addToBattlefieldAndReturn(player1, new MarketGnome());
+        harness.setHand(player1, List.of(new QuicksandWhirlpool()));
+        harness.setLibrary(player1, List.of(new Plains()));
+        harness.setLife(player1, 10);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, gnome.getId());
+
+        assertThat(gd.findExiledCard(gnome.getCard().getId())).isNotNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 10);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }
