@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.c.ClawingTorment;
+import com.github.laxika.magicalvibes.cards.i.IntercessorsArrest;
+import com.github.laxika.magicalvibes.cards.s.ShortCircuit;
+import com.github.laxika.magicalvibes.cards.s.SpiritedCompanion;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -16,7 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(LightPawsEmperorsVoice.class)
+@CardUsed({LightPawsEmperorsVoice.class, ClawingTorment.class, IntercessorsArrest.class, ShortCircuit.class, SpiritedCompanion.class})
 class LightPawsEmperorsVoiceTest extends BaseCardTest {
 
     @Test
@@ -33,8 +38,7 @@ class LightPawsEmperorsVoiceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castEnchantment(player1, 0, lightPaws.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -65,6 +69,113 @@ class LightPawsEmperorsVoiceTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    void realAuraSearchExcludesNamesOfAllControlledAurasAndDoesNotTriggerAgain() {
+        Permanent lightPaws = addCreatureReady(player1, new LightPawsEmperorsVoice());
+        Permanent otherCreature = addCreatureReady(player1, new SpiritedCompanion());
+        Permanent existingAura = harness.addToBattlefieldAndReturn(player1, new ShortCircuit());
+        existingAura.setAttachedTo(otherCreature.getId());
+        Card eligible = new ClawingTorment();
+        Card sameNameAsEntering = new IntercessorsArrest();
+        Card sameNameAsOtherAura = new ShortCircuit();
+        Card nonAura = new SpiritedCompanion();
+        harness.setLibrary(player1, List.of(eligible, sameNameAsEntering, sameNameAsOtherAura, nonAura));
+        harness.setHand(player1, List.of(new IntercessorsArrest()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castEnchantment(player1, 0, otherCreature.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().cards()).containsExactly(eligible);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(findPermanent(player1, "Clawing Torment").getAttachedTo()).isEqualTo(lightPaws.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(
+                sameNameAsEntering, sameNameAsOtherAura, nonAura);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void controllerCanDeclineSearch() {
+        Permanent lightPaws = addCreatureReady(player1, new LightPawsEmperorsVoice());
+        Card eligible = new ClawingTorment();
+        harness.setLibrary(player1, List.of(eligible));
+        harness.setHand(player1, List.of(new IntercessorsArrest()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castEnchantment(player1, 0, lightPaws.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(eligible);
+        assertThat(findPermanents(player1, "Clawing Torment")).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void searchStillShufflesWhenLightPawsHasLeftTheBattlefield() {
+        Permanent lightPaws = addCreatureReady(player1, new LightPawsEmperorsVoice());
+        Permanent otherCreature = addCreatureReady(player1, new SpiritedCompanion());
+        Card eligible = new ClawingTorment();
+        harness.setLibrary(player1, List.of(eligible));
+        harness.setHand(player1, List.of(new IntercessorsArrest()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castEnchantment(player1, 0, otherCreature.getId());
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(lightPaws);
+
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(eligible);
+        assertThat(findPermanents(player1, "Clawing Torment")).isEmpty();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    void auraCastByOpponentDoesNotTriggerAfterSpellControlChanges() {
+        addCreatureReady(player2, new LightPawsEmperorsVoice());
+        Permanent otherCreature = addCreatureReady(player1, new SpiritedCompanion());
+        harness.setHand(player1, List.of(new IntercessorsArrest()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castEnchantment(player1, 0, otherCreature.getId());
+        gd.stack.getFirst().setControllerId(player2.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player2, "Intercessor's Arrest").getAttachedTo()).isEqualTo(otherCreature.getId());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void protectionPreventsFetchedAuraFromEnteringBattlefield() {
+        Permanent lightPaws = addCreatureReady(player1, new LightPawsEmperorsVoice());
+        Permanent otherCreature = addCreatureReady(player1, new SpiritedCompanion());
+        Card ineligible = new ClawingTorment();
+        harness.setLibrary(player1, List.of(ineligible));
+        harness.setHand(player1, List.of(new IntercessorsArrest()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castEnchantment(player1, 0, otherCreature.getId());
+        harness.passBothPriorities();
+        lightPaws.getProtectionFromColorsUntilEndOfTurn().add(CardColor.BLACK);
+
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.LibrarySearch) {
+            harness.handleCardChosen(player1, 0);
+        }
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ineligible);
+        assertThat(findPermanents(player1, "Clawing Torment")).isEmpty();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
     private Card aura(String name, String manaCost) {
         Card card = card(name, CardType.ENCHANTMENT, manaCost);
         card.setSubtypes(List.of(CardSubtype.AURA));
