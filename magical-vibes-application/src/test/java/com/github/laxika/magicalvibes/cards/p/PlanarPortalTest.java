@@ -72,7 +72,8 @@ class PlanarPortalTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals(chosenName));
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gameLogContains(player1.getUsername() + "'s library is shuffled.")).isTrue();
+        assertThat(gameLogContains(player1.getUsername()
+                + " puts a card into their hand. Library is shuffled.")).isTrue();
     }
 
     @Test
@@ -116,6 +117,70 @@ class PlanarPortalTest extends BaseCardTest {
         Permanent perm = harness.addToBattlefieldAndReturn(player, new PlanarPortal());
         perm.setSummoningSick(false);
         return perm;
+    }
+
+    @Test
+    @DisplayName("A newly entered noncreature portal can activate immediately")
+    void newlyEnteredPortalCanActivate() {
+        Permanent portal = harness.addToBattlefieldAndReturn(player1, new PlanarPortal());
+        portal.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.setLibrary(player1, List.of(new Swamp()));
+        harness.setHand(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(portal.isTapped()).isTrue();
+        harness.assertInHand(player1, "Swamp");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An unrestricted search cannot decline to find a card")
+    void cannotDeclineNonemptySearch() {
+        addReadyPortal(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The activated ability resolves after the portal leaves the battlefield")
+    void abilityResolvesWithoutSource() {
+        Permanent portal = addReadyPortal(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Swamp()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(portal);
+        gd.playerGraveyards.get(player1.getId()).add(portal.getCard());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Swamp");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void setupLibrary() {
