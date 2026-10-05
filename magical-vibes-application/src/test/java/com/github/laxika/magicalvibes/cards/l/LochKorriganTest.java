@@ -100,6 +100,44 @@ class LochKorriganTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent korrigan = harness.addToBattlefieldAndReturn(player1, new LochKorrigan());
+        korrigan.setSummoningSick(true);
+        korrigan.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(korrigan.getEffectivePower()).isEqualTo(2);
+        assertThat(korrigan.getEffectiveToughness()).isEqualTo(2);
+        assertThat(korrigan.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Boost applies only to its source and spends the hybrid mana")
+    void boostsOnlySourceAndSpendsMana() {
+        Permanent source = addKorriganReady(player1);
+        Permanent other = addKorriganReady(player1);
+        Permanent opposing = addKorriganReady(player2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(source.getEffectivePower()).isEqualTo(2);
+        assertThat(source.getEffectiveToughness()).isEqualTo(2);
+        assertThat(other.getEffectivePower()).isEqualTo(1);
+        assertThat(other.getEffectiveToughness()).isEqualTo(1);
+        assertThat(opposing.getEffectivePower()).isEqualTo(1);
+        assertThat(opposing.getEffectiveToughness()).isEqualTo(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
     private Permanent addKorriganReady(Player player) {
         return addCreatureReady(player, new LochKorrigan());
     }
