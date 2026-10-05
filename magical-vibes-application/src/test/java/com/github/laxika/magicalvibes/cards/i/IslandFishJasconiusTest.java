@@ -29,6 +29,35 @@ class IslandFishJasconiusTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's Island does not prevent the sacrifice trigger")
+    void opponentsIslandDoesNotPreventSacrifice() {
+        harness.addToBattlefield(player2, new Island());
+        harness.castFromHand(player1, new IslandFishJasconius(), "{4}{U}{U}{U}");
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Island Fish Jasconius");
+        harness.assertInGraveyard(player1, "Island Fish Jasconius");
+    }
+
+    @Test
+    @DisplayName("Gaining an Island after the sacrifice ability triggers does not stop the sacrifice")
+    void gainingIslandAfterTriggerDoesNotPreventSacrifice() {
+        harness.addToBattlefield(player1, new IslandFishJasconius());
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player1, "Island Fish Jasconius");
+
+        harness.addToBattlefield(player1, new Island());
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Island Fish Jasconius");
+        harness.assertInGraveyard(player1, "Island Fish Jasconius");
+    }
+
+    @Test
     @DisplayName("Survives while controller controls an Island")
     void survivesWithIsland() {
         harness.addToBattlefield(player1, new Island());
@@ -96,6 +125,20 @@ class IslandFishJasconiusTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
+        assertThat(fish.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Opponent's upkeep does not offer the untap payment")
+    void opponentsUpkeepDoesNotTriggerUntap() {
+        harness.addToBattlefield(player1, new Island());
+        Permanent fish = addCreatureReady(player1, new IslandFishJasconius());
+        fish.tap();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(fish.isTapped()).isTrue();
     }
 
