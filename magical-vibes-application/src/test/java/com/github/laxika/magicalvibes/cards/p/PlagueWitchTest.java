@@ -94,4 +94,69 @@ class PlagueWitchTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(discarded);
         harness.assertNotInGraveyard(player1, "Spineless Thug");
     }
+
+    @Test
+    @DisplayName("Can target itself and dies when its toughness becomes zero")
+    void canTargetItself() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent witch = addCreatureReady(player1, new PlagueWitch());
+        harness.setHand(player1, List.of(new SpinelessThug()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, witch.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(witch.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Spineless Thug");
+        harness.assertOnBattlefield(player1, "Plague Witch");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Plague Witch");
+        harness.assertInGraveyard(player1, "Plague Witch");
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost while already tapped")
+    void cannotActivateWhileTapped() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent witch = addCreatureReady(player1, new PlagueWitch());
+        witch.setTapped(true);
+        Permanent target = addCreatureReady(player2, new SpinelessThug());
+        SpinelessThug discarded = new SpinelessThug();
+        harness.setHand(player1, List.of(discarded));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(discarded);
+        harness.assertNotInGraveyard(player1, "Spineless Thug");
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost with summoning sickness")
+    void cannotActivateWithSummoningSickness() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent witch = addCreatureReady(player1, new PlagueWitch());
+        witch.setSummoningSick(true);
+        Permanent target = addCreatureReady(player2, new SpinelessThug());
+        SpinelessThug discarded = new SpinelessThug();
+        harness.setHand(player1, List.of(discarded));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(witch.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(discarded);
+        harness.assertNotInGraveyard(player1, "Spineless Thug");
+    }
 }
