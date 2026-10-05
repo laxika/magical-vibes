@@ -51,10 +51,11 @@ class MuscleSliverTest extends BaseCardTest {
     @Test
     @DisplayName("Does not boost a non-Sliver creature")
     void doesNotBoostNonSliver() {
-        addCreatureReady(player1, new MuscleSliver());
         Permanent creature = addCreatureReady(player1, new TrainedArmodon());
         int basePower = gqs.getEffectivePower(gd, creature);
         int baseToughness = gqs.getEffectiveToughness(gd, creature);
+
+        addCreatureReady(player1, new MuscleSliver());
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(basePower);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(baseToughness);
@@ -70,6 +71,29 @@ class MuscleSliverTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Muscle Slivers controlled by different players stack and lose only the departed source's boost")
+    void opposingMuscleSliversStackUntilOneLeaves() {
+        Permanent first = addCreatureReady(player1, new MuscleSliver());
+        Permanent second = addCreatureReady(player2, new MuscleSliver());
+        Permanent otherSliver = addCreatureReady(player2, new ArmorSliver());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, otherSliver)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, otherSliver)).isEqualTo(4);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, first));
+
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherSliver)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, otherSliver)).isEqualTo(3);
     }
 
     @Test
