@@ -61,8 +61,7 @@ class IndestructibleAuraTest extends BaseCardTest {
 
         castIndestructibleAura(target);
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(target);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
@@ -73,6 +72,49 @@ class IndestructibleAuraTest extends BaseCardTest {
                 .contains(target.getId());
         assertThat(target.getMarkedDamage()).isZero();
         harness.assertInGraveyard(player1, "Durkwood Boars");
+    }
+
+    @Test
+    @DisplayName("Does not prevent damage to other creatures")
+    void doesNotProtectOtherCreatures() {
+        Permanent protectedCreature = harness.addToBattlefieldAndReturn(player1, new KoboldsOfKherKeep());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new KoboldsOfKherKeep());
+
+        castIndestructibleAura(protectedCreature);
+        dealTwoDamageTo(otherCreature);
+        dealTwoDamageTo(protectedCreature);
+
+        harness.assertInGraveyard(player2, "Kobolds of Kher Keep");
+        harness.assertOnBattlefield(player1, "Kobolds of Kher Keep");
+        assertThat(protectedCreature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Prevents self-inflicted damage without preventing damage dealt to opponents")
+    void preventsSelfInflictedDamage() {
+        Permanent source = addCreatureReady(player1, new PsionicEntity());
+
+        castIndestructibleAura(source);
+        int sourceIndex = gd.playerBattlefields.get(player1.getId()).indexOf(source);
+        harness.activateAbility(player1, sourceIndex, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player1, "Psionic Entity");
+        assertThat(source.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Still prevents damage during the end step")
+    void preventsDamageDuringEndStep() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new KoboldsOfKherKeep());
+
+        castIndestructibleAura(creature);
+        harness.forceStep(TurnStep.END_STEP);
+        dealTwoDamageTo(creature);
+
+        harness.assertOnBattlefield(player1, "Kobolds of Kher Keep");
+        assertThat(creature.getMarkedDamage()).isZero();
     }
 
     @Test
