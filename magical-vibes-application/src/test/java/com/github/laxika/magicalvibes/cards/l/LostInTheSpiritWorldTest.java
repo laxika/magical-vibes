@@ -72,6 +72,48 @@ class LostInTheSpiritWorldTest extends BaseCardTest {
                 .hasMessageContaining("creature");
     }
 
+    @Test
+    void canReturnYourOwnCreatureAndStillCreateSpirit() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        cast(target.getId());
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1);
+    }
+
+    @Test
+    void returnsStolenCreatureToOwnerAndCreatesSpiritForSpellController() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        gd.stolenCreatures.put(target.getId(), player2.getId());
+
+        cast(target.getId());
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1);
+        assertThat(findPermanents(player2, "Spirit")).isEmpty();
+    }
+
+    @Test
+    void doesNotCreateSpiritWhenChosenTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareSpell();
+        harness.castSorcery(player1, 0, target.getId());
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target));
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+        harness.assertInGraveyard(player1, "Lost in the Spirit World");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void cast(UUID targetId) {
         prepareSpell();
         if (targetId == null) {
