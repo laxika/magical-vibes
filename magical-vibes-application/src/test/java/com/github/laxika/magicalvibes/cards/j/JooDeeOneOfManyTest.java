@@ -91,4 +91,59 @@ class JooDeeOneOfManyTest extends BaseCardTest {
         harness.activateAbility(player1, permanentIndex, null, null);
         harness.passBothPriorities();
     }
+
+    @Test
+    @DisplayName("Can keep the surveilled card and sacrifice the newly created copy")
+    void canKeepTopCardAndSacrificeNewCopy() {
+        Card topCard = new JooDeeOneOfMany();
+        harness.setLibrary(player1, List.of(topCard));
+        Permanent jooDee = addCreatureReady(player1, new JooDeeOneOfMany());
+
+        activate(jooDee);
+        harness.handleMayAbilityChosen(player1, false);
+        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .findFirst().orElseThrow();
+        assertThat(token.isTapped()).isFalse();
+        harness.handleMultiplePermanentsChosen(player1, List.of(token.getId()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(jooDee);
+        assertThat(jooDee.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent copying and sacrificing")
+    void emptyLibraryDoesNotPreventRemainingEffects() {
+        harness.setLibrary(player1, List.of());
+        Permanent jooDee = addCreatureReady(player1, new JooDeeOneOfMany());
+
+        activate(jooDee);
+        harness.handleMultiplePermanentsChosen(player1, List.of(jooDee.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1)
+                .allMatch(permanent -> permanent.getCard().isToken());
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(jooDee.getOriginalCard());
+    }
+
+    @Test
+    @DisplayName("A token copy retains the activated ability")
+    void tokenCopyRetainsActivatedAbility() {
+        harness.setLibrary(player1, List.of());
+        Permanent jooDee = addCreatureReady(player1, new JooDeeOneOfMany());
+        activate(jooDee);
+        harness.handleMultiplePermanentsChosen(player1, List.of(jooDee.getId()));
+        Permanent token = gd.playerBattlefields.get(player1.getId()).getFirst();
+        token.setSummoningSick(false);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        activate(token);
+        harness.handleMultiplePermanentsChosen(player1, List.of(token.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1)
+                .allMatch(permanent -> permanent.getCard().isToken()
+                        && !permanent.getId().equals(token.getId()));
+    }
 }
