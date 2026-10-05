@@ -71,4 +71,41 @@ class LoreBrokerTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(player2Draw);
     }
 
+    @Test
+    @DisplayName("Discard choices stay hidden until both players choose, even when the nonactive player controls the ability")
+    void discardsHappenSimultaneouslyAfterBothPlayersChoose() {
+        var broker = addCreatureReady(player2, new LoreBroker());
+        Watchwolf player1Discard = new Watchwolf();
+        Watchwolf player2Discard = new Watchwolf();
+        Forest player1Draw = new Forest();
+        Forest player2Draw = new Forest();
+        harness.setHand(player1, List.of(player1Discard));
+        harness.setHand(player2, List.of(player2Discard));
+        harness.setLibrary(player1, List.of(player1Draw));
+        harness.setLibrary(player2, List.of(player2Draw));
+
+        harness.passPriority(player1);
+        harness.activateAbility(player2, 0, null, null);
+        assertThat(broker.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(player1Discard, player1Draw);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(player2Discard, player2Draw);
+
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(player1Discard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(player2Discard);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(player1Draw);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(player2Draw);
+    }
 }
