@@ -72,6 +72,45 @@ class MeditateTest extends BaseCardTest {
         assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("Casting during the opponent's turn skips the caster's upcoming turn")
+    void skipsUpcomingTurnWhenCastDuringOpponentsTurn() {
+        advanceTurn();
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        castMeditate();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        advanceTurn();
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+
+        harness.forceStep(TurnStep.CLEANUP);
+        harness.passUntil(player1, TurnStep.UNTAP);
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Two resolved Meditates skip two successive turns")
+    void multipleMeditatesSkipSuccessiveTurns() {
+        castMeditate();
+        castMeditate();
+
+        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(2);
+        advanceTurn();
+        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(2);
+        advanceTurn();
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        advanceTurn();
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+
+        harness.forceStep(TurnStep.CLEANUP);
+        harness.passUntil(player1, TurnStep.UNTAP);
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+    }
+
     private void advanceTurn() {
         harness.forceStep(TurnStep.CLEANUP);
         harness.passUntil(player2, TurnStep.UNTAP);
