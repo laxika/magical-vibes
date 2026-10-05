@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
@@ -34,12 +36,11 @@ class JinxTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Jinx()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         Permanent land = harness.addToBattlefieldAndReturn(player1, new AysenAbbey());
-        harness.castInstant(player1, 0, land.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, land.getId());
         harness.handleListChoice(player1, "ISLAND");
 
-        int forestIndex = gd.playerBattlefields.get(player1.getId()).indexOf(land);
-        gs.tapPermanent(gd, player1, forestIndex);
+        int landIndex = gd.playerBattlefields.get(player1.getId()).indexOf(land);
+        harness.tapPermanent(player1, landIndex);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
@@ -87,14 +88,63 @@ class JinxTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a land");
     }
 
+    @ParameterizedTest
+    @EnumSource(value = CardSubtype.class, names = {"PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST"})
+    @DisplayName("Each basic land type can be chosen")
+    void canChooseEveryBasicLandType(CardSubtype subtype) {
+        harness.setHand(player1, List.of(new Jinx()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new AysenAbbey());
+
+        harness.castAndResolveInstant(player1, 0, land.getId());
+        harness.handleListChoice(player1, subtype.name());
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, land)).containsExactly(subtype);
+    }
+
+    @Test
+    @DisplayName("An illegal target prevents both the land change and delayed draw")
+    void illegalTargetDoesNotScheduleDraw() {
+        harness.setHand(player1, List.of(new Jinx()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new AysenAbbey());
+        harness.castInstant(player1, 0, land.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(land);
+        gd.playerGraveyards.get(player2.getId()).add(land.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Jinx");
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Casting during upkeep does not draw until the next turn's upkeep")
+    void castingDuringUpkeepWaitsForNextTurn() {
+        advanceToUpkeep(player1);
+        castJinxOnOpponentLand();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+
+        advanceToUpkeep(player2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
+
     /** Casts Jinx on the opponent's land and chooses Island. */
     private Permanent castJinxOnOpponentLand() {
         harness.setHand(player1, List.of(new Jinx()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         Permanent land = harness.addToBattlefieldAndReturn(player2, new AysenAbbey());
 
-        harness.castInstant(player1, 0, land.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, land.getId());
         harness.handleListChoice(player1, "ISLAND");
 
         return land;
