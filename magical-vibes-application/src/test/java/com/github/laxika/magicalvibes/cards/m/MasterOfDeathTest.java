@@ -75,4 +75,112 @@ class MasterOfDeathTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Master of Death");
         harness.assertNotInHand(player1, "Master of Death");
     }
+
+    @Test
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        harness.setGraveyard(player1, List.of(new MasterOfDeath()));
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Master of Death");
+    }
+
+    @Test
+    void doesNothingIfSourceLeavesGraveyardBeforeResolution() {
+        MasterOfDeath master = new MasterOfDeath();
+        harness.setGraveyard(player1, List.of(master));
+        harness.setLife(player1, 20);
+        advanceToUpkeep(player1);
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removeCardFromGraveyardById(gd, master.getId()));
+        harness.setExile(player1, List.of(master));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player1, 20);
+        harness.assertNotInHand(player1, "Master of Death");
+    }
+
+    @Test
+    void doesNotOfferPaymentIfSourceLeavesAndReentersGraveyard() {
+        MasterOfDeath master = new MasterOfDeath();
+        harness.setGraveyard(player1, List.of(master));
+        gd.markGraveyardEntry(master);
+        harness.setLife(player1, 20);
+        advanceToUpkeep(player1);
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removeCardFromGraveyardById(gd, master.getId()));
+        harness.setHand(player1, List.of(master));
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(master));
+        gd.markGraveyardEntry(master);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Master of Death");
+        harness.assertNotInHand(player1, "Master of Death");
+    }
+
+    @Test
+    void surveilCanKeepBothCardsInReversedOrder() {
+        Card first = new MasterOfDeath();
+        Card second = new MasterOfDeath();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new MasterOfDeath()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(1, 0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void surveilWithEmptyLibraryDoesNotRequireAChoice() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new MasterOfDeath()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Master of Death");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void surveilWithOneCardCanPutItIntoGraveyard() {
+        Card onlyCard = new MasterOfDeath();
+        harness.setLibrary(player1, List.of(onlyCard));
+        harness.setHand(player1, List.of(new MasterOfDeath()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(onlyCard);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(onlyCard);
+    }
 }
