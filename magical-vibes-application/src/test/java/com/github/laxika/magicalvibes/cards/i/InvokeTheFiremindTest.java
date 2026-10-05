@@ -69,6 +69,50 @@ class InvokeTheFiremindTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Draw mode with X zero draws nothing from an empty library")
+    void zeroDrawDoesNotAttemptToDraw() {
+        harness.setHand(player1, List.of(new InvokeTheFiremind()));
+        harness.setLibrary(player1, List.of());
+        addMana(0);
+
+        harness.castModalSorceryWithModesForX(player1, 0, 1, new int[]{0}, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Invoke the Firemind");
+        assertThat(gd.playersAttemptedDrawFromEmptyLibrary).doesNotContain(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Damage mode with X zero deals no damage")
+    void zeroDamageDoesNotChangeLife() {
+        harness.setHand(player1, List.of(new InvokeTheFiremind()));
+        int lifeBefore = gd.getLife(player2.getId());
+        addMana(0);
+
+        harness.castModalSorceryWithModesForX(player1, 0, 1, new int[]{1}, 0, player2.getId(), List.of());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, lifeBefore);
+        harness.assertInGraveyard(player1, "Invoke the Firemind");
+    }
+
+    @Test
+    @DisplayName("Damage mode can deal lethal damage to a creature you control")
+    void damageModeCanKillOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new VertigoSpawn());
+        harness.setHand(player1, List.of(new InvokeTheFiremind()));
+        addMana(3);
+
+        harness.castModalSorceryWithModesForX(player1, 0, 1, new int[]{1}, 3, target.getId(), List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Vertigo Spawn");
+        harness.assertInGraveyard(player1, "Vertigo Spawn");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
     private void addMana(int xValue) {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.RED, 1);
