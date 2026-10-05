@@ -126,4 +126,53 @@ class NightDayTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(4);
     }
+
+    @Test
+    void dayAffectsCreaturesPresentAtResolutionButNotCreaturesEnteringLater() {
+        Permanent firstKavu = harness.addToBattlefieldAndReturn(player2, new KavuMauler());
+        harness.setHand(player1, List.of(new NightDay()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castModalInstant(player1, 0, 1, List.of(player2.getId()));
+        Permanent secondKavu = harness.addToBattlefieldAndReturn(player2, new KavuMauler());
+        harness.passBothPriorities();
+        Permanent laterKavu = harness.addToBattlefieldAndReturn(player2, new KavuMauler());
+
+        assertThat(gqs.getEffectivePower(gd, firstKavu)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, firstKavu)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, secondKavu)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, secondKavu)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, laterKavu)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, laterKavu)).isEqualTo(4);
+    }
+
+    @Test
+    void nightCanTargetItsControllersCreatureAndRepeatedCastsAccumulate() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player1, new KavuMauler());
+        harness.setHand(player1, List.of(new NightDay(), new NightDay()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castModalInstant(player1, 0, 0, List.of(kavu.getId()));
+        harness.passBothPriorities();
+        harness.castModalInstant(player1, 0, 0, List.of(kavu.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(2);
+
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(4);
+    }
+
+    @Test
+    void dayCannotBeCastWithOnlyNightsManaCost() {
+        harness.setHand(player1, List.of(new NightDay()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 1, List.of(player2.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }
