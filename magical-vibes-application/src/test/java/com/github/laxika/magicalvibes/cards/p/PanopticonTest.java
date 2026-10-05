@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-@CardUsed(Panopticon.class)
+@CardUsed({Panopticon.class, com.github.laxika.magicalvibes.cards.f.FaridehDevilsChosen.class})
 class PanopticonTest extends BaseCardTest {
     private PlanechaseService planar;
     private PlanarDieRoller die;
@@ -137,8 +137,7 @@ class PanopticonTest extends BaseCardTest {
         gd.turnNumber = 2;
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(before + 2);
     }
 
@@ -197,14 +196,12 @@ class PanopticonTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(com.github.laxika.magicalvibes.cards.f.FaridehDevilsChosen.class)
     void planarRollTriggersDiceAbilitiesWithoutProducingANumericalResult() {
-        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.f.FaridehDevilsChosen());
+        Permanent farideh = harness.addToBattlefieldAndReturn(player1, new com.github.laxika.magicalvibes.cards.f.FaridehDevilsChosen());
         int before = gd.playerHands.get(player1.getId()).size();
         when(die.roll()).thenReturn(PlanarDieResult.BLANK);
         harness.inMutationScope(() -> planar.rollSpecialAction(gd, player1.getId()));
         harness.passBothPriorities();
-        Permanent farideh = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(gqs.hasKeyword(gd, farideh, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, farideh, Keyword.MENACE)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(before);
@@ -234,4 +231,47 @@ class PanopticonTest extends BaseCardTest {
         assertThat(startingGame.playerHands.get(opening.getPlayer1().getId())).hasSize(7);
     }
 
+    @Test
+    void drawStepAdditionalCardWaitsForItsTriggerToResolve() {
+        int before = gd.playerHands.get(player1.getId()).size();
+        int opponentBefore = gd.playerHands.get(player2.getId()).size();
+        gd.turnNumber = 3;
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.passUntil(TurnStep.DRAW);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(before + 1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(before + 2);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentBefore);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void chaosOnOpponentsTurnDrawsOnlyForOpponent() {
+        int before = gd.playerHands.get(player2.getId()).size();
+        int otherBefore = gd.playerHands.get(player1.getId()).size();
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
+        when(die.roll()).thenReturn(PlanarDieResult.CHAOS);
+        harness.inMutationScope(() -> planar.rollSpecialAction(gd, player2.getId()));
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(before);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(before + 1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(otherBefore);
+    }
+
+    @Test
+    void pendingChaosDrawResolvesAfterPlaneswalkingAwayFromItsSource() {
+        int before = gd.playerHands.get(player1.getId()).size();
+        var oldId = gd.planechase.faceUp.getFirst().getId();
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> planar.planeswalk(gd));
+        assertThat(gd.planechase.faceUp.getFirst().getId()).isNotEqualTo(oldId);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(before + 1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(before + 2);
+        assertThat(gd.stack).isEmpty();
+    }
 }
