@@ -15,9 +15,58 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MnemonicSliver.class, WingedSliver.class, LightningElemental.class, Forest.class})
+@CardUsed({MnemonicSliver.class, WingedSliver.class, LightningElemental.class, Forest.class,
+        AmoeboidChangeling.class})
 class MnemonicSliverTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Mnemonic Sliver does not grant abilities while its spell is on the stack")
+    void doesNotGrantAbilityBeforeResolving() {
+        Permanent sliver = addCreatureReady(player1, new WingedSliver());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new MnemonicSliver(), "{2}{U}");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(sliver);
+
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(sliver.getCard());
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Mnemonic Sliver can sacrifice itself and draw after leaving")
+    void sacrificesItselfAsCostAndDrawsOnResolution() {
+        Permanent mnemonicSliver = addCreatureReady(player1, new MnemonicSliver());
+        mnemonicSliver.setSummoningSick(true);
+        mnemonicSliver.setTapped(true);
+        Permanent otherSliver = addCreatureReady(player1, new WingedSliver());
+        Forest drawnCard = new Forest();
+        harness.setLibrary(player1, List.of(drawnCard));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(mnemonicSliver);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(mnemonicSliver.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gs.getEffectiveActivatedAbilities(gd, otherSliver)).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1).contains(drawnCard);
+    }
 
     @Test
     @DisplayName("All Slivers, including opposing ones, gain the draw ability")
@@ -93,7 +142,6 @@ class MnemonicSliverTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(AmoeboidChangeling.class)
     @DisplayName("A Sliver that loses all creature types no longer keeps its own granted ability")
     void losingSliverTypeRemovesItsGrantedAbility() {
         Permanent mnemonicSliver = addCreatureReady(player1, new MnemonicSliver());
