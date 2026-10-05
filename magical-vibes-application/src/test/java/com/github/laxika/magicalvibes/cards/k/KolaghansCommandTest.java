@@ -39,9 +39,8 @@ class KolaghansCommandTest extends BaseCardTest {
     @Test
     @DisplayName("Destroys an artifact and deals 2 damage to a player")
     void destroysArtifactAndDealsDamage() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
-        castWithModes(new int[]{2, 3}, null, List.of(
-                harness.getPermanentId(player2, "Fountain of Youth"), player2.getId()));
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        castWithModes(new int[]{2, 3}, null, List.of(artifact.getId(), player2.getId()));
 
         harness.assertNotOnBattlefield(player2, "Fountain of Youth");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -71,6 +70,142 @@ class KolaghansCommandTest extends BaseCardTest {
                 List.of(creature.getId(), player2.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("artifact");
+    }
+
+    @Test
+    @DisplayName("Return resolves before self-discard, so the returned creature can be discarded")
+    void returnsCreatureBeforeSelfDiscard() {
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+
+        castWithModes(new int[]{0, 1}, creature.getId(), List.of(player1.getId()));
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Kolaghan's Command");
+    }
+
+    @Test
+    @DisplayName("Returns a creature while destroying an artifact")
+    void returnsCreatureAndDestroysArtifact() {
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+
+        castWithModes(new int[]{0, 2}, creature.getId(), List.of(artifact.getId()));
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+        harness.assertInGraveyard(player2, "Fountain of Youth");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Returns a creature while dealing damage to a different creature")
+    void returnsCreatureAndDamagesCreature() {
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        Permanent damageTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castWithModes(new int[]{0, 3}, creature.getId(), List.of(damageTarget.getId()));
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Discard pauses resolution before artifact destruction")
+    void discardsBeforeDestroyingArtifact() {
+        harness.setHand(player2, List.of(new Forest()));
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+
+        castWithModes(new int[]{1, 2}, null, List.of(player2.getId(), artifact.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.assertOnBattlefield(player2, "Fountain of Youth");
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+        harness.assertInGraveyard(player2, "Fountain of Youth");
+    }
+
+    @Test
+    @DisplayName("An empty hand does not prevent the damage mode from resolving")
+    void emptyHandStillAllowsCreatureDamage() {
+        harness.setHand(player2, List.of());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castWithModes(new int[]{1, 3}, null, List.of(player2.getId(), creature.getId()));
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Kolaghan's Command");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Damage still resolves when the graveyard target becomes illegal")
+    void damageResolvesAfterGraveyardTargetLeaves() {
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new KolaghansCommand()));
+        addMana();
+        harness.castModalInstantWithModes(player1, 0, 2, new int[]{0, 3},
+                creature.getId(), List.of(player2.getId()));
+
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(creature));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player1, "Kolaghan's Command");
+    }
+
+    @Test
+    @DisplayName("Return mode rejects a creature in an opponent's graveyard")
+    void cannotReturnOpponentsCreature() {
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.setHand(player1, List.of(new KolaghansCommand()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(player1, 0, 2,
+                new int[]{0, 3}, creature.getId(), List.of(player2.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Return mode rejects a noncreature card in your graveyard")
+    void cannotReturnNoncreature() {
+        Forest land = new Forest();
+        harness.setGraveyard(player1, List.of(land));
+        harness.setHand(player1, List.of(new KolaghansCommand()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(player1, 0, 2,
+                new int[]{0, 3}, land.getId(), List.of(player2.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Damage mode cannot target a noncreature artifact")
+    void damageModeRejectsNoncreatureArtifact() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        harness.setHand(player1, List.of(new KolaghansCommand()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(player1, 0, 2,
+                new int[]{2, 3}, null, List.of(artifact.getId(), artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private void castWithModes(int[] modes, java.util.UUID targetId, List<java.util.UUID> targetIds) {
