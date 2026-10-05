@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.d.Duskwalker;
 import com.github.laxika.magicalvibes.cards.k.KavuTitan;
-import com.github.laxika.magicalvibes.cards.p.PhyrexianLens;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -88,5 +87,54 @@ class PlagueSpitterTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Plague Spitter").getMarkedDamage()).isZero();
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Lethal upkeep damage triggers a second wave of damage when Plague Spitter dies")
+    void lethalUpkeepDamageTriggersDeathDamage() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent spitter = harness.addToBattlefieldAndReturn(player1, new PlagueSpitter());
+        spitter.setMarkedDamage(1);
+        harness.addToBattlefield(player1, new KavuTitan());
+        harness.addToBattlefield(player2, new KavuTitan());
+        Permanent lens = harness.addToBattlefieldAndReturn(player2, new PhyrexianLens());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Plague Spitter");
+        harness.assertInGraveyard(player1, "Plague Spitter");
+        harness.assertNotOnBattlefield(player1, "Kavu Titan");
+        harness.assertInGraveyard(player1, "Kavu Titan");
+        harness.assertNotOnBattlefield(player2, "Kavu Titan");
+        harness.assertInGraveyard(player2, "Kavu Titan");
+        harness.assertOnBattlefield(player2, "Phyrexian Lens");
+        assertThat(lens.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("An opponent's Plague Spitter deals death damage during your turn")
+    void opponentsDeathTriggerWorksDuringYourTurn() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+        Permanent spitter = harness.addToBattlefieldAndReturn(player2, new PlagueSpitter());
+        Permanent titan = harness.addToBattlefieldAndReturn(player1, new KavuTitan());
+        harness.addToBattlefield(player2, new Duskwalker());
+
+        spitter.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Plague Spitter");
+        harness.assertNotOnBattlefield(player2, "Plague Spitter");
+        harness.assertInGraveyard(player2, "Duskwalker");
+        harness.assertNotOnBattlefield(player2, "Duskwalker");
+        assertThat(titan.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
     }
 }
