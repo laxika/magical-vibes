@@ -105,6 +105,38 @@ class NakayaShadeTest extends BaseCardTest {
         assertThat(shade.getEffectiveToughness()).isEqualTo(1);
     }
 
+    @Test
+    void repeatedActivationsGiveCumulativeBoosts() {
+        Permanent shade = addShade();
+
+        activateAbility();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+
+        activateAbility();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(shade.getEffectivePower()).isEqualTo(3);
+        assertThat(shade.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    void opponentIsAskedFirstOnTheirTurnAndCanPayWithColoredMana() {
+        Permanent shade = addShade();
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        activateAbility();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(shade.getEffectivePower()).isEqualTo(1);
+        assertThat(shade.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private Permanent addShade() {
         return harness.addToBattlefieldAndReturn(player1, new NakayaShade());
     }
