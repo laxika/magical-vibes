@@ -51,4 +51,41 @@ class LightningAngelTest extends BaseCardTest {
         assertThat(angel.isTapped()).isFalse();
         harness.assertLife(player2, 17);
     }
+
+    @Test
+    @DisplayName("Another flying creature can block Lightning Angel")
+    void flyingCreatureCanBlock() {
+        addCreatureReady(player1, new LightningAngel());
+        Permanent blocker = addCreatureReady(player2, new LightningAngel());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player1, "Lightning Angel");
+        harness.assertOnBattlefield(player2, "Lightning Angel");
+        assertThat(blocker.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Vigilance leaves Lightning Angel available to block after attacking")
+    void vigilanceAllowsBlockingAfterAttacking() {
+        Permanent angel = addCreatureReady(player1, new LightningAngel());
+        addCreatureReady(player2, new Thallid());
+
+        declareAttackers(player1, List.of(0));
+        resolveCombat();
+        harness.assertLife(player2, 17);
+        assertThat(angel.isTapped()).isFalse();
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
+        harness.assertOnBattlefield(player1, "Lightning Angel");
+        harness.assertInGraveyard(player2, "Thallid");
+    }
 }
