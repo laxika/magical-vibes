@@ -13,6 +13,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @CardUsed({LastWord.class, CrazedGoblin.class, Vex.class, Oxidize.class, AetherVial.class})
 class LastWordTest extends BaseCardTest {
 
@@ -78,11 +80,39 @@ class LastWordTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, vialPermanent.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, oxidize.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, oxidize.getId());
 
         harness.assertInGraveyard(player1, "Oxidize");
         harness.assertOnBattlefield(player1, "Aether Vial");
         harness.assertInGraveyard(player2, "Last Word");
+    }
+
+    @Test
+    @DisplayName("Leaves the stack when its only target is gone despite being uncounterable")
+    void doesNotResolveWhenTargetLeavesStack() {
+        Permanent vial = harness.addToBattlefieldAndReturn(player1, new AetherVial());
+        Oxidize oxidize = new Oxidize();
+        LastWord first = new LastWord();
+        LastWord second = new LastWord();
+        harness.setHand(player1, List.of(oxidize));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player2, List.of(first, second));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+
+        harness.castInstant(player1, 0, vial.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, oxidize.getId());
+        harness.castAndResolveInstant(player2, 0, oxidize.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertInGraveyard(player1, "Oxidize");
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(second).doesNotContain(first);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(first, second);
+        harness.assertOnBattlefield(player1, "Aether Vial");
     }
 }
