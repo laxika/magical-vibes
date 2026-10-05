@@ -29,7 +29,7 @@ class RadagastWizardOfWildsTest extends BaseCardTest {
 
         castColossalDreadmaw(BEAST_MODE);
 
-        Permanent beast = findPermanents(player1, "Beast").getFirst();
+        Permanent beast = findPermanent(player1, "Beast");
         assertThat(beast.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(beast.getCard().getSubtypes()).contains(CardSubtype.BEAST);
         assertThat(beast.getEffectivePower()).isEqualTo(3);
@@ -42,7 +42,7 @@ class RadagastWizardOfWildsTest extends BaseCardTest {
 
         castColossalDreadmaw(BIRD_MODE);
 
-        Permanent bird = findPermanents(player1, "Bird").getFirst();
+        Permanent bird = findPermanent(player1, "Bird");
         assertThat(bird.getCard().getColor()).isEqualTo(CardColor.BLUE);
         assertThat(bird.getCard().getSubtypes()).contains(CardSubtype.BIRD);
         assertThat(gqs.hasKeyword(gd, bird, Keyword.FLYING)).isTrue();
@@ -64,12 +64,88 @@ class RadagastWizardOfWildsTest extends BaseCardTest {
     void beastsAndBirdsYouControlHaveWardOne() {
         addRadagast();
         castColossalDreadmaw(BEAST_MODE);
-        Permanent beast = findPermanents(player1, "Beast").getFirst();
+        Permanent beast = findPermanent(player1, "Beast");
 
         castShockAt(player2, beast);
         harness.handleMayAbilityChosen(player2, false);
 
         harness.assertInGraveyard(player2, "Shock");
+    }
+
+    @Test
+    void birdsYouControlHaveWardOne() {
+        addRadagast();
+        castColossalDreadmaw(BIRD_MODE);
+        Permanent bird = findPermanent(player1, "Bird");
+
+        castShockAt(player2, bird);
+        harness.handleMayAbilityChosen(player2, false);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Bird");
+        assertThat(bird.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void payingWardAllowsTheSpellToResolve() {
+        addRadagast();
+        castColossalDreadmaw(BIRD_MODE);
+        Permanent bird = findPermanent(player1, "Bird");
+
+        castShockAt(player2, bird);
+        harness.handleMayAbilityChosen(player2, true);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Bird");
+    }
+
+    @Test
+    void yourOwnSpellsDoNotTriggerWard() {
+        addRadagast();
+        castColossalDreadmaw(BIRD_MODE);
+        Permanent bird = findPermanent(player1, "Bird");
+
+        castShockAt(player1, bird);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Bird");
+    }
+
+    @Test
+    void unrelatedCreaturesDoNotGainWard() {
+        addRadagast();
+        castColossalDreadmaw(BEAST_MODE);
+        Permanent dinosaur = findPermanent(player1, "Colossal Dreadmaw");
+
+        castShockAt(player2, dinosaur);
+        resolveAllTriggers();
+
+        assertThat(dinosaur.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void spellsBelowManaValueFiveDoNotCreateTokens() {
+        addRadagast();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Beast")).isZero();
+        assertThat(countPermanents(player1, "Bird")).isZero();
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void opponentsSpellsDoNotCreateTokens() {
+        addRadagast();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new ColossalDreadmaw(), "{4}{G}{G}");
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Beast")).isZero();
+        assertThat(countPermanents(player1, "Bird")).isZero();
+        harness.assertOnBattlefield(player2, "Colossal Dreadmaw");
     }
 
     private Permanent addRadagast() {
@@ -81,9 +157,7 @@ class RadagastWizardOfWildsTest extends BaseCardTest {
     }
 
     private void castColossalDreadmaw(String mode) {
-        harness.setHand(player1, List.of(new ColossalDreadmaw()));
-        harness.addMana(player1, ManaColor.GREEN, 6);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ColossalDreadmaw(), "{4}{G}{G}");
         harness.passBothPriorities();
         harness.handleListChoice(player1, mode);
         harness.passBothPriorities();
