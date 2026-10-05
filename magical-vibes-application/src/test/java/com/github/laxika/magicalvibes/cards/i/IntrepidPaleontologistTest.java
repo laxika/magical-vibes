@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.b.BelligerentYearling;
+import com.github.laxika.magicalvibes.cards.d.DeepFreeze;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({IntrepidPaleontologist.class, BelligerentYearling.class, GrizzlyBears.class})
+@CardUsed({IntrepidPaleontologist.class, BelligerentYearling.class, GrizzlyBears.class, DeepFreeze.class})
 class IntrepidPaleontologistTest extends BaseCardTest {
 
     @Test
@@ -67,10 +68,7 @@ class IntrepidPaleontologistTest extends BaseCardTest {
         harness.castFromExile(player1, dinosaur.getId());
         harness.passBothPriorities();
 
-        Permanent entered = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(dinosaur.getId()))
-                .findFirst()
-                .orElseThrow();
+        Permanent entered = findPermanent(player1, "Belligerent Yearling");
         assertThat(entered.getCounterCount(CounterType.FINALITY)).isEqualTo(1);
         assertThat(gd.findExiledCard(dinosaur.getId())).isNull();
         assertThat(gd.getCardsExiledByPermanent(paleontologist.getId())).isEmpty();
@@ -96,8 +94,105 @@ class IntrepidPaleontologistTest extends BaseCardTest {
     }
 
     private Permanent addReadyPaleontologist() {
-        Permanent paleontologist = harness.addToBattlefieldAndReturn(player1, new IntrepidPaleontologist());
-        paleontologist.setSummoningSick(false);
-        return paleontologist;
+        return addCreatureReady(player1, new IntrepidPaleontologist());
+    }
+
+    @Test
+    void canExileOpponentsDinosaurButCannotCastIt() {
+        addReadyPaleontologist();
+        Card dinosaur = new BelligerentYearling();
+        harness.setGraveyard(player2, List.of(dinosaur));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 1, null, dinosaur.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player2, "Belligerent Yearling");
+        assertThat(gd.findExiledCard(dinosaur.getId())).isNotNull();
+        prepareDinosaurCast();
+        assertThatThrownBy(() -> harness.castFromExile(player1, dinosaur.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No permission");
+    }
+
+    @Test
+    void cannotCastAfterSourceLeavesEvenWithAnotherPaleontologist() {
+        Permanent source = addReadyPaleontologist();
+        Card dinosaur = exileOwnDinosaur();
+        source.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player1, "Intrepid Paleontologist");
+        addReadyPaleontologist();
+
+        prepareDinosaurCast();
+        assertThatThrownBy(() -> harness.castFromExile(player1, dinosaur.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No permission");
+    }
+
+    @Test
+    void finalityStillAppliesWhenSourceLeavesBeforeSpellResolves() {
+        Permanent source = addReadyPaleontologist();
+        Card dinosaur = exileOwnDinosaur();
+        prepareDinosaurCast();
+        harness.castFromExile(player1, dinosaur.getId());
+        source.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        Permanent entered = findPermanent(player1, "Belligerent Yearling");
+        assertThat(entered.getCounterCount(CounterType.FINALITY)).isEqualTo(1);
+        entered.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player1, "Belligerent Yearling");
+        harness.assertNotInGraveyard(player1, "Belligerent Yearling");
+        assertThat(gd.findExiledCard(dinosaur.getId())).isNotNull();
+        assertThat(gd.findExiledCard(dinosaur.getId()).sourcePermanentId()).isNull();
+    }
+
+    @Test
+    void cannotCastWhenPaleontologistLosesItsAbilities() {
+        Permanent source = addReadyPaleontologist();
+        Card dinosaur = exileOwnDinosaur();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new DeepFreeze()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, source.getId());
+        harness.passBothPriorities();
+
+        prepareDinosaurCast();
+        assertThatThrownBy(() -> harness.castFromExile(player1, dinosaur.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No permission");
+    }
+
+    @Test
+    void exileAbilityDoesNotRequireTappingOrHaste() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new IntrepidPaleontologist());
+        source.setSummoningSick(true);
+        source.setTapped(true);
+        Card dinosaur = exileOwnDinosaur();
+
+        assertThat(gd.findExiledCard(dinosaur.getId())).isNotNull();
+        assertThat(source.isTapped()).isTrue();
+    }
+
+    private Card exileOwnDinosaur() {
+        Card dinosaur = new BelligerentYearling();
+        harness.setGraveyard(player1, List.of(dinosaur));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 1, null, dinosaur.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        return dinosaur;
+    }
+
+    private void prepareDinosaurCast() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
     }
 }
