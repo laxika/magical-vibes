@@ -1,16 +1,45 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.s.SeatOfTheSynod;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NimLasher.class, Ornithopter.class})
+@CardUsed({NimLasher.class, Ornithopter.class, SeatOfTheSynod.class})
 class NimLasherTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Artifact lands count once, while nonartifact creatures do not count")
+    void countsArtifactLandsButNotNonartifactCreatures() {
+        Permanent nim = harness.addToBattlefieldAndReturn(player1, new NimLasher());
+        harness.addToBattlefield(player1, new NimLasher());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new SeatOfTheSynod());
+        land.setTapped(true);
+        harness.addToBattlefield(player2, new SeatOfTheSynod());
+
+        assertThat(gqs.getEffectivePower(gd, nim)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, nim)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Artifact cards outside the battlefield do not contribute to the bonus")
+    void ignoresArtifactsOutsideBattlefield() {
+        Permanent nim = harness.addToBattlefieldAndReturn(player1, new NimLasher());
+        harness.setHand(player1, List.of(new Ornithopter()));
+        harness.setGraveyard(player1, List.of(new Ornithopter()));
+        harness.setExile(player1, List.of(new Ornithopter()));
+        harness.setLibrary(player1, List.of(new Ornithopter()));
+
+        assertThat(gqs.getEffectivePower(gd, nim)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, nim)).isEqualTo(1);
+    }
 
     @Test
     @DisplayName("Gets +1/+0 for each artifact controlled by its controller")
