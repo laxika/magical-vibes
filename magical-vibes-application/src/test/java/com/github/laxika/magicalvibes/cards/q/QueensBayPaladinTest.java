@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.q;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DoublingSeason;
 import com.github.laxika.magicalvibes.cards.v.VampireNoble;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -18,7 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({QueensBayPaladin.class, VampireNoble.class, GrizzlyBears.class})
+@CardUsed({QueensBayPaladin.class, VampireNoble.class, GrizzlyBears.class, DoublingSeason.class})
 class QueensBayPaladinTest extends BaseCardTest {
 
     @Test
@@ -47,9 +48,8 @@ class QueensBayPaladinTest extends BaseCardTest {
     @Test
     @DisplayName("Attack trigger returns a Vampire from your graveyard")
     void attackTriggerReturnsVampire() {
-        Permanent paladin = new Permanent(new QueensBayPaladin());
+        Permanent paladin = harness.addToBattlefieldAndReturn(player1, new QueensBayPaladin());
         paladin.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(paladin);
         Card vampire = new VampireNoble();
         harness.setGraveyard(player1, List.of(vampire));
         harness.setLife(player1, 20);
@@ -77,6 +77,73 @@ class QueensBayPaladinTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Vampire Noble");
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("An opponent's Vampire cannot be returned when your graveyard has no Vampire")
+    void cannotReturnOpponentsVampire() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player2, List.of(new VampireNoble()));
+        harness.setLife(player1, 20);
+
+        castPaladin();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        harness.assertInGraveyard(player2, "Vampire Noble");
+        harness.assertNotOnBattlefield(player1, "Vampire Noble");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("A target that leaves the graveyard before resolution causes no life loss")
+    void missingTargetDoesNotLoseLife() {
+        Card vampire = new VampireNoble();
+        harness.setGraveyard(player1, List.of(vampire));
+        harness.setLife(player1, 20);
+
+        castPaladin();
+        harness.handleMultipleCardsChosen(player1, List.of(vampire.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Vampire Noble");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("A returned Vampire is exiled instead of dying because of its finality counter")
+    void returnedVampireIsExiledInsteadOfDying() {
+        Card vampire = new VampireNoble();
+        harness.setGraveyard(player1, List.of(vampire));
+
+        castPaladin();
+        harness.handleMultipleCardsChosen(player1, List.of(vampire.getId()));
+        harness.passBothPriorities();
+        Permanent returned = findPermanentByCardId(vampire.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, returned));
+
+        harness.assertNotOnBattlefield(player1, "Vampire Noble");
+        harness.assertNotInGraveyard(player1, "Vampire Noble");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(vampire.getId()));
+    }
+
+    @Test
+    @DisplayName("Doubling Season doubles the finality counter placed on the returning Vampire")
+    void finalityCounterIsDoubled() {
+        harness.addToBattlefield(player1, new DoublingSeason());
+        Card vampire = new VampireNoble();
+        harness.setGraveyard(player1, List.of(vampire));
+        harness.setLife(player1, 20);
+
+        castPaladin();
+        harness.handleMultipleCardsChosen(player1, List.of(vampire.getId()));
+        harness.passBothPriorities();
+
+        assertThat(findPermanentByCardId(vampire.getId()).getCounterCount(CounterType.FINALITY))
+                .isEqualTo(2);
+        harness.assertLife(player1, 17);
     }
 
     private void castPaladin() {
