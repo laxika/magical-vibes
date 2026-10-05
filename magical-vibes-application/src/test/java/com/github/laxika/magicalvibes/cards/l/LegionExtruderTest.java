@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -48,9 +49,8 @@ class LegionExtruderTest extends BaseCardTest {
 
     @Test
     void sacrificesAnotherArtifactAndCreatesGolemToken() {
-        harness.addToBattlefield(player1, new LegionExtruder());
+        Permanent extruder = harness.addToBattlefieldAndReturn(player1, new LegionExtruder());
         harness.addToBattlefield(player1, new Spellbook());
-        Permanent extruder = findPermanent(player1, "Legion Extruder");
         extruder.setSummoningSick(false);
         int extruderIndex = gd.playerBattlefields.get(player1.getId()).indexOf(extruder);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -68,8 +68,7 @@ class LegionExtruderTest extends BaseCardTest {
 
     @Test
     void cannotSacrificeLegionExtruderItself() {
-        harness.addToBattlefield(player1, new LegionExtruder());
-        Permanent extruder = findPermanent(player1, "Legion Extruder");
+        Permanent extruder = harness.addToBattlefieldAndReturn(player1, new LegionExtruder());
         extruder.setSummoningSick(false);
         int extruderIndex = gd.playerBattlefields.get(player1.getId()).indexOf(extruder);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -77,5 +76,87 @@ class LegionExtruderTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, extruderIndex, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("No permanent to sacrifice matching: another artifact");
+    }
+
+    @Test
+    void newlyEnteredNoncreatureArtifactCanActivateAndPaysCostsBeforeResolution() {
+        Permanent extruder = harness.addToBattlefieldAndReturn(player1, new LegionExtruder());
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(extruder.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Spellbook");
+        harness.assertNotOnBattlefield(player1, "Golem");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Golem"))
+                .singleElement()
+                .satisfies(token -> {
+                    assertThat(token.getCard().hasType(CardType.CREATURE)).isTrue();
+                    assertThat(token.getCard().hasType(CardType.ARTIFACT)).isTrue();
+                    assertThat(token.getCard().getPower()).isEqualTo(3);
+                    assertThat(token.getCard().getToughness()).isEqualTo(3);
+                    assertThat(token.getCard().getColors()).isEmpty();
+                    assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.GOLEM);
+                    assertThat(token.isTapped()).isFalse();
+                });
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent extruder = harness.addToBattlefieldAndReturn(player1, new LegionExtruder());
+        extruder.setTapped(true);
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Spellbook");
+        harness.assertNotOnBattlefield(player1, "Golem");
+    }
+
+    @Test
+    void cannotSacrificeAnOpponentsArtifact() {
+        harness.addToBattlefield(player1, new LegionExtruder());
+        harness.addToBattlefield(player2, new Spellbook());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No permanent to sacrifice matching: another artifact");
+
+        harness.assertOnBattlefield(player2, "Spellbook");
+    }
+
+    @Test
+    void cannotSacrificeANonartifactCreature() {
+        harness.addToBattlefield(player1, new LegionExtruder());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No permanent to sacrifice matching: another artifact");
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void cannotActivateWithoutTwoMana() {
+        Permanent extruder = harness.addToBattlefieldAndReturn(player1, new LegionExtruder());
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(extruder.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Spellbook");
+        harness.assertNotOnBattlefield(player1, "Golem");
     }
 }
