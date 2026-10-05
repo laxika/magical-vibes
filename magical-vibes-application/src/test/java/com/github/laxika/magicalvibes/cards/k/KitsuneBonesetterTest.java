@@ -18,6 +18,82 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class KitsuneBonesetterTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Hand-size restriction is checked at activation, not resolution")
+    void resolvesAfterControllerLosesHandSizeAdvantage() {
+        harness.setHand(player1, List.of(new JiwariTheEarthAflame()));
+        harness.setHand(player2, List.of());
+        Permanent bonesetter = addCreatureReady(player1, new KitsuneBonesetter());
+        Permanent target = addCreatureReady(player2, new JiwariTheEarthAflame());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        assertThat(bonesetter.isTapped()).isTrue();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new JiwariTheEarthAflame()));
+        harness.passBothPriorities();
+
+        assertThat(target.getDamagePreventionShield()).isEqualTo(3);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player2, 0, 3, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("Unused prevention carries over to later damage events this turn")
+    void preventionSpansSeparateDamageEvents() {
+        harness.setHand(player1, List.of(new JiwariTheEarthAflame()));
+        harness.setHand(player2, List.of());
+        addCreatureReady(player1, new KitsuneBonesetter());
+        Permanent source = addCreatureReady(player1, new JiwariTheEarthAflame());
+        Permanent target = addCreatureReady(player2, new JiwariTheEarthAflame());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(source),
+                2, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player2, 0, 2, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost while summoning sick or already tapped")
+    void cannotActivateWhileSummoningSickOrTapped() {
+        harness.setHand(player1, List.of(new JiwariTheEarthAflame()));
+        harness.setHand(player2, List.of());
+        Permanent bonesetter = harness.addToBattlefieldAndReturn(player1, new KitsuneBonesetter());
+        Permanent target = addCreatureReady(player2, new JiwariTheEarthAflame());
+        bonesetter.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        bonesetter.setSummoningSick(false);
+        bonesetter.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getDamagePreventionShield()).isZero();
+    }
+
+    @Test
     @DisplayName("Prevents the next 3 damage to a target creature when ahead in hand size")
     void preventsNextThreeDamageWhenControllerHasMoreCards() {
         harness.setHand(player1, List.of(new JiwariTheEarthAflame(), new JiwariTheEarthAflame()));
