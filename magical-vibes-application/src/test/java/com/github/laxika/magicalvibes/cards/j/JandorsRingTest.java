@@ -105,4 +105,29 @@ class JandorsRingTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(cardAlreadyInHand, firstDraw);
     }
+    @Test
+    @DisplayName("Discard is paid on activation before the replacement card is drawn")
+    void paysDiscardBeforeDrawingOnResolution() {
+        Permanent ring = harness.addToBattlefieldAndReturn(player1, new JandorsRing());
+        GrizzlyBears drawnCard = new GrizzlyBears();
+        Forest replacement = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawnCard, replacement));
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(replacement);
+        assertThat(ring.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(replacement);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
 }
