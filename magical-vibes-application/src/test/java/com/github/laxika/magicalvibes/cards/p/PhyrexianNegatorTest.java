@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.b.BloodshotCyclops;
+import com.github.laxika.magicalvibes.cards.b.BloodArtist;
 import com.github.laxika.magicalvibes.cards.f.FodderCannon;
 import com.github.laxika.magicalvibes.cards.g.GoliathBeetle;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +17,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({PhyrexianNegator.class, BloodshotCyclops.class, GoliathBeetle.class, PhyrexianMonitor.class,
-        FodderCannon.class})
+        FodderCannon.class, BloodArtist.class})
 class PhyrexianNegatorTest extends BaseCardTest {
 
     @Test
@@ -31,8 +33,7 @@ class PhyrexianNegatorTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, negator.getId());
         harness.handlePermanentChosen(player1, sacrificedCreature.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.handleMultiplePermanentsChosen(player2, List.of(
                 monitor1.getId(), monitor2.getId(), fodderCannon.getId()));
@@ -96,7 +97,7 @@ class PhyrexianNegatorTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(
                 sacrificedPermanent1.getId(), sacrificedPermanent2.getId()));
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player2, 17);
         harness.assertInGraveyard(player2, "Phyrexian Monitor");
         harness.assertOnBattlefield(player1, "Phyrexian Negator");
         harness.assertInGraveyard(player1, "Phyrexian Monitor");
@@ -113,5 +114,56 @@ class PhyrexianNegatorTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Phyrexian Negator");
         harness.assertInGraveyard(player2, "Phyrexian Negator");
+    }
+
+    @Test
+    @DisplayName("Lethal damage still requires sacrificing as many remaining permanents as possible")
+    void lethalDamageTriggerSurvivesItsSource() {
+        addCreatureReady(player1, new BloodshotCyclops());
+        Permanent ammunition = addCreatureReady(player1, new PhyrexianNegator());
+        Permanent negator = addCreatureReady(player2, new PhyrexianNegator());
+        harness.addToBattlefield(player2, new PhyrexianMonitor());
+        harness.addToBattlefield(player2, new FodderCannon());
+
+        harness.activateAbility(player1, 0, null, negator.getId());
+        harness.handlePermanentChosen(player1, ammunition.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Phyrexian Negator");
+        harness.assertInGraveyard(player2, "Phyrexian Monitor");
+        harness.assertInGraveyard(player2, "Fodder Cannon");
+        harness.assertOnBattlefield(player1, "Bloodshot Cyclops");
+    }
+
+    @Test
+    @DisplayName("Automatically sacrificing all available permanents sacrifices them simultaneously")
+    void automaticSacrificesAreSimultaneous() {
+        Permanent attacker = addCreatureReady(player1, new BloodshotCyclops());
+        harness.addToBattlefield(player2, new BloodArtist());
+        Permanent negator = addCreatureReady(player2, new PhyrexianNegator());
+        harness.addToBattlefield(player2, new PhyrexianMonitor());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        attacker.setAttacking(true);
+        negator.setBlocking(true);
+        negator.addBlockingTarget(0);
+        resolveCombat(player1);
+
+        for (int i = 0; i < 10; i++) {
+            resolveAllTriggers();
+            if (!gd.interaction.isAwaitingInput()) {
+                break;
+            }
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+            harness.handlePermanentChosen(player2, player1.getId());
+        }
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 24);
+        assertThat(gd.stack).isEmpty();
     }
 }
