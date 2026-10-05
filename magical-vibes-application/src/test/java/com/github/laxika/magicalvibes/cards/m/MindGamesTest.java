@@ -52,7 +52,9 @@ class MindGamesTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an enchantment or player")
     void cannotTargetEnchantmentOrPlayer() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new Pacifism());
+        enchantment.setAttachedTo(creature.getId());
         harness.setHand(player1, List.of(new MindGames()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -70,8 +72,7 @@ class MindGamesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindGames()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.isTapped()).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -97,5 +98,56 @@ class MindGamesTest extends BaseCardTest {
                 .extracting(card -> card.getName())
                 .containsExactly("Mind Games");
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Buyback still returns the spell when its target is already tapped")
+    void buybackWithAlreadyTappedTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setTapped(true);
+        harness.setHand(player1, List.of(new MindGames()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstantWithBuyback(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        harness.assertInHand(player1, "Mind Games");
+        harness.assertNotInGraveyard(player1, "Mind Games");
+    }
+
+    @Test
+    @DisplayName("Buyback does not return the spell when its only target leaves the battlefield")
+    void illegalTargetPreventsBuybackReturn() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MindGames()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstantWithBuyback(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Mind Games");
+        harness.assertNotInHand(player1, "Mind Games");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Buyback requires a second blue mana in addition to two generic mana")
+    void buybackCannotBePaidWithOnlyOneBlueMana() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MindGames()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castInstantWithBuyback(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Mind Games");
+        assertThat(target.isTapped()).isFalse();
     }
 }
