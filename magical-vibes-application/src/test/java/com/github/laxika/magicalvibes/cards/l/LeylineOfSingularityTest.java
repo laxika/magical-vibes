@@ -85,4 +85,59 @@ class LeylineOfSingularityTest extends BaseCardTest {
 
         assertThat(gqs.hasEffectiveSupertype(gd, creature, CardSupertype.LEGENDARY)).isFalse();
     }
+
+    @Test
+    @DisplayName("Casting Leyline normally makes existing nonland permanents legendary")
+    void normalCastAppliesToExistingPermanents() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new SilhanaLedgewalker());
+
+        harness.castFromHand(player1, new LeylineOfSingularity(), "{2}{U}{U}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Leyline of Singularity");
+        assertThat(gqs.hasEffectiveSupertype(gd, creature, CardSupertype.LEGENDARY)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The controller chooses which duplicate creature to keep")
+    void legendRulePutsUnchosenCreatureInGraveyard() {
+        harness.addToBattlefield(player1, new LeylineOfSingularity());
+        Permanent kept = harness.addToBattlefieldAndReturn(player1, new SilhanaLedgewalker());
+        Permanent removed = harness.addToBattlefieldAndReturn(player1, new SilhanaLedgewalker());
+
+        harness.runStateBasedActions();
+        harness.handlePermanentChosen(player1, kept.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(kept).doesNotContain(removed);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(removed.getCard());
+        harness.assertOnBattlefield(player1, "Leyline of Singularity");
+    }
+
+    @Test
+    @DisplayName("Same-named legendary creatures controlled by different players coexist")
+    void sameNameAcrossControllersDoesNotInvokeLegendRule() {
+        harness.addToBattlefield(player1, new LeylineOfSingularity());
+        harness.addToBattlefield(player1, new SilhanaLedgewalker());
+        harness.addToBattlefield(player2, new SilhanaLedgewalker());
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Silhana Ledgewalker");
+        harness.assertOnBattlefield(player2, "Silhana Ledgewalker");
+    }
+
+    @Test
+    @DisplayName("Duplicate nonlegendary lands are unaffected by Leyline")
+    void duplicateLandsDoNotInvokeLegendRule() {
+        harness.addToBattlefield(player1, new LeylineOfSingularity());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new OrzhovBasilica());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new OrzhovBasilica());
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(first, second);
+        harness.assertNotInGraveyard(player1, "Orzhov Basilica");
+    }
 }
