@@ -130,4 +130,38 @@ class LiegeOfThePitTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(bear.getId(), wurm.getId())
                 .doesNotContain(liege.getId());
     }
+
+    @Test
+    void opposingCreatureCannotBeSacrificedForTheUpkeepAbility() {
+        harness.addToBattlefield(player1, new LiegeOfThePit());
+        harness.addToBattlefield(player2, new AshcoatBear());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Liege of the Pit");
+        harness.assertOnBattlefield(player2, "Ashcoat Bear");
+        harness.assertLife(player1, lifeBefore - 7);
+    }
+
+    @Test
+    void anotherLiegeCanBeSacrificedAndItsPendingTriggerStillResolves() {
+        harness.addToBattlefield(player1, new LiegeOfThePit());
+        harness.addToBattlefield(player1, new LiegeOfThePit());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Liege of the Pit")).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Liege of the Pit");
+        harness.assertLife(player1, lifeBefore);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Liege of the Pit");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        harness.assertLife(player1, lifeBefore);
+    }
 }
