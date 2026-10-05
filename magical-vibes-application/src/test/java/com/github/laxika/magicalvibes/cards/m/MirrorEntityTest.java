@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.k.KithkinHealer;
+import com.github.laxika.magicalvibes.cards.l.Lignify;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MirrorEntity.class, KithkinHealer.class})
+@CardUsed({MirrorEntity.class, KithkinHealer.class, Lignify.class})
 class MirrorEntityTest extends BaseCardTest {
 
     @Test
@@ -129,5 +131,73 @@ class MirrorEntityTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, healer)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, healer)).isEqualTo(2);
         assertThat(GameQueryService.permanentHasSubtype(healer, CardSubtype.ELF)).isFalse();
+    }
+
+    @Test
+    void zeroActivationKillsCreaturesWithoutToughnessBonuses() {
+        addCreatureReady(player1, new MirrorEntity());
+        Permanent healer = addCreatureReady(player1, new KithkinHealer());
+        healer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.activateAbility(player1, 0, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Mirror Entity");
+        harness.assertOnBattlefield(player1, "Kithkin Healer");
+        assertThat(gqs.getEffectivePower(gd, healer)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, healer)).isEqualTo(1);
+        assertThat(gqs.hasEffectiveSubtype(gd, healer, CardSubtype.ELF)).isTrue();
+    }
+
+    @Test
+    void lastResolvingActivationDeterminesBasePowerAndToughness() {
+        Permanent entity = addCreatureReady(player1, new MirrorEntity());
+        Permanent healer = addCreatureReady(player1, new KithkinHealer());
+        harness.addMana(player1, ManaColor.WHITE, 7);
+
+        harness.activateAbility(player1, 0, 2, null);
+        harness.activateAbility(player1, 0, 5, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, healer)).isEqualTo(5);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, healer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, healer)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, entity)).isEqualTo(2);
+    }
+
+    @Test
+    void resolvingAbilityGivesLignifiedSourceAllCreatureTypes() {
+        Permanent entity = addCreatureReady(player1, new MirrorEntity());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.activateAbility(player1, 0, 4, null);
+        Permanent lignify = harness.addToBattlefieldAndReturn(player2, new Lignify());
+        lignify.setAttachedTo(entity.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, entity)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, entity)).isEqualTo(4);
+        assertThat(gqs.hasEffectiveSubtype(gd, entity, CardSubtype.ELF)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, entity, CardSubtype.GOBLIN)).isTrue();
+        assertThat(gqs.hasKeyword(gd, entity, Keyword.CHANGELING)).isFalse();
+    }
+
+    @Test
+    void gainingAllCreatureTypesDoesNotGrantChangelingAbility() {
+        addCreatureReady(player1, new MirrorEntity());
+        Permanent healer = addCreatureReady(player1, new KithkinHealer());
+        Permanent lignify = harness.addToBattlefieldAndReturn(player2, new Lignify());
+        lignify.setAttachedTo(healer.getId());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, 4, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasEffectiveSubtype(gd, healer, CardSubtype.ELF)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, healer, CardSubtype.GOBLIN)).isTrue();
+        assertThat(gqs.hasKeyword(gd, healer, Keyword.CHANGELING)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, healer)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, healer)).isEqualTo(4);
     }
 }
