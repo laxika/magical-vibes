@@ -1,53 +1,44 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GatstafShepherd;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
+import com.github.laxika.magicalvibes.cards.d.DarkthicketWolf;
+import com.github.laxika.magicalvibes.cards.c.CloisteredYouth;
+import com.github.laxika.magicalvibes.cards.t.ThrabenSentry;
+import com.github.laxika.magicalvibes.cards.v.VillageBellRinger;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Moonmist.class, GatstafShepherd.class, WalkingCorpse.class, DarkthicketWolf.class,
+        CloisteredYouth.class, ThrabenSentry.class, VillageBellRinger.class})
 class MoonmistTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Moonmist puts it on the stack as an instant")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new Moonmist()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Moonmist(), "{1}{G}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Moonmist");
     }
-
-    // ===== Transform all Humans =====
 
     @Test
     @DisplayName("Transforms Human DFC creatures when it resolves")
     void transformsHumanDfcCreatures() {
         // GatstafShepherd is a Human Werewolf DFC
-        harness.addToBattlefield(player1, new GatstafShepherd());
-        Permanent shepherd = findPermanent(player1, "Gatstaf Shepherd");
+        Permanent shepherd = harness.addToBattlefieldAndReturn(player1, new GatstafShepherd());
 
         assertThat(shepherd.isTransformed()).isFalse();
 
-        harness.setHand(player1, List.of(new Moonmist()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Moonmist(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(shepherd.isTransformed()).isTrue();
@@ -57,16 +48,10 @@ class MoonmistTest extends BaseCardTest {
     @Test
     @DisplayName("Transforms Human DFCs on both players' battlefields")
     void transformsHumansOnBothBattlefields() {
-        harness.addToBattlefield(player1, new GatstafShepherd());
-        harness.addToBattlefield(player2, new GatstafShepherd());
-        Permanent p1Shepherd = findPermanent(player1, "Gatstaf Shepherd");
-        Permanent p2Shepherd = findPermanent(player2, "Gatstaf Shepherd");
+        Permanent p1Shepherd = harness.addToBattlefieldAndReturn(player1, new GatstafShepherd());
+        Permanent p2Shepherd = harness.addToBattlefieldAndReturn(player2, new GatstafShepherd());
 
-        harness.setHand(player1, List.of(new Moonmist()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Moonmist(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(p1Shepherd.isTransformed()).isTrue();
@@ -74,10 +59,9 @@ class MoonmistTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Transforms already-transformed Human DFCs back to front face")
-    void transformsAlreadyTransformedBack() {
-        harness.addToBattlefield(player1, new GatstafShepherd());
-        Permanent shepherd = findPermanent(player1, "Gatstaf Shepherd");
+    @DisplayName("Does not transform a back face that is no longer Human")
+    void doesNotTransformNonHumanBackFace() {
+        Permanent shepherd = harness.addToBattlefieldAndReturn(player1, new GatstafShepherd());
 
         // Manually transform to back face (Gatstaf Howler is a Werewolf, no longer Human)
         Card backFace = shepherd.getOriginalCard().getBackFaceCard();
@@ -87,11 +71,7 @@ class MoonmistTest extends BaseCardTest {
 
         // Moonmist says "Transform all Humans" — Gatstaf Howler is a Werewolf (not Human)
         // so it should NOT be affected
-        harness.setHand(player1, List.of(new Moonmist()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Moonmist(), "{1}{G}");
         harness.passBothPriorities();
 
         // Should stay transformed since Gatstaf Howler is not a Human
@@ -102,81 +82,66 @@ class MoonmistTest extends BaseCardTest {
     @Test
     @DisplayName("Does not affect non-Human creatures")
     void doesNotAffectNonHumans() {
-        // GrizzlyBears is a Bear, not a Human
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        // WalkingCorpse is a Zombie, not a Human
+        Permanent corpse = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
 
-        harness.setHand(player1, List.of(new Moonmist()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Moonmist(), "{1}{G}");
         harness.passBothPriorities();
 
-        assertThat(bears.isTransformed()).isFalse();
+        assertThat(corpse.isTransformed()).isFalse();
     }
 
-    // ===== Combat damage prevention =====
-
     @Test
-    @DisplayName("Sets combat damage exempt predicate after resolving")
-    void setsCombatDamageExemptPredicate() {
-        harness.setHand(player1, List.of(new Moonmist()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castInstant(player1, 0);
+    @DisplayName("Prevents non-Wolf combat damage while Wolves and Werewolves deal damage")
+    void preventsOnlyNonWolfCombatDamage() {
+        Permanent corpse = addCreatureReady(player1, new WalkingCorpse());
+        Permanent wolf = addCreatureReady(player1, new DarkthicketWolf());
+        Permanent shepherd = addCreatureReady(player1, new GatstafShepherd());
+        harness.castFromHand(player1, new Moonmist(), "{1}{G}");
         harness.passBothPriorities();
 
-        assertThat(gd.combatDamageExemptPredicate).isNotNull();
+        corpse.setAttacking(true);
+        wolf.setAttacking(true);
+        shepherd.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.setLife(player2, 20);
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player2, 15);
     }
 
     @Test
     @DisplayName("Non-Werewolf/Wolf creatures are prevented from dealing combat damage")
     void nonWerewolfCreaturesPreventedFromDealingCombatDamage() {
-        // GrizzlyBears is a Bear — not a Werewolf or Wolf
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        // WalkingCorpse is a Zombie — not a Werewolf or Wolf
+        Permanent corpse = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
 
-        harness.setHand(player1, List.of(new Moonmist()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Moonmist(), "{1}{G}");
         harness.passBothPriorities();
 
-        assertThat(gqs.isPreventedFromDealingDamage(gd, bears, true)).isTrue();
+        assertThat(gqs.isPreventedFromDealingDamage(gd, corpse, true)).isTrue();
     }
 
     @Test
     @DisplayName("Non-Werewolf/Wolf creatures can still deal non-combat damage")
     void nonWerewolfCreaturesCanDealNonCombatDamage() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent corpse = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
 
-        harness.setHand(player1, List.of(new Moonmist()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Moonmist(), "{1}{G}");
         harness.passBothPriorities();
 
         // Non-combat damage should not be prevented
-        assertThat(gqs.isPreventedFromDealingDamage(gd, bears, false)).isFalse();
+        assertThat(gqs.isPreventedFromDealingDamage(gd, corpse, false)).isFalse();
     }
 
     @Test
     @DisplayName("Werewolf creatures are NOT prevented from dealing combat damage")
     void werewolfCreaturesCanDealCombatDamage() {
         // GatstafShepherd front face is Human Werewolf — has Werewolf subtype
-        harness.addToBattlefield(player1, new GatstafShepherd());
-        Permanent shepherd = findPermanent(player1, "Gatstaf Shepherd");
+        Permanent shepherd = harness.addToBattlefieldAndReturn(player1, new GatstafShepherd());
 
-        harness.setHand(player1, List.of(new Moonmist()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Moonmist(), "{1}{G}");
         harness.passBothPriorities();
 
         // After Moonmist, the shepherd transformed to Gatstaf Howler (Werewolf subtype)
@@ -184,20 +149,78 @@ class MoonmistTest extends BaseCardTest {
         assertThat(gqs.isPreventedFromDealingDamage(gd, shepherd, true)).isFalse();
     }
 
-    // ===== Goes to graveyard =====
-
     @Test
     @DisplayName("Moonmist goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        harness.setHand(player1, List.of(new Moonmist()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Moonmist(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Moonmist");
     }
 
+    @Test
+    void transformsNonWerewolfHumanAndPreventsItsCombatDamage() {
+        Permanent youth = harness.addToBattlefieldAndReturn(player1, new CloisteredYouth());
+        harness.castFromHand(player1, new Moonmist(), "{1}{G}");
+        harness.passBothPriorities();
+
+        assertThat(youth.isTransformed()).isTrue();
+        harness.assertOnBattlefield(player1, "Unholy Fiend");
+        assertThat(gqs.isPreventedFromDealingDamage(gd, youth, true)).isTrue();
+    }
+
+    @Test
+    void transformsHumanBackFaceToFrontFace() {
+        Permanent sentry = harness.addToBattlefieldAndReturn(player1, new ThrabenSentry());
+        harness.castFromHand(player1, new Moonmist(), "{1}{G}");
+        harness.passBothPriorities();
+        assertThat(sentry.isTransformed()).isTrue();
+
+        harness.castFromHand(player1, new Moonmist(), "{1}{G}");
+        harness.passBothPriorities();
+
+        assertThat(sentry.isTransformed()).isFalse();
+        harness.assertOnBattlefield(player1, "Thraben Sentry");
+    }
+
+    @Test
+    void singleFacedHumanRemainsOnBattlefield() {
+        Permanent human = harness.addToBattlefieldAndReturn(player1, new VillageBellRinger());
+        harness.castFromHand(player1, new Moonmist(), "{1}{G}");
+        harness.passBothPriorities();
+
+        assertThat(human.isTransformed()).isFalse();
+        harness.assertOnBattlefield(player1, "Village Bell-Ringer");
+        assertThat(gqs.isPreventedFromDealingDamage(gd, human, true)).isTrue();
+    }
+
+    @Test
+    void preventionAppliesToCreaturesEnteringAfterResolutionOnEitherSide() {
+        harness.castFromHand(player1, new Moonmist(), "{1}{G}");
+        harness.passBothPriorities();
+        Permanent corpse = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
+        Permanent wolf = harness.addToBattlefieldAndReturn(player2, new DarkthicketWolf());
+
+        assertThat(gqs.isPreventedFromDealingDamage(gd, corpse, true)).isTrue();
+        assertThat(gqs.isPreventedFromDealingDamage(gd, wolf, true)).isFalse();
+    }
+
+    @Test
+    void preventionExpiresOnFollowingTurn() {
+        harness.castFromHand(player1, new Moonmist(), "{1}{G}");
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        Permanent corpse = addCreatureReady(player2, new WalkingCorpse());
+        corpse.setAttacking(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.setLife(player1, 20);
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player1, 18);
+    }
 }
