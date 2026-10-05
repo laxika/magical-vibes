@@ -1,7 +1,16 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.b.Bulette;
+import com.github.laxika.magicalvibes.cards.c.CircleOfDreamsDruid;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GreenDragon;
+import com.github.laxika.magicalvibes.cards.o.Owlbear;
+import com.github.laxika.magicalvibes.cards.p.Plummet;
+import com.github.laxika.magicalvibes.cards.p.PurpleWorm;
+import com.github.laxika.magicalvibes.cards.s.ShamblingGhast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.DeckFormat;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +23,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LongRest.class})
+@CardUsed({LongRest.class, Forest.class, ShamblingGhast.class, Plummet.class,
+        CircleOfDreamsDruid.class, Bulette.class, Owlbear.class, GreenDragon.class, PurpleWorm.class})
 class LongRestTest extends BaseCardTest {
 
     @Test
@@ -89,6 +99,125 @@ class LongRestTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 2))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void zeroXResolvesWithoutTargetsAndExilesLongRest() {
+        LongRest longRest = new LongRest();
+        harness.setHand(player1, List.of(longRest));
+        harness.setLife(player1, 5);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 5);
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card() == longRest);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(longRest);
+    }
+
+    @Test
+    void eightReturnedCardsResetLifeToCommanderStartingTotal() {
+        gd.format = DeckFormat.COMMANDER;
+        List<Card> cards = realCardsWithEightDifferentManaValues();
+        harness.setGraveyard(player1, cards);
+        harness.setHand(player1, List.of(new LongRest()));
+        harness.setLife(player1, 5);
+        harness.addMana(player1, ManaColor.GREEN, 11);
+
+        harness.castSorcery(player1, 0, 8);
+        harness.handleMultipleCardsChosen(player1, cards.stream().map(Card::getId).toList());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 40);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrderElementsOf(cards);
+    }
+
+    @Test
+    void resettingLifeCanLowerLifeAboveStartingTotal() {
+        List<Card> cards = realCardsWithEightDifferentManaValues();
+        harness.setGraveyard(player1, cards);
+        harness.setHand(player1, List.of(new LongRest()));
+        harness.setLife(player1, 30);
+        harness.setLife(player2, 9);
+        harness.addMana(player1, ManaColor.GREEN, 11);
+
+        harness.castSorcery(player1, 0, 8);
+        harness.handleMultipleCardsChosen(player1, cards.stream().map(Card::getId).toList());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 9);
+    }
+
+    @Test
+    void onlySevenOfEightTargetsStillInGraveyardDoNotResetLife() {
+        List<Card> cards = realCardsWithEightDifferentManaValues();
+        LongRest longRest = new LongRest();
+        harness.setGraveyard(player1, cards);
+        harness.setHand(player1, List.of(longRest));
+        harness.setLife(player1, 5);
+        harness.addMana(player1, ManaColor.GREEN, 11);
+
+        harness.castSorcery(player1, 0, 8);
+        harness.handleMultipleCardsChosen(player1, cards.stream().map(Card::getId).toList());
+        harness.setGraveyard(player1, cards.subList(0, 7));
+        harness.setExile(player1, List.of(cards.get(7)));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 5);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactlyInAnyOrderElementsOf(cards.subList(0, 7));
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card() == longRest);
+    }
+
+    @Test
+    void allTargetsLeavingGraveyardPreventsResolutionAndSelfExile() {
+        Card target = new Forest();
+        LongRest longRest = new LongRest();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(longRest));
+        harness.setLife(player1, 5);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castSorcery(player1, 0, 1);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 5);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(longRest);
+        assertThat(gd.exiledCards).noneMatch(entry -> entry.card() == longRest);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void mustChooseExactlyXTargetsFromOwnGraveyard() {
+        Card first = new Forest();
+        Card second = new ShamblingGhast();
+        Card opponentCard = new Plummet();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setGraveyard(player2, List.of(opponentCard));
+        harness.setHand(player1, List.of(new LongRest()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castSorcery(player1, 0, 2);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(first.getId(), second.getId());
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(first.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCard);
+    }
+
+    private List<Card> realCardsWithEightDifferentManaValues() {
+        return List.of(new Forest(), new ShamblingGhast(), new Plummet(), new CircleOfDreamsDruid(),
+                new Bulette(), new Owlbear(), new GreenDragon(), new PurpleWorm());
     }
 
     private Card graveyardCard(String name, int manaValue) {
