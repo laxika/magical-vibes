@@ -66,6 +66,51 @@ class PyrokinesisTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The spell itself cannot be exiled to pay its alternate cost")
+    void cannotExileItself() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new StormCrow());
+        harness.setHand(player1, List.of(new Pyrokinesis()));
+
+        assertThatThrownBy(() ->
+                harness.castInstantWithAlternateExileFromHand(player1, 0, Map.of(target.getId(), 4), 0)
+        ).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Alternate cost can exile a card before the spell in hand")
+    void canExileCardBeforeSpellInHand() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new StormCrow());
+        harness.setHand(player1, List.of(new GuerrillaTactics(), new Pyrokinesis()));
+
+        harness.castInstantWithAlternateExileFromHand(player1, 1, Map.of(target.getId(), 4), 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Storm Crow");
+        harness.assertInGraveyard(player1, "Pyrokinesis");
+        harness.assertNotInGraveyard(player1, "Guerrilla Tactics");
+        assertThat(gd.exiledCards).extracting(e -> e.card().getName()).containsExactly("Guerrilla Tactics");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can divide damage unevenly between own hexproof creature and opposing creature")
+    void canDamageOwnHexproofCreature() {
+        Permanent ownTarget = harness.addToBattlefieldAndReturn(player1, new StormCrow());
+        Permanent opposingTarget = harness.addToBattlefieldAndReturn(player2, new StormCrow());
+        ownTarget.getGrantedKeywords().add(Keyword.HEXPROOF);
+        harness.setHand(player1, List.of(new Pyrokinesis()));
+        addFullMana();
+
+        harness.castInstant(player1, 0, Map.of(ownTarget.getId(), 1, opposingTarget.getId(), 3));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Storm Crow");
+        assertThat(ownTarget.getMarkedDamage()).isEqualTo(1);
+        harness.assertNotOnBattlefield(player2, "Storm Crow");
+        harness.assertInGraveyard(player2, "Storm Crow");
+    }
+
+    @Test
     @DisplayName("Players can't be assigned damage")
     void cannotTargetPlayers() {
         harness.setHand(player1, List.of(new Pyrokinesis()));
