@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.b.BurnishedHart;
+import com.github.laxika.magicalvibes.cards.n.NightsWhisper;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KianneCorruptedMemory.class, GrizzlyBears.class, Shock.class})
+@CardUsed({KianneCorruptedMemory.class, BurnishedHart.class, NightsWhisper.class, KenrithsTransformation.class})
 class KianneCorruptedMemoryTest extends BaseCardTest {
 
     @Test
@@ -26,10 +26,10 @@ class KianneCorruptedMemoryTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KianneCorruptedMemory());
         prepareOpponentTurn();
 
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new NightsWhisper()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castInstant(player1, 0, player2.getId());
+        harness.castSorcery(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
     }
@@ -40,8 +40,8 @@ class KianneCorruptedMemoryTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KianneCorruptedMemory());
         prepareOpponentTurn();
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new BurnishedHart()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -67,26 +67,114 @@ class KianneCorruptedMemoryTest extends BaseCardTest {
         harness.passBothPriorities();
         prepareOpponentTurn();
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new BurnishedHart()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
     }
 
+    @Test
+    void oddPowerDoesNotGrantNoncreatureFlash() {
+        Permanent kianne = harness.addToBattlefieldAndReturn(player1, new KianneCorruptedMemory());
+        kianne.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        prepareOpponentTurn();
+        harness.setHand(player1, List.of(new NightsWhisper()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    void opponentDrawDoesNotPutCounterOnKianne() {
+        Permanent kianne = harness.addToBattlefieldAndReturn(player1, new KianneCorruptedMemory());
+        harness.setLibrary(player2, List.of(new BurnishedHart()));
+
+        advanceToDraw(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(kianne.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void drawDoesNotChangeParityUntilTriggerResolves() {
+        Permanent kianne = harness.addToBattlefieldAndReturn(player1, new KianneCorruptedMemory());
+        harness.setLibrary(player1, List.of(new BurnishedHart()));
+        advanceToDraw(player1);
+        harness.setHand(player1, List.of(new BurnishedHart()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThat(kianne.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void drawingTwoCardsCreatesTwoSeparateCounterTriggers() {
+        Permanent kianne = harness.addToBattlefieldAndReturn(player1, new KianneCorruptedMemory());
+        harness.setLibrary(player1, List.of(new BurnishedHart(), new BurnishedHart()));
+        harness.setHand(player1, List.of(new NightsWhisper()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        prepareOpponentTurn();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(kianne.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+        assertThat(kianne.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.passBothPriorities();
+        assertThat(kianne.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.setHand(player1, List.of(new NightsWhisper(), new BurnishedHart()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 1))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+        harness.castSorcery(player1, 0);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void losingAbilitiesStopsDrawCounterTriggers() {
+        Permanent kianne = harness.addToBattlefieldAndReturn(player1, new KianneCorruptedMemory());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new KenrithsTransformation()));
+        harness.setLibrary(player2, List.of(new BurnishedHart()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castEnchantment(player2, 0, kianne.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gqs.hasLostAllAbilities(gd, kianne)).isTrue();
+        harness.setLibrary(player1, List.of(new BurnishedHart()));
+
+        advanceToDraw(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(kianne.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private void prepareOpponentTurn() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passPriority(player2);
+        harness.ensurePriority(player1);
     }
 
     private void advanceToDraw(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2;
         harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.DRAW);
     }
 }
