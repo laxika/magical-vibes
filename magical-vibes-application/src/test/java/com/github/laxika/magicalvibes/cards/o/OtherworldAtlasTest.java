@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({OtherworldAtlas.class})
 class OtherworldAtlasTest extends BaseCardTest {
 
     @Test
@@ -69,10 +71,50 @@ class OtherworldAtlasTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Draw ability counts charge counters at resolution")
+    void drawsUsingCountersAtResolution() {
+        Permanent atlas = addReadyAtlas(player1);
+        atlas.setCounterCount(CounterType.CHARGE, 1);
+        atlas.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        atlas.setCounterCount(CounterType.CHARGE, 2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(atlas.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A newly entered noncreature Atlas can activate its tap ability")
+    void newlyEnteredAtlasCanActivate() {
+        Permanent atlas = harness.addToBattlefieldAndReturn(player1, new OtherworldAtlas());
+        atlas.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(atlas.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(atlas.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped Atlas cannot activate its draw ability")
+    void tappedAtlasCannotActivateDrawAbility() {
+        Permanent atlas = addReadyAtlas(player1);
+        atlas.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private Permanent addReadyAtlas(Player player) {
-        Permanent perm = new Permanent(new OtherworldAtlas());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new OtherworldAtlas());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
