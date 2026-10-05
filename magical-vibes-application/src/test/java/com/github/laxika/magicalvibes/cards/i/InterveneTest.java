@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.l.LavaAxe;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
 import com.github.laxika.magicalvibes.cards.m.MotherOfRunes;
+import com.github.laxika.magicalvibes.cards.r.Rancor;
 import com.github.laxika.magicalvibes.cards.y.YavimayaWurm;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -17,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Intervene.class, MightOfOaks.class, YavimayaWurm.class, LavaAxe.class, MotherOfRunes.class})
+@CardUsed({Intervene.class, MightOfOaks.class, YavimayaWurm.class, LavaAxe.class, MotherOfRunes.class, Rancor.class})
 class InterveneTest extends BaseCardTest {
 
     @Test
@@ -131,7 +133,68 @@ class InterveneTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Intervene()));
         harness.addMana(player2, ManaColor.BLUE, 1);
 
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, abilityEntry.getCard().getId()))
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, abilityEntry.getTargetableId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void countersAuraSpellTargetingCreature() {
+        Permanent wurm = harness.addToBattlefieldAndReturn(player1, new YavimayaWurm());
+        Rancor rancor = new Rancor();
+        harness.setHand(player1, List.of(rancor));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player2, List.of(new Intervene()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castEnchantment(player1, 0, wurm.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, rancor.getId());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Rancor");
+        harness.assertNotInHand(player1, "Rancor");
+        harness.assertNotOnBattlefield(player1, "Rancor");
+    }
+
+    @Test
+    void canCounterOwnSpellTargetingOpponentsCreature() {
+        Permanent wurm = harness.addToBattlefieldAndReturn(player2, new YavimayaWurm());
+        MightOfOaks might = new MightOfOaks();
+        harness.setHand(player1, List.of(might, new Intervene()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, wurm.getId());
+        harness.castAndResolveInstant(player1, 0, might.getId());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Might of Oaks");
+        harness.assertInGraveyard(player1, "Intervene");
+        assertThat(gd.gameLog).anyMatch(entry -> entry.plainText().contains("Might of Oaks is countered."));
+    }
+
+    @Test
+    void stillCountersWhenCreatureGainsProtectionFromTargetedSpell() {
+        addCreatureReady(player1, new MotherOfRunes());
+        Permanent wurm = harness.addToBattlefieldAndReturn(player1, new YavimayaWurm());
+        MightOfOaks might = new MightOfOaks();
+        harness.setHand(player1, List.of(might));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.setHand(player2, List.of(new Intervene()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, wurm.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, might.getId());
+        harness.passPriority(player2);
+        harness.activateAbility(player1, 0, null, wurm.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardColor.GREEN.name());
+        assertThat(gqs.hasProtectionFrom(gd, wurm, CardColor.GREEN)).isTrue();
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Might of Oaks");
+        assertThat(gd.gameLog).anyMatch(entry -> entry.plainText().contains("Might of Oaks is countered."));
     }
 }
