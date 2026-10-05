@@ -45,6 +45,81 @@ class NightscapeMasterTest extends BaseCardTest {
     }
 
     @Test
+    void canReturnItselfToHand() {
+        Permanent source = addCreatureReady(player1, new NightscapeMaster());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, source.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Nightscape Master");
+        harness.assertInHand(player1, "Nightscape Master");
+    }
+
+    @Test
+    void canDealLethalDamageToItself() {
+        Permanent source = addCreatureReady(player1, new NightscapeMaster());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, 1, null, source.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Nightscape Master");
+        harness.assertInGraveyard(player1, "Nightscape Master");
+    }
+
+    @Test
+    void returnsStolenCreatureToOwnerRatherThanController() {
+        addCreatureReady(player1, new NightscapeMaster());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ArmoredGuardian());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerBattlefields.get(player1.getId()).add(target);
+        gd.stolenCreatures.put(target.getId(), player2.getId());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Armored Guardian");
+        harness.assertInHand(player2, "Armored Guardian");
+        harness.assertNotInHand(player1, "Armored Guardian");
+    }
+
+    @Test
+    void neitherAbilityCanBeActivatedWithSummoningSickness() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new NightscapeMaster());
+        source.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ArmoredGuardian());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        for (int abilityIndex = 0; abilityIndex < 2; abilityIndex++) {
+            int index = abilityIndex;
+            assertThatThrownBy(() -> harness.activateAbility(player1, 0, index, null, target.getId()))
+                    .isInstanceOf(IllegalStateException.class);
+        }
+        assertThat(source.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void neitherAbilityCanBeActivatedWithOnlyOneRequiredColoredMana() {
+        Permanent source = addCreatureReady(player1, new NightscapeMaster());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ArmoredGuardian());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        for (int abilityIndex = 0; abilityIndex < 2; abilityIndex++) {
+            int index = abilityIndex;
+            assertThatThrownBy(() -> harness.activateAbility(player1, 0, index, null, target.getId()))
+                    .isInstanceOf(IllegalStateException.class);
+        }
+        assertThat(source.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Neither ability can target a noncreature permanent")
     void cannotTargetNonCreature() {
         Permanent source = addCreatureReady(player1, new NightscapeMaster());
