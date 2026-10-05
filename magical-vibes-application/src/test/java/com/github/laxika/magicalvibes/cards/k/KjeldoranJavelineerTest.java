@@ -70,7 +70,8 @@ class KjeldoranJavelineerTest extends BaseCardTest {
     @Test
     @DisplayName("Does not deal damage if the target stops attacking before resolution")
     void targetMustStillBeAttackingAtResolution() {
-        addReadyJavelineer();
+        Permanent javelineer = addReadyJavelineer();
+        javelineer.setCounterCount(CounterType.AGE, 1);
         Permanent attacker = addCombatCreature(player2, true, false);
 
         harness.activateAbility(player1, 0, null, attacker.getId());
@@ -109,6 +110,81 @@ class KjeldoranJavelineerTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(javelineer);
         harness.assertInGraveyard(player1, "Kjeldoran Javelineer");
+    }
+
+    @Test
+    @DisplayName("Damage uses the age counter count at resolution")
+    void usesCurrentAgeCounters() {
+        Permanent javelineer = addReadyJavelineer();
+        javelineer.setCounterCount(CounterType.AGE, 2);
+        Permanent attacker = addCombatCreature(player2, true, false);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        javelineer.setCounterCount(CounterType.AGE, 1);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
+    }
+
+    @Test
+    @DisplayName("Damage uses the final age counter count when the source leaves the battlefield")
+    void usesLastKnownAgeCounters() {
+        Permanent javelineer = addReadyJavelineer();
+        javelineer.setCounterCount(CounterType.AGE, 1);
+        Permanent attacker = addCombatCreature(player2, true, false);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        javelineer.setCounterCount(CounterType.AGE, 2);
+        harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, javelineer);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Kjeldoran Javelineer");
+        harness.assertInGraveyard(player2, "Kjeldoran Outrider");
+    }
+
+    @Test
+    @DisplayName("The second cumulative upkeep requires two mana")
+    void paysForEveryAgeCounter() {
+        Permanent javelineer = harness.addToBattlefieldAndReturn(player1, new KjeldoranJavelineer());
+        javelineer.setCounterCount(CounterType.AGE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(javelineer.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(javelineer);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Cannot pay only part of cumulative upkeep")
+    void insufficientManaSacrifices() {
+        Permanent javelineer = harness.addToBattlefieldAndReturn(player1, new KjeldoranJavelineer());
+        javelineer.setCounterCount(CounterType.AGE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(javelineer);
+        harness.assertInGraveyard(player1, "Kjeldoran Javelineer");
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep does not trigger during the opponent's upkeep")
+    void opponentUpkeepDoesNotAddAgeCounter() {
+        Permanent javelineer = harness.addToBattlefieldAndReturn(player1, new KjeldoranJavelineer());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(javelineer.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(javelineer);
     }
 
     private Permanent addReadyJavelineer() {
