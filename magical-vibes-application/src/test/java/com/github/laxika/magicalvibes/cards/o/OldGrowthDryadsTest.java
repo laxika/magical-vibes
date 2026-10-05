@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RavenousDaggertooth;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -22,6 +22,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({OldGrowthDryads.class, Plains.class, Forest.class, Mountain.class, RavenousDaggertooth.class})
 class OldGrowthDryadsTest extends BaseCardTest {
 
     @Test
@@ -78,7 +79,7 @@ class OldGrowthDryadsTest extends BaseCardTest {
         int battlefieldBefore = gd.playerBattlefields.get(player2.getId()).size();
 
         // Opponent picks a basic land
-        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player2, 0);
 
         // Land entered the battlefield tapped
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(battlefieldBefore + 1);
@@ -89,7 +90,7 @@ class OldGrowthDryadsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Opponent can fail to find (decline search)")
+    @DisplayName("Opponent can search and fail to find")
     void opponentCanFailToFind() {
         harness.setHand(player1, List.of(new OldGrowthDryads()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -102,8 +103,8 @@ class OldGrowthDryadsTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         int battlefieldBefore = gd.playerBattlefields.get(player2.getId()).size();
 
-        // Opponent declines (fail to find, index -1)
-        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(-1));
+        // Opponent fails to find a basic land
+        harness.handleCardChosen(player2, -1);
 
         // No land entered the battlefield
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(battlefieldBefore);
@@ -112,48 +113,117 @@ class OldGrowthDryadsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("No search prompt when opponent has no basic lands in library")
-    void noBasicLandsInOpponentLibrary() {
+    @DisplayName("Opponent with no basic lands can decline without searching or shuffling")
+    void opponentWithoutBasicLandsCanDecline() {
         harness.setHand(player1, List.of(new OldGrowthDryads()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         // Opponent has no basic lands in library
-        List<Card> deck2 = harness.getGameData().playerDecks.get(player2.getId());
-        deck2.clear();
-        deck2.addAll(List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new RavenousDaggertooth(), new RavenousDaggertooth()));
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger (no basic lands found)
 
-        GameData gd = harness.getGameData();
-        // No search prompt (opponent had no basic lands)
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player2, false);
+        } else if (gd.interaction.activeInteraction() instanceof PendingInteraction.LibrarySearch) {
+            harness.handleCardChosen(player2, -1);
+        }
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.gameLog).noneMatch(entry -> entry.plainText().contains(player2.getUsername() + " searches")
+                || entry.plainText().contains("Library is shuffled"));
     }
 
     @Test
-    @DisplayName("Old-Growth Dryads enters the battlefield as a 3/3")
-    void entersAsThreeThree() {
+    @DisplayName("Old-Growth Dryads enters successfully with an empty opposing library")
+    void entersWithEmptyOpponentLibrary() {
         harness.setHand(player1, List.of(new OldGrowthDryads()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         // Clear opponent's library so search is skipped
-        harness.getGameData().playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player2, List.of());
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger (empty library)
 
-        GameData gd = harness.getGameData();
+        harness.assertOnBattlefield(player1, "Old-Growth Dryads");
+        assertThat(harness.getGameData().interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Opponent can decline the optional search without searching or shuffling")
+    void opponentCanDeclineWithoutSearchingOrShuffling() {
+        harness.setHand(player1, List.of(new OldGrowthDryads()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        setupLibrary(player2);
+        List<Card> libraryBefore = List.copyOf(gd.playerDecks.get(player2.getId()));
+        int logStart = gd.gameLog.size();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player2, false);
+        } else {
+            harness.handleCardChosen(player2, -1);
+        }
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(libraryBefore);
+        assertThat(gd.gameLog.subList(logStart, gd.gameLog.size()))
+                .noneMatch(entry -> entry.plainText().contains(player2.getUsername() + " searches")
+                        || entry.plainText().contains("Library is shuffled"));
+    }
+
+    @Test
+    @DisplayName("Entering under the nonactive player's control gives the active opponent the search")
+    void nonactiveControllerGivesActiveOpponentSearch() {
+        setupLibrary(player1);
+        setupLibrary(player2);
+
+        harness.enterBattlefieldAndReturn(player2, new OldGrowthDryads());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId())
+                .isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, 0);
+
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Old-Growth Dryads")
-                        && p.getCard().getPower() == 3
-                        && p.getCard().getToughness() == 3);
+                .anyMatch(permanent -> permanent.getCard() instanceof Plains && permanent.isTapped());
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard() instanceof Plains);
+    }
+
+    @Test
+    @DisplayName("Finding a land removes it from the library and shuffles the remaining cards")
+    void findingLandMovesItAndShuffles() {
+        harness.setHand(player1, List.of(new OldGrowthDryads()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        Plains plains = new Plains();
+        Forest forest = new Forest();
+        RavenousDaggertooth creature = new RavenousDaggertooth();
+        harness.setLibrary(player2, List.of(plains, forest, creature));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyInAnyOrder(forest, creature);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(plains.getId()) && permanent.isTapped());
+        assertThat(gd.gameLog).anyMatch(entry -> entry.plainText().contains("shuffled"));
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void setupLibrary(Player player) {
-        List<Card> deck = harness.getGameData().playerDecks.get(player.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Forest(), new Mountain(), new GrizzlyBears()));
+        harness.setLibrary(player, List.of(new Plains(), new Forest(), new Mountain(), new RavenousDaggertooth()));
     }
 }
