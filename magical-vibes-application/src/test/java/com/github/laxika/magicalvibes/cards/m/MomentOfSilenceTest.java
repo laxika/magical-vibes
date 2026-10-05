@@ -90,4 +90,75 @@ class MomentOfSilenceTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.currentStep.getPhaseName()).isEqualTo("Combat Phase");
     }
+
+    @Test
+    @DisplayName("Resolving before combat skips the targeted player's combat phase")
+    void resolvedSpellSkipsCombat() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new MomentOfSilence()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("A combat phase that has already begun is not skipped")
+    void doesNotSkipCombatAlreadyInProgress() {
+        addCreatureReady(player2, new FreshVolunteers());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.setHand(player1, List.of(new MomentOfSilence()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.passUntil(player2, TurnStep.DECLARE_ATTACKERS);
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
+        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Targeting the inactive player does not skip either player's next normal combat")
+    void inactivePlayerSkipExpiresBeforeTheirTurn() {
+        addCreatureReady(player1, new FreshVolunteers());
+        addCreatureReady(player2, new FreshVolunteers());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new MomentOfSilence()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+        harness.passUntilWithNoAttackers(player2, TurnStep.BEGINNING_OF_COMBAT);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("Two copies skip one combat each and unused skips expire this turn")
+    void multipleCopiesDoNotCarryOverToNextTurn() {
+        addCreatureReady(player2, new FreshVolunteers());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new MomentOfSilence(), new MomentOfSilence()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        harness.passUntilWithNoAttackers(player2, TurnStep.BEGINNING_OF_COMBAT);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isZero();
+    }
 }
