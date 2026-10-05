@@ -30,7 +30,7 @@ class MoiraBrownGuideAuthorTest extends BaseCardTest {
         Permanent guide = findPermanent(player1, "Wasteland Survival Guide");
         assertThat(guide.getCard().isToken()).isTrue();
         assertThat(guide.getCard().getType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(guide.getCard().getSubtypes()).containsExactly(CardSubtype.EQUIPMENT);
+        assertThat(guide.getCard().getSubtypes()).containsExactlyInAnyOrder(CardSubtype.BOOK, CardSubtype.EQUIPMENT);
     }
 
     @Test
@@ -79,5 +79,77 @@ class MoiraBrownGuideAuthorTest extends BaseCardTest {
         assertThat(moira.getCounterCount(CounterType.QUEST)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Multiple attackers trigger once and can put the counter on the Guide")
+    void multipleAttackersPutOnlyOneCounterOnGuide() {
+        harness.enterBattlefieldAndReturn(player1, new MoiraBrownGuideAuthor());
+        resolveAllTriggers();
+        Permanent guide = findPermanent(player1, "Wasteland Survival Guide");
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(first),
+                gd.playerBattlefields.get(player1.getId()).indexOf(second)));
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).contains(guide.getId()).doesNotContain(opponentCreature.getId());
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, guide.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(guide.getCounterCount(CounterType.QUEST)).isEqualTo(1);
+        assertThat(findPermanent(player1, "Moira Brown, Guide Author").getCounterCount(CounterType.QUEST))
+                .isZero();
+    }
+
+    @Test
+    @DisplayName("The Guide counts all your quest counters, including on lands, and updates continuously")
+    void guideCountsCountersAcrossControlledPermanents() {
+        Permanent moira = harness.enterBattlefieldAndReturn(player1, new MoiraBrownGuideAuthor());
+        resolveAllTriggers();
+        Permanent guide = findPermanent(player1, "Wasteland Survival Guide");
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent land = harness.enterBattlefieldAndReturn(player1, new Forest());
+        Permanent opponentLand = harness.enterBattlefieldAndReturn(player2, new Forest());
+        moira.setCounterCount(CounterType.QUEST, 2);
+        guide.setCounterCount(CounterType.QUEST, 3);
+        land.setCounterCount(CounterType.QUEST, 4);
+        land.setCounterCount(CounterType.CHARGE, 5);
+        opponentLand.setCounterCount(CounterType.QUEST, 10);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(guide),
+                0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(11);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(11);
+
+        land.setCounterCount(CounterType.QUEST, 0);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("An opponent attacking does not trigger Moira")
+    void opponentAttackDoesNotPutQuestCounter() {
+        Permanent moira = harness.enterBattlefieldAndReturn(player1, new MoiraBrownGuideAuthor());
+        resolveAllTriggers();
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(attacker)));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(moira.getCounterCount(CounterType.QUEST)).isZero();
+        assertThat(findPermanent(player1, "Wasteland Survival Guide").getCounterCount(CounterType.QUEST))
+                .isZero();
     }
 }
