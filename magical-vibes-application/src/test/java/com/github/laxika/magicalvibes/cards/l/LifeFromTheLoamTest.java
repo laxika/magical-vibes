@@ -131,4 +131,68 @@ class LifeFromTheLoamTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(loam);
         assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("May choose zero targets even when lands are available")
+    void mayChooseZeroAvailableLandTargets() {
+        Card forest = new Forest();
+        Card opposingForest = new Forest();
+        LifeFromTheLoam loam = new LifeFromTheLoam();
+        harness.setGraveyard(player1, List.of(forest));
+        harness.setGraveyard(player2, List.of(opposingForest));
+        harness.setHand(player1, List.of(loam));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castSorcery(player1, 0, 0);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(forest.getId());
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(forest, loam);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingForest);
+    }
+
+    @Test
+    @DisplayName("Cannot dredge with fewer than three cards in the library")
+    void drawsNormallyWhenLibraryIsTooSmallForDredge() {
+        LifeFromTheLoam loam = new LifeFromTheLoam();
+        Card topCard = new Forest();
+        Card nextCard = new HuntedTroll();
+        harness.setGraveyard(player1, List.of(loam));
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        harness.setHand(player1, List.of());
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(loam);
+        assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Dredge mills only three cards and leaves the rest of the library")
+    void dredgeLeavesRemainingLibraryCards() {
+        LifeFromTheLoam loam = new LifeFromTheLoam();
+        List<Card> milled = List.of(new Forest(), new HuntedTroll(), new Forest());
+        Card remainingCard = new Forest();
+        List<Card> library = new ArrayList<>(milled);
+        library.add(remainingCard);
+        harness.setGraveyard(player1, List.of(loam));
+        harness.setLibrary(player1, library);
+        harness.setHand(player1, List.of());
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(loam);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(milled);
+        assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isZero();
+    }
 }
