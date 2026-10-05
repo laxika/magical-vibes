@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.cards.b.BoundByMoonsilver;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.t.TomoyaTheRevealer;
 import com.github.laxika.magicalvibes.model.Card;
@@ -82,6 +83,100 @@ class JushiApprenticeTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @CardUsed(BoundByMoonsilver.class)
+    @DisplayName("An effect preventing transformation does not prevent Jushi Apprentice from flipping")
+    void flipsDespiteTransformationPrevention() {
+        Permanent apprentice = addApprentice();
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new BoundByMoonsilver());
+        aura.setAttachedTo(apprentice.getId());
+        harness.setHand(player1, hand(8));
+        harness.setLibrary(player1, hand(5));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(9);
+        assertThat(apprentice.isTransformed()).isTrue();
+        assertThat(aura.getAttachedTo()).isEqualTo(apprentice.getId());
+    }
+
+    @Test
+    @DisplayName("The flip threshold uses the hand size at resolution after drawing")
+    void flipThresholdIsCheckedAtResolution() {
+        Permanent apprentice = addApprentice();
+        harness.setHand(player1, hand(8));
+        harness.setLibrary(player1, hand(5));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.setHand(player1, hand(7));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(8);
+        assertThat(apprentice.isTransformed()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Tomoya counts the ability controller's hand at resolution")
+    void tomoyaCountsHandAtResolution() {
+        Permanent apprentice = addApprentice();
+        apprentice.setTransformed(true);
+        apprentice.setCard(apprentice.getOriginalCard().getBackFaceCard());
+        harness.setHand(player1, hand(2));
+        harness.setHand(player2, hand(0));
+        harness.setLibrary(player2, hand(10));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        harness.setHand(player1, hand(4));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(4);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("Tomoya draws no cards when the ability controller has an empty hand")
+    void tomoyaDrawsZeroWithEmptyHand() {
+        Permanent apprentice = addApprentice();
+        apprentice.setTransformed(true);
+        apprentice.setCard(apprentice.getOriginalCard().getBackFaceCard());
+        harness.setHand(player1, hand(0));
+        harness.setHand(player2, hand(1));
+        harness.setLibrary(player2, hand(5));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(5);
+    }
+
+    @Test
+    @DisplayName("After flipping through the draw ability, the same permanent can use Tomoya's ability")
+    void flippedPermanentUsesTomoyaAbility() {
+        Permanent apprentice = addApprentice();
+        harness.setHand(player1, hand(8));
+        harness.setLibrary(player1, hand(5));
+        harness.setHand(player2, hand(0));
+        harness.setLibrary(player2, hand(12));
+        harness.addMana(player1, ManaColor.BLUE, 8);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(apprentice.isTapped()).isTrue();
+        apprentice.setTapped(false);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(9);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(9);
+        assertThat(apprentice.isTapped()).isTrue();
     }
 
     private Permanent addApprentice() {
