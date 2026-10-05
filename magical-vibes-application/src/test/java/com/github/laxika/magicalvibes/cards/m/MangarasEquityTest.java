@@ -151,6 +151,60 @@ class MangarasEquityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only damage actually dealt to you is reflected")
+    void partiallyPreventedDamageReflectsOnlyRemainingDamage() {
+        addEquity(player2, CardColor.RED);
+        addCreatureReady(player2, new FemerefHealer());
+        harness.activateAbility(player2, 1, null, player2.getId());
+        harness.passBothPriorities();
+        Permanent attacker = attackWith(new TalruumMinotaur());
+
+        resolveCombatAndTriggers();
+
+        harness.assertLife(player2, 18);
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Talruum Minotaur");
+    }
+
+    @Test
+    @DisplayName("Fully prevented damage does not trigger reflection")
+    void fullyPreventedDamageDoesNotReflect() {
+        addEquity(player2, CardColor.BLACK);
+        addCreatureReady(player2, new FemerefHealer());
+        harness.activateAbility(player2, 1, null, player2.getId());
+        harness.passBothPriorities();
+        Permanent guildmage = addCreatureReady(player1, new ShadowGuildmage());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+        assertThat(guildmage.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Shadow Guildmage");
+    }
+
+    @Test
+    @DisplayName("Noncombat damage to a white creature is reflected")
+    void nonCombatDamageToWhiteCreatureReflected() {
+        addEquity(player2, CardColor.BLACK);
+        Permanent scouts = addCreatureReady(player2, new FemerefScouts());
+        addCreatureReady(player1, new ShadowGuildmage());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, null, scouts.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+        assertThat(scouts.getMarkedDamage()).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Shadow Guildmage");
+    }
+
+    @Test
     @DisplayName("Paying {1}{W} at upkeep keeps it on the battlefield")
     void payAtUpkeepKeepsIt() {
         addEquity(player1, CardColor.RED);
