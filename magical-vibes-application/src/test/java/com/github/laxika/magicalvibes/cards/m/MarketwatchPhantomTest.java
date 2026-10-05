@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.c.CaseOfTheGatewayExpress;
+import com.github.laxika.magicalvibes.cards.g.GraniteWitness;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MarketwatchPhantom.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({MarketwatchPhantom.class, GraniteWitness.class, CaseOfTheGatewayExpress.class})
 class MarketwatchPhantomTest extends BaseCardTest {
 
     @Test
@@ -24,8 +23,8 @@ class MarketwatchPhantomTest extends BaseCardTest {
     void gainsFlyingForSmallAlly() {
         Permanent phantom = harness.addToBattlefieldAndReturn(player1, new MarketwatchPhantom());
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new MarketwatchPhantom()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -38,8 +37,8 @@ class MarketwatchPhantomTest extends BaseCardTest {
     void flyingWearsOffAtEndOfTurn() {
         Permanent phantom = harness.addToBattlefieldAndReturn(player1, new MarketwatchPhantom());
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new MarketwatchPhantom()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -56,8 +55,9 @@ class MarketwatchPhantomTest extends BaseCardTest {
     void doesNotTriggerForHighPowerAlly() {
         Permanent phantom = harness.addToBattlefieldAndReturn(player1, new MarketwatchPhantom());
 
-        harness.setHand(player1, List.of(new HillGiant()));
-        harness.addMana(player1, ManaColor.RED, 4);
+        harness.setHand(player1, List.of(new GraniteWitness()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
@@ -70,11 +70,10 @@ class MarketwatchPhantomTest extends BaseCardTest {
     void doesNotTriggerForOpponentsCreature() {
         Permanent phantom = harness.addToBattlefieldAndReturn(player1, new MarketwatchPhantom());
 
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player2, new MarketwatchPhantom());
 
-        GameData gameData = harness.getGameData();
-        assertThat(gameData.stack).isEmpty();
-        assertThat(gqs.hasKeyword(gameData, phantom, Keyword.FLYING)).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, phantom, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -89,5 +88,50 @@ class MarketwatchPhantomTest extends BaseCardTest {
         Permanent phantom = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.hasKeyword(gd, phantom, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature entering with power increased above 2 does not trigger")
+    void doesNotTriggerWhenStaticBoostRaisesEnteringPower() {
+        Permanent phantom = harness.addToBattlefieldAndReturn(player1, new MarketwatchPhantom());
+        Permanent solvedCase = harness.addToBattlefieldAndReturn(player1, new CaseOfTheGatewayExpress());
+        solvedCase.setSolved(true);
+        harness.setHand(player1, List.of(new MarketwatchPhantom()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, phantom, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A disguised creature with printed power above 2 triggers as a 2/2")
+    void triggersForFaceDownCreature() {
+        Permanent phantom = harness.addToBattlefieldAndReturn(player1, new MarketwatchPhantom());
+        harness.setHand(player1, List.of(new GraniteWitness()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, phantom, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Increasing the entering creature's power after entry does not stop the trigger")
+    void powerIsNotRecheckedAtResolution() {
+        Permanent phantom = harness.addToBattlefieldAndReturn(player1, new MarketwatchPhantom());
+        Permanent entering = harness.enterBattlefieldAndReturn(player1, new MarketwatchPhantom());
+        assertThat(gd.stack).hasSize(1);
+        entering.setPowerModifier(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, phantom, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, entering, Keyword.FLYING)).isFalse();
     }
 }
