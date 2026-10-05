@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.TropicalIsland;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -90,5 +91,60 @@ class LandGrantTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("condition is not met");
+    }
+
+    @Test
+    @DisplayName("Can reveal an empty hand after moving Land Grant to the stack")
+    void alternateCostCanRevealEmptyHand() {
+        harness.setHand(player1, List.of(new LandGrant()));
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.castWithAlternateCost(player1, 0, List.of());
+
+        assertThat(gameLogContains("reveals their hand. It is empty.")).isTrue();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(log -> log.contains("reveals Forest"));
+        harness.assertInGraveyard(player1, "Land Grant");
+    }
+
+    @Test
+    @DisplayName("May fail to find even when a Forest is in the library")
+    void mayFailToFindForest() {
+        Forest forest = new Forest();
+        harness.setHand(player1, List.of(new LandGrant()));
+        harness.setLibrary(player1, List.of(forest));
+
+        harness.castWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertNotInHand(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Land Grant");
+    }
+
+    @Test
+    @DisplayName("Can pay the mana cost when there is a land in hand")
+    void manaCostAllowedWithLandInHand() {
+        Forest heldForest = new Forest();
+        Forest foundForest = new Forest();
+        harness.setHand(player1, List.of(new LandGrant(), heldForest));
+        harness.setLibrary(player1, List.of(foundForest));
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(heldForest, foundForest);
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .noneMatch(log -> log.contains("reveals their hand"));
+        harness.assertInGraveyard(player1, "Land Grant");
     }
 }
