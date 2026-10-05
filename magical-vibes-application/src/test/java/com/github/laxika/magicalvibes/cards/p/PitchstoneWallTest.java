@@ -146,6 +146,37 @@ class PitchstoneWallTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Pitchstone Wall");
     }
 
+    @Test
+    void twoPendingDiscardsCanReturnOnlyOneCardWithOneWall() {
+        harness.addToBattlefield(player1, new Aquamoeba());
+        harness.addToBattlefield(player1, new PitchstoneWall());
+        Card firstDiscard = new Aquamoeba();
+        Card secondDiscard = new Aquamoeba();
+        harness.setHand(player1, List.of(firstDiscard, secondDiscard));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(secondDiscard).doesNotContain(firstDiscard);
+        harness.assertInGraveyard(player1, "Pitchstone Wall");
+
+        for (int remainingEntry = 0; remainingEntry < 3 && !gd.stack.isEmpty(); remainingEntry++) {
+            harness.passBothPriorities();
+            if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+                harness.handleMayAbilityChosen(player1, true);
+            }
+        }
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).contains(secondDiscard).doesNotContain(firstDiscard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(firstDiscard).doesNotContain(secondDiscard);
+    }
     private Card prepareDiscard() {
         harness.addToBattlefield(player1, new PitchstoneWall());
         Card discardedCard = new Aquamoeba();
