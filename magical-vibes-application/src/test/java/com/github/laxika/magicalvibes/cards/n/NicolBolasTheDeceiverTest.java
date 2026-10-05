@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.IntStream;
@@ -19,6 +19,7 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({NicolBolasTheDeceiver.class, Forest.class, GrizzlyBears.class})
 class NicolBolasTheDeceiverTest extends BaseCardTest {
 
     private static final String LOSE_LIFE = "Lose 3 life";
@@ -106,7 +107,7 @@ class NicolBolasTheDeceiverTest extends BaseCardTest {
         Permanent bolas = addReadyBolas(player1, 5);
         harness.addToBattlefield(player2, new GrizzlyBears());
         UUID bearId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.setLibrary(player1, new ArrayList<>(List.of(new Forest())));
+        harness.setLibrary(player1, List.of(new Forest()));
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, 1, null, bearId);
@@ -134,9 +135,9 @@ class NicolBolasTheDeceiverTest extends BaseCardTest {
     void minusElevenDamagesOpponentsAndDrawsSeven() {
         Permanent bolas = addReadyBolas(player1, 11);
         harness.setLife(player2, 20);
-        harness.setLibrary(player1, new ArrayList<>(IntStream.range(0, 7)
+        harness.setLibrary(player1, IntStream.range(0, 7)
                 .mapToObj(i -> new Forest())
-                .toList()));
+                .toList());
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, 2, null, null);
@@ -158,12 +159,45 @@ class NicolBolasTheDeceiverTest extends BaseCardTest {
                 .hasMessageContaining("Not enough loyalty");
     }
 
+    @Test
+    @DisplayName("Minus three can destroy your own creature after Bolas dies from the loyalty cost")
+    void minusThreeCanDestroyOwnCreatureAtExactlyThreeLoyalty() {
+        addReadyBolas(player1, 3);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.activateAbility(player1, 0, 1, null, bearId);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Nicol Bolas, the Deceiver");
+        harness.assertInGraveyard(player1, "Nicol Bolas, the Deceiver");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Minus three does not draw when its only target leaves before resolution")
+    void minusThreeDoesNotDrawWithIllegalTarget() {
+        addReadyBolas(player1, 5);
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.activateAbility(player1, 0, 1, null, bear.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(bear);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
     private Permanent addReadyBolas(Player player, int loyalty) {
-        NicolBolasTheDeceiver card = new NicolBolasTheDeceiver();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new NicolBolasTheDeceiver());
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
