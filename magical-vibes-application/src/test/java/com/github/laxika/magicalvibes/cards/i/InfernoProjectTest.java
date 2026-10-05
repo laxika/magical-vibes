@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.Fireball;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({InfernoProject.class, Divination.class, Forest.class, GrizzlyBears.class, Shock.class})
+@CardUsed({InfernoProject.class, Divination.class, Forest.class, GrizzlyBears.class, Shock.class, Fireball.class})
 class InfernoProjectTest extends BaseCardTest {
 
     @Test
@@ -39,5 +40,56 @@ class InfernoProjectTest extends BaseCardTest {
         Permanent project = harness.enterBattlefieldAndReturn(player1, new InfernoProject());
 
         assertThat(project.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void countsEachGraveyardCardIncludingDuplicates() {
+        harness.setGraveyard(player1, List.of(new Shock(), new Shock(), new Divination()));
+
+        Permanent project = harness.enterBattlefieldAndReturn(player1, new InfernoProject());
+
+        assertThat(project.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+    }
+
+    @Test
+    void variableManaCostContributesOnlyItsFixedPartInGraveyard() {
+        harness.setGraveyard(player1, List.of(new Fireball(), new Divination()));
+
+        Permanent project = harness.enterBattlefieldAndReturn(player1, new InfernoProject());
+
+        assertThat(project.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    void countsGraveyardWhenSpellResolvesAndKeepsCountersAfterGraveyardChanges() {
+        harness.setGraveyard(player1, List.of(new Shock()));
+        harness.castFromHand(player1, new InfernoProject(), "{6}{R}");
+        harness.setGraveyard(player1, List.of(new Shock(), new Divination()));
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Inferno Project");
+        Permanent project = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof InfernoProject)
+                .findFirst().orElseThrow();
+        assertThat(project.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+
+        harness.setGraveyard(player1, List.of());
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Inferno Project");
+        assertThat(project.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    void diesWhenCastWithOnlyOpponentsInstantsAndSorceriesInGraveyard() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new Shock(), new Divination()));
+
+        harness.castFromHand(player1, new InfernoProject(), "{6}{R}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Inferno Project");
+        harness.assertInGraveyard(player1, "Inferno Project");
     }
 }
