@@ -11,18 +11,15 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NightOfSoulsBetrayal.class, MossKami.class, WanderingOnes.class})
+@CardUsed({NightOfSoulsBetrayal.class, MossKami.class, WanderingOnes.class, Opalescence.class})
 class NightOfSoulsBetrayalTest extends BaseCardTest {
 
     @Test
     @DisplayName("Creatures of both players get -1/-1")
     void debuffsAllCreatures() {
         harness.addToBattlefield(player1, new NightOfSoulsBetrayal());
-        harness.addToBattlefield(player1, new MossKami());
-        harness.addToBattlefield(player2, new MossKami());
-
-        Permanent own = findPermanent(player1, "Moss Kami");
-        Permanent opponent = findPermanent(player2, "Moss Kami");
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new MossKami());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new MossKami());
 
         assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, own)).isEqualTo(4);
@@ -33,9 +30,8 @@ class NightOfSoulsBetrayalTest extends BaseCardTest {
     @Test
     @DisplayName("Debuff applies when it resolves onto the battlefield")
     void debuffAppliesOnResolve() {
-        harness.addToBattlefield(player2, new MossKami());
+        Permanent mossKami = harness.addToBattlefieldAndReturn(player2, new MossKami());
 
-        Permanent mossKami = findPermanent(player2, "Moss Kami");
         assertThat(gqs.getEffectivePower(gd, mossKami)).isEqualTo(5);
 
         harness.castFromHand(player1, new NightOfSoulsBetrayal(), "{2}{B}{B}");
@@ -51,9 +47,7 @@ class NightOfSoulsBetrayalTest extends BaseCardTest {
     void twoCopiesStack() {
         harness.addToBattlefield(player1, new NightOfSoulsBetrayal());
         harness.addToBattlefield(player2, new NightOfSoulsBetrayal());
-        harness.addToBattlefield(player1, new MossKami());
-
-        Permanent mossKami = findPermanent(player1, "Moss Kami");
+        Permanent mossKami = harness.addToBattlefieldAndReturn(player1, new MossKami());
 
         assertThat(gqs.getEffectivePower(gd, mossKami)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, mossKami)).isEqualTo(3);
@@ -76,9 +70,8 @@ class NightOfSoulsBetrayalTest extends BaseCardTest {
     @DisplayName("Debuff is removed when it leaves the battlefield")
     void debuffRemovedWhenSourceLeaves() {
         harness.addToBattlefield(player1, new NightOfSoulsBetrayal());
-        harness.addToBattlefield(player1, new MossKami());
+        Permanent mossKami = harness.addToBattlefieldAndReturn(player1, new MossKami());
 
-        Permanent mossKami = findPermanent(player1, "Moss Kami");
         assertThat(gqs.getEffectivePower(gd, mossKami)).isEqualTo(4);
 
         gd.playerBattlefields.get(player1.getId())
@@ -89,7 +82,6 @@ class NightOfSoulsBetrayalTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Opalescence.class)
     @DisplayName("All creatures includes Night of Souls' Betrayal when it becomes a creature")
     void debuffAppliesToAnimatedSource() {
         Permanent night = harness.addToBattlefieldAndReturn(player1, new NightOfSoulsBetrayal());
@@ -98,5 +90,34 @@ class NightOfSoulsBetrayalTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, night)).isTrue();
         assertThat(gqs.getEffectivePower(gd, night)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, night)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Resolving the enchantment sends existing one-toughness creatures to the graveyard")
+    void resolvingEnchantmentKillsSmallCreatures() {
+        harness.addToBattlefield(player1, new WanderingOnes());
+        harness.addToBattlefield(player2, new WanderingOnes());
+
+        harness.castFromHand(player1, new NightOfSoulsBetrayal(), "{2}{B}{B}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Wandering Ones");
+        harness.assertNotOnBattlefield(player2, "Wandering Ones");
+        harness.assertInGraveyard(player1, "Wandering Ones");
+        harness.assertInGraveyard(player2, "Wandering Ones");
+        harness.assertOnBattlefield(player1, "Night of Souls' Betrayal");
+    }
+
+    @Test
+    @DisplayName("A one-toughness creature resolving under the enchantment dies immediately")
+    void newlyResolvedSmallCreatureDies() {
+        harness.addToBattlefield(player1, new NightOfSoulsBetrayal());
+
+        harness.castFromHand(player1, new WanderingOnes(), "{U}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Wandering Ones");
+        harness.assertInGraveyard(player1, "Wandering Ones");
+        harness.assertOnBattlefield(player1, "Night of Souls' Betrayal");
     }
 }
