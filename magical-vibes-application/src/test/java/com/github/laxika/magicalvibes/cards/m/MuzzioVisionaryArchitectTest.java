@@ -96,6 +96,109 @@ class MuzzioVisionaryArchitectTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
+    @Test
+    void zeroManaValueArtifactDoesNotLookAtAnyCards() {
+        addCreatureReady(player1, new MuzzioVisionaryArchitect());
+        harness.addToBattlefield(player1, new Ornithopter());
+        Card topCard = new GildedLotus();
+        harness.setLibrary(player1, List.of(topCard));
+
+        activate();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        harness.assertNotOnBattlefield(player1, "Gilded Lotus");
+    }
+
+    @Test
+    void noMatchingArtifactsStillAllowsBottomOrdering() {
+        addCreatureReady(player1, new MuzzioVisionaryArchitect());
+        harness.addToBattlefield(player1, new WornPowerstone());
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        Card third = new GrizzlyBears();
+        Card unlooked = new Ornithopter();
+        harness.setLibrary(player1, List.of(first, second, third, unlooked));
+
+        activate();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 0, 1)));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unlooked, third, first, second);
+    }
+
+    @Test
+    void shortLibraryAllowsArtifactToEnterWithItsOwnTappedReplacement() {
+        addCreatureReady(player1, new MuzzioVisionaryArchitect());
+        harness.addToBattlefield(player1, new GildedLotus());
+        Card selected = new WornPowerstone();
+        Card remaining = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(selected, remaining));
+
+        activate();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anySatisfy(permanent -> {
+                    assertThat(permanent.getCard().getId()).isEqualTo(selected.getId());
+                    assertThat(permanent.isTapped()).isTrue();
+                });
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void artifactManaValueIsEvaluatedWhenAbilityResolves() {
+        addCreatureReady(player1, new MuzzioVisionaryArchitect());
+        harness.addToBattlefield(player1, new WornPowerstone());
+        Card topCard = new Ornithopter();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    void emptyLibraryDoesNotRequestAChoice() {
+        addCreatureReady(player1, new MuzzioVisionaryArchitect());
+        harness.addToBattlefield(player1, new WornPowerstone());
+        harness.setLibrary(player1, List.of());
+
+        activate();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void usesGreatestManaValueRatherThanSumOrNumberOfArtifacts() {
+        addCreatureReady(player1, new MuzzioVisionaryArchitect());
+        harness.addToBattlefield(player1, new WornPowerstone());
+        harness.addToBattlefield(player1, new GildedLotus());
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        Card third = new GrizzlyBears();
+        Card fourth = new GrizzlyBears();
+        Card fifth = new Ornithopter();
+        Card unlooked = new GildedLotus();
+        harness.setLibrary(player1, List.of(first, second, third, fourth, fifth, unlooked));
+
+        activate();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(fifth);
+        harness.handleCardChosen(player1, 0);
+        harness.assertOnBattlefield(player1, "Ornithopter");
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(3, 2, 1, 0)));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unlooked, fourth, third, second, first);
+    }
+
     private Permanent setupMuzzioWithoutControlledArtifact() {
         return addCreatureReady(player1, new MuzzioVisionaryArchitect());
     }
