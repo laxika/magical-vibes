@@ -49,12 +49,68 @@ class ProtocolKnightTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void castProtocolKnight(Permanent target) {
+    @Test
+    void addsStunCounterToAnAlreadyTappedCreature() {
+        harness.addToBattlefield(player1, new KnightErrant());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.tap();
+
+        castProtocolKnight(target);
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(1);
+    }
+
+    @Test
+    void opponentsKnightDoesNotSatisfyTheCondition() {
+        Permanent target = addCreatureReady(player2, new KnightErrant());
+
+        castProtocolKnight(target);
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.STUN)).isZero();
+    }
+
+    @Test
+    void checksForAnotherKnightWhenTheTriggerResolves() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new ProtocolKnight()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreature(player1, 0, 0, target.getId());
         harness.passBothPriorities();
+
+        harness.addToBattlefield(player1, new KnightErrant());
+        resolveAllTriggers();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(1);
+    }
+
+    @Test
+    void doesNotAddStunCounterIfTheOtherKnightDiesBeforeResolution() {
+        Permanent knight = addCreatureReady(player1, new KnightErrant());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ProtocolKnight()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0, 0, target.getId());
         harness.passBothPriorities();
+
+        knight.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(knight);
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.STUN)).isZero();
+    }
+
+    private void castProtocolKnight(Permanent target) {
+        harness.setHand(player1, List.of(new ProtocolKnight()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0, 0, target.getId());
+        resolveAllTriggers();
     }
 }
