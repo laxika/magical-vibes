@@ -31,10 +31,7 @@ class JechtReluctantGuardianTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        Permanent transformed = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof BraskasFinalAeon)
-                .findFirst()
-                .orElseThrow();
+        Permanent transformed = findPermanent(player1, "Braska's Final Aeon");
         assertThat(transformed.isTransformed()).isTrue();
         assertThat(transformed.getCounterCount(CounterType.LORE)).isEqualTo(1);
 
@@ -92,5 +89,115 @@ class JechtReluctantGuardianTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(third);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(braska);
+    }
+
+    @Test
+    void chapterTwoDiscardsOnlyFromOpponentAndDrawsForController() {
+        Permanent braska = addBraskaWithLore(1);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        advanceToNextChapter();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player2, 1);
+        resolveAllTriggers();
+
+        assertThat(braska.getCounterCount(CounterType.LORE)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(braska);
+    }
+
+    @Test
+    void chapterTwoStillDrawsWhenOpponentHasNoCards() {
+        Permanent braska = addBraskaWithLore(1);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        advanceToNextChapter();
+        resolveAllTriggers();
+
+        assertThat(braska.getCounterCount(CounterType.LORE)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void chapterThreeSacrificesOnlyAvailableCreatureAndLeavesControllersCreature() {
+        Permanent braska = addBraskaWithLore(2);
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingCreature = addCreatureReady(player2, new GrizzlyBears());
+
+        advanceToNextChapter();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opposingCreature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature).doesNotContain(braska);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Jecht, Reluctant Guardian");
+    }
+
+    @Test
+    void chapterThreeWithNoOpposingCreaturesStillSacrificesSaga() {
+        Permanent braska = addBraskaWithLore(2);
+
+        advanceToNextChapter();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(braska);
+        harness.assertInGraveyard(player1, "Jecht, Reluctant Guardian");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void stolenJechtReturnsToOwnerAndOwnerControlsChapterOne() {
+        JechtReluctantGuardian card = new JechtReluctantGuardian();
+        card.setOwnerId(player2.getId());
+        Permanent jecht = addCreatureReady(player1, card);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        jecht.setAttacking(true);
+
+        resolveCombat();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(jecht);
+        Permanent transformed = findPermanent(player2, "Braska's Final Aeon");
+        assertThat(transformed.isTransformed()).isTrue();
+        assertThat(transformed.getId()).isNotEqualTo(jecht.getId());
+        assertThat(transformed.isSummoningSick()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    private Permanent addBraskaWithLore(int lore) {
+        JechtReluctantGuardian front = new JechtReluctantGuardian();
+        front.setOwnerId(player1.getId());
+        Permanent braska = addCreatureReady(player1, front);
+        braska.setCard(front.getBackFaceCard());
+        braska.setTransformed(true);
+        braska.setCounterCount(CounterType.LORE, lore);
+        return braska;
+    }
+
+    private void advanceToNextChapter() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
