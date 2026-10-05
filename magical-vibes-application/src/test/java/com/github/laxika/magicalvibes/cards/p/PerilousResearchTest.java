@@ -42,6 +42,31 @@ class PerilousResearchTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrifices the controller's only permanent and leaves the opponent's permanent alone")
+    void sacrificesOnlyControllersPermanent() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new SnowCoveredForest());
+        Permanent opposingIsland = harness.addToBattlefieldAndReturn(player2, new SnowCoveredIsland());
+        SnowCoveredIsland drawnIsland = new SnowCoveredIsland();
+        SnowCoveredForest drawnForest = new SnowCoveredForest();
+        harness.setLibrary(player1, List.of(drawnIsland, drawnForest));
+        PerilousResearch spell = new PerilousResearch();
+
+        harness.castFromHand(player1, spell, "{1}{U}");
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactlyInAnyOrder(drawnIsland, drawnForest);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(opposingIsland);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(forest.getCard(), spell);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
     @DisplayName("Draws two cards without prompting when the controller has no permanent")
     void drawsTwoCardsWithoutPermanentToSacrifice() {
         SnowCoveredIsland drawnIsland = new SnowCoveredIsland();
