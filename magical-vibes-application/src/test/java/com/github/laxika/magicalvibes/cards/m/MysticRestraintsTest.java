@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.c.CageOfHands;
+import com.github.laxika.magicalvibes.cards.v.VeilOfSecrecy;
 import com.github.laxika.magicalvibes.cards.w.WanderingOnes;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MysticRestraints.class, WanderingOnes.class, CageOfHands.class})
+@CardUsed({MysticRestraints.class, WanderingOnes.class, CageOfHands.class, VeilOfSecrecy.class})
 class MysticRestraintsTest extends BaseCardTest {
 
     @Test
@@ -31,10 +32,8 @@ class MysticRestraintsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB tap trigger
 
         assertThat(creature.isTapped()).isTrue();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mystic Restraints")
-                        && p.isAttached()
-                        && p.getAttachedTo().equals(creature.getId()));
+        assertThat(findPermanent(player1, "Mystic Restraints").getAttachedTo())
+                .isEqualTo(creature.getId());
     }
 
     @Test
@@ -46,9 +45,8 @@ class MysticRestraintsTest extends BaseCardTest {
         Permanent free = addCreatureReady(player2, new WanderingOnes());
         free.tap();
 
-        Permanent aura = new Permanent(new MysticRestraints());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new MysticRestraints());
         aura.setAttachedTo(enchanted.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         advanceToUpkeep(player2);
 
@@ -62,9 +60,8 @@ class MysticRestraintsTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player2, new WanderingOnes());
         creature.tap();
 
-        Permanent aura = new Permanent(new MysticRestraints());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new MysticRestraints());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
         advanceToUpkeep(player2);
@@ -118,5 +115,42 @@ class MysticRestraintsTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Mystic Restraints");
         harness.assertNotOnBattlefield(player1, "Mystic Restraints");
+    }
+
+    @Test
+    @DisplayName("The enchanted creature stays untapped until the enter trigger resolves")
+    void tapTriggerUsesTheStack() {
+        Permanent creature = addCreatureReady(player2, new WanderingOnes());
+        harness.setHand(player1, List.of(new MysticRestraints()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Mystic Restraints");
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The enter trigger taps the enchanted creature even if it gains shroud")
+    void tapTriggerDoesNotTargetEnchantedCreature() {
+        Permanent creature = addCreatureReady(player2, new WanderingOnes());
+        harness.setHand(player1, List.of(new MysticRestraints(), new VeilOfSecrecy()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        assertThat(creature.isTapped()).isFalse();
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Mystic Restraints");
     }
 }
