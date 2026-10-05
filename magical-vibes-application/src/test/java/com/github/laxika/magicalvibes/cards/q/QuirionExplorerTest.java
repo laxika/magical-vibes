@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.q;
 
 import com.github.laxika.magicalvibes.cards.d.DromarsCavern;
+import com.github.laxika.magicalvibes.cards.e.ExoticOrchard;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.t.TerminalMoraine;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({QuirionExplorer.class, DromarsCavern.class, TerminalMoraine.class, Forest.class})
+@CardUsed({QuirionExplorer.class, DromarsCavern.class, TerminalMoraine.class, Forest.class, ExoticOrchard.class})
 class QuirionExplorerTest extends BaseCardTest {
 
     @Test
@@ -91,6 +92,74 @@ class QuirionExplorerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         assertThat(explorer.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Tapped opponent lands still contribute all colors they could produce")
+    void tappedOpponentLandStillContributesColors() {
+        Permanent explorer = addCreatureReady(player1, new QuirionExplorer());
+        harness.addToBattlefieldAndReturn(player2, new DromarsCavern()).tap();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options()).containsExactlyInAnyOrder("BLACK", "BLUE", "WHITE");
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(explorer.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Combines colors from multiple opponent lands but adds only one mana")
+    void combinesOpponentLandColors() {
+        addCreatureReady(player1, new QuirionExplorer());
+        harness.addToBattlefield(player2, new DromarsCavern());
+        harness.addToBattlefield(player2, new Forest());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options()).containsExactlyInAnyOrder("BLACK", "BLUE", "WHITE", "GREEN");
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Opponent mana creatures do not contribute colors")
+    void ignoresOpponentManaCreature() {
+        Permanent explorer = addCreatureReady(player1, new QuirionExplorer());
+        addCreatureReady(player2, new QuirionExplorer());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(explorer.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Opponent Exotic Orchard can produce the color of the controller's Forest")
+    void recognizesOpponentExoticOrchardColor() {
+        Permanent explorer = addCreatureReady(player1, new QuirionExplorer());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new ExoticOrchard());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(explorer.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
