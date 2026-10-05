@@ -102,6 +102,44 @@ class OtarianJuggernautTest extends BaseCardTest {
         assertThat(nonWall.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("Losing threshold removes the power bonus and attack requirement immediately")
+    void losesThresholdWhenGraveyardDropsBelowSeven() {
+        harness.setGraveyard(player1, graveyardCards(7));
+        Permanent juggernaut = addCreatureReady(player1, new OtarianJuggernaut());
+        assertThat(gqs.getEffectivePower(gd, juggernaut)).isEqualTo(5);
+
+        harness.setGraveyard(player1, graveyardCards(6));
+
+        assertThat(gqs.getEffectivePower(gd, juggernaut)).isEqualTo(2);
+        declareAttackers(List.of());
+        assertThat(juggernaut.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Otarian Juggernaut is not required to attack at threshold")
+    void tappedJuggernautIsNotRequiredToAttack() {
+        harness.setGraveyard(player1, graveyardCards(7));
+        Permanent juggernaut = addCreatureReady(player1, new OtarianJuggernaut());
+        juggernaut.setTapped(true);
+
+        declareAttackers(List.of());
+
+        assertThat(juggernaut.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Otarian Juggernaut is not required to attack at threshold")
+    void summoningSickJuggernautIsNotRequiredToAttack() {
+        harness.setGraveyard(player1, graveyardCards(7));
+        Permanent juggernaut = addCreatureReady(player1, new OtarianJuggernaut());
+        juggernaut.setSummoningSick(true);
+
+        declareAttackers(List.of());
+
+        assertThat(juggernaut.isAttacking()).isFalse();
+    }
+
     private List<Card> graveyardCards(int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
