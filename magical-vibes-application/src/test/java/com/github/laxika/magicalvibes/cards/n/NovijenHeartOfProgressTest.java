@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.m.MistralCharger;
 import com.github.laxika.magicalvibes.cards.t.TransguildCourier;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -23,9 +22,8 @@ class NovijenHeartOfProgressTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
 
-        GameData gameData = harness.getGameData();
-        assertThat(gameData.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
-        assertThat(gameData.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
         assertThat(novijen.isTapped()).isTrue();
     }
 
@@ -50,9 +48,55 @@ class NovijenHeartOfProgressTest extends BaseCardTest {
         assertThat(recentLand.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("Includes creatures that enter after activation but before resolution")
+    void checksCreaturesAtResolution() {
+        addReadyNovijen();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        Permanent lateCreature = harness.enterBattlefieldAndReturn(player2, new MistralCharger());
+        assertThat(lateCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(lateCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can activate with no creatures and pays green, blue and tap costs")
+    void resolvesWithNoCreatures() {
+        Permanent novijen = harness.enterBattlefieldAndReturn(player1, new NovijenHeartOfProgress());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(novijen.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(novijen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A land that entered this turn can immediately produce mana")
+    void newlyEnteredLandCanTapForMana() {
+        Permanent novijen = harness.enterBattlefieldAndReturn(player1, new NovijenHeartOfProgress());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(novijen.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyNovijen() {
-        Permanent novijen = harness.addToBattlefieldAndReturn(player1, new NovijenHeartOfProgress());
-        novijen.setSummoningSick(false);
-        return novijen;
+        return harness.addToBattlefieldAndReturn(player1, new NovijenHeartOfProgress());
     }
 }
