@@ -32,8 +32,7 @@ class ManholeCoverTest extends BaseCardTest {
 
         assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
@@ -76,5 +75,61 @@ class ManholeCoverTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
         harness.assertOnBattlefield(player1, "Manhole Cover");
+    }
+
+    @Test
+    @DisplayName("Flash allows casting during the opponent's turn and protecting their creature")
+    void flashCanProtectOpponentsCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player1, List.of(new ManholeCover()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castArtifact(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Manhole Cover");
+        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Sacrificing the artifact pays the cost immediately and does not stop its ETB trigger")
+    void sacrificeWhileEtbIsPending() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ManholeCover()));
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castArtifact(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 1, null, player1.getId());
+
+        harness.assertNotOnBattlefield(player1, "Manhole Cover");
+        harness.assertInGraveyard(player1, "Manhole Cover");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        harness.assertInHand(player1, "Island");
+        harness.passBothPriorities();
+        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The artifact can be cast with no creatures to target")
+    void canEnterWithoutCreatures() {
+        harness.setHand(player1, List.of(new ManholeCover()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Manhole Cover");
+        assertThat(gd.stack).isEmpty();
     }
 }
