@@ -104,11 +104,7 @@ class IntoTheFrayTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of()))
+        assertThatThrownBy(() -> declareAttackers(player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
     }
@@ -125,11 +121,56 @@ class IntoTheFrayTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player2, List.of());
+        declareAttackers(player2, List.of());
 
         assertThat(target.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not allow a summoning-sick creature to attack")
+    void summoningSicknessStillPreventsAttacking() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ArabaMothrider());
+        target.setSummoningSick(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new IntoTheFray()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        declareAttackers(player2, List.of());
+
+        assertThat(target.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Splicing requires paying the red mana in addition to the host spell cost")
+    void spliceRequiresAdditionalRedMana() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ArabaMothrider());
+        harness.setHand(player1, List.of(new SpiritualVisit(), new IntoTheFray()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castWithSplice(player1, 0, target.getId(), List.of(1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("mana");
+    }
+
+    @Test
+    @DisplayName("An illegal splice target prevents the entire host spell from resolving")
+    void illegalSpliceTargetPreventsHostSpellResolving() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ArabaMothrider());
+        IntoTheFray intoTheFray = new IntoTheFray();
+        harness.setHand(player1, List.of(new SpiritualVisit(), intoTheFray));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castWithSplice(player1, 0, target.getId(), List.of(1));
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(intoTheFray);
+        harness.assertInGraveyard(player1, "Spiritual Visit");
     }
 }
