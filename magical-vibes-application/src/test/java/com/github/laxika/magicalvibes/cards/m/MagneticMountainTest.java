@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MagneticMountain.class, MerfolkOfThePearlTrident.class, GrizzlyBears.class})
+@CardUsed({MagneticMountain.class, MerfolkOfThePearlTrident.class, GrizzlyBears.class, Island.class})
 class MagneticMountainTest extends BaseCardTest {
 
     @Test
@@ -113,9 +114,54 @@ class MagneticMountainTest extends BaseCardTest {
         assertThat(ownMerfolk.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Only tapped blue creatures are offered, and choosing a subset leaves the rest tapped")
+    void choosingSubsetUntapsOnlyChosenTappedBlueCreature() {
+        harness.addToBattlefield(player1, new MagneticMountain());
+        Permanent chosen = addTapped(player1, new MerfolkOfThePearlTrident());
+        Permanent unchosen = addTapped(player1, new MerfolkOfThePearlTrident());
+        Permanent alreadyUntapped = harness.addToBattlefieldAndReturn(player1, new MerfolkOfThePearlTrident());
+        Permanent bears = addTapped(player1, new GrizzlyBears());
+
+        advanceToUpkeep(player1);
+        bears.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(chosen.getId(), unchosen.getId());
+        assertThat(alreadyUntapped.isTapped()).isFalse();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(chosen.isTapped()).isFalse();
+        assertThat(unchosen.isTapped()).isTrue();
+        assertThat(bears.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Untapped mana sources allow the upkeep payment without floating mana beforehand")
+    void manaSourcesAllowPaymentChoiceDuringResolution() {
+        harness.addToBattlefield(player1, new MagneticMountain());
+        Permanent merfolk = addTapped(player1, new MerfolkOfThePearlTrident());
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, new Island());
+        }
+
+        advanceToUpkeep(player1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(merfolk.getId());
+    }
+
     private Permanent addTapped(Player player, Card card) {
-        Permanent perm = harness.addToBattlefieldAndReturn(player, card);
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(player, card);
         perm.tap();
         return perm;
     }
