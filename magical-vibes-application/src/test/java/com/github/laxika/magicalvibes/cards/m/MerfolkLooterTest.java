@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MerfolkLooter.class, GrizzlyBears.class})
+@CardUsed({MerfolkLooter.class, GrizzlyBears.class, Unsummon.class})
 class MerfolkLooterTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -302,13 +302,40 @@ class MerfolkLooterTest extends BaseCardTest {
         Permanent atkPerm = addCreatureReady(player1, new MerfolkLooter());
         atkPerm.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 
+    @Test
+    @DisplayName("Looting resolves after Merfolk Looter leaves the battlefield")
+    void abilityResolvesAfterSourceReturnsToHand() {
+        MerfolkLooter card = new MerfolkLooter();
+        Permanent looter = addCreatureReady(player1, card);
+        GrizzlyBears drawnCard = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, looter.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(looter);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card, drawnCard);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(card);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }
 
