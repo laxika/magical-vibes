@@ -61,8 +61,7 @@ class MeriekeRiBeritTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Incinerate()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, merieke.getId());
-        harness.passBothPriorities(); // Incinerate resolves, Merieke dies, trigger goes on the stack.
+        harness.castAndResolveInstant(player1, 0, merieke.getId());
         harness.passBothPriorities(); // Trigger resolves.
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -85,8 +84,7 @@ class MeriekeRiBeritTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Incinerate()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, merieke.getId());
-        harness.passBothPriorities(); // Incinerate resolves, Merieke dies, trigger goes on the stack.
+        harness.castAndResolveInstant(player1, 0, merieke.getId());
         harness.passBothPriorities(); // Trigger resolves.
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -233,6 +231,109 @@ class MeriekeRiBeritTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(bears.getId()));
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card.getId().equals(bears.getCard().getId()));
+    }
+
+    @Test
+    @DisplayName("Untapping before the first activation resolves creates no destruction trigger")
+    void untappingBeforeResolutionDoesNotTriggerDestruction() {
+        Permanent merieke = addReadyMerieke(player1);
+        Permanent bears = addCreatureReady(player2, new BalduvianBears());
+        Permanent brownie = addCreatureReady(player1, new FyndhornBrownie());
+
+        int meriekeIndex = gd.playerBattlefields.get(player1.getId()).indexOf(merieke);
+        harness.activateAbility(player1, meriekeIndex, null, bears.getId());
+        addBrownieMana(player1);
+        untapWithBrownie(brownie, merieke);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(bears.getId()));
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .noneMatch(card -> card.getId().equals(bears.getCard().getId()));
+    }
+
+    @Test
+    @DisplayName("Multiple activations pending together each create a separate destruction trigger")
+    void untappingDestroysEveryCreatureFromPendingActivations() {
+        Permanent merieke = addReadyMerieke(player1);
+        Permanent first = addCreatureReady(player2, new BalduvianBears());
+        Permanent second = addCreatureReady(player2, new BalduvianBears());
+        Permanent firstBrownie = addCreatureReady(player1, new FyndhornBrownie());
+        Permanent secondBrownie = addCreatureReady(player1, new FyndhornBrownie());
+
+        int meriekeIndex = gd.playerBattlefields.get(player1.getId()).indexOf(merieke);
+        harness.activateAbility(player1, meriekeIndex, null, first.getId());
+        addBrownieMana(player1);
+        untapWithBrownie(firstBrownie, merieke);
+        harness.activateAbility(player1, meriekeIndex, null, second.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(first.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(second.getId()));
+
+        addBrownieMana(player1);
+        untapWithBrownie(secondBrownie, merieke);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card.getId().equals(first.getCard().getId()))
+                .anyMatch(card -> card.getId().equals(second.getCard().getId()));
+    }
+
+    @Test
+    @DisplayName("The delayed trigger retains the original activation's controller")
+    void destructionTriggerRetainsOriginalController() {
+        Permanent merieke = addReadyMerieke(player1);
+        Permanent bears = addCreatureReady(player2, new BalduvianBears());
+        activateSteal(merieke, bears);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new BindingGrasp()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castEnchantment(player2, 0, merieke.getId());
+        harness.passBothPriorities();
+
+        Permanent brownie = addCreatureReady(player2, new FyndhornBrownie());
+        addBrownieMana(player2);
+        int brownieIndex = gd.playerBattlefields.get(player2.getId()).indexOf(brownie);
+        harness.activateAbility(player2, brownieIndex, null, merieke.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card.getId().equals(bears.getCard().getId()));
+    }
+
+    @Test
+    @DisplayName("Leaving after an untap has already triggered destruction does not trigger it again")
+    void delayedDestructionTriggersOnlyOnce() {
+        Permanent merieke = addReadyMerieke(player1);
+        Permanent bears = addCreatureReady(player2, new BalduvianBears());
+        Permanent brownie = addCreatureReady(player1, new FyndhornBrownie());
+        activateSteal(merieke, bears);
+
+        addBrownieMana(player1);
+        untapWithBrownie(brownie, merieke);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, merieke.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(card -> card.getId().equals(bears.getCard().getId()));
     }
