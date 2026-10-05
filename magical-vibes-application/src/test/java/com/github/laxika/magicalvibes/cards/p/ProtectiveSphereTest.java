@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.b.BlindSeer;
 import com.github.laxika.magicalvibes.cards.g.GhituFire;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElite;
 import com.github.laxika.magicalvibes.cards.r.RagingKavu;
@@ -12,10 +13,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ProtectiveSphere.class, GhituFire.class, LlanowarElite.class, RagingKavu.class})
+@CardUsed({ProtectiveSphere.class, GhituFire.class, LlanowarElite.class, RagingKavu.class, BlindSeer.class})
 class ProtectiveSphereTest extends BaseCardTest {
 
     @Test
@@ -135,6 +137,74 @@ class ProtectiveSphereTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
+    void doesNotPreventDamageAfterSourceLosesMatchingColor() {
+        harness.setLife(player1, 20);
+        addSphere();
+        harness.addToBattlefield(player1, new BlindSeer());
+        Permanent source = addCreatureReady(player2, new RagingKavu());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, source.getId());
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 1, null, source.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLUE");
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, Map.of());
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 16);
+    }
+
+    @Test
+    void choosingCreatureSpellAlsoPreventsDamageFromPermanentItBecomes() {
+        harness.setLife(player1, 20);
+        addSphere();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        RagingKavu source = new RagingKavu();
+        harness.castFromHand(player2, source, "{1}{R}{G}");
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, source.getId());
+        harness.passBothPriorities();
+
+        declareAttackers(player2, List.of(0));
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    void doesNotPreventChosenSpellDamageToYourCreature() {
+        harness.setLife(player1, 20);
+        addSphere();
+        Permanent creature = addCreatureReady(player1, new LlanowarElite());
+        GhituFire source = new GhituFire();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(source));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castSorcery(player2, 0, 1, creature.getId());
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, source.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertInGraveyard(player1, "Llanowar Elite");
     }
 
     private void addSphere() {
