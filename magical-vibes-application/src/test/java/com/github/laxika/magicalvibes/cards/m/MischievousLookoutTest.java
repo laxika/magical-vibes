@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MischievousLookout.class, SolRing.class, Shatter.class, WalkingCorpse.class, Pacifism.class})
+@CardUsed({MischievousLookout.class, SolRing.class, Shatter.class, WalkingCorpse.class, Pacifism.class, Counterspell.class})
 class MischievousLookoutTest extends BaseCardTest {
 
     @Test
@@ -31,9 +32,7 @@ class MischievousLookoutTest extends BaseCardTest {
         prepareMainPhase();
 
         harness.castFromGraveyard(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent ringPermanent = findPermanent(player1, "Sol Ring");
         assertThat(gqs.isArtifact(gd, ringPermanent)).isTrue();
@@ -70,6 +69,80 @@ class MischievousLookoutTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, 1))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void becomesARatCreatureWhileStillOnTheStack() {
+        harness.addToBattlefield(player1, new MischievousLookout());
+        SolRing ring = new SolRing();
+        harness.setGraveyard(player1, List.of(ring));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        prepareMainPhase();
+
+        harness.castFromGraveyard(player1, 0);
+
+        var spell = gd.stack.stream()
+                .filter(entry -> entry.getCard().getId().equals(ring.getId()))
+                .findFirst().orElseThrow();
+        assertThat(spell.getCard().hasType(CardType.ARTIFACT)).isTrue();
+        assertThat(spell.getCard().hasType(CardType.CREATURE)).isTrue();
+        assertThat(spell.getCard().getSubtypes()).contains(CardSubtype.RAT);
+        assertThat(spell.getCard().getPower()).isEqualTo(2);
+        assertThat(spell.getCard().getToughness()).isEqualTo(1);
+    }
+
+    @Test
+    void counteredSpellRetainsItsPerpetualCreatureChange() {
+        harness.addToBattlefield(player1, new MischievousLookout());
+        SolRing ring = new SolRing();
+        harness.setGraveyard(player1, List.of(ring));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        prepareMainPhase();
+
+        harness.castFromGraveyard(player1, 0);
+        harness.castInstant(player2, 0, ring.getId());
+        resolveAllTriggers();
+
+        var returnedCard = gd.playerGraveyards.get(player1.getId()).stream()
+                .filter(card -> card.getId().equals(ring.getId()))
+                .findFirst().orElseThrow();
+        assertThat(returnedCard.hasType(CardType.ARTIFACT)).isTrue();
+        assertThat(returnedCard.hasType(CardType.CREATURE)).isTrue();
+        assertThat(returnedCard.getSubtypes()).contains(CardSubtype.RAT);
+        assertThat(returnedCard.getPower()).isEqualTo(2);
+        assertThat(returnedCard.getToughness()).isEqualTo(1);
+    }
+
+    @Test
+    void permitsOnlyOneGraveyardCastPerTurn() {
+        harness.addToBattlefield(player1, new MischievousLookout());
+        harness.setGraveyard(player1, List.of(new SolRing(), new SolRing()));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        prepareMainPhase();
+
+        harness.castFromGraveyard(player1, 0);
+        resolveAllTriggers();
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotCastFromGraveyardDuringOpponentsTurn() {
+        harness.addToBattlefield(player1, new MischievousLookout());
+        harness.setGraveyard(player1, List.of(new SolRing()));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        prepareMainPhase();
+        harness.forceActivePlayer(player2);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
 
