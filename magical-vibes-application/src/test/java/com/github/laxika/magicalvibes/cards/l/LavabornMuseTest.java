@@ -103,12 +103,57 @@ class LavabornMuseTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         // Trigger is on the stack — add cards to opponent's hand before resolution
-        gd.playerHands.get(player2.getId()).add(new GrizzlyBears());
-        gd.playerHands.get(player2.getId()).add(new GrizzlyBears());
+        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
         // Now opponent has 3 cards in hand
         harness.passBothPriorities(); // resolve trigger
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Deals damage when hand grows to exactly two cards before resolution")
+    void dealsDamageAtResolutionThreshold() {
+        harness.addToBattlefield(player1, new LavabornMuse());
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, lifeBefore - 3);
+    }
+
+    @Test
+    @DisplayName("Each Muse deals damage independently")
+    void multipleMusesEachDealDamage() {
+        harness.addToBattlefield(player1, new LavabornMuse());
+        harness.addToBattlefield(player1, new LavabornMuse());
+        harness.setHand(player2, List.of());
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, lifeBefore - 6);
+    }
+
+    @Test
+    @DisplayName("An already triggered ability deals damage after its source leaves")
+    void triggerResolvesAfterSourceLeaves() {
+        harness.addToBattlefield(player1, new LavabornMuse());
+        harness.setHand(player2, List.of());
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(1);
+        var muse = gd.playerBattlefields.get(player1.getId()).removeFirst();
+        harness.setGraveyard(player1, List.of(muse.getCard()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, lifeBefore - 3);
     }
 }
 
