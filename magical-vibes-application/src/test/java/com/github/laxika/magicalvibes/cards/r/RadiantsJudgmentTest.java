@@ -77,8 +77,7 @@ class RadiantsJudgmentTest extends BaseCardTest {
         harness.setHand(player2, List.of(new SickAndTired()));
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
-        harness.castInstant(player2, 0, List.of(target.getId(), otherCreature.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, List.of(target.getId(), otherCreature.getId()));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Yavimaya Scion");
@@ -114,5 +113,53 @@ class RadiantsJudgmentTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Radiant's Judgment");
         harness.assertInHand(player1, "Yavimaya Granger");
+    }
+
+    @Test
+    @DisplayName("Can destroy a creature controlled by the caster")
+    void destroysOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new YavimayaScion());
+
+        harness.setHand(player1, List.of(new RadiantsJudgment()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Yavimaya Scion");
+        harness.assertInGraveyard(player1, "Yavimaya Scion");
+        harness.assertInGraveyard(player1, "Radiant's Judgment");
+    }
+
+    @Test
+    @DisplayName("Cycling discards as a cost and draws only on resolution")
+    void cyclingDiscardsBeforeDrawing() {
+        harness.setHand(player1, List.of(new RadiantsJudgment()));
+        harness.setLibrary(player1, List.of(new YavimayaGranger()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertNotInHand(player1, "Radiant's Judgment");
+        harness.assertInGraveyard(player1, "Radiant's Judgment");
+        harness.assertNotInHand(player1, "Yavimaya Granger");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Yavimaya Granger");
+    }
+
+    @Test
+    @DisplayName("Cycling requires two mana and does not discard when payment fails")
+    void cannotCycleWithInsufficientMana() {
+        harness.setHand(player1, List.of(new RadiantsJudgment()));
+        harness.setLibrary(player1, List.of(new YavimayaGranger()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Radiant's Judgment");
+        harness.assertNotInGraveyard(player1, "Radiant's Judgment");
+        harness.assertNotInHand(player1, "Yavimaya Granger");
     }
 }
