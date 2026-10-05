@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(KjeldoranGargoyle.class)
+@CardUsed({KjeldoranGargoyle.class, Backlash.class})
 class KjeldoranGargoyleTest extends BaseCardTest {
 
     @Test
@@ -73,7 +73,6 @@ class KjeldoranGargoyleTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Backlash.class)
     void noncombatDamageAlsoGainsLife() {
         Permanent gargoyle = addCreatureReady(player2, new KjeldoranGargoyle());
         harness.setLife(player2, 20);
@@ -90,5 +89,24 @@ class KjeldoranGargoyleTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void lifeGainUsesDamageDealtRatherThanPowerAtResolution() {
+        harness.setLife(player1, 15);
+        harness.setLife(player2, 20);
+        Permanent gargoyle = addCreatureReady(player1, new KjeldoranGargoyle());
+        gargoyle.setPowerModifier(2);
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(gargoyle)));
+        resolveCombat();
+
+        harness.assertLife(player2, 15);
+        harness.assertLife(player1, 15);
+
+        gargoyle.setPowerModifier(0);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
     }
 }
