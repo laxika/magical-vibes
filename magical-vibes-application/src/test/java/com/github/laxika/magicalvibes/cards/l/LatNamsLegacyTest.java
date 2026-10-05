@@ -22,8 +22,7 @@ class LatNamsLegacyTest extends BaseCardTest {
                 java.util.stream.Stream.of(legacy), otherHandCards.stream()).toList());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
     }
 
     @Test
@@ -68,6 +67,43 @@ class LatNamsLegacyTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 2);
     }
 
+    @Test
+    @DisplayName("The delayed draw is created during spell resolution without a separate trigger")
+    void schedulesDrawAsPartOfSpellResolution() {
+        Card shuffled = new LatNamsLegacy();
+        castLatNamsLegacy(List.of(shuffled));
+
+        harness.handleMultipleCardsChosen(player1, List.of(shuffled.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An upkeep in the same turn does not cause the delayed draw")
+    void waitsForNextTurnAndDrawsOnlyOnce() {
+        Card shuffled = new LatNamsLegacy();
+        castLatNamsLegacy(List.of(shuffled));
+        harness.handleMultipleCardsChosen(player1, List.of(shuffled.getId()));
+        harness.passBothPriorities();
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        advanceToUpkeep(player1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+
+        advanceToUpkeep(player2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+
+        advanceToUpkeep(player1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
+        assertThat(gd.stack).isEmpty();
+    }
     @Test
     @DisplayName("With an empty hand nothing is shuffled and no draw is scheduled")
     void emptyHandDoesNothing() {
