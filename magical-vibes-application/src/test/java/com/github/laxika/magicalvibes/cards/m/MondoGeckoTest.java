@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.b.BloodcrazedGoblin;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.o.OreskosSwiftclaw;
+import com.github.laxika.magicalvibes.cards.c.CrustaceanCommando;
+import com.github.laxika.magicalvibes.cards.e.EPFPointSquad;
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.t.Terminate;
+import com.github.laxika.magicalvibes.cards.z.ZooEscapees;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -18,7 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MondoGecko.class, BloodcrazedGoblin.class, GrizzlyBears.class, OreskosSwiftclaw.class})
+@CardUsed({MondoGecko.class, CrustaceanCommando.class, ZooEscapees.class, EPFPointSquad.class, Island.class,
+        Terminate.class})
 class MondoGeckoTest extends BaseCardTest {
 
     @Test
@@ -28,7 +31,7 @@ class MondoGeckoTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         Permanent mondo = harness.addToBattlefieldAndReturn(player1, new MondoGecko());
-        harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player1, new ArrayList<>(List.of(new ZooEscapees())));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(mondo), null, null);
@@ -49,7 +52,7 @@ class MondoGeckoTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         Permanent mondo = harness.addToBattlefieldAndReturn(player1, new MondoGecko());
-        harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player1, new ArrayList<>(List.of(new ZooEscapees())));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(mondo), null, null);
@@ -69,20 +72,108 @@ class MondoGeckoTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage draws once for each distinct color among controlled permanents")
     void combatDamageDrawsForEachDistinctControlledColor() {
-        Permanent mondo = harness.addToBattlefieldAndReturn(player1, new MondoGecko());
-        mondo.setSummoningSick(false);
+        Permanent mondo = addCreatureReady(player1, new MondoGecko());
         mondo.setAttacking(true);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new OreskosSwiftclaw());
-        harness.addToBattlefield(player1, new BloodcrazedGoblin());
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears()));
+        harness.addToBattlefield(player1, new ZooEscapees());
+        harness.addToBattlefield(player1, new ZooEscapees());
+        harness.addToBattlefield(player1, new EPFPointSquad());
+        harness.addToBattlefield(player1, new CrustaceanCommando());
+        harness.setLibrary(player1, List.of(new ZooEscapees(), new ZooEscapees(),
+                new ZooEscapees(), new ZooEscapees()));
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         resolveCombat();
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 4);
+    }
+
+    @Test
+    @DisplayName("Repeated activations replace the color but retain hexproof from both chosen colors")
+    void repeatedActivationsAccumulateHexproof() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent mondo = harness.addToBattlefieldAndReturn(player1, new MondoGecko());
+        harness.setHand(player1, List.of(new Island(), new ZooEscapees()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        for (String color : List.of("RED", "GREEN")) {
+            harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(mondo), null, null);
+            harness.handleCardChosen(player1, 0);
+            harness.passBothPriorities();
+            harness.handleListChoice(player1, color);
+        }
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gqs.getEffectiveColors(gd, mondo)).containsExactly(CardColor.GREEN);
+        assertThat(gqs.hasHexproofFromColor(gd, mondo, CardColor.RED)).isTrue();
+        assertThat(gqs.hasHexproofFromColor(gd, mondo, CardColor.GREEN)).isTrue();
+        assertThat(gqs.hasHexproofFromColor(gd, mondo, CardColor.BLUE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Multicolored permanents contribute each color, but colorless lands and opposing permanents do not")
+    void combatDamageCountsMulticolorButNotColorlessOrOpposingPermanents() {
+        Permanent mondo = addCreatureReady(player1, new MondoGecko());
+        mondo.setAttacking(true);
+        harness.addToBattlefield(player1, new EPFPointSquad());
+        harness.addToBattlefield(player1, new EPFPointSquad());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player2, new ZooEscapees());
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island(), new Island()));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 3);
+    }
+
+    @Test
+    @DisplayName("The draw trigger counts current colors when it resolves")
+    void combatDamageCountsColorsAtResolution() {
+        Permanent mondo = addCreatureReady(player1, new MondoGecko());
+        mondo.setAttacking(true);
+        harness.addToBattlefield(player1, new EPFPointSquad());
+        harness.setHand(player1, List.of(new Island()));
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island(), new Island()));
+
+        resolveCombat();
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(mondo), null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Hexproof from red invalidates an opposing black-red spell already on the stack")
+    void hexproofStopsMulticoloredSpellWithMatchingNonprimaryColor() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent mondo = harness.addToBattlefieldAndReturn(player1, new MondoGecko());
+        harness.setHand(player1, List.of(new Island()));
+        harness.setHand(player2, List.of(new Terminate()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, mondo.getId());
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(mondo), null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Mondo Gecko");
+        harness.assertNotInGraveyard(player1, "Mondo Gecko");
+        harness.assertInGraveyard(player2, "Terminate");
     }
 }
