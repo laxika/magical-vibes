@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({MagmaticCore.class, BorealCentaur.class})
@@ -31,16 +34,15 @@ class MagmaticCoreTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, firstCreature.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
         harness.handlePermanentChosen(player1, secondCreature.getId());
-        harness.passBothPriorities();
 
-        PendingInteraction.XValueChoice allocation =
-                gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
+        PendingInteraction.ColorChoice allocation =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(allocation).isNotNull();
-        assertThat(allocation.minValue()).isEqualTo(1);
-        assertThat(allocation.maxValue()).isEqualTo(2);
-        harness.handleXValueChosen(player1, 1);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
-        harness.handleXValueChosen(player1, 2);
+        assertThat(allocation.options()).containsExactly("1", "2");
+        harness.handleListChoice(player1, "1");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+        harness.handleListChoice(player1, "2");
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(firstCreature);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(secondCreature.getCard());
@@ -122,10 +124,11 @@ class MagmaticCoreTest extends BaseCardTest {
         assertThat(targetChoice.validIds()).contains(creature.getId()).doesNotContain(noncreature.getId());
 
         harness.handlePermanentChosen(player1, creature.getId());
+        harness.handleListChoice(player1, "1");
         harness.passBothPriorities();
-        harness.handleXValueChosen(player1, 1);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
@@ -139,6 +142,83 @@ class MagmaticCoreTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(core);
+    }
+
+    @Test
+    @DisplayName("Zero age counters cannot assign damage to a creature")
+    void zeroAgeCountersCannotTargetCreatures() {
+        harness.addToBattlefield(player1, new MagmaticCore());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BorealCentaur());
+
+        advanceToEndStep(player1);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        if (choice != null) {
+            assertThat(choice.validIds()).doesNotContain(creature.getId());
+        }
+        assertThat(creature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("One damage cannot be divided among two target creatures")
+    void oneAgeCounterCannotTargetTwoCreatures() {
+        Permanent core = harness.addToBattlefieldAndReturn(player1, new MagmaticCore());
+        core.setCounterCount(CounterType.AGE, 1);
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new BorealCentaur());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new BorealCentaur());
+
+        advanceToEndStep(player1);
+        harness.handlePermanentChosen(player1, first.getId());
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        if (choice != null) {
+            assertThat(choice.validIds()).doesNotContain(second.getId());
+            harness.handlePermanentChosen(player1, player1.getId());
+        }
+        harness.handleListChoice(player1, "1");
+        harness.passBothPriorities();
+
+        assertThat(first.getMarkedDamage()).isEqualTo(1);
+        assertThat(second.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Any number of targets permits more than 99 creatures when enough damage is available")
+    void canTargetOneHundredCreatures() {
+        Permanent core = harness.addToBattlefieldAndReturn(player1, new MagmaticCore());
+        core.setCounterCount(CounterType.AGE, 100);
+        List<Permanent> creatures = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            creatures.add(harness.addToBattlefieldAndReturn(player2, new BorealCentaur()));
+        }
+
+        advanceToEndStep(player1);
+        for (int i = 0; i < 99; i++) {
+            harness.handlePermanentChosen(player1, creatures.get(i).getId());
+        }
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(creatures.get(99).getId());
+    }
+
+    @Test
+    @DisplayName("Can choose zero targets even when creatures are available")
+    void canDeclineAllAvailableTargets() {
+        Permanent core = harness.addToBattlefieldAndReturn(player1, new MagmaticCore());
+        core.setCounterCount(CounterType.AGE, 3);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BorealCentaur());
+
+        advanceToEndStep(player1);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(creature.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Magmatic Core");
     }
 
     private void advanceToEndStep(Player activePlayer) {
