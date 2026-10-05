@@ -36,8 +36,7 @@ class LoamDwellerTest extends BaseCardTest {
 
         Permanent land = findPermanent(player1, "Tendo Ice Bridge");
         assertThat(land.isTapped()).isTrue();
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(card -> card instanceof TendoIceBridge);
+        harness.assertNotInHand(player1, "Tendo Ice Bridge");
     }
 
     @Test
@@ -69,8 +68,7 @@ class LoamDwellerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard() instanceof TendoIceBridge);
+        harness.assertNotOnBattlefield(player1, "Tendo Ice Bridge");
     }
 
     @Test
@@ -85,8 +83,7 @@ class LoamDwellerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard() instanceof TendoIceBridge);
+        harness.assertNotOnBattlefield(player1, "Tendo Ice Bridge");
     }
 
     @Test
@@ -100,8 +97,7 @@ class LoamDwellerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard() instanceof TendoIceBridge);
+        harness.assertNotOnBattlefield(player1, "Tendo Ice Bridge");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
@@ -119,8 +115,66 @@ class LoamDwellerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard() instanceof TendoIceBridge);
+        harness.assertNotOnBattlefield(player1, "Tendo Ice Bridge");
+    }
+
+    @Test
+    @DisplayName("Casting Loam Dweller does not trigger its own ability")
+    void castingItselfDoesNotTrigger() {
+        harness.setHand(player1, List.of(new LoamDweller(), new TendoIceBridge()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Loam Dweller");
+        harness.assertInHand(player1, "Tendo Ice Bridge");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A land is put onto the battlefield before the triggering Spirit resolves")
+    void landEntersBeforeSpiritAndOnlyOneLandIsPut() {
+        addLoamDweller();
+        harness.setHand(player1, List.of(new KamiOfFalseHope(), new GoblinCohort(),
+                new TendoIceBridge(), new TendoIceBridge()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Kami of False Hope");
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(countPermanents(player1, "Tendo Ice Bridge")).isEqualTo(1);
+        assertThat(findPermanent(player1, "Tendo Ice Bridge").isTapped()).isTrue();
+        harness.assertInHand(player1, "Goblin Cohort");
+        harness.assertInHand(player1, "Tendo Ice Bridge");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Putting a land onto the battlefield does not use the normal land play")
+    void puttingLandDoesNotConsumeLandPlay() {
+        addLoamDweller();
+        harness.setHand(player1, List.of(new KamiOfFalseHope(),
+                new TendoIceBridge(), new TendoIceBridge()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+        harness.playLand(player1, 0);
+
+        assertThat(countPermanents(player1, "Tendo Ice Bridge")).isEqualTo(2);
+        assertThat(findPermanents(player1, "Tendo Ice Bridge"))
+                .filteredOn(Permanent::isTapped).hasSize(1);
+        harness.assertNotInHand(player1, "Tendo Ice Bridge");
     }
 
     private void addLoamDweller() {
