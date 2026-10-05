@@ -93,6 +93,64 @@ class KitsunePalliatorTest extends BaseCardTest {
         assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("Creature and player shields are consumed independently and do not prevent later damage")
+    void shieldsAreConsumedIndependently() {
+        Permanent palliator = addReadyPalliator();
+        Permanent enemy = addReadyCreature(player2);
+        int lifeBefore = gd.getLife(player2.getId());
+
+        activatePalliator(palliator);
+        castFirstVolley(enemy);
+
+        assertThat(enemy.getMarkedDamage()).isZero();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+
+        castFirstVolley(enemy);
+
+        assertThat(enemy.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 1);
+        assertThat(palliator.getDamagePreventionShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Two resolved activations prevent two damage to each creature and player")
+    void multipleActivationsStack() {
+        Permanent first = addReadyPalliator();
+        Permanent second = addReadyPalliator();
+        Permanent enemy = addReadyCreature(player2);
+        int lifeBefore = gd.getLife(player2.getId());
+
+        activatePalliator(first);
+        activatePalliator(second);
+        castIre(enemy.getId());
+        castIre(player2.getId());
+
+        assertThat(enemy.getMarkedDamage()).isZero();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("A creature entering before the ability resolves receives a shield")
+    void creatureEnteringBeforeResolutionIsShielded() {
+        Permanent palliator = addReadyPalliator();
+        harness.activateAbility(player1, indexOf(player1, palliator), 0, null, null);
+        assertThat(palliator.isTapped()).isTrue();
+
+        Permanent newcomer = harness.enterBattlefieldAndReturn(player2, new GnarledMass());
+        harness.passBothPriorities();
+        castFirstVolley(newcomer);
+
+        assertThat(newcomer.getMarkedDamage()).isZero();
+    }
+
+    private void castFirstVolley(Permanent target) {
+        harness.setHand(player1, List.of(new FirstVolley()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+    }
+
     private Permanent addReadyPalliator() {
         return addCreatureReady(player1, new KitsunePalliator());
     }
