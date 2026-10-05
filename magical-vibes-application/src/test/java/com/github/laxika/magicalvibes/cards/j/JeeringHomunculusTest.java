@@ -23,11 +23,7 @@ class JeeringHomunculusTest extends BaseCardTest {
     void acceptingEtbMayGoadsTargetCreature() {
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
-        castJeeringHomunculus();
-        harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, bears.getId());
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        resolveGoad(bears);
 
         assertThat(als.getMustAttackRequirementCount(gd, bears)).isEqualTo(1);
     }
@@ -58,6 +54,72 @@ class JeeringHomunculusTest extends BaseCardTest {
                 player1, harness.getPermanentId(player2, "Telepathy")))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid permanent");
+    }
+
+    @Test
+    @CardUsed({JeeringHomunculus.class})
+    @DisplayName("The ETB ability can goad Jeering Homunculus itself")
+    void canGoadItself() {
+        castJeeringHomunculus();
+        harness.passBothPriorities();
+        Permanent homunculus = findPermanent(player1, "Jeering Homunculus");
+        harness.handlePermanentChosen(player1, homunculus.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.isGoaded(gd, homunculus)).isTrue();
+        assertThat(als.getMustAttackRequirementCount(gd, homunculus)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A goaded creature must attack but can attack the goading player in a two-player game")
+    void goadedCreatureMustAttackInTwoPlayerGame() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        resolveGoad(bears);
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        declareAttackers(player2, List.of(0));
+
+        assertThat(bears.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped goaded creature is not required to attack")
+    void tappedGoadedCreatureNeedNotAttack() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        resolveGoad(bears);
+        bears.setTapped(true);
+
+        declareAttackers(player2, List.of());
+
+        assertThat(bears.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Goad lasts through the opponent's turn and expires when your next turn begins")
+    void goadExpiresAtControllersNextTurn() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        resolveGoad(bears);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gqs.isGoaded(gd, bears)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        assertThat(gqs.isGoaded(gd, bears)).isFalse();
+        assertThat(als.getMustAttackRequirementCount(gd, bears)).isZero();
+    }
+
+    private void resolveGoad(Permanent target) {
+        castJeeringHomunculus();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
     }
 
     private void castJeeringHomunculus() {
