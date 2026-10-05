@@ -144,4 +144,59 @@ class MightWeaverTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
+
+    @Test
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent weaver = harness.addToBattlefieldAndReturn(player1, new MightWeaver());
+        weaver.setSummoningSick(true);
+        weaver.setTapped(true);
+        Permanent target = addCreatureReady(player1, new KavuAggressor());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(weaver.isTapped()).isTrue();
+    }
+
+    @Test
+    void canActivateRepeatedlyWithoutTapping() {
+        Permanent weaver = addCreatureReady(player1, new MightWeaver());
+        Permanent red = addCreatureReady(player1, new KavuAggressor());
+        Permanent white = addCreatureReady(player2, new ArdentSoldier());
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, null, red.getId());
+        harness.activateAbility(player1, 0, null, white.getId());
+        resolveAllTriggers();
+
+        assertThat(red.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(white.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(weaver.isTapped()).isFalse();
+    }
+
+    @Test
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent weaver = addCreatureReady(player1, new MightWeaver());
+        Permanent target = addCreatureReady(player1, new KavuAggressor());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(weaver);
+        gd.playerGraveyards.get(player1.getId()).add(weaver.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    void cannotTargetGreenCreature() {
+        Permanent weaver = addCreatureReady(player1, new MightWeaver());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, weaver.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a");
+    }
 }
