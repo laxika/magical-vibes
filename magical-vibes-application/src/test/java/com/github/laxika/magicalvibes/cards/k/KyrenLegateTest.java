@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -77,5 +78,84 @@ class KyrenLegateTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Kyren Legate");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Tapped qualifying lands still allow the free cast")
+    void tappedLandsAllowAlternateCost() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player2, new Plains());
+        findPermanent(player1, "Mountain").setTapped(true);
+        findPermanent(player2, "Plains").setTapped(true);
+        harness.setHand(player1, List.of(new KyrenLegate()));
+
+        harness.castWithAlternateCost(player1, 0, (UUID) null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Kyren Legate");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("The caster's own Plains does not satisfy the opponent condition")
+    void ownPlainsDoesNotAllowAlternateCost() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Plains());
+        harness.setHand(player1, List.of(new KyrenLegate()));
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, (UUID) null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Kyren Legate");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's Mountain does not satisfy the caster condition")
+    void opponentMountainDoesNotAllowAlternateCost() {
+        harness.addToBattlefield(player2, new Mountain());
+        harness.addToBattlefield(player2, new Plains());
+        harness.setHand(player1, List.of(new KyrenLegate()));
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, (UUID) null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Kyren Legate");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The free casting option does not grant instant-speed timing")
+    void alternateCostDoesNotGrantFlash() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player2, new Plains());
+        harness.setHand(player1, List.of(new KyrenLegate()));
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, (UUID) null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Kyren Legate");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Removing qualifying lands after casting does not stop resolution")
+    void qualifyingLandsAreNotRequiredAtResolution() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player2, new Plains());
+        harness.setHand(player1, List.of(new KyrenLegate()));
+
+        harness.castWithAlternateCost(player1, 0, (UUID) null);
+        Permanent mountain = findPermanent(player1, "Mountain");
+        Permanent plains = findPermanent(player2, "Plains");
+        gd.playerBattlefields.get(player1.getId()).remove(mountain);
+        gd.playerGraveyards.get(player1.getId()).add(mountain.getCard());
+        gd.playerBattlefields.get(player2.getId()).remove(plains);
+        gd.playerGraveyards.get(player2.getId()).add(plains.getCard());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Kyren Legate");
+        assertThat(gd.stack).isEmpty();
     }
 }
