@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PowerWordKill;
 import com.github.laxika.magicalvibes.cards.w.WilyGoblin;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KalainReclusivePainter.class, WilyGoblin.class, FugitiveWizard.class, GrizzlyBears.class})
+@CardUsed({KalainReclusivePainter.class, WilyGoblin.class, FugitiveWizard.class, GrizzlyBears.class,
+        PowerWordKill.class})
 class KalainReclusivePainterTest extends BaseCardTest {
 
     @Test
@@ -28,8 +30,7 @@ class KalainReclusivePainterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
     }
@@ -96,33 +97,115 @@ class KalainReclusivePainterTest extends BaseCardTest {
         assertThat(wizard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    void mixedManaOnlyCountsManaFromTreasure() {
+        addReadyKalain(player1);
+        createTreasure();
+        sacrificeTreasureFor(ManaColor.GREEN);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Grizzly Bears")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void kalainDoesNotGiveItselfCounters() {
+        createTwoTreasures();
+        sacrificeTreasureFor(ManaColor.BLACK);
+        sacrificeTreasureFor(ManaColor.RED);
+        harness.setHand(player1, List.of(new KalainReclusivePainter()));
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Kalain, Reclusive Painter")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+    }
+
+    @Test
+    void opponentSpendingTreasureManaDoesNotReceiveCounters() {
+        addReadyKalain(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        createTreasure(player2);
+        sacrificeTreasureFor(player2, ManaColor.BLUE);
+        harness.setHand(player2, List.of(new FugitiveWizard()));
+
+        harness.castCreature(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player2, "Fugitive Wizard")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void kalainMustStillBePresentWhenCreatureEnters() {
+        Permanent kalain = addReadyKalain(player1);
+        createTreasure();
+        sacrificeTreasureFor(ManaColor.BLUE);
+        harness.setHand(player1, List.of(new FugitiveWizard()));
+        harness.castCreature(player1, 0);
+
+        harness.setHand(player2, List.of(new PowerWordKill()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castInstant(player2, 0, kalain.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Kalain, Reclusive Painter");
+        assertThat(findPermanent(player1, "Fugitive Wizard")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void uncastCreatureDoesNotUseTreasureManaFloatingInPool() {
+        addReadyKalain(player1);
+        createTreasure();
+        sacrificeTreasureFor(ManaColor.BLUE);
+
+        Permanent wizard = harness.enterBattlefieldAndReturn(player1, new FugitiveWizard());
+        resolveAllTriggers();
+
+        assertThat(wizard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private Permanent addReadyKalain(Player player) {
         return addCreatureReady(player, new KalainReclusivePainter());
     }
 
     private void createTreasure() {
-        harness.setHand(player1, List.of(new WilyGoblin()));
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        createTreasure(player1);
+    }
+
+    private void createTreasure(Player player) {
+        harness.setHand(player, List.of(new WilyGoblin()));
+        harness.addMana(player, ManaColor.RED, 2);
+        harness.castCreature(player, 0);
+        resolveAllTriggers();
     }
 
     private void createTwoTreasures() {
         harness.setHand(player1, List.of(new WilyGoblin(), new WilyGoblin()));
         harness.addMana(player1, ManaColor.RED, 4);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void sacrificeTreasureFor(ManaColor color) {
-        Permanent treasure = findPermanent(player1, "Treasure");
-        int treasureIndex = gd.playerBattlefields.get(player1.getId()).indexOf(treasure);
-        harness.activateAbility(player1, treasureIndex, null, null);
-        harness.handleListChoice(player1, color.name());
+        sacrificeTreasureFor(player1, color);
+    }
+
+    private void sacrificeTreasureFor(Player player, ManaColor color) {
+        Permanent treasure = findPermanent(player, "Treasure");
+        int treasureIndex = gd.playerBattlefields.get(player.getId()).indexOf(treasure);
+        harness.activateAbility(player, treasureIndex, null, null);
+        harness.handleListChoice(player, color.name());
     }
 }
