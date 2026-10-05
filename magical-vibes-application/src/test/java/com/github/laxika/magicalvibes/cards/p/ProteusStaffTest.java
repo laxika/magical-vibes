@@ -124,6 +124,101 @@ class ProteusStaffTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Finds the targeted creature itself when it is the last creature in the library")
+    void returnsTargetWhenNoOtherCreatureExists() {
+        Card staff = new ProteusStaff();
+        harness.addToBattlefield(player1, staff);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        Card first = new Forest();
+        Card second = new Shock();
+        harness.setLibrary(player1, List.of(first, second));
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard).containsExactly(staff, target.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getId).doesNotContain(target.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first);
+    }
+
+    @Test
+    @DisplayName("An empty controller library still allows the target to go to its owner's library")
+    void emptyControllerLibraryDoesNotPreventMovingTarget() {
+        harness.addToBattlefield(player1, new ProteusStaff());
+        Card targetCard = new LlanowarElves();
+        targetCard.setOwnerId(player1.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, targetCard);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(targetCard);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not reveal any cards when the target dies before resolution")
+    void doesNotRevealWhenTargetBecomesIllegal() {
+        harness.addToBattlefield(player1, new ProteusStaff());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new Shock()));
+        Card top = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(top));
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(target.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(p -> p.getCard().getName()).containsExactly("Proteus Staff");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The target's controller orders their entire library when no creature is found")
+    void controllerReordersEntireLibraryWithoutCreatures() {
+        harness.addToBattlefield(player1, new ProteusStaff());
+        Card targetCard = new LlanowarElves();
+        targetCard.setOwnerId(player1.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, targetCard);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        Card first = new Shock();
+        Card second = new Forest();
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of(first, second));
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(targetCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(second, first);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
     @DisplayName("Can only be activated at sorcery speed")
     void requiresSorcerySpeed() {
         harness.addToBattlefield(player1, new ProteusStaff());
