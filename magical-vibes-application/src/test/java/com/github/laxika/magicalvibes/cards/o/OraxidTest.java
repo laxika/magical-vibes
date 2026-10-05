@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.f.FireElemental;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.l.LaccolithRig;
+import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Oraxid.class, LightningBolt.class, Unsummon.class, FireElemental.class, CrawWurm.class})
+@CardUsed({Oraxid.class, LightningBolt.class, Unsummon.class, FireElemental.class, CrawWurm.class, LaccolithRig.class, Pyroclasm.class})
 class OraxidTest extends BaseCardTest {
 
     @Test
@@ -92,5 +94,44 @@ class OraxidTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Oraxid");
         harness.assertInGraveyard(player2, "Oraxid");
+    }
+
+    @Test
+    @DisplayName("Protection also prevents Oraxid's controller from targeting it with a red spell")
+    void controllerCannotTargetWithRedSpell() {
+        Permanent oraxid = addCreatureReady(player1, new Oraxid());
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, oraxid.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from red");
+    }
+
+    @Test
+    @DisplayName("Oraxid cannot be targeted by a red Aura")
+    void cannotBeEnchantedByRedAura() {
+        Permanent oraxid = addCreatureReady(player2, new Oraxid());
+        harness.setHand(player1, List.of(new LaccolithRig()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, oraxid.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Protection prevents non-targeted red spell damage")
+    void nonTargetedRedDamageIsPrevented() {
+        Permanent oraxid = addCreatureReady(player2, new Oraxid());
+        Permanent wurm = addCreatureReady(player2, new CrawWurm());
+        harness.setHand(player1, List.of(new Pyroclasm()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(oraxid.getMarkedDamage()).isZero();
+        assertThat(wurm.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Oraxid");
     }
 }
