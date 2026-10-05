@@ -182,4 +182,60 @@ class InfernalHarvestTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(swamp);
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(nonCreature);
     }
+
+    @Test
+    @DisplayName("Returning Swamps is paid before resolution and damage is not redistributed")
+    void paysCostBeforeResolutionAndDoesNotRedistributeDamage() {
+        Permanent swamp1 = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        Permanent swamp2 = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepare();
+
+        harness.castSorceryReturningPermanents(player1, 0,
+                Map.of(first.getId(), 1, second.getId(), 1),
+                List.of(swamp1.getId(), swamp2.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(first.getMarkedDamage()).isZero();
+        assertThat(second.getMarkedDamage()).isZero();
+
+        gd.playerBattlefields.get(player2.getId()).remove(first);
+        harness.passBothPriorities();
+
+        assertThat(second.getMarkedDamage()).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Infernal Harvest");
+    }
+
+    @Test
+    @DisplayName("Every chosen target must receive at least one damage")
+    void cannotAssignZeroDamageToATarget() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepare();
+
+        assertThatThrownBy(() -> harness.castSorceryReturningPermanents(player1, 0,
+                Map.of(first.getId(), 1, second.getId(), 0), List.of(swamp.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(swamp);
+        harness.assertInHand(player1, "Infernal Harvest");
+    }
+
+    @Test
+    @DisplayName("Can deal damage to a creature controlled by the caster")
+    void canTargetOwnCreature() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        prepare();
+
+        harness.castSorceryReturningPermanents(player1, 0,
+                Map.of(bears.getId(), 1), List.of(swamp.getId()));
+        harness.passBothPriorities();
+
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
+        harness.assertInHand(player1, "Swamp");
+    }
 }
