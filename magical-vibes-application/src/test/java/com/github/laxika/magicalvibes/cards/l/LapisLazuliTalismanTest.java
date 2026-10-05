@@ -97,4 +97,56 @@ class LapisLazuliTalismanTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
+
+    @Test
+    @DisplayName("The controller can pay to untap an opponent's permanent")
+    void untapsOpponentsPermanent() {
+        harness.addToBattlefield(player1, new LapisLazuliTalisman());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        bears.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castFromHand(player1, new ZuranSpellcaster(), "{2}{U}");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(bears.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(bears.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Talisman still triggers and can untap itself")
+    void tappedTalismanCanUntapItself() {
+        Permanent talisman = harness.addToBattlefieldAndReturn(player1, new LapisLazuliTalisman());
+        talisman.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castFromHand(player1, new ZuranSpellcaster(), "{2}{U}");
+        harness.handlePermanentChosen(player1, talisman.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(talisman.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Accepting without enough mana does not untap the target")
+    void insufficientManaLeavesTargetTapped() {
+        harness.addToBattlefield(player1, new LapisLazuliTalisman());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        bears.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castFromHand(player1, new ZuranSpellcaster(), "{2}{U}");
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bears.isTapped()).isTrue();
+    }
 }
