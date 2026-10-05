@@ -55,9 +55,68 @@ class InventiveWingsmithTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(shock));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castFromLibraryTop(player1, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveFromLibraryTop(player1, player2.getId());
         advanceToEndStep(player1);
+
+        assertThat(wingsmith.getCounterCount(CounterType.FLYING)).isEqualTo(1);
+    }
+
+    @Test
+    void doesNotTriggerWithAnExistingFlyingCounter() {
+        Permanent wingsmith = addWingsmith();
+        wingsmith.setCounterCount(CounterType.FLYING, 1);
+
+        beginEndStep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(wingsmith.getCounterCount(CounterType.FLYING)).isEqualTo(1);
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsEndStep() {
+        Permanent wingsmith = addWingsmith();
+
+        beginEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(wingsmith.getCounterCount(CounterType.FLYING)).isZero();
+    }
+
+    @Test
+    void handSpellInResponsePreventsCounterAtResolution() {
+        Permanent wingsmith = addWingsmith();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        beginEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(wingsmith.getCounterCount(CounterType.FLYING)).isZero();
+    }
+
+    @Test
+    void flyingCounterAddedInResponsePreventsAnotherCounter() {
+        Permanent wingsmith = addWingsmith();
+        beginEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+        wingsmith.setCounterCount(CounterType.FLYING, 1);
+
+        harness.passBothPriorities();
+
+        assertThat(wingsmith.getCounterCount(CounterType.FLYING)).isEqualTo(1);
+    }
+
+    @Test
+    void opponentsHandSpellDoesNotPreventCounter() {
+        Permanent wingsmith = addWingsmith();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        beginEndStep(player1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
 
         assertThat(wingsmith.getCounterCount(CounterType.FLYING)).isEqualTo(1);
     }
@@ -67,10 +126,14 @@ class InventiveWingsmithTest extends BaseCardTest {
     }
 
     private void advanceToEndStep(Player activePlayer) {
+        beginEndStep(activePlayer);
+        harness.passBothPriorities();
+    }
+
+    private void beginEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
     }
 }
