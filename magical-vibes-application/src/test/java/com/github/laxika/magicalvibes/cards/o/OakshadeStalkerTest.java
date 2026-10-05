@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.m.MoonlitAmbusher;
+import com.github.laxika.magicalvibes.cards.m.MuldrothaTheGravetide;
 import com.github.laxika.magicalvibes.model.DayNight;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OakshadeStalker.class, MoonlitAmbusher.class})
+@CardUsed({OakshadeStalker.class, MoonlitAmbusher.class, MuldrothaTheGravetide.class})
 class OakshadeStalkerTest extends BaseCardTest {
 
     @Test
@@ -86,5 +87,76 @@ class OakshadeStalkerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Resolving the first daybound creature establishes day without a surcharge")
+    void normalCastEstablishesDay() {
+        gd.dayNight = DayNight.NEITHER;
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new OakshadeStalker()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        assertThat(findPermanent(player1, "Oakshade Stalker").isTransformed()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Paying the flash surcharge at night still enters as Moonlit Ambusher")
+    void flashCastAtNightEntersTransformed() {
+        gd.dayNight = DayNight.NIGHT;
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new OakshadeStalker()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreatureWithEvoke(player1, 0, null);
+        harness.passBothPriorities();
+
+        Permanent ambusher = findPermanent(player1, "Moonlit Ambusher");
+        assertThat(ambusher.isTransformed()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, ambusher)).isEqualTo(6);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Selecting flash casting cannot bypass the surcharge with only normal-cost mana")
+    void flashCastRequiresEnoughMana() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new OakshadeStalker()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castCreatureWithEvoke(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Muldrotha permits graveyard casting during upkeep by paying the flash surcharge")
+    void flashCastFromGraveyardWithMuldrotha() {
+        harness.addToBattlefield(player1, new MuldrothaTheGravetide());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.setGraveyard(player1, List.of(new OakshadeStalker()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castFromGraveyard(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Oakshade Stalker");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }
