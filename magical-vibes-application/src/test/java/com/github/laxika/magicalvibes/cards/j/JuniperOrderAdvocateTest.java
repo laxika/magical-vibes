@@ -72,4 +72,41 @@ class JuniperOrderAdvocateTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("Tapped green creatures still receive the bonus")
+    void tappedGreenCreatureGetsBoost() {
+        harness.addToBattlefield(player1, new JuniperOrderAdvocate());
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new ElvishSpiritGuide());
+        elf.tap();
+
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Multiple Advocates stack and each bonus depends on its own source being untapped")
+    void multipleAdvocatesHaveIndependentBonuses() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new JuniperOrderAdvocate());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new JuniperOrderAdvocate());
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new ElvishSpiritGuide());
+
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(4);
+
+        first.tap();
+
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(3);
+
+        second.tap();
+
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(2);
+
+        first.untap();
+
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(3);
+    }
 }
