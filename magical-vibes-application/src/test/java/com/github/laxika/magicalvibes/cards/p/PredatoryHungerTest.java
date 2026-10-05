@@ -19,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PredatoryHunger.class, ElvishBerserker.class, FightingChance.class, Allay.class, Forbid.class})
+@CardUsed({PredatoryHunger.class, ElvishBerserker.class, FightingChance.class, Allay.class, Forbid.class,
+        EnchantmentAlteration.class})
 class PredatoryHungerTest extends BaseCardTest {
 
     @Test
@@ -96,8 +97,7 @@ class PredatoryHungerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Forbid()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, creatureSpell.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creatureSpell.getId());
         harness.passBothPriorities();
 
         assertThat(host.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -115,8 +115,7 @@ class PredatoryHungerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Allay()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, aura.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, aura.getId());
         harness.passBothPriorities();
 
         assertThat(host.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -124,7 +123,6 @@ class PredatoryHungerTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(EnchantmentAlteration.class)
     @DisplayName("The trigger affects the creature enchanted when it resolves")
     void triggerUsesCurrentEnchantedCreatureAtResolution() {
         Permanent firstHost = addCreatureReady(player1, new ElvishBerserker());
@@ -136,8 +134,7 @@ class PredatoryHungerTest extends BaseCardTest {
         castOpponentCreatureSpell();
         harness.setHand(player1, List.of(new EnchantmentAlteration()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0, aura.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, aura.getId());
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -147,6 +144,56 @@ class PredatoryHungerTest extends BaseCardTest {
         assertThat(aura.getAttachedTo()).isEqualTo(secondHost.getId());
         harness.passBothPriorities();
 
+        assertThat(firstHost.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(secondHost.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An opponent putting a creature onto the battlefield without casting does not trigger")
+    void creatureEnteringWithoutBeingCastDoesNotAddCounter() {
+        Permanent host = addCreatureReady(player1, new ElvishBerserker());
+        enchantHost(host);
+
+        harness.enterBattlefieldAndReturn(player2, new ElvishBerserker());
+        resolveAllTriggers();
+
+        assertThat(host.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Two Predatory Hungers each trigger for the same opponent creature spell")
+    void multipleAurasEachAddCounter() {
+        Permanent host = addCreatureReady(player1, new ElvishBerserker());
+        enchantHost(host);
+        enchantHost(host);
+
+        castOpponentCreatureSpell();
+        resolveAllTriggers();
+
+        assertThat(host.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A moved Aura that leaves uses its final enchanted creature")
+    void movedAuraLeavingUsesLastEnchantedCreature() {
+        Permanent firstHost = addCreatureReady(player1, new ElvishBerserker());
+        Permanent secondHost = addCreatureReady(player1, new ElvishBerserker());
+        enchantHost(firstHost);
+        Permanent aura = findPermanent(player1, "Predatory Hunger");
+
+        castOpponentCreatureSpell();
+        harness.setHand(player1, List.of(new EnchantmentAlteration()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        harness.handlePermanentChosen(player1, secondHost.getId());
+
+        harness.setHand(player1, List.of(new Allay()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Predatory Hunger");
         assertThat(firstHost.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(secondHost.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
