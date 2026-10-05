@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
+import com.github.laxika.magicalvibes.cards.l.LanternKami;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,8 +16,42 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NezumiRonin.class, HumbleBudoka.class})
+@CardUsed({NezumiRonin.class, HumbleBudoka.class, LanternKami.class})
 class NezumiRoninTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Bushido waits for its triggered ability to resolve")
+    void bushidoBonusWaitsForResolution() {
+        Permanent ronin = addCreatureReady(player1, new NezumiRonin());
+        addCreatureReady(player2, new HumbleBudoka());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(ronin.getPowerModifier()).isZero();
+        assertThat(ronin.getToughnessModifier()).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(ronin.getPowerModifier()).isEqualTo(1);
+        assertThat(ronin.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Bushido lets Nezumi Ronin survive combat with a one-power blocker")
+    void bushidoToughnessBonusPreventsLethalCombatDamage() {
+        addCreatureReady(player1, new NezumiRonin());
+        addCreatureReady(player2, new LanternKami());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+        harness.resolveCombatDamage();
+
+        harness.assertOnBattlefield(player1, "Nezumi Ronin");
+        harness.assertInGraveyard(player2, "Lantern Kami");
+    }
 
     @Test
     @DisplayName("When Nezumi Ronin becomes blocked, it gets +1/+1 until end of turn")
