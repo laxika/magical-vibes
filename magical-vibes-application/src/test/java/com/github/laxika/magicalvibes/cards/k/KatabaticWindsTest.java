@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.p.PantherWarriors;
 import com.github.laxika.magicalvibes.cards.q.QuirionDruid;
 import com.github.laxika.magicalvibes.cards.c.CoralAtoll;
 import com.github.laxika.magicalvibes.cards.s.SpittingDrake;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -78,7 +77,7 @@ class KatabaticWindsTest extends BaseCardTest {
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("declares 1 blocker"));
+        assertThat(gameLogContains("declares 1 blocker")).isTrue();
     }
 
     @Test
@@ -155,6 +154,74 @@ class KatabaticWindsTest extends BaseCardTest {
 
         advanceTurn();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(winds);
+    }
+
+    @Test
+    @DisplayName("Flying creatures can attack while Katabatic Winds is phased out")
+    void flyingCreatureCanAttackWhileWindsIsPhasedOut() {
+        Permanent winds = harness.addToBattlefieldAndReturn(player1, new KatabaticWinds());
+        Permanent flyer = addCreatureReady(player1, new SpittingDrake());
+        harness.setLife(player2, 20);
+
+        harness.performUntapStep(player1);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(winds);
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(flyer)));
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Katabatic Winds also prevents opposing flying creatures from attacking")
+    void opposingFlyingCreatureCannotAttack() {
+        harness.addToBattlefield(player1, new KatabaticWinds());
+        Permanent flyer = addCreatureReady(player2, new SpittingDrake());
+
+        assertThatThrownBy(() -> declareAttackers(player2,
+                List.of(gd.playerBattlefields.get(player2.getId()).indexOf(flyer))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Flying creatures can block while Katabatic Winds is phased out")
+    void flyingCreatureCanBlockWhileWindsIsPhasedOut() {
+        Permanent winds = harness.addToBattlefieldAndReturn(player1, new KatabaticWinds());
+        Permanent attacker = addCreatureReady(player1, new PantherWarriors());
+        Permanent blocker = addCreatureReady(player2, new SpittingDrake());
+
+        harness.performUntapStep(player1);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(winds);
+        declareAttackersAndPrepareBlockers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+
+        assertThat(gameLogContains("declares 1 blocker")).isTrue();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Flying creature tap abilities become legal while Winds is phased out and are locked again when it phases in")
+    void tapAbilityRestrictionFollowsPhasing() {
+        Permanent winds = harness.addToBattlefieldAndReturn(player1, new KatabaticWinds());
+        Permanent spirit = addCreatureReady(player1, new GuidingSpirit());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(winds);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(spirit),
+                null, player2.getId());
+        harness.passBothPriorities();
+        assertThat(spirit.isTapped()).isTrue();
+
+        advanceToUpkeep(player1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(winds);
+        assertThat(spirit.isTapped()).isFalse();
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(spirit), null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
     }
 
     private void advanceTurn() {
