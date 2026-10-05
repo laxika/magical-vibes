@@ -123,4 +123,38 @@ class MirrorWallTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
+
+    @Test
+    @DisplayName("Attack permission begins only when the ability resolves")
+    void permissionRequiresResolution() {
+        Permanent wall = addWallReady();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(als.canAttack(gd, wall, player1.getId())).isFalse();
+
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        assertThat(wall.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped wall can activate but cannot attack until untapped")
+    void tappedWallCanActivateButCannotAttack() {
+        Permanent wall = addWallReady();
+        wall.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wall.isTapped()).isTrue();
+        assertThat(als.canAttack(gd, wall, player1.getId())).isFalse();
+
+        wall.setTapped(false);
+        declareAttackersAndPrepareBlockers(List.of(0));
+        assertThat(wall.isAttacking()).isTrue();
+    }
 }
