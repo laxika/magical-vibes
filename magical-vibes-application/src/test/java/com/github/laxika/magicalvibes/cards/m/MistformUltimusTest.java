@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.c.Conspiracy;
 import com.github.laxika.magicalvibes.cards.l.LordOfAtlantis;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MistformUltimus.class, LordOfAtlantis.class})
+@CardUsed({MistformUltimus.class, LordOfAtlantis.class, Conspiracy.class})
 class MistformUltimusTest extends BaseCardTest {
 
     @Test
@@ -62,5 +63,47 @@ class MistformUltimusTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gqs.cardHasSubtype(gd.stack.getFirst().getCard(), CardSubtype.MERFOLK, gd, player1.getId()))
                 .isTrue();
+    }
+
+    @Test
+    @DisplayName("Conspiracy replaces all creature types when Mistform Ultimus enters later")
+    void conspiracyOverridesTypesWhenMistformEntersLater() {
+        harness.castFromHand(player1, new Conspiracy(), "{3}{B}{B}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
+
+        harness.castFromHand(player1, new MistformUltimus(), "{3}{U}");
+        harness.passBothPriorities();
+        Permanent mistform = findPermanent(player1, "Mistform Ultimus");
+
+        assertThat(gqs.hasEffectiveSubtype(gd, mistform, CardSubtype.GOBLIN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, mistform, CardSubtype.MERFOLK)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, mistform, CardSubtype.ILLUSION)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Conspiracy replaces all creature types when Mistform Ultimus enters first")
+    void conspiracyOverridesTypesWhenMistformEntersFirst() {
+        Permanent mistform = harness.addToBattlefieldAndReturn(player1, new MistformUltimus());
+
+        harness.castFromHand(player1, new Conspiracy(), "{3}{B}{B}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
+
+        assertThat(gqs.hasEffectiveSubtype(gd, mistform, CardSubtype.GOBLIN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, mistform, CardSubtype.MERFOLK)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, mistform, CardSubtype.ILLUSION)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Mistform Ultimus does not grant creature types to other creatures")
+    void doesNotGrantTypesToOtherCreatures() {
+        harness.addToBattlefield(player1, new MistformUltimus());
+        Permanent lord = harness.addToBattlefieldAndReturn(player1, new LordOfAtlantis());
+
+        assertThat(gqs.hasEffectiveSubtype(gd, lord, CardSubtype.MERFOLK)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, lord, CardSubtype.GOBLIN)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, lord)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lord)).isEqualTo(2);
     }
 }
