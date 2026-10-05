@@ -1,18 +1,88 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.p.PropheticPrism;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({InspiringVantage.class, Mountain.class, PropheticPrism.class})
 class InspiringVantageTest extends BaseCardTest {
+
+    @Test
+    void entersUntappedWithNoOtherLands() {
+        playInspiringVantage();
+
+        assertThat(findVantage(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    void entersUntappedWithOneOtherLand() {
+        addMountain(player1);
+
+        playInspiringVantage();
+
+        assertThat(findVantage(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    void opponentLandsDoNotCount() {
+        addMountain(player1);
+        addMountain(player1);
+        addMountain(player2);
+        addMountain(player2);
+        addMountain(player2);
+
+        playInspiringVantage();
+
+        assertThat(findVantage(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    void nonlandPermanentsDoNotCount() {
+        addMountain(player1);
+        addMountain(player1);
+        harness.addToBattlefield(player1, new PropheticPrism());
+
+        playInspiringVantage();
+
+        assertThat(findVantage(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    void tappedNonbasicLandsCount() {
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefieldAndReturn(player1, new InspiringVantage()).tap();
+        }
+
+        playInspiringVantage();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).get(3).isTapped()).isTrue();
+    }
+
+    @Test
+    void cannotActivateManaAbilityWhileTapped() {
+        addMountain(player1);
+        addMountain(player1);
+        addMountain(player1);
+        playInspiringVantage();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 3, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 3, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+    }
 
     @Test
     void entersUntappedWithTwoOtherLands() {
@@ -61,14 +131,13 @@ class InspiringVantageTest extends BaseCardTest {
     }
 
     private Permanent addReadyVantage(Player player) {
-        Permanent permanent = new Permanent(new InspiringVantage());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new InspiringVantage());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
     private void addMountain(Player player) {
-        gd.playerBattlefields.get(player.getId()).add(new Permanent(new Mountain()));
+        harness.addToBattlefield(player, new Mountain());
     }
 
     private Permanent findVantage(Player player) {
