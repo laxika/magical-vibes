@@ -31,7 +31,7 @@ class KrisMageTest extends BaseCardTest {
 
         assertThat(krisMage.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Fresh Volunteers");
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -89,5 +89,53 @@ class KrisMageTest extends BaseCardTest {
 
     private Permanent addReadyKrisMage(Player player) {
         return addCreatureReady(player, new KrisMage());
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent krisMage = harness.addToBattlefieldAndReturn(player1, new KrisMage());
+        krisMage.setSummoningSick(true);
+        harness.setHand(player1, List.of(new FreshVolunteers()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(krisMage.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Can target itself and dies from its own damage")
+    void canTargetItself() {
+        Permanent krisMage = addReadyKrisMage(player1);
+        harness.setHand(player1, List.of(new FreshVolunteers()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 0, null, krisMage.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Kris Mage");
+        harness.assertInGraveyard(player1, "Kris Mage");
+        harness.assertInGraveyard(player1, "Fresh Volunteers");
+    }
+
+    @Test
+    @DisplayName("Marks one damage on a creature that survives")
+    void marksNonlethalDamage() {
+        addReadyKrisMage(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
+        harness.setHand(player1, List.of(new KrisMage()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Fresh Volunteers");
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Kris Mage");
     }
 }
