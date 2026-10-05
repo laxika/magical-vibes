@@ -71,8 +71,48 @@ class MantaRidersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(gqs.hasKeyword(gd, riders, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Flying is granted on resolution only to the activated Manta Riders")
+    void grantsFlyingOnlyToSourceOnResolution() {
+        Permanent riders = addCreatureReady(player1, new MantaRiders());
+        Permanent otherRiders = addCreatureReady(player1, new MantaRiders());
+        Permanent opposingRiders = addCreatureReady(player2, new MantaRiders());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.hasKeyword(gd, riders, Keyword.FLYING)).isFalse();
+
         harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, riders, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherRiders, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingRiders, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Manta Riders can activate repeatedly, paying blue mana each time")
+    void canActivateRepeatedlyWhileTapped() {
+        Permanent riders = addCreatureReady(player1, new MantaRiders());
+        riders.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, riders, Keyword.FLYING)).isTrue();
+        assertThat(riders.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.hasKeyword(gd, riders, Keyword.FLYING)).isFalse();
     }
