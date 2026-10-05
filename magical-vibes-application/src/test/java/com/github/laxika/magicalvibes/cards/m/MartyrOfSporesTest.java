@@ -61,10 +61,12 @@ class MartyrOfSporesTest extends BaseCardTest {
     void cannotRevealMoreGreenCardsThanAreInHand() {
         harness.setHand(player1, List.of(new BorealGriffin()));
         Permanent martyr = addCreatureReady(player1, new MartyrOfSpores());
+        Permanent target = addCreatureReady(player2, new BorealDruid());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough matching cards");
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(martyr);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
@@ -120,5 +122,76 @@ class MartyrOfSporesTest extends BaseCardTest {
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(martyr);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(greenCard, nonGreenCard);
+    }
+
+    @Test
+    @DisplayName("Revealing a subset fixes X even if the hand changes before resolution")
+    void revealedSubsetDeterminesBoostAfterHandChanges() {
+        Card firstGreenCard = new BorealDruid();
+        Card secondGreenCard = new PanglacialWurm();
+        harness.setHand(player1, List.of(firstGreenCard, secondGreenCard));
+        Permanent martyr = addCreatureReady(player1, new MartyrOfSpores());
+        Permanent target = addCreatureReady(player2, new BorealDruid());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, target.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(secondGreenCard.getId()));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(martyr.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstGreenCard, secondGreenCard);
+        assertThat(target.getEffectivePower()).isEqualTo(1);
+        harness.setHand(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Martyr can activate its ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Card greenCard = new BorealDruid();
+        harness.setHand(player1, List.of(greenCard));
+        Permanent martyr = addCreatureReady(player1, new MartyrOfSpores());
+        martyr.setSummoningSick(true);
+        martyr.setTapped(true);
+        Permanent target = addCreatureReady(player1, new BorealDruid());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, target.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(greenCard.getId()));
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(martyr.getCard());
+    }
+
+    @Test
+    @DisplayName("The reveal selection must contain exactly X distinct cards")
+    void rejectsWrongCountAndDuplicateRevealSelections() {
+        Card firstGreenCard = new BorealDruid();
+        Card secondGreenCard = new PanglacialWurm();
+        harness.setHand(player1, List.of(firstGreenCard, secondGreenCard));
+        Permanent martyr = addCreatureReady(player1, new MartyrOfSpores());
+        Permanent target = addCreatureReady(player1, new BorealDruid());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 2, target.getId());
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(firstGreenCard.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(firstGreenCard.getId(), firstGreenCard.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(martyr);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+
+        harness.handleMultipleCardsChosen(player1, List.of(firstGreenCard.getId(), secondGreenCard.getId()));
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(martyr.getCard());
     }
 }
