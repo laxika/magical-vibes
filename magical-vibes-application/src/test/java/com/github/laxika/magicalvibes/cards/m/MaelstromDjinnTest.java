@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.t.Timecrafting;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(MaelstromDjinn.class)
+@CardUsed({MaelstromDjinn.class, Timecrafting.class})
 class MaelstromDjinnTest extends BaseCardTest {
 
     @Test
@@ -56,6 +57,47 @@ class MaelstromDjinnTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Maelstrom Djinn");
         harness.assertInGraveyard(player1, "Maelstrom Djinn");
+    }
+
+    @Test
+    void castingFaceUpDoesNotGrantVanishing() {
+        harness.castFromHand(player1, new MaelstromDjinn(), "{7}{U}");
+        resolveAllTriggers();
+        Permanent djinn = findPermanent(player1, "Maelstrom Djinn");
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(djinn.getCounterCount(CounterType.TIME)).isZero();
+        assertThat(gqs.hasKeyword(gd, djinn, Keyword.VANISHING)).isFalse();
+        harness.assertOnBattlefield(player1, "Maelstrom Djinn");
+    }
+
+    @Test
+    void opponentsUpkeepDoesNotRemoveTimeCounters() {
+        Permanent djinn = turnFaceUpDjinn();
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        assertThat(djinn.getCounterCount(CounterType.TIME)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Maelstrom Djinn");
+    }
+
+    @Test
+    void removingLastTimeCounterWithAnotherSpellTriggersSacrifice() {
+        Permanent djinn = turnFaceUpDjinn();
+        harness.setHand(player1, List.of(new Timecrafting()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castModalInstantForX(player1, 0, 0, 2, djinn.getId());
+        resolveAllTriggers();
+        harness.assertNotOnBattlefield(player1, "Maelstrom Djinn");
+        harness.assertInGraveyard(player1, "Maelstrom Djinn");
+    }
+
+    @Test
+    void vanishingDoesNotTriggerAtUpkeepWithoutTimeCounters() {
+        Permanent djinn = turnFaceUpDjinn();
+        djinn.setCounterCount(CounterType.TIME, 0);
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Maelstrom Djinn");
     }
 
     private Permanent turnFaceUpDjinn() {
