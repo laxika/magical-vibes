@@ -38,6 +38,24 @@ class LynxTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A tapped Forest still makes Lynx unblockable")
+    void cannotBeBlockedWhenDefendersForestIsTapped() {
+        harness.addToBattlefield(player2, new Forest());
+        findPermanent(player2, "Forest").setTapped(true);
+        Permanent blockerPerm = addCreatureReady(player2, new BearCub());
+        Permanent atkPerm = addCreatureReady(player1, new Lynx());
+
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
     @DisplayName("Lynx can be blocked when defending player does not control a Forest")
     void canBeBlockedWhenDefenderDoesNotControlForest() {
         Permanent blockerPerm = addCreatureReady(player2, new BearCub());
