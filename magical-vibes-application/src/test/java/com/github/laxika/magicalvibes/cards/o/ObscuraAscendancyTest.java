@@ -22,9 +22,7 @@ class ObscuraAscendancyTest extends BaseCardTest {
     void createsSpiritAtMatchingManaValue() {
         Permanent ascendancy = harness.addToBattlefieldAndReturn(player1, new ObscuraAscendancy());
 
-        harness.setHand(player1, List.of(new Opt()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Opt(), "{U}");
         harness.passBothPriorities();
 
         assertThat(ascendancy.getCounterCount(CounterType.SOUL)).isEqualTo(1);
@@ -57,9 +55,7 @@ class ObscuraAscendancyTest extends BaseCardTest {
         Permanent ascendancy = harness.addToBattlefieldAndReturn(player1, new ObscuraAscendancy());
         ascendancy.setCounterCount(CounterType.SOUL, 1);
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(ascendancy.getCounterCount(CounterType.SOUL)).isEqualTo(2);
@@ -71,9 +67,7 @@ class ObscuraAscendancyTest extends BaseCardTest {
     void boostsSpiritsAtThreshold() {
         Permanent ascendancy = harness.addToBattlefieldAndReturn(player1, new ObscuraAscendancy());
 
-        harness.setHand(player1, List.of(new Opt()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Opt(), "{U}");
         harness.passBothPriorities();
 
         Permanent spirit = findPermanents(player1, "Spirit").getFirst();
@@ -87,5 +81,64 @@ class ObscuraAscendancyTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(5);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    void nonmatchingSpellDoesNotTrigger() {
+        Permanent ascendancy = harness.addToBattlefieldAndReturn(player1, new ObscuraAscendancy());
+
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(ascendancy.getCounterCount(CounterType.SOUL)).isZero();
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+    }
+
+    @Test
+    void opponentsSpellDoesNotTrigger() {
+        Permanent ascendancy = harness.addToBattlefieldAndReturn(player1, new ObscuraAscendancy());
+
+        harness.castFromHand(player2, new Opt(), "{U}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(ascendancy.getCounterCount(CounterType.SOUL)).isZero();
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+    }
+
+    @Test
+    void ignoresOtherCounterTypes() {
+        Permanent ascendancy = harness.addToBattlefieldAndReturn(player1, new ObscuraAscendancy());
+        ascendancy.setCounterCount(CounterType.CHARGE, 5);
+
+        harness.castFromHand(player1, new Opt(), "{U}");
+        harness.passBothPriorities();
+
+        assertThat(ascendancy.getCounterCount(CounterType.SOUL)).isEqualTo(1);
+        Permanent spirit = findPermanents(player1, "Spirit").getFirst();
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(2);
+    }
+
+    @Test
+    void boostAppliesOnlyToOwnSpiritsAndTracksThreshold() {
+        Permanent ascendancy = harness.addToBattlefieldAndReturn(player1, new ObscuraAscendancy());
+        harness.addToBattlefield(player2, new ObscuraAscendancy());
+        harness.castFromHand(player1, new Opt(), "{U}");
+        harness.passBothPriorities();
+        harness.castFromHand(player2, new Opt(), "{U}");
+        harness.passBothPriorities();
+        Permanent ownSpirit = findPermanents(player1, "Spirit").getFirst();
+        Permanent opposingSpirit = findPermanents(player2, "Spirit").getFirst();
+
+        ascendancy.setCounterCount(CounterType.SOUL, 6);
+        assertThat(gqs.getEffectivePower(gd, ownSpirit)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ownSpirit)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, opposingSpirit)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingSpirit)).isEqualTo(2);
+
+        ascendancy.setCounterCount(CounterType.SOUL, 4);
+        assertThat(gqs.getEffectivePower(gd, ownSpirit)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownSpirit)).isEqualTo(2);
     }
 }
