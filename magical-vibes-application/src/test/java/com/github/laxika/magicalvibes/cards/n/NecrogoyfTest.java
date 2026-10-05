@@ -92,9 +92,82 @@ class NecrogoyfTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castSorcery(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
         harness.handleCardChosen(player1, 0);
         return necrogoyf;
+    }
+
+    @Test
+    @DisplayName("Power updates when creature cards enter or leave either graveyard")
+    void powerUpdatesWithGraveyards() {
+        Permanent necrogoyf = addCreatureReady(player1, new Necrogoyf());
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+
+        assertThat(gqs.getEffectivePower(gd, necrogoyf)).isZero();
+
+        harness.setGraveyard(player2, List.of(new Necrogoyf(), new Necrogoyf()));
+        assertThat(gqs.getEffectivePower(gd, necrogoyf)).isEqualTo(2);
+
+        harness.setGraveyard(player1, List.of(new Necrogoyf()));
+        assertThat(gqs.getEffectivePower(gd, necrogoyf)).isEqualTo(3);
+
+        harness.setGraveyard(player2, List.of());
+        assertThat(gqs.getEffectivePower(gd, necrogoyf)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, necrogoyf)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Necrogoyf defines its power in hand and counts itself in the graveyard")
+    void powerWorksOutsideBattlefield() {
+        Necrogoyf necrogoyf = new Necrogoyf();
+        harness.setHand(player1, List.of(necrogoyf));
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new Necrogoyf()));
+
+        assertThat(gqs.getEffectiveCardPower(gd, necrogoyf)).isEqualTo(1);
+
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(necrogoyf));
+
+        assertThat(gqs.getEffectiveCardPower(gd, necrogoyf)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An empty hand does not prevent the upkeep trigger from resolving")
+    void upkeepWithEmptyHandResolves() {
+        addCreatureReady(player1, new Necrogoyf());
+        harness.setHand(player2, List.of());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Declining madness after upkeep discard puts Necrogoyf in its owner's graveyard")
+    void decliningUpkeepMadnessIncreasesPower() {
+        Permanent source = addCreatureReady(player1, new Necrogoyf());
+        Necrogoyf discarded = new Necrogoyf();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player2, List.of(discarded));
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(discarded);
+        assertThat(gqs.getEffectivePower(gd, source)).isZero();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(discarded);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discarded);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(1);
     }
 }
