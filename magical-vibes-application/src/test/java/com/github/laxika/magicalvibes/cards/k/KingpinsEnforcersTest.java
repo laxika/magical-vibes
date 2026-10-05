@@ -68,6 +68,66 @@ class KingpinsEnforcersTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
     }
 
+    @Test
+    @DisplayName("Lifelink gains life when the Enforcers deal combat damage")
+    void gainsLifeFromCombatDamage() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new KingpinsEnforcers());
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Enforcers can sacrifice itself")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent enforcers = harness.addToBattlefieldAndReturn(player1, new KingpinsEnforcers());
+        enforcers.setSummoningSick(true);
+        enforcers.tap();
+        KingpinsEnforcers drawn = new KingpinsEnforcers();
+        KingpinsEnforcers remaining = new KingpinsEnforcers();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn, remaining));
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(enforcers);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(enforcers.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid before resolution and only the controller draws")
+    void paysSacrificeBeforeDrawing() {
+        Permanent enforcers = harness.addToBattlefieldAndReturn(player1, new KingpinsEnforcers());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        KingpinsEnforcers drawn = new KingpinsEnforcers();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handlePermanentChosen(player1, artifact.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(enforcers).doesNotContain(artifact);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(artifact.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
     private void addAbilityMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLACK, 1);
