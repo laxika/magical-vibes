@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.n.NoviceInspector;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -11,9 +12,10 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(KraulWhipcracker.class)
+@CardUsed({KraulWhipcracker.class, NoviceInspector.class})
 class KraulWhipcrackerTest extends BaseCardTest {
 
     @Test
@@ -22,8 +24,7 @@ class KraulWhipcrackerTest extends BaseCardTest {
         Permanent token = addToken(player2, true);
         castWhipcracker(List.of(token.getId()));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Soldier");
         harness.assertOnBattlefield(player1, "Kraul Whipcracker");
@@ -49,6 +50,70 @@ class KraulWhipcrackerTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a token an opponent controls");
     }
 
+    @Test
+    @DisplayName("ETB destroys an opponent's noncreature Clue token")
+    void etbDestroysClueToken() {
+        harness.enterBattlefieldAndReturn(player2, new NoviceInspector());
+        resolveAllTriggers();
+        Permanent clue = findPermanent(player2, "Clue");
+
+        castWhipcracker(List.of(clue.getId()));
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Clue");
+        harness.assertOnBattlefield(player2, "Novice Inspector");
+        harness.assertOnBattlefield(player1, "Kraul Whipcracker");
+    }
+
+    @Test
+    @DisplayName("Creature resolves when there are no legal tokens to target")
+    void resolvesWithoutLegalTargets() {
+        addToken(player1, true);
+        harness.addToBattlefield(player2, new NoviceInspector());
+
+        castWhipcracker(List.of());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Kraul Whipcracker");
+        harness.assertOnBattlefield(player1, "Soldier");
+        harness.assertOnBattlefield(player2, "Novice Inspector");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("ETB does not destroy a token that changes to your control before resolution")
+    void targetBecomesIllegalAfterControlChange() {
+        Permanent token = addToken(player2, true);
+        castWhipcracker(List.of(token.getId()));
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Kraul Whipcracker");
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player2.getId()).remove(token);
+        gd.playerBattlefields.get(player1.getId()).add(token);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Soldier");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB still resolves after Kraul Whipcracker leaves the battlefield")
+    void triggerResolvesWithoutSource() {
+        Permanent token = addToken(player2, true);
+        castWhipcracker(List.of(token.getId()));
+        harness.passBothPriorities();
+        Permanent whipcracker = findPermanent(player1, "Kraul Whipcracker");
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(whipcracker);
+        gd.playerGraveyards.get(player1.getId()).add(whipcracker.getCard());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Soldier");
+        harness.assertInGraveyard(player1, "Kraul Whipcracker");
+    }
     private void castWhipcracker(List<java.util.UUID> targetIds) {
         harness.setHand(player1, List.of(new KraulWhipcracker()));
         harness.addMana(player1, ManaColor.BLACK, 1);
