@@ -80,6 +80,55 @@ class KjeldoranOutriderTest extends BaseCardTest {
         assertThat(outrider.getToughnessModifier()).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("A tapped Outrider can activate its ability without untapping")
+    void abilityCanBeActivatedWhileTapped() {
+        Permanent outrider = addReadyOutrider();
+        outrider.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(outrider.getToughnessModifier()).isEqualTo(1);
+        assertThat(outrider.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The boost waits for resolution and affects only the activating Outrider")
+    void boostUsesStackAndOnlyAffectsSource() {
+        Permanent otherOutrider = addReadyOutrider();
+        Permanent source = addReadyOutrider();
+        Permanent opposingOutrider = harness.addToBattlefieldAndReturn(player2, new KjeldoranOutrider());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(source.getToughnessModifier()).isEqualTo(0);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(0);
+        assertThat(source.getToughnessModifier()).isEqualTo(1);
+        assertThat(otherOutrider.getToughnessModifier()).isEqualTo(0);
+        assertThat(opposingOutrider.getToughnessModifier()).isEqualTo(0);
+        assertThat(source.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Colorless mana cannot pay the white activation cost")
+    void cannotActivateWithOnlyColorlessMana() {
+        Permanent outrider = addReadyOutrider();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(outrider.getToughnessModifier()).isEqualTo(0);
+    }
     private Permanent addReadyOutrider() {
         return addCreatureReady(player1, new KjeldoranOutrider());
     }
