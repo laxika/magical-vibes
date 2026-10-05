@@ -88,6 +88,69 @@ class LightningRiftTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
+    @Test
+    @DisplayName("The controller can target themselves and pay generic mana with colored mana")
+    void canTargetControllerAndPayWithColoredMana() {
+        prepareGame();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        cycleLonelySandbar();
+        chooseTarget(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each trigger charges only one mana even when more mana is available")
+    void paysOnlyOneManaPerTrigger() {
+        prepareGame();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        cycleLonelySandbar();
+        chooseTarget(player2.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An opponent's available mana cannot fund the controller's payment")
+    void opponentManaCannotPayForTrigger() {
+        prepareGame();
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        cycleLonelySandbar();
+        chooseTarget(player2.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The Rift trigger resolves before the cycling ability draws a card")
+    void triggerResolvesBeforeCyclingDraw() {
+        prepareGame();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        cycleLonelySandbar();
+        chooseTarget(player2.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Lonely Sandbar");
+        harness.assertNotInHand(player1, "Glory Seeker");
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertLife(player2, 18);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Glory Seeker");
+    }
+
     private void prepareGame() {
         harness.addToBattlefield(player1, new LightningRift());
         harness.setHand(player1, List.of(new LonelySandbar()));
