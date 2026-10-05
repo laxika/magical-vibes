@@ -62,12 +62,56 @@ class MinotaurRoxxonCEOTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Villain")).isEmpty();
     }
 
+    @Test
+    @DisplayName("Each Roxxon sees both deaths when opposing Roxxons die simultaneously")
+    void simultaneousDeathsCreateTwoVillainsForEachController() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new MinotaurRoxxonCEO());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new MinotaurRoxxonCEO());
+        first.setMarkedDamage(4);
+        second.setMarkedDamage(4);
+
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Minotaur, Roxxon CEO");
+        harness.assertNotOnBattlefield(player2, "Minotaur, Roxxon CEO");
+        assertThat(findPermanents(player1, "Villain")).hasSize(2);
+        assertThat(findPermanents(player2, "Villain")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A token copy of Roxxon still triggers for its own death")
+    void tokenCopySelfDeathCreatesVillain() {
+        MinotaurRoxxonCEO copy = new MinotaurRoxxonCEO();
+        copy.setToken(true);
+        Permanent roxxon = harness.addToBattlefieldAndReturn(player2, copy);
+        harness.setHand(player1, List.of(new Murder()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castInstant(player1, 0, roxxon.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Villain")).isEmpty();
+        assertThat(findPermanents(player2, "Villain")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A friendly nontoken creature dying creates exactly one Villain")
+    void friendlyNontokenCreatureDeathCreatesVillain() {
+        harness.addToBattlefield(player1, new MinotaurRoxxonCEO());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        killWithDoomBlade(bears);
+
+        assertThat(findPermanents(player1, "Villain")).hasSize(1);
+        assertThat(findPermanents(player2, "Villain")).isEmpty();
+    }
+
     private void killWithDoomBlade(Permanent target) {
-        harness.setHand(player1, java.util.List.of(new DoomBlade()));
+        harness.setHand(player1, List.of(new DoomBlade()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private Card tokenCreature() {
