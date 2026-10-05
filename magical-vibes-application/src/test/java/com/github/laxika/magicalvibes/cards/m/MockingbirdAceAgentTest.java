@@ -27,8 +27,7 @@ class MockingbirdAceAgentTest extends BaseCardTest {
 
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(mockingbird.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -57,5 +56,57 @@ class MockingbirdAceAgentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(mockingbird.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void counterResolvesBeforeDamageSpellTargetingMockingbird() {
+        Permanent mockingbird = harness.addToBattlefieldAndReturn(player1, new MockingbirdAceAgent());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, mockingbird.getId());
+        assertThat(mockingbird.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(mockingbird.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Mockingbird, Ace Agent");
+        harness.assertInGraveyard(player1, "Shock");
+    }
+
+    @Test
+    void opponentSpellTargetingYourCreatureDoesNotTrigger() {
+        Permanent mockingbird = harness.addToBattlefieldAndReturn(player1, new MockingbirdAceAgent());
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.passPriority(player1);
+
+        harness.castInstant(player2, 0, mockingbird.getId());
+        resolveAllTriggers();
+
+        assertThat(mockingbird.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player2, "Giant Growth");
+    }
+
+    @Test
+    void counterStillResolvesWhenTargetedCreatureDiesInResponse() {
+        Permanent mockingbird = harness.addToBattlefieldAndReturn(player1, new MockingbirdAceAgent());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, bears.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(mockingbird.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        resolveAllTriggers();
+
+        assertThat(mockingbird.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Giant Growth");
     }
 }
