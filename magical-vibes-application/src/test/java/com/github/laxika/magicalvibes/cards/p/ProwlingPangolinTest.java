@@ -17,8 +17,7 @@ class ProwlingPangolinTest extends BaseCardTest {
 
     private void castAndResolve() {
         harness.castFromHand(player1, new ProwlingPangolin(), "{3}{B}{B}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     @Test
@@ -106,6 +105,58 @@ class ProwlingPangolinTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Prowling Pangolin");
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Sacrifices wait until every eligible player has made their choice")
+    void sacrificesWaitForAllPlayerChoices() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
+        harness.addToBattlefield(player2, new ElvishWarrior());
+        harness.addToBattlefield(player2, new ElvishWarrior());
+        castAndResolve();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(first, second);
+        harness.assertOnBattlefield(player1, "Prowling Pangolin");
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The opponent can accept after the controller declines")
+    void opponentCanAcceptAfterControllerDeclines() {
+        harness.addToBattlefield(player1, new ElvishWarrior());
+        harness.addToBattlefield(player2, new ElvishWarrior());
+        harness.addToBattlefield(player2, new ElvishWarrior());
+        castAndResolve();
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertInGraveyard(player1, "Prowling Pangolin");
+        harness.assertOnBattlefield(player1, "Elvish Warrior");
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("One creature per player cannot pay the two-creature sacrifice")
+    void playersCannotCombineTheirCreatures() {
+        harness.addToBattlefield(player2, new ElvishWarrior());
+        castAndResolve();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Prowling Pangolin");
+        harness.assertOnBattlefield(player2, "Elvish Warrior");
     }
 
     @Test
