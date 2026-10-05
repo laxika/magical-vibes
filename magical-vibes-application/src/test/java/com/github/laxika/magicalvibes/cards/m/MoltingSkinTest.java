@@ -15,6 +15,48 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MoltingSkinTest extends BaseCardTest {
 
     @Test
+    @DisplayName("The return cost is paid before the regeneration ability resolves")
+    void paysReturnCostBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ArabaMothrider());
+        harness.addToBattlefield(player1, new MoltingSkin());
+
+        harness.activateAbility(player1, 1, null, target.getId());
+
+        harness.assertInHand(player1, "Molting Skin");
+        harness.assertNotOnBattlefield(player1, "Molting Skin");
+        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The regeneration shield prevents only the next destruction and taps the creature")
+    void regenerationReplacesOnlyOneDestruction() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ArabaMothrider());
+        harness.addToBattlefield(player1, new MoltingSkin());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.inMutationScope(() ->
+                assertThat(harness.getPermanentRemovalService().tryDestroyPermanent(gd, target)).isFalse());
+
+        harness.assertOnBattlefield(player2, "Araba Mothrider");
+        harness.assertNotInGraveyard(player2, "Araba Mothrider");
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getRegenerationShield()).isZero();
+
+        harness.inMutationScope(() ->
+                assertThat(harness.getPermanentRemovalService().tryDestroyPermanent(gd, target)).isTrue());
+
+        harness.assertNotOnBattlefield(player2, "Araba Mothrider");
+        harness.assertInGraveyard(player2, "Araba Mothrider");
+    }
+
+    @Test
     @DisplayName("Returning Molting Skin to its owner's hand regenerates the target creature")
     void returnsSelfAndRegeneratesTargetCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ArabaMothrider());
