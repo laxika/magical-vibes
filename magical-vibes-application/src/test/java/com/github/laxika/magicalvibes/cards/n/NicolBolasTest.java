@@ -18,6 +18,69 @@ import static org.assertj.core.api.Assertions.assertThat;
 class NicolBolasTest extends BaseCardTest {
 
     @Test
+    @DisplayName("The upkeep payment does not trigger during an opponent's upkeep")
+    void opponentUpkeepDoesNotRequirePayment() {
+        harness.addToBattlefield(player1, new NicolBolas());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Nicol Bolas");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Three mana of the wrong colors cannot pay the upkeep cost")
+    void wrongColorsCannotPayUpkeep() {
+        harness.addToBattlefield(player1, new NicolBolas());
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Nicol Bolas");
+        harness.assertInGraveyard(player1, "Nicol Bolas");
+    }
+
+    @Test
+    @DisplayName("Damage to an opponent's creature does not make that opponent discard")
+    void damageToCreatureDoesNotDiscard() {
+        harness.setHand(player2, List.of(new FlyingMen(), new FlyingMen()));
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new FlyingMen());
+        Permanent bolas = addCreatureReady(player1, new NicolBolas());
+        Permanent whip = harness.addToBattlefieldAndReturn(player1, new FireWhip());
+        whip.setAttachedTo(bolas.getId());
+
+        harness.activateAbility(player1, 0, null, victim.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Flying Men");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Damage to an opponent with an empty hand resolves without a discard choice")
+    void damageToEmptyHandResolves() {
+        harness.setHand(player2, List.of());
+        harness.setLife(player2, 20);
+        Permanent bolas = addCreatureReady(player1, new NicolBolas());
+        Permanent whip = harness.addToBattlefieldAndReturn(player1, new FireWhip());
+        whip.setAttachedTo(bolas.getId());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Declining to pay {U}{B}{R} sacrifices Nicol Bolas")
     void declineSacrifices() {
         harness.addToBattlefield(player1, new NicolBolas());
