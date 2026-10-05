@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -69,6 +70,84 @@ class OrcristGoblinCleaverTest extends BaseCardTest {
         Permanent equipment = harness.addToBattlefieldAndReturn(player, new OrcristGoblinCleaver());
         equipment.setSummoningSick(false);
         return equipment;
+    }
+
+    @Test
+    void equipAttachesForThreeMana() {
+        Permanent equipment = addEquipmentReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    void equipmentControllerChoosesTypeAndCreatesTreasures() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new HillGiant());
+        Permanent equipment = addEquipmentReady(player2);
+        equipment.setAttachedTo(attacker.getId());
+        attacker.setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, "GIANT");
+
+        assertThat(treasuresFor(player2)).hasSize(1);
+        assertThat(treasuresFor(player1)).isEmpty();
+    }
+
+    @Test
+    void choosingAnAbsentTypeCreatesNoTreasures() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent equipment = addEquipmentReady(player1);
+        equipment.setAttachedTo(attacker.getId());
+        attacker.setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GOBLIN");
+
+        assertThat(treasuresFor(player1)).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void equipmentWithoutAbilitiesDoesNotTrigger() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent equipment = addEquipmentReady(player1);
+        equipment.setAttachedTo(attacker.getId());
+        equipment.setLosesAllAbilitiesUntilEndOfTurn(true);
+        attacker.setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(treasuresFor(player1)).isEmpty();
+    }
+
+    @Test
+    void countsCreaturesAtResolutionAfterEquipmentLeaves() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherBear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent equipment = addEquipmentReady(player1);
+        equipment.setAttachedTo(attacker.getId());
+        attacker.setAttacking(true);
+
+        resolveCombat();
+        gd.playerBattlefields.get(player1.getId()).remove(otherBear);
+        gd.playerBattlefields.get(player1.getId()).remove(equipment);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BEAR");
+
+        assertThat(treasuresFor(player1)).hasSize(1);
     }
 
     private List<Permanent> treasuresFor(Player player) {
