@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -15,12 +15,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MorcantsLoyalist.class, LlanowarElves.class, GrizzlyBears.class, WrathOfGod.class})
 class MorcantsLoyalistTest extends BaseCardTest {
 
     private void destroyLoyalist() {
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities();
     }
 
@@ -80,5 +79,68 @@ class MorcantsLoyalistTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(loyalist.getId()));
+    }
+
+    @Test
+    void multipleLoyalistsBuffEachOtherAndStackOnOtherElves() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new MorcantsLoyalist());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new MorcantsLoyalist());
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(3);
+    }
+
+    @Test
+    void canReturnAnElfThatDiesAtTheSameTime() {
+        Card loyalist = new MorcantsLoyalist();
+        Card elf = new LlanowarElves();
+        Card opposingElf = new LlanowarElves();
+        harness.addToBattlefield(player1, loyalist);
+        harness.addToBattlefield(player1, elf);
+        harness.addToBattlefield(player2, opposingElf);
+
+        destroyLoyalist();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(elf.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(elf.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(elf.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(elf.getId()));
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card.getId().equals(opposingElf.getId()));
+    }
+
+    @Test
+    void canReturnADifferentLoyalistWithTheSameName() {
+        Card loyalist = new MorcantsLoyalist();
+        Card anotherLoyalist = new MorcantsLoyalist();
+        harness.addToBattlefield(player1, loyalist);
+        harness.setGraveyard(player1, new ArrayList<>(List.of(anotherLoyalist)));
+
+        destroyLoyalist();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(anotherLoyalist.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(anotherLoyalist.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(anotherLoyalist.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(loyalist.getId()))
+                .noneMatch(card -> card.getId().equals(anotherLoyalist.getId()));
     }
 }
