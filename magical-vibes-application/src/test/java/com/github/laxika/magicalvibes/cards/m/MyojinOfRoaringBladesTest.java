@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.a.AncientBrontodon;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -25,11 +24,7 @@ class MyojinOfRoaringBladesTest extends BaseCardTest {
     void castFromHandEntersWithIndestructibleCounter() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new MyojinOfRoaringBlades()));
-        harness.addMana(player1, ManaColor.RED, 3);
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MyojinOfRoaringBlades(), "{5}{R}{R}{R}");
         harness.passBothPriorities();
 
         Permanent myojin = findPermanent(player1, "Myojin of Roaring Blades");
@@ -81,6 +76,78 @@ class MyojinOfRoaringBladesTest extends BaseCardTest {
                 player1, 0, 0, List.of(forest.getId())))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(myojin.getCounterCount(CounterType.INDESTRUCTIBLE)).isEqualTo(1);
+    }
+
+    @Test
+    void canActivateWithZeroTargets() {
+        Permanent myojin = addReadyMyojin();
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of());
+
+        assertThat(myojin.getCounterCount(CounterType.INDESTRUCTIBLE)).isZero();
+        assertThat(gqs.hasKeyword(gd, myojin, Keyword.INDESTRUCTIBLE)).isFalse();
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void cannotActivateWithoutIndestructibleCounter() {
+        harness.addToBattlefield(player1, new MyojinOfRoaringBlades());
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, List.of(player2.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void cannotChooseSameTargetTwice() {
+        Permanent myojin = addReadyMyojin();
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, List.of(player2.getId(), player2.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(myojin.getCounterCount(CounterType.INDESTRUCTIBLE)).isEqualTo(1);
+    }
+
+    @Test
+    void cannotChooseMoreThanThreeTargets() {
+        Permanent myojin = addReadyMyojin();
+        Permanent brontodon = addCreatureReady(player2, new AncientBrontodon());
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0,
+                List.of(player1.getId(), player2.getId(), myojin.getId(), brontodon.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(myojin.getCounterCount(CounterType.INDESTRUCTIBLE)).isEqualTo(1);
+    }
+
+    @Test
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent myojin = addReadyMyojin();
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(player2.getId()));
+        assertThat(myojin.getCounterCount(CounterType.INDESTRUCTIBLE)).isZero();
+
+        gd.playerBattlefields.get(player1.getId()).remove(myojin);
+        gd.playerGraveyards.get(player1.getId()).add(myojin.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 13);
+    }
+
+    @Test
+    void remainingTargetStillTakesSevenDamageWhenOtherTargetLeaves() {
+        addReadyMyojin();
+        Permanent brontodon = addCreatureReady(player2, new AncientBrontodon());
+        harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, List.of(player2.getId(), brontodon.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(brontodon);
+        gd.playerGraveyards.get(player2.getId()).add(brontodon.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 13);
     }
 
     private Permanent addReadyMyojin() {
