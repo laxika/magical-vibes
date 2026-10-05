@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -23,7 +22,7 @@ class PsychicImpetusTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature gets +2/+2 and is goaded")
     void enchantedCreatureGetsBoostAndIsGoaded() {
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         castPsychicImpetus(creature);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
@@ -34,7 +33,7 @@ class PsychicImpetusTest extends BaseCardTest {
     @Test
     @DisplayName("Attacking enchanted creature triggers scry 2")
     void attackingEnchantedCreatureTriggersScryTwo() {
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new Mountain()));
         castPsychicImpetus(creature);
 
@@ -51,7 +50,7 @@ class PsychicImpetusTest extends BaseCardTest {
     @Test
     @DisplayName("Aura controller scries when an opponent's enchanted creature attacks")
     void opponentCreatureAttackLetsAuraControllerScry() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new Mountain()));
         castPsychicImpetus(creature);
 
@@ -77,10 +76,52 @@ class PsychicImpetusTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private Permanent addCreatureReady(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
-        creature.setSummoningSick(false);
-        return creature;
+    @Test
+    @DisplayName("Goaded creature must attack when able")
+    void cannotOmitAbleEnchantedAttacker() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        castPsychicImpetus(creature);
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
+    }
+
+    @Test
+    @DisplayName("An unrelated attacker does not trigger scry while the enchanted creature is tapped")
+    void unrelatedAttackerDoesNotTriggerScry() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Mountain()));
+        castPsychicImpetus(creature);
+        creature.setTapped(true);
+
+        declareAttackers(player2, List.of(1));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Scry 2 with a one-card library allows putting that card on the bottom")
+    void scryWithOneCardLibrary() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        GrizzlyBears card = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(card));
+        castPsychicImpetus(creature);
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry).isNotNull();
+        assertThat(scry.decidingPlayerId()).isEqualTo(player1.getId());
+        assertThat(scry.cards()).containsExactly(card);
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(card);
     }
 
     private void castPsychicImpetus(Permanent creature) {
