@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.d.DurkwoodBoars;
+import com.github.laxika.magicalvibes.cards.g.GaeasRevenge;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NetherVoid.class, DurkwoodBoars.class})
+@CardUsed({NetherVoid.class, DurkwoodBoars.class, GaeasRevenge.class})
 class NetherVoidTest extends BaseCardTest {
 
     @Test
@@ -78,5 +79,65 @@ class NetherVoidTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Durkwood Boars");
+    }
+
+    @Test
+    @DisplayName("Does not trigger for its own casting")
+    void doesNotCounterItself() {
+        harness.castFromHand(player1, new NetherVoid(), "{3}{B}");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Nether Void");
+        harness.assertNotInGraveyard(player1, "Nether Void");
+    }
+
+    @Test
+    @DisplayName("Colored mana can pay the generic counter payment")
+    void coloredManaCanPay() {
+        harness.addToBattlefield(player1, new NetherVoid());
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.castFromHand(player2, new DurkwoodBoars(), "{4}{G}");
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Durkwood Boars");
+    }
+
+    @Test
+    @DisplayName("An uncounterable spell resolves without paying")
+    void uncounterableSpellResolvesWithoutPaying() {
+        harness.addToBattlefield(player1, new NetherVoid());
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new GaeasRevenge(), "{5}{G}{G}");
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Gaea's Revenge");
+        harness.assertNotInGraveyard(player2, "Gaea's Revenge");
+    }
+
+    @Test
+    @DisplayName("The caster may pay even when the spell cannot be countered")
+    void mayPayForUncounterableSpell() {
+        harness.addToBattlefield(player1, new NetherVoid());
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castFromHand(player2, new GaeasRevenge(), "{5}{G}{G}");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Gaea's Revenge");
     }
 }
