@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.b.BenevolentUnicorn;
 import com.github.laxika.magicalvibes.cards.f.FeralShadow;
 import com.github.laxika.magicalvibes.cards.g.GibberingHyenas;
 import com.github.laxika.magicalvibes.cards.g.GiantMantis;
@@ -15,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({KaerveksHex.class, GibberingHyenas.class, GiantMantis.class, IronTuskElephant.class,
-        FeralShadow.class, PutridLeech.class, Forest.class})
+        FeralShadow.class, PutridLeech.class, Forest.class, BenevolentUnicorn.class})
 class KaerveksHexTest extends BaseCardTest {
 
     private void castHex() {
@@ -73,5 +74,34 @@ class KaerveksHexTest extends BaseCardTest {
         castHex();
 
         assertThat(forest.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Benevolent Unicorn reduces the combined damage to green creatures only once")
+    void spellDamageReductionAppliesOnceToCombinedDamage() {
+        Permanent unicorn = harness.addToBattlefieldAndReturn(player1, new BenevolentUnicorn());
+        Permanent mantis = harness.addToBattlefieldAndReturn(player2, new GiantMantis());
+        Permanent hyenas = harness.addToBattlefieldAndReturn(player1, new GibberingHyenas());
+
+        castHex();
+
+        assertThat(mantis.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Gibbering Hyenas");
+        assertThat(hyenas.getMarkedDamage()).isEqualTo(1);
+        assertThat(unicorn.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Resolves on an empty battlefield without damaging either player")
+    void emptyBattlefieldDoesNotDamagePlayers() {
+        int firstLife = gd.playerLifeTotals.get(player1.getId());
+        int secondLife = gd.playerLifeTotals.get(player2.getId());
+
+        castHex();
+
+        harness.assertLife(player1, firstLife);
+        harness.assertLife(player2, secondLife);
+        harness.assertInGraveyard(player1, "Kaervek's Hex");
+        assertThat(gd.stack).isEmpty();
     }
 }
