@@ -6,7 +6,14 @@ import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.d.DanithaCapashenParagon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GrunnTheLonelyKing;
+import com.github.laxika.magicalvibes.cards.j.JayaBallard;
+import com.github.laxika.magicalvibes.cards.j.JhoiraWeatherlightCaptain;
+import com.github.laxika.magicalvibes.cards.o.OathOfTeferi;
+import com.github.laxika.magicalvibes.cards.t.TraxosScourgeOfKroog;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,9 +21,10 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MoxAmber.class, ChandraNalaar.class, DanithaCapashenParagon.class,
+        GrizzlyBears.class, GrunnTheLonelyKing.class, JayaBallard.class,
+        JhoiraWeatherlightCaptain.class, OathOfTeferi.class, TraxosScourgeOfKroog.class})
 class MoxAmberTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Produces no mana when no legendary creatures or planeswalkers are controlled")
@@ -132,5 +140,73 @@ class MoxAmberTest extends BaseCardTest {
         // Opponent's legendary creature should not count
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(0);
+    }
+    @Test
+    @DisplayName("A nonlegendary planeswalker does not contribute its color")
+    void nonlegendaryPlaneswalkerDoesNotContribute() {
+        Permanent mox = harness.addToBattlefieldAndReturn(player1, new MoxAmber());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new JayaBallard());
+        // Model a planeswalker that has lost legendary status, as with a nonlegendary copy.
+        planeswalker.getPersistentRemovedSupertypes().add(CardSupertype.LEGENDARY);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(mox.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        for (ManaColor color : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isZero();
+        }
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A multicolored legendary creature offers its colors but produces only one mana")
+    void multicoloredLegendaryCreatureProducesOneChosenMana() {
+        Permanent mox = harness.addToBattlefieldAndReturn(player1, new MoxAmber());
+        harness.addToBattlefield(player1, new JhoiraWeatherlightCaptain());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("BLUE", "RED");
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(mox.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        for (ManaColor color : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(color))
+                    .isEqualTo(color == ManaColor.BLUE ? 1 : 0);
+        }
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A colorless legendary creature produces no mana, including no colorless mana")
+    void colorlessLegendaryCreatureProducesNoMana() {
+        Permanent mox = harness.addToBattlefieldAndReturn(player1, new MoxAmber());
+        harness.addToBattlefield(player1, new TraxosScourgeOfKroog());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(mox.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        for (ManaColor color : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isZero();
+        }
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A colored legendary enchantment does not contribute colors")
+    void legendaryEnchantmentDoesNotContribute() {
+        harness.addToBattlefield(player1, new MoxAmber());
+        harness.addToBattlefield(player1, new OathOfTeferi());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        for (ManaColor color : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isZero();
+        }
     }
 }
