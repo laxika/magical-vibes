@@ -1,113 +1,131 @@
 package com.github.laxika.magicalvibes.cards.j;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.cards.r.RiverSneak;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({JacesSentinel.class, JaceIngeniousMindMage.class, RiverSneak.class})
 class JacesSentinelTest extends BaseCardTest {
-
-    // ===== Conditional +1/+0 and can't be blocked with Jace =====
 
     @Test
     @DisplayName("Gets +1/+0 when controller controls a Jace planeswalker")
     void getsPowerBoostWithJace() {
-        harness.addToBattlefield(player1, new JacesSentinel());
-        harness.addToBattlefield(player1, createJacePlaneswalker());
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new JacesSentinel());
+        harness.addToBattlefield(player1, new JaceIngeniousMindMage());
 
-        Permanent sentinel = findPermanent(player1, "Jace's Sentinel");
         assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(2); // 1 base + 1 bonus
     }
 
     @Test
     @DisplayName("Can't be blocked when controller controls a Jace planeswalker")
     void cantBeBlockedWithJace() {
-        harness.addToBattlefield(player1, new JacesSentinel());
-        harness.addToBattlefield(player1, createJacePlaneswalker());
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new JacesSentinel());
+        harness.addToBattlefield(player1, new JaceIngeniousMindMage());
 
-        Permanent sentinel = findPermanent(player1, "Jace's Sentinel");
         assertThat(gqs.hasCantBeBlocked(gd, sentinel)).isTrue();
     }
-
-    // ===== No bonus without a Jace =====
 
     @Test
     @DisplayName("No power boost without a Jace planeswalker")
     void noPowerBoostWithoutJace() {
-        harness.addToBattlefield(player1, new JacesSentinel());
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new JacesSentinel());
 
-        Permanent sentinel = findPermanent(player1, "Jace's Sentinel");
         assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(1); // 1 base, no bonus
     }
 
     @Test
     @DisplayName("Can be blocked without a Jace planeswalker")
     void canBeBlockedWithoutJace() {
-        harness.addToBattlefield(player1, new JacesSentinel());
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new JacesSentinel());
 
-        Permanent sentinel = findPermanent(player1, "Jace's Sentinel");
         assertThat(gqs.hasCantBeBlocked(gd, sentinel)).isFalse();
     }
-
-    // ===== Non-Jace creature doesn't count =====
 
     @Test
     @DisplayName("Non-Jace creature does not grant bonus")
     void nonJaceDoesNotGrantBonus() {
-        harness.addToBattlefield(player1, new JacesSentinel());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new JacesSentinel());
+        harness.addToBattlefield(player1, new RiverSneak());
 
-        Permanent sentinel = findPermanent(player1, "Jace's Sentinel");
         assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, sentinel)).isFalse();
     }
-
-    // ===== Loses bonus when Jace leaves =====
 
     @Test
     @DisplayName("Loses +1/+0 and can't be blocked when Jace leaves the battlefield")
     void losesBonusWhenJaceLeaves() {
-        harness.addToBattlefield(player1, new JacesSentinel());
-        harness.addToBattlefield(player1, createJacePlaneswalker());
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new JacesSentinel());
+        Permanent jace = harness.addToBattlefieldAndReturn(player1, new JaceIngeniousMindMage());
 
-        Permanent sentinel = findPermanent(player1, "Jace's Sentinel");
         assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(2);
         assertThat(gqs.hasCantBeBlocked(gd, sentinel)).isTrue();
 
-        // Remove the Jace planeswalker
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getSubtypes().contains(CardSubtype.JACE));
+        gd.playerBattlefields.get(player1.getId()).remove(jace);
 
         assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, sentinel)).isFalse();
     }
-
-    // ===== Opponent's Jace doesn't count =====
 
     @Test
     @DisplayName("Opponent's Jace planeswalker does not grant bonus")
     void opponentJaceDoesNotCount() {
-        harness.addToBattlefield(player1, new JacesSentinel());
-        harness.addToBattlefield(player2, createJacePlaneswalker());
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new JacesSentinel());
+        harness.addToBattlefield(player2, new JaceIngeniousMindMage());
 
-        Permanent sentinel = findPermanent(player1, "Jace's Sentinel");
         assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, sentinel)).isFalse();
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Bonus begins immediately when Jace enters and does not change toughness")
+    void gainsBonusWhenJaceEnters() {
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new JacesSentinel());
+        int originalToughness = gqs.getEffectiveToughness(gd, sentinel);
+        assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(1);
+        assertThat(gqs.hasCantBeBlocked(gd, sentinel)).isFalse();
 
-    private Card createJacePlaneswalker() {
-        Card card = new GrizzlyBears();
-        card.setSubtypes(List.of(CardSubtype.JACE));
-        return card;
+        harness.addToBattlefield(player1, new JaceIngeniousMindMage());
+
+        assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(originalToughness);
+        assertThat(gqs.hasCantBeBlocked(gd, sentinel)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Jace leaving your control immediately removes the bonus")
+    void losesBonusWhenJaceChangesController() {
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new JacesSentinel());
+        Permanent jace = harness.addToBattlefieldAndReturn(player1, new JaceIngeniousMindMage());
+        assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(2);
+        assertThat(gqs.hasCantBeBlocked(gd, sentinel)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(jace);
+        gd.playerBattlefields.get(player2.getId()).add(jace);
+
+        assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(1);
+        assertThat(gqs.hasCantBeBlocked(gd, sentinel)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A legal blocker cannot block Sentinel while its controller controls Jace")
+    void jacePreventsBlocking() {
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new JacesSentinel());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new RiverSneak());
+        var defenders = gd.playerBattlefields.get(player2.getId());
+        assertThat(harness.getBlockLegalityService().canBlockAttacker(gd, blocker, sentinel, defenders)).isTrue();
+
+        Permanent jace = harness.addToBattlefieldAndReturn(player1, new JaceIngeniousMindMage());
+
+        assertThat(harness.getBlockLegalityService().canBlockAttacker(gd, blocker, sentinel, defenders)).isFalse();
+
+        gd.playerBattlefields.get(player1.getId()).remove(jace);
+
+        assertThat(harness.getBlockLegalityService().canBlockAttacker(gd, blocker, sentinel, defenders)).isTrue();
     }
 
 }
