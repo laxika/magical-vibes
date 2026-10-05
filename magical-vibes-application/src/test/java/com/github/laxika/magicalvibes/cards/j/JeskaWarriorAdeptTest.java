@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.d.DwarvenDriller;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -94,11 +93,10 @@ class JeskaWarriorAdeptTest extends BaseCardTest {
     @Test
     @DisplayName("First strike lets Jeska survive combat with a 2/2 blocker")
     void firstStrikeLetsJeskaSurviveCombat() {
-        Permanent jeska = addReadyJeskaForJudReview(player1);
+        Permanent jeska = addCreatureReady(player1, new JeskaWarriorAdept());
         harness.addToBattlefield(player2, new DwarvenDriller());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -106,7 +104,39 @@ class JeskaWarriorAdeptTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Dwarven Driller");
     }
 
-    private Permanent addReadyJeskaForJudReview(Player player) {
-        return addCreatureReady(player, new JeskaWarriorAdept());
+    @Test
+    @DisplayName("Jeska can target herself with her damage ability")
+    void canTargetHerself() {
+        Permanent jeska = harness.addToBattlefieldAndReturn(player1, new JeskaWarriorAdept());
+
+        harness.activateAbility(player1, 0, null, jeska.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Jeska, Warrior Adept");
+        harness.assertInGraveyard(player1, "Jeska, Warrior Adept");
+    }
+
+    @Test
+    @DisplayName("Jeska can deal damage to her controller")
+    void canTargetController() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new JeskaWarriorAdept());
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Haste allows Jeska to attack immediately")
+    void hasteAllowsImmediateAttack() {
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new JeskaWarriorAdept());
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player2, 17);
     }
 }
