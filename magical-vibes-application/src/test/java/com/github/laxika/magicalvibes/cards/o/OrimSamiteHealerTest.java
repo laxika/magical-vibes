@@ -65,8 +65,7 @@ class OrimSamiteHealerTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new LightningBlast()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
@@ -111,5 +110,48 @@ class OrimSamiteHealerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("Orim can protect itself, but the shield is exhausted by the first damage event")
+    void selfProtectionIsConsumed() {
+        Permanent orim = addCreatureReady(player1, new OrimSamiteHealer());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, orim.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new LightningBlast(), new LightningBlast()));
+        harness.addMana(player2, ManaColor.RED, 8);
+        harness.castAndResolveInstant(player2, 0, orim.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(orim);
+        assertThat(orim.getDamagePreventionShield()).isZero();
+
+        harness.castAndResolveInstant(player2, 0, orim.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(orim);
+        harness.assertInGraveyard(player1, "Orim, Samite Healer");
+    }
+
+    @Test
+    @DisplayName("The activated ability resolves even if Orim is destroyed in response")
+    void abilitySurvivesSourceRemoval() {
+        Permanent orim = addCreatureReady(player1, new OrimSamiteHealer());
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.setHand(player2, List.of(new LightningBlast(), new LightningBlast()));
+        harness.addMana(player2, ManaColor.RED, 8);
+        harness.castAndResolveInstant(player2, 0, orim.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(orim);
+
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 19);
     }
 }
