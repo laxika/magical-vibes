@@ -54,4 +54,39 @@ class PincerSpiderTest extends BaseCardTest {
 
         assertThat(spider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
+
+    @Test
+    void genericKickerCanBePaidWithColorlessMana() {
+        harness.setHand(player1, List.of(new PincerSpider()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Pincer Spider")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void kickerRemainsOptionalWhenEnoughManaIsAvailable() {
+        harness.setHand(player1, List.of(new PincerSpider()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Pincer Spider")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void kickedCastStillRequiresGreenManaForBaseCost() {
+        harness.setHand(player1, List.of(new PincerSpider()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        assertThatThrownBy(() -> harness.castKickedCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }
