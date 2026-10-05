@@ -45,4 +45,31 @@ class ManakinTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
+
+    @Test
+    @DisplayName("Can activate after its controller's untap step")
+    void canActivateAfterControllersUntapStep() {
+        harness.addToBattlefield(player1, new Manakin());
+
+        harness.performUntapStep(player1);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can activate again after untapping")
+    void canActivateAgainAfterUntapping() {
+        Permanent manakin = addCreatureReady(player1, new Manakin());
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerManaPools.get(player1.getId()).clear();
+
+        harness.performUntapStep(player1);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(manakin.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
 }
