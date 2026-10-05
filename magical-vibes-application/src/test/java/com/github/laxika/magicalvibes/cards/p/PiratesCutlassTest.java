@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PiratesCutlass.class, DireFleetCaptain.class, GrizzlyBears.class})
 class PiratesCutlassTest extends BaseCardTest {
 
     // ===== ETB attach to Pirate =====
@@ -90,8 +92,8 @@ class PiratesCutlassTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("ETB does not trigger when cast without a target")
-    void etbDoesNotTriggerWithoutTarget() {
+    @DisplayName("ETB leaves no ability on the stack when there is no legal target")
+    void etbLeavesNoAbilityOnStackWithoutLegalTarget() {
         harness.setHand(player1, List.of(new PiratesCutlass()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
@@ -157,9 +159,7 @@ class PiratesCutlassTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Add a non-Pirate creature — Equip can target any creature you control
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         // Equip to bears for {2}
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -180,7 +180,62 @@ class PiratesCutlassTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, pirate)).isEqualTo(2);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("An opponent's Pirate is not a legal ETB target")
+    void opponentPirateDoesNotProvideEtbTarget() {
+        harness.addToBattlefield(player2, new DireFleetCaptain());
+        harness.setHand(player1, List.of(new PiratesCutlass()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Pirate's Cutlass").getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        Permanent pirate = findPermanent(player2, "Dire Fleet Captain");
+        assertThat(gqs.getEffectivePower(gd, pirate)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, pirate)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("ETB cannot attach Equipment that left the battlefield")
+    void etbDoesNothingWhenEquipmentLeaves() {
+        Permanent pirate = harness.addToBattlefieldAndReturn(player1, new DireFleetCaptain());
+        harness.setHand(player1, List.of(new PiratesCutlass()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castArtifact(player1, 0, pirate.getId());
+        harness.passBothPriorities();
+
+        Permanent cutlass = findPermanent(player1, "Pirate's Cutlass");
+        gd.playerBattlefields.get(player1.getId()).remove(cutlass);
+        gd.playerGraveyards.get(player1.getId()).add(cutlass.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Pirate's Cutlass");
+        assertThat(gqs.getEffectivePower(gd, pirate)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, pirate)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("ETB does not attach to a Pirate now controlled by an opponent")
+    void etbTargetBecomesIllegalAfterControlChanges() {
+        Permanent pirate = harness.addToBattlefieldAndReturn(player1, new DireFleetCaptain());
+        harness.setHand(player1, List.of(new PiratesCutlass()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castArtifact(player1, 0, pirate.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player1.getId()).remove(pirate);
+        gd.playerBattlefields.get(player2.getId()).add(pirate);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanent(player1, "Pirate's Cutlass").getAttachedTo()).isNull();
+        assertThat(gqs.getEffectivePower(gd, pirate)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, pirate)).isEqualTo(2);
+    }
 
     private int findPermanentIndex(Player player, String name) {
         List<Permanent> battlefield = gd.playerBattlefields.get(player.getId());
