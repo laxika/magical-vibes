@@ -57,23 +57,24 @@ class OvermasterTest extends BaseCardTest {
     @Test
     @DisplayName("The next sorcery spell can't be countered")
     void nextSorcerySpellCantBeCountered() {
-        harness.setLibrary(player1, List.of(new PardicCollaborator(), new PardicCollaborator(), new PardicCollaborator()));
         castOvermaster();
 
-        ObsessiveSearch obsessiveSearch = new ObsessiveSearch();
-        harness.setHand(player1, List.of(obsessiveSearch));
-        harness.addMana(player1, ManaColor.BLUE, 1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SengirVampire());
+        CripplingFatigue cripplingFatigue = new CripplingFatigue();
+        harness.setHand(player1, List.of(cripplingFatigue));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.setHand(player2, List.of(new Liquify()));
         harness.addMana(player2, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0, target.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, obsessiveSearch.getId());
+        harness.castInstant(player2, 0, cripplingFatigue.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        harness.assertInGraveyard(player1, "Obsessive Search");
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Crippling Fatigue");
         harness.assertInGraveyard(player2, "Liquify");
     }
 
@@ -204,11 +205,9 @@ class OvermasterTest extends BaseCardTest {
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
         ObsessiveSearch obsessiveSearch = new ObsessiveSearch();
-        harness.setHand(player1, List.of(obsessiveSearch));
-        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.setHand(player2, List.of(new Liquify()));
         harness.addMana(player2, ManaColor.BLUE, 3);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, obsessiveSearch, "{U}");
         harness.passPriority(player1);
         harness.castInstant(player2, 0, obsessiveSearch.getId());
         harness.passBothPriorities();
@@ -216,6 +215,37 @@ class OvermasterTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(obsessiveSearch.getId()));
+    }
+
+    @Test
+    @DisplayName("Countering Overmaster prevents both the draw and the protection")
+    void counteringOvermasterPreventsItsEffects() {
+        Overmaster overmaster = new Overmaster();
+        Card drawnCard = new PardicCollaborator();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player2, List.of(new Liquify()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.castFromHand(player1, overmaster, "{R}");
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, overmaster.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(overmaster);
+
+        FieryTemper fieryTemper = new FieryTemper();
+        harness.setHand(player1, List.of(fieryTemper));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.setHand(player2, List.of(new Liquify()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, fieryTemper.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(fieryTemper);
     }
 
     private void castOvermaster() {
