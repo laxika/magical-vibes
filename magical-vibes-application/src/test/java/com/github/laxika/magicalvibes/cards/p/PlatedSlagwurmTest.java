@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.b.Battlegrowth;
 import com.github.laxika.magicalvibes.cards.s.SpikeshotGoblin;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -54,5 +55,32 @@ class PlatedSlagwurmTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, slagwurm.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("hexproof");
+    }
+
+    @Test
+    @DisplayName("Controller's targeting spell resolves on Plated Slagwurm")
+    void controllerTargetingSpellResolves() {
+        Permanent slagwurm = addCreatureReady(player1, new PlatedSlagwurm());
+        harness.setHand(player1, List.of(new Battlegrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, slagwurm.getId());
+
+        assertThat(slagwurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Plated Slagwurm");
+    }
+
+    @Test
+    @DisplayName("Controller can target and damage Plated Slagwurm with an ability")
+    void controllerTargetingAbilityResolves() {
+        Permanent slagwurm = addCreatureReady(player1, new PlatedSlagwurm());
+        addCreatureReady(player1, new SpikeshotGoblin());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 1, null, slagwurm.getId());
+        harness.passBothPriorities();
+
+        assertThat(slagwurm.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Plated Slagwurm");
     }
 }
