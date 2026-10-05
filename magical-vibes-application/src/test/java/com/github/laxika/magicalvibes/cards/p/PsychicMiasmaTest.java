@@ -6,17 +6,20 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.ObstinateBaloth;
+import com.github.laxika.magicalvibes.cards.t.TamiyoCollectorOfTales;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PsychicMiasma.class, Forest.class, GrizzlyBears.class, ObstinateBaloth.class, TamiyoCollectorOfTales.class})
 class PsychicMiasmaTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -39,7 +42,7 @@ class PsychicMiasmaTest extends BaseCardTest {
     @Test
     @DisplayName("Discarding a non-land card sends Psychic Miasma to graveyard")
     void discardingNonLandGoesToGraveyard() {
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
         harness.setHand(player1, List.of(new PsychicMiasma()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -64,7 +67,7 @@ class PsychicMiasmaTest extends BaseCardTest {
     @Test
     @DisplayName("Discarding a land card returns Psychic Miasma to owner's hand")
     void discardingLandReturnsToHand() {
-        harness.setHand(player2, new ArrayList<>(List.of(new Forest())));
+        harness.setHand(player2, List.of(new Forest()));
         harness.setHand(player1, List.of(new PsychicMiasma()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -83,7 +86,7 @@ class PsychicMiasmaTest extends BaseCardTest {
     @Test
     @DisplayName("Return to hand is logged")
     void returnToHandIsLogged() {
-        harness.setHand(player2, new ArrayList<>(List.of(new Forest())));
+        harness.setHand(player2, List.of(new Forest()));
         harness.setHand(player1, List.of(new PsychicMiasma()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -98,7 +101,7 @@ class PsychicMiasmaTest extends BaseCardTest {
     @Test
     @DisplayName("Spell is not in graveyard while awaiting discard choice (deferred disposition)")
     void spellNotInGraveyardWhileAwaitingDiscard() {
-        harness.setHand(player2, new ArrayList<>(List.of(new Forest())));
+        harness.setHand(player2, List.of(new Forest()));
         harness.setHand(player1, List.of(new PsychicMiasma()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -116,7 +119,7 @@ class PsychicMiasmaTest extends BaseCardTest {
     @Test
     @DisplayName("Target with empty hand results in no discard and spell goes to graveyard")
     void targetWithEmptyHandNoDiscard() {
-        harness.setHand(player2, new ArrayList<>());
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new PsychicMiasma()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -135,7 +138,7 @@ class PsychicMiasmaTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing non-land when both land and non-land available keeps spell in graveyard")
     void choosingNonLandFromMultipleOptions() {
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Forest())));
+        harness.setHand(player2, List.of(new GrizzlyBears(), new Forest()));
         harness.setHand(player1, List.of(new PsychicMiasma()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -154,7 +157,7 @@ class PsychicMiasmaTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing land when both land and non-land available returns spell to hand")
     void choosingLandFromMultipleOptions() {
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Forest())));
+        harness.setHand(player2, List.of(new GrizzlyBears(), new Forest()));
         harness.setHand(player1, List.of(new PsychicMiasma()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -168,5 +171,58 @@ class PsychicMiasmaTest extends BaseCardTest {
         // One card remains in opponent's hand
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player2.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Self-targeted land discard returns the spell and discards exactly one card")
+    void selfTargetedLandDiscardReturnsSpell() {
+        harness.setHand(player1, List.of(new PsychicMiasma(), new Forest(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castSorcery(player1, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInHand(player1, "Psychic Miasma");
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Psychic Miasma");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Self-targeted discard does not apply Obstinate Baloth's opponent-only replacement")
+    void selfTargetedDiscardDoesNotApplyOpponentReplacement() {
+        harness.setHand(player1, List.of(new PsychicMiasma(), new ObstinateBaloth()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castSorcery(player1, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Obstinate Baloth");
+        harness.assertNotOnBattlefield(player1, "Obstinate Baloth");
+        harness.assertInGraveyard(player1, "Psychic Miasma");
+        harness.assertNotInHand(player1, "Psychic Miasma");
+    }
+
+    @Test
+    @DisplayName("Preventing the discard still sends the resolved spell to its owner's graveyard")
+    void preventedDiscardDoesNotStrandSpell() {
+        harness.addToBattlefield(player2, new TamiyoCollectorOfTales());
+        harness.setHand(player2, List.of(new Forest()));
+        harness.setHand(player1, List.of(new PsychicMiasma()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInHand(player2, "Forest");
+        harness.assertNotInGraveyard(player2, "Forest");
+        harness.assertInGraveyard(player1, "Psychic Miasma");
+        harness.assertNotInHand(player1, "Psychic Miasma");
+        assertThat(gd.stack).isEmpty();
     }
 }
