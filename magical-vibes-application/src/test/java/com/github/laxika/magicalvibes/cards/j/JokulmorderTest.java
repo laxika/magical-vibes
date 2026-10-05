@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.cards.i.IntoTheNorth;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredForest;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredIsland;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredMountain;
@@ -15,7 +16,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Jokulmorder.class, SnowCoveredForest.class, SnowCoveredIsland.class, SnowCoveredMountain.class})
+@CardUsed({Jokulmorder.class, SnowCoveredForest.class, SnowCoveredIsland.class, SnowCoveredMountain.class,
+        IntoTheNorth.class})
 class JokulmorderTest extends BaseCardTest {
 
     @Test
@@ -26,10 +28,7 @@ class JokulmorderTest extends BaseCardTest {
         }
 
         castAndResolveJokulmorder();
-        Permanent jokulmorder = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof Jokulmorder)
-                .findFirst()
-                .orElseThrow();
+        Permanent jokulmorder = findPermanent(player1, "Jokulmorder");
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -169,7 +168,54 @@ class JokulmorderTest extends BaseCardTest {
 
     private void castAndResolveJokulmorder() {
         harness.castFromHand(player1, new Jokulmorder(), "{4}{U}{U}{U}");
+        resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("Putting an Island onto the battlefield does not trigger the untap ability")
+    void islandPutOntoBattlefieldDoesNotTrigger() {
+        Permanent jokulmorder = harness.addToBattlefieldAndReturn(player1, new Jokulmorder());
+        jokulmorder.tap();
+        harness.setLibrary(player1, List.of(new SnowCoveredIsland()));
+
+        harness.castFromHand(player1, new IntoTheNorth(), "{1}{G}");
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Snow-Covered Island");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(jokulmorder.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's lands cannot pay the five-land sacrifice")
+    void opponentLandsCannotPaySacrifice() {
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, new SnowCoveredForest());
+        }
+        harness.addToBattlefield(player2, new SnowCoveredForest());
+
+        castAndResolveJokulmorder();
+
+        harness.assertInGraveyard(player1, "Jokulmorder");
+        assertThat(countPermanents(player1, "Snow-Covered Forest")).isEqualTo(4);
+        assertThat(countPermanents(player2, "Snow-Covered Forest")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Tapped lands can pay the five-land sacrifice")
+    void tappedLandsCanPaySacrifice() {
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefieldAndReturn(player1, new SnowCoveredForest()).tap();
+        }
+
+        castAndResolveJokulmorder();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Jokulmorder");
+        assertThat(countPermanents(player1, "Snow-Covered Forest")).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof SnowCoveredForest).hasSize(5);
     }
 }
