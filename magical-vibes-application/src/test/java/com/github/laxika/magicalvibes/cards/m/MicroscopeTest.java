@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Microscope.class, DarksteelCitadel.class})
 class MicroscopeTest extends BaseCardTest {
@@ -56,6 +57,80 @@ class MicroscopeTest extends BaseCardTest {
         assertThat(gqs.cardHasType(target, CardType.CREATURE, gd, player2.getId())).isFalse();
         assertThat(gqs.cardHasSubtype(target, CardSubtype.GERM, gd, player2.getId())).isFalse();
         assertThat(gqs.getEffectiveCardColors(gd, target)).isEmpty();
+    }
+
+    @Test
+    void surveilAbilityTapsMicroscopeAsItsCost() {
+        Permanent microscope = addReadyMicroscope();
+        harness.setLibrary(player1, List.of(new DarksteelCitadel()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(microscope.isTapped()).isTrue();
+    }
+
+    @Test
+    void animationAbilityTapsMicroscopeAsItsCost() {
+        Permanent microscope = addReadyMicroscope();
+        Card target = new DarksteelCitadel();
+        harness.setGraveyard(player1, List.of(target));
+
+        harness.activateAbility(player1, 0, 1, null, target.getId(), Zone.GRAVEYARD);
+
+        assertThat(microscope.isTapped()).isTrue();
+    }
+
+    @Test
+    void tappedMicroscopeCannotSurveil() {
+        Permanent microscope = addReadyMicroscope();
+        microscope.tap();
+        harness.setLibrary(player1, List.of(new DarksteelCitadel()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tappedMicroscopeCannotAnimateAGraveyardCard() {
+        Permanent microscope = addReadyMicroscope();
+        microscope.tap();
+        Card target = new DarksteelCitadel();
+        harness.setGraveyard(player1, List.of(target));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canKeepSurveilledCardOnTopWithoutDrawingIt() {
+        addReadyMicroscope();
+        Card topCard = new DarksteelCitadel();
+        harness.setLibrary(player1, List.of(topCard));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(topCard);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(topCard);
+    }
+
+    @Test
+    void animationPreservesPermanentTypesAndDoesNotMoveCardFromOwnGraveyard() {
+        addReadyMicroscope();
+        Card target = new DarksteelCitadel();
+        harness.setGraveyard(player1, List.of(target));
+
+        harness.activateAbility(player1, 0, 1, null, target.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(gqs.cardHasType(target, CardType.CREATURE, gd, player1.getId())).isTrue();
+        assertThat(gqs.cardHasType(target, CardType.ARTIFACT, gd, player1.getId())).isTrue();
+        assertThat(gqs.cardHasType(target, CardType.LAND, gd, player1.getId())).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(target);
     }
 
     private Permanent addReadyMicroscope() {
