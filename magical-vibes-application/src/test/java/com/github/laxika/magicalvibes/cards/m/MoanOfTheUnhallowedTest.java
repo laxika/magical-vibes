@@ -1,19 +1,22 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MoanOfTheUnhallowed.class})
 class MoanOfTheUnhallowedTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting Moan of the Unhallowed creates two 2/2 Zombie tokens")
@@ -21,8 +24,7 @@ class MoanOfTheUnhallowedTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MoanOfTheUnhallowed()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         List<Permanent> zombies = findPermanents(player1, "Zombie");
 
@@ -41,8 +43,7 @@ class MoanOfTheUnhallowedTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MoanOfTheUnhallowed()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertInGraveyard(player1, "Moan of the Unhallowed");
     }
@@ -53,8 +54,7 @@ class MoanOfTheUnhallowedTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new MoanOfTheUnhallowed()));
         harness.addMana(player1, ManaColor.BLACK, 7);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         List<Permanent> zombies = findPermanents(player1, "Zombie");
 
@@ -73,12 +73,60 @@ class MoanOfTheUnhallowedTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new MoanOfTheUnhallowed()));
         harness.addMana(player1, ManaColor.BLACK, 7);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
-        GameData gd = harness.getGameData();
         harness.assertNotInGraveyard(player1, "Moan of the Unhallowed");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Moan of the Unhallowed"));
+    }
+
+    @Test
+    @DisplayName("Created Zombies are black creature tokens controlled by the caster")
+    void createsBlackZombieCreatureTokensForCaster() {
+        harness.setHand(player1, List.of(new MoanOfTheUnhallowed()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(findPermanents(player1, "Zombie")).hasSize(2).allSatisfy(zombie -> {
+            assertThat(zombie.getCard().isToken()).isTrue();
+            assertThat(zombie.getCard().getColor()).isEqualTo(CardColor.BLACK);
+            assertThat(zombie.getCard().hasType(CardType.CREATURE)).isTrue();
+            assertThat(zombie.getCard().getSubtypes()).containsExactly(CardSubtype.ZOMBIE);
+        });
+        assertThat(findPermanents(player2, "Zombie")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flashback cannot be paid with only six mana")
+    void flashbackRequiresSevenMana() {
+        harness.setGraveyard(player1, List.of(new MoanOfTheUnhallowed()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Moan of the Unhallowed");
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Zombie")).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The same card can be cast normally and then flashed back for four Zombies")
+    void normalCastThenFlashbackCreatesFourZombies() {
+        MoanOfTheUnhallowed card = new MoanOfTheUnhallowed();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.assertInGraveyard(player1, "Moan of the Unhallowed");
+        harness.addMana(player1, ManaColor.BLACK, 7);
+
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        assertThat(findPermanents(player1, "Zombie")).hasSize(4);
+        harness.assertNotInGraveyard(player1, "Moan of the Unhallowed");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(card);
     }
 }
