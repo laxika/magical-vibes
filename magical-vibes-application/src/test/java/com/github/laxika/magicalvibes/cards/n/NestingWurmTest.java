@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.s.SkyshroudClaim;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NestingWurm.class})
+@CardUsed({NestingWurm.class, SkyshroudClaim.class})
 class NestingWurmTest extends BaseCardTest {
 
     @Test
@@ -81,6 +82,74 @@ class NestingWurmTest extends BaseCardTest {
         resolveMayPrompt(false);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("An accepted search may find zero cards even when matches exist")
+    void acceptedSearchCanFindZeroCards() {
+        setupAndCast();
+        setupLibraryWithNestingWurms(2);
+        List<Card> originalLibrary = List.copyOf(gd.playerDecks.get(player1.getId()));
+
+        resolveMayPrompt(true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrderElementsOf(originalLibrary);
+    }
+
+    @Test
+    @DisplayName("Search finds only Nesting Wurms in the controller's library and ends when matches run out")
+    void searchFiltersCardsAndEndsWhenMatchesRunOut() {
+        setupAndCast();
+        NestingWurm first = new NestingWurm();
+        NestingWurm second = new NestingWurm();
+        SkyshroudClaim other = new SkyshroudClaim();
+        NestingWurm opponentsWurm = new NestingWurm();
+        harness.setLibrary(player1, List.of(other, first, second));
+        harness.setLibrary(player2, List.of(opponentsWurm));
+        harness.setHand(player2, List.of());
+
+        resolveMayPrompt(true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(first, second);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(other);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentsWurm);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An accepted search with no matching cards finishes without moving other cards")
+    void searchWithNoMatchesFinishes() {
+        setupAndCast();
+        SkyshroudClaim other = new SkyshroudClaim();
+        harness.setLibrary(player1, List.of(other));
+
+        resolveMayPrompt(true);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(other);
+    }
+
+    @Test
+    @DisplayName("An accepted search of an empty library finishes normally")
+    void searchOfEmptyLibraryFinishes() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+
+        resolveMayPrompt(true);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     private void setupAndCast() {
