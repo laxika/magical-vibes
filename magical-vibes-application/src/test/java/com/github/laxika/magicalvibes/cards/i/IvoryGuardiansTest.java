@@ -131,6 +131,43 @@ class IvoryGuardiansTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Multiple qualifying red permanents grant only one boost per Guardians")
+    void multipleRedPermanentsDoNotMultiplyBoost() {
+        Permanent guardians = harness.addToBattlefieldAndReturn(player1, new IvoryGuardians());
+        harness.addToBattlefield(player2, new MonssGoblinRaiders());
+        harness.addToBattlefield(player2, new HurloonMinotaur());
+
+        assertThat(gqs.getEffectivePower(gd, guardians)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, guardians)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The boost does not apply to creatures with other names")
+    void doesNotBoostOtherCreatures() {
+        harness.addToBattlefield(player1, new IvoryGuardians());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent raiders = harness.addToBattlefieldAndReturn(player2, new MonssGoblinRaiders());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, raiders)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, raiders)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Two Guardians controlled by the same player each grant a boost")
+    void sameControllerAbilitiesStack() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new IvoryGuardians());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new IvoryGuardians());
+        harness.addToBattlefield(player2, new MonssGoblinRaiders());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(5);
+    }
+
+    @Test
     @DisplayName("Red creature cannot block Ivory Guardians (protection from red)")
     void redCreatureCannotBlock() {
         addCreatureReady(player1, new IvoryGuardians());
@@ -148,8 +185,7 @@ class IvoryGuardiansTest extends BaseCardTest {
         Permanent guardians = addCreatureReady(player1, new IvoryGuardians());
         addCreatureReady(player2, new HurloonMinotaur());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player2);
 
