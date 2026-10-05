@@ -52,8 +52,7 @@ class OverrunTest extends BaseCardTest {
         harness.castFromHand(player1, new Overrun(), "{2}{G}{G}{G}");
         harness.passBothPriorities();
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
@@ -106,6 +105,42 @@ class OverrunTest extends BaseCardTest {
         assertThat(laterCreature.getEffectivePower()).isEqualTo(1);
         assertThat(laterCreature.getEffectiveToughness()).isEqualTo(2);
         assertThat(laterCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Creatures entering while Overrun is on the stack receive its effects")
+    void creaturesEnteringBeforeResolutionAreAffected() {
+        harness.castFromHand(player1, new Overrun(), "{2}{G}{G}{G}");
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new WoodlandDruid());
+
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(4);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated Overruns add their boosts and both expire at end of turn")
+    void repeatedOverrunsStackAndExpire() {
+        Permanent creature = addCreatureReady(player1, new WoodlandDruid());
+
+        harness.castFromHand(player1, new Overrun(), "{2}{G}{G}{G}");
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new Overrun(), "{2}{G}{G}{G}");
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(7);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(8);
+        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(1);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
