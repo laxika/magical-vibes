@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.d.DarkProphecy;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -95,6 +93,7 @@ class OldHobAlleycatBluesTest extends BaseCardTest {
     @DisplayName("Cannot target a non-token creature")
     void cannotTargetNonTokenCreature() {
         Permanent oldHob = addOldHobReady(player1);
+        oldHob.setAttacking(true);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -108,17 +107,94 @@ class OldHobAlleycatBluesTest extends BaseCardTest {
         return addCreatureReady(player, new OldHobAlleycatBlues());
     }
 
-    private Permanent addAttackingToken(Player player) {
-        Card tokenCard = new Card();
-        tokenCard.setName("Test Token");
-        tokenCard.setType(CardType.CREATURE);
-        tokenCard.setPower(1);
-        tokenCard.setToughness(1);
-        tokenCard.setToken(true);
+    @Test
+    void indestructibleTokenSurvivesDestructionAndLosesTemporaryKeywords() {
+        Permanent oldHob = addOldHobReady(player1);
+        Permanent token = addAttackingToken(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, battlefieldIndex(player1, oldHob), null, token.getId());
+        resolveAllTriggers();
 
-        Permanent token = new Permanent(tokenCard);
+        advanceToEndStep(player1);
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
+        assertThat(gqs.hasKeyword(gd, token, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gqs.hasKeyword(gd, token, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isFalse();
+        advanceToEndStep(player2);
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
+    }
+
+    @Test
+    void cannotTargetNonattackingToken() {
+        Permanent oldHob = addOldHobReady(player1);
+        Permanent token = addAttackingToken(player1);
+        token.setAttacking(false);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(player1, oldHob), null, token.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("attacking creature token");
+    }
+
+    @Test
+    void targetMustStillBeAttackingAtResolution() {
+        Permanent oldHob = addOldHobReady(player1);
+        Permanent token = addAttackingToken(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, battlefieldIndex(player1, oldHob), null, token.getId());
+        token.setAttacking(false);
+
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, token, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    void canProtectOpponentsAttackingToken() {
+        Permanent oldHob = addOldHobReady(player1);
+        addOldHobReady(player2);
+        Permanent token = addAttackingToken(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.ensurePriority(player1);
+        harness.activateAbility(player1, battlefieldIndex(player1, oldHob), null, token.getId());
+
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, token, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    void delayedDestructionKeepsOriginalSourceAndControllerAfterTokenChangesControl() {
+        Permanent oldHob = addOldHobReady(player1);
+        Permanent token = addAttackingToken(player1);
+        gd.playerBattlefields.get(player1.getId()).remove(token);
+        gd.playerBattlefields.get(player2.getId()).add(token);
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(oldHob.getCard());
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(oldHob.getId());
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(token);
+    }
+
+    private Permanent addAttackingToken(Player player) {
+        advanceToBeginningOfCombat(player);
+        resolveAllTriggers();
+        Permanent token = findPermanent(player, "Mutant");
         token.setAttacking(true);
-        gd.playerBattlefields.get(player.getId()).add(token);
         return token;
     }
 
@@ -129,8 +205,7 @@ class OldHobAlleycatBluesTest extends BaseCardTest {
     private void advanceToBeginningOfCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 
     private void advanceToEndStep(Player activePlayer) {
