@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LostInALabyrinth.class, GrizzlyBears.class, Forest.class})
 class LostInALabyrinthTest extends BaseCardTest {
 
     @Test
@@ -30,8 +32,7 @@ class LostInALabyrinthTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LostInALabyrinth()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
@@ -55,8 +56,7 @@ class LostInALabyrinthTest extends BaseCardTest {
         List<Card> deck = gd.playerDecks.get(player1.getId());
         Card originalTop = deck.getFirst();
 
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.getGameService().handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
@@ -76,8 +76,7 @@ class LostInALabyrinthTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LostInALabyrinth()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
         harness.getGameService().handleInteractionAnswer(gd, player1,
@@ -105,5 +104,69 @@ class LostInALabyrinthTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, landId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Targeting an opponent's creature still scries the caster's library")
+    void opponentCreatureAndKeepTop() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card top = new Forest();
+        harness.setLibrary(player1, List.of(top, new LostInALabyrinth()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        List<Card> opponentLibrary = List.copyOf(harness.getGameData().playerDecks.get(player2.getId()));
+        harness.setHand(player1, List.of(new LostInALabyrinth()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        GameData gd = harness.getGameData();
+        assertThat(target.getEffectivePower()).isEqualTo(-1);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(top);
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(top);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(opponentLibrary);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Lost in a Labyrinth");
+    }
+
+    @Test
+    @DisplayName("An illegal target prevents scrying")
+    void removedTargetPreventsScry() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card top = new Forest();
+        harness.setLibrary(player1, List.of(top, new LostInALabyrinth()));
+        harness.setHand(player1, List.of(new LostInALabyrinth()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, target.getId());
+
+        GameData gd = harness.getGameData();
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(top);
+        harness.assertInGraveyard(player1, "Lost in a Labyrinth");
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent the debuff or require a scry choice")
+    void emptyLibraryStillDebuffs() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new LostInALabyrinth()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getEffectivePower()).isEqualTo(-1);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(harness.getGameData().interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Lost in a Labyrinth");
     }
 }
