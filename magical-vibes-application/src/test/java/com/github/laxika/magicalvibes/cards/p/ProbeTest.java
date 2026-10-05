@@ -27,8 +27,7 @@ class ProbeTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Swamp(), new Island(), new Forest()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);
@@ -97,5 +96,78 @@ class ProbeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(player2.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("target");
+    }
+
+    @Test
+    @DisplayName("Kicked Probe can target its controller, who discards twice")
+    void kickedProbeCanTargetItsController() {
+        harness.setHand(player1, List.of(new Probe(), new Island(), new Forest()));
+        harness.setHand(player2, List.of(new Swamp()));
+        harness.setLibrary(player1, List.of(new Swamp(), new Island(), new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        gs.playCard(gd, player1, 0, 0, player1.getId(), null, List.of(), List.of(),
+                false, null, null, List.of(), null, List.of(), true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(5);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Probe");
+    }
+
+    @Test
+    @DisplayName("Kicked Probe discards the target player's only card and finishes resolving")
+    void kickedProbeAgainstOneCardHand() {
+        harness.setHand(player1, List.of(new Probe()));
+        harness.setHand(player2, List.of(new Island()));
+        harness.setLibrary(player1, List.of(new Swamp(), new Island(), new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        gs.playCard(gd, player1, 0, 0, player2.getId(), null, List.of(), List.of(),
+                false, null, null, List.of(), null, List.of(), true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player2, "Island");
+        harness.assertInGraveyard(player1, "Probe");
+    }
+
+    @Test
+    @DisplayName("An empty target hand does not prevent kicked Probe's draw and controller discard")
+    void kickedProbeAgainstEmptyHand() {
+        harness.setHand(player1, List.of(new Probe()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Swamp(), new Island(), new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        gs.playCard(gd, player1, 0, 0, player2.getId(), null, List.of(), List.of(),
+                false, null, null, List.of(), null, List.of(), true);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Probe");
     }
 }
