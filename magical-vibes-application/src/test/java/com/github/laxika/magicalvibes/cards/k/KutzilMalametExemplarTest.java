@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -27,8 +29,6 @@ class KutzilMalametExemplarTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passPriority(player1);
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, kutzil.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -80,6 +80,158 @@ class KutzilMalametExemplarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(topCard).doesNotContain(nextCard);
+    }
+
+    @Test
+    void opponentCanCastDuringTheirOwnTurn() {
+        Permanent kutzil = addKutzil();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castAndResolveInstant(player2, 0, kutzil.getId());
+
+        assertThat(kutzil.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void controllerCanCastDuringTheirOwnTurn() {
+        addKutzil();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void mixedQualifyingAndUnmodifiedAttackersDrawOnce() {
+        addKutzil();
+        addReadyAttacker();
+        addReadyAttacker().setPowerModifier(1);
+        Card topCard = new GrizzlyBears();
+        Card nextCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(topCard).doesNotContain(nextCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+    }
+
+    @Test
+    void kutzilCanTriggerFromItsOwnCombatDamage() {
+        Permanent kutzil = addKutzil();
+        kutzil.setSummoningSick(false);
+        kutzil.setAttacking(true);
+        kutzil.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
+    }
+
+    @Test
+    void toughnessIncreaseAloneDoesNotDraw() {
+        addKutzil();
+        addReadyAttacker().setToughnessModifier(2);
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    void increasedBasePowerAloneDoesNotDraw() {
+        addKutzil();
+        Permanent attacker = addReadyAttacker();
+        attacker.setBasePowerToughnessOverriddenUntilEndOfTurn(true);
+        attacker.setBasePowerOverride(4);
+        attacker.setBaseToughnessOverride(4);
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    void powerIncreaseAboveOverriddenBasePowerDraws() {
+        addKutzil();
+        Permanent attacker = addReadyAttacker();
+        attacker.setBasePowerToughnessOverriddenUntilEndOfTurn(true);
+        attacker.setBasePowerOverride(1);
+        attacker.setBaseToughnessOverride(1);
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
+    }
+
+    @Test
+    void drawDoesNotRecheckPowerWhenTriggerResolves() {
+        addKutzil();
+        Permanent attacker = addReadyAttacker();
+        attacker.setPowerModifier(1);
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+
+        resolveCombat();
+        attacker.setPowerModifier(0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
+    }
+
+    @Test
+    void doubleStrikeDrawsInEachDamageStep() {
+        addKutzil();
+        Permanent attacker = addReadyAttacker();
+        attacker.setPowerModifier(1);
+        attacker.getGrantedKeywords().add(Keyword.DOUBLE_STRIKE);
+        Card firstCard = new GrizzlyBears();
+        Card secondCard = new GrizzlyBears();
+        Card thirdCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(firstCard, secondCard, thirdCard));
+
+        resolveCombat();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(firstCard, secondCard).doesNotContain(thirdCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(thirdCard);
+    }
+
+    @Test
+    void opposingBoostedCreatureDoesNotDrawForKutzilController() {
+        addKutzil();
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        attacker.setPowerModifier(1);
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+
+        resolveCombat(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
     }
 
     private Permanent addKutzil() {
