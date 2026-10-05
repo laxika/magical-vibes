@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
+import com.github.laxika.magicalvibes.cards.e.ElspethSunsNemesis;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PurphorossIntervention.class, CrawWurm.class, Millstone.class})
+@CardUsed({PurphorossIntervention.class, CrawWurm.class, Millstone.class, ElspethSunsNemesis.class})
 class PurphorossInterventionTest extends BaseCardTest {
 
     @Test
@@ -46,8 +48,7 @@ class PurphorossInterventionTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Elemental");
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Elemental");
@@ -76,5 +77,67 @@ class PurphorossInterventionTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castModalInstantForX(player1, 0, 1, 1, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature or planeswalker");
+    }
+
+    @Test
+    @DisplayName("Deals twice X damage to a planeswalker, removing loyalty")
+    void dealsTwiceXDamageToPlaneswalker() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ElspethSunsNemesis());
+        harness.setHand(player1, List.of(new PurphorossIntervention()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castModalInstantForX(player1, 0, 1, 2, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Elspeth, Sun's Nemesis");
+        assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Lethal damage puts a planeswalker into its owner's graveyard")
+    void lethalDamageRemovesPlaneswalker() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ElspethSunsNemesis());
+        harness.setHand(player1, List.of(new PurphorossIntervention()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castModalInstantForX(player1, 0, 1, 3, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Elspeth, Sun's Nemesis");
+        harness.assertInGraveyard(player2, "Elspeth, Sun's Nemesis");
+    }
+
+    @Test
+    @DisplayName("X zero creates a 0/1 token that survives until the next end step")
+    void zeroXCreatesToken() {
+        harness.setHand(player1, List.of(new PurphorossIntervention()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castModalInstantForX(player1, 0, 0, 0, null);
+        harness.passBothPriorities();
+
+        Permanent elemental = findPermanent(player1, "Elemental");
+        assertThat(elemental.getCard().getPower()).isZero();
+        assertThat(elemental.getCard().getToughness()).isEqualTo(1);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Elemental");
+    }
+
+    @Test
+    @DisplayName("X zero deals no damage to a legal planeswalker target")
+    void zeroXDealsNoDamage() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ElspethSunsNemesis());
+        harness.setHand(player1, List.of(new PurphorossIntervention()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castModalInstantForX(player1, 0, 1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Elspeth, Sun's Nemesis");
+        assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
     }
 }
