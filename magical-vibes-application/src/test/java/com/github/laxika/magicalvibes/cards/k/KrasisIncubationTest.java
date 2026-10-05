@@ -1,13 +1,15 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,25 +19,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KrasisIncubation.class, GrizzlyBears.class, BottleGnomes.class, FountainOfYouth.class,
+        LlanowarElves.class})
 class KrasisIncubationTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enchanted creature cannot attack")
     void enchantedCreatureCannotAttack() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent aura = new Permanent(new KrasisIncubation());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new KrasisIncubation());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player2.getId()).add(aura);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -43,23 +39,15 @@ class KrasisIncubationTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature cannot block")
     void enchantedCreatureCannotBlock() {
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        Permanent aura = new Permanent(new KrasisIncubation());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new KrasisIncubation());
         aura.setAttachedTo(blocker.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1))))
                 .isInstanceOf(IllegalStateException.class)
@@ -69,13 +57,10 @@ class KrasisIncubationTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature cannot activate its abilities")
     void enchantedCreatureCannotActivateAbilities() {
-        Permanent gnomes = new Permanent(new BottleGnomes());
-        gnomes.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(gnomes);
+        Permanent gnomes = addCreatureReady(player1, new BottleGnomes());
 
-        Permanent aura = new Permanent(new KrasisIncubation());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new KrasisIncubation());
         aura.setAttachedTo(gnomes.getId());
-        gd.playerBattlefields.get(player2.getId()).add(aura);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -86,7 +71,7 @@ class KrasisIncubationTest extends BaseCardTest {
     @DisplayName("Cannot enchant a noncreature permanent")
     void cannotTargetNonCreature() {
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.f.FountainOfYouth());
+        harness.addToBattlefield(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new KrasisIncubation()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -101,13 +86,10 @@ class KrasisIncubationTest extends BaseCardTest {
     @Test
     @DisplayName("Activated ability returns the Aura to hand and puts two +1/+1 counters on the enchanted creature")
     void abilityBouncesAuraAndAddsCounters() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
-        Permanent aura = new Permanent(new KrasisIncubation());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new KrasisIncubation());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -123,25 +105,87 @@ class KrasisIncubationTest extends BaseCardTest {
     @Test
     @DisplayName("Creature can attack once the Aura has been returned to hand")
     void creatureCanAttackAfterBounce() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent aura = new Permanent(new KrasisIncubation());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new KrasisIncubation());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player2.getId()).add(aura);
 
         harness.addMana(player2, ManaColor.GREEN, 2);
         harness.addMana(player2, ManaColor.BLUE, 2);
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
-        harness.forceActivePlayer(player1);
-        harness.beginAttackerDeclarationInput();
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-
-        assertThatCode(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatCode(() -> declareAttackers(player1, List.of(0)))
                 .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Casting the Aura attaches it to the chosen creature")
+    void castingAuraAttachesToCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new KrasisIncubation()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Krasis Incubation").getAttachedTo()).isEqualTo(bears.getId());
+    }
+
+    @Test
+    @DisplayName("Returning the Aura is an immediate cost and restores the creature's abilities before resolution")
+    void bounceCostRestoresAbilitiesBeforeResolution() {
+        Permanent gnomes = harness.addToBattlefieldAndReturn(player1, new BottleGnomes());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new KrasisIncubation());
+        aura.setAttachedTo(gnomes.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Krasis Incubation");
+        harness.assertInHand(player1, "Krasis Incubation");
+        assertThat(gnomes.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 23);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Bottle Gnomes");
+        assertThat(gnomes.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The Aura can also put counters on its controller's creature")
+    void abilityAddsCountersToControllersCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new KrasisIncubation());
+        aura.setAttachedTo(bears.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Krasis Incubation");
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Enchanted creature cannot activate mana abilities")
+    void enchantedCreatureCannotActivateManaAbilities() {
+        Permanent elves = addCreatureReady(player1, new LlanowarElves());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new KrasisIncubation());
+        aura.setAttachedTo(elves.getId());
+
+        assertThatThrownBy(() -> harness.tapPermanent(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
+        assertThat(elves.isTapped()).isFalse();
     }
 }
