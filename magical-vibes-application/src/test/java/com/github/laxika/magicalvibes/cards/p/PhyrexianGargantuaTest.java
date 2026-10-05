@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -41,6 +42,38 @@ class PhyrexianGargantuaTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(forest);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 2);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent the trigger's life loss before the controller loses")
+    void emptyLibraryStillLosesLife() {
+        harness.setLibrary(player1, List.of());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        castGargantua();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 2);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("The controller draws both cards before losing the game to the trigger's life loss")
+    void lethalLifeLossStillDrawsBothCards() {
+        Forest first = new Forest();
+        Forest second = new Forest();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setLife(player1, 2);
+
+        castGargantua();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isZero();
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
     }
 
     @Test
