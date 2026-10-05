@@ -100,6 +100,84 @@ class InnocuousResearcherTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
     }
 
+    @Test
+    @DisplayName("A mixed parley reveal investigates once and both players draw")
+    void mixedRevealInvestigatesOnce() {
+        Card nonland = new InnocuousResearcher();
+        Card land = new Forest();
+        harness.setLibrary(player1, List.of(nonland));
+        harness.setLibrary(player2, List.of(land));
+        addReadyResearcher();
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Clue")).hasSize(1);
+        assertThat(findPermanents(player2, "Clue")).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).contains(nonland);
+        assertThat(gd.playerHands.get(player2.getId())).contains(land);
+    }
+
+    @Test
+    @DisplayName("The end-step ability untaps only its controller's lands")
+    void endStepUntapsOnlyControlledLands() {
+        Permanent researcher = addReadyResearcher();
+        researcher.tap();
+        Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent opposingLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+        ownLand.tap();
+        opposingLand.tap();
+
+        triggerEndStepAbility();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(ownLand.isTapped()).isFalse();
+        assertThat(opposingLand.isTapped()).isTrue();
+        assertThat(researcher.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Accepting with no lands still prevents casting after the Researcher leaves")
+    void acceptingWithNoLandsStillPreventsCastingAfterSourceLeaves() {
+        Permanent researcher = addReadyResearcher();
+        triggerEndStepAbility();
+        harness.handleMayAbilityChosen(player1, true);
+        gd.playerBattlefields.get(player1.getId()).remove(researcher);
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("The casting restriction lasts through the opponent's turn and ends next turn")
+    void castingRestrictionExpiresAtControllersNextTurn() {
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        Permanent researcher = addReadyResearcher();
+        triggerEndStepAbility();
+        harness.handleMayAbilityChosen(player1, true);
+        gd.playerBattlefields.get(player1.getId()).remove(researcher);
+        harness.setHand(player1, List.of(new Shock()));
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.RED, 1);
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+    }
+
     private Permanent addReadyResearcher() {
         return addCreatureReady(player1, new InnocuousResearcher());
     }
@@ -108,7 +186,7 @@ class InnocuousResearcherTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
     }
 }
