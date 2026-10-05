@@ -3,11 +3,14 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
+import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.d.Demolish;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MindRot;
+import com.github.laxika.magicalvibes.cards.m.Millstone;
+import com.github.laxika.magicalvibes.cards.s.SculptingSteel;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,7 +29,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({LegacyWeapon.class, AngelsFeather.class, Demolish.class, Forest.class,
-        GloriousAnthem.class, GrizzlyBears.class, MindRot.class})
+        GloriousAnthem.class, GrizzlyBears.class, MindRot.class, Cancel.class, Millstone.class,
+        SculptingSteel.class})
 class LegacyWeaponTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -43,7 +47,7 @@ class LegacyWeaponTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Legacy Weapon");
+        assertThat(entry.getCard()).isInstanceOf(LegacyWeapon.class);
     }
 
     @Test
@@ -75,7 +79,7 @@ class LegacyWeaponTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Legacy Weapon");
+        assertThat(entry.getCard()).isInstanceOf(LegacyWeapon.class);
         assertThat(entry.getTargetId()).isEqualTo(target.getId());
     }
 
@@ -278,8 +282,7 @@ class LegacyWeaponTest extends BaseCardTest {
         int deckSizeBefore = harness.getGameData().playerDecks.get(player2.getId()).size();
 
         UUID targetId = harness.getPermanentId(player2, "Legacy Weapon");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
         // Not on battlefield
@@ -306,8 +309,7 @@ class LegacyWeaponTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
 
@@ -351,6 +353,81 @@ class LegacyWeaponTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("Grizzly Bears") && log.contains("exiled"));
+    }
+
+    @Test
+    @DisplayName("A countered Legacy Weapon is shuffled into its owner's library")
+    void replacementEffectWhenCountered() {
+        LegacyWeapon weapon = new LegacyWeapon();
+        harness.setHand(player1, List.of(weapon));
+        harness.setHand(player2, List.of(new Cancel()));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castArtifact(player1, 0);
+        harness.castAndResolveInstant(player2, 0, weapon.getId());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Legacy Weapon");
+        harness.assertNotInGraveyard(player1, "Legacy Weapon");
+        assertThat(gd.playerDecks.get(player1.getId())).contains(weapon);
+    }
+
+    @Test
+    @DisplayName("A milled Legacy Weapon is shuffled into its owner's library")
+    void replacementEffectWhenMilled() {
+        LegacyWeapon weapon = new LegacyWeapon();
+        Forest forest = new Forest();
+        harness.setLibrary(player2, List.of(weapon, forest));
+        harness.addToBattlefield(player1, new Millstone());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player2, "Legacy Weapon");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(weapon);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(forest);
+    }
+
+    @Test
+    @DisplayName("Legacy Weapon can exile itself without shuffling into the library")
+    void canExileItself() {
+        LegacyWeapon card = new LegacyWeapon();
+        Permanent weapon = harness.addToBattlefieldAndReturn(player1, card);
+        int librarySize = gd.playerDecks.get(player1.getId()).size();
+        addWubrgMana(player1);
+
+        harness.activateAbility(player1, 0, null, weapon.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Legacy Weapon");
+        harness.assertNotInGraveyard(player1, "Legacy Weapon");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(librarySize);
+    }
+
+    @Test
+    @DisplayName("An artifact copying Legacy Weapon shuffles into its owner's library when destroyed")
+    void copiedReplacementEffectOnDestruction() {
+        Permanent weapon = harness.addToBattlefieldAndReturn(player2, new LegacyWeapon());
+        SculptingSteel steel = new SculptingSteel();
+        harness.setHand(player1, List.of(steel));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, weapon.getId());
+        UUID copyId = harness.getPermanentId(player1, "Legacy Weapon");
+        harness.setHand(player1, List.of(new Demolish()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, copyId);
+
+        harness.assertNotOnBattlefield(player1, "Legacy Weapon");
+        harness.assertNotInGraveyard(player1, "Sculpting Steel");
+        assertThat(gd.playerDecks.get(player1.getId())).contains(steel);
+        harness.assertOnBattlefield(player2, "Legacy Weapon");
     }
 
     private void addWubrgMana(Player player) {
