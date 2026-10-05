@@ -9,8 +9,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -63,11 +61,42 @@ class MidnightAngelArmorTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private void castArmor() {
-        harness.setHand(player1, List.of(new MidnightAngelArmor()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
+    @Test
+    void equipCannotTargetOpponentsCreature() {
+        Permanent armor = harness.addToBattlefieldAndReturn(player1, new MidnightAngelArmor());
+        Permanent opposingArmor = harness.enterBattlefieldAndReturn(player2, new MidnightAngelArmor());
+        harness.passBothPriorities();
+        Permanent opposingSoldier = findPermanent(player2, "Soldier");
+        assertThat(opposingArmor.getAttachedTo()).isEqualTo(opposingSoldier.getId());
+        harness.ensurePriority(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castArtifact(player1, 0);
+
+        int armorIndex = gd.playerBattlefields.get(player1.getId()).indexOf(armor);
+        assertThatThrownBy(() -> harness.activateAbility(player1, armorIndex, null, opposingSoldier.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("you control");
+        assertThat(armor.getAttachedTo()).isNull();
+    }
+
+    @Test
+    void entryTriggerStillCreatesSoldierAfterArmorLeavesBattlefield() {
+        harness.castFromHand(player1, new MidnightAngelArmor(), "{3}{W}{W}");
+        harness.passBothPriorities();
+        Permanent armor = findPermanent(player1, "Midnight Angel Armor");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, armor));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Midnight Angel Armor");
+        harness.assertInGraveyard(player1, "Midnight Angel Armor");
+        Permanent soldier = findPermanent(player1, "Soldier");
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.VIGILANCE)).isFalse();
+    }
+
+    private void castArmor() {
+        harness.castFromHand(player1, new MidnightAngelArmor(), "{3}{W}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
