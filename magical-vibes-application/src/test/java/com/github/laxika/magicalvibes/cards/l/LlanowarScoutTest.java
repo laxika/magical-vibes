@@ -2,13 +2,13 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LlanowarScout.class, Forest.class, LlanowarElves.class})
 class LlanowarScoutTest extends BaseCardTest {
 
     
@@ -39,7 +40,7 @@ class LlanowarScoutTest extends BaseCardTest {
     @DisplayName("Resolving ability prompts may choice first")
     void resolvingPromptsMayChoice() {
         addReadyScout(player1);
-        harness.setHand(player1, List.of(new Forest(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Forest(), new LlanowarElves()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -52,7 +53,7 @@ class LlanowarScoutTest extends BaseCardTest {
     @DisplayName("Accepting may prompt allows choosing only land cards from hand")
     void acceptingMayPromptsLandChoice() {
         addReadyScout(player1);
-        harness.setHand(player1, List.of(new GrizzlyBears(), new Forest(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new LlanowarElves(), new Forest(), new LlanowarElves()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -116,8 +117,7 @@ class LlanowarScoutTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate while Llanowar Scout has summoning sickness")
     void cannotActivateWithSummoningSickness() {
-        Permanent scout = new Permanent(new LlanowarScout());
-        gd.playerBattlefields.get(player1.getId()).add(scout);
+        harness.addToBattlefield(player1, new LlanowarScout());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -161,10 +161,67 @@ class LlanowarScoutTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Accepting with no land in hand finishes without putting a card onto the battlefield")
+    void acceptingWithNoLandDoesNothing() {
+        addReadyScout(player1);
+        LlanowarElves creature = new LlanowarElves();
+        harness.setHand(player1, List.of(creature));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Accepting with an empty hand finishes normally")
+    void acceptingWithEmptyHandDoesNothing() {
+        addReadyScout(player1);
+        harness.setHand(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Putting one land does not consume the normal land play")
+    void putsOnlyOneLandAndPreservesNormalLandPlay() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        addReadyScout(player1);
+        Forest chosen = new Forest();
+        Forest remaining = new Forest();
+        harness.setHand(player1, List.of(chosen, remaining));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.playLand(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+    }
+
     private Permanent addReadyScout(Player player) {
-        Permanent scout = new Permanent(new LlanowarScout());
+        Permanent scout = harness.addToBattlefieldAndReturn(player, new LlanowarScout());
         scout.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(scout);
         return scout;
     }
 }
