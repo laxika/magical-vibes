@@ -92,6 +92,73 @@ class PentarchPaladinTest extends BaseCardTest {
         assertThat(paladin.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("Flanking does not weaken a blocker with flanking")
+    void flankingDoesNotWeakenFlankingBlocker() {
+        addCreatureReady(player1, new PentarchPaladin());
+        Permanent blocker = addCreatureReady(player2, new PentarchPaladin());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(blocker.getEffectivePower()).isEqualTo(3);
+        assertThat(blocker.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Pentarch Paladin can destroy itself when white was chosen")
+    void canDestroyItself() {
+        Permanent paladin = addReadyPaladin(CardColor.WHITE);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, paladin.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Pentarch Paladin");
+        harness.assertInGraveyard(player1, "Pentarch Paladin");
+    }
+
+    @Test
+    @DisplayName("The chosen color remains available after the ability's source is destroyed")
+    void abilityResolvesAfterSourceIsDestroyed() {
+        Permanent paladin = addReadyPaladin(CardColor.GREEN);
+        Permanent opposingPaladin = addCreatureReady(player2, new PentarchPaladin());
+        opposingPaladin.setChosenColor(CardColor.WHITE);
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new AshcoatBear());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, bear.getId());
+        harness.activateAbility(player2, 0, 0, null, paladin.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Pentarch Paladin");
+        harness.assertInGraveyard(player1, "Pentarch Paladin");
+        harness.assertOnBattlefield(player2, "Ashcoat Bear");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Ashcoat Bear");
+        harness.assertInGraveyard(player2, "Ashcoat Bear");
+    }
+
+    @Test
+    @DisplayName("Pentarch Paladin cannot pay its ability cost with one white and one colorless mana")
+    void requiresTwoWhiteMana() {
+        Permanent paladin = addReadyPaladin(CardColor.GREEN);
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new AshcoatBear());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bear.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(paladin.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Ashcoat Bear");
+    }
+
     private Permanent addReadyPaladin(CardColor chosenColor) {
         Permanent paladin = addCreatureReady(player1, new PentarchPaladin());
         paladin.setChosenColor(chosenColor);
