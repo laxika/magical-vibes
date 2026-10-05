@@ -96,6 +96,37 @@ class KarnsTouchTest extends BaseCardTest {
         assertThat(gqs.isArtifact(gd, matrix)).isTrue();
     }
 
+    @Test
+    @DisplayName("An animated artifact can use its retained ability to boost itself")
+    void animatedArtifactCanBoostItself() {
+        Permanent matrix = harness.addToBattlefieldAndReturn(player1, new PowerMatrix());
+        matrix.setSummoningSick(false);
+        castKarnsTouch(matrix);
+
+        harness.activateAbility(player1, 0, null, matrix.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, matrix)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, matrix)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, matrix, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, matrix, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, matrix, Keyword.TRAMPLE)).isTrue();
+        assertThat(matrix.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A newly controlled animated artifact cannot pay a tap ability cost")
+    void animatedArtifactIsSubjectToSummoningSickness() {
+        Permanent matrix = harness.addToBattlefieldAndReturn(player1, new PowerMatrix());
+        matrix.setSummoningSick(true);
+        castKarnsTouch(matrix);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, matrix.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(matrix.isTapped()).isFalse();
+    }
+
     private void castKarnsTouch(Permanent target) {
         prepareKarnsTouch();
         harness.castAndResolveInstant(player1, 0, target.getId());
