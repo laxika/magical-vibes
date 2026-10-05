@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.z.ZetalpaPrimalDawn;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -20,18 +21,18 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({IronwillForger.class, GrizzlyBears.class})
+@CardUsed({IronwillForger.class, GrizzlyBears.class, ZetalpaPrimalDawn.class})
 class IronwillForgerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Lieutenant targets a nonlegendary creature you control and grants it myriad")
     void lieutenantGrantsMyriadToLegalTarget() {
-        Card commander = new GrizzlyBears();
+        Card commander = new ZetalpaPrimalDawn();
         gd.makeCommander(player1.getId(), commander);
-        addReadyCreature(player1, commander);
-        addReadyCreature(player1, new IronwillForger());
-        Permanent target = addReadyCreature(player1, new GrizzlyBears());
-        addReadyCreature(player2, new GrizzlyBears());
+        addCreatureReady(player1, commander);
+        addCreatureReady(player1, new IronwillForger());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         advanceToBeginningOfCombat(player1);
 
@@ -57,13 +58,21 @@ class IronwillForgerTest extends BaseCardTest {
                         && permanent.isTapped()
                         && permanent.isAttacking()
                         && permanent.getAttackTarget().equals(thirdPlayerId));
+
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Grizzly Bears"))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
     }
 
     @Test
     @DisplayName("Lieutenant does nothing without a commander")
     void doesNotTriggerWithoutCommander() {
-        addReadyCreature(player1, new IronwillForger());
-        addReadyCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new IronwillForger());
+        addCreatureReady(player1, new GrizzlyBears());
 
         advanceToBeginningOfCombat(player1);
 
@@ -73,11 +82,11 @@ class IronwillForgerTest extends BaseCardTest {
     @Test
     @DisplayName("Lieutenant rejects an opponent's creature as a target")
     void rejectsOpponentCreatureTarget() {
-        Card commander = new GrizzlyBears();
+        Card commander = new ZetalpaPrimalDawn();
         gd.makeCommander(player1.getId(), commander);
-        addReadyCreature(player1, commander);
-        addReadyCreature(player1, new IronwillForger());
-        Permanent opponentCreature = addReadyCreature(player2, new GrizzlyBears());
+        addCreatureReady(player1, commander);
+        addCreatureReady(player1, new IronwillForger());
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
         advanceToBeginningOfCombat(player1);
 
@@ -85,11 +94,80 @@ class IronwillForgerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void excludesLegendaryCreaturesAndAllowsForgerItself() {
+        Card commander = new ZetalpaPrimalDawn();
+        gd.makeCommander(player1.getId(), commander);
+        Permanent legendary = addCreatureReady(player1, commander);
+        Permanent forger = addCreatureReady(player1, new IronwillForger());
+
+        advanceToBeginningOfCombat(player1);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).contains(forger.getId()).doesNotContain(legendary.getId());
+        harness.handlePermanentChosen(player1, forger.getId());
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void commanderLeavingBeforeResolutionPreventsMyriad() {
+        Card commander = new ZetalpaPrimalDawn();
+        gd.makeCommander(player1.getId(), commander);
+        Permanent commanderPermanent = addCreatureReady(player1, commander);
+        addCreatureReady(player1, new IronwillForger());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        addThirdPlayer();
+
+        advanceToBeginningOfCombat(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(commanderPermanent);
+        gd.playerCommandZones.get(player1.getId()).add(commander);
+        harness.passBothPriorities();
+
+        declareAttackers(List.of(1));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(findPermanents(player1, "Grizzly Bears")).noneMatch(p -> p.getCard().isToken());
+    }
+
+    @Test
+    void myriadTokenCreationCanBeDeclined() {
+        Card commander = new ZetalpaPrimalDawn();
+        gd.makeCommander(player1.getId(), commander);
+        addCreatureReady(player1, commander);
+        addCreatureReady(player1, new IronwillForger());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        addThirdPlayer();
+
+        advanceToBeginningOfCombat(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        declareAttackers(List.of(2));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            harness.handleMayAbilityChosen(player1, false);
+            resolveAllTriggers();
+        });
+        assertThat(findPermanents(player1, "Grizzly Bears")).noneMatch(p -> p.getCard().isToken());
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsCombat() {
+        Card commander = new ZetalpaPrimalDawn();
+        gd.makeCommander(player1.getId(), commander);
+        addCreatureReady(player1, commander);
+        addCreatureReady(player1, new IronwillForger());
+
+        advanceToBeginningOfCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void advanceToBeginningOfCombat(Player activePlayer) {
