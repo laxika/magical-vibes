@@ -78,4 +78,36 @@ class LivingHiveTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Insect")).isEmpty();
         harness.assertOnBattlefield(player2, "Plated Slagwurm");
     }
+
+    @Test
+    @DisplayName("Trample does not require assigning excess damage to the player")
+    void doesNotCreateTokensWhenAllDamageIsAssignedToSmallBlocker() {
+        Permanent hive = addCreatureReady(player1, new LivingHive());
+        hive.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new Frogmite());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 6));
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(findPermanents(player1, "Insect")).isEmpty();
+        harness.assertInGraveyard(player2, "Frogmite");
+    }
+
+    @Test
+    @DisplayName("Tokens belong to Living Hive's controller when the second player attacks")
+    void createsTokensForSecondPlayerController() {
+        Permanent hive = addCreatureReady(player2, new LivingHive());
+        hive.setAttacking(true);
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(14);
+        assertThat(findPermanents(player2, "Insect")).hasSize(6);
+        assertThat(findPermanents(player1, "Insect")).isEmpty();
+    }
 }
