@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +14,61 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({OonasProwler.class})
 class OonasProwlerTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Repeated activations are cumulative and may reduce power below zero")
+    void repeatedActivationsReducePowerBelowZero() {
+        Permanent prowler = harness.addToBattlefieldAndReturn(player1, new OonasProwler());
+        int basePower = gqs.getEffectivePower(gd, prowler);
+        int baseToughness = gqs.getEffectiveToughness(gd, prowler);
+        harness.setHand(player1, List.of(new OonasProwler(), new OonasProwler()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, prowler)).isEqualTo(basePower - 4).isNegative();
+        assertThat(gqs.getEffectiveToughness(gd, prowler)).isEqualTo(baseToughness);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Discard is paid before resolution and does not immediately reduce power")
+    void discardIsAnActivationCost() {
+        Permanent prowler = harness.addToBattlefieldAndReturn(player1, new OonasProwler());
+        int basePower = gqs.getEffectivePower(gd, prowler);
+        harness.setHand(player2, List.of(new OonasProwler()));
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertInGraveyard(player2, "Oona's Prowler");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, prowler)).isEqualTo(basePower);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, prowler)).isEqualTo(basePower - 2);
+    }
+
+    @Test
+    @DisplayName("An opponent cannot pay the discard cost using the controller's hand")
+    void opponentCannotDiscardControllersCard() {
+        harness.addToBattlefieldAndReturn(player1, new OonasProwler());
+        harness.setHand(player1, List.of(new OonasProwler()));
+        harness.setHand(player2, List.of());
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
 
     // ===== Controller activation =====
 
@@ -24,13 +78,13 @@ class OonasProwlerTest extends BaseCardTest {
         Permanent prowler = harness.addToBattlefieldAndReturn(player1, new OonasProwler());
         int basePower = gqs.getEffectivePower(gd, prowler);
         int baseToughness = gqs.getEffectiveToughness(gd, prowler);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new OonasProwler()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Oona's Prowler");
         assertThat(gqs.getEffectivePower(gd, prowler)).isEqualTo(basePower - 2);
         assertThat(gqs.getEffectiveToughness(gd, prowler)).isEqualTo(baseToughness);
     }
@@ -53,7 +107,7 @@ class OonasProwlerTest extends BaseCardTest {
         Permanent prowler = harness.addToBattlefieldAndReturn(player1, new OonasProwler());
         int basePower = gqs.getEffectivePower(gd, prowler);
         harness.setHand(player1, new ArrayList<>());
-        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new OonasProwler()));
 
         // player2 doesn't control the Prowler (it's on player1's battlefield at index 0),
         // but the ability is flagged "any player may activate".
@@ -63,7 +117,7 @@ class OonasProwlerTest extends BaseCardTest {
 
         // The activating opponent pays the discard cost from their own hand.
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Oona's Prowler");
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         // The effect still applies to the Prowler its controller owns.
         assertThat(gqs.getEffectivePower(gd, prowler)).isEqualTo(basePower - 2);
@@ -75,7 +129,7 @@ class OonasProwlerTest extends BaseCardTest {
     @DisplayName("Paying the discard cost puts the ability on the stack")
     void payingCostStacksAbility() {
         harness.addToBattlefieldAndReturn(player1, new OonasProwler());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new OonasProwler()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
@@ -90,7 +144,7 @@ class OonasProwlerTest extends BaseCardTest {
     @DisplayName("The -2/-0 wears off at end of turn cleanup")
     void boostWearsOffAtEndOfTurn() {
         Permanent prowler = harness.addToBattlefieldAndReturn(player1, new OonasProwler());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new OonasProwler()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
