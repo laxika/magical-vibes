@@ -18,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MemoryJar.class, GiantCockroach.class})
+@CardUsed({MemoryJar.class, GiantCockroach.class, RielleTheEverwise.class, TamiyoCollectorOfTales.class})
 class MemoryJarTest extends BaseCardTest {
 
     @Test
@@ -80,7 +80,6 @@ class MemoryJarTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(RielleTheEverwise.class)
     @DisplayName("The delayed discard counts the whole hand as one discard event")
     void delayedDiscardIsOneDiscardEvent() {
         List<Card> player1Hand = List.of(new MemoryJar(), new GiantCockroach());
@@ -104,7 +103,6 @@ class MemoryJarTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(TamiyoCollectorOfTales.class)
     @DisplayName("The delayed discard respects an opponent's discard-prevention effect")
     void delayedDiscardRespectsOpponentDiscardPrevention() {
         List<Card> player1Hand = List.of(new MemoryJar(), new GiantCockroach());
@@ -136,6 +134,84 @@ class MemoryJarTest extends BaseCardTest {
                 .noneMatch(card -> replacementHand2.stream().map(Card::getId).toList().contains(card.getId()));
     }
 
+    @Test
+    @DisplayName("Empty original hands still cause the drawn hands to be discarded at the next end step")
+    void emptyOriginalHandsStillDiscardDrawnHands() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        setDeck(player1, 7);
+        setDeck(player2, 7);
+        addReadyJar();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.assertInGraveyard(player1, "Memory Jar");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(7);
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(8);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(7);
+    }
+
+    @Test
+    @DisplayName("An activation during the end step waits until the following end step")
+    void activationDuringEndStepWaitsUntilFollowingEndStep() {
+        List<Card> originalHand = List.of(new GiantCockroach());
+        harness.setHand(player1, originalHand);
+        harness.setHand(player2, List.of());
+        setDeck(player1, 8);
+        setDeck(player2, 8);
+        addReadyJar();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
+        assertThat(gd.exiledCards).hasSize(1);
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(originalHand);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Different players' Jar return triggers resolve in active-player/nonactive-player order")
+    void differentControllersReturnHandsInApnapOrder() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new GiantCockroach()));
+        harness.setHand(player2, List.of(new GiantCockroach()));
+        setDeck(player1, 14);
+        setDeck(player2, 14);
+        harness.addToBattlefield(player2, new MemoryJar());
+        addReadyJar();
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        List<Card> intermediateHand1 = new ArrayList<>(gd.playerHands.get(player1.getId()));
+        List<Card> intermediateHand2 = new ArrayList<>(gd.playerHands.get(player2.getId()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        advanceToEndStep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactlyInAnyOrderElementsOf(intermediateHand1);
+        assertThat(gd.playerHands.get(player2.getId()))
+                .containsExactlyInAnyOrderElementsOf(intermediateHand2);
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
     private void addReadyJar() {
         Permanent jar = harness.addToBattlefieldAndReturn(player1, new MemoryJar());
         jar.setSummoningSick(false);
@@ -154,7 +230,6 @@ class MemoryJarTest extends BaseCardTest {
         for (int i = 0; i < count; i++) {
             deck.add(new GiantCockroach());
         }
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(deck);
+        harness.setLibrary(player, deck);
     }
 }
