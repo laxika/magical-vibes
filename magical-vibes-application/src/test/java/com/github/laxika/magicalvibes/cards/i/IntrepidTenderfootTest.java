@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(IntrepidTenderfoot.class)
+@CardUsed({IntrepidTenderfoot.class})
 class IntrepidTenderfootTest extends BaseCardTest {
 
     @Test
@@ -41,5 +41,74 @@ class IntrepidTenderfootTest extends BaseCardTest {
                 .hasMessageContaining("sorcery speed");
 
         assertThat(tenderfoot.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent tenderfoot = harness.addToBattlefieldAndReturn(player1, new IntrepidTenderfoot());
+        tenderfoot.setSummoningSick(true);
+        tenderfoot.setTapped(true);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(tenderfoot.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(tenderfoot.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(tenderfoot.isTapped()).isTrue();
+    }
+
+    @Test
+    void requiresThreeMana() {
+        Permanent tenderfoot = addCreatureReady(player1, new IntrepidTenderfoot());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.stack).isEmpty();
+        assertThat(tenderfoot.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void canActivateAgainAfterResolutionInPostcombatMainPhase() {
+        Permanent tenderfoot = addCreatureReady(player1, new IntrepidTenderfoot());
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(tenderfoot.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(tenderfoot.isTapped()).isFalse();
+    }
+
+    @Test
+    void cannotActivateDuringOpponentsMainPhase() {
+        Permanent tenderfoot = addCreatureReady(player1, new IntrepidTenderfoot());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+        assertThat(tenderfoot.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void cannotActivateInResponseToItsOwnAbility() {
+        Permanent tenderfoot = addCreatureReady(player1, new IntrepidTenderfoot());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(tenderfoot.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }
