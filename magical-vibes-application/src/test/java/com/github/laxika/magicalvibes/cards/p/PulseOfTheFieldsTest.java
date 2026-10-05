@@ -47,6 +47,42 @@ class PulseOfTheFieldsTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Pulse of the Fields");
     }
 
+    @Test
+    @DisplayName("Uses current life totals when the opponent gains life in response")
+    void returnsWhenOpponentGainsLifeBeforeResolution() {
+        harness.setLife(player1, 18);
+        harness.setLife(player2, 20);
+        harness.castFromHand(player1, new PulseOfTheFields(), "{1}{W}{W}");
+        harness.castFromHand(player2, new PulseOfTheFields(), "{1}{W}{W}");
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 24);
+        harness.assertInGraveyard(player2, "Pulse of the Fields");
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        harness.assertInHand(player1, "Pulse of the Fields");
+        harness.assertNotInGraveyard(player1, "Pulse of the Fields");
+    }
+
+    @Test
+    @DisplayName("Gains life for and returns to the second player's hand")
+    void returnsToSecondPlayersHandWhenBehind() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 10);
+
+        harness.castFromHand(player2, new PulseOfTheFields(), "{1}{W}{W}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 14);
+        harness.assertInHand(player2, "Pulse of the Fields");
+        harness.assertNotInGraveyard(player2, "Pulse of the Fields");
+        harness.assertNotInHand(player1, "Pulse of the Fields");
+    }
+
     private void cast() {
         harness.castFromHand(player1, new PulseOfTheFields(), "{1}{W}{W}");
         harness.passBothPriorities();
