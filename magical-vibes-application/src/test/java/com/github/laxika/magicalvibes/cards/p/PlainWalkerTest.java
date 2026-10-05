@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -21,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PlainWalker.class, GrizzlyBears.class, Plains.class, Panopticon.class})
+@CardUsed({PlainWalker.class, GrizzlyBears.class, Plains.class, Panopticon.class, JaceBeleren.class})
 class PlainWalkerTest extends BaseCardTest {
 
     @Test
@@ -78,6 +76,22 @@ class PlainWalkerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The attacking player's planeswalker does not prevent blocking")
+    void ownPlaneswalkerDoesNotPreventBlocking() {
+        addPlaneswalker(player1, 3);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new PlainWalker());
+        declareAttackersAndPrepareBlockers(
+                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Planeswalks after dealing combat damage to a player")
     void planeswalksAfterCombatDamageToPlayer() {
         preparePlanechase();
@@ -111,6 +125,43 @@ class PlainWalkerTest extends BaseCardTest {
                 .isNotEqualTo(oldPlaneId);
     }
 
+    @Test
+    @DisplayName("Combat damage to a creature does not cause a planeswalk")
+    void doesNotPlaneswalkAfterBlockedCombat() {
+        preparePlanechase();
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new PlainWalker());
+        var oldPlaneId = gd.planechase.faceUp.getFirst().getId();
+
+        declareAttackersAndPrepareBlockers(
+                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.planechase.faceUp).singleElement()
+                .extracting(PlanarObject::getId)
+                .isEqualTo(oldPlaneId);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+    }
+
+    @Test
+    @DisplayName("Planeswalking has no effect outside Planechase")
+    void combatDamageWithoutPlanechase() {
+        Permanent attacker = addCreatureReady(player1, new PlainWalker());
+        int oldLife = gd.playerLifeTotals.get(player2.getId());
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(oldLife - 2);
+        assertThat(gd.planechase).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void preparePlanechase() {
         gd.planechase = new PlanechaseState();
         gd.planechase.controllerId = player1.getId();
@@ -122,12 +173,8 @@ class PlainWalkerTest extends BaseCardTest {
     }
 
     private Permanent addPlaneswalker(Player player, int loyalty) {
-        Card card = new Card();
-        card.setName("Test Planeswalker");
-        card.setType(CardType.PLANESWALKER);
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new JaceBeleren());
         permanent.setCounterCount(CounterType.LOYALTY, loyalty);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
