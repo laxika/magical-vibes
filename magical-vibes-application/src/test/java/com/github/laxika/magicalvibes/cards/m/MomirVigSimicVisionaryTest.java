@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.a.AssaultZeppelid;
 import com.github.laxika.magicalvibes.cards.e.EnigmaEidolon;
 import com.github.laxika.magicalvibes.cards.s.SimicInitiate;
 import com.github.laxika.magicalvibes.cards.s.SimicSignet;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MomirVigSimicVisionary.class, EnigmaEidolon.class, SimicInitiate.class, SimicSignet.class})
+@CardUsed({MomirVigSimicVisionary.class, EnigmaEidolon.class, SimicInitiate.class, SimicSignet.class,
+        AssaultZeppelid.class})
 class MomirVigSimicVisionaryTest extends BaseCardTest {
 
     @Test
@@ -35,7 +36,7 @@ class MomirVigSimicVisionaryTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
                 .params().cards()).containsExactly(searchedCreature);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(searchedCreature, noncreature);
     }
@@ -114,6 +115,70 @@ class MomirVigSimicVisionaryTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+    }
+
+    @Test
+    @DisplayName("A green and blue spell can search before revealing the searched creature")
+    void greenAndBlueSpellCanSearchThenPutCreatureIntoHand() {
+        addMomir();
+        Card creature = new EnigmaEidolon();
+        Card noncreature = new SimicSignet();
+        harness.setLibrary(player1, List.of(noncreature, creature));
+        harness.castFromHand(player1, new AssaultZeppelid(), "{2}{G}{U}");
+
+        var order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(order).isNotNull();
+        assertThat(order.options()).hasSize(2);
+        harness.handleListChoice(player1, order.options().get(1));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature, noncreature);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(creature);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(noncreature);
+        harness.assertNotOnBattlefield(player1, "Assault Zeppelid");
+    }
+
+    @Test
+    @DisplayName("A green and blue spell can reveal before searching")
+    void greenAndBlueSpellCanRevealThenSearch() {
+        addMomir();
+        Card creature = new EnigmaEidolon();
+        Card noncreature = new SimicSignet();
+        harness.setLibrary(player1, List.of(noncreature, creature));
+        harness.castFromHand(player1, new AssaultZeppelid(), "{2}{G}{U}");
+
+        var order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(order).isNotNull();
+        harness.handleListChoice(player1, order.options().getFirst());
+        harness.passBothPriorities();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(noncreature, creature);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(creature);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature, noncreature);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(creature);
+    }
+
+    @Test
+    @DisplayName("The blue trigger on an empty library does not draw or lose the game")
+    void blueTriggerOnEmptyLibraryDoesNothing() {
+        addMomir();
+        harness.setLibrary(player1, List.of());
+        castBlueCreature();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.status).isEqualTo(com.github.laxika.magicalvibes.model.GameStatus.RUNNING);
     }
 
     private void addMomir() {
