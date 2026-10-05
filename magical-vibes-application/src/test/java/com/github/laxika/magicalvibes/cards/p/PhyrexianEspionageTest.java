@@ -60,4 +60,55 @@ class PhyrexianEspionageTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentCreature);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentForest);
     }
+
+    @Test
+    void kickedStillDrawsWhenOpponentHasNoCards() {
+        Forest firstDraw = new Forest();
+        Forest secondDraw = new Forest();
+        PhyrexianEspionage spell = new PhyrexianEspionage();
+        harness.setHand(player1, List.of(spell));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castKickedSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
+    }
+
+    @Test
+    void drawsBeforeOpponentChoosesTheirDiscard() {
+        Forest firstDraw = new Forest();
+        Forest secondDraw = new Forest();
+        Forest firstOpponentCard = new Forest();
+        Forest secondOpponentCard = new Forest();
+        harness.setHand(player1, List.of(new PhyrexianEspionage()));
+        harness.setHand(player2, List.of(firstOpponentCard, secondOpponentCard));
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castKickedSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(firstOpponentCard, secondOpponentCard);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player2.getId());
+
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(firstOpponentCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(secondOpponentCard);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 }
