@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({NotOfThisWorld.class, DuskdaleWurm.class, GrizzlyBears.class, ProdigalSorcerer.class, Shock.class})
 class NotOfThisWorldTest extends BaseCardTest {
 
     @Test
@@ -25,8 +27,7 @@ class NotOfThisWorldTest extends BaseCardTest {
         castShockAt(player2, wurm);
         harness.setHand(player1, List.of(new NotOfThisWorld()));
 
-        harness.castInstant(player1, 0, gd.stack.getFirst().getCard().getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, gd.stack.getFirst().getCard().getId());
 
         harness.assertInGraveyard(player2, "Shock");
         harness.assertInGraveyard(player1, "Not of This World");
@@ -65,8 +66,7 @@ class NotOfThisWorldTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, wurm.getId());
         harness.setHand(player1, List.of(new NotOfThisWorld()));
 
-        harness.castInstant(player1, 0, sorcerer.getCard().getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, sorcerer.getCard().getId());
 
         assertThat(gd.stack).isEmpty();
         assertThat(sorcerer.isTapped()).isTrue();
@@ -81,10 +81,55 @@ class NotOfThisWorldTest extends BaseCardTest {
         harness.setHand(player2, List.of(shock));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.setHand(player1, List.of(new NotOfThisWorld()));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
 
         harness.forceActivePlayer(player2);
         harness.castInstant(player2, 0, bears.getId());
         harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, shock.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Counters a spell targeting a small creature when the full cost is paid")
+    void countersSpellForFullCost() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castShockAt(player2, bears);
+        harness.setHand(player1, List.of(new NotOfThisWorld()));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        harness.castAndResolveInstant(player1, 0, gd.stack.getFirst().getCard().getId());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertInGraveyard(player2, "Shock");
+        harness.assertInGraveyard(player1, "Not of This World");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A large creature that is not targeted does not reduce the cost")
+    void unrelatedLargeCreatureDoesNotReduceCost() {
+        harness.addToBattlefield(player1, new DuskdaleWurm());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castShockAt(player2, bears);
+        harness.setHand(player1, List.of(new NotOfThisWorld()));
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, gd.stack.getFirst().getCard().getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot counter a spell targeting only a player")
+    void cannotTargetSpellTargetingPlayer() {
+        Shock shock = new Shock();
+        harness.setHand(player2, List.of(shock));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+        harness.setHand(player1, List.of(new NotOfThisWorld()));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, shock.getId()))
                 .isInstanceOf(IllegalStateException.class);
