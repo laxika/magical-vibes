@@ -68,7 +68,6 @@ class NarcissismTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower + 2);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower);
@@ -109,6 +108,61 @@ class NarcissismTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Narcissism");
+    }
+
+    @Test
+    void repeatedDiscardActivationsStackAndAcceptDifferentCardTypes() {
+        addNarcissism();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AngelOfRetribution());
+        harness.setHand(player1, List.of(new CabalCoffers(), new CabalRitual()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        int basePower = gqs.getEffectivePower(gd, target);
+        int baseToughness = gqs.getEffectiveToughness(gd, target);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.assertInGraveyard(player1, "Cabal Coffers");
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower + 4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(baseToughness + 4);
+        harness.assertInGraveyard(player1, "Cabal Ritual");
+        harness.assertOnBattlefield(player1, "Narcissism");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    void sacrificingSourceInResponseDoesNotStopDiscardAbilityAndBothBoostsExpire() {
+        addNarcissism();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AngelOfRetribution());
+        harness.setHand(player1, List.of(new CabalRitual()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        int basePower = gqs.getEffectivePower(gd, target);
+        int baseToughness = gqs.getEffectiveToughness(gd, target);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+
+        harness.assertInGraveyard(player1, "Narcissism");
+        harness.assertInGraveyard(player1, "Cabal Ritual");
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower + 2);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower + 4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(baseToughness + 4);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(baseToughness);
     }
 
     private void addNarcissism() {
