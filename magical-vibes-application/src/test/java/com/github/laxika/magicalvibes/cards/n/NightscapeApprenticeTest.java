@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -27,8 +29,7 @@ class NightscapeApprenticeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, spider.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Pincer Spider"));
+        harness.assertNotOnBattlefield(player1, "Pincer Spider");
         assertThat(gd.playerDecks.get(player1.getId()).get(0).getName())
                 .isEqualTo("Pincer Spider");
     }
@@ -85,5 +86,71 @@ class NightscapeApprenticeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, spider, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    void canPutItselfOnTopOfLibrary() {
+        Permanent apprentice = addCreatureReady(player1, new NightscapeApprentice());
+        PincerSpider libraryCard = new PincerSpider();
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, apprentice.getId());
+        assertThat(apprentice.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Nightscape Apprentice");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(apprentice.getCard(), libraryCard);
+    }
+
+    @Test
+    void tappingForFirstStrikePreventsUsingTheOtherAbility() {
+        Permanent apprentice = addCreatureReady(player1, new NightscapeApprentice());
+        Permanent spider = addCreatureReady(player1, new PincerSpider());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, spider.getId());
+        assertThat(apprentice.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, spider.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Pincer Spider");
+        assertThat(gqs.hasKeyword(gd, spider, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    void firstStrikeResolvesAfterItsSourceLeavesTheBattlefield() {
+        Permanent apprentice = addCreatureReady(player1, new NightscapeApprentice());
+        addCreatureReady(player1, new NightscapeApprentice());
+        Permanent spider = addCreatureReady(player1, new PincerSpider());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, spider.getId());
+        harness.activateAbility(player1, 1, 0, null, apprentice.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId()).get(0)).isSameAs(apprentice.getCard());
+        assertThat(gqs.hasKeyword(gd, spider, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    void firstStrikeDoesNotAffectATargetThatHasLeftTheBattlefield() {
+        addCreatureReady(player1, new NightscapeApprentice());
+        addCreatureReady(player1, new NightscapeApprentice());
+        Permanent spider = addCreatureReady(player1, new PincerSpider());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, spider.getId());
+        harness.activateAbility(player1, 1, 0, null, spider.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Pincer Spider");
+        assertThat(gd.playerDecks.get(player1.getId()).get(0)).isSameAs(spider.getCard());
+        assertThat(gd.stack).isEmpty();
     }
 }
