@@ -108,6 +108,63 @@ class KnollspineDragonTest extends BaseCardTest {
                 .hasSize(2);
     }
 
+    @Test
+    @DisplayName("An empty hand can still be discarded to draw the full damage total")
+    void emptyHandStillDraws() {
+        damagePlayer(player2.getId());
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island(), new Island()));
+
+        harness.castFromHand(player1, new KnollspineDragon(), "{5}{R}{R}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        harness.assertNotInGraveyard(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("Damage dealt in response to the trigger is included in the draw count")
+    void damageInResponseCountsAtResolution() {
+        damagePlayer(player2.getId());
+        harness.setLibrary(player1, List.of(
+                new Island(), new Island(), new Island(), new Island(),
+                new Island(), new Island(), new Island(), new Island()));
+
+        castDragon(List.of(new FlameJavelin(), new Island()));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 12);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(8);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(c -> c.getName().equals("Island"))
+                .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Damage from an opponent's own spell also contributes to the draw count")
+    void damageFromOpponentSourceCounts() {
+        harness.setHand(player2, List.of(new FlameJavelin()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.castInstant(player2, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island(), new Island()));
+
+        castDragon(List.of(new Island()));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        harness.assertInGraveyard(player1, "Island");
+    }
+
     private void castDragon(List<Card> extraHandCards) {
         List<Card> hand = new ArrayList<>();
         hand.add(new KnollspineDragon());
