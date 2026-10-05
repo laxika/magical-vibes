@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.d.DarksteelAxe;
 import com.github.laxika.magicalvibes.cards.e.EchoCirclet;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,28 +16,40 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KembasLegion.class, DarksteelAxe.class, EchoCirclet.class, GrizzlyBears.class})
 class KembasLegionTest extends BaseCardTest {
 
-    // ===== Blocking with no equipment =====
+    @Test
+    @DisplayName("Vigilance leaves Kemba's Legion untapped when it attacks")
+    void vigilanceLeavesLegionUntapped() {
+        Permanent legion = addCreatureReady(player1, new KembasLegion());
+        declareAttackers(List.of(0));
+        assertThat(legion.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Kemba's Legion can block one creature without Equipment")
+    void canBlockOneWithoutEquipment() {
+        Permanent legion = harness.addToBattlefieldAndReturn(player2, new KembasLegion());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+        assertThatCode(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0)))).doesNotThrowAnyException();
+        assertThat(legion.isBlocking()).isTrue();
+    }
 
     @Test
     @DisplayName("With no equipment attached, Kemba's Legion can only block one creature")
     void canOnlyBlockOneWithNoEquipment() {
-        Permanent legionPerm = new Permanent(new KembasLegion());
-        legionPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(legionPerm);
+        Permanent legionPerm = addCreatureReady(player2, new KembasLegion());
 
         for (int i = 0; i < 2; i++) {
-            Permanent atkPerm = new Permanent(new GrizzlyBears());
-            atkPerm.setSummoningSick(false);
+            Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
             atkPerm.setAttacking(true);
-            gd.playerBattlefields.get(player1.getId()).add(atkPerm);
         }
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(legionPerm);
 
@@ -49,32 +61,21 @@ class KembasLegionTest extends BaseCardTest {
                 .hasMessageContaining("too many times");
     }
 
-    // ===== Blocking with one equipment =====
-
     @Test
     @DisplayName("With one equipment attached, Kemba's Legion can block two creatures")
     void canBlockTwoWithOneEquipment() {
-        Permanent legionPerm = new Permanent(new KembasLegion());
-        legionPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(legionPerm);
+        Permanent legionPerm = addCreatureReady(player2, new KembasLegion());
 
         // Darksteel Axe is a simple equipment with no additional block effect
-        Permanent equipPerm = new Permanent(new DarksteelAxe());
-        equipPerm.setSummoningSick(false);
+        Permanent equipPerm = addCreatureReady(player2, new DarksteelAxe());
         equipPerm.setAttachedTo(legionPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(equipPerm);
 
         for (int i = 0; i < 2; i++) {
-            Permanent atkPerm = new Permanent(new GrizzlyBears());
-            atkPerm.setSummoningSick(false);
+            Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
             atkPerm.setAttacking(true);
-            gd.playerBattlefields.get(player1.getId()).add(atkPerm);
         }
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(legionPerm);
 
@@ -85,33 +86,22 @@ class KembasLegionTest extends BaseCardTest {
         ))).doesNotThrowAnyException();
     }
 
-    // ===== Blocking with two equipment =====
-
     @Test
     @DisplayName("With two equipment attached, Kemba's Legion can block three creatures")
     void canBlockThreeWithTwoEquipment() {
-        Permanent legionPerm = new Permanent(new KembasLegion());
-        legionPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(legionPerm);
+        Permanent legionPerm = addCreatureReady(player2, new KembasLegion());
 
         for (int i = 0; i < 2; i++) {
-            Permanent equipPerm = new Permanent(new DarksteelAxe());
-            equipPerm.setSummoningSick(false);
+            Permanent equipPerm = addCreatureReady(player2, new DarksteelAxe());
             equipPerm.setAttachedTo(legionPerm.getId());
-            gd.playerBattlefields.get(player2.getId()).add(equipPerm);
         }
 
         for (int i = 0; i < 3; i++) {
-            Permanent atkPerm = new Permanent(new GrizzlyBears());
-            atkPerm.setSummoningSick(false);
+            Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
             atkPerm.setAttacking(true);
-            gd.playerBattlefields.get(player1.getId()).add(atkPerm);
         }
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(legionPerm);
 
@@ -123,32 +113,21 @@ class KembasLegionTest extends BaseCardTest {
         ))).doesNotThrowAnyException();
     }
 
-    // ===== Cannot exceed max blocks =====
-
     @Test
     @DisplayName("With one equipment, Kemba's Legion cannot block three creatures")
     void cannotExceedMaxBlocksWithOneEquipment() {
-        Permanent legionPerm = new Permanent(new KembasLegion());
-        legionPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(legionPerm);
+        Permanent legionPerm = addCreatureReady(player2, new KembasLegion());
 
         // Darksteel Axe: no additional block effect, so max = 1 base + 1 per-equipment = 2
-        Permanent equipPerm = new Permanent(new DarksteelAxe());
-        equipPerm.setSummoningSick(false);
+        Permanent equipPerm = addCreatureReady(player2, new DarksteelAxe());
         equipPerm.setAttachedTo(legionPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(equipPerm);
 
         for (int i = 0; i < 3; i++) {
-            Permanent atkPerm = new Permanent(new GrizzlyBears());
-            atkPerm.setSummoningSick(false);
+            Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
             atkPerm.setAttacking(true);
-            gd.playerBattlefields.get(player1.getId()).add(atkPerm);
         }
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(legionPerm);
 
@@ -161,31 +140,20 @@ class KembasLegionTest extends BaseCardTest {
                 .hasMessageContaining("too many times");
     }
 
-    // ===== Unattached equipment does not count =====
-
     @Test
     @DisplayName("Unattached equipment on battlefield does not grant additional blocks")
     void unattachedEquipmentDoesNotCount() {
-        Permanent legionPerm = new Permanent(new KembasLegion());
-        legionPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(legionPerm);
+        Permanent legionPerm = addCreatureReady(player2, new KembasLegion());
 
         // Equipment on battlefield but NOT attached to Kemba's Legion
-        Permanent equipPerm = new Permanent(new DarksteelAxe());
-        equipPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(equipPerm);
+        Permanent equipPerm = addCreatureReady(player2, new DarksteelAxe());
 
         for (int i = 0; i < 2; i++) {
-            Permanent atkPerm = new Permanent(new GrizzlyBears());
-            atkPerm.setSummoningSick(false);
+            Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
             atkPerm.setAttacking(true);
-            gd.playerBattlefields.get(player1.getId()).add(atkPerm);
         }
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(legionPerm);
 
@@ -197,37 +165,24 @@ class KembasLegionTest extends BaseCardTest {
                 .hasMessageContaining("too many times");
     }
 
-    // ===== Effect only applies to self =====
-
     @Test
     @DisplayName("Kemba's Legion effect does not grant additional blocks to other creatures")
     void effectDoesNotApplyToOtherCreatures() {
-        Permanent legionPerm = new Permanent(new KembasLegion());
-        legionPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(legionPerm);
+        Permanent legionPerm = addCreatureReady(player2, new KembasLegion());
 
         // Attach equipment to Kemba's Legion
-        Permanent equipPerm = new Permanent(new DarksteelAxe());
-        equipPerm.setSummoningSick(false);
+        Permanent equipPerm = addCreatureReady(player2, new DarksteelAxe());
         equipPerm.setAttachedTo(legionPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(equipPerm);
 
         // Another creature without equipment
-        Permanent otherPerm = new Permanent(new GrizzlyBears());
-        otherPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(otherPerm);
+        Permanent otherPerm = addCreatureReady(player2, new GrizzlyBears());
 
         for (int i = 0; i < 2; i++) {
-            Permanent atkPerm = new Permanent(new GrizzlyBears());
-            atkPerm.setSummoningSick(false);
+            Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
             atkPerm.setAttacking(true);
-            gd.playerBattlefields.get(player1.getId()).add(atkPerm);
         }
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int otherIdx = gd.playerBattlefields.get(player2.getId()).indexOf(otherPerm);
 
@@ -240,33 +195,42 @@ class KembasLegionTest extends BaseCardTest {
                 .hasMessageContaining("too many times");
     }
 
-    // ===== Stacks with Echo Circlet's own GrantAdditionalBlockEffect =====
+    @Test
+    @DisplayName("Opponent-controlled attached Equipment still grants an additional block")
+    void countsEquipmentControlledByOpponent() {
+        Permanent legion = harness.addToBattlefieldAndReturn(player2, new KembasLegion());
+        Permanent axe = harness.addToBattlefieldAndReturn(player1, new DarksteelAxe());
+        axe.setAttachedTo(legion.getId());
+
+        for (int i = 0; i < 2; i++) {
+            Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+            attacker.setAttacking(true);
+        }
+
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 1),
+                new BlockerAssignment(0, 2)
+        ))).doesNotThrowAnyException();
+    }
 
     @Test
     @DisplayName("Kemba's Legion with Echo Circlet gets +1 from equipment count AND +1 from Echo Circlet's own effect")
     void stacksWithEchoCircletEffect() {
-        Permanent legionPerm = new Permanent(new KembasLegion());
-        legionPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(legionPerm);
+        Permanent legionPerm = addCreatureReady(player2, new KembasLegion());
 
         // Echo Circlet has both GrantAdditionalBlockEffect(1) AND counts as equipment
-        Permanent equipPerm = new Permanent(new EchoCirclet());
-        equipPerm.setSummoningSick(false);
+        Permanent equipPerm = addCreatureReady(player2, new EchoCirclet());
         equipPerm.setAttachedTo(legionPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(equipPerm);
 
         // With one Echo Circlet: base 1 + 1 (equipment count) + 1 (Echo Circlet's own effect) = 3
         for (int i = 0; i < 3; i++) {
-            Permanent atkPerm = new Permanent(new GrizzlyBears());
-            atkPerm.setSummoningSick(false);
+            Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
             atkPerm.setAttacking(true);
-            gd.playerBattlefields.get(player1.getId()).add(atkPerm);
         }
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(legionPerm);
 
