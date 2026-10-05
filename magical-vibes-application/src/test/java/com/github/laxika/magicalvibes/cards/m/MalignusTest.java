@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Malignus.class, GrizzlyBears.class, PlatinumAngel.class})
 class MalignusTest extends BaseCardTest {
 
     @Test
@@ -73,9 +76,8 @@ class MalignusTest extends BaseCardTest {
     @Test
     @DisplayName("The same shield does prevent an ordinary creature's combat damage")
     void ordinaryCombatDamageIsPrevented() {
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
         gd.playerDamagePreventionShields.put(player2.getId(), 10);
 
         declareAttackers(List.of(0));
@@ -88,13 +90,11 @@ class MalignusTest extends BaseCardTest {
     @DisplayName("A blocker's prevention shield does not stop Malignus's combat damage")
     void combatDamageToBlockerCantBePrevented() {
         addMalignus(player1);
-        Permanent blocker = new Permanent(new GrizzlyBears());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         blocker.setSummoningSick(false);
         blocker.setDamagePreventionShield(10);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -119,13 +119,11 @@ class MalignusTest extends BaseCardTest {
     @DisplayName("Blanket prevention of all damage to creatures does not stop Malignus")
     void blanketCreaturePreventionCantStopMalignus() {
         addMalignus(player1);
-        Permanent blocker = new Permanent(new GrizzlyBears());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
         gd.preventAllDamageToAllCreatures = true;
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -134,11 +132,49 @@ class MalignusTest extends BaseCardTest {
                 .noneMatch(p -> p.getId().equals(blocker.getId()));
     }
 
+    @Test
+    @DisplayName("Negative opponent life totals produce negative base power and toughness")
+    void negativeOpponentLifeIsNotClampedToZero() {
+        harness.addToBattlefield(player2, new PlatinumAngel());
+        harness.setLife(player2, -3);
+        Permanent malignus = addMalignus(player1);
+
+        assertThat(gqs.getEffectivePower(gd, malignus)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, malignus)).isEqualTo(-1);
+    }
+
+    @Test
+    @DisplayName("The characteristic-defining ability works in hand and graveyard")
+    void powerAndToughnessTrackOpponentLifeOutsideBattlefield() {
+        Card malignus = new Malignus();
+        gd.playerHands.get(player1.getId()).add(malignus);
+        harness.setLife(player2, 13);
+
+        assertThat(gqs.getEffectiveCardPower(gd, malignus)).isEqualTo(7);
+        assertThat(gqs.getEffectiveCardToughness(gd, malignus)).isEqualTo(7);
+
+        gd.playerHands.get(player1.getId()).remove(malignus);
+        gd.playerGraveyards.get(player1.getId()).add(malignus);
+        harness.setLife(player2, 8);
+
+        assertThat(gqs.getEffectiveCardPower(gd, malignus)).isEqualTo(4);
+        assertThat(gqs.getEffectiveCardToughness(gd, malignus)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Opponent life is evaluated relative to Malignus's controller")
+    void usesOpponentsOfItsCurrentController() {
+        harness.setLife(player1, 9);
+        harness.setLife(player2, 30);
+        Permanent malignus = addMalignus(player2);
+
+        assertThat(gqs.getEffectivePower(gd, malignus)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, malignus)).isEqualTo(5);
+    }
+
     private Permanent addMalignus(Player player) {
-        Card card = new Malignus();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new Malignus());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
