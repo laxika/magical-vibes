@@ -4,9 +4,11 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.e.ElvishMystic;
+import com.github.laxika.magicalvibes.cards.e.EarthElemental;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({NissaResurgentAnimist.class, Forest.class, GrizzlyBears.class,
-        LlanowarElves.class, ElvishMystic.class})
+        LlanowarElves.class, ElvishMystic.class, EarthElemental.class})
 class NissaResurgentAnimistTest extends BaseCardTest {
 
     @Test
@@ -89,6 +91,110 @@ class NissaResurgentAnimistTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+    }
+
+    @Test
+    void firstResolutionDoesNotRevealEvenWhenTopCardMatches() {
+        harness.addToBattlefield(player1, new NissaResurgentAnimist());
+        Card found = new LlanowarElves();
+        harness.setLibrary(player1, List.of(found));
+        harness.setHand(player1, List.of());
+
+        resolveLandfall(new Forest());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(found);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    void secondResolutionFindsElementalAndPutsSkippedCardsBelowUnrevealedCards() {
+        harness.addToBattlefield(player1, new NissaResurgentAnimist());
+        Card skippedCreature = new GrizzlyBears();
+        Card skippedLand = new Forest();
+        Card found = new EarthElemental();
+        Card unrevealed = new LlanowarElves();
+        harness.setLibrary(player1, List.of(skippedCreature, skippedLand, found, unrevealed));
+        harness.setHand(player1, List.of());
+
+        resolveLandfall(new Forest());
+        resolveLandfall(new Forest());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(found);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(unrevealed);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(1, 3))
+                .containsExactlyInAnyOrder(skippedCreature, skippedLand);
+    }
+
+    @Test
+    void secondResolutionWithEmptyLibraryStillAddsMana() {
+        harness.addToBattlefield(player1, new NissaResurgentAnimist());
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of());
+
+        resolveLandfall(new Forest());
+        resolveLandfall(new Forest());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+    }
+
+    @Test
+    void pendingSecondResolutionStillFindsCardAfterNissaLeaves() {
+        harness.addToBattlefield(player1, new NissaResurgentAnimist());
+        Card found = new LlanowarElves();
+        harness.setLibrary(player1, List.of(found));
+        harness.setHand(player1, List.of());
+        resolveLandfall(new Forest());
+        gd.landsPlayedThisTurn.put(player1.getId(), 0);
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+
+        var nissa = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, nissa);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, ManaColor.RED.name());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(found);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+    }
+
+    @Test
+    void resolutionCountResetsOnNextTurn() {
+        harness.addToBattlefield(player1, new NissaResurgentAnimist());
+        harness.setLibrary(player1, List.of(new LlanowarElves(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of());
+        resolveLandfall(new Forest());
+        resolveLandfall(new Forest());
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        Card found = new LlanowarElves();
+        harness.setLibrary(player1, List.of(found));
+        harness.setHand(player1, List.of());
+
+        resolveLandfall(new Forest());
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(found);
+
+        resolveLandfall(new Forest());
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(found);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void opponentsLandDoesNotTriggerNissa() {
+        harness.addToBattlefield(player1, new NissaResurgentAnimist());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Forest()));
+
+        harness.playLand(player2, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
     }
 
     private void resolveLandfall(Card land) {
