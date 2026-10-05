@@ -53,12 +53,73 @@ class InfestationExpertTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Insect")).isEqualTo(2);
     }
 
+    @Test
+    void enteringStartsDayWhenItIsNeitherDayNorNight() {
+        gd.dayNight = DayNight.NEITHER;
+
+        castInfestationExpert();
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        assertThat(findPermanent(player1, "Infestation Expert").isTransformed()).isFalse();
+        assertThat(countPermanents(player1, "Insect")).isEqualTo(1);
+    }
+
+    @Test
+    void becomingNightTransformsWithoutCreatingAnEntryTokenThenAttackCreatesTwo() {
+        gd.dayNight = DayNight.DAY;
+        Permanent expert = addCreatureReady(player1, new InfestationExpert());
+        gd.previousTurnActivePlayerId = player2.getId();
+        gd.spellsCastLastTurn.clear();
+
+        harness.performUntapStep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
+        assertThat(expert.isTransformed()).isTrue();
+        assertThat(countPermanents(player1, "Insect")).isZero();
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(expert)));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Insect")).isEqualTo(2);
+    }
+
+    @Test
+    void becomingDayTransformsWithoutCreatingAnEntryTokenThenAttackCreatesOne() {
+        gd.dayNight = DayNight.NIGHT;
+        Permanent werewolf = addTransformedExpert(player1);
+        gd.previousTurnActivePlayerId = player2.getId();
+        gd.spellsCastLastTurn.put(player2.getId(), 2);
+
+        harness.performUntapStep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        assertThat(werewolf.isTransformed()).isFalse();
+        assertThat(countPermanents(player1, "Insect")).isZero();
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(werewolf)));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Insect")).isEqualTo(1);
+    }
+
+    @Test
+    void attackTokensBelongToTheAttackingCreaturesController() {
+        Permanent expert = addCreatureReady(player2, new InfestationExpert());
+
+        declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(expert)));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player2, "Insect")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Insect")).isZero();
+    }
+
     private void castInfestationExpert() {
         harness.setHand(player1, List.of(new InfestationExpert()));
         harness.addMana(player1, ManaColor.GREEN, 5);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private Permanent addTransformedExpert(Player player) {
