@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,11 +15,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MasterWarcraft.class, BorosRecruit.class})
+@CardUsed({MasterWarcraft.class, BorosRecruit.class, JaceBeleren.class})
 class MasterWarcraftTest extends BaseCardTest {
 
     private Permanent addAttacker(Player player) {
@@ -31,8 +34,7 @@ class MasterWarcraftTest extends BaseCardTest {
     private void castMasterWarcraft(Player caster) {
         harness.setHand(caster, List.of(new MasterWarcraft()));
         harness.addMana(caster, ManaColor.RED, 4);
-        harness.castInstant(caster, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0);
     }
 
     private void enterPrecombatMain(Player activePlayer) {
@@ -222,5 +224,56 @@ class MasterWarcraftTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The non-active controller may choose no attackers")
+    void nonActiveControllerMayChooseNoAttackers() {
+        enterPrecombatMain(player2);
+        Permanent attacker = addAttacker(player2);
+        castMasterWarcraft(player1);
+
+        harness.passUntil(player2, TurnStep.DECLARE_ATTACKERS);
+        gs.declareAttackers(gd, player1, List.of());
+
+        assertThat(attacker.isAttacking()).isFalse();
+        assertThat(attacker.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Choosing attackers does not allow a tapped creature to attack")
+    void cannotChooseTappedAttacker() {
+        enterPrecombatMain(player2);
+        Permanent attacker = addAttacker(player2);
+        Permanent tappedCreature = addAttacker(player2);
+        tappedCreature.setTapped(true);
+        castMasterWarcraft(player1);
+
+        harness.passUntil(player2, TurnStep.DECLARE_ATTACKERS);
+        int tappedIndex = gd.playerBattlefields.get(player2.getId()).indexOf(tappedCreature);
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(tappedIndex)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(attacker.isAttacking()).isFalse();
+        assertThat(tappedCreature.isAttacking()).isFalse();
+    }
+
+    @Test
+    @CardUsed({MasterWarcraft.class, BorosRecruit.class, JaceBeleren.class})
+    @DisplayName("Choosing the opponent's attackers does not grant choice of attack destinations")
+    void nonActiveControllerCannotChooseAttackDestinations() {
+        enterPrecombatMain(player2);
+        Permanent attacker = addAttacker(player2);
+        addBlocker(player1);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+        castMasterWarcraft(player1);
+
+        harness.passUntil(player2, TurnStep.DECLARE_ATTACKERS);
+        int attackerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(attacker);
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(attackerIndex),
+                Map.of(attackerIndex, planeswalker.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(attacker.isAttacking()).isFalse();
     }
 }
