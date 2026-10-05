@@ -90,6 +90,28 @@ class MercadianAtlasTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
+    @Test
+    @DisplayName("A land played before Atlas entered still prevents the trigger")
+    void doesNotTriggerAfterLandPlayedBeforeAtlasEntered() {
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+        harness.addToBattlefield(player1, new MercadianAtlas());
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Atlas entering after the end step begins does not trigger retroactively")
+    void doesNotTriggerWhenEnteringDuringEndStep() {
+        advanceToEndStep(player1);
+        harness.addToBattlefield(player1, new MercadianAtlas());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
     private void advanceToEndStep(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
