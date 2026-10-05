@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BaboonSpirit;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MechanicalGlider.class, GrizzlyBears.class})
+@CardUsed({MechanicalGlider.class, BaboonSpirit.class})
 class MechanicalGliderTest extends BaseCardTest {
 
     @Test
@@ -29,7 +30,7 @@ class MechanicalGliderTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent glider = findGlider(player1);
+        Permanent glider = findPermanent(player1, "Mechanical Glider");
         assertThat(glider.getAttachedTo()).isEqualTo(creature.getId());
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
     }
@@ -63,17 +64,64 @@ class MechanicalGliderTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature you control");
     }
 
-    private Permanent addCreatureReady(Player player) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
-        creature.setSummoningSick(false);
-        return creature;
+    @Test
+    @DisplayName("Mechanical Glider can enter without any creatures to attach to")
+    void entersWithoutCreatures() {
+        harness.setHand(player1, List.of(new MechanicalGlider()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Mechanical Glider").getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 
-    private Permanent findGlider(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof MechanicalGlider)
-                .findFirst()
-                .orElseThrow();
+    @Test
+    @DisplayName("Equip cannot target a creature controlled by the opponent")
+    void equipCannotTargetOpponentsCreature() {
+        Permanent creature = addCreatureReady(player2);
+        harness.addToBattlefield(player1, new MechanicalGlider());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature you control");
+    }
+
+    @Test
+    @DisplayName("Equip cannot be activated during combat")
+    void equipCannotBeActivatedDuringCombat() {
+        Permanent creature = addCreatureReady(player1);
+        harness.addToBattlefield(player1, new MechanicalGlider());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+    }
+
+    @Test
+    @DisplayName("The attachment target can be chosen after Mechanical Glider enters")
+    void choosesAttachmentTargetAfterEntering() {
+        Permanent creature = addCreatureReady(player1);
+        harness.setHand(player1, List.of(new MechanicalGlider()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent glider = findPermanent(player1, "Mechanical Glider");
+        assertThat(glider.getAttachedTo()).isNull();
+        harness.handlePermanentChosen(player1, creature.getId());
+        resolveAllTriggers();
+
+        assertThat(glider.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+    }
+    private Permanent addCreatureReady(Player player) {
+        return addCreatureReady(player, new BaboonSpirit());
     }
 
     private int findGliderIndex(Player player) {
