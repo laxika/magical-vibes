@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({InvertTheSkies.class, GrizzlyBears.class, SuntailHawk.class})
 class InvertTheSkiesTest extends BaseCardTest {
 
     /**
@@ -27,8 +29,7 @@ class InvertTheSkiesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new InvertTheSkies()));
         if (green > 0) harness.addMana(player1, ManaColor.GREEN, green);
         if (blue > 0) harness.addMana(player1, ManaColor.BLUE, blue);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
     }
 
     private Permanent ownBears() {
@@ -37,6 +38,37 @@ class InvertTheSkiesTest extends BaseCardTest {
 
     private Permanent opponentHawk() {
         return findPermanent(player2, "Suntail Hawk");
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution are unaffected")
+    void creaturesEnteringAfterResolutionAreUnaffected() {
+        castInvertTheSkies(2, 2);
+
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent hawk = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, hawk, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creatures entering before resolution are affected")
+    void creaturesEnteringBeforeResolutionAreAffected() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new InvertTheSkies()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0);
+
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent hawk = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, hawk, Keyword.FLYING)).isFalse();
     }
 
     @Test
