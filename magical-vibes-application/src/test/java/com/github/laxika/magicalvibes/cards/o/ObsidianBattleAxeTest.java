@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.c.CloakAndDagger;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,10 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ObsidianBattleAxe.class, ElvishWarrior.class, GrizzlyBears.class})
+@CardUsed({ObsidianBattleAxe.class, ElvishWarrior.class, GrizzlyBears.class, CloakAndDagger.class})
 class ObsidianBattleAxeTest extends BaseCardTest {
-
-    // ===== Static: +2/+1 and haste =====
 
     @Test
     @DisplayName("Equipped creature gets +2/+1 and haste")
@@ -50,8 +49,6 @@ class ObsidianBattleAxeTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
     }
 
-    // ===== Equip {3} =====
-
     @Test
     @DisplayName("Resolving equip attaches the Axe to target creature")
     void resolvingEquipAttachesToCreature() {
@@ -64,8 +61,6 @@ class ObsidianBattleAxeTest extends BaseCardTest {
 
         assertThat(axe.getAttachedTo()).isEqualTo(creature.getId());
     }
-
-    // ===== Trigger: Warrior creature enters =====
 
     @Test
     @DisplayName("Accepting the may attaches the Axe to the Warrior that entered")
@@ -149,13 +144,73 @@ class ObsidianBattleAxeTest extends BaseCardTest {
         assertThat(axe.getAttachedTo()).isEqualTo(warrior.getId());
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Accepting the trigger moves the Axe and its bonuses to the entering Warrior")
+    void movesFromPreviouslyEquippedCreature() {
+        Permanent oldCreature = addCreatureReady(player1, new ElvishWarrior());
+        Permanent axe = addAxeReady(player1);
+        axe.setAttachedTo(oldCreature.getId());
+
+        harness.setHand(player1, List.of(new ElvishWarrior()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent entering = findPermanents(player1, "Elvish Warrior").get(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(axe.getAttachedTo()).isEqualTo(entering.getId());
+        assertThat(gqs.getEffectivePower(gd, oldCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, oldCreature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, oldCreature, Keyword.HASTE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, entering)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, entering)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, entering, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Declining the trigger preserves the existing attachment")
+    void declinePreservesExistingAttachment() {
+        Permanent oldCreature = addCreatureReady(player1, new ElvishWarrior());
+        Permanent axe = addAxeReady(player1);
+        axe.setAttachedTo(oldCreature.getId());
+
+        harness.setHand(player1, List.of(new ElvishWarrior()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(axe.getAttachedTo()).isEqualTo(oldCreature.getId());
+        assertThat(gqs.getEffectivePower(gd, oldCreature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, oldCreature, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @CardUsed(CloakAndDagger.class)
+    @DisplayName("The attachment trigger can attach to an entering Warrior with shroud")
+    void triggerDoesNotTargetEnteringWarrior() {
+        Permanent axe = addAxeReady(player1);
+        Permanent cloak = harness.addToBattlefieldAndReturn(player1, new CloakAndDagger());
+
+        harness.setHand(player1, List.of(new ElvishWarrior()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent warrior = warriorOnBattlefield(player1);
+        cloak.setAttachedTo(warrior.getId());
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.SHROUD)).isTrue();
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(axe.getAttachedTo()).isEqualTo(warrior.getId());
+    }
 
     private Permanent addAxeReady(Player player) {
-        Permanent perm = new Permanent(new ObsidianBattleAxe());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new ObsidianBattleAxe());
     }
 
     private Permanent warriorOnBattlefield(Player player) {
