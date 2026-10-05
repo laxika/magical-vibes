@@ -44,4 +44,33 @@ class LandLeechesTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Land Leeches");
         harness.assertOnBattlefield(player2, "Hill Giant");
     }
+
+    @Test
+    @DisplayName("First strike kills a 2/2 attacker before it deals regular damage")
+    void firstStrikeWorksWhileBlocking() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        Permanent blocker = addCreatureReady(player2, new LandLeeches());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Land Leeches");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An unblocked first striker deals its damage only once")
+    void unblockedFirstStrikerDoesNotDealRegularDamageAgain() {
+        Permanent attacker = addCreatureReady(player1, new LandLeeches());
+        attacker.setAttacking(true);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player1, "Land Leeches");
+    }
 }
