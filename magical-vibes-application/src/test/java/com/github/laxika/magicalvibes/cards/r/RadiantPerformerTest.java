@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.f.FieryTemper;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
+import com.github.laxika.magicalvibes.cards.s.SeedsOfStrength;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,7 +20,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RadiantPerformer.class, FieryTemper.class, GrizzlyBears.class, ProdigalSorcerer.class})
+@CardUsed({RadiantPerformer.class, FieryTemper.class, GrizzlyBears.class, ProdigalSorcerer.class,
+        SeedsOfStrength.class})
 class RadiantPerformerTest extends BaseCardTest {
 
     @Test
@@ -54,9 +56,7 @@ class RadiantPerformerTest extends BaseCardTest {
     @DisplayName("Copies a single-target activated ability for each other legal permanent and player")
     void copiesTargetedActivatedAbilityForEachOtherLegalTarget() {
         ProdigalSorcerer sorcerer = new ProdigalSorcerer();
-        Permanent sorcererPermanent = new Permanent(sorcerer);
-        sorcererPermanent.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(sorcererPermanent);
+        Permanent sorcererPermanent = addCreatureReady(player2, sorcerer);
         Permanent originalTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
@@ -86,5 +86,74 @@ class RadiantPerformerTest extends BaseCardTest {
                         radiantPerformerId, player1.getId(), player2.getId());
         assertThat(copies).extracting(StackEntry::getTargetId).doesNotContain(originalTarget.getId());
         assertThat(copies).allMatch(copy -> copy.getControllerId().equals(player1.getId()));
+    }
+
+    @Test
+    @DisplayName("Copies a spell whose three target slots all name the same creature")
+    void copiesRepeatedTargetsOnOneCreature() {
+        SeedsOfStrength seeds = new SeedsOfStrength();
+        Permanent originalTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(seeds, new RadiantPerformer()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castInstant(player1, 0, List.of(originalTarget.getId(), originalTarget.getId(), originalTarget.getId()));
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(seeds.getId());
+        harness.handlePermanentChosen(player1, seeds.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy).toList()).hasSize(2);
+        Permanent performer = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof RadiantPerformer).findFirst().orElseThrow();
+        for (int i = 0; i < 3; i++) {
+            harness.passBothPriorities();
+        }
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, originalTarget)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, performer)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Does not copy a spell targeting different creatures")
+    void doesNotCopyDistinctTargets() {
+        SeedsOfStrength seeds = new SeedsOfStrength();
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(seeds, new RadiantPerformer()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castInstant(player1, 0, List.of(first.getId(), first.getId(), second.getId()));
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack).noneMatch(StackEntry::isCopy);
+    }
+
+    @Test
+    @DisplayName("Entering without being cast from hand does not trigger copying")
+    void enteringWithoutCastingDoesNotCopy() {
+        FieryTemper fieryTemper = new FieryTemper();
+        Permanent originalTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(fieryTemper));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castInstant(player1, 0, originalTarget.getId());
+
+        harness.enterBattlefieldAndReturn(player1, new RadiantPerformer());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack).noneMatch(StackEntry::isCopy);
     }
 }
