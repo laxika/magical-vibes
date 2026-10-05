@@ -9,12 +9,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({QuestForTheGravelord.class, GrizzlyBears.class, Shock.class})
 class QuestForTheGravelordTest extends BaseCardTest {
 
     @Test
@@ -24,8 +26,7 @@ class QuestForTheGravelordTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         setupPlayer2WithShock();
 
-        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Grizzly Bears"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -39,8 +40,7 @@ class QuestForTheGravelordTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         setupPlayer2WithShock();
 
-        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Grizzly Bears"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -75,6 +75,51 @@ class QuestForTheGravelordTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An opponent's creature dying also offers a quest counter")
+    void opponentCreatureDeathOffersQuestCounter() {
+        Permanent quest = addQuest();
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        setupPlayer2WithShock();
+
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(quest.getCounterCount(CounterType.QUEST)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Activation pays exactly three counters and sacrifices before the token resolves")
+    void paysCostsBeforeResolutionWithExtraCounters() {
+        Permanent quest = addQuest();
+        quest.setCounterCount(CounterType.QUEST, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(quest.getCounterCount(CounterType.QUEST)).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Quest for the Gravelord");
+        assertThat(findPermanents(player1, "Zombie Giant")).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Zombie Giant")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Other counter types cannot pay the quest counter cost")
+    void otherCountersCannotPayCost() {
+        Permanent quest = addQuest();
+        quest.setCounterCount(CounterType.QUEST, 2);
+        quest.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(quest.getCounterCount(CounterType.QUEST)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Quest for the Gravelord");
     }
 
     private Permanent addQuest() {
