@@ -87,4 +87,40 @@ class OniOfWildPlacesTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
+
+    @Test
+    @DisplayName("Must return itself when it is the only red creature")
+    void returnsItselfWhenItIsTheOnlyRedCreature() {
+        Permanent oni = addCreatureReady(player1, new OniOfWildPlaces());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        PendingInteraction.PermanentChoice choice =
+                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validIds()).containsExactly(oni.getId());
+        harness.handlePermanentChosen(player1, oni.getId());
+
+        harness.assertNotOnBattlefield(player1, "Oni of Wild Places");
+        harness.assertInHand(player1, "Oni of Wild Places");
+    }
+
+    @Test
+    @DisplayName("Still returns a red creature after Oni leaves the battlefield")
+    void returnsRedCreatureAfterSourceLeavesBattlefield() {
+        Permanent oni = addCreatureReady(player1, new OniOfWildPlaces());
+        Permanent redCreature = addCreatureReady(player1, new AkkiUnderling());
+
+        advanceToUpkeep(player1);
+        gd.playerBattlefields.get(player1.getId()).remove(oni);
+        resolveAllTriggers();
+
+        PendingInteraction.PermanentChoice choice =
+                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validIds()).containsExactly(redCreature.getId());
+        harness.handlePermanentChosen(player1, redCreature.getId());
+
+        harness.assertNotOnBattlefield(player1, "Akki Underling");
+        harness.assertInHand(player1, "Akki Underling");
+    }
 }
