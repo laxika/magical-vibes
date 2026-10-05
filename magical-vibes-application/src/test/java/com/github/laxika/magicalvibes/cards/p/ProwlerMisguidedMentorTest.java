@@ -69,6 +69,73 @@ class ProwlerMisguidedMentorTest extends BaseCardTest {
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Block restriction uses current power rather than printed power")
+    void boostedBearsCanBlock() {
+        Permanent prowler = addAttackingProwler();
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(bears),
+                gd.playerBattlefields.get(player1.getId()).indexOf(prowler))));
+
+        assertThat(bears.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Combat damage with no other friendly creature does not prompt for a target")
+    void noLegalTargetDoesNotPrompt() {
+        Permanent prowler = addAttackingProwler();
+        addCreatureReady(player2, new GrizzlyBears());
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 17);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(prowler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The counter ability does not retarget when its target leaves the battlefield")
+    void removedTargetDoesNotReceiveCounter() {
+        Permanent prowler = addAttackingProwler();
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, bears.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(bears);
+        gd.playerGraveyards.get(player1.getId()).add(bears.getCard());
+        harness.passBothPriorities();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(prowler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Combat damage to a blocking creature does not trigger the counter ability")
+    void damageToCreatureDoesNotTrigger() {
+        Permanent prowler = addAttackingProwler();
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent giant = addCreatureReady(player2, new HillGiant());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(giant),
+                gd.playerBattlefields.get(player1.getId()).indexOf(prowler))));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 20);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addAttackingProwler() {
         Permanent prowler = addCreatureReady(player1, new ProwlerMisguidedMentor());
         prowler.setAttacking(true);
