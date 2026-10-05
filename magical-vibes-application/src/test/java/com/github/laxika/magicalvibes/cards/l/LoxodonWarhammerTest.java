@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SpiritLink;
+import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -20,7 +21,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LoxodonWarhammer.class, GrizzlyBears.class, SpiritLink.class})
+@CardUsed({LoxodonWarhammer.class, GrizzlyBears.class, SpiritLink.class, ProdigalPyromancer.class})
 class LoxodonWarhammerTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -378,7 +379,7 @@ class LoxodonWarhammerTest extends BaseCardTest {
     // ===== Lifelink + Spirit Link stacking =====
 
     @Test
-    @DisplayName("Lifelink and Spirit Link both trigger, granting life separately")
+    @DisplayName("Lifelink grants life immediately and Spirit Link grants life when its trigger resolves")
     void lifelinkAndSpiritLinkStack() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
@@ -398,6 +399,9 @@ class LoxodonWarhammerTest extends BaseCardTest {
         // Creature power is 5 (2 + 3)
         // Player2 takes 5 damage: 20 - 5 = 15
         harness.assertLife(player2, 15);
+        harness.assertLife(player1, 25);
+        resolveAllTriggers();
+
         // Player1 gains 5 from lifelink + 5 from Spirit Link = 10 total: 20 + 10 = 30
         harness.assertLife(player1, 30);
     }
@@ -429,6 +433,74 @@ class LoxodonWarhammerTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, creature2)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, creature2, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, creature2, Keyword.LIFELINK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Equip does not move equipment if its target changes controller before resolution")
+    void equipDoesNotMoveToTargetThatChangesController() {
+        Permanent warhammer = addWarhammerReady(player1);
+        Permanent original = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        warhammer.setAttachedTo(original.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerBattlefields.get(player2.getId()).add(target);
+        harness.passBothPriorities();
+
+        assertThat(warhammer.getAttachedTo()).isEqualTo(original.getId());
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Lifelink benefits the equipped creature's controller even when the equipment has another controller")
+    void lifelinkBenefitsCreatureController() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent warhammer = addWarhammerReady(player1);
+        warhammer.setAttachedTo(creature.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(warhammer);
+        gd.playerBattlefields.get(player2.getId()).add(warhammer);
+        creature.setAttacking(true);
+        resolveCombat();
+
+        harness.assertLife(player1, 25);
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("Two Warhammers stack their power boosts but do not multiply lifelink")
+    void multipleWarhammersDoNotMultiplyLifelink() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        addWarhammerReady(player1).setAttachedTo(creature.getId());
+        addWarhammerReady(player1).setAttachedTo(creature.getId());
+        creature.setAttacking(true);
+
+        resolveCombat();
+
+        harness.assertLife(player1, 28);
+        harness.assertLife(player2, 12);
+    }
+
+    @Test
+    @DisplayName("Lifelink applies to noncombat damage dealt by the equipped creature")
+    void lifelinkAppliesToNoncombatDamage() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent creature = addCreatureReady(player1, new ProdigalPyromancer());
+        addWarhammerReady(player1).setAttachedTo(creature.getId());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
     }
 
     // ===== Helpers =====
