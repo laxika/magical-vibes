@@ -24,15 +24,13 @@ class LuxuriousLibationTest extends BaseCardTest {
     @Test
     @DisplayName("Gives a creature +X/+X and creates a Citizen token")
     void boostsByXAndCreatesCitizenToken() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new LuxuriousLibation()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        UUID bearId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, 3, bearId);
+        harness.castInstant(player1, 0, 3, bear.getId());
         harness.passBothPriorities();
 
-        Permanent bear = findPermanent(player2, "Grizzly Bears");
         assertThat(bear.getEffectivePower()).isEqualTo(5);
         assertThat(bear.getEffectiveToughness()).isEqualTo(5);
 
@@ -48,15 +46,13 @@ class LuxuriousLibationTest extends BaseCardTest {
     @Test
     @DisplayName("The +X/+X boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new LuxuriousLibation()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, 2, bearId);
+        harness.castInstant(player1, 0, 2, bear.getId());
         harness.passBothPriorities();
 
-        Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getEffectivePower()).isEqualTo(4);
         assertThat(bear.getEffectiveToughness()).isEqualTo(4);
 
@@ -79,5 +75,40 @@ class LuxuriousLibationTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("X can be zero and still creates exactly one Citizen")
+    void zeroXStillCreatesCitizen() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new LuxuriousLibation()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstant(player1, 0, 0, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(countPermanents(player1, "Citizen")).isEqualTo(1);
+        assertThat(findPermanent(player1, "Citizen").getEffectivePower()).isEqualTo(1);
+        assertThat(findPermanent(player1, "Citizen").getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Creates no Citizen when its only target leaves before resolution")
+    void removedTargetPreventsTokenCreation() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new LuxuriousLibation()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castInstant(player1, 0, 3, bear.getId());
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bear);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Citizen")).isZero();
+        assertThat(countPermanents(player2, "Citizen")).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof LuxuriousLibation);
     }
 }
