@@ -60,6 +60,47 @@ class KrosanBeastTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, beast)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Gains the boost immediately when the graveyard reaches seven cards")
+    void gainsBoostWhenGraveyardGrows() {
+        harness.setGraveyard(player1, graveyardCards(6));
+        Permanent beast = harness.addToBattlefieldAndReturn(player1, new KrosanBeast());
+
+        assertThat(gqs.getEffectivePower(gd, beast)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, beast)).isEqualTo(1);
+
+        harness.setGraveyard(player1, graveyardCards(7));
+
+        assertThat(gqs.getEffectivePower(gd, beast)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, beast)).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("More than seven graveyard cards still grant only +7/+7")
+    void boostAboveThresholdDoesNotScale() {
+        harness.setGraveyard(player1, graveyardCards(10));
+        Permanent beast = harness.addToBattlefieldAndReturn(player1, new KrosanBeast());
+
+        assertThat(gqs.getEffectivePower(gd, beast)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, beast)).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("Each Beast boosts only itself using its own controller's graveyard")
+    void boostIsSelfOnly() {
+        harness.setGraveyard(player1, graveyardCards(7));
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new KrosanBeast());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new KrosanBeast());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new KrosanBeast());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, opposing)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposing)).isEqualTo(1);
+    }
+
     private List<Card> graveyardCards(int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
