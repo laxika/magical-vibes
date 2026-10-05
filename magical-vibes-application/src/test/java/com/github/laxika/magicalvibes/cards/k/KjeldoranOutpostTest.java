@@ -105,6 +105,59 @@ class KjeldoranOutpostTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only the chosen Plains is sacrificed when several are available")
+    void sacrificesOnlyChosenPlains() {
+        Permanent retained = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent chosen = harness.addToBattlefieldAndReturn(player1, new Plains());
+        harness.setHand(player1, List.of(new KjeldoranOutpost()));
+
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, chosen.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(retained).doesNotContain(chosen);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(chosen.getCard());
+        harness.assertOnBattlefield(player1, "Kjeldoran Outpost");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Failed entry under another player's control puts Outpost into its owner's graveyard")
+    void failedEntryUsesOwnerGraveyard() {
+        KjeldoranOutpost outpost = new KjeldoranOutpost();
+        outpost.setOwnerId(player2.getId());
+
+        harness.enterBattlefieldAndReturn(player1, outpost);
+
+        harness.assertNotOnBattlefield(player1, "Kjeldoran Outpost");
+        harness.assertNotInGraveyard(player1, "Kjeldoran Outpost");
+        harness.assertInGraveyard(player2, "Kjeldoran Outpost");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Outpost can make a Soldier immediately after entering, and the ability uses the stack")
+    void newlyEnteredOutpostCanCreateSoldier() {
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        harness.setHand(player1, List.of(new KjeldoranOutpost()));
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, plains.getId());
+        Permanent outpost = findPermanent(player1, "Kjeldoran Outpost");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(outpost.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Soldier");
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Mana ability adds {W}")
     void manaAbilityAddsWhite() {
         harness.addToBattlefield(player1, new KjeldoranOutpost());
