@@ -29,9 +29,8 @@ class PressIntoServiceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PressIntoService()));
         addMana();
 
-        harness.castSorcery(player1, 0, List.of(
+        harness.castAndResolveSorcery(player1, 0, List.of(
                 stolen.getId(), supportedFirst.getId(), supportedSecond.getId()));
-        harness.passBothPriorities();
 
         assertThat(supportedFirst.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(supportedSecond.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -49,8 +48,7 @@ class PressIntoServiceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PressIntoService()));
         addMana();
 
-        harness.castSorcery(player1, 0, List.of(stolen.getId(), supported.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(stolen.getId(), supported.getId()));
 
         assertThat(supported.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(stolen.hasKeyword(Keyword.HASTE)).isTrue();
@@ -63,8 +61,7 @@ class PressIntoServiceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PressIntoService()));
         addMana();
 
-        harness.castSorcery(player1, 0, List.of(stolen.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(stolen.getId()));
 
         assertThat(stolen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(stolen.hasKeyword(Keyword.HASTE)).isTrue();
@@ -77,8 +74,7 @@ class PressIntoServiceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PressIntoService()));
         addMana();
 
-        harness.castSorcery(player1, 0, List.of(stolen.getId(), stolen.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(stolen.getId(), stolen.getId()));
 
         assertThat(stolen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(stolen.hasKeyword(Keyword.HASTE)).isTrue();
@@ -92,8 +88,7 @@ class PressIntoServiceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PressIntoService()));
         addMana();
 
-        harness.castSorcery(player1, 0, List.of(stolen.getId(), supported.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(stolen.getId(), supported.getId()));
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -117,6 +112,74 @@ class PressIntoServiceTest extends BaseCardTest {
                         enchantment.getId(), supported.getId(), secondSupported.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
+    }
+
+    @Test
+    @DisplayName("Cannot support the same creature twice")
+    void cannotSupportTheSameCreatureTwice() {
+        Permanent stolen = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent supported = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PressIntoService()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
+                List.of(stolen.getId(), supported.getId(), supported.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can untap and haste a creature already controlled by the caster")
+    void canTargetOwnCreatureForControl() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        creature.tap();
+        harness.setHand(player1, List.of(new PressIntoService()));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, List.of(creature.getId()));
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+    }
+
+    @Test
+    @DisplayName("Support still resolves when the control target leaves the battlefield")
+    void supportsWhenControlTargetLeaves() {
+        Permanent stolen = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent supported = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PressIntoService()));
+        addMana();
+        harness.castSorcery(player1, 0, List.of(stolen.getId(), supported.getId()));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, stolen));
+
+        harness.passBothPriorities();
+
+        assertThat(supported.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(supported.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(supported);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(supported);
+    }
+
+    @Test
+    @DisplayName("Remaining support and control targets resolve when one support target leaves")
+    void resolvesRemainingTargetsWhenSupportTargetLeaves() {
+        Permanent stolen = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent removed = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent supported = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        stolen.tap();
+        harness.setHand(player1, List.of(new PressIntoService()));
+        addMana();
+        harness.castSorcery(player1, 0, List.of(stolen.getId(), removed.getId(), supported.getId()));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, removed));
+
+        harness.passBothPriorities();
+
+        assertThat(supported.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(stolen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(stolen.isTapped()).isFalse();
+        assertThat(stolen.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(stolen);
     }
 
     private void addMana() {
