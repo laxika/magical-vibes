@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.a.AuroraGriffin;
 import com.github.laxika.magicalvibes.cards.m.MoggJailer;
-import com.github.laxika.magicalvibes.cards.p.PlaneswalkersMirth;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,6 +11,68 @@ import org.junit.jupiter.api.Test;
 
 @CardUsed({PhyrexianBloodstock.class, AuroraGriffin.class, MoggJailer.class, PlaneswalkersMirth.class})
 class PhyrexianBloodstockTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Returning Bloodstock to hand still triggers destruction")
+    void returningToHandDestroysWhiteCreature() {
+        Permanent whiteCreature = addCreatureReady(player2, new AuroraGriffin());
+        Permanent bloodstock = harness.addToBattlefieldAndReturn(player1, new PhyrexianBloodstock());
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToHand(gd, bloodstock));
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, whiteCreature.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Phyrexian Bloodstock");
+        harness.assertNotOnBattlefield(player2, "Aurora Griffin");
+        harness.assertInGraveyard(player2, "Aurora Griffin");
+    }
+
+    @Test
+    @DisplayName("Exiling Bloodstock still triggers destruction")
+    void exilingDestroysWhiteCreature() {
+        Permanent whiteCreature = addCreatureReady(player2, new AuroraGriffin());
+        Permanent bloodstock = harness.addToBattlefieldAndReturn(player1, new PhyrexianBloodstock());
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToExile(gd, bloodstock));
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, whiteCreature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Phyrexian Bloodstock");
+        harness.assertNotOnBattlefield(player2, "Aurora Griffin");
+        harness.assertInGraveyard(player2, "Aurora Griffin");
+    }
+
+    @Test
+    @DisplayName("The mandatory trigger can destroy its controller's white creature")
+    void destroysControllersWhiteCreature() {
+        Permanent whiteCreature = addCreatureReady(player1, new AuroraGriffin());
+        Permanent bloodstock = harness.addToBattlefieldAndReturn(player1, new PhyrexianBloodstock());
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bloodstock));
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, whiteCreature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Aurora Griffin");
+        harness.assertInGraveyard(player1, "Aurora Griffin");
+    }
 
     @Test
     @DisplayName("LTB destroys the chosen white creature even with a regeneration shield")
