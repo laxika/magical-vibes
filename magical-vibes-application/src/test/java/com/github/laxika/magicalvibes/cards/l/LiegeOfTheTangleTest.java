@@ -5,14 +5,17 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,16 +24,21 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({LiegeOfTheTangle.class, Forest.class, Mountain.class})
 class LiegeOfTheTangleTest extends BaseCardTest {
 
     private Permanent addLand(Player player, Card card) {
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
-    // ===== Combat damage trigger =====
+    private void resolveLiegeCombat() {
+        resolveCombat();
+        if (!gd.interaction.isAwaitingInput() && !gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+    }
 
     @Test
     @DisplayName("Dealing combat damage triggers multi-permanent choice for controller's lands")
@@ -40,7 +48,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         addLand(player1, new Forest());
         addLand(player1, new Forest());
 
-        resolveCombat();
+        resolveLiegeCombat();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNotNull();
@@ -58,7 +66,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         Permanent forest1 = addLand(player1, new Forest());
         Permanent forest2 = addLand(player1, new Forest());
 
-        resolveCombat();
+        resolveLiegeCombat();
 
         harness.handleMultiplePermanentsChosen(player1, List.of(forest1.getId(), forest2.getId()));
 
@@ -73,7 +81,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         liege.setAttacking(true);
         Permanent forest = addLand(player1, new Forest());
 
-        resolveCombat();
+        resolveLiegeCombat();
         harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
 
         assertThat(forest.getCounterCount(CounterType.AWAKENING)).isEqualTo(1);
@@ -89,10 +97,10 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         liege.setAttacking(true);
         Permanent forest = addLand(player1, new Forest());
 
-        resolveCombat();
+        resolveLiegeCombat();
         harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
 
-        assertThat(forest.getCard().getType()).isEqualTo(CardType.LAND);
+        assertThat(gqs.getEffectiveCardTypes(gd, forest)).contains(CardType.LAND, CardType.CREATURE);
     }
 
     @Test
@@ -102,7 +110,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         liege.setAttacking(true);
         Permanent forest = addLand(player1, new Forest());
 
-        resolveCombat();
+        resolveLiegeCombat();
         harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
 
         // Simulate end of turn reset
@@ -121,7 +129,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         liege.setAttacking(true);
         Permanent forest = addLand(player1, new Forest());
 
-        resolveCombat();
+        resolveLiegeCombat();
 
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
@@ -137,12 +145,11 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         liege.setAttacking(true);
         addLand(player1, new Forest());
 
-        // Add blocker that can survive (8/8 needed to fully block, but any creature blocks)
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new LiegeOfTheTangle());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        resolveCombat();
+        resolveLiegeCombat();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
     }
@@ -154,7 +161,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         liege.setAttacking(true);
         // player1 has no lands
 
-        resolveCombat();
+        resolveLiegeCombat();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("controls no lands"));
@@ -168,7 +175,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         Permanent forest1 = addLand(player1, new Forest());
         Permanent forest2 = addLand(player1, new Forest());
 
-        resolveCombat();
+        resolveLiegeCombat();
 
         harness.handleMultiplePermanentsChosen(player1, List.of(forest1.getId()));
 
@@ -186,7 +193,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         liege.setAttacking(true);
         addLand(player1, new Forest());
 
-        resolveCombat();
+        resolveLiegeCombat();
 
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
@@ -200,7 +207,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         liege.setAttacking(true);
         Permanent forest = addLand(player1, new Forest());
 
-        resolveCombat();
+        resolveLiegeCombat();
 
         harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
 
@@ -216,7 +223,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         Permanent forest = addLand(player1, new Forest());
         Permanent mountain = addLand(player1, new Mountain());
 
-        resolveCombat();
+        resolveLiegeCombat();
 
         harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId(), mountain.getId()));
 
@@ -226,5 +233,55 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         assertThat(mountain.getEffectiveToughness()).isEqualTo(8);
         assertThat(gqs.isCreature(gd, forest)).isTrue();
         assertThat(gqs.isCreature(gd, mountain)).isTrue();
+    }
+
+    @Test
+    void awakenedLandIsGreenElementalAfterLiegeLeaves() {
+        Permanent liege = addCreatureReady(player1, new LiegeOfTheTangle());
+        liege.setAttacking(true);
+        Permanent mountain = addLand(player1, new Mountain());
+
+        resolveLiegeCombat();
+        harness.handleMultiplePermanentsChosen(player1, List.of(mountain.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(liege);
+
+        assertThat(gqs.getEffectiveColors(gd, mountain)).containsExactly(CardColor.GREEN);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, mountain)).containsExactly(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectivePower(gd, mountain)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, mountain)).isEqualTo(8);
+        assertThat(gqs.getEffectiveCardTypes(gd, mountain)).contains(CardType.LAND, CardType.CREATURE);
+    }
+
+    @Test
+    @CardUsed({DryadArbor.class})
+    void existingLandCreatureBecomesEightEightElemental() {
+        Permanent liege = addCreatureReady(player1, new LiegeOfTheTangle());
+        liege.setAttacking(true);
+        Permanent arbor = addLand(player1, new DryadArbor());
+
+        resolveLiegeCombat();
+        harness.handleMultiplePermanentsChosen(player1, List.of(arbor.getId()));
+
+        assertThat(arbor.getCounterCount(CounterType.AWAKENING)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, arbor)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, arbor)).isEqualTo(8);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, arbor)).containsExactly(CardSubtype.ELEMENTAL);
+    }
+
+    @Test
+    void opponentsLandsAreNotOfferedForAwakening() {
+        Permanent liege = addCreatureReady(player1, new LiegeOfTheTangle());
+        liege.setAttacking(true);
+        Permanent ownLand = addLand(player1, new Forest());
+        Permanent opposingLand = addLand(player2, new Forest());
+
+        resolveLiegeCombat();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).maxCount())
+                .isEqualTo(1);
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownLand.getId()));
+
+        assertThat(ownLand.getCounterCount(CounterType.AWAKENING)).isEqualTo(1);
+        assertThat(opposingLand.getCounterCount(CounterType.AWAKENING)).isZero();
+        assertThat(gqs.isCreature(gd, opposingLand)).isFalse();
     }
 }
