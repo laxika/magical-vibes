@@ -40,4 +40,37 @@ class MirriTheCursedTest extends BaseCardTest {
 
         assertThat(mirri.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
+
+    @Test
+    @DisplayName("Gets a counter when blocking and killing an attacker with first strike")
+    void getsCounterWhenBlocking() {
+        addCreatureReady(player1, new AvenRiftwatcher());
+        Permanent mirri = addCreatureReady(player2, new MirriTheCursed());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(mirri.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(mirri);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof AvenRiftwatcher);
+    }
+
+    @Test
+    @DisplayName("Can attack immediately with haste without triggering its counter ability against a player")
+    void attacksWhileSummoningSick() {
+        Permanent mirri = harness.addToBattlefieldAndReturn(player1, new MirriTheCursed());
+        mirri.setSummoningSick(true);
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        assertThat(mirri.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
 }
