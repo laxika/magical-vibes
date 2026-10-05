@@ -77,6 +77,63 @@ class OverwhelmingSurgeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Damage mode can target an artifact creature you control")
+    void damageModeCanTargetOwnArtifactCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        cast(new int[]{0}, List.of(creature.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Ornithopter");
+        harness.assertInGraveyard(player1, "Ornithopter");
+    }
+
+    @Test
+    @DisplayName("Destroy mode cannot target a nonartifact creature")
+    void destroyModeRejectsNonartifactCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new OverwhelmingSurge()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(player1, 0, 1, 2,
+                new int[]{1}, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Artifact destruction still resolves when the creature target leaves")
+    void artifactModeResolvesWhenCreatureTargetLeaves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Millstone());
+        harness.setHand(player1, List.of(new OverwhelmingSurge()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0, 1},
+                List.of(creature.getId(), artifact.getId()));
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, creature));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Millstone");
+        harness.assertInGraveyard(player2, "Millstone");
+    }
+
+    @Test
+    @DisplayName("Creature damage still resolves when the artifact target leaves")
+    void damageModeResolvesWhenArtifactTargetLeaves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Millstone());
+        harness.setHand(player1, List.of(new OverwhelmingSurge()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0, 1},
+                List.of(creature.getId(), artifact.getId()));
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, artifact));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Millstone");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
     private void cast(int[] modes, List<UUID> targetIds) {
         harness.setHand(player1, List.of(new OverwhelmingSurge()));
         harness.addMana(player1, ManaColor.RED, 3);
