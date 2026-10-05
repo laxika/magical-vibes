@@ -105,4 +105,77 @@ class MartyrOfSandsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(nonWhiteCard);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(0);
     }
+
+    @Test
+    @DisplayName("Pays reveal and sacrifice costs before resolution even while tapped and summoning sick")
+    void paysCostsBeforeResolutionAndKeepsChosenX() {
+        Card whiteCard = new AdarkarValkyrie();
+        Card otherWhiteCard = new FieldMarshal();
+        harness.setHand(player1, List.of(whiteCard, otherWhiteCard));
+        Permanent martyr = harness.addToBattlefieldAndReturn(player1, new MartyrOfSands());
+        martyr.setSummoningSick(true);
+        martyr.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, 1, null);
+        harness.handleMultipleCardsChosen(player1, List.of(whiteCard.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(martyr);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(martyr.getCard());
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(whiteCard, otherWhiteCard);
+
+        harness.setHand(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Cannot reveal the same card twice or fewer cards than the chosen X")
+    void rejectsDuplicateAndIncorrectRevealCounts() {
+        Card firstWhiteCard = new AdarkarValkyrie();
+        Card secondWhiteCard = new FieldMarshal();
+        harness.setHand(player1, List.of(firstWhiteCard, secondWhiteCard));
+        Permanent martyr = addCreatureReady(player1, new MartyrOfSands());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 2, null);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(
+                player1, List.of(firstWhiteCard.getId(), firstWhiteCard.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(firstWhiteCard.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(martyr);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        harness.assertLife(player1, 20);
+
+        harness.handleMultipleCardsChosen(player1, List.of(firstWhiteCard.getId(), secondWhiteCard.getId()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 26);
+    }
+
+    @Test
+    @DisplayName("Can activate with an empty hand by choosing zero")
+    void canActivateWithEmptyHand() {
+        harness.setHand(player1, List.of());
+        Permanent martyr = addCreatureReady(player1, new MartyrOfSands());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(martyr);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(martyr.getCard());
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
 }
