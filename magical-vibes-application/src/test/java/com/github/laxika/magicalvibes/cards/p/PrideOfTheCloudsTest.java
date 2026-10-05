@@ -38,9 +38,7 @@ class PrideOfTheCloudsTest extends BaseCardTest {
     void forecastCreatesBirdAndKeepsSourceInHand() {
         PrideOfTheClouds pride = new PrideOfTheClouds();
         harness.setHand(player1, List.of(pride));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -62,9 +60,7 @@ class PrideOfTheCloudsTest extends BaseCardTest {
     @DisplayName("Forecast can be activated only once during its controller's upkeep")
     void forecastIsLimitedToOncePerTurn() {
         harness.setHand(player1, List.of(new PrideOfTheClouds()));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -90,5 +86,71 @@ class PrideOfTheCloudsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("during your upkeep");
+    }
+
+    @Test
+    @DisplayName("Does not count itself as another flying creature")
+    void doesNotCountItself() {
+        Permanent pride = harness.addToBattlefieldAndReturn(player1, new PrideOfTheClouds());
+
+        assertThat(gqs.getEffectivePower(gd, pride)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, pride)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Each copy in hand can forecast once in the same upkeep")
+    void separateCopiesCanForecast() {
+        harness.setHand(player1, List.of(new PrideOfTheClouds(), new PrideOfTheClouds()));
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.activateHandAbility(player1, 1, null);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Bird")).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Forecast cannot be activated in the opponent's upkeep")
+    void forecastRejectsOpponentsUpkeep() {
+        harness.setHand(player1, List.of(new PrideOfTheClouds()));
+        advanceToUpkeep(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.ensurePriority(player1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("during your upkeep");
+    }
+
+    @Test
+    @DisplayName("Forecast keeps its source revealed until the upkeep ends")
+    void forecastKeepsSourceRevealedDuringUpkeep() {
+        harness.setHand(player1, List.of(new PrideOfTheClouds()));
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        harness.clearMessages();
+        harness.publishState();
+        assertThat(harness.getConn2().getMessagesContaining("\"opponentHand\""))
+                .anyMatch(message -> message.contains("\"opponentHand\":[{")
+                        && message.contains("Pride of the Clouds"));
+
+        harness.passUntil(TurnStep.DRAW);
+        harness.clearMessages();
+        harness.publishState();
+        assertThat(harness.getConn2().getMessagesContaining("\"opponentHand\":[]"))
+                .isNotEmpty();
     }
 }
