@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.cards.k.KarnScionOfUrza;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
@@ -15,16 +18,15 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({OrcishVandal.class, Spellbook.class, LeoninScimitar.class, LlanowarElves.class, KarnScionOfUrza.class})
 class OrcishVandalTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating ability with one artifact auto-sacrifices it and puts ability on stack")
     void autoSacrificesOnlyArtifact() {
-        harness.addToBattlefield(player1, new OrcishVandal());
+        addCreatureReady(player1, new OrcishVandal());
         harness.addToBattlefield(player1, new Spellbook());
 
-        Permanent vandal = findPermanent(player1, "Orcish Vandal");
-        vandal.setSummoningSick(false);
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
@@ -36,12 +38,10 @@ class OrcishVandalTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability with multiple artifacts asks to choose which to sacrifice")
     void asksForChoiceWithMultipleArtifacts() {
-        harness.addToBattlefield(player1, new OrcishVandal());
+        addCreatureReady(player1, new OrcishVandal());
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player1, new LeoninScimitar());
 
-        Permanent vandal = findPermanent(player1, "Orcish Vandal");
-        vandal.setSummoningSick(false);
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
@@ -52,12 +52,10 @@ class OrcishVandalTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing an artifact to sacrifice puts ability on stack")
     void choosingArtifactPutsAbilityOnStack() {
-        harness.addToBattlefield(player1, new OrcishVandal());
+        addCreatureReady(player1, new OrcishVandal());
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player1, new LeoninScimitar());
 
-        Permanent vandal = findPermanent(player1, "Orcish Vandal");
-        vandal.setSummoningSick(false);
         UUID spellbookId = findPermanent(player1, "Spellbook").getId();
 
         harness.activateAbility(player1, 0, null, player2.getId());
@@ -72,28 +70,24 @@ class OrcishVandalTest extends BaseCardTest {
     @Test
     @DisplayName("Ability deals 2 damage to target player on resolution")
     void dealsDamageToPlayer() {
-        harness.addToBattlefield(player1, new OrcishVandal());
+        addCreatureReady(player1, new OrcishVandal());
         harness.addToBattlefield(player1, new Spellbook());
         harness.setLife(player2, 20);
 
-        Permanent vandal = findPermanent(player1, "Orcish Vandal");
-        vandal.setSummoningSick(false);
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
     }
 
     @Test
     @DisplayName("Ability deals 2 damage to target creature")
     void dealsDamageToCreature() {
-        harness.addToBattlefield(player1, new OrcishVandal());
+        addCreatureReady(player1, new OrcishVandal());
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player2, new LlanowarElves());
 
-        Permanent vandal = findPermanent(player1, "Orcish Vandal");
-        vandal.setSummoningSick(false);
         UUID elvesId = findPermanent(player2, "Llanowar Elves").getId();
 
         harness.activateAbility(player1, 0, null, elvesId);
@@ -105,10 +99,8 @@ class OrcishVandalTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability without an artifact to sacrifice")
     void cannotActivateWithoutArtifact() {
-        harness.addToBattlefield(player1, new OrcishVandal());
+        addCreatureReady(player1, new OrcishVandal());
 
-        Permanent vandal = findPermanent(player1, "Orcish Vandal");
-        vandal.setSummoningSick(false);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -123,6 +115,64 @@ class OrcishVandalTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Ability deals 2 damage directly to a planeswalker")
+    void dealsDamageToPlaneswalker() {
+        addCreatureReady(player1, new OrcishVandal());
+        harness.addToBattlefield(player1, new Spellbook());
+        Permanent karn = harness.addToBattlefieldAndReturn(player2, new KarnScionOfUrza());
+        karn.setCounterCount(CounterType.LOYALTY, 5);
+
+        harness.activateAbility(player1, 0, null, karn.getId());
+        harness.passBothPriorities();
+
+        assertThat(karn.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Orcish Vandal may target itself")
+    void canTargetItself() {
+        Permanent vandal = addCreatureReady(player1, new OrcishVandal());
+        harness.addToBattlefield(player1, new Spellbook());
+
+        harness.activateAbility(player1, 0, null, vandal.getId());
+        assertThat(vandal.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player1, "Spellbook");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Orcish Vandal");
+        harness.assertInGraveyard(player1, "Orcish Vandal");
+    }
+
+    @Test
+    @DisplayName("Cannot use an opponent's artifact to pay the sacrifice cost")
+    void cannotSacrificeOpponentsArtifact() {
+        addCreatureReady(player1, new OrcishVandal());
+        harness.addToBattlefield(player2, new Spellbook());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No permanent to sacrifice matching: an artifact");
+
+        harness.assertOnBattlefield(player2, "Spellbook");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate a tapped Orcish Vandal")
+    void cannotActivateWhenTapped() {
+        Permanent vandal = addCreatureReady(player1, new OrcishVandal());
+        vandal.setTapped(true);
+        harness.addToBattlefield(player1, new Spellbook());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Spellbook");
+        assertThat(gd.stack).isEmpty();
     }
 
 }
