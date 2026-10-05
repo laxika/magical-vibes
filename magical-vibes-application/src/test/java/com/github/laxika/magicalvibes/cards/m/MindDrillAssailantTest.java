@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DaggerfangDuo;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MindDrillAssailant.class, GrizzlyBears.class})
+@CardUsed({MindDrillAssailant.class, DaggerfangDuo.class})
 class MindDrillAssailantTest extends BaseCardTest {
 
     @Test
@@ -44,8 +44,8 @@ class MindDrillAssailantTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addToBattlefield(player1, new MindDrillAssailant());
-        Card topCard = new GrizzlyBears();
-        gd.playerDecks.get(player1.getId()).addFirst(topCard);
+        Card topCard = new DaggerfangDuo();
+        harness.setLibrary(player1, List.of(topCard));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -57,10 +57,106 @@ class MindDrillAssailantTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
+    @Test
+    @DisplayName("Threshold continuously updates as cards leave the graveyard")
+    void losesThresholdWhenGraveyardShrinks() {
+        harness.setGraveyard(player1, graveyardCards(8));
+        Permanent assailant = harness.addToBattlefieldAndReturn(player1, new MindDrillAssailant());
+
+        assertThat(gqs.getEffectivePower(gd, assailant)).isEqualTo(5);
+        harness.setGraveyard(player1, graveyardCards(7));
+        assertThat(gqs.getEffectivePower(gd, assailant)).isEqualTo(5);
+        harness.setGraveyard(player1, graveyardCards(6));
+        assertThat(gqs.getEffectivePower(gd, assailant)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, assailant)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("An opponent's graveyard does not enable threshold")
+    void ignoresOpponentsGraveyard() {
+        harness.setGraveyard(player1, graveyardCards(6));
+        harness.setGraveyard(player2, graveyardCards(7));
+        Permanent assailant = harness.addToBattlefieldAndReturn(player1, new MindDrillAssailant());
+
+        assertThat(gqs.getEffectivePower(gd, assailant)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Surveilling with black mana enables threshold immediately")
+    void blackManaSurveilEnablesThreshold() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setGraveyard(player1, graveyardCards(6));
+        Permanent assailant = harness.addToBattlefieldAndReturn(player1, new MindDrillAssailant());
+        Card topCard = new DaggerfangDuo();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThat(gqs.getEffectivePower(gd, assailant)).isEqualTo(2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(7).contains(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, assailant)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, assailant)).isEqualTo(5);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Surveil may leave the card on top, and the ability can be used again")
+    void keepsTopCardAndCanActivateAgain() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new MindDrillAssailant());
+        Card topCard = new DaggerfangDuo();
+        Card nextCard = new DaggerfangDuo();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        harness.setGraveyard(player1, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, nextCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Surveilling an empty library resolves without drawing or adding cards")
+    void surveilsEmptyLibrary() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new MindDrillAssailant());
+        harness.setLibrary(player1, List.of());
+        harness.setGraveyard(player1, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
     private List<Card> graveyardCards(int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            cards.add(new GrizzlyBears());
+            cards.add(new DaggerfangDuo());
         }
         return cards;
     }
