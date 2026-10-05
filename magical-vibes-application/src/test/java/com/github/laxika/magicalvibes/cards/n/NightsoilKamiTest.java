@@ -29,8 +29,7 @@ class NightsoilKamiTest extends BaseCardTest {
     private void kikuShadowToKillNightsoilKami() {
         harness.setHand(player1, List.of(new KikusShadow()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, harness.getPermanentId(player1, "Nightsoil Kami"));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player1, "Nightsoil Kami"));
     }
 
     private void mirenToKillNightsoilKami(Permanent nightsoil) {
@@ -56,6 +55,10 @@ class NightsoilKamiTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
         harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(spirit.getId()));
@@ -85,7 +88,7 @@ class NightsoilKamiTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Soulshift may be declined")
+    @DisplayName("Soulshift may be declined when it resolves after choosing a target")
     void soulshiftMayBeDeclined() {
         Permanent nightsoil = harness.addToBattlefieldAndReturn(player1, new NightsoilKami());
         Card spirit = new DeathknellKami();
@@ -95,8 +98,12 @@ class NightsoilKamiTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
         harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(spirit.getId()));
@@ -113,5 +120,32 @@ class NightsoilKamiTest extends BaseCardTest {
         kikuShadowToKillNightsoilKami();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Soulshift requires a target before its controller decides whether to return it")
+    void targetIsRequiredWhenTriggerGoesOnStack() {
+        harness.addToBattlefield(player1, new NightsoilKami());
+        Card spirit = new BriarknitKami();
+        harness.setGraveyard(player1, List.of(spirit));
+
+        kikuShadowToKillNightsoilKami();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.minCount()).isEqualTo(1);
+        assertThat(choice.maxCount()).isEqualTo(1);
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
+
+        harness.assertInGraveyard(player1, "Briarknit Kami");
+        harness.assertNotInHand(player1, "Briarknit Kami");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Briarknit Kami");
+        harness.assertNotInGraveyard(player1, "Briarknit Kami");
     }
 }
