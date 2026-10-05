@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -95,8 +97,62 @@ class InspiredSkypainterMaestrosGiftTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         return findPermanent(player1, "Inspired Skypainter");
+    }
+
+    @Test
+    @DisplayName("Inspired Skypainter prepares only when its enters trigger resolves")
+    void preparationWaitsForEntersTrigger() {
+        harness.setHand(player1, List.of(new InspiredSkypainterMaestrosGift()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent skypainter = findPermanent(player1, "Inspired Skypainter");
+        assertThat(skypainter.isPrepared()).isFalse();
+        assertThat(skypainter.getPreparedSpellCardId()).isNull();
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+        assertThat(skypainter.isPrepared()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Maestro's Gift haste expires while its token remains on the battlefield")
+    void tokenHasteExpiresAfterTurn() {
+        Permanent skypainter = castSkypainter();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castFromExile(player1, skypainter.getPreparedSpellCardId(), skypainter.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        Permanent token = findPermanents(player1, "Inspired Skypainter").stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .findFirst().orElseThrow();
+        assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(token.isPrepared()).isTrue();
+        assertThat(skypainter.isPrepared()).isFalse();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
+        assertThat(token.hasKeyword(Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A nontoken creature's combat damage does not prepare Inspired Skypainter")
+    void nontokenCombatDamageDoesNotPrepareSource() {
+        Permanent skypainter = addCreatureReady(player1, new InspiredSkypainterMaestrosGift());
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(skypainter)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(skypainter.isPrepared()).isFalse();
+        assertThat(skypainter.getPreparedSpellCardId()).isNull();
     }
 }
