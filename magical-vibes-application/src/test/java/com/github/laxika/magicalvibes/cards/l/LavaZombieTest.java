@@ -23,12 +23,9 @@ class LavaZombieTest extends BaseCardTest {
     @Test
     @DisplayName("Entering prompts to return a black or red creature you control")
     void enteringPromptsForBlackOrRedCreature() {
-        addCreatureReady(player1, new MaggotCarrier());
-        addCreatureReady(player1, new MoggSentry());
-        addCreatureReady(player1, new AlphaKavu());
-        UUID maggotCarrierId = harness.getPermanentId(player1, "Maggot Carrier");
-        UUID moggSentryId = harness.getPermanentId(player1, "Mogg Sentry");
-        UUID alphaKavuId = harness.getPermanentId(player1, "Alpha Kavu");
+        UUID maggotCarrierId = addCreatureReady(player1, new MaggotCarrier()).getId();
+        UUID moggSentryId = addCreatureReady(player1, new MoggSentry()).getId();
+        UUID alphaKavuId = addCreatureReady(player1, new AlphaKavu()).getId();
 
         harness.castFromHand(player1, new LavaZombie(), "{1}{B}{R}");
         resolveAllTriggers();
@@ -63,9 +60,8 @@ class LavaZombieTest extends BaseCardTest {
     @Test
     @DisplayName("The chosen black or red creature returns to its owner's hand")
     void chosenCreatureReturnsToHand() {
-        addCreatureReady(player1, new MaggotCarrier());
+        UUID maggotCarrierId = addCreatureReady(player1, new MaggotCarrier()).getId();
         addCreatureReady(player1, new AlphaKavu());
-        UUID maggotCarrierId = harness.getPermanentId(player1, "Maggot Carrier");
 
         harness.castFromHand(player1, new LavaZombie(), "{1}{B}{R}");
         resolveAllTriggers();
@@ -104,5 +100,72 @@ class LavaZombieTest extends BaseCardTest {
 
         assertThat(lavaZombie.getPowerModifier()).isZero();
         assertThat(lavaZombie.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Lava Zombie must return itself when it is the only eligible creature")
+    void returnsItselfWhenNoOtherCreatureQualifies() {
+        addCreatureReady(player1, new AlphaKavu());
+
+        harness.castFromHand(player1, new LavaZombie(), "{1}{B}{R}");
+        resolveAllTriggers();
+        UUID lavaZombieId = harness.getPermanentId(player1, "Lava Zombie");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)
+                .validIds()).containsExactly(lavaZombieId);
+
+        harness.handlePermanentChosen(player1, lavaZombieId);
+
+        harness.assertInHand(player1, "Lava Zombie");
+        harness.assertNotOnBattlefield(player1, "Lava Zombie");
+        harness.assertOnBattlefield(player1, "Alpha Kavu");
+    }
+
+    @Test
+    @DisplayName("A red creature can be returned instead of Lava Zombie")
+    void returnsRedCreature() {
+        UUID moggSentryId = addCreatureReady(player1, new MoggSentry()).getId();
+
+        harness.castFromHand(player1, new LavaZombie(), "{1}{B}{R}");
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, moggSentryId);
+
+        harness.assertInHand(player1, "Mogg Sentry");
+        harness.assertNotOnBattlefield(player1, "Mogg Sentry");
+        harness.assertOnBattlefield(player1, "Lava Zombie");
+    }
+
+    @Test
+    @DisplayName("A creature controlled by you returns to its owner's hand")
+    void returnsBorrowedCreatureToOwner() {
+        MaggotCarrier carrier = new MaggotCarrier();
+        carrier.setOwnerId(player2.getId());
+        UUID carrierId = addCreatureReady(player1, carrier).getId();
+
+        harness.castFromHand(player1, new LavaZombie(), "{1}{B}{R}");
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, carrierId);
+
+        harness.assertInHand(player2, "Maggot Carrier");
+        harness.assertNotInHand(player1, "Maggot Carrier");
+        harness.assertNotOnBattlefield(player1, "Maggot Carrier");
+        harness.assertOnBattlefield(player1, "Lava Zombie");
+    }
+
+    @Test
+    @DisplayName("Repeated activations stack and do not boost another creature")
+    void repeatedActivationsBoostOnlySelf() {
+        Permanent lavaZombie = addCreatureReady(player1, new LavaZombie());
+        Permanent otherCreature = addCreatureReady(player1, new MaggotCarrier());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(lavaZombie.getPowerModifier()).isEqualTo(2);
+        assertThat(lavaZombie.getToughnessModifier()).isZero();
+        assertThat(otherCreature.getPowerModifier()).isZero();
+        assertThat(otherCreature.getToughnessModifier()).isZero();
     }
 }
