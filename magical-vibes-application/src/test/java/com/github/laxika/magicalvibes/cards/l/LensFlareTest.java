@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LensFlare.class, Spellbook.class, HillGiant.class, GrizzlyBears.class})
+@CardUsed({LensFlare.class, Spellbook.class, HillGiant.class, GrizzlyBears.class, LandscaperColos.class})
 class LensFlareTest extends BaseCardTest {
 
     @Test
@@ -43,8 +43,7 @@ class LensFlareTest extends BaseCardTest {
         Permanent target = addAttacker(new HillGiant());
         prepareCast();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Hill Giant");
         harness.assertInGraveyard(player2, "Hill Giant");
@@ -54,13 +53,99 @@ class LensFlareTest extends BaseCardTest {
     @DisplayName("Cannot target a creature that is not attacking or blocking")
     void cannotTargetNonCombatCreature() {
         addArtifacts(player1, 4);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent target = findPermanent(player2, "Grizzly Bears");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         prepareCast();
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("attacking or blocking creature");
+    }
+
+    @Test
+    void dealsExactlyFiveDamageToBlockingCreature() {
+        addArtifacts(player1, 4);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LandscaperColos());
+        target.setBlocking(true);
+        target.getBlockingTargets().add(gd.playerBattlefields.get(player1.getId()).indexOf(attacker));
+        prepareCast();
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertOnBattlefield(player2, "Landscaper Colos");
+        assertThat(target.getMarkedDamage()).isEqualTo(5);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void paysFullCostWithoutArtifacts() {
+        Permanent target = addAttacker(new HillGiant());
+        prepareCast();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castInstant(player1, 0, target.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void opposingArtifactsDoNotReduceCost() {
+        addArtifacts(player2, 4);
+        Permanent target = addAttacker(new HillGiant());
+        prepareCast();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Lens Flare");
+    }
+
+    @Test
+    void excessAffinityCannotPayWhiteCost() {
+        addArtifacts(player1, 6);
+        Permanent target = addAttacker(new HillGiant());
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new LensFlare()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Lens Flare");
+    }
+
+    @Test
+    void excessAffinityStillAllowsCastingForOneWhite() {
+        addArtifacts(player1, 6);
+        Permanent target = addAttacker(new HillGiant());
+        prepareCast();
+
+        harness.castInstant(player1, 0, target.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void doesNotDamageTargetThatStopsAttackingBeforeResolution() {
+        addArtifacts(player1, 4);
+        Permanent target = addAttacker(new HillGiant());
+        prepareCast();
+        harness.castInstant(player1, 0, target.getId());
+        target.setAttacking(false);
+        target.setAttackTarget(null);
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Lens Flare");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void prepareCast() {
