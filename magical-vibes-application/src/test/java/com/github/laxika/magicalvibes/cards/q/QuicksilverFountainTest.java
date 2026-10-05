@@ -179,6 +179,94 @@ class QuicksilverFountainTest extends BaseCardTest {
         assertThat(floodedForest.getCounterCount(CounterType.FLOOD)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("End-step cleanup leaves flood counters on nonland permanents")
+    void cleanupOnlyRemovesCountersFromLands() {
+        Permanent fountain = harness.addToBattlefieldAndReturn(player1, new QuicksilverFountain());
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        fountain.setCounterCount(CounterType.FLOOD, 2);
+        island.setCounterCount(CounterType.FLOOD, 3);
+
+        advanceToEndStep(player1);
+
+        assertThat(island.getCounterCount(CounterType.FLOOD)).isZero();
+        assertThat(fountain.getCounterCount(CounterType.FLOOD)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An expired Island effect does not restart when a new flood counter is placed")
+    void expiredIslandEffectDoesNotRestart() {
+        harness.addToBattlefield(player1, new QuicksilverFountain());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        floodLand(forest);
+
+        advanceToEndStep(player1);
+
+        assertThat(forest.getCounterCount(CounterType.FLOOD)).isZero();
+        assertThat(gqs.effectiveLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
+
+        forest.setCounterCount(CounterType.FLOOD, 1);
+
+        assertThat(gqs.effectiveLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
+    }
+
+    @Test
+    @DisplayName("Cleanup on an opponent's end step restores a flooded land's original mana ability")
+    void opponentEndStepRestoresOriginalManaAbility() {
+        harness.addToBattlefield(player1, new QuicksilverFountain());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        floodLand(forest);
+
+        advanceToEndStep(player2);
+
+        assertThat(forest.getCounterCount(CounterType.FLOOD)).isZero();
+        assertThat(gqs.effectiveLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
+        harness.tapPermanent(player1, 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Cleanup does not trigger when any land is a non-Island")
+    void cleanupDoesNotTriggerWhenConditionIsInitiallyFalse() {
+        harness.addToBattlefield(player1, new QuicksilverFountain());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A flood counter alone does not turn a land into an Island")
+    void unrelatedFloodCounterDoesNotChangeLandType() {
+        harness.addToBattlefield(player1, new QuicksilverFountain());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.setCounterCount(CounterType.FLOOD, 1);
+
+        assertThat(gqs.effectiveLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
+        advanceToEndStep(player1);
+        assertThat(forest.getCounterCount(CounterType.FLOOD)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The upkeep ability still floods its target if the Fountain leaves before resolution")
+    void upkeepAbilityResolvesAfterFountainLeaves() {
+        Permanent fountain = harness.addToBattlefieldAndReturn(player1, new QuicksilverFountain());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, forest.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, fountain));
+        harness.passBothPriorities();
+
+        assertThat(forest.getCounterCount(CounterType.FLOOD)).isEqualTo(1);
+        assertThat(gqs.effectiveLandTypes(gd, forest)).containsExactly(CardSubtype.ISLAND);
+    }
+
     private void floodLand(Permanent land) {
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, land.getId());
