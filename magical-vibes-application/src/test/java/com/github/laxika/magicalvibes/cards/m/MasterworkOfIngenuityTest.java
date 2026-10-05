@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -67,10 +66,54 @@ class MasterworkOfIngenuityTest extends BaseCardTest {
         assertThat(findCopy(source).getCard().getName()).isEqualTo("Masterwork of Ingenuity");
     }
 
-    private void castMasterwork(MasterworkOfIngenuity source) {
-        harness.setHand(player1, List.of(source));
+    @Test
+    @DisplayName("Copying attached, tapped Equipment enters untapped and unattached")
+    void doesNotCopyAttachmentOrTappedState() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castArtifact(player1, 0);
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(equipment), null, creature.getId());
+        harness.passBothPriorities();
+        equipment.tap();
+        MasterworkOfIngenuity source = new MasterworkOfIngenuity();
+        castMasterwork(source);
+
+        chooseCopy(equipment);
+
+        Permanent copy = findCopy(source);
+        assertThat(copy.getAttachedTo()).isNull();
+        assertThat(copy.isTapped()).isFalse();
+        assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(equipment.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Can choose friendly Equipment among Equipment on both battlefields")
+    void choosesEquipmentControlledByItsController() {
+        harness.addToBattlefield(player2, new Bonesplitter());
+        Permanent scimitar = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        MasterworkOfIngenuity source = new MasterworkOfIngenuity();
+        castMasterwork(source);
+
+        chooseCopy(scimitar);
+
+        Permanent copy = findCopy(source);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(copy), null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(copy.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
+
+    private void castMasterwork(MasterworkOfIngenuity source) {
+        harness.castFromHand(player1, source, "{1}");
         harness.passBothPriorities();
     }
 
