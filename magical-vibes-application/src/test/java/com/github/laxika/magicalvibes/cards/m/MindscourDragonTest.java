@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.l.LotusPathDjinn;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MindscourDragon.class, LotusPathDjinn.class})
 class MindscourDragonTest extends BaseCardTest {
 
     @Test
@@ -22,8 +22,8 @@ class MindscourDragonTest extends BaseCardTest {
         dragon.setAttacking(true);
         dragon.setAttackTarget(player2.getId());
 
-        setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
-        setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new LotusPathDjinn(), new LotusPathDjinn(), new LotusPathDjinn(), new LotusPathDjinn()));
+        harness.setLibrary(player2, List.of(new LotusPathDjinn(), new LotusPathDjinn(), new LotusPathDjinn(), new LotusPathDjinn()));
 
         resolveCombat();
 
@@ -41,11 +41,11 @@ class MindscourDragonTest extends BaseCardTest {
         Permanent dragon = addCreatureReady(player1, new MindscourDragon());
         dragon.setAttacking(true);
         dragon.setAttackTarget(player2.getId());
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new LotusPathDjinn());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new LotusPathDjinn(), new LotusPathDjinn(), new LotusPathDjinn(), new LotusPathDjinn()));
 
         resolveCombat();
         harness.passBothPriorities();
@@ -54,8 +54,43 @@ class MindscourDragonTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
-    private void setLibrary(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+    @Test
+    @DisplayName("Combat damage mills exactly four cards from the chosen opponent")
+    void combatDamageMillsOpponent() {
+        Permanent dragon = addCreatureReady(player1, new MindscourDragon());
+        dragon.setAttacking(true);
+        dragon.setAttackTarget(player2.getId());
+        LotusPathDjinn remaining = new LotusPathDjinn();
+        harness.setLibrary(player2, List.of(new LotusPathDjinn(), new LotusPathDjinn(),
+                new LotusPathDjinn(), new LotusPathDjinn(), remaining));
+
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(4);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remaining);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A target with fewer than four cards mills its remaining library")
+    void shortLibraryMillsOnlyRemainingCards() {
+        Permanent dragon = addCreatureReady(player1, new MindscourDragon());
+        dragon.setAttacking(true);
+        dragon.setAttackTarget(player2.getId());
+        harness.setLibrary(player2, List.of(new LotusPathDjinn(), new LotusPathDjinn()));
+
+        resolveCombat();
+
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 }
