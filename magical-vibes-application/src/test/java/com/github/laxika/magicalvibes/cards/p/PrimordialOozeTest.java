@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.s.Solemnity;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PrimordialOoze.class})
+@CardUsed({PrimordialOoze.class, Solemnity.class, Unsummon.class})
 class PrimordialOozeTest extends BaseCardTest {
 
     private void advanceToUpkeepAndResolveTrigger(Player activePlayer) {
@@ -39,6 +41,14 @@ class PrimordialOozeTest extends BaseCardTest {
     void tappedOozeDoesNotHaveToAttack() {
         Permanent ooze = addCreatureReady(player1, new PrimordialOoze());
         ooze.tap();
+
+        assertThatCode(() -> declareAttackers(List.of())).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Ooze is not required to attack")
+    void summoningSickOozeDoesNotHaveToAttack() {
+        harness.addToBattlefield(player1, new PrimordialOoze());
 
         assertThatCode(() -> declareAttackers(List.of())).doesNotThrowAnyException();
     }
@@ -135,5 +145,60 @@ class PrimordialOozeTest extends BaseCardTest {
         assertThat(ooze.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(ooze.isTapped()).isFalse();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Declining a zero payment still taps the Ooze when counters cannot be placed")
+    void declineZeroPaymentStillTaps() {
+        harness.addToBattlefield(player1, new Solemnity());
+        Permanent ooze = harness.addToBattlefieldAndReturn(player1, new PrimordialOoze());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeepAndResolveTrigger(player1);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(ooze.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(ooze.isTapped()).isTrue();
+        harness.assertLife(player1, lifeBefore);
+    }
+
+    @Test
+    @DisplayName("A zero payment can be paid without mana when counters cannot be placed")
+    void payZeroKeepsOozeUntapped() {
+        harness.addToBattlefield(player1, new Solemnity());
+        Permanent ooze = harness.addToBattlefieldAndReturn(player1, new PrimordialOoze());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeepAndResolveTrigger(player1);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(ooze.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(ooze.isTapped()).isFalse();
+        harness.assertLife(player1, lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Removing the Ooze in response does not prevent damage based on its last counters")
+    void removedOozeStillDealsLastKnownCounterDamage() {
+        Permanent ooze = harness.addToBattlefieldAndReturn(player1, new PrimordialOoze());
+        ooze.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player1, List.of(new Unsummon()));
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, ooze.getId());
+        harness.assertInHand(player1, "Primordial Ooze");
+        harness.assertNotOnBattlefield(player1, "Primordial Ooze");
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertLife(player1, lifeBefore - 2);
     }
 }
