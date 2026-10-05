@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KeldonWarcaller.class, HistoryOfBenalia.class})
 class KeldonWarcallerTest extends BaseCardTest {
-
-    // ===== Attack trigger: put lore counter on target Saga =====
 
     @Test
     @DisplayName("Attacking with Keldon Warcaller queues target selection for a Saga")
@@ -118,7 +118,7 @@ class KeldonWarcallerTest extends BaseCardTest {
         Permanent opponentSaga = addSagaWithLoreCounters(player2, 0);
 
         // Need a valid target for the trigger to fire — add a Saga player1 controls
-        Permanent ownSaga = addSagaWithLoreCounters(player1, 0);
+        addSagaWithLoreCounters(player1, 0);
 
         declareAttackers(player1, List.of(0));
 
@@ -142,19 +142,56 @@ class KeldonWarcallerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
-    // ===== Helpers =====
+    @Test
+    void cannotTargetNonSagaPermanent() {
+        Permanent warcaller = addWarcallerReady(player1);
+        addSagaWithLoreCounters(player1, 0);
+
+        declareAttackers(player1, List.of(0));
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, warcaller.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void triggerResolvesAfterWarcallerLeavesBattlefield() {
+        Permanent warcaller = addWarcallerReady(player1);
+        Permanent saga = addSagaWithLoreCounters(player1, 1);
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, saga.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(warcaller);
+        gd.playerGraveyards.get(player1.getId()).add(warcaller.getCard());
+        harness.passBothPriorities();
+
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(2);
+        assertThat(gd.stack).anyMatch(e -> e.getDescription().contains("chapter II"));
+    }
+
+    @Test
+    void targetBecomesIllegalWhenOpponentGainsControl() {
+        addWarcallerReady(player1);
+        Permanent saga = addSagaWithLoreCounters(player1, 1);
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, saga.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(saga);
+        gd.playerBattlefields.get(player2.getId()).add(saga);
+        harness.passBothPriorities();
+
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
 
     private Permanent addWarcallerReady(Player player) {
-        Permanent perm = new Permanent(new KeldonWarcaller());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new KeldonWarcaller());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private Permanent addSagaWithLoreCounters(Player player, int loreCounters) {
-        Permanent saga = new Permanent(new HistoryOfBenalia());
+        Permanent saga = harness.addToBattlefieldAndReturn(player, new HistoryOfBenalia());
         saga.setCounterCount(CounterType.LORE, loreCounters);
-        gd.playerBattlefields.get(player.getId()).add(saga);
         return saga;
     }
 }
