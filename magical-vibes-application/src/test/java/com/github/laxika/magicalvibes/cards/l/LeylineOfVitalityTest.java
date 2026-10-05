@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -10,9 +11,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.CardUsedExtension;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -23,12 +26,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("scryfall")
+@ExtendWith(CardUsedExtension.class)
+@CardUsed({LeylineOfVitality.class, RuneclawBear.class, GiantSpider.class})
 class LeylineOfVitalityTest {
 
     protected GameTestHarness harness;
     protected Player player1;
     protected Player player2;
-    protected GameService gs;
     protected GameQueryService gqs;
     protected GameData gd;
 
@@ -37,13 +41,10 @@ class LeylineOfVitalityTest {
         harness = new GameTestHarness();
         player1 = harness.getPlayer1();
         player2 = harness.getPlayer2();
-        gs = harness.getGameService();
         gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         // Do NOT call skipMulligan() here — leyline tests need to set hand first
     }
-
-    // ===== Leyline opening hand mechanic (CR 103.6) =====
 
     @Test
     @DisplayName("Leyline in opening hand prompts may ability at game start")
@@ -62,10 +63,8 @@ class LeylineOfVitalityTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Leyline of Vitality"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Leyline of Vitality"));
+        harness.assertOnBattlefield(player1, "Leyline of Vitality");
+        harness.assertNotInHand(player1, "Leyline of Vitality");
     }
 
     @Test
@@ -76,24 +75,16 @@ class LeylineOfVitalityTest {
 
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Leyline of Vitality"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Leyline of Vitality"));
+        harness.assertNotOnBattlefield(player1, "Leyline of Vitality");
+        harness.assertInHand(player1, "Leyline of Vitality");
     }
-
-    // ===== Static +0/+1 to own creatures =====
 
     @Test
     @DisplayName("Own creatures get +0/+1")
     void buffsOwnCreaturesToughness() {
         harness.skipMulligan();
         harness.addToBattlefield(player1, new LeylineOfVitality());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
@@ -104,11 +95,7 @@ class LeylineOfVitalityTest {
     void doesNotBuffOpponentCreatures() {
         harness.skipMulligan();
         harness.addToBattlefield(player1, new LeylineOfVitality());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-
-        Permanent opponentBears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
 
         assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentBears)).isEqualTo(2);
@@ -119,7 +106,7 @@ class LeylineOfVitalityTest {
     void buffsAllOwnCreatures() {
         harness.skipMulligan();
         harness.addToBattlefield(player1, new LeylineOfVitality());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new RuneclawBear());
         harness.addToBattlefield(player1, new GiantSpider());
 
         for (Permanent p : gd.playerBattlefields.get(player1.getId())) {
@@ -138,11 +125,7 @@ class LeylineOfVitalityTest {
         harness.skipMulligan();
         harness.addToBattlefield(player1, new LeylineOfVitality());
         harness.addToBattlefield(player1, new LeylineOfVitality());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
@@ -153,11 +136,7 @@ class LeylineOfVitalityTest {
     void bonusRemovedWhenLeylineLeaves() {
         harness.skipMulligan();
         harness.addToBattlefield(player1, new LeylineOfVitality());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
 
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
 
@@ -169,15 +148,13 @@ class LeylineOfVitalityTest {
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
-    // ===== Triggered ability: creature enters, may gain 1 life =====
-
     @Test
     @DisplayName("Creature entering triggers may prompt, accepting gains 1 life")
     void creatureEnteringTriggersLifeGainAccepted() {
         harness.skipMulligan();
         harness.addToBattlefield(player1, new LeylineOfVitality());
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new RuneclawBear()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
@@ -203,7 +180,7 @@ class LeylineOfVitalityTest {
         harness.skipMulligan();
         harness.addToBattlefield(player1, new LeylineOfVitality());
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new RuneclawBear()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
@@ -231,7 +208,7 @@ class LeylineOfVitalityTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new RuneclawBear()));
         harness.addMana(player2, ManaColor.GREEN, 2);
 
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
@@ -247,8 +224,6 @@ class LeylineOfVitalityTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 
-    // ===== Leyline can be cast normally from hand =====
-
     @Test
     @DisplayName("Leyline of Vitality can be cast normally for {2}{G}{G}")
     void canBeCastNormally() {
@@ -261,11 +236,8 @@ class LeylineOfVitalityTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Leyline of Vitality"));
+        harness.assertOnBattlefield(player1, "Leyline of Vitality");
     }
-
-    // ===== Leyline pregame + static boost interaction =====
 
     @Test
     @DisplayName("Leyline placed from opening hand immediately buffs creatures that enter afterward")
@@ -274,13 +246,101 @@ class LeylineOfVitalityTest {
         harness.skipMulligan();
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+    }
+
+    @Test
+    @CardUsed({Opalescence.class})
+    @DisplayName("Leyline animated by Opalescence receives its own toughness bonus")
+    void animatedLeylineBuffsItself() {
+        harness.skipMulligan();
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent leyline = harness.addToBattlefieldAndReturn(player1, new LeylineOfVitality());
+
+        assertThat(gqs.isCreature(gd, leyline)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, leyline)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, leyline)).isEqualTo(5);
+    }
+
+    @Test
+    @CardUsed({Opalescence.class})
+    @DisplayName("Leyline entering as a creature triggers its own optional life gain")
+    void animatedLeylineTriggersForItsOwnEntry() {
+        harness.skipMulligan();
+        harness.addToBattlefield(player1, new Opalescence());
+        harness.setHand(player1, List.of(new LeylineOfVitality()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                && e.getCard().getName().equals("Leyline of Vitality"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, lifeBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Multiple opening-hand Leylines can be accepted or declined independently")
+    void openingHandChoicesAreIndependent() {
+        harness.setHand(player1, List.of(new LeylineOfVitality(), new LeylineOfVitality()));
+        harness.skipMulligan();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard() instanceof LeylineOfVitality).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .filteredOn(c -> c instanceof LeylineOfVitality).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Each Leyline offers a separate optional life gain for one creature")
+    void twoLeylinesOfferIndependentLifeGainChoices() {
+        harness.skipMulligan();
+        harness.addToBattlefield(player1, new LeylineOfVitality());
+        harness.addToBattlefield(player1, new LeylineOfVitality());
+        harness.setHand(player1, List.of(new RuneclawBear()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertLife(player1, lifeBefore + 1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Life gain still resolves after its Leyline leaves the battlefield")
+    void lifeGainResolvesAfterSourceLeaves() {
+        harness.skipMulligan();
+        Permanent leyline = harness.addToBattlefieldAndReturn(player1, new LeylineOfVitality());
+        harness.setHand(player1, List.of(new RuneclawBear()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(leyline);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, lifeBefore + 1);
     }
 }
