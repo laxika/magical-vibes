@@ -22,10 +22,9 @@ class KeenEyedArchersTest extends BaseCardTest {
     @DisplayName("Reach lets Keen-Eyed Archers block a creature with flying")
     void reachCanBlockFlyer() {
         Permanent flyer = addCreatureReady(player1, new ArmoredPegasus());
-        flyer.setAttacking(true);
         Permanent archers = addCreatureReady(player2, new KeenEyedArchers());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(indexOf(player1, flyer)));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 indexOf(player2, archers), indexOf(player1, flyer))));
@@ -37,14 +36,41 @@ class KeenEyedArchersTest extends BaseCardTest {
     @DisplayName("A creature without flying or reach cannot block the flyer")
     void nonReachCannotBlockFlyer() {
         Permanent flyer = addCreatureReady(player1, new ArmoredPegasus());
-        flyer.setAttacking(true);
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(indexOf(player1, flyer)));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 indexOf(player2, bears), indexOf(player1, flyer)))))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Reach also allows blocking a creature without flying")
+    void reachCanBlockGroundCreature() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent archers = addCreatureReady(player2, new KeenEyedArchers());
+
+        declareAttackersAndPrepareBlockers(List.of(indexOf(player1, bears)));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                indexOf(player2, archers), indexOf(player1, bears))));
+
+        assertThat(archers.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Reach does not prevent creatures without flying from blocking the Archers")
+    void reachDoesNotGrantFlyingWhenAttacking() {
+        Permanent archers = addCreatureReady(player1, new KeenEyedArchers());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(indexOf(player1, archers)));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                indexOf(player2, bears), indexOf(player1, archers))));
+
+        assertThat(bears.isBlocking()).isTrue();
     }
 
     private int indexOf(Player player, Permanent perm) {
