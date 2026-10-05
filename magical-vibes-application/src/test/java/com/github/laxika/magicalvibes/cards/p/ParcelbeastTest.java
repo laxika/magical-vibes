@@ -33,7 +33,7 @@ class ParcelbeastTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(forest);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(findPermanent(forest)).isNotNull();
+        assertThat(findPermanent(player1, "Forest").isTapped()).isFalse();
     }
 
     @Test
@@ -49,7 +49,7 @@ class ParcelbeastTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(forest);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(findPermanent(forest)).isNull();
+        assertThat(findPermanents(player1, "Forest")).isEmpty();
     }
 
     @Test
@@ -67,10 +67,49 @@ class ParcelbeastTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
-    private Permanent findPermanent(Card card) {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(card.getId()))
-                .findFirst()
-                .orElse(null);
+    @Test
+    void emptyLibraryDoesNotDrawOrOfferAChoice() {
+        Permanent parcelbeast = addCreatureReady(player1, new Parcelbeast());
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        List<Card> handBefore = List.copyOf(gd.playerHands.get(player1.getId()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(handBefore);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(parcelbeast.isTapped()).isTrue();
+    }
+
+    @Test
+    void puttingLandOntoBattlefieldDoesNotUseAnotherLandPlay() {
+        addCreatureReady(player1, new Parcelbeast());
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+        gd.landsPlayedThisTurn.put(player1.getId(), 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findPermanent(player1, "Forest").getCard()).isSameAs(forest);
+        assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
+    }
+
+    @Test
+    void canCastForMutateCostTargetingOwnedNonHuman() {
+        Permanent target = addCreatureReady(player1, new Parcelbeast());
+        harness.setHand(player1, List.of(new Parcelbeast()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castWithAlternateCost(player1, 0, target.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }
+
