@@ -80,4 +80,22 @@ class MarshGoblinsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be blocked");
     }
+
+    @Test
+    @DisplayName("A Swamp controlled by the attacker does not prevent blocking")
+    void canBeBlockedWhenOnlyAttackerControlsSwamp() {
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player2, new Forest());
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent atkPerm = addCreatureReady(player1, new MarshGoblins());
+        atkPerm.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+
+        assertThat(blockerPerm.isBlocking()).isTrue();
+    }
 }
