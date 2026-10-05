@@ -1,58 +1,53 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.cards.a.AlphaTyrranax;
+import com.github.laxika.magicalvibes.cards.a.AccordersShield;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.m.Memnite;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Lifesmith.class, AccordersShield.class, AlphaTyrranax.class, Memnite.class})
 class LifesmithTest extends BaseCardTest {
 
-    // ===== Trigger fires on artifact cast =====
-
     @Test
-    @DisplayName("Casting an artifact spell triggers may ability prompt")
+    @DisplayName("Casting an artifact puts the trigger on the stack before the payment choice")
     void artifactCastTriggersMayPrompt() {
         harness.addToBattlefield(player1, new Lifesmith());
-        harness.setHand(player1, List.of(new Spellbook()));
 
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new AccordersShield(), "{0}");
 
-        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
-
-    // ===== Accept and pay gains life =====
 
     @Test
     @DisplayName("Accepting pays {1} and gains 3 life")
     void acceptPaysAndGainsLife() {
         harness.addToBattlefield(player1, new Lifesmith());
-        harness.setHand(player1, List.of(new Spellbook()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new AccordersShield(), "{0}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        // Triggered ability should be on the stack
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getCard().getName().equals("Lifesmith"));
+        harness.assertLife(player1, lifeBefore + 3);
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Accorder's Shield");
 
-        // Resolve triggered ability
-        harness.passBothPriorities();
-
-        // Resolve Spellbook
+        // Resolve the artifact spell
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 3);
@@ -61,21 +56,19 @@ class LifesmithTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(0);
     }
 
-    // ===== Decline =====
-
     @Test
     @DisplayName("Declining may ability does not gain life or spend mana")
     void declineDoesNothing() {
         harness.addToBattlefield(player1, new Lifesmith());
-        harness.setHand(player1, List.of(new Spellbook()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new AccordersShield(), "{0}");
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        GameData gd = harness.getGameData();
         // No triggered ability on stack
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getCard().getName().equals("Lifesmith"));
@@ -87,25 +80,17 @@ class LifesmithTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 
-    // ===== Non-artifact does not trigger =====
-
     @Test
     @DisplayName("Non-artifact spell does not trigger Lifesmith")
     void nonArtifactDoesNotTrigger() {
         harness.addToBattlefield(player1, new Lifesmith());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFromHand(player1, new AlphaTyrranax(), "{4}{G}{G}");
 
-        harness.castCreature(player1, 0);
-
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         // Stack should only have the creature spell
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
     }
-
-    // ===== Opponent's artifact does not trigger =====
 
     @Test
     @DisplayName("Opponent casting artifact does not trigger Lifesmith")
@@ -116,36 +101,74 @@ class LifesmithTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new Spellbook()));
+        harness.castFromHand(player2, new AccordersShield(), "{0}");
 
-        harness.castArtifact(player2, 0);
-
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
     }
 
-    // ===== Cannot pay =====
-
     @Test
-    @DisplayName("Accepting with no mana treats as decline")
+    @DisplayName("The trigger resolves without life gain when its controller cannot pay")
     void cannotPayTreatsAsDecline() {
         harness.addToBattlefield(player1, new Lifesmith());
-        harness.setHand(player1, List.of(new Spellbook()));
-        // No mana added — cannot pay {1}
 
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new AccordersShield(), "{0}");
+        assertThat(gd.stack).hasSize(2);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.passBothPriorities();
 
         // May prompt fires
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         // Accept, but cannot pay
         harness.handleMayAbilityChosen(player1, true);
+        harness.assertLife(player1, lifeBefore);
+        assertThat(gd.stack).hasSize(1);
 
         // No triggered ability on stack
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getCard().getName().equals("Lifesmith"));
+    }
+    @Test
+    @DisplayName("Artifact creatures trigger Lifesmith and colored mana pays the generic cost")
+    void artifactCreatureTriggersAndColoredManaPays() {
+        harness.addToBattlefield(player1, new Lifesmith());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.castFromHand(player1, new Memnite(), "{0}");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, lifeBefore + 3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Memnite");
+    }
+
+    @Test
+    @DisplayName("Each Lifesmith creates an independent trigger with its own payment choice")
+    void multipleLifesmithsHaveIndependentPaymentChoices() {
+        harness.addToBattlefield(player1, new Lifesmith());
+        harness.addToBattlefield(player1, new Lifesmith());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castFromHand(player1, new Memnite(), "{0}");
+
+        assertThat(gd.stack).hasSize(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertLife(player1, lifeBefore + 3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertLife(player1, lifeBefore + 3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Memnite");
     }
 }
