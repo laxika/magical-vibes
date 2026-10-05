@@ -63,6 +63,43 @@ class MerfolkRaidersTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("Tapped Merfolk Raiders stays tapped when phasing out and untaps when phasing in")
+    void phasingOccursBeforeUntapping() {
+        Permanent raiders = addCreatureReady(player1, new MerfolkRaiders());
+        raiders.setTapped(true);
+
+        harness.performUntapStep(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(raiders);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(raiders);
+        assertThat(raiders.isTapped()).isTrue();
+
+        harness.performUntapStep(player2);
+
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(raiders);
+        assertThat(raiders.isTapped()).isTrue();
+
+        harness.performUntapStep(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(raiders);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).doesNotContain(raiders);
+        assertThat(raiders.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An Island controlled only by the attacker does not prevent blocking")
+    void islandwalkDoesNotCheckAttackersIslands() {
+        Permanent blocker = addCreatureReady(player2, new MerfolkRaiders());
+        harness.addToBattlefield(player1, new Island());
+        Permanent attacker = addAttackingRaiders();
+
+        prepareDeclareBlockers();
+        declareBlocker(blocker, attacker);
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
     private Permanent addAttackingRaiders() {
         Permanent attacker = addCreatureReady(player1, new MerfolkRaiders());
         attacker.setAttacking(true);
