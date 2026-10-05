@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Fugue;
+import com.github.laxika.magicalvibes.cards.e.ErraticPortal;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MindMaggots.class, RagingGoblin.class, Fugue.class})
+@CardUsed({MindMaggots.class, RagingGoblin.class, Fugue.class, ErraticPortal.class})
 class MindMaggotsTest extends BaseCardTest {
 
     @Test
@@ -103,5 +104,47 @@ class MindMaggotsTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(findPermanent(player1, "Mind Maggots")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void resolvesWithoutAChoiceWhenHandIsEmpty() {
+        harness.castFromHand(player1, new MindMaggots(), "{3}{B}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(findPermanent(player1, "Mind Maggots")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void stillDiscardsWhenSourceLeavesBeforeTriggerResolves() {
+        Permanent otherMaggots = harness.addToBattlefieldAndReturn(player1, new MindMaggots());
+        harness.addToBattlefield(player2, new ErraticPortal());
+        harness.castFromHand(player1, new MindMaggots(), "{3}{B}");
+        harness.passBothPriorities();
+
+        Permanent enteringMaggots = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> !permanent.getId().equals(otherMaggots.getId()))
+                .findFirst().orElseThrow();
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.ensurePriority(player2);
+        harness.activateAbility(player2, 0, null, enteringMaggots.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInHand(player1, "Mind Maggots");
+
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 1);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Mind Maggots");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(otherMaggots);
+        assertThat(otherMaggots.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }
