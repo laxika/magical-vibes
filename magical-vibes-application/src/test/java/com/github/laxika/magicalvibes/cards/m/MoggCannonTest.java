@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.l.LowlandGiant;
+import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -9,10 +11,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MoggCannon.class, LowlandGiant.class})
+@CardUsed({MoggCannon.class, LowlandGiant.class, Shatter.class})
 class MoggCannonTest extends BaseCardTest {
 
     @Test
@@ -46,7 +50,7 @@ class MoggCannonTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Lowland Giant");
 
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(1);
@@ -75,5 +79,81 @@ class MoggCannonTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, otherCannon.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Activation during the end step waits until the following end step, but the boost expires this turn")
+    void endStepActivationWaitsUntilNextTurn() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(player1, new MoggCannon());
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new LowlandGiant());
+        harness.setLibrary(player2, List.of(new LowlandGiant()));
+
+        harness.activateAbility(player1, 0, null, giant.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, giant, Keyword.FLYING)).isTrue();
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        harness.assertOnBattlefield(player1, "Lowland Giant");
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, giant, Keyword.FLYING)).isFalse();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player1, "Lowland Giant");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Lowland Giant");
+        harness.assertInGraveyard(player1, "Lowland Giant");
+    }
+
+    @Test
+    @DisplayName("A tapped Mogg Cannon cannot activate again")
+    void cannotActivateWhileTapped() {
+        harness.addToBattlefield(player1, new MoggCannon());
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new LowlandGiant());
+
+        harness.activateAbility(player1, 0, null, giant.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, giant.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Removing Mogg Cannon in response does not stop the ability or its delayed destruction")
+    void abilityResolvesAfterCannonIsDestroyed() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent cannon = harness.addToBattlefieldAndReturn(player1, new MoggCannon());
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new LowlandGiant());
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, giant.getId());
+        harness.castInstant(player2, 0, cannon.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Mogg Cannon");
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, giant, Keyword.FLYING)).isTrue();
+        harness.passUntil(TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Lowland Giant");
+        harness.assertInGraveyard(player1, "Lowland Giant");
     }
 }
