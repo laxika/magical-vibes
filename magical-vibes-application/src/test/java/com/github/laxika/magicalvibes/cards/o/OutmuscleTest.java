@@ -33,8 +33,7 @@ class OutmuscleTest extends BaseCardTest {
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID elvesId = harness.getPermanentId(player2, "Llanowar Elves");
-        harness.castSorcery(player1, 0, List.of(bearId, elvesId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(bearId, elvesId));
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -53,8 +52,7 @@ class OutmuscleTest extends BaseCardTest {
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID giantId = harness.getPermanentId(player2, "Hill Giant");
-        harness.castSorcery(player1, 0, List.of(bearId, giantId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(bearId, giantId));
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -99,5 +97,77 @@ class OutmuscleTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(bearId, elvesId)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature an opponent controls");
+    }
+
+    @Test
+    @DisplayName("Without adamant, lethal fight damage kills both creatures")
+    void lethalFightWithoutAdamant() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new Outmuscle()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(bear.getId(), giant.getId()));
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Four green mana also satisfies adamant")
+    void fourGreenManaSatisfiesAdamant() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new Outmuscle()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(bear.getId(), giant.getId()));
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(bear.getMarkedDamage()).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.INDESTRUCTIBLE)).isTrue();
+        harness.assertInGraveyard(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Losing the opposing target still grants the counter and adamant without fighting")
+    void opposingTargetLeavesBeforeResolution() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new Outmuscle()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castSorcery(player1, 0, List.of(bear.getId(), giant.getId()));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, giant));
+
+        harness.passBothPriorities();
+
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(bear.getMarkedDamage()).isZero();
+        harness.assertInHand(player2, "Hill Giant");
+        harness.assertInGraveyard(player1, "Outmuscle");
+    }
+
+    @Test
+    @DisplayName("Losing the controlled target does not affect the remaining opposing target")
+    void controlledTargetLeavesBeforeResolution() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new Outmuscle()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castSorcery(player1, 0, List.of(bear.getId(), giant.getId()));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, bear));
+
+        harness.passBothPriorities();
+
+        assertThat(giant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(giant.getMarkedDamage()).isZero();
+        assertThat(gqs.hasKeyword(gd, giant, Keyword.INDESTRUCTIBLE)).isFalse();
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Outmuscle");
     }
 }
