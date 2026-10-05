@@ -3,11 +3,8 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -26,11 +23,11 @@ class NimbleBrigandTest extends BaseCardTest {
     @Test
     @DisplayName("Can be blocked before its controller commits a crime")
     void canBeBlockedBeforeCrime() {
-        Permanent brigand = addReadyCreature(player1, new NimbleBrigand());
+        Permanent brigand = addCreatureReady(player1, new NimbleBrigand());
         brigand.setAttacking(true);
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        prepareBlockers();
+        prepareDeclareBlockers();
 
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
@@ -41,12 +38,12 @@ class NimbleBrigandTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot be blocked after its controller commits a crime")
     void cannotBeBlockedAfterCrime() {
-        Permanent brigand = addReadyCreature(player1, new NimbleBrigand());
+        Permanent brigand = addCreatureReady(player1, new NimbleBrigand());
         brigand.setAttacking(true);
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         commitCrime();
 
-        prepareBlockers();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
@@ -60,7 +57,7 @@ class NimbleBrigandTest extends BaseCardTest {
     void drawsOnCombatDamageToPlayer() {
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
-        Permanent brigand = addReadyCreature(player1, new NimbleBrigand());
+        Permanent brigand = addCreatureReady(player1, new NimbleBrigand());
         brigand.setAttacking(true);
 
         resolveUnblockedCombat();
@@ -74,11 +71,11 @@ class NimbleBrigandTest extends BaseCardTest {
     void doesNotDrawWhenBlocked() {
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
-        Permanent brigand = addReadyCreature(player1, new NimbleBrigand());
+        Permanent brigand = addCreatureReady(player1, new NimbleBrigand());
         brigand.setAttacking(true);
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        prepareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(brigand))));
@@ -88,6 +85,77 @@ class NimbleBrigandTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
+    @Test
+    @DisplayName("An opponent's crime does not make Nimble Brigand unblockable")
+    void opponentsCrimeDoesNotPreventBlocking() {
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+        Permanent brigand = addCreatureReady(player1, new NimbleBrigand());
+        brigand.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(brigand)))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Targeting yourself is not a crime")
+    void targetingSelfDoesNotPreventBlocking() {
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player1.getId());
+        harness.passBothPriorities();
+        Permanent brigand = addCreatureReady(player1, new NimbleBrigand());
+        brigand.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(brigand)))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("A crime committed before Nimble Brigand enters still prevents blocking")
+    void crimeBeforeEnteringPreventsBlocking() {
+        commitCrime();
+        Permanent brigand = addCreatureReady(player1, new NimbleBrigand());
+        brigand.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(brigand)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("Each unblocked Nimble Brigand draws its own card")
+    void twoBrigandsEachDrawOneCard() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        addCreatureReady(player1, new NimbleBrigand()).setAttacking(true);
+        addCreatureReady(player1, new NimbleBrigand()).setAttacking(true);
+
+        resolveUnblockedCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
     private void commitCrime() {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -95,24 +163,11 @@ class NimbleBrigandTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private void prepareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-    }
-
     private void resolveUnblockedCombat() {
-        prepareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent creature = new Permanent(card);
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
-    }
 }
