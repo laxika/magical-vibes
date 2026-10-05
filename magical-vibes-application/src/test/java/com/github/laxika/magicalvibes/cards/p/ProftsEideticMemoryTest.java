@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SanitationAutomaton;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,13 +16,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ProftsEideticMemory.class, GrizzlyBears.class})
+@CardUsed({ProftsEideticMemory.class, SanitationAutomaton.class})
 class ProftsEideticMemoryTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enters and draws a card")
     void entersAndDrawsACard() {
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new SanitationAutomaton()));
         harness.setHand(player1, List.of(new ProftsEideticMemory()));
         addBlueAndColorlessMana();
 
@@ -37,9 +38,9 @@ class ProftsEideticMemoryTest extends BaseCardTest {
     @DisplayName("At combat, puts counters equal to cards drawn minus one on a creature you control")
     void putsCountersEqualToCardsDrawnMinusOne() {
         harness.addToBattlefield(player1, new ProftsEideticMemory());
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SanitationAutomaton());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new SanitationAutomaton());
+        harness.setLibrary(player1, List.of(new SanitationAutomaton(), new SanitationAutomaton(), new SanitationAutomaton()));
         draw(player1);
         draw(player1);
         draw(player1);
@@ -57,8 +58,135 @@ class ProftsEideticMemoryTest extends BaseCardTest {
     @DisplayName("Does not trigger at combat after only one card has been drawn")
     void doesNotTriggerAfterOnlyOneDraw() {
         harness.addToBattlefield(player1, new ProftsEideticMemory());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addToBattlefield(player1, new SanitationAutomaton());
+        harness.setLibrary(player1, List.of(new SanitationAutomaton()));
+        draw(player1);
+
+        advanceToCombat(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void controllerKeepsMoreThanSevenCardsDuringCleanup() {
+        harness.addToBattlefield(player1, new ProftsEideticMemory());
+        harness.setHand(player1, List.of(
+                new SanitationAutomaton(), new SanitationAutomaton(), new SanitationAutomaton(),
+                new SanitationAutomaton(), new SanitationAutomaton(), new SanitationAutomaton(),
+                new SanitationAutomaton(), new SanitationAutomaton(), new SanitationAutomaton()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+
+        harness.passUntil(player1, TurnStep.CLEANUP);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(9);
+    }
+
+    @Test
+    void opponentStillDiscardsDuringCleanup() {
+        harness.addToBattlefield(player1, new ProftsEideticMemory());
+        harness.setHand(player2, List.of(
+                new SanitationAutomaton(), new SanitationAutomaton(), new SanitationAutomaton(),
+                new SanitationAutomaton(), new SanitationAutomaton(), new SanitationAutomaton(),
+                new SanitationAutomaton(), new SanitationAutomaton()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNotNull();
+        harness.handleCardChosen(player2, 0);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(7);
+    }
+
+    @Test
+    void countsCardsDrawnBeforeEnchantmentEntered() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SanitationAutomaton());
+        harness.setLibrary(player1, List.of(new SanitationAutomaton(), new SanitationAutomaton()));
+        draw(player1);
+        draw(player1);
+        harness.addToBattlefield(player1, new ProftsEideticMemory());
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void countsAdditionalCardsDrawnBeforeTriggerResolves() {
+        harness.addToBattlefield(player1, new ProftsEideticMemory());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SanitationAutomaton());
+        harness.setLibrary(player1, List.of(
+                new SanitationAutomaton(), new SanitationAutomaton(), new SanitationAutomaton()));
+        draw(player1);
+        draw(player1);
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        draw(player1);
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void secondDrawAfterCombatBeginsDoesNotTriggerRetroactively() {
+        harness.addToBattlefield(player1, new ProftsEideticMemory());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SanitationAutomaton());
+        harness.setLibrary(player1, List.of(new SanitationAutomaton(), new SanitationAutomaton()));
+        draw(player1);
+
+        advanceToCombat(player1);
+        draw(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsCombat() {
+        harness.addToBattlefield(player1, new ProftsEideticMemory());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SanitationAutomaton());
+        harness.setLibrary(player1, List.of(new SanitationAutomaton(), new SanitationAutomaton()));
+        draw(player1);
+        draw(player1);
+
+        advanceToCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void opponentsDrawsDoNotIncreaseCounterCount() {
+        harness.addToBattlefield(player1, new ProftsEideticMemory());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SanitationAutomaton());
+        harness.setLibrary(player1, List.of(new SanitationAutomaton(), new SanitationAutomaton()));
+        harness.setLibrary(player2, List.of(new SanitationAutomaton(), new SanitationAutomaton()));
+        draw(player1);
+        draw(player1);
+        draw(player2);
+        draw(player2);
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void noLegalCreatureTargetDoesNotLeaveAPendingChoice() {
+        harness.addToBattlefield(player1, new ProftsEideticMemory());
+        harness.addToBattlefield(player2, new SanitationAutomaton());
+        harness.setLibrary(player1, List.of(new SanitationAutomaton(), new SanitationAutomaton()));
+        draw(player1);
         draw(player1);
 
         advanceToCombat(player1);
@@ -82,7 +210,6 @@ class ProftsEideticMemoryTest extends BaseCardTest {
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 }
