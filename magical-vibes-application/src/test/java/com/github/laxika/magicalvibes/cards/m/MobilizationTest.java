@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HonorGuard;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -18,8 +19,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Mobilization.class, HonorGuard.class, GrizzlyBears.class})
+@CardUsed({Mobilization.class, HonorGuard.class, GrizzlyBears.class, Opalescence.class, MirrorEntity.class})
 class MobilizationTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -208,5 +210,66 @@ class MobilizationTest extends BaseCardTest {
 
         // Combat resolves fully via auto-pass, clearing isAttacking; tapped state persists
         assertThat(bearsPerm.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Activation requires white mana even with three generic mana available")
+    void activationRequiresWhiteMana() {
+        harness.addToBattlefield(player1, new Mobilization());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(countPermanents(player1, "Soldier")).isZero();
+    }
+
+    @Test
+    @DisplayName("The generic part of the activation cost can be paid with colorless mana")
+    void activationAcceptsGenericAndWhiteMana() {
+        harness.addToBattlefield(player1, new Mobilization());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Soldier")).isZero();
+    }
+
+    @Test
+    @DisplayName("An activated ability still creates its token after Mobilization leaves")
+    void activationResolvesAfterSourceLeaves() {
+        Permanent mobilization = harness.addToBattlefieldAndReturn(player1, new Mobilization());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(mobilization);
+        harness.passBothPriorities();
+
+        Permanent token = findPermanent(player1, "Soldier");
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(1);
+        assertThat(token.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Mobilization grants itself vigilance when it becomes a Soldier creature")
+    @CardUsed({Opalescence.class, MirrorEntity.class})
+    void animatedMobilizationGetsVigilanceWhenItBecomesSoldier() {
+        Permanent mobilization = harness.addToBattlefieldAndReturn(player1, new Mobilization());
+        harness.addToBattlefield(player1, new Opalescence());
+        harness.addToBattlefield(player1, new MirrorEntity());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        assertThat(gqs.hasKeyword(gd, mobilization, Keyword.VIGILANCE)).isFalse();
+
+        harness.activateAbility(player1, 2, 3, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasEffectiveSubtype(gd, mobilization, CardSubtype.SOLDIER)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mobilization, Keyword.VIGILANCE)).isTrue();
     }
 }
