@@ -24,24 +24,25 @@ class NajeelaTheBladeBlossomTestMarRegression extends BaseCardTest {
     @Test
     void warriorAttackOffersTokenToNajeelaControllerAndGivesItToWarriorController() {
         addCreatureReady(player1, new NajeelaTheBladeBlossom());
-        Permanent attacker = addCreatureReady(player2, new ElvishWarrior());
+        addCreatureReady(player2, new ElvishWarrior());
 
         declareAttackers(player2, List.of(0));
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.MayAbilityChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
         assertThat(choice.playerId()).isEqualTo(player1.getId());
 
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleMayAbilityChosen(player1, true));
 
         Permanent token = findPermanent(player2, "Warrior");
         assertThat(token.getCard().isToken()).isTrue();
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.WARRIOR);
         assertThat(token.isTapped()).isTrue();
-        assertThat(token.isAttackedThisTurn()).isTrue();
-        assertThat(attacker.isAttacking()).isTrue();
+        assertThat(token.isAttacking()).isTrue();
+        assertThat(token.getAttackTarget()).isEqualTo(player1.getId());
         harness.assertNotOnBattlefield(player1, "Warrior");
     }
 
@@ -49,12 +50,8 @@ class NajeelaTheBladeBlossomTestMarRegression extends BaseCardTest {
     void combatAbilityUntapsAttackersGrantsKeywordsAndQueuesCombat() {
         Permanent najeela = addCreatureReady(player1, new NajeelaTheBladeBlossom());
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        attacker.tap();
-        attacker.setAttacking(true);
-        attacker.setAttackTarget(player2.getId());
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
-        harness.clearPriorityPassed();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(1)));
 
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -62,7 +59,7 @@ class NajeelaTheBladeBlossomTestMarRegression extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.activateAbility(player1, 0, 0, null, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
 
         assertThat(attacker.isTapped()).isFalse();
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
