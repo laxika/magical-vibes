@@ -15,9 +15,54 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ManipulateFate.class, Forest.class, Island.class, Plains.class, WorldlyCounsel.class})
 class ManipulateFateTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("An empty library still leads to a failed draw")
+    void emptyLibraryStillAttemptsToDraw() {
+        harness.setLibrary(player1, List.of());
+
+        harness.castFromHand(player1, new ManipulateFate(), "{1}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Cannot decline the search or stop early, and may select cards with the same name")
+    void mustFindThreeCardsEvenWithDuplicateNames() {
+        Card drawn = new WorldlyCounsel();
+        Card first = new Forest();
+        Card second = new Forest();
+        Card third = new Forest();
+        harness.setLibrary(player1, List.of(drawn, first, second, third));
+
+        harness.castFromHand(player1, new ManipulateFate(), "{1}{U}");
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        harness.handleCardChosen(player1, 1);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.handleCardChosen(player1, 1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getId)
+                .containsExactlyInAnyOrder(first.getId(), second.getId(), third.getId());
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId).containsExactly(drawn.getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 
     @Test
     @DisplayName("Exiles three cards, shuffles, then draws a card")
