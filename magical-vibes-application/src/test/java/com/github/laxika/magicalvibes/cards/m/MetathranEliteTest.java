@@ -64,6 +64,49 @@ class MetathranEliteTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("Metathran Elite can't be blocked when an opponent controls its Aura")
+    void cannotBeBlockedWithOpponentControlledAura() {
+        Permanent elite = addAttackingElite();
+        Permanent aura = new Permanent(new MarkOfFury());
+        aura.setAttachedTo(elite.getId());
+        gd.playerBattlefields.get(player2.getId()).add(aura);
+        Permanent blocker = addCreatureReady(player2, new MetathranSoldier());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(elite)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("Metathran Elite becomes blockable as soon as its last Aura leaves")
+    void canBeBlockedAfterLastAuraLeaves() {
+        Permanent elite = addAttackingElite();
+        Permanent aura = new Permanent(new MarkOfFury());
+        aura.setAttachedTo(elite.getId());
+        gd.playerBattlefields.get(player1.getId()).add(aura);
+        Permanent blocker = addCreatureReady(player2, new MetathranSoldier());
+
+        prepareDeclareBlockers();
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(elite)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        gd.playerHands.get(player1.getId()).add(aura.getCard());
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(elite))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
     private Permanent addAttackingElite() {
         Permanent elite = addCreatureReady(player1, new MetathranElite());
         elite.setAttacking(true);
