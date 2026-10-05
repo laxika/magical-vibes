@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.b.BleedDry;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.p.PersistentSpecimen;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,13 +16,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MindleechGhoul.class, GrizzlyBears.class, Forest.class, Island.class})
+@CardUsed({MindleechGhoul.class, PersistentSpecimen.class, Forest.class, Island.class, BleedDry.class})
 class MindleechGhoulTest extends BaseCardTest {
 
     @Test
     @DisplayName("Declining exploit leaves Mindleech Ghoul and the other creature on the battlefield")
     void decliningExploitDoesNothing() {
-        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new PersistentSpecimen());
         Forest handCard = new Forest();
         harness.setHand(player2, List.of(handCard));
 
@@ -37,7 +38,7 @@ class MindleechGhoulTest extends BaseCardTest {
     @Test
     @DisplayName("Exploiting a creature makes each opponent exile a card from their hand")
     void exploitExilesFromOpponentsHands() {
-        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new PersistentSpecimen());
         Forest exiledCard = new Forest();
         Island remainingCard = new Island();
         harness.setHand(player2, List.of(exiledCard, remainingCard));
@@ -49,7 +50,7 @@ class MindleechGhoulTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         harness.assertOnBattlefield(player1, "Mindleech Ghoul");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Persistent Specimen");
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(remainingCard);
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(exiledCard);
     }
@@ -57,7 +58,7 @@ class MindleechGhoulTest extends BaseCardTest {
     @Test
     @DisplayName("Exploit still sacrifices a creature when opponents have empty hands")
     void exploitWithEmptyOpponentHand() {
-        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new PersistentSpecimen());
         harness.setHand(player2, List.of());
 
         castMindleechGhoul();
@@ -66,8 +67,80 @@ class MindleechGhoulTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Mindleech Ghoul");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Persistent Specimen");
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Mindleech Ghoul can exploit itself and still exile an opponent's chosen card")
+    void exploitingItselfTriggersExile() {
+        Forest controllerHandCard = new Forest();
+        Forest remainingCard = new Forest();
+        Island exiledCard = new Island();
+        harness.setHand(player2, List.of(remainingCard, exiledCard));
+
+        castMindleechGhoul();
+        harness.setHand(player1, List.of(controllerHandCard));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Mindleech Ghoul"));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 1);
+
+        harness.assertNotOnBattlefield(player1, "Mindleech Ghoul");
+        harness.assertInGraveyard(player1, "Mindleech Ghoul");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(controllerHandCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(remainingCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(exiledCard);
+    }
+
+    @Test
+    @DisplayName("Removing Mindleech Ghoul before exploit resolves prevents the exile trigger")
+    void removedBeforeExploitDoesNotExile() {
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new PersistentSpecimen());
+        Forest handCard = new Forest();
+        harness.setHand(player2, List.of(new BleedDry(), handCard));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new MindleechGhoul()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Mindleech Ghoul"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, fodder.getId());
+
+        harness.assertNotOnBattlefield(player1, "Mindleech Ghoul");
+        harness.assertInGraveyard(player1, "Persistent Specimen");
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(handCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exiled cards stay exiled after Mindleech Ghoul leaves the battlefield")
+    void exileIsPermanentAfterSourceLeaves() {
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new PersistentSpecimen());
+        Forest exiledCard = new Forest();
+        harness.setHand(player2, List.of(exiledCard, new BleedDry()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        castMindleechGhoul();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Mindleech Ghoul"));
+
+        harness.assertNotOnBattlefield(player1, "Mindleech Ghoul");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(exiledCard);
     }
 
     private void castMindleechGhoul() {
