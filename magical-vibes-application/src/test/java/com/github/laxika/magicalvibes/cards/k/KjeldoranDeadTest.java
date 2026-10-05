@@ -65,6 +65,50 @@ class KjeldoranDeadTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
+    @Test
+    @DisplayName("ETB cannot sacrifice an opponent's creature")
+    void etbCannotSacrificeOpponentsCreature() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        harness.castFromHand(player1, new KjeldoranDead(), "{B}");
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Kjeldoran Dead");
+        harness.assertNotOnBattlefield(player1, "Kjeldoran Dead");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Regeneration cannot prevent the ETB sacrifice")
+    void regenerationCannotPreventSacrifice() {
+        harness.castFromHand(player1, new KjeldoranDead(), "{B}");
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(findPermanent(player1, "Kjeldoran Dead").getRegenerationShield()).isEqualTo(1);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Kjeldoran Dead");
+        harness.assertInGraveyard(player1, "Kjeldoran Dead");
+    }
+
+    @Test
+    @DisplayName("Regeneration can be activated while tapped and summoning sick")
+    void regenerationCanBeActivatedWhileTappedAndSummoningSick() {
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new KjeldoranDead());
+        perm.setSummoningSick(true);
+        perm.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(perm.getRegenerationShield()).isEqualTo(1);
+        assertThat(perm.isTapped()).isTrue();
+    }
+
     // ===== {B}: Regenerate =====
 
     @Test
