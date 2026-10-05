@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.a.AlloyMyr;
+import com.github.laxika.magicalvibes.cards.p.PriestOfUrabrask;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,13 +16,19 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MyrSuperion.class, AlloyMyr.class, PriestOfUrabrask.class})
 class MyrSuperionTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Myr Superion has requiresCreatureMana flag set")
-    void hasCreatureManaRestriction() {
-        MyrSuperion card = new MyrSuperion();
-        assertThat(card.isRequiresCreatureMana()).isTrue();
+    @DisplayName("Myr Superion cannot be cast without mana")
+    void cannotCastWithoutMana() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new MyrSuperion()));
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -67,15 +75,13 @@ class MyrSuperionTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        // Put two Llanowar Elves on the battlefield (without summoning sickness)
-        harness.addToBattlefield(player1, new LlanowarElves());
-        harness.addToBattlefield(player1, new LlanowarElves());
-        gd.playerBattlefields.get(player1.getId()).get(0).setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).get(1).setSummoningSick(false);
+        addCreatureReady(player1, new AlloyMyr());
+        addCreatureReady(player1, new AlloyMyr());
 
-        // Tap both for mana
-        harness.tapPermanent(player1, 0);
-        harness.tapPermanent(player1, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+        harness.activateAbility(player1, 1, null, null);
+        harness.handleListChoice(player1, "GREEN");
 
         ManaPool pool = gd.playerManaPools.get(player1.getId());
         assertThat(pool.getCreatureManaTotal()).isEqualTo(2);
@@ -117,6 +123,55 @@ class MyrSuperionTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Casting Myr Superion spends creature mana and preserves land mana")
+    void spendsOnlyCreatureManaFromMixedPool() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new MyrSuperion()));
+        harness.addCreatureMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+
+        ManaPool pool = gd.playerManaPools.get(player1.getId());
+        assertThat(pool.get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(pool.getCreatureManaTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Land mana left after casting Myr Superion cannot cast another")
+    void cannotReuseCreatureManaForSecondCast() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new MyrSuperion(), new MyrSuperion()));
+        harness.addCreatureMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Myr Superion can use mana from a creature's enter trigger")
+    void canCastWithTriggeredCreatureMana() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new PriestOfUrabrask(), new MyrSuperion()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Myr Superion");
     }
 
     @Test
