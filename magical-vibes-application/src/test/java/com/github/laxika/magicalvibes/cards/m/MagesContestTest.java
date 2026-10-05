@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.a.AlabasterLeech;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.e.Exclude;
+import com.github.laxika.magicalvibes.cards.u.UrzasRage;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,10 +12,9 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MagesContest.class, AlabasterLeech.class, Forest.class, Exclude.class})
+@CardUsed({MagesContest.class, AlabasterLeech.class, Forest.class, Exclude.class, UrzasRage.class})
 class MagesContestTest extends BaseCardTest {
 
     private void castAgainstCreatureSpell() {
@@ -69,6 +69,48 @@ class MagesContestTest extends BaseCardTest {
         harness.assertLife(player1, 15);
         harness.assertLife(player2, 20);
         harness.assertOnBattlefield(player1, "Alabaster Leech");
+        harness.assertInGraveyard(player2, "Mages' Contest");
+    }
+
+    @Test
+    @DisplayName("A player can bid more life than they have without losing life when outbid")
+    void bidAboveLifeTotalCanBeOutbid() {
+        harness.setLife(player2, 50);
+        castAgainstCreatureSpell();
+
+        harness.handleXValueChosen(player1, 21);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 50);
+        harness.handleXValueChosen(player2, 22);
+        harness.handleXValueChosen(player1, 0);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 28);
+        harness.assertInGraveyard(player1, "Alabaster Leech");
+    }
+
+    @Test
+    @DisplayName("Winning against an uncounterable instant still loses life and the instant resolves")
+    void winningBidDoesNotCounterUncounterableSpell() {
+        UrzasRage rage = new UrzasRage();
+        harness.setHand(player1, List.of(rage));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setHand(player2, List.of(new MagesContest()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, rage.getId());
+        harness.handleXValueChosen(player1, 0);
+
+        harness.assertLife(player2, 19);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Urza's Rage");
         harness.assertInGraveyard(player2, "Mages' Contest");
     }
 
