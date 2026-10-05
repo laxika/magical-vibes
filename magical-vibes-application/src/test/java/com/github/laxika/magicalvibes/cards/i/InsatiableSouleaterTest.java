@@ -8,15 +8,16 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({InsatiableSouleater.class})
 class InsatiableSouleaterTest extends BaseCardTest {
-
-    // ===== Activated ability: grant trample paying green mana =====
 
     @Test
     @DisplayName("Activating trample ability puts it on the stack")
@@ -29,7 +30,7 @@ class InsatiableSouleaterTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Insatiable Souleater");
+        assertThat(entry.getSourcePermanentId()).isEqualTo(souleater.getId());
         assertThat(entry.getTargetId()).isEqualTo(souleater.getId());
     }
 
@@ -64,8 +65,6 @@ class InsatiableSouleaterTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, souleater, Keyword.TRAMPLE)).isFalse();
     }
 
-    // ===== Phyrexian mana: pay with life =====
-
     @Test
     @DisplayName("Can pay Phyrexian mana with 2 life when no green mana available")
     void paysLifeWhenNoGreenMana() {
@@ -95,8 +94,6 @@ class InsatiableSouleaterTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
     }
 
-    // ===== Activation constraints =====
-
     @Test
     @DisplayName("Activating ability does NOT tap Insatiable Souleater")
     void activatingAbilityDoesNotTap() {
@@ -118,27 +115,24 @@ class InsatiableSouleaterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Insatiable Souleater");
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(souleater.getId());
     }
 
     @Test
     @DisplayName("Can activate ability with summoning sickness (no tap cost)")
     void canActivateWithSummoningSickness() {
-        Permanent souleater = new Permanent(new InsatiableSouleater());
-        gd.playerBattlefields.get(player1.getId()).add(souleater);
+        Permanent souleater = harness.addToBattlefieldAndReturn(player1, new InsatiableSouleater());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Insatiable Souleater");
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(souleater.getId());
     }
 
-    // ===== Fizzle =====
-
     @Test
-    @DisplayName("Ability fizzles if Insatiable Souleater is removed before resolution")
-    void abilityFizzlesIfSourceRemoved() {
+    @DisplayName("Ability has no effect if Insatiable Souleater is removed before resolution")
+    void abilityHasNoEffectIfSourceRemoved() {
         addSouleaterReady(player1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -151,12 +145,56 @@ class InsatiableSouleaterTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Cannot pay the Phyrexian cost with less than two life and no green mana")
+    void cannotPayWithInsufficientLife() {
+        Permanent souleater = addSouleaterReady(player1);
+        harness.setLife(player1, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player1, 1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, souleater, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Only the activated Souleater gains trample")
+    void grantsTrampleOnlyToSource() {
+        Permanent source = addSouleaterReady(player1);
+        Permanent other = addSouleaterReady(player1);
+        Permanent opponent = addSouleaterReady(player2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gqs.hasKeyword(gd, source, Keyword.TRAMPLE)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, source, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An old activation does not grant trample to the source after it reenters")
+    void oldActivationDoesNotAffectReturnedSource() {
+        Permanent source = addSouleaterReady(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        Permanent returned = harness.addToBattlefieldAndReturn(player1, source.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.TRAMPLE)).isFalse();
+    }
 
     private Permanent addSouleaterReady(Player player) {
-        Permanent perm = new Permanent(new InsatiableSouleater());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new InsatiableSouleater());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
