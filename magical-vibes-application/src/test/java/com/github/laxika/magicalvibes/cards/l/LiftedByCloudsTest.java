@@ -37,8 +37,7 @@ class LiftedByCloudsTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, mossKami, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, mossKami, Keyword.FLYING)).isFalse();
     }
@@ -109,5 +108,48 @@ class LiftedByCloudsTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, mossKami, Keyword.FLYING)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(lifted);
+    }
+
+    @Test
+    @DisplayName("Spliced flying expires at cleanup and does not affect other creatures")
+    void splicedFlyingExpiresAtCleanup() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MossKami());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new MossKami());
+        LiftedByClouds lifted = new LiftedByClouds();
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new GlacialRay(), lifted));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castWithSplice(player1, 0, target.getId(), List.of(1));
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(lifted);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.UPKEEP);
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(lifted);
+    }
+
+    @Test
+    @DisplayName("Cannot splice without the blue mana required by the splice cost")
+    void spliceRequiresBlueMana() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new MossKami());
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new GlacialRay(), new LiftedByClouds()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castWithSplice(player1, 0, target.getId(), List.of(1)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
 }
