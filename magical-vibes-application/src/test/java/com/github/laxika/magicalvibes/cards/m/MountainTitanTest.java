@@ -22,9 +22,7 @@ class MountainTitanTest extends BaseCardTest {
     void blackSpellPutsCounter() {
         Permanent titan = activateTitan();
 
-        harness.setHand(player1, List.of(new DarkRitual()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new DarkRitual(), "{B}");
         harness.passBothPriorities(); // resolve the delayed trigger
 
         assertThat(titan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -35,9 +33,7 @@ class MountainTitanTest extends BaseCardTest {
     void nonblackSpellPutsNoCounter() {
         Permanent titan = activateTitan();
 
-        harness.setHand(player1, List.of(new MountainGoat()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MountainGoat(), "{R}");
 
         assertThat(titan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
@@ -50,9 +46,7 @@ class MountainTitanTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player1, List.of(new DarkRitual()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new DarkRitual(), "{B}");
 
         assertThat(titan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
@@ -84,9 +78,7 @@ class MountainTitanTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new DarkRitual()));
-        harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.castInstant(player2, 0);
+        harness.castFromHand(player2, new DarkRitual(), "{B}");
         resolveAllTriggers();
 
         assertThat(titan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -104,9 +96,7 @@ class MountainTitanTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.clearPriorityPassed();
 
-        harness.setHand(player1, List.of(new DarkRitual()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new DarkRitual(), "{B}");
         resolveAllTriggers();
 
         assertThat(titan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -117,11 +107,7 @@ class MountainTitanTest extends BaseCardTest {
     void multicoloredBlackSpellPutsCounter() {
         Permanent titan = activateTitan();
 
-        harness.setHand(player1, List.of(new MountainTitan()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MountainTitan(), "{2}{B}{R}");
         harness.passBothPriorities();
 
         assertThat(titan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -140,11 +126,64 @@ class MountainTitanTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player1, List.of(new DarkRitual()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new DarkRitual(), "{B}");
 
         assertThat(titan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Only the activated Titan gets a counter when another Titan is present")
+    void countersGoOnlyOnActivatedSource() {
+        Permanent activatedTitan = activateTitan();
+        Permanent otherTitan = addCreatureReady(player1, new MountainTitan());
+
+        harness.castFromHand(player1, new DarkRitual(), "{B}");
+        resolveAllTriggers();
+
+        assertThat(activatedTitan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(otherTitan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A black spell cast in response to activation does not trigger it")
+    void blackSpellBeforeActivationResolvesPutsNoCounter() {
+        Permanent titan = addCreatureReady(player1, new MountainTitan());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.castFromHand(player1, new DarkRitual(), "{B}");
+        resolveAllTriggers();
+
+        assertThat(titan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.castFromHand(player1, new DarkRitual(), "{B}");
+        resolveAllTriggers();
+
+        assertThat(titan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The trigger still works in the end step and its counters survive cleanup")
+    void endStepSpellPutsPermanentCounter() {
+        Permanent titan = activateTitan();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player1, new DarkRitual(), "{B}");
+        resolveAllTriggers();
+
+        assertThat(titan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+
+        harness.passUntil(TurnStep.UPKEEP);
+
+        assertThat(titan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.castFromHand(player1, new DarkRitual(), "{B}");
+        resolveAllTriggers();
+        assertThat(titan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     /**
