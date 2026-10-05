@@ -48,8 +48,7 @@ class IndrisTheHydrostaticSurgeTest extends BaseCardTest {
         gd.recordSpellCast(player1.getId(), new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
     }
@@ -63,12 +62,126 @@ class IndrisTheHydrostaticSurgeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .filteredOn(Card::getName, "Grizzly Bears")
                 .hasSize(3);
+    }
+
+    @Test
+    void instantCastDrawsBeforeTheSpellResolves() {
+        addCreatureReady(player1, new IndrisTheHydrostaticSurge());
+        Card drawnCard = new LightningBolt();
+        harness.setLibrary(player1, List.of(drawnCard, new LightningBolt()));
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    void opponentsInstantDoesNotDrawACard() {
+        addCreatureReady(player1, new IndrisTheHydrostaticSurge());
+        harness.setLibrary(player1, List.of(new LightningBolt()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    void creatureCastDoesNotDrawACard() {
+        addCreatureReady(player1, new IndrisTheHydrostaticSurge());
+        harness.setLibrary(player1, List.of(new LightningBolt()));
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void enteringUnderOpponentControlConjuresIntoTheirEmptyLibrary() {
+        harness.setLibrary(player1, List.of(new LightningBolt()));
+        harness.setLibrary(player2, List.of());
+        harness.enterBattlefieldAndReturn(player2, new IndrisTheHydrostaticSurge());
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .hasSize(4)
+                .allSatisfy(card -> {
+                    assertThat(card.getName()).isEqualTo("Lightning Bolt");
+                    assertThat(card.getOwnerId()).isEqualTo(player2.getId());
+                });
+    }
+
+    @Test
+    void stormCountsOpponentsSpellAndCopiesDoNotTriggerAdditionalDraws() {
+        harness.setLibrary(player1, List.of());
+        harness.enterBattlefieldAndReturn(player1, new IndrisTheHydrostaticSurge());
+        resolveAllTriggers();
+        Card conjuredBolt = gd.playerDecks.get(player1.getId()).removeFirst();
+        harness.setHand(player1, List.of(conjuredBolt));
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 14);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(conjuredBolt);
+    }
+
+    @Test
+    void conjuredBoltsKeepStormAfterIndrisDies() {
+        harness.setLibrary(player1, List.of());
+        var indris = harness.enterBattlefieldAndReturn(player1, new IndrisTheHydrostaticSurge());
+        resolveAllTriggers();
+        Card conjuredBolt = gd.playerDecks.get(player1.getId()).removeFirst();
+        harness.setHand(player1, List.of(conjuredBolt));
+        harness.setHand(player2, List.of(new LightningBolt(), new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player2, 0, indris.getId());
+        harness.castAndResolveInstant(player2, 0, indris.getId());
+        harness.assertNotOnBattlefield(player1, "Indris, the Hydrostatic Surge");
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 11);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
     }
 
     private List<Card> cards(int count) {
