@@ -67,6 +67,37 @@ class NobleSteedsTest extends BaseCardTest {
     }
 
     @Test
+    void grantsFirstStrikeOnlyToChosenCreatureOnResolution() {
+        harness.addToBattlefield(player1, new NobleSteeds());
+        Permanent target = addCreatureReady(player1, new AesthirGlider());
+        Permanent other = addCreatureReady(player1, new AesthirGlider());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    void cannotActivateWithoutWhiteMana() {
+        harness.addToBattlefield(player1, new NobleSteeds());
+        Permanent target = addCreatureReady(player1, new AesthirGlider());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
     @DisplayName("Targeting a non-creature permanent is rejected")
     void nonCreatureRejected() {
         harness.addToBattlefield(player1, new NobleSteeds());
