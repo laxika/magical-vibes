@@ -3,13 +3,13 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LilianaUntouchedByDeath.class, Forest.class, WalkingCorpse.class, GrizzlyBears.class})
 class LilianaUntouchedByDeathTest extends BaseCardTest {
 
     @Test
@@ -212,12 +213,137 @@ class LilianaUntouchedByDeathTest extends BaseCardTest {
                 .hasMessageContaining("Not enough loyalty");
     }
 
+    @Test
+    @DisplayName("+1 drains only once even when all three milled cards are Zombies")
+    void plusOneMultipleZombiesDrainOnce() {
+        addReadyLiliana(player1, 5);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setLibrary(player1, List.of(new WalkingCorpse(), new WalkingCorpse(), new WalkingCorpse()));
+
+        harness.activateAbility(player1, 0, 0, null, (UUID) null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("+1 still drains when fewer than three cards remain and a Zombie is milled")
+    void plusOneShortLibrary() {
+        addReadyLiliana(player1, 5);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setLibrary(player1, List.of(new WalkingCorpse()));
+
+        harness.activateAbility(player1, 0, 0, null, (UUID) null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("-2 counts Zombies at resolution and keeps that value afterward")
+    void minusTwoCountsAtResolution() {
+        addReadyLiliana(player1, 5);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new WalkingCorpse());
+
+        harness.activateAbility(player1, 0, 1, null, bears.getId());
+        harness.addToBattlefield(player1, new WalkingCorpse());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
+
+        harness.addToBattlefield(player1, new WalkingCorpse());
+        harness.runStateBasedActions();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+    }
+
+    @Test
+    @DisplayName("-2 has no effect when only the opponent controls Zombies")
+    void minusTwoIgnoresOpponentZombies() {
+        addReadyLiliana(player1, 5);
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
+
+        harness.activateAbility(player1, 0, 1, null, zombie.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, zombie)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, zombie)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("-3 permits multiple Zombie casts even when paying loyalty removes Liliana")
+    void minusThreeSurvivesSourceAndAllowsMultipleCasts() {
+        addReadyLiliana(player1, 3);
+        harness.setGraveyard(player1, List.of(new WalkingCorpse(), new WalkingCorpse()));
+        harness.setHand(player1, List.of());
+
+        harness.activateAbility(player1, 0, 2, null, (UUID) null);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+
+        for (int i = 0; i < 2; i++) {
+            harness.clearPriorityPassed();
+            harness.addMana(player1, ManaColor.BLACK, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            harness.castFromGraveyard(player1, 0);
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(perm -> perm.getCard() instanceof WalkingCorpse).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card instanceof WalkingCorpse);
+    }
+
+    @Test
+    @DisplayName("-3 does not waive mana costs")
+    void minusThreeRequiresMana() {
+        addReadyLiliana(player1, 5);
+        harness.setGraveyard(player1, List.of(new WalkingCorpse()));
+        harness.setHand(player1, List.of());
+
+        harness.activateAbility(player1, 0, 2, null, (UUID) null);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("-3 does not give Zombie creatures instant timing")
+    void minusThreeRequiresCreatureTiming() {
+        addReadyLiliana(player1, 5);
+        harness.setGraveyard(player1, List.of(new WalkingCorpse()));
+        harness.setHand(player1, List.of());
+
+        harness.activateAbility(player1, 0, 2, null, (UUID) null);
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private Permanent addReadyLiliana(Player player, int loyalty) {
-        Card card = new LilianaUntouchedByDeath();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new LilianaUntouchedByDeath());
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
