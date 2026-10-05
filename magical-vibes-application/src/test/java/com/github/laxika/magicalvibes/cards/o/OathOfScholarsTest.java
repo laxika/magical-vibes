@@ -103,4 +103,65 @@ class OathOfScholarsTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Oath of Scholars");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
     }
+
+    @Test
+    void emptyHandStillAllowsDrawingThreeCards() {
+        harness.addToBattlefield(player1, new OathOfScholars());
+        harness.setHand(player1, List.of(new OathOfScholars()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new OathOfScholars(), new OathOfScholars(), new OathOfScholars()));
+
+        advanceToUpkeep(player2);
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void discardsTheEntireHandBeforeDrawingExactlyThreeCards() {
+        harness.addToBattlefield(player1, new OathOfScholars());
+        harness.setHand(player1, List.of(new OathOfScholars(), new OathOfScholars(), new OathOfScholars()));
+        Card firstDiscard = new OathOfScholars();
+        Card secondDiscard = new OathOfScholars();
+        harness.setHand(player2, List.of(firstDiscard, secondDiscard));
+        Card firstDraw = new OathOfScholars();
+        Card secondDraw = new OathOfScholars();
+        Card thirdDraw = new OathOfScholars();
+        Card remaining = new OathOfScholars();
+        harness.setLibrary(player2, List.of(firstDraw, secondDraw, thirdDraw, remaining));
+
+        advanceToUpkeep(player2);
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyInAnyOrder(firstDiscard, secondDiscard);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyInAnyOrder(firstDraw, secondDraw, thirdDraw);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remaining);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    void abilityDoesNotResolveWhenTargetDiscardsDownToFewerCards() {
+        harness.addToBattlefield(player1, new OathOfScholars());
+        harness.setHand(player1, List.of(new OathOfScholars(), new OathOfScholars()));
+        Card originalHandCard = new OathOfScholars();
+        harness.setHand(player2, List.of(originalHandCard));
+        harness.setLibrary(player2, List.of(new OathOfScholars(), new OathOfScholars(), new OathOfScholars()));
+
+        advanceToUpkeep(player2);
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.setHand(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(originalHandCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(3);
+    }
 }
