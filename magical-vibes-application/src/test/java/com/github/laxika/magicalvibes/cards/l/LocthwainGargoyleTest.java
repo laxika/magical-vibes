@@ -68,10 +68,46 @@ class LocthwainGargoyleTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
+    @Test
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent gargoyle = harness.addToBattlefieldAndReturn(player1, new LocthwainGargoyle());
+        gargoyle.setSummoningSick(true);
+        gargoyle.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gargoyle.getPowerModifier()).isEqualTo(2);
+        assertThat(gargoyle.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gargoyle.isTapped()).isTrue();
+    }
+
+    @Test
+    void abilityWaitsForResolutionAndAffectsOnlyItsSource() {
+        Permanent gargoyle = addReadyGargoyle(player1);
+        Permanent other = addReadyGargoyle(player1);
+        Permanent opponent = addReadyGargoyle(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gargoyle.getPowerModifier()).isZero();
+        assertThat(gargoyle.hasKeyword(Keyword.FLYING)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gargoyle.getPowerModifier()).isEqualTo(2);
+        assertThat(gargoyle.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(opponent.hasKeyword(Keyword.FLYING)).isFalse();
+    }
+
     private Permanent addReadyGargoyle(Player player) {
-        Permanent gargoyle = new Permanent(new LocthwainGargoyle());
+        Permanent gargoyle = harness.addToBattlefieldAndReturn(player, new LocthwainGargoyle());
         gargoyle.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(gargoyle);
         return gargoyle;
     }
 }
