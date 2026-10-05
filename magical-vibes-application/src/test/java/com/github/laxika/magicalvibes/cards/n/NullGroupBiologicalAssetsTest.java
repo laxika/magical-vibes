@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NullGroupBiologicalAssets.class, GrizzlyBears.class})
+@CardUsed({NullGroupBiologicalAssets.class})
 class NullGroupBiologicalAssetsTest extends BaseCardTest {
 
     @Test
@@ -31,8 +30,8 @@ class NullGroupBiologicalAssetsTest extends BaseCardTest {
     @Test
     @DisplayName("May discard a card to draw a card when it attacks")
     void mayDiscardToDrawWhenAttacking() {
-        GrizzlyBears discarded = new GrizzlyBears();
-        GrizzlyBears drawn = new GrizzlyBears();
+        NullGroupBiologicalAssets discarded = new NullGroupBiologicalAssets();
+        NullGroupBiologicalAssets drawn = new NullGroupBiologicalAssets();
         harness.setHand(player1, List.of(discarded));
         harness.setLibrary(player1, List.of(drawn));
         addCreatureReady(player1, new NullGroupBiologicalAssets());
@@ -52,9 +51,9 @@ class NullGroupBiologicalAssetsTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the attack trigger does not discard or draw")
     void decliningAttackTriggerDoesNothing() {
-        GrizzlyBears card = new GrizzlyBears();
+        NullGroupBiologicalAssets card = new NullGroupBiologicalAssets();
         harness.setHand(player1, List.of(card));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new NullGroupBiologicalAssets()));
         addCreatureReady(player1, new NullGroupBiologicalAssets());
 
         declareAttackers(List.of(0));
@@ -63,5 +62,63 @@ class NullGroupBiologicalAssetsTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+    @Test
+    @DisplayName("Accepting with an empty hand does not draw")
+    void cannotDrawWithoutDiscarding() {
+        NullGroupBiologicalAssets libraryCard = new NullGroupBiologicalAssets();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(libraryCard));
+        addCreatureReady(player1, new NullGroupBiologicalAssets());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Controller chooses one card to discard before drawing")
+    void choosesDiscardFromMultipleCards() {
+        NullGroupBiologicalAssets kept = new NullGroupBiologicalAssets();
+        NullGroupBiologicalAssets discarded = new NullGroupBiologicalAssets();
+        NullGroupBiologicalAssets drawn = new NullGroupBiologicalAssets();
+        harness.setHand(player1, List.of(kept, discarded));
+        harness.setLibrary(player1, List.of(drawn));
+        addCreatureReady(player1, new NullGroupBiologicalAssets());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept, discarded);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept, drawn);
+    }
+
+    @Test
+    @DisplayName("Attack trigger still resolves after its source is destroyed")
+    void attackTriggerSurvivesSourceRemoval() {
+        NullGroupBiologicalAssets discarded = new NullGroupBiologicalAssets();
+        NullGroupBiologicalAssets drawn = new NullGroupBiologicalAssets();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(drawn));
+        Permanent attacker = addCreatureReady(player1, new NullGroupBiologicalAssets());
+
+        declareAttackers(List.of(0));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .destroyPermanentToGraveyard(gd, attacker));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(attacker.getCard(), discarded);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
     }
 }
