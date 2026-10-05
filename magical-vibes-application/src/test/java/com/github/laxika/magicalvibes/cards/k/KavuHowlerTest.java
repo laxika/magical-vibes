@@ -49,9 +49,8 @@ class KavuHowlerTest extends BaseCardTest {
         KavuMauler kavu2 = new KavuMauler();
         Index nonKavu2 = new Index();
         KavuGlider deepKavu = new KavuGlider();
+        harness.setLibrary(player1, List.of(kavu1, nonKavu1, kavu2, nonKavu2, deepKavu));
         List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(kavu1, nonKavu1, kavu2, nonKavu2, deepKavu));
 
         castHowler();
         finishAnyReorder();
@@ -65,15 +64,48 @@ class KavuHowlerTest extends BaseCardTest {
     void noncreatureKavuCardsGoToHand() {
         Card kavuSpell = createNoncreatureKavu();
         Index nonKavu = new Index();
+        harness.setLibrary(player1, List.of(kavuSpell, nonKavu));
         List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(kavuSpell, nonKavu));
 
         castHowler();
         finishAnyReorder();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(kavuSpell);
         assertThat(deck).containsExactly(nonKavu);
+    }
+
+    @Test
+    @DisplayName("The controller can reverse the order of non-Kavu cards on the bottom")
+    void bottomCardsCanBeReordered() {
+        Index first = new Index();
+        Index second = new Index();
+        Index third = new Index();
+        Index fourth = new Index();
+        KavuGlider unrevealed = new KavuGlider();
+        harness.setLibrary(player1, List.of(first, second, third, fourth, unrevealed));
+
+        castHowler();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class)).isNotNull();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(3, 2, 1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unrevealed, fourth, third, second, first);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A short library containing only Kavu goes entirely to hand without reordering")
+    void allKavuInShortLibraryGoToHand() {
+        KavuGlider first = new KavuGlider();
+        KavuMauler second = new KavuMauler();
+        harness.setLibrary(player1, List.of(first, second));
+
+        castHowler();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
