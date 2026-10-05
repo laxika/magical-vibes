@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.EvolvedSleeper;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NemataPrimevalWarden.class, GrizzlyBears.class, Shock.class})
+@CardUsed({NemataPrimevalWarden.class, GrizzlyBears.class, Shock.class, EvolvedSleeper.class})
 class NemataPrimevalWardenTest extends BaseCardTest {
 
     @Test
@@ -29,8 +30,8 @@ class NemataPrimevalWardenTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
@@ -48,6 +49,7 @@ class NemataPrimevalWardenTest extends BaseCardTest {
         harness.runStateBasedActions();
 
         harness.assertNotOnBattlefield(player2, "Saproling");
+        resolveAllTriggers();
         assertThat(findPermanents(player1, "Saproling")).hasSize(1);
     }
 
@@ -107,6 +109,66 @@ class NemataPrimevalWardenTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Saproling creation waits for its triggered ability to resolve")
+    void tokenCreationUsesStack() {
+        addCreatureReady(player1, new NemataPrimevalWarden());
+        Permanent sleeper = addCreatureReady(player2, new EvolvedSleeper());
+        sleeper.setMarkedDamage(1);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.findExiledCard(sleeper.getCard().getId())).isNotNull();
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Saproling")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Nemata without abilities does not exile dying opponents' creatures")
+    void abilityLossDisablesReplacement() {
+        Permanent nemata = addCreatureReady(player1, new NemataPrimevalWarden());
+        nemata.setLosesAllAbilitiesUntilEndOfTurn(true);
+        Permanent sleeper = addCreatureReady(player2, new EvolvedSleeper());
+        sleeper.setMarkedDamage(1);
+
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Evolved Sleeper");
+        assertThat(gd.findExiledCard(sleeper.getCard().getId())).isNull();
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Nemata still replaces opposing deaths when it dies simultaneously")
+    void simultaneousDeathStillCreatesToken() {
+        Permanent nemata = addCreatureReady(player1, new NemataPrimevalWarden());
+        Permanent sleeper = addCreatureReady(player2, new EvolvedSleeper());
+        nemata.setMarkedDamage(4);
+        sleeper.setMarkedDamage(1);
+
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Nemata, Primeval Warden");
+        assertThat(gd.findExiledCard(sleeper.getCard().getId())).isNotNull();
+        assertThat(findPermanents(player1, "Saproling")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The pump cost cannot sacrifice an opponent's Saproling")
+    void cannotSacrificeOpponentsSaproling() {
+        addCreatureReady(player1, new NemataPrimevalWarden());
+        addCreatureReady(player2, createSaprolingToken());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanents(player2, "Saproling")).hasSize(1);
     }
 
     private Card createSaprolingToken() {
