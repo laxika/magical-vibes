@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
+import com.github.laxika.magicalvibes.cards.c.Conspiracy;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,12 +13,10 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LossarnachCaptain.class, EliteVanguard.class, GrizzlyBears.class})
+@CardUsed({LossarnachCaptain.class, EliteVanguard.class, GrizzlyBears.class, Conspiracy.class})
 class LossarnachCaptainTest extends BaseCardTest {
 
     @Test
@@ -42,9 +40,7 @@ class LossarnachCaptainTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LossarnachCaptain());
         Permanent victim = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        harness.setHand(player1, List.of(new EliteVanguard()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new EliteVanguard(), "{W}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.permanentChoiceContext())
@@ -61,9 +57,7 @@ class LossarnachCaptainTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LossarnachCaptain());
         Permanent victim = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -92,17 +86,78 @@ class LossarnachCaptainTest extends BaseCardTest {
     @DisplayName("The tap trigger cannot target a creature its controller controls")
     void cannotTargetOwnCreature() {
         Permanent ownVictim = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentVictim = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castCaptain();
 
         harness.passBothPriorities();
+        assertThat(gd.interaction.permanentChoiceContext())
+                .isInstanceOf(PermanentChoiceContext.EntersTriggerTarget.class);
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownVictim.getId()))
                 .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, opponentVictim.getId());
+        harness.passBothPriorities();
+        assertThat(ownVictim.isTapped()).isFalse();
+        assertThat(opponentVictim.isTapped()).isTrue();
+    }
+
+    @Test
+    void upkeepTokenEntryTapsOpponentCreature() {
+        harness.addToBattlefield(player1, new LossarnachCaptain());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Human Soldier")).isEqualTo(1);
+        assertThat(gd.interaction.permanentChoiceContext())
+                .isInstanceOf(PermanentChoiceContext.EntersTriggerTarget.class);
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
+        assertThat(victim.isTapped()).isTrue();
+    }
+
+    @Test
+    void opponentsUpkeepDoesNotCreateToken() {
+        harness.addToBattlefield(player1, new LossarnachCaptain());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Human Soldier")).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentHumanEntryDoesNotTrigger() {
+        harness.addToBattlefield(player1, new LossarnachCaptain());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+
+        harness.castFromHand(player2, new EliteVanguard(), "{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(victim.isTapped()).isFalse();
+    }
+
+    @Test
+    void ownEntryStillTriggersWhenConspiracyReplacesHumanType() {
+        Permanent conspiracy = harness.addToBattlefieldAndReturn(player1, new Conspiracy());
+        conspiracy.setChosenSubtype(CardSubtype.GOBLIN);
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castCaptain();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.permanentChoiceContext())
+                .isInstanceOf(PermanentChoiceContext.EntersTriggerTarget.class);
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
+        assertThat(victim.isTapped()).isTrue();
     }
 
     private void castCaptain() {
-        harness.setHand(player1, List.of(new LossarnachCaptain()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new LossarnachCaptain(), "{3}{W}");
     }
 }
