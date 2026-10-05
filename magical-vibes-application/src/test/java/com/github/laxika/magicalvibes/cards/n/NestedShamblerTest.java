@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
+import com.github.laxika.magicalvibes.cards.t.TragicFall;
+import com.github.laxika.magicalvibes.cards.v.VerminGorger;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NestedShambler.class, GiantGrowth.class, WrathOfGod.class})
+@CardUsed({NestedShambler.class, GiantGrowth.class, WrathOfGod.class, TragicFall.class, VerminGorger.class})
 class NestedShamblerTest extends BaseCardTest {
 
     @Test
@@ -42,5 +44,55 @@ class NestedShamblerTest extends BaseCardTest {
             assertThat(squirrel.getEffectivePower()).isEqualTo(1);
             assertThat(squirrel.getEffectiveToughness()).isEqualTo(1);
         });
+    }
+
+    @Test
+    @DisplayName("Sacrificing an unmodified Nested Shambler creates one tapped Squirrel")
+    void sacrificeCreatesOneTappedSquirrel() {
+        addCreatureReady(player1, new VerminGorger());
+        harness.addToBattlefield(player1, new NestedShambler());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Nested Shambler");
+        assertThat(findPermanents(player1, "Squirrel")).singleElement()
+                .satisfies(squirrel -> assertThat(squirrel.isTapped()).isTrue());
+        assertThat(findPermanents(player2, "Squirrel")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Nested Shambler dying with negative power creates no Squirrels")
+    void negativePowerCreatesNoSquirrels() {
+        Permanent shambler = harness.addToBattlefieldAndReturn(player1, new NestedShambler());
+        harness.setHand(player1, List.of(new TragicFall(), new NestedShambler()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, shambler.getId());
+        harness.assertInGraveyard(player1, "Nested Shambler");
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Squirrel")).isEmpty();
+        assertThat(findPermanents(player2, "Squirrel")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Simultaneously dying Shamblers create Squirrels for their respective controllers")
+    void simultaneousDeathsCreateTokensForEachController() {
+        harness.addToBattlefield(player1, new NestedShambler());
+        harness.addToBattlefield(player2, new NestedShambler());
+
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Nested Shambler");
+        harness.assertInGraveyard(player2, "Nested Shambler");
+        assertThat(findPermanents(player1, "Squirrel")).singleElement()
+                .satisfies(squirrel -> assertThat(squirrel.isTapped()).isTrue());
+        assertThat(findPermanents(player2, "Squirrel")).singleElement()
+                .satisfies(squirrel -> assertThat(squirrel.isTapped()).isTrue());
     }
 }
