@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MerfolkMesmerist.class})
 class MerfolkMesmeristTest extends BaseCardTest {
 
     @Test
@@ -98,10 +100,54 @@ class MerfolkMesmeristTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Milling an empty library does not cause a loss")
+    void emptyLibraryDoesNotCauseLoss() {
+        addReadyMesmerist(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setLibrary(player2, List.of());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(com.github.laxika.magicalvibes.model.GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent mesmerist = addReadyMesmerist(player1);
+        mesmerist.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Mana and tap costs are paid before the ability resolves")
+    void paysCostsBeforeResolution() {
+        Permanent mesmerist = addReadyMesmerist(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        int deckSizeBefore = trimDeck(player2, 10);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(mesmerist.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore - 2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
     private Permanent addReadyMesmerist(Player player) {
-        Permanent perm = harness.addToBattlefieldAndReturn(player, new MerfolkMesmerist());
-        perm.setSummoningSick(false);
-        return perm;
+        return addCreatureReady(player, new MerfolkMesmerist());
     }
 
     private int trimDeck(Player player, int size) {
