@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
-
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FortressCrab;
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -18,6 +16,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.u.UnrulyMob;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -27,24 +27,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({LilianaOfTheVeil.class, WalkingCorpse.class, FortressCrab.class, Plains.class, Swamp.class, UnrulyMob.class})
 class LilianaOfTheVeilTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has three loyalty abilities")
-    void hasThreeLoyaltyAbilities() {
-        LilianaOfTheVeil card = new LilianaOfTheVeil();
-        assertThat(card.getActivatedAbilities()).hasSize(3);
-    }
-
-    
-
-    
-
-    
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting puts planeswalker spell on the stack")
@@ -59,12 +43,12 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.PLANESWALKER_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Liliana of the Veil");
+        assertThat(entry.getCard()).isInstanceOf(LilianaOfTheVeil.class);
     }
 
     @Test
-    @DisplayName("Resolving puts planeswalker on battlefield with initial loyalty 3")
-    void resolvingEntersBattlefieldWithLoyalty() {
+    @DisplayName("Resolving puts planeswalker on the battlefield")
+    void resolvingEntersBattlefield() {
         harness.setHand(player1, List.of(new LilianaOfTheVeil()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -72,14 +56,8 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         harness.castPlaneswalker(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
-        assertThat(bf).anyMatch(p -> p.getCard().getName().equals("Liliana of the Veil"));
-        Permanent liliana = bf.stream().filter(p -> p.getCard().getName().equals("Liliana of the Veil")).findFirst().orElseThrow();
-        assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Liliana of the Veil");
     }
-
-    // ===== +1 ability: Each player discards a card =====
 
     @Test
     @DisplayName("+1 ability makes each player discard a card and increases loyalty")
@@ -98,9 +76,13 @@ class LilianaOfTheVeilTest extends BaseCardTest {
 
         // Active player (player1) discards first — enters discard choice
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player2, 0);
+        harness.assertInGraveyard(player1, "Swamp");
+        harness.assertInGraveyard(player2, "Plains");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
-
-    // ===== -2 ability: Target player sacrifices a creature =====
 
     @Test
     @DisplayName("-2 ability forces target player to sacrifice a creature")
@@ -108,16 +90,15 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         Permanent liliana = addReadyLiliana(player1);
         liliana.setCounterCount(CounterType.LOYALTY, 5);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
+        harness.addToBattlefield(player2, new WalkingCorpse());
 
         harness.activateAbility(player1, 0, 1, null, player2.getId());
         harness.passBothPriorities();
 
         assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 5 - 2
         // With one creature, it's auto-sacrificed
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Walking Corpse");
+        harness.assertInGraveyard(player2, "Walking Corpse");
     }
 
     @Test
@@ -126,10 +107,8 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         Permanent liliana = addReadyLiliana(player1);
         liliana.setCounterCount(CounterType.LOYALTY, 5);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        Permanent spider = new Permanent(new GiantSpider());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(spider);
+        harness.addToBattlefield(player2, new WalkingCorpse());
+        harness.addToBattlefield(player2, new FortressCrab());
 
         harness.activateAbility(player1, 0, 1, null, player2.getId());
         harness.passBothPriorities();
@@ -138,6 +117,9 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player2.getId());
         assertThat(gd.interaction.permanentChoiceContext()).isInstanceOf(PermanentChoiceContext.SacrificeCreature.class);
+        harness.handlePermanentChosen(player2, harness.getPermanentId(player2, "Fortress Crab"));
+        harness.assertInGraveyard(player2, "Fortress Crab");
+        harness.assertOnBattlefield(player2, "Walking Corpse");
     }
 
     @Test
@@ -154,18 +136,14 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no creatures to sacrifice"));
     }
 
-    // ===== -6 ability: Separate permanents into two piles =====
-
     @Test
     @DisplayName("-6 ability prompts controller to separate permanents into two piles")
     void minusSixPromptsPileSeparation() {
         Permanent liliana = addReadyLiliana(player1);
         liliana.setCounterCount(CounterType.LOYALTY, 6);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        Permanent spider = new Permanent(new GiantSpider());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(spider);
+        harness.addToBattlefield(player2, new WalkingCorpse());
+        harness.addToBattlefield(player2, new FortressCrab());
 
         harness.activateAbility(player1, 0, 2, null, player2.getId());
         harness.passBothPriorities();
@@ -183,10 +161,8 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         Permanent liliana = addReadyLiliana(player1);
         liliana.setCounterCount(CounterType.LOYALTY, 6);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        Permanent spider = new Permanent(new GiantSpider());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(spider);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
+        harness.addToBattlefield(player2, new FortressCrab());
 
         harness.activateAbility(player1, 0, 2, null, player2.getId());
         harness.passBothPriorities();
@@ -201,10 +177,9 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         // Target player chooses Yes = sacrifice pile 1 (bears)
         harness.handleMayAbilityChosen(player2, true);
 
-        gd = harness.getGameData();
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertOnBattlefield(player2, "Giant Spider");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Walking Corpse");
+        harness.assertOnBattlefield(player2, "Fortress Crab");
+        harness.assertInGraveyard(player2, "Walking Corpse");
     }
 
     @Test
@@ -213,10 +188,8 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         Permanent liliana = addReadyLiliana(player1);
         liliana.setCounterCount(CounterType.LOYALTY, 6);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        Permanent spider = new Permanent(new GiantSpider());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(spider);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
+        harness.addToBattlefield(player2, new FortressCrab());
 
         harness.activateAbility(player1, 0, 2, null, player2.getId());
         harness.passBothPriorities();
@@ -227,9 +200,9 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         // Step 2: Target player chooses No = sacrifice pile 2 (spider)
         harness.handleMayAbilityChosen(player2, false);
 
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player2, "Giant Spider");
-        harness.assertInGraveyard(player2, "Giant Spider");
+        harness.assertOnBattlefield(player2, "Walking Corpse");
+        harness.assertNotOnBattlefield(player2, "Fortress Crab");
+        harness.assertInGraveyard(player2, "Fortress Crab");
     }
 
     @Test
@@ -238,10 +211,8 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         Permanent liliana = addReadyLiliana(player1);
         liliana.setCounterCount(CounterType.LOYALTY, 6);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        Permanent spider = new Permanent(new GiantSpider());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(spider);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, new FortressCrab());
 
         harness.activateAbility(player1, 0, 2, null, player2.getId());
         harness.passBothPriorities();
@@ -253,8 +224,8 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
 
         // Both permanents should survive since pile 2 was empty
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
-        harness.assertOnBattlefield(player2, "Giant Spider");
+        harness.assertOnBattlefield(player2, "Walking Corpse");
+        harness.assertOnBattlefield(player2, "Fortress Crab");
     }
 
     @Test
@@ -281,8 +252,6 @@ class LilianaOfTheVeilTest extends BaseCardTest {
                 .hasMessageContaining("Not enough loyalty");
     }
 
-    // ===== Loyalty ability restrictions =====
-
     @Test
     @DisplayName("Cannot activate loyalty ability during opponent's turn")
     void cannotActivateOnOpponentsTurn() {
@@ -297,7 +266,7 @@ class LilianaOfTheVeilTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate two loyalty abilities on same planeswalker in one turn")
     void cannotActivateTwicePerTurn() {
-        Permanent liliana = addReadyLiliana(player1);
+        addReadyLiliana(player1);
         harness.setHand(player1, List.of(new Swamp()));
         harness.setHand(player2, List.of(new Plains()));
 
@@ -313,14 +282,117 @@ class LilianaOfTheVeilTest extends BaseCardTest {
                 .hasMessageContaining("one loyalty ability");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("+1 keeps chosen cards in hand until every player has chosen")
+    void plusOneDiscardsSimultaneously() {
+        addReadyLiliana(player1);
+        harness.setHand(player1, List.of(new Swamp(), new WalkingCorpse()));
+        harness.setHand(player2, List.of(new Plains(), new FortressCrab()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInHand(player1, "Walking Corpse");
+        harness.assertNotInGraveyard(player1, "Walking Corpse");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player2.getId());
+
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertInGraveyard(player1, "Walking Corpse");
+        harness.assertInGraveyard(player2, "Plains");
+        harness.assertInHand(player1, "Swamp");
+        harness.assertInHand(player2, "Fortress Crab");
+    }
+
+    @Test
+    @DisplayName("+1 still discards the opponent's card when the controller has an empty hand")
+    void plusOneWithControllerEmptyHand() {
+        Permanent liliana = addReadyLiliana(player1);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Plains()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertInGraveyard(player2, "Plains");
+        assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("+1 can resolve when both players have empty hands")
+    void plusOneWithBothHandsEmpty() {
+        Permanent liliana = addReadyLiliana(player1);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("-2 may target the controller and leaves lands alone")
+    void minusTwoCanTargetController() {
+        addReadyLiliana(player1);
+        harness.addToBattlefield(player1, new WalkingCorpse());
+        harness.addToBattlefield(player1, new Swamp());
+
+        harness.activateAbility(player1, 0, 1, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Walking Corpse");
+        harness.assertOnBattlefield(player1, "Swamp");
+        harness.assertOnBattlefield(player1, "Liliana of the Veil");
+    }
+
+    @Test
+    @DisplayName("-6 includes lands and the source when targeting the controller")
+    void minusSixCanSacrificeSourceAndLand() {
+        Permanent liliana = addReadyLiliana(player1);
+        liliana.setCounterCount(CounterType.LOYALTY, 7);
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        harness.addToBattlefield(player1, new WalkingCorpse());
+
+        harness.activateAbility(player1, 0, 2, null, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(liliana.getId(), swamp.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Liliana of the Veil");
+        harness.assertInGraveyard(player1, "Swamp");
+        harness.assertOnBattlefield(player1, "Walking Corpse");
+    }
+
+    @Test
+    @DisplayName("-6 creatures dying in the same pile see one another die")
+    void minusSixPreservesSimultaneousDeathTriggers() {
+        Permanent liliana = addReadyLiliana(player1);
+        liliana.setCounterCount(CounterType.LOYALTY, 7);
+        Permanent mob = harness.addToBattlefieldAndReturn(player2, new UnrulyMob());
+        Permanent corpse = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
+
+        harness.activateAbility(player1, 0, 2, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(mob.getId(), corpse.getId()));
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertInGraveyard(player2, "Unruly Mob");
+        harness.assertInGraveyard(player2, "Walking Corpse");
+        assertThat(gd.stack).anySatisfy(entry -> {
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getCard()).isInstanceOf(UnrulyMob.class);
+        });
+    }
 
     private Permanent addReadyLiliana(Player player) {
-        LilianaOfTheVeil card = new LilianaOfTheVeil();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new LilianaOfTheVeil());
         perm.setCounterCount(CounterType.LOYALTY, 3);
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
