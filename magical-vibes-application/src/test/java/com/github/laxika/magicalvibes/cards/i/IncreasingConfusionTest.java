@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,9 +13,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({IncreasingConfusion.class})
 class IncreasingConfusionTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting normally mills target player for X cards")
@@ -110,5 +110,43 @@ class IncreasingConfusionTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("requires a target");
+    }
+
+    @Test
+    @DisplayName("Flashback with X=0 mills nothing and exiles the spell")
+    void flashbackWithZeroX() {
+        int deckBefore = gd.playerDecks.get(player2.getId()).size();
+        IncreasingConfusion spell = new IncreasingConfusion();
+        harness.setGraveyard(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castFlashback(player1, 0, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+    }
+
+    @Test
+    @DisplayName("Flashback can mill yourself and stops at the end of the library")
+    void flashbackSelfWithShortLibrary() {
+        IncreasingConfusion spell = new IncreasingConfusion();
+        IncreasingConfusion first = new IncreasingConfusion();
+        IncreasingConfusion second = new IncreasingConfusion();
+        IncreasingConfusion third = new IncreasingConfusion();
+        harness.setLibrary(player1, List.of(first, second, third));
+        harness.setGraveyard(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castFlashback(player1, 0, 2, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(first, second, third);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
     }
 }
