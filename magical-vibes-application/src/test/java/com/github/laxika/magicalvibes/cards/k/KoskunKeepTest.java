@@ -101,6 +101,68 @@ class KoskunKeepTest extends BaseCardTest {
         assertThat(keep.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("A newly entered land can tap for mana immediately without using the stack")
+    void newlyEnteredKeepCanProduceManaImmediately() {
+        Permanent keep = harness.enterBattlefieldAndReturn(player1, new KoskunKeep());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(mana(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(keep.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Colored mana can pay the generic cost of the red ability")
+    void redAbilityAcceptsColoredManaPayment() {
+        Permanent keep = addKoskunKeep();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(mana(ManaColor.GREEN)).isZero();
+        assertThat(mana(ManaColor.RED)).isEqualTo(1);
+        assertThat(keep.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Colored mana can pay the generic cost of the black or green ability")
+    void twoManaAbilityAcceptsColoredManaPayment() {
+        Permanent keep = addKoskunKeep();
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(mana(ManaColor.RED)).isZero();
+        assertThat(mana(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(mana(ManaColor.BLACK)).isZero();
+        assertThat(keep.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The two-mana ability only permits black or green")
+    void cannotChooseRedForTwoManaAbility() {
+        Permanent keep = addKoskunKeep();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 2, null, null);
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "RED"))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(mana(ManaColor.RED)).isZero();
+
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThat(mana(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(mana(ManaColor.GREEN)).isZero();
+        assertThat(mana(ManaColor.COLORLESS)).isZero();
+        assertThat(keep.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addKoskunKeep() {
         Permanent keep = harness.addToBattlefieldAndReturn(player1, new KoskunKeep());
         keep.setSummoningSick(false);
