@@ -2,11 +2,14 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.c.CatharCommando;
+import com.github.laxika.magicalvibes.cards.s.SigardaHostOfHerons;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +18,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KillingWave.class, GrizzlyBears.class, HillGiant.class,
+        CatharCommando.class, SigardaHostOfHerons.class})
 class KillingWaveTest extends BaseCardTest {
 
     @Test
@@ -31,17 +36,19 @@ class KillingWaveTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("X=0 keeps every creature with no prompt")
-    void xZeroDoesNothing() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new HillGiant());
+    @DisplayName("X=0 allows both players to pay zero life to keep their creatures")
+    void xZeroCanKeepEveryCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         harness.setHand(player1, List.of(new KillingWave()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
+        harness.handleMultiplePermanentsChosen(player2, List.of(giant.getId()));
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -60,8 +67,7 @@ class KillingWaveTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KillingWave()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, 2);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2);
 
         // Active player chooses first — keep the Bears.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
@@ -91,8 +97,7 @@ class KillingWaveTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KillingWave()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, 2);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2);
 
         harness.handleMultiplePermanentsChosen(player1, List.of(first.getId()));
 
@@ -118,8 +123,7 @@ class KillingWaveTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KillingWave()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, 3);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3);
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -143,13 +147,83 @@ class KillingWaveTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KillingWave()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, 3);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed({KillingWave.class, CatharCommando.class})
+    @DisplayName("At X=0 a player may decline payment for some creatures")
+    void xZeroAllowsSelectiveSacrifice() {
+        Permanent kept = harness.addToBattlefieldAndReturn(player1, new CatharCommando());
+        Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new CatharCommando());
+        harness.setHand(player1, List.of(new KillingWave()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleMultiplePermanentsChosen(player1, List.of(kept.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getId).contains(kept.getId()).doesNotContain(sacrificed.getId());
+        harness.assertInGraveyard(player1, "Cathar Commando");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @CardUsed({KillingWave.class, CatharCommando.class, SigardaHostOfHerons.class})
+    @DisplayName("Sigarda lets an opponent decline payment without sacrificing creatures")
+    void sigardaPreventsOpponentCausedSacrifices() {
+        harness.addToBattlefield(player2, new SigardaHostOfHerons());
+        harness.addToBattlefield(player2, new CatharCommando());
+        harness.setHand(player1, List.of(new KillingWave()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 2);
+        harness.handleMultiplePermanentsChosen(player2, List.of());
+
+        harness.assertOnBattlefield(player2, "Sigarda, Host of Herons");
+        harness.assertOnBattlefield(player2, "Cathar Commando");
+        harness.assertNotInGraveyard(player2, "Sigarda, Host of Herons");
+        harness.assertNotInGraveyard(player2, "Cathar Commando");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @CardUsed({KillingWave.class, CatharCommando.class, SigardaHostOfHerons.class})
+    @DisplayName("Sigarda does not prevent sacrifices caused by its controller's Killing Wave")
+    void sigardaDoesNotPreventOwnSacrifices() {
+        harness.addToBattlefield(player1, new SigardaHostOfHerons());
+        harness.addToBattlefield(player1, new CatharCommando());
+        harness.setHand(player1, List.of(new KillingWave()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 2);
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        harness.assertNotOnBattlefield(player1, "Sigarda, Host of Herons");
+        harness.assertNotOnBattlefield(player1, "Cathar Commando");
+        harness.assertInGraveyard(player1, "Sigarda, Host of Herons");
+        harness.assertInGraveyard(player1, "Cathar Commando");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @CardUsed({KillingWave.class})
+    @DisplayName("With no creatures, Killing Wave resolves without choices or life payments")
+    void emptyBattlefieldNeedsNoChoices() {
+        harness.setHand(player1, List.of(new KillingWave()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 3);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Killing Wave");
     }
 
     @Test
@@ -162,8 +236,7 @@ class KillingWaveTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KillingWave()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, 1);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1);
 
         UUID firstChooser = gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId();
         assertThat(firstChooser).isEqualTo(player1.getId());
