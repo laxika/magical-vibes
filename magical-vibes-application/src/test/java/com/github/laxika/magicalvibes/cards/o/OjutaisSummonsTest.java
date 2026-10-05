@@ -24,8 +24,7 @@ class OjutaisSummonsTest extends BaseCardTest {
         harness.setHand(player1, List.of(card));
         addOjutaisSummonsMana();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         List<Permanent> tokens = djinnMonkTokens(player1);
         assertThat(tokens).hasSize(1);
@@ -43,8 +42,7 @@ class OjutaisSummonsTest extends BaseCardTest {
         harness.setHand(player1, List.of(card));
         addOjutaisSummonsMana();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(djinnMonkTokens(player1)).hasSize(1);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
@@ -63,15 +61,63 @@ class OjutaisSummonsTest extends BaseCardTest {
         assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
     }
 
+    @Test
+    void decliningReboundLeavesTheCardExiledWithoutAnotherOffer() {
+        OjutaisSummons card = new OjutaisSummons();
+        harness.setHand(player1, List.of(card));
+        addOjutaisSummonsMana();
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(djinnMonkTokens(player1)).hasSize(1);
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        harness.assertNotInGraveyard(player1, "Ojutai's Summons");
+        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+
+        advanceToUpkeep(player2);
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(djinnMonkTokens(player1)).hasSize(1);
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+    }
+
+    @Test
+    void reboundWaitsForTheCastersUpkeepRatherThanTheOpponents() {
+        OjutaisSummons card = new OjutaisSummons();
+        harness.setHand(player1, List.of(card));
+        addOjutaisSummonsMana();
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        assertThat(djinnMonkTokens(player1)).hasSize(1);
+        assertThat(djinnMonkTokens(player2)).isEmpty();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(djinnMonkTokens(player1)).hasSize(2);
+        assertThat(djinnMonkTokens(player2)).isEmpty();
+        harness.assertInGraveyard(player1, "Ojutai's Summons");
+    }
+
     private void addOjutaisSummonsMana() {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
     }
 
     private List<Permanent> djinnMonkTokens(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
+        return findPermanents(player, "Djinn Monk").stream()
                 .filter(permanent -> permanent.getCard().isToken())
-                .filter(permanent -> permanent.getCard().getName().equals("Djinn Monk"))
                 .toList();
     }
 }
