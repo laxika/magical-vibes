@@ -124,6 +124,52 @@ class PangTongYoungPhoenixTest extends BaseCardTest {
         assertThat(infantry.getToughnessModifier()).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Can target itself even though paying the cost taps it")
+    void canBoostItself() {
+        setupOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Permanent pangTong = findPermanent(player1, "Pang Tong, \"Young Phoenix\"");
+
+        harness.activateAbility(player1, 0, null, pangTong.getId());
+        harness.passBothPriorities();
+
+        assertThat(pangTong.isTapped()).isTrue();
+        assertThat(pangTong.getPowerModifier()).isZero();
+        assertThat(pangTong.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        setupOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Permanent pangTong = findPermanent(player1, "Pang Tong, \"Young Phoenix\"");
+        pangTong.setSummoningSick(true);
+        UUID targetId = harness.getPermanentId(player1, "Alert Shu Infantry");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(pangTong.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate again while tapped")
+    void cannotActivateWhileTapped() {
+        setupOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        UUID targetId = harness.getPermanentId(player1, "Alert Shu Infantry");
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanent(player1, "Alert Shu Infantry").getToughnessModifier()).isEqualTo(2);
+    }
+
     private void setupOnMyTurn(TurnStep step) {
         addCreatureReady(player1, new PangTongYoungPhoenix());
         addCreatureReady(player1, new AlertShuInfantry());
