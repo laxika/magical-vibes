@@ -30,6 +30,34 @@ class NeglectedManorTest extends BaseCardTest {
     }
 
     @Test
+    void entersUntappedWhenControllerHasLessThan13Life() {
+        harness.setLife(player1, 12);
+        playManor();
+
+        assertThat(manor().isTapped()).isFalse();
+    }
+
+    @Test
+    void entersUntappedWhenOpponentHasLessThan13Life() {
+        harness.setLife(player2, 12);
+        playManor();
+
+        assertThat(manor().isTapped()).isFalse();
+    }
+
+    @Test
+    void enteringWithoutBeingPlayedStillChecksLifeTotals() {
+        Permanent first = harness.enterBattlefieldAndReturn(player1, new NeglectedManor());
+        assertThat(first.isTapped()).isTrue();
+
+        harness.setLife(player2, 13);
+        Permanent second = harness.enterBattlefieldAndReturn(player1, new NeglectedManor());
+
+        assertThat(second.isTapped()).isFalse();
+        assertThat(first.isTapped()).isTrue();
+    }
+
+    @Test
     void entersTappedWhenNoPlayerHas13OrLessLife() {
         harness.setLife(player1, 14);
         harness.setLife(player2, 14);
@@ -64,9 +92,8 @@ class NeglectedManorTest extends BaseCardTest {
     }
 
     private Permanent addReadyManor() {
-        Permanent manor = new Permanent(new NeglectedManor());
+        Permanent manor = harness.addToBattlefieldAndReturn(player1, new NeglectedManor());
         manor.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(manor);
         return manor;
     }
 
