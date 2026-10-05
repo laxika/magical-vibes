@@ -25,12 +25,9 @@ class MegatheriumTest extends BaseCardTest {
     }
 
     private void castMegatheriumWithNoCardsLeftInHand() {
-        harness.setHand(player1, List.of(new Megatherium()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Megatherium(), "{2}{G}");
     }
 
     @Test
@@ -83,6 +80,65 @@ class MegatheriumTest extends BaseCardTest {
     @DisplayName("Declining to pay sacrifices Megatherium")
     void decliningPaymentSacrificesMegatherium() {
         castMegatheriumWithTwoCardsLeftInHand();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Megatherium");
+        harness.assertInGraveyard(player1, "Megatherium");
+    }
+
+    @Test
+    @DisplayName("The payment uses the reduced hand size when the trigger resolves")
+    void paymentUsesReducedHandSizeAtResolution() {
+        castMegatheriumWithTwoCardsLeftInHand();
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Megatherium()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Megatherium");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Cards gained before the trigger resolves increase the payment")
+    void paymentUsesIncreasedHandSizeAtResolution() {
+        castMegatheriumWithNoCardsLeftInHand();
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Megatherium(), new Megatherium()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Megatherium");
+        harness.assertInGraveyard(player1, "Megatherium");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Colored mana can pay the generic cost and the opponent's hand does not count")
+    void coloredManaPaysOnlyForControllersHand() {
+        castMegatheriumWithTwoCardsLeftInHand();
+        harness.setHand(player2, List.of(new Megatherium(), new Megatherium(), new Megatherium()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Megatherium");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("The controller may decline to pay even when the payment is zero")
+    void decliningZeroPaymentSacrificesMegatherium() {
+        castMegatheriumWithNoCardsLeftInHand();
 
         harness.passBothPriorities();
         harness.passBothPriorities();
