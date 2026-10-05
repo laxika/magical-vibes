@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.v.VulshokSorcerer;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -10,8 +11,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LoxodonAnchorite.class, LoxodonStalwart.class})
+@CardUsed({LoxodonAnchorite.class, LoxodonStalwart.class, VulshokSorcerer.class})
 class LoxodonAnchoriteTest extends BaseCardTest {
 
     @Test
@@ -74,5 +76,66 @@ class LoxodonAnchoriteTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 17);
+    }
+
+    @Test
+    void shieldPreventsOnlyTwoDamageAcrossSeparateNoncombatEvents() {
+        addCreatureReady(player1, new LoxodonAnchorite());
+        for (int i = 0; i < 3; i++) {
+            addCreatureReady(player2, new VulshokSorcerer());
+        }
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        for (int i = 0; i < 3; i++) {
+            harness.activateAbility(player2, i, null, player2.getId());
+            harness.passBothPriorities();
+            harness.assertLife(player2, i < 2 ? 20 : 19);
+        }
+    }
+
+    @Test
+    void multipleAnchoritesAddTheirPreventionToTheSameTarget() {
+        addCreatureReady(player1, new LoxodonAnchorite());
+        addCreatureReady(player1, new LoxodonAnchorite());
+        addCreatureReady(player2, new LoxodonStalwart());
+        addCreatureReady(player2, new LoxodonStalwart());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, player1.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0, 1));
+        gs.declareBlockers(gd, player1, List.of());
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefieldAndReturn(player1, new LoxodonAnchorite());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+    }
+
+    @Test
+    void cannotActivateAgainWhileTapped() {
+        addCreatureReady(player1, new LoxodonAnchorite());
+        harness.activateAbility(player1, 0, null, player1.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
     }
 }
