@@ -97,6 +97,41 @@ class PlagueFiendTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
+    @Test
+    @DisplayName("Colored mana can pay the generic destruction prevention cost")
+    void coloredManaPreventsDestruction() {
+        Permanent plagueFiend = addCreatureReady(player1, new PlagueFiend());
+        plagueFiend.setAttacking(true);
+        addCreatureReady(player2, new RibCageSpider());
+
+        resolveCombatToPaymentChoice();
+
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
+        harness.assertOnBattlefield(player2, "Rib Cage Spider");
+        harness.assertInGraveyard(player1, "Plague Fiend");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Zero combat damage does not trigger destruction")
+    void zeroCombatDamageDoesNotTrigger() {
+        Permanent plagueFiend = addCreatureReady(player1, new PlagueFiend());
+        plagueFiend.setPowerModifier(-1);
+        plagueFiend.setAttacking(true);
+        addCreatureReady(player2, new RibCageSpider());
+
+        resolveCombatToPaymentChoice();
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Rib Cage Spider");
+        harness.assertInGraveyard(player1, "Plague Fiend");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void resolveCombatToPaymentChoice() {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
