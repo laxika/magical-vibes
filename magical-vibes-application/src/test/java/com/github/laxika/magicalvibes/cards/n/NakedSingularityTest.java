@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.i.InfernalDarkness;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredForest;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredIsland;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredMountain;
@@ -18,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NakedSingularity.class, SnowCoveredForest.class, SnowCoveredIsland.class,
+@CardUsed({NakedSingularity.class, InfernalDarkness.class, SnowCoveredForest.class, SnowCoveredIsland.class,
         SnowCoveredMountain.class, SnowCoveredPlains.class, SnowCoveredSwamp.class})
 class NakedSingularityTest extends BaseCardTest {
 
@@ -101,8 +102,6 @@ class NakedSingularityTest extends BaseCardTest {
         harness.addToBattlefield(player1, new NakedSingularity());
         harness.addToBattlefield(player2, new SnowCoveredMountain());
 
-        harness.forceActivePlayer(player2);
-        harness.clearPriorityPassed();
         harness.tapPermanent(player2, 0);
 
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(1);
@@ -171,5 +170,48 @@ class NakedSingularityTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(singularity);
         harness.assertInGraveyard(player1, "Naked Singularity");
+    }
+
+    @Test
+    @DisplayName("Multiple copies do not change the amount of mana produced")
+    void multipleCopiesPreserveManaAmount() {
+        harness.addToBattlefield(player1, new NakedSingularity());
+        harness.addToBattlefield(player1, new NakedSingularity());
+        harness.addToBattlefield(player1, new SnowCoveredPlains());
+
+        harness.tapPermanent(player1, 2);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Lands produce normally after Naked Singularity is sacrificed")
+    void replacementEndsAfterSacrifice() {
+        harness.addToBattlefield(player1, new NakedSingularity());
+        harness.addToBattlefield(player1, new SnowCoveredMountain());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The land controller chooses the final color with Infernal Darkness")
+    void competingReplacementAllowsEitherFinalColor() {
+        harness.addToBattlefield(player1, new NakedSingularity());
+        harness.addToBattlefield(player1, new InfernalDarkness());
+        harness.addToBattlefield(player1, new SnowCoveredPlains());
+
+        harness.tapPermanent(player1, 2);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        PendingInteraction.ColorChoice choice = (PendingInteraction.ColorChoice) gd.interaction.activeInteraction();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.options()).containsExactlyInAnyOrder("RED", "BLACK");
     }
 }
