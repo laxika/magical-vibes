@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.GameStatus;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(Ponder.class)
+@CardUsed({Ponder.class})
 class PonderTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -197,6 +198,81 @@ class PonderTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("declines"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("chooses not to shuffle"));
+    }
+
+    @Test
+    @DisplayName("Reordering preserves the other top cards and the rest of the library")
+    void preservesRemainingLibraryOrder() {
+        Ponder first = new Ponder();
+        Ponder second = new Ponder();
+        Ponder third = new Ponder();
+        Ponder fourth = new Ponder();
+        Ponder fifth = new Ponder();
+        harness.setLibrary(player1, List.of(first, second, third, fourth, fifth));
+
+        harness.castFromHand(player1, new Ponder(), "{U}");
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third, second, first, fourth, fifth);
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(third);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first, fourth, fifth);
+    }
+
+    @Test
+    @DisplayName("A one-card library can be shuffled and its only card is drawn")
+    void drawsOnlyCardAfterShuffle() {
+        Ponder onlyCard = new Ponder();
+        harness.setLibrary(player1, List.of(onlyCard));
+
+        harness.castFromHand(player1, new Ponder(), "{U}");
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0)));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+        harness.assertInGraveyard(player1, "Ponder");
+    }
+
+    @Test
+    @DisplayName("An empty library still permits shuffling before the failed draw")
+    void emptyLibraryStillOffersShuffleThenLosesOnDraw() {
+        harness.setLibrary(player1, List.of());
+
+        harness.castFromHand(player1, new Ponder(), "{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the caster may reorder the cards")
+    void opponentCannotReorderCards() {
+        harness.castFromHand(player1, new Ponder(), "{U}");
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> gs.handleInteractionAnswer(gd, player2,
+                new InteractionAnswer.CardOrder(List.of(0, 1, 2))))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 }
