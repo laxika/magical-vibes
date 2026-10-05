@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,11 +16,12 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PrismaticBoon.class, BayFalcon.class, MtendaHerder.class, Forest.class})
+@CardUsed({PrismaticBoon.class, BayFalcon.class, MtendaHerder.class, Forest.class, Incinerate.class})
 class PrismaticBoonTest extends BaseCardTest {
 
     @Test
@@ -122,7 +124,7 @@ class PrismaticBoonTest extends BaseCardTest {
 
         assertThat(falcon.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLACK);
 
-        falcon.resetModifiers();
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
         assertThat(falcon.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
     }
 
@@ -140,5 +142,66 @@ class PrismaticBoonTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstantForX(player1, 0, 1, List.of(forestId)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
+    }
+
+    @Test
+    void resolvesForRemainingTargetWhenAnotherDiesInResponse() {
+        Permanent falcon = harness.addToBattlefieldAndReturn(player1, new BayFalcon());
+        Permanent herder = harness.addToBattlefieldAndReturn(player1, new MtendaHerder());
+        harness.setHand(player1, List.of(new PrismaticBoon()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstantForX(player1, 0, 2, List.of(falcon.getId(), herder.getId()));
+
+        harness.setHand(player2, List.of(new Incinerate()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, falcon.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(herder.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.RED);
+        assertThat(falcon.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+    }
+
+    @Test
+    void doesNotChooseColorWhenAllTargetsDieInResponse() {
+        Permanent falcon = harness.addToBattlefieldAndReturn(player1, new BayFalcon());
+        harness.setHand(player1, List.of(new PrismaticBoon()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstantForX(player1, 0, 1, List.of(falcon.getId()));
+
+        harness.setHand(player2, List.of(new Incinerate()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, falcon.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(card -> card instanceof PrismaticBoon);
+    }
+
+    @Test
+    void canGrantProtectionToMoreThanOneHundredCreatures() {
+        List<Permanent> creatures = IntStream.range(0, 101)
+                .mapToObj(i -> harness.addToBattlefieldAndReturn(player1, new BayFalcon()))
+                .toList();
+        harness.setHand(player1, List.of(new PrismaticBoon()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 101);
+
+        harness.castInstantForX(player1, 0, 101, creatures.stream().map(Permanent::getId).toList());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(creatures).allSatisfy(creature ->
+                assertThat(creature.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.RED));
     }
 }
