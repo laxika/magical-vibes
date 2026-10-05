@@ -50,4 +50,36 @@ class KrarkClanIronworksTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Avarice Totem");
     }
 
+    @Test
+    @DisplayName("Tapped Ironworks can repeatedly sacrifice tapped artifacts and then itself")
+    void tappedArtifactsCanBeSacrificedRepeatedly() {
+        Permanent ironworks = harness.addToBattlefieldAndReturn(player1, new KrarkClanIronworks());
+        Permanent firstArtifact = harness.addToBattlefieldAndReturn(player1, new AvariceTotem());
+        Permanent secondArtifact = harness.addToBattlefieldAndReturn(player1, new AvariceTotem());
+        ironworks.setTapped(true);
+        firstArtifact.setTapped(true);
+        secondArtifact.setTapped(true);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, firstArtifact.getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(ironworks, secondArtifact);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, secondArtifact.getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(4);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(ironworks);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(6);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactly(firstArtifact.getCard(), secondArtifact.getCard(), ironworks.getCard());
+    }
 }
