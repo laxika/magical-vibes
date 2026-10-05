@@ -70,6 +70,32 @@ class InnerCalmOuterStrengthTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counts cards at resolution and keeps that boost after the hand changes")
+    void countsHandAtResolutionAndLocksInBoost() {
+        Permanent target = addCreatureReady(player1, new ArabaMothrider());
+        harness.addToBattlefield(player1, new OboroPalaceInTheClouds());
+        harness.setHand(player1, List.of(new InnerCalmOuterStrength()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Oboro, Palace in the Clouds");
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreaturePermanent() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new OboroPalaceInTheClouds());
