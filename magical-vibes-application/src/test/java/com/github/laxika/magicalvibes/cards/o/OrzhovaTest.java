@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Orzhova.class, GrizzlyBears.class, Shock.class, Panopticon.class})
 class OrzhovaTest extends BaseCardTest {
@@ -75,5 +76,75 @@ class OrzhovaTest extends BaseCardTest {
 
         assertThat(gd.findExiledCard(creature.getId())).isNotNull();
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(noncreature);
+    }
+
+    @Test
+    void chaosCanChooseNoTargetsEvenWhenAnOpponentHasCreatureCards() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> triggers.processNextETBTokenMultiTargetTrigger(gd));
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(creature);
+        assertThat(gd.findExiledCard(creature.getId())).isNull();
+    }
+
+    @Test
+    void chaosExilesOnlyTheSelectedCreatureAndCannotTargetItsControllersGraveyard() {
+        Card ownCreature = new GrizzlyBears();
+        Card selected = new GrizzlyBears();
+        Card unselected = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(ownCreature));
+        harness.setGraveyard(player2, List.of(selected, unselected));
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> triggers.processNextETBTokenMultiTargetTrigger(gd));
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(selected.getId(), unselected.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(selected.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(selected.getId())).isNotNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ownCreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(unselected);
+    }
+
+    @Test
+    void chaosRejectsTwoTargetsFromTheSameOpponentsGraveyard() {
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(first, second));
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> triggers.processNextETBTokenMultiTargetTrigger(gd));
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(
+                player1, List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(first, second);
+    }
+
+    @Test
+    void planeswalkingAwayReturnsMultipleCreaturesEvenWhenTheOtherGraveyardIsEmpty() {
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        Card noncreature = new Shock();
+        harness.setGraveyard(player1, List.of(first, second, noncreature));
+        harness.setGraveyard(player2, List.of());
+
+        harness.inMutationScope(() -> planar.planeswalk(gd));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .contains(first.getId(), second.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(noncreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 }
