@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @CardUsed({Kindle.class, CanyonWildcat.class})
 class KindleTest extends BaseCardTest {
 
@@ -100,5 +102,51 @@ class KindleTest extends BaseCardTest {
         // The first Kindle is now in the graveyard, so the second deals 3.
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("Does not count Kindles that leave graveyards before resolution")
+    void recountsGraveyardsAtResolution() {
+        harness.setGraveyard(player1, List.of(new Kindle()));
+        harness.setGraveyard(player2, List.of(new Kindle()));
+        harness.setHand(player1, List.of(new Kindle()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Can target its own controller")
+    void canDamageItsController() {
+        harness.setHand(player1, List.of(new Kindle()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Does not deal damage when its creature target dies before resolution")
+    void doesNotResolveWithDepartedTarget() {
+        var wildcat = harness.addToBattlefieldAndReturn(player2, new CanyonWildcat());
+        harness.setHand(player1, List.of(new Kindle(), new Kindle()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castInstant(player1, 0, wildcat.getId());
+        harness.castAndResolveInstant(player1, 0, wildcat.getId());
+        harness.assertInGraveyard(player2, "Canyon Wildcat");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
     }
 }
