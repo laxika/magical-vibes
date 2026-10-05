@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.d.Deduce;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MelekReforgedResearcher.class, Divination.class, GrizzlyBears.class})
+@CardUsed({MelekReforgedResearcher.class, Divination.class, GrizzlyBears.class, Deduce.class})
 class MelekReforgedResearcherTest extends BaseCardTest {
 
     @Test
@@ -66,11 +67,96 @@ class MelekReforgedResearcherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castSorcery(player1, 0, 0);
+        harness.castAndResolveSorcery(player1, 0, 0);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
-        harness.passBothPriorities();
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void countsInstantsAndUpdatesWhenCardsLeaveTheGraveyard() {
+        harness.setGraveyard(player1, List.of(new Deduce(), new Deduce()));
+        Permanent melek = addCreatureReady(player1, new MelekReforgedResearcher());
+
+        assertThat(gqs.getEffectivePower(gd, melek)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, melek)).isEqualTo(4);
+
+        harness.setGraveyard(player1, List.of(new Deduce()));
+
+        assertThat(gqs.getEffectivePower(gd, melek)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, melek)).isEqualTo(2);
+    }
+
+    @Test
+    void definesPowerAndToughnessInHandAndGraveyard() {
+        MelekReforgedResearcher melek = new MelekReforgedResearcher();
+        harness.setHand(player1, List.of(melek));
+        harness.setGraveyard(player1, List.of(new Deduce()));
+
+        assertThat(gqs.getEffectiveCardPower(gd, melek)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, melek)).isEqualTo(2);
+
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(melek, new Deduce(), new Deduce()));
+
+        assertThat(gqs.getEffectiveCardPower(gd, melek)).isEqualTo(4);
+        assertThat(gqs.getEffectiveCardToughness(gd, melek)).isEqualTo(4);
+    }
+
+    @Test
+    void discountCannotPayColoredManaAndIsSharedBetweenInstantsAndSorceries() {
+        harness.setGraveyard(player1, List.of(new Deduce()));
+        addCreatureReady(player1, new MelekReforgedResearcher());
+        harness.setHand(player1, List.of(new Deduce(), new Deduce()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setLibrary(player1, List.of(new MelekReforgedResearcher()));
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        harness.setHand(player1, List.of(new Divination()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void spellCastBeforeMelekEnteredStillUsesTheFirstSpellOfTheTurn() {
+        harness.setHand(player1, List.of(new Deduce()));
+        harness.setLibrary(player1, List.of(new MelekReforgedResearcher()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        addCreatureReady(player1, new MelekReforgedResearcher());
+        harness.setHand(player1, List.of(new Deduce()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void controllerCanUseDiscountOnOpponentsTurnButOpponentCannot() {
+        harness.setGraveyard(player1, List.of(new Deduce()));
+        addCreatureReady(player1, new MelekReforgedResearcher());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Deduce()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.setHand(player1, List.of(new Deduce()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }
