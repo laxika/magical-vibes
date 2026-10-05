@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WallOfGlare;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -15,10 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OrcishConscripts.class, BalduvianBears.class, WallOfGlare.class})
+@CardUsed({OrcishConscripts.class, GrizzlyBears.class, WallOfGlare.class, Humility.class})
 class OrcishConscriptsTest extends BaseCardTest {
-
-    // --- Attacking ---
 
     @Test
     @DisplayName("Orcish Conscripts can't attack alone")
@@ -34,7 +33,7 @@ class OrcishConscriptsTest extends BaseCardTest {
     @DisplayName("Orcish Conscripts can't attack with only one other attacker")
     void cannotAttackWithSingleAlly() {
         addCreatureReady(player1, new OrcishConscripts());
-        addCreatureReady(player1, new BalduvianBears());
+        addCreatureReady(player1, new GrizzlyBears());
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of(0, 1)))
                 .isInstanceOf(IllegalStateException.class)
@@ -45,8 +44,8 @@ class OrcishConscriptsTest extends BaseCardTest {
     @DisplayName("Orcish Conscripts can attack when two other creatures also attack")
     void canAttackWithTwoAllies() {
         addCreatureReady(player1, new OrcishConscripts());
-        addCreatureReady(player1, new BalduvianBears());
-        addCreatureReady(player1, new BalduvianBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
 
         assertThatCode(() -> declareAttackers(player1, List.of(0, 1, 2))).doesNotThrowAnyException();
     }
@@ -55,12 +54,10 @@ class OrcishConscriptsTest extends BaseCardTest {
     @DisplayName("Orcish Conscripts does not restrict another creature from attacking alone")
     void anotherCreatureCanAttackAlone() {
         addCreatureReady(player1, new OrcishConscripts());
-        addCreatureReady(player1, new BalduvianBears());
+        addCreatureReady(player1, new GrizzlyBears());
 
         assertThatCode(() -> declareAttackers(player1, List.of(1))).doesNotThrowAnyException();
     }
-
-    // --- Blocking ---
 
     @Test
     @DisplayName("Orcish Conscripts can't block alone")
@@ -79,7 +76,7 @@ class OrcishConscriptsTest extends BaseCardTest {
     void cannotBlockWithSingleAlly() {
         addReadyAttacker(player1);
         addCreatureReady(player2, new OrcishConscripts());
-        addCreatureReady(player2, new BalduvianBears());
+        addCreatureReady(player2, new GrizzlyBears());
         prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
@@ -109,8 +106,8 @@ class OrcishConscriptsTest extends BaseCardTest {
     void canBlockWithTwoAllies() {
         addReadyAttacker(player1);
         addCreatureReady(player2, new OrcishConscripts());
-        addCreatureReady(player2, new BalduvianBears());
-        addCreatureReady(player2, new BalduvianBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
         prepareDeclareBlockers();
 
         assertThatCode(() -> gs.declareBlockers(gd, player2,
@@ -123,15 +120,52 @@ class OrcishConscriptsTest extends BaseCardTest {
     void anotherCreatureCanBlockAlone() {
         addReadyAttacker(player1);
         addCreatureReady(player2, new OrcishConscripts());
-        addCreatureReady(player2, new BalduvianBears());
+        addCreatureReady(player2, new GrizzlyBears());
         prepareDeclareBlockers();
 
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0))))
                 .doesNotThrowAnyException();
     }
 
+    @Test
+    @DisplayName("Orcish Conscripts can attack alone after losing its abilities")
+    void canAttackAloneWithoutAbilities() {
+        addCreatureReady(player1, new OrcishConscripts());
+        harness.addToBattlefield(player1, new Humility());
+
+        assertThatCode(() -> declareAttackers(player1, List.of(0))).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Orcish Conscripts can block alone after losing its abilities")
+    void canBlockAloneWithoutAbilities() {
+        addReadyAttacker(player1);
+        addCreatureReady(player2, new OrcishConscripts());
+        harness.addToBattlefield(player2, new Humility());
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Orcish Conscripts can block while its allies block different attackers")
+    void alliesMayBlockDifferentAttackers() {
+        addReadyAttacker(player1);
+        addReadyAttacker(player1);
+        addReadyAttacker(player1);
+        addCreatureReady(player2, new OrcishConscripts());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 1), new BlockerAssignment(2, 2))))
+                .doesNotThrowAnyException();
+    }
+
     private Permanent addReadyAttacker(Player player) {
-        Permanent attacker = addCreatureReady(player, new BalduvianBears());
+        Permanent attacker = addCreatureReady(player, new GrizzlyBears());
         attacker.setAttacking(true);
         return attacker;
     }
