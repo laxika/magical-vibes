@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
@@ -20,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KishlaVillage.class, GrizzlyBears.class, Island.class, Swamp.class})
+@CardUsed({KishlaVillage.class, Island.class, Swamp.class})
 class KishlaVillageTest extends BaseCardTest {
 
     @Test
@@ -30,7 +29,7 @@ class KishlaVillageTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         assertThat(findVillage(player1).isTapped()).isTrue();
     }
@@ -43,7 +42,7 @@ class KishlaVillageTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         assertThat(findVillage(player1).isTapped()).isFalse();
     }
@@ -56,7 +55,7 @@ class KishlaVillageTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         assertThat(findVillage(player1).isTapped()).isFalse();
     }
@@ -77,8 +76,8 @@ class KishlaVillageTest extends BaseCardTest {
     void surveilsTwo() {
         GameData gameData = harness.getGameData();
         Permanent village = addVillageReady(player1);
-        Card topCard = new GrizzlyBears();
-        Card secondCard = new GrizzlyBears();
+        Card topCard = new Island();
+        Card secondCard = new Swamp();
         int graveyardBefore = gd.playerGraveyards.get(player1.getId()).size();
         harness.setLibrary(player1, List.of(topCard, secondCard));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -100,10 +99,86 @@ class KishlaVillageTest extends BaseCardTest {
     }
 
     private Permanent addVillageReady(Player player) {
-        Permanent village = new Permanent(new KishlaVillage());
-        village.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(village);
-        return village;
+        return harness.addToBattlefieldAndReturn(player, new KishlaVillage());
+    }
+
+    @Test
+    void opponentsIslandAndSwampDoNotAllowUntappedEntry() {
+        harness.addToBattlefield(player2, new Island());
+        harness.addToBattlefield(player2, new Swamp());
+        harness.setHand(player1, List.of(new KishlaVillage()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.playLand(player1, 0);
+
+        assertThat(findVillage(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    void surveilCanKeepBothCardsInReverseOrder() {
+        Card first = new Island();
+        Card second = new Swamp();
+        Card third = new KishlaVillage();
+        harness.setLibrary(player1, List.of(first, second, third));
+        int graveyardBefore = gd.playerGraveyards.get(player1.getId()).size();
+        activateSurveil();
+
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(1, 0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first, third);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(graveyardBefore);
+    }
+
+    @Test
+    void surveilCanKeepOneCardAndPutOneInGraveyard() {
+        Card first = new Island();
+        Card second = new Swamp();
+        Card third = new KishlaVillage();
+        harness.setLibrary(player1, List.of(first, second, third));
+        activateSurveil();
+
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(1), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, third);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first).doesNotContain(second, third);
+    }
+
+    @Test
+    void surveilWithOneCardOnlyLooksAtThatCard() {
+        Card onlyCard = new Island();
+        harness.setLibrary(player1, List.of(onlyCard));
+        activateSurveil();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(onlyCard);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onlyCard);
+    }
+
+    @Test
+    void surveilEmptyLibraryCompletesWithoutLosing() {
+        harness.setLibrary(player1, List.of());
+        activateSurveil();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playersWhoLostGameThisMatch).doesNotContain(player1.getId());
+    }
+
+    private void activateSurveil() {
+        addVillageReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.passBothPriorities();
     }
 
     private Permanent findVillage(Player player) {
