@@ -50,7 +50,7 @@ class IthHighArcanistTest extends BaseCardTest {
     void preventsCombatDamageDealtToTarget() {
         Permanent ith = addIth();
         Permanent attacker = addAttacker(player1, player2, 2, 2);
-        addBlocker(player2, 3, 3, 0);
+        addBlocker(player2, 3, 3, gd.playerBattlefields.get(player1.getId()).indexOf(attacker));
 
         activateIth(ith, attacker);
         resolveCombat();
@@ -91,16 +91,63 @@ class IthHighArcanistTest extends BaseCardTest {
     void canTargetOpponentsAttacker() {
         Permanent ith = addIth();
         Permanent attacker = addAttacker(player2, player1, 2, 2);
+        attacker.tap();
 
         activateIth(ith, attacker);
 
         assertThat(attacker.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("Suspend exiles Ith with four time counters for white and blue mana")
+    void suspendsFromHand() {
+        IthHighArcanist card = new IthHighArcanist();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Untapping the target leaves it attacking and does not protect other attackers")
+    void otherAttackersStillDealCombatDamage() {
+        Permanent ith = addIth();
+        Permanent protectedAttacker = addAttacker(player1, player2, 2, 2);
+        addAttacker(player1, player2, 2, 2);
+        protectedAttacker.tap();
+        harness.setLife(player2, 20);
+
+        activateIth(ith, protectedAttacker);
+
+        assertThat(protectedAttacker.isAttacking()).isTrue();
+        resolveCombat();
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("The ability does not untap a target that stops attacking before resolution")
+    void targetMustStillBeAttackingOnResolution() {
+        Permanent ith = addIth();
+        Permanent attacker = addAttacker(player1, player2, 2, 2);
+        attacker.tap();
+        prepareActivation();
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(ith);
+        harness.activateAbility(player1, index, null, attacker.getId());
+        attacker.setAttacking(false);
+
+        harness.passBothPriorities();
+
+        assertThat(attacker.isTapped()).isTrue();
+    }
+
     private Permanent addIth() {
-        Permanent ith = harness.addToBattlefieldAndReturn(player1, new IthHighArcanist());
-        ith.setSummoningSick(false);
-        return ith;
+        return addCreatureReady(player1, new IthHighArcanist());
     }
 
     private void activateIth(Permanent ith, Permanent target) {
@@ -120,11 +167,9 @@ class IthHighArcanistTest extends BaseCardTest {
         Card bears = new GrizzlyBears();
         bears.setPower(power);
         bears.setToughness(toughness);
-        Permanent attacker = new Permanent(bears);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(owner, bears);
         attacker.setAttacking(true);
         attacker.setAttackTarget(defender.getId());
-        gd.playerBattlefields.get(owner.getId()).add(attacker);
         return attacker;
     }
 
@@ -132,11 +177,9 @@ class IthHighArcanistTest extends BaseCardTest {
         Card bears = new GrizzlyBears();
         bears.setPower(power);
         bears.setToughness(toughness);
-        Permanent blocker = new Permanent(bears);
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(owner, bears);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(blockedAttackerIndex);
-        gd.playerBattlefields.get(owner.getId()).add(blocker);
         return blocker;
     }
 }
