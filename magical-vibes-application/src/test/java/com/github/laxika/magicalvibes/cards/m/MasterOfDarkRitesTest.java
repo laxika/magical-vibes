@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.b.BloodlineNecromancer;
+import com.github.laxika.magicalvibes.cards.d.DireFleetRavager;
+import com.github.laxika.magicalvibes.cards.i.IndulgentAristocrat;
+import com.github.laxika.magicalvibes.cards.v.VillageRites;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -18,7 +22,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(MasterOfDarkRites.class)
+@CardUsed({MasterOfDarkRites.class, BloodlineNecromancer.class, DireFleetRavager.class, IndulgentAristocrat.class, VillageRites.class})
 class MasterOfDarkRitesTest extends BaseCardTest {
 
     @Test
@@ -71,6 +75,116 @@ class MasterOfDarkRitesTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void restrictedManaPaysGenericAndColoredCostsOfAVampireSpell() {
+        addRealMasterAndFodder();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setHand(player1, List.of(new BloodlineNecromancer()));
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    void restrictedManaCannotPayForAnUnrelatedCreatureEvenWithEnoughTotalMana() {
+        addRealMasterAndFodder();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setHand(player1, List.of(new DireFleetRavager()));
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void restrictedManaCannotPayForAnInstant() {
+        Permanent master = addRealMasterAndFodder();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.setHand(player1, List.of(new VillageRites()));
+
+        assertThatThrownBy(() -> harness.castInstantWithSacrifice(player1, 0, null, master.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void restrictedManaCannotPayForAVampiresActivatedAbility() {
+        addRealMasterAndFodder();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.addToBattlefield(player1, new IndulgentAristocrat());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void summoningSickMasterCannotActivate() {
+        harness.addToBattlefield(player1, new MasterOfDarkRites());
+        harness.addToBattlefield(player1, new IndulgentAristocrat());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    void tappedMasterCannotActivateAgain() {
+        addRealMasterAndFodder();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.addToBattlefield(player1, new IndulgentAristocrat());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(3);
+    }
+
+    @Test
+    void opponentsCreatureCannotPayTheSacrificeCost() {
+        Permanent master = harness.addToBattlefieldAndReturn(player1, new MasterOfDarkRites());
+        master.setSummoningSick(false);
+        harness.addToBattlefield(player2, new IndulgentAristocrat());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Indulgent Aristocrat");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    void choosingFodderResolvesTheManaAbilityWithoutUsingTheStack() {
+        Permanent master = addRealMasterAndFodder();
+        Permanent chosen = harness.addToBattlefieldAndReturn(player1, new IndulgentAristocrat());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.handlePermanentChosen(player1, chosen.getId());
+
+        assertThat(master.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(chosen);
+        harness.assertInGraveyard(player1, "Indulgent Aristocrat");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(3);
+    }
+
+    private Permanent addRealMasterAndFodder() {
+        Permanent master = harness.addToBattlefieldAndReturn(player1, new MasterOfDarkRites());
+        master.setSummoningSick(false);
+        harness.addToBattlefield(player1, new IndulgentAristocrat());
+        return master;
     }
 
     private Permanent addMasterAndFodder() {
