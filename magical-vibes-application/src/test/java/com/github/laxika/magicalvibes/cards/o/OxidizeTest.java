@@ -30,6 +30,18 @@ class OxidizeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can destroy an artifact you control")
+    void destroysOwnArtifact() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SerumPowder());
+
+        castOxidize(target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Serum Powder");
+        harness.assertInGraveyard(player1, "Serum Powder");
+        harness.assertInGraveyard(player1, "Oxidize");
+    }
+
+    @Test
     @DisplayName("Target artifact cannot be regenerated")
     void cannotBeRegenerated() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SerumPowder());
