@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.g.GorillaTitan;
 import com.github.laxika.magicalvibes.cards.w.WildMongrel;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,16 +16,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PatriarchsDesire.class, WildMongrel.class, Plains.class})
+@CardUsed({PatriarchsDesire.class, WildMongrel.class, Plains.class, GorillaTitan.class})
 class PatriarchsDesireTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Enchanted creature gets -2/-2 below threshold")
+    @DisplayName("Enchanted creature gets +2/-2 below threshold")
     void enchantedCreatureGetsBaseDebuff() {
         Permanent creature = addCreatureReady(player1, new WildMongrel());
         attachAura(player1, creature);
 
-        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(0);
     }
 
@@ -35,7 +36,7 @@ class PatriarchsDesireTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new WildMongrel());
         attachAura(player1, creature);
 
-        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(-2);
     }
 
@@ -46,7 +47,7 @@ class PatriarchsDesireTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new WildMongrel());
         attachAura(player1, creature);
 
-        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(0);
     }
 
@@ -57,7 +58,7 @@ class PatriarchsDesireTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player2, new WildMongrel());
         attachAura(player1, creature);
 
-        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(-2);
     }
 
@@ -68,12 +69,12 @@ class PatriarchsDesireTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new WildMongrel());
         attachAura(player1, creature);
 
-        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(-2);
 
         harness.setGraveyard(player1, graveyardWithSevenCards().subList(0, 6));
 
-        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(0);
     }
 
@@ -91,10 +92,64 @@ class PatriarchsDesireTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Threshold begins when the Aura controller reaches seven cards")
+    void thresholdBeginsAtSevenCards() {
+        harness.setGraveyard(player1, graveyardWithSevenCards().subList(0, 6));
+        Permanent creature = addCreatureReady(player2, new WildMongrel());
+        attachAura(player1, creature);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(0);
+
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(-2);
+    }
+
+    @Test
+    @DisplayName("Resolving the Aura kills a two-toughness creature and puts the Aura in its owner's graveyard")
+    void resolvingAuraKillsCreatureWithZeroToughness() {
+        Permanent creature = addCreatureReady(player2, new WildMongrel());
+        harness.setHand(player1, List.of(new PatriarchsDesire()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Wild Mongrel");
+        harness.assertInGraveyard(player2, "Wild Mongrel");
+        harness.assertNotOnBattlefield(player1, "Patriarch's Desire");
+        harness.assertInGraveyard(player1, "Patriarch's Desire");
+    }
+
+    @Test
+    @DisplayName("Resolved Aura boosts power and tracks its controller's threshold on an opposing creature")
+    void resolvedAuraTracksThresholdOnSurvivingCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GorillaTitan());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new WildMongrel());
+        harness.setHand(player1, List.of(new PatriarchsDesire()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Patriarch's Desire").getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
+
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(12);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(2);
+    }
+
     private void attachAura(Player controller, Permanent creature) {
-        Permanent aura = new Permanent(new PatriarchsDesire());
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new PatriarchsDesire());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
     }
 
     private List<Card> graveyardWithSevenCards() {
