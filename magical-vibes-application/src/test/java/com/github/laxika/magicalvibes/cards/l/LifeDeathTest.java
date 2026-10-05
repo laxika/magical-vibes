@@ -60,8 +60,7 @@ class LifeDeathTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0, 1, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1, creature.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(creature.getId()));
@@ -92,5 +91,70 @@ class LifeDeathTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void lifeAffectsLandsPresentAtResolutionButNotLandsEnteringAfterward() {
+        harness.setHand(player1, List.of(new LifeDeath()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castModalSorcery(player1, 0, 0, List.of());
+
+        Permanent landBeforeResolution = harness.addToBattlefieldAndReturn(player1, new YavimayaCoast());
+        harness.passBothPriorities();
+        Permanent landAfterResolution = harness.addToBattlefieldAndReturn(player1, new YavimayaCoast());
+
+        assertThat(gqs.isCreature(gd, landBeforeResolution)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, landBeforeResolution)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, landBeforeResolution)).isEqualTo(1);
+        assertThat(gqs.isLand(gd, landAfterResolution)).isTrue();
+        assertThat(gqs.isCreature(gd, landAfterResolution)).isFalse();
+    }
+
+    @Test
+    void lifeCanResolveWithoutAnyLandsOrGraveyardTargets() {
+        harness.setHand(player1, List.of(new LifeDeath()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castModalSorcery(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Life // Death");
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void deathDoesNotLoseLifeWhenItsTargetLeavesTheGraveyard() {
+        Card creature = new GaeasSkyfolk();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new LifeDeath()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castSorcery(player1, 0, 1, creature.getId());
+
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Gaea's Skyfolk");
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void deathReturnsOnlyTheChosenCreature() {
+        Card chosen = new GaeasSkyfolk();
+        Card other = new GaeasSkyfolk();
+        harness.setGraveyard(player1, List.of(chosen, other));
+        harness.setHand(player1, List.of(new LifeDeath()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 1, chosen.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(chosen.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(other.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(other.getId()));
+        harness.assertLife(player1, 18);
     }
 }
