@@ -55,10 +55,74 @@ class LongstalkBrawlTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void secondTargetMustBeACreatureYouDoNotControl() {
+        Permanent ownBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent otherOwnBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new LongstalkBrawl()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castSorceryWithGift(
+                player1, 0, List.of(ownBear.getId(), otherOwnBear.getId()), true))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void opponentTargetLeavingStillAllowsTheGiftAndCounterButNoFight() {
+        Permanent ownBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castWithoutResolving(List.of(ownBear.getId(), opponentBear.getId()), true);
+        gd.playerBattlefields.get(player2.getId()).remove(opponentBear);
+
+        harness.passBothPriorities();
+
+        assertThat(ownBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(ownBear.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(countPermanents(player2, "Fish")).isEqualTo(1);
+        assertThat(findPermanent(player2, "Fish").isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Longstalk Brawl");
+    }
+
+    @Test
+    void ownTargetLeavingStillAllowsTheGiftButNoCounterOrFight() {
+        Permanent ownBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castWithoutResolving(List.of(ownBear.getId(), opponentBear.getId()), true);
+        gd.playerBattlefields.get(player1.getId()).remove(ownBear);
+
+        harness.passBothPriorities();
+
+        assertThat(opponentBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opponentBear.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(countPermanents(player2, "Fish")).isEqualTo(1);
+        assertThat(findPermanent(player2, "Fish").isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Longstalk Brawl");
+    }
+
+    @Test
+    void bothTargetsLeavingPreventsThePromisedGift() {
+        Permanent ownBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castWithoutResolving(List.of(ownBear.getId(), opponentBear.getId()), true);
+        gd.playerBattlefields.get(player1.getId()).remove(ownBear);
+        gd.playerBattlefields.get(player2.getId()).remove(opponentBear);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Fish");
+        harness.assertInGraveyard(player1, "Longstalk Brawl");
+    }
+
     private void cast(List<java.util.UUID> targetIds, boolean giftPromised) {
+        castWithoutResolving(targetIds, giftPromised);
+        harness.passBothPriorities();
+    }
+
+    private void castWithoutResolving(List<java.util.UUID> targetIds, boolean giftPromised) {
         harness.setHand(player1, List.of(new LongstalkBrawl()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castSorceryWithGift(player1, 0, targetIds, giftPromised);
-        harness.passBothPriorities();
     }
 }
