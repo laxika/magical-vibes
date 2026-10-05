@@ -2,13 +2,13 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.cards.j.JadeLeech;
+import com.github.laxika.magicalvibes.cards.t.TransguildCourier;
+import com.github.laxika.magicalvibes.cards.u.UniversalAutomaton;
+import com.github.laxika.magicalvibes.cards.w.WebweaverChangeling;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -18,7 +18,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MorophonTheBoundless.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({MorophonTheBoundless.class, GrizzlyBears.class, HillGiant.class,
+        UniversalAutomaton.class, WebweaverChangeling.class, JadeLeech.class, TransguildCourier.class})
 class MorophonTheBoundlessTest extends BaseCardTest {
 
     @Test
@@ -101,6 +102,108 @@ class MorophonTheBoundlessTest extends BaseCardTest {
 
         var bonus = gqs.computeStaticBonus(gd, findPermanent(player2, "Grizzly Bears"));
 
+        assertThat(bonus.power()).isZero();
+        assertThat(bonus.toughness()).isZero();
+    }
+
+    @Test
+    void doesNotBoostNonmatchingCreature() {
+        addMorophon(CardSubtype.BEAR);
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+
+        var bonus = gqs.computeStaticBonus(gd, giant);
+
+        assertThat(bonus.power()).isZero();
+        assertThat(bonus.toughness()).isZero();
+    }
+
+    @Test
+    void doesNotReduceNonmatchingSpell() {
+        addMorophon(CardSubtype.BEAR);
+        harness.setHand(player1, List.of(new HillGiant()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotReduceOpponentsSpell() {
+        addMorophon(CardSubtype.BEAR);
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void boostsChangelingOfChosenType() {
+        addMorophon(CardSubtype.BEAR);
+        Permanent automaton = harness.addToBattlefieldAndReturn(player1, new UniversalAutomaton());
+
+        var bonus = gqs.computeStaticBonus(gd, automaton);
+
+        assertThat(bonus.power()).isEqualTo(1);
+        assertThat(bonus.toughness()).isEqualTo(1);
+    }
+
+    @Test
+    void reducesOnlyOneSymbolOfEachColorForChangelingSpell() {
+        addMorophon(CardSubtype.BEAR);
+        harness.setHand(player1, List.of(new WebweaverChangeling()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    void remainingRepeatedColoredSymbolStillRequiresItsColor() {
+        addMorophon(CardSubtype.BEAR);
+        harness.setHand(player1, List.of(new WebweaverChangeling()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void coloredReductionDoesNotMakeColorlessChangelingFree() {
+        addMorophon(CardSubtype.BEAR);
+        harness.setHand(player1, List.of(new UniversalAutomaton()));
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void reducesColoredCostIncreaseRegardlessOfBattlefieldOrder() {
+        addMorophon(CardSubtype.GOLEM);
+        harness.addToBattlefield(player1, new JadeLeech());
+        harness.setHand(player1, List.of(new TransguildCourier()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    void boostEndsWhenMorophonLeavesBattlefield() {
+        Permanent morophon = addMorophon(CardSubtype.BEAR);
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(gqs.computeStaticBonus(gd, bear).toughness()).isEqualTo(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(morophon);
+
+        var bonus = gqs.computeStaticBonus(gd, bear);
         assertThat(bonus.power()).isZero();
         assertThat(bonus.toughness()).isZero();
     }
