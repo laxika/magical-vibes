@@ -76,8 +76,48 @@ class OrbOfDreamsTest extends BaseCardTest {
     @DisplayName("Existing permanents are not tapped when Orb of Dreams enters")
     void existingPermanentsAreNotTappedWhenOrbEnters() {
         harness.addToBattlefield(player1, new TendoIceBridge());
-        harness.addToBattlefield(player1, new OrbOfDreams());
+        harness.castFromHand(player1, new OrbOfDreams(), "{3}");
+        harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Tendo Ice Bridge").isTapped()).isFalse();
+        assertThat(findPermanent(player1, "Orb of Dreams").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An existing Orb makes a second Orb enter tapped")
+    void secondOrbEntersTapped() {
+        harness.addToBattlefield(player1, new OrbOfDreams());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, new OrbOfDreams(), "{3}");
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player2, "Orb of Dreams").isTapped()).isTrue();
+        assertThat(findPermanent(player1, "Orb of Dreams").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Orb affects creatures entering without being cast")
+    void tappedOrbAffectsNoncastEntry() {
+        Permanent orb = harness.addToBattlefieldAndReturn(player1, new OrbOfDreams());
+        orb.tap();
+
+        Permanent creature = harness.enterBattlefieldAndReturn(player2, new GnarledMass());
+
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Orb does not prevent permanents from untapping normally")
+    void enteredPermanentsUntapNormally() {
+        harness.addToBattlefield(player1, new OrbOfDreams());
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new GnarledMass());
+        assertThat(creature.isTapped()).isTrue();
+
+        harness.performUntapStep(player1);
+
+        assertThat(creature.isTapped()).isFalse();
     }
 }
