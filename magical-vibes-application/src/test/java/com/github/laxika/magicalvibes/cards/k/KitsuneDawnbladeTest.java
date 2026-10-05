@@ -128,6 +128,65 @@ class KitsuneDawnbladeTest extends BaseCardTest {
         assertThat(dawnblade.getToughnessModifier()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("The ETB ability can target Kitsune Dawnblade itself")
+    void etbCanTapItself() {
+        castKitsuneDawnblade();
+        Permanent dawnblade = findPermanent(player1, "Kitsune Dawnblade");
+
+        harness.handlePermanentChosen(player1, dawnblade.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(dawnblade.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ETB ability can tap another creature its controller controls")
+    void etbCanTapOwnCreature() {
+        Permanent bonesetter = harness.addToBattlefieldAndReturn(player1, new KitsuneBonesetter());
+
+        castKitsuneDawnblade();
+        harness.handlePermanentChosen(player1, bonesetter.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bonesetter.isTapped()).isTrue();
+        assertThat(findPermanent(player1, "Kitsune Dawnblade").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An already tapped creature is a legal ETB target")
+    void etbCanTargetTappedCreature() {
+        Permanent bonesetter = harness.addToBattlefieldAndReturn(player2, new KitsuneBonesetter());
+        bonesetter.setTapped(true);
+
+        castKitsuneDawnblade();
+        harness.handlePermanentChosen(player1, bonesetter.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bonesetter.isTapped()).isTrue();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ETB ability does not resolve when its target leaves the battlefield")
+    void etbDoesNotResolveWithMissingTarget() {
+        Permanent bonesetter = harness.addToBattlefieldAndReturn(player2, new KitsuneBonesetter());
+
+        castKitsuneDawnblade();
+        harness.handlePermanentChosen(player1, bonesetter.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(bonesetter);
+        gd.playerHands.get(player2.getId()).add(bonesetter.getCard());
+        harness.passBothPriorities();
+
+        assertThat(bonesetter.isTapped()).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanent(player1, "Kitsune Dawnblade").isTapped()).isFalse();
+    }
+
     private void castKitsuneDawnblade() {
         harness.castFromHand(player1, new KitsuneDawnblade(), "{4}{W}");
         harness.passBothPriorities();
