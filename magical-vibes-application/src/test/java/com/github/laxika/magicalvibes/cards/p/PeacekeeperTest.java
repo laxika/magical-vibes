@@ -141,4 +141,31 @@ class PeacekeeperTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
+    @Test
+    @DisplayName("Losing all abilities lifts Peacekeeper's attack restriction")
+    void losingAllAbilitiesAllowsAttacks() {
+        Permanent peacekeeper = harness.addToBattlefieldAndReturn(player1, new Peacekeeper());
+        Permanent treefolk = addReadyTreefolk(player1);
+        peacekeeper.setLosesAllAbilitiesUntilEndOfTurn(true);
+
+        harness.setLife(player2, 20);
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(treefolk)));
+
+        harness.assertLife(player2, 17);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(peacekeeper);
+    }
+
+    @Test
+    @DisplayName("Two generic mana cannot replace the white upkeep payment")
+    void paymentRequiresWhiteMana() {
+        Permanent peacekeeper = harness.addToBattlefieldAndReturn(player1, new Peacekeeper());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(peacekeeper);
+        harness.assertInGraveyard(player1, "Peacekeeper");
+    }
 }
