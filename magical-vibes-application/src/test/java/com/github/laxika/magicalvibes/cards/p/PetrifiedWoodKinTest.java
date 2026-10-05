@@ -51,16 +51,13 @@ class PetrifiedWoodKinTest extends BaseCardTest {
     @DisplayName("Bloodthirst X counts damage dealt after the spell was cast but before it resolves")
     void bloodthirstCountsDamageBeforeResolution() {
         PetrifiedWoodKin woodKin = new PetrifiedWoodKin();
-        harness.setHand(player1, List.of(woodKin));
-        harness.addMana(player1, ManaColor.GREEN, 7);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, woodKin, "{6}{G}");
         harness.passPriority(player1);
 
         harness.setHand(player2, List.of(new Pyromatics()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player2.getId());
         harness.assertLife(player2, 19);
         harness.passBothPriorities();
 
@@ -88,13 +85,11 @@ class PetrifiedWoodKinTest extends BaseCardTest {
     @DisplayName("The creature spell cannot be countered")
     void cannotBeCountered() {
         PetrifiedWoodKin woodKin = new PetrifiedWoodKin();
-        harness.setHand(player1, List.of(woodKin));
-        harness.addMana(player1, ManaColor.GREEN, 7);
 
         harness.setHand(player2, List.of(new Frazzle()));
         harness.addMana(player2, ManaColor.BLUE, 4);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, woodKin, "{6}{G}");
         harness.passPriority(player1);
         harness.castInstant(player2, 0, woodKin.getId());
         harness.passBothPriorities();
@@ -102,6 +97,59 @@ class PetrifiedWoodKinTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Petrified Wood-Kin");
         harness.assertInGraveyard(player2, "Frazzle");
+    }
+
+    @Test
+    @DisplayName("Bloodthirst does not count a reduced life total without damage")
+    void bloodthirstDoesNotCountLifeLossWithoutDamage() {
+        harness.setLife(player2, 10);
+
+        castPetrifiedWoodKin();
+
+        assertThat(findPermanent(player1, "Petrified Wood-Kin")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Bloodthirst X totals separate damage events rather than life lost")
+    void bloodthirstTotalsSeparateDamageEvents() {
+        for (int i = 0; i < 2; i++) {
+            harness.setHand(player1, List.of(new Pyromatics()));
+            harness.addMana(player1, ManaColor.RED, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            harness.castAndResolveInstant(player1, 0, player2.getId());
+        }
+        harness.setLife(player2, 20);
+
+        castPetrifiedWoodKin();
+
+        assertThat(findPermanent(player1, "Petrified Wood-Kin")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Bloodthirst applies when entering without being cast and uses the entering controller")
+    void bloodthirstAppliesToUncastEntryForEitherController() {
+        gd.recordDamageToPlayer(player1.getId(), 5);
+        gd.recordDamageToPlayer(player2.getId(), 2);
+
+        var permanent = harness.enterBattlefieldAndReturn(player2, new PetrifiedWoodKin());
+
+        assertThat(permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Protection also stops instants cast by its controller")
+    void protectionStopsControllersInstants() {
+        var permanent = harness.addToBattlefieldAndReturn(player1, new PetrifiedWoodKin());
+        harness.setHand(player1, List.of(new Pyromatics()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, permanent.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid target");
     }
 
     private void castPetrifiedWoodKin() {
