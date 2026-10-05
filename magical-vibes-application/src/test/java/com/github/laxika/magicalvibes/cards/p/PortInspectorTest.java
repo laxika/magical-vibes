@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PortInspector.class, FreshVolunteers.class})
+@CardUsed({PortInspector.class, FreshVolunteers.class, JaceBeleren.class})
 class PortInspectorTest extends BaseCardTest {
 
     @Test
@@ -71,9 +72,7 @@ class PortInspectorTest extends BaseCardTest {
     }
 
     private void declarePortInspectorBlocked(List<BlockerAssignment> assignments) {
-        Permanent inspector = addCreatureReady(player1, new PortInspector());
-        inspector.setAttacking(true);
-        inspector.setAttackTarget(player2.getId());
+        addCreatureReady(player1, new PortInspector());
 
         int blockerCount = assignments.stream()
                 .mapToInt(BlockerAssignment::blockerIndex)
@@ -84,9 +83,63 @@ class PortInspectorTest extends BaseCardTest {
         }
         harness.setHand(player2, List.of(new FreshVolunteers()));
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, assignments);
+        harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("The blocked trigger still resolves after Port Inspector leaves the battlefield")
+    void looksAtHandAfterSourceLeavesBattlefield() {
+        declarePortInspectorBlocked();
+        Permanent inspector = findPermanent(player1, "Port Inspector");
+        gd.playerBattlefields.get(player1.getId()).remove(inspector);
+        gd.playerGraveyards.get(player1.getId()).add(inspector.getCard());
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND"))
+                .anyMatch(message -> message.contains("Fresh Volunteers"));
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("When attacking a planeswalker, it looks at that planeswalker's controller's hand")
+    void looksAtHandWhenAttackingPlaneswalker() {
+        declareBlockedAttackingPlaneswalker(false);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND"))
+                .anyMatch(message -> message.contains("Fresh Volunteers"));
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The defending player's hand remains accessible after the attacked planeswalker leaves")
+    void looksAtHandAfterAttackedPlaneswalkerLeavesBattlefield() {
+        declareBlockedAttackingPlaneswalker(true);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND"))
+                .anyMatch(message -> message.contains("Fresh Volunteers"));
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
+    }
+
+    private void declareBlockedAttackingPlaneswalker(boolean planeswalkerLeaves) {
+        Permanent inspector = addCreatureReady(player1, new PortInspector());
+        addCreatureReady(player2, new FreshVolunteers());
+        Permanent jace = harness.enterBattlefieldAndReturn(player2, new JaceBeleren());
+        inspector.setAttacking(true);
+        inspector.setAttackTarget(jace.getId());
+        harness.setHand(player2, List.of(new FreshVolunteers()));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        if (planeswalkerLeaves) {
+            gd.playerBattlefields.get(player2.getId()).remove(jace);
+            gd.playerGraveyards.get(player2.getId()).add(jace.getCard());
+        }
         harness.passBothPriorities();
     }
 }
