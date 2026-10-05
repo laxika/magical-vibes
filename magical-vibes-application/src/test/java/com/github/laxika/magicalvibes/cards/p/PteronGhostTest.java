@@ -56,11 +56,57 @@ class PteronGhostTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Dismantle()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, artifact.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, artifact.getId());
 
         harness.assertOnBattlefield(player2, "Myr Moonvessel");
         assertThat(artifact.getRegenerationShield()).isZero();
         assertThat(artifact.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Pteron Ghost can regenerate an artifact in response to destruction")
+    void regeneratesInResponseToDestruction() {
+        harness.addToBattlefield(player1, new PteronGhost());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AetherVial());
+        harness.setHand(player1, List.of(new Dismantle()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castSorcery(player1, 0, artifact.getId());
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+        harness.assertInGraveyard(player1, "Pteron Ghost");
+        assertThat(gd.stack).hasSize(2);
+        assertThat(artifact.getRegenerationShield()).isZero();
+
+        harness.passBothPriorities();
+        assertThat(artifact.getRegenerationShield()).isEqualTo(1);
+        assertThat(artifact.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Aether Vial");
+        assertThat(artifact.getRegenerationShield()).isZero();
+        assertThat(artifact.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A regeneration shield protects a noncreature artifact only once")
+    void shieldProtectsNoncreatureArtifactOnlyOnce() {
+        Permanent ghost = harness.addToBattlefieldAndReturn(player1, new PteronGhost());
+        ghost.setTapped(true);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AetherVial());
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Dismantle(), new Dismantle()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castAndResolveSorcery(player1, 0, artifact.getId());
+        harness.assertOnBattlefield(player1, "Aether Vial");
+        assertThat(artifact.isTapped()).isTrue();
+
+        harness.castAndResolveSorcery(player1, 0, artifact.getId());
+        harness.assertNotOnBattlefield(player1, "Aether Vial");
+        harness.assertInGraveyard(player1, "Aether Vial");
     }
 }
