@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CliffhavenSellSword;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,14 +14,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LegionAngel.class, GrizzlyBears.class})
+@CardUsed({LegionAngel.class, CliffhavenSellSword.class})
 class LegionAngelTest extends BaseCardTest {
 
     @Test
     @DisplayName("Offers a Legion Angel from outside the game and puts it into hand")
     void offersLegionAngelFromOutsideTheGame() {
         Card chosen = new LegionAngel();
-        Card nonmatching = new GrizzlyBears();
+        Card nonmatching = new CliffhavenSellSword();
         setSideboard(chosen, nonmatching);
 
         castLegionAngel();
@@ -54,7 +53,7 @@ class LegionAngelTest extends BaseCardTest {
     @Test
     @DisplayName("Does not prompt when no Legion Angel is outside the game")
     void noMatchingCardNoPrompt() {
-        Card nonmatching = new GrizzlyBears();
+        Card nonmatching = new CliffhavenSellSword();
         setSideboard(nonmatching);
 
         castLegionAngel();
@@ -63,12 +62,55 @@ class LegionAngelTest extends BaseCardTest {
         assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(nonmatching);
     }
 
+    @Test
+    @DisplayName("Takes only the selected Legion Angel when several are available")
+    void takesOnlyOneOfMultipleMatchingCards() {
+        Card first = new LegionAngel();
+        Card second = new LegionAngel();
+        setSideboard(first, second);
+
+        castLegionAngel();
+
+        assertThat(pendingSearch().params().cards()).containsExactly(first, second);
+        choose(second);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(first);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot take a Legion Angel from an opponent's sideboard")
+    void cannotTakeOpponentsCard() {
+        Card opponentsCard = new LegionAngel();
+        setSideboard();
+        gd.playerSideboards.put(player2.getId(), new ArrayList<>(List.of(opponentsCard)));
+
+        castLegionAngel();
+
+        assertThat(pendingSearch()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerSideboards.get(player2.getId())).containsExactly(opponentsCard);
+    }
+
+    @Test
+    @DisplayName("An exiled Legion Angel is not outside the game")
+    void cannotTakeExiledCard() {
+        Card exiled = new LegionAngel();
+        harness.setExile(player1, List.of(exiled));
+        setSideboard();
+
+        castLegionAngel();
+
+        assertThat(pendingSearch()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(exiled);
+    }
     private void castLegionAngel() {
         harness.setHand(player1, List.of(new LegionAngel()));
         harness.addMana(player1, ManaColor.WHITE, 4);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void setSideboard(Card... cards) {
@@ -82,6 +124,6 @@ class LegionAngelTest extends BaseCardTest {
     private void choose(Card card) {
         PendingInteraction.LibrarySearch search = pendingSearch();
         int index = card == null ? -1 : search.params().cards().indexOf(card);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(index));
+        harness.handleCardChosen(player1, index);
     }
 }
