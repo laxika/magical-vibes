@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.DauthiSlayer;
 import com.github.laxika.magicalvibes.cards.s.SearingTouch;
 import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -134,6 +135,38 @@ class MazeOfShadowsTest extends BaseCardTest {
         assertThat(attacker.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Can target its controller's untapped attacker without removing it from combat")
+    void canTargetOwnUntappedAttacker() {
+        harness.setLife(player2, 20);
+        addReadyMaze(player1);
+        Permanent attacker = addShadowAttacker(player1, player2);
+
+        activateMaze(attacker);
+
+        assertThat(attacker.isTapped()).isFalse();
+        assertThat(attacker.isAttacking()).isTrue();
+        resolveCombat(player1);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Does not untap or prevent damage if the attacker loses shadow before resolution")
+    void doesNothingIfTargetLosesShadowBeforeResolution() {
+        harness.setLife(player1, 20);
+        addReadyMaze(player1);
+        Permanent attacker = addShadowAttacker(player2, player1);
+        attacker.tap();
+
+        harness.activateAbility(player1, 0, 1, null, attacker.getId());
+        attacker.getRemovedKeywords().add(Keyword.SHADOW);
+        harness.passBothPriorities();
+
+        assertThat(attacker.isTapped()).isTrue();
+        resolveCombat(player2);
+        harness.assertLife(player1, 18);
+    }
+
     private void activateMaze(Permanent target) {
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
@@ -148,11 +181,9 @@ class MazeOfShadowsTest extends BaseCardTest {
     }
 
     private Permanent addAttacker(Player owner, Player defender, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(owner, card);
         perm.setAttacking(true);
         perm.setAttackTarget(defender.getId());
-        gd.playerBattlefields.get(owner.getId()).add(perm);
         return perm;
     }
 
