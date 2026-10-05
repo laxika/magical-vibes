@@ -12,8 +12,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MobJustice.class, MoggFlunkies.class, VolrathsStronghold.class})
+@CardUsed({MobJustice.class, MoggFlunkies.class, VolrathsStronghold.class, ChandraNalaar.class})
 class MobJusticeTest extends BaseCardTest {
 
     @Test
@@ -76,7 +77,6 @@ class MobJusticeTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(ChandraNalaar.class)
     @DisplayName("Can target a planeswalker")
     void canTargetPlaneswalker() {
         var chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
@@ -90,5 +90,47 @@ class MobJusticeTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, chandra.getId());
 
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Can target its controller and counts that controller's creatures")
+    void canTargetItsController() {
+        harness.addToBattlefield(player1, new MoggFlunkies());
+        harness.addToBattlefield(player1, new MoggFlunkies());
+        harness.addToBattlefield(player2, new MoggFlunkies());
+        harness.setHand(player1, List.of(new MobJustice()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature")
+    void cannotTargetCreature() {
+        var creature = harness.addToBattlefieldAndReturn(player2, new MoggFlunkies());
+        harness.addToBattlefield(player1, new MoggFlunkies());
+        harness.setHand(player1, List.of(new MobJustice()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature land")
+    void cannotTargetLand() {
+        var land = harness.addToBattlefieldAndReturn(player2, new VolrathsStronghold());
+        harness.addToBattlefield(player1, new MoggFlunkies());
+        harness.setHand(player1, List.of(new MobJustice()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
