@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
+import com.github.laxika.magicalvibes.cards.g.Gravkill;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KavaronHarrier.class, GiantGrowth.class})
+@CardUsed({KavaronHarrier.class, Gravkill.class})
 class KavaronHarrierTest extends BaseCardTest {
 
     @Test
@@ -42,9 +42,11 @@ class KavaronHarrierTest extends BaseCardTest {
         assertThat(robot.getCard().getSubtypes()).containsExactly(CardSubtype.ROBOT);
         assertThat(robot.getCard().hasType(CardType.CREATURE)).isTrue();
         assertThat(robot.getCard().hasType(CardType.ARTIFACT)).isTrue();
+        assertThat(robot.getCard().getColors()).isEmpty();
         assertThat(robot.isTapped()).isTrue();
         assertThat(robot.isAttackedThisTurn()).isTrue();
         assertThat(robot.getAttackTarget()).isEqualTo(harrier.getAttackTarget());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test
@@ -60,6 +62,7 @@ class KavaronHarrierTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Robot"))
                 .noneMatch(permanent -> permanent.getCard().isToken());
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
     }
 
     @Test
@@ -77,16 +80,52 @@ class KavaronHarrierTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_OF_COMBAT);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(robot);
     }
 
+    @Test
+    @DisplayName("End-of-combat sacrifice uses the stack and allows responses")
+    void sacrificeAllowsResponses() {
+        addCreatureReady(player1, new KavaronHarrier());
+        preventAutoPass(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        Permanent robot = findPermanent(player1, "Robot");
+
+        harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(robot);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(robot);
+    }
+
+    @Test
+    @DisplayName("A token controlled by the opponent cannot be sacrificed by its creator")
+    void stolenTokenIsNotSacrificed() {
+        addCreatureReady(player1, new KavaronHarrier());
+        preventAutoPass(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        Permanent robot = findPermanent(player1, "Robot");
+        gd.playerBattlefields.get(player1.getId()).remove(robot);
+        gd.playerBattlefields.get(player2.getId()).add(robot);
+
+        harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(robot);
+    }
+
     private void preventAutoPass(Player player) {
-        harness.setHand(player, List.of(new GiantGrowth()));
-        harness.addMana(player, ManaColor.GREEN, 1);
+        harness.setHand(player, List.of(new Gravkill()));
+        harness.addMana(player, ManaColor.BLACK, 4);
     }
 }
