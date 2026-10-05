@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ObzedatGhostCouncil.class})
 class ObzedatGhostCouncilTest extends BaseCardTest {
 
     @Test
@@ -35,7 +37,7 @@ class ObzedatGhostCouncilTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        assertThatThrownBy(() -> harness.getGameService().playCard(gd, player1, 0, 0, player1.getId(), null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
     }
@@ -71,6 +73,8 @@ class ObzedatGhostCouncilTest extends BaseCardTest {
         assertThat(findObzedat(player1)).isNull();
 
         runUpkeepOf(player1);
+        assertThat(findObzedat(player1)).isNull();
+        harness.passBothPriorities(); // resolve the delayed return trigger
 
         Permanent returned = findObzedat(player1);
         assertThat(returned).isNotNull();
@@ -87,11 +91,64 @@ class ObzedatGhostCouncilTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         runUpkeepOf(player1);
+        harness.passBothPriorities(); // resolve the delayed return trigger
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities(); // resolve the ETB trigger
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+    }
+
+    @Test
+    @DisplayName("A borrowed Obzedat waits for its ability controller's upkeep, then returns to its owner")
+    void borrowedObzedatReturnsAtAbilityControllersUpkeep() {
+        ObzedatGhostCouncil card = new ObzedatGhostCouncil();
+        card.setOwnerId(player2.getId());
+        harness.addToBattlefield(player1, card);
+        exileAtEndStep(true);
+
+        runUpkeepOf(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(findObzedat(player1)).isNull();
+        Permanent returned = findObzedat(player2);
+        assertThat(returned).isNotNull();
+        assertThat(returned.hasKeyword(Keyword.HASTE)).isTrue();
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 22);
+    }
+
+    @Test
+    @DisplayName("A borrowed Obzedat does not return during its owner's intervening upkeep")
+    void borrowedObzedatSkipsOwnersUpkeep() {
+        ObzedatGhostCouncil card = new ObzedatGhostCouncil();
+        card.setOwnerId(player2.getId());
+        harness.addToBattlefield(player1, card);
+        exileAtEndStep(true);
+
+        runUpkeepOf(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findObzedat(player1)).isNull();
+        assertThat(findObzedat(player2)).isNull();
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(card.getId()));
+    }
+
+    @Test
+    @DisplayName("Obzedat does not trigger during an opponent's end step")
+    void opponentsEndStepDoesNotTrigger() {
+        harness.addToBattlefield(player1, new ObzedatGhostCouncil());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Obzedat, Ghost Council");
     }
 
     private void exileAtEndStep(boolean accept) {
@@ -123,6 +180,6 @@ class ObzedatGhostCouncilTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.getGameService().playCard(gd, player1, 0, 0, player2.getId(), null);
+        harness.castCreature(player1, 0, player2.getId());
     }
 }
