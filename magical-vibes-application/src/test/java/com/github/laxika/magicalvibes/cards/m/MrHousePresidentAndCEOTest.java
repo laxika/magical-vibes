@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.k.KambalProfiteeringMayor;
 import com.github.laxika.magicalvibes.cards.t.Treasure;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MrHousePresidentAndCEO.class, Treasure.class})
+@CardUsed({MrHousePresidentAndCEO.class, Treasure.class, KambalProfiteeringMayor.class})
 class MrHousePresidentAndCEOTest extends BaseCardTest {
 
     private RollD6EffectHandler rollD6EffectHandler;
@@ -60,6 +61,53 @@ class MrHousePresidentAndCEOTest extends BaseCardTest {
     }
 
     @Test
+    void resultOfFiveCreatesOnlyARobot() {
+        activateHouse(5);
+
+        assertThat(findPermanents(player1, "Robot")).hasSize(1);
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+    }
+
+    @Test
+    void resultBelowFourDoesNotTrigger() {
+        ReflectionTestUtils.setField(rollD6EffectHandler, "diceRollService", new FixedDiceRollService(3));
+        Permanent house = addCreatureReady(player1, new MrHousePresidentAndCEO());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(house), null, null);
+
+        harness.getStackResolutionService().resolveTopOfStack(gd);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingManaAbilityTriggers).isEmpty();
+    }
+
+    @Test
+    void opponentsRollDoesNotTriggerHouse() {
+        addCreatureReady(player2, new MrHousePresidentAndCEO());
+
+        activateHouse(6);
+
+        assertThat(findPermanents(player1, "Robot")).hasSize(1);
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        assertThat(findPermanents(player2, "Robot")).isEmpty();
+        assertThat(findPermanents(player2, "Treasure")).isEmpty();
+    }
+
+    @Test
+    void robotAndTreasureEnterTogetherForTokenEntryTriggers() {
+        harness.addToBattlefield(player1, new KambalProfiteeringMayor());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        activateHouse(6);
+
+        assertThat(findPermanents(player1, "Robot")).hasSize(1);
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
     void treasureManaAddsADieAndEachQualifyingResultTriggers() {
         addTreasure(player1);
         addTreasure(player1);
@@ -89,15 +137,8 @@ class MrHousePresidentAndCEOTest extends BaseCardTest {
     }
 
     private void activateTreasure(String color) {
-        int treasureIndex = -1;
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
-        for (int i = 0; i < battlefield.size(); i++) {
-            if (battlefield.get(i).getCard().getName().equals("Treasure")) {
-                treasureIndex = i;
-                break;
-            }
-        }
-        assertThat(treasureIndex).isGreaterThanOrEqualTo(0);
+        int treasureIndex = battlefield.indexOf(findPermanent(player1, "Treasure"));
         harness.activateAbility(player1, treasureIndex, null, null);
         harness.handleListChoice(player1, color);
     }
