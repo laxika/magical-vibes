@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KillerWhale;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,7 +20,7 @@ class OmenHawkerTest extends BaseCardTest {
 
     @Test
     void addsBlueAndColorlessAbilityOnlyMana() {
-        addReady(new OmenHawker());
+        addCreatureReady(player1, new OmenHawker());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -34,8 +33,8 @@ class OmenHawkerTest extends BaseCardTest {
 
     @Test
     void abilityOnlyManaCanPayForAnActivatedAbility() {
-        addReady(new OmenHawker());
-        addReady(new KillerWhale());
+        addCreatureReady(player1, new OmenHawker());
+        addCreatureReady(player1, new KillerWhale());
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.activateAbility(player1, 1, 0, null, null);
@@ -48,11 +47,12 @@ class OmenHawkerTest extends BaseCardTest {
 
     @Test
     void abilityOnlyManaCannotPayForACreatureSpell() {
-        addReady(new OmenHawker());
+        addCreatureReady(player1, new OmenHawker());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.activateAbility(player1, 0, 0, null, null);
         harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
@@ -60,9 +60,50 @@ class OmenHawkerTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getAbilityOnlyMana(ManaColor.COLORLESS)).isEqualTo(1);
     }
 
-    private Permanent addReady(Card card) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player1, card);
-        permanent.setSummoningSick(false);
-        return permanent;
+    @Test
+    void manaAbilityTapsHawkerAndResolvesWithoutUsingTheStack() {
+        Permanent hawker = addCreatureReady(player1, new OmenHawker());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(hawker.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getAbilityOnlyMana(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getAbilityOnlyMana(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    void abilityOnlyBlueManaCannotPayForABlueCreatureSpell() {
+        addCreatureReady(player1, new OmenHawker());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new OmenHawker()));
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getAbilityOnlyMana(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getAbilityOnlyMana(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new OmenHawker());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getAbilityOnlyMana(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getAbilityOnlyMana(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    void cannotActivateAgainWhileTapped() {
+        addCreatureReady(player1, new OmenHawker());
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getAbilityOnlyMana(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getAbilityOnlyMana(ManaColor.COLORLESS)).isEqualTo(1);
     }
 }
