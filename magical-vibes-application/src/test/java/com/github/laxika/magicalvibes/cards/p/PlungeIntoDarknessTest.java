@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({PlungeIntoDarkness.class, AuriokChampion.class, KrarkClanIronworks.class})
 class PlungeIntoDarknessTest extends BaseCardTest {
@@ -133,6 +134,110 @@ class PlungeIntoDarknessTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(exiled);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Sacrifice mode with no controlled creatures leaves opposing creatures alone")
+    void sacrificeModeWithOnlyOpposingCreatures() {
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new AuriokChampion());
+        int lifeBefore = gd.getLife(player1.getId());
+        cast(0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Plunge into Darkness");
+    }
+
+    @Test
+    @DisplayName("Paying more life than the library size still pays the full amount")
+    void lifePaymentExceedsLibrarySize() {
+        Card chosen = new AuriokChampion();
+        Card exiled = new KrarkClanIronworks();
+        harness.setLibrary(player1, List.of(chosen, exiled));
+        int lifeBefore = gd.getLife(player1.getId());
+        cast(1);
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 5);
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        harness.assertLife(player1, lifeBefore - 5);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(exiled);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Looking at one card puts it into hand and leaves deeper cards untouched")
+    void lifePaymentOfOneLeavesRestOfLibraryUntouched() {
+        Card chosen = new AuriokChampion();
+        Card untouched = new KrarkClanIronworks();
+        harness.setLibrary(player1, List.of(chosen, untouched));
+        int lifeBefore = gd.getLife(player1.getId());
+        cast(1);
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 1);
+
+        harness.assertLife(player1, lifeBefore - 1);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Life can be paid with an empty library without drawing or choosing a card")
+    void lifePaymentWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        int lifeBefore = gd.getLife(player1.getId());
+        cast(1);
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 3);
+
+        harness.assertLife(player1, lifeBefore - 3);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Plunge into Darkness");
+    }
+
+    @Test
+    @DisplayName("Entwine gains life before choosing how much life to pay regardless of selection order")
+    void entwineCanPayNewlyGainedLife() {
+        harness.setLife(player1, 2);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AuriokChampion());
+        Card chosen = new KrarkClanIronworks();
+        harness.setLibrary(player1, List.of(chosen));
+        addMana(3);
+        harness.setHand(player1, List.of(new PlungeIntoDarkness()));
+        harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{1, 0}, List.of());
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
+
+        harness.assertLife(player1, 5);
+        harness.handleXValueChosen(player1, 4);
+
+        harness.assertLife(player1, 1);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature.getCard());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Choosing both modes requires the additional black mana")
+    void bothModesRequireEntwineMana() {
+        addMana(2);
+        harness.setHand(player1, List.of(new PlungeIntoDarkness()));
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(
+                player1, 0, 1, 2, new int[]{0, 1}, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Plunge into Darkness");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void cast(int mode) {
