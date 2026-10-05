@@ -111,4 +111,59 @@ class OrderOfTheSacredTorchTest extends BaseCardTest {
         assertThat(orderPermanent.isTapped()).isFalse();
         harness.assertLife(player1, 0);
     }
+
+    @Test
+    @DisplayName("Pays costs immediately and cannot activate again while tapped")
+    void paysCostsBeforeResolutionAndCannotActivateAgain() {
+        Permanent order = addCreatureReady(player1, new OrderOfTheSacredTorch());
+        harness.setLife(player1, 20);
+        Terror terror = new Terror();
+        harness.setHand(player2, List.of(terror));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player2);
+        harness.castInstant(player2, 0, order.getId());
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, terror.getId());
+
+        assertThat(order.isTapped()).isTrue();
+        harness.assertLife(player1, 19);
+        assertThat(gd.stack).hasSize(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, terror.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+        harness.assertLife(player1, 19);
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Terror");
+        harness.assertOnBattlefield(player1, "Order of the Sacred Torch");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent order = harness.addToBattlefieldAndReturn(player1, new OrderOfTheSacredTorch());
+        harness.setLife(player1, 20);
+        Terror terror = new Terror();
+        harness.setHand(player2, List.of(terror));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player2);
+        harness.castInstant(player2, 0, order.getId());
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, terror.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(order.isTapped()).isFalse();
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Order of the Sacred Torch");
+        harness.assertInGraveyard(player2, "Terror");
+    }
 }
