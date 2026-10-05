@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningStrike;
+import com.github.laxika.magicalvibes.cards.m.MemoryDeluge;
+import com.github.laxika.magicalvibes.cards.o.OtherworldlyGaze;
 import com.github.laxika.magicalvibes.cards.y.YawgmothsAgenda;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -19,20 +21,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({PatricianGeist.class, GrizzlyBears.class,
-        YawgmothsAgenda.class, LightningStrike.class})
+        YawgmothsAgenda.class, LightningStrike.class, OtherworldlyGaze.class, MemoryDeluge.class})
 class PatricianGeistTest extends BaseCardTest {
 
     @Test
     void boostsOtherSpiritsYouControl() {
-        addCreatureReady(player1, new PatricianGeist());
-        addCreatureReady(player1, spirit());
-        addCreatureReady(player1, new GrizzlyBears());
-        addCreatureReady(player2, spirit());
-
-        Permanent geist = findPermanent(player1, "Patrician Geist");
-        Permanent ownSpirit = findPermanent(player1, "Test Spirit");
-        Permanent ownBear = findPermanent(player1, "Grizzly Bears");
-        Permanent opposingSpirit = findPermanent(player2, "Test Spirit");
+        Permanent geist = addCreatureReady(player1, new PatricianGeist());
+        Permanent ownSpirit = addCreatureReady(player1, spirit());
+        Permanent ownBear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingSpirit = addCreatureReady(player2, spirit());
 
         assertThat(gqs.getEffectivePower(gd, geist)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, geist)).isEqualTo(2);
@@ -72,6 +69,70 @@ class PatricianGeistTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void reducesFlashbackCost() {
+        harness.addToBattlefield(player1, new PatricianGeist());
+        harness.setGraveyard(player1, List.of(new OtherworldlyGaze()));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castFlashback(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player1, "Otherworldly Gaze");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void multipleGeistsCannotReduceColoredFlashbackCost() {
+        harness.addToBattlefield(player1, new PatricianGeist());
+        harness.addToBattlefield(player1, new PatricianGeist());
+        harness.setGraveyard(player1, List.of(new OtherworldlyGaze()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Otherworldly Gaze");
+    }
+
+    @Test
+    void doesNotReduceOpponentsFlashbackCost() {
+        harness.addToBattlefield(player1, new PatricianGeist());
+        harness.setGraveyard(player2, List.of(new OtherworldlyGaze()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castFlashback(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player2, "Otherworldly Gaze");
+    }
+
+    @Test
+    void multipleGeistsBoostEachOther() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new PatricianGeist());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new PatricianGeist());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+    }
+
+    @Test
+    void multipleGeistsStackTheirGraveyardCostReductions() {
+        harness.addToBattlefield(player1, new PatricianGeist());
+        harness.addToBattlefield(player1, new PatricianGeist());
+        harness.setGraveyard(player1, List.of(new MemoryDeluge()));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castFlashback(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player1, "Memory Deluge");
+        assertThat(gd.stack).isEmpty();
     }
 
     private Card spirit() {
