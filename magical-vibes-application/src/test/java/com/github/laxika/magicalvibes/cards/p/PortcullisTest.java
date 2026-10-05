@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.r.ReinsOfPower;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -18,7 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Portcullis.class, GrizzlyBears.class, LlanowarElves.class, Naturalize.class,
-        ReinsOfPower.class, Shock.class})
+        ReinsOfPower.class, Shock.class, MarchOfTheMachines.class})
 class PortcullisTest extends BaseCardTest {
 
     @Test
@@ -95,8 +96,7 @@ class PortcullisTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bearsId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bearsId);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Llanowar Elves");
@@ -116,14 +116,11 @@ class PortcullisTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, elvesId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, elvesId);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Llanowar Elves");
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .extracting(card -> (Object) card.getName())
-                .contains("Llanowar Elves");
+        harness.assertInGraveyard(player1, "Llanowar Elves");
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
@@ -141,8 +138,7 @@ class PortcullisTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, portcullisId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, portcullisId);
 
         harness.assertNotOnBattlefield(player1, "Portcullis");
         harness.passBothPriorities();
@@ -168,7 +164,10 @@ class PortcullisTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, portcullisId);
+        harness.castAndResolveInstant(player2, 0, portcullisId);
+
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Llanowar Elves");
@@ -189,8 +188,7 @@ class PortcullisTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ReinsOfPower()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         harness.assertOnBattlefield(player2, "Llanowar Elves");
         harness.assertNotOnBattlefield(player1, "Llanowar Elves");
@@ -208,12 +206,63 @@ class PortcullisTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, portcullisId);
+        harness.castAndResolveInstant(player2, 0, portcullisId);
+
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Llanowar Elves");
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each exiled creature returns through a separate delayed trigger")
+    void returnsMultipleCreaturesThroughSeparateTriggers() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        castPortcullis();
+        castLlanowarElves();
+        harness.passBothPriorities();
+        castLlanowarElves();
+        harness.passBothPriorities();
+
+        UUID portcullisId = harness.getPermanentId(player1, "Portcullis");
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, portcullisId);
+
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Llanowar Elves"))
+                .hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Portcullis triggers for itself if it enters as a creature")
+    void exilesItselfWhenEnteringAsCreature() {
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        castPortcullis();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Portcullis");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Portcullis"));
+        assertThat(gd.stack).isEmpty();
     }
 
     private void castPortcullis() {
