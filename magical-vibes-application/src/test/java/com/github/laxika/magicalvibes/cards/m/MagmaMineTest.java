@@ -113,11 +113,82 @@ class MagmaMineTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("A tapped Mine can still gain pressure counters")
+    void tappedMineCanGainPressureCounter() {
+        Permanent mine = addReadyMine(player1);
+        mine.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(mine.getCounterCount(CounterType.PRESSURE)).isEqualTo(1);
+        assertThat(mine.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Adding a pressure counter requires four mana")
+    void insufficientManaCannotAddPressureCounter() {
+        Permanent mine = addReadyMine(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(mine.getCounterCount(CounterType.PRESSURE)).isZero();
+        harness.assertOnBattlefield(player1, "Magma Mine");
+    }
+
+    @Test
+    @DisplayName("Only pressure counters contribute to damage")
+    void otherCountersDoNotIncreaseDamage() {
+        Permanent mine = addReadyMine(player1);
+        mine.setCounterCount(CounterType.PRESSURE, 2);
+        mine.setCounterCount(CounterType.CHARGE, 5);
+
+        harness.activateAbility(player1, 0, 1, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Magma Mine");
+    }
+
+    @Test
+    @DisplayName("A pending pressure counter ability cannot increase damage after sacrifice")
+    void pendingCounterAbilityDoesNotIncreaseDamage() {
+        Permanent mine = addReadyMine(player1);
+        mine.setCounterCount(CounterType.PRESSURE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertNotOnBattlefield(player1, "Magma Mine");
+        harness.assertInGraveyard(player1, "Magma Mine");
+    }
+
+    @Test
+    @DisplayName("A noncreature Mine can use its tap ability on the turn it enters")
+    void newlyEnteredMineCanBeSacrificed() {
+        Permanent mine = harness.addToBattlefieldAndReturn(player1, new MagmaMine());
+        mine.setCounterCount(CounterType.PRESSURE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player1, "Magma Mine");
+    }
+
     private Permanent addReadyMine(Player player) {
-        MagmaMine card = new MagmaMine();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new MagmaMine());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
