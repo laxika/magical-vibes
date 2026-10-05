@@ -99,8 +99,7 @@ class NagaoBoundByHonorTest extends BaseCardTest {
         Permanent nagao = addCreatureReady(player1, new NagaoBoundByHonor());
         addCreatureReady(player2, new WanderingOnes());
 
-        declareAttackers(List.of(0));
-        harness.passUntil(TurnStep.DECLARE_BLOCKERS);
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
@@ -115,13 +114,37 @@ class NagaoBoundByHonorTest extends BaseCardTest {
         addCreatureReady(player2, new WanderingOnes());
         addCreatureReady(player2, new WanderingOnes());
 
-        declareAttackers(List.of(0));
-        harness.passUntil(TurnStep.DECLARE_BLOCKERS);
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, nagao)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, nagao)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Nagao boosts Samurai present at resolution but not those entering afterward")
+    void attackBoostUsesSamuraiPresentAtResolution() {
+        Permanent nagao = addCreatureReady(player1, new NagaoBoundByHonor());
+        addCreatureReady(player2, new WanderingOnes());
+
+        declareAttackers(List.of(0));
+        assertThat(gqs.getEffectivePower(gd, nagao)).isEqualTo(3);
+
+        Permanent beforeResolution = harness.enterBattlefieldAndReturn(player1, new MothriderSamurai());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, nagao)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, nagao)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(3);
+
+        Permanent afterResolution = harness.enterBattlefieldAndReturn(player1, new MothriderSamurai());
+
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(3);
     }
 }
