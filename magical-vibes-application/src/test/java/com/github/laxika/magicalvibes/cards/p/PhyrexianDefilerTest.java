@@ -84,8 +84,8 @@ class PhyrexianDefilerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The -3/-3 effect destroys a 2/2 creature")
-    void abilityDestroysTwoTwoCreature() {
+    @DisplayName("The -3/-3 effect puts a 2/2 creature into the graveyard")
+    void abilityPutsTwoTwoCreatureIntoGraveyard() {
         addCreatureReady(player1, new PhyrexianDefiler());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new PhyrexianBroodlings());
 
@@ -94,5 +94,58 @@ class PhyrexianDefilerTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Phyrexian Broodlings");
         harness.assertInGraveyard(player2, "Phyrexian Broodlings");
+    }
+
+    @Test
+    @DisplayName("Sacrificing Defiler is paid before the ability resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        addCreatureReady(player1, new PhyrexianDefiler());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GangOfElk());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Phyrexian Defiler");
+        harness.assertInGraveyard(player1, "Phyrexian Defiler");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(target.getEffectivePower()).isEqualTo(5);
+        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability can target another creature its controller controls")
+    void abilityCanTargetOwnCreature() {
+        addCreatureReady(player1, new PhyrexianDefiler());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GangOfElk());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Phyrexian Defiler");
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Defiler can target itself but its sacrificed target is gone at resolution")
+    void abilityCanTargetItself() {
+        Permanent source = addCreatureReady(player1, new PhyrexianDefiler());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GangOfElk());
+
+        harness.activateAbility(player1, 0, null, source.getId());
+
+        harness.assertInGraveyard(player1, "Phyrexian Defiler");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(other.getEffectivePower()).isEqualTo(5);
+        assertThat(other.getEffectiveToughness()).isEqualTo(4);
     }
 }
