@@ -52,4 +52,56 @@ class PhotonLadyOfLightTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bear);
     }
+
+    @Test
+    @DisplayName("Flickering a stolen creature returns it to its owner")
+    void stolenCreatureReturnsToOwner() {
+        addCreatureReady(player1, new PhotonLadyOfLight());
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        bear.getCard().setOwnerId(player2.getId());
+        gd.stolenCreatures.put(bear.getId(), player2.getId());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, bear.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        Permanent returned = findPermanent(player2, "Grizzly Bears");
+        assertThat(returned.getId()).isNotEqualTo(bear.getId());
+        assertThat(returned.getCard().getOwnerId()).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Flickering another attacker returns it untapped and outside combat")
+    void flickeredAttackerLeavesCombat() {
+        addCreatureReady(player1, new PhotonLadyOfLight());
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1));
+        harness.handlePermanentChosen(player1, bear.getId());
+        harness.passBothPriorities();
+
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
+        assertThat(returned.getId()).isNotEqualTo(bear.getId());
+        assertThat(returned.isTapped()).isFalse();
+        assertThat(returned.isAttacking()).isFalse();
+        assertThat(returned.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A target that changes controller before resolution is not flickered")
+    void targetChangingControllerIsIllegal() {
+        addCreatureReady(player1, new PhotonLadyOfLight());
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, bear.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(bear);
+        gd.playerBattlefields.get(player2.getId()).add(bear);
+        gd.stolenCreatures.put(bear.getId(), player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bear);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
 }
