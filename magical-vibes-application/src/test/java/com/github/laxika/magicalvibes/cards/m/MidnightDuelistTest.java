@@ -1,13 +1,15 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.d.DeathWind;
+import com.github.laxika.magicalvibes.cards.f.FalkenrathExterminator;
+import com.github.laxika.magicalvibes.cards.h.HavengulVampire;
+import com.github.laxika.magicalvibes.cards.u.UndeadExecutioner;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,64 +18,39 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MidnightDuelist.class, HavengulVampire.class, UndeadExecutioner.class,
+        FalkenrathExterminator.class, DeathWind.class})
 class MidnightDuelistTest extends BaseCardTest {
-
-    private static Card createCreature(String name, int power, int toughness, CardColor color,
-                                       CardSubtype... subtypes) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        card.setSubtypes(List.of(subtypes));
-        return card;
-    }
 
     @Test
     @DisplayName("Midnight Duelist takes no combat damage from a blocked Vampire attacker")
     void takesNoDamageFromVampire() {
-        Permanent attacker = new Permanent(createCreature("Vampire Aristocrat", 4, 4, CardColor.BLACK, CardSubtype.VAMPIRE));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new HavengulVampire());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new MidnightDuelist());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new MidnightDuelist());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat();
 
         harness.assertOnBattlefield(player2, "Midnight Duelist");
-        harness.assertOnBattlefield(player1, "Vampire Aristocrat");
+        harness.assertOnBattlefield(player1, "Havengul Vampire");
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Midnight Duelist dies to combat damage from a non-Vampire attacker")
     void takesNormalDamageFromNonVampire() {
-        Permanent attacker = new Permanent(createCreature("Hill Giant", 3, 3, CardColor.RED));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new UndeadExecutioner());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new MidnightDuelist());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new MidnightDuelist());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat();
 
         harness.assertNotOnBattlefield(player2, "Midnight Duelist");
     }
@@ -81,19 +58,11 @@ class MidnightDuelistTest extends BaseCardTest {
     @Test
     @DisplayName("A Vampire cannot block Midnight Duelist")
     void vampireCannotBlock() {
-        Permanent attacker = new Permanent(new MidnightDuelist());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new MidnightDuelist());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
+        addCreatureReady(player2, new HavengulVampire());
 
-        Permanent blocker = new Permanent(createCreature("Vampire Aristocrat", 4, 4, CardColor.BLACK, CardSubtype.VAMPIRE));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -103,22 +72,54 @@ class MidnightDuelistTest extends BaseCardTest {
     @Test
     @DisplayName("A non-Vampire creature can block Midnight Duelist")
     void nonVampireCanBlock() {
-        Permanent attacker = new Permanent(new MidnightDuelist());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new MidnightDuelist());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
+        Permanent blocker = addCreatureReady(player2, new UndeadExecutioner());
 
-        Permanent blocker = new Permanent(createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void opposingVampireCannotTargetDuelist() {
+        Permanent source = addCreatureReady(player1, new FalkenrathExterminator());
+        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent duelist = harness.addToBattlefieldAndReturn(player2, new MidnightDuelist());
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, duelist.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+        assertThat(gd.stack).isEmpty();
+        assertThat(duelist.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void friendlyVampireCannotTargetDuelist() {
+        Permanent source = addCreatureReady(player1, new FalkenrathExterminator());
+        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent duelist = harness.addToBattlefieldAndReturn(player1, new MidnightDuelist());
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, duelist.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void nonVampireBlackSpellCanTargetAndKillDuelist() {
+        Permanent duelist = harness.addToBattlefieldAndReturn(player2, new MidnightDuelist());
+        harness.setHand(player1, List.of(new DeathWind()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castInstant(player1, 0, 2, duelist.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Midnight Duelist");
+        harness.assertInGraveyard(player2, "Midnight Duelist");
     }
 }
