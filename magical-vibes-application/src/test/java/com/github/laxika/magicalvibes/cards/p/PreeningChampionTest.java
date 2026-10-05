@@ -21,8 +21,7 @@ class PreeningChampionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent token = findPermanent(player1, "Elemental");
         assertThat(token.getCard().isToken()).isTrue();
@@ -31,5 +30,21 @@ class PreeningChampionTest extends BaseCardTest {
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLUE);
         assertThat(token.getCard().getColors()).containsExactlyInAnyOrder(CardColor.BLUE, CardColor.RED);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ELEMENTAL);
+    }
+
+    @Test
+    void enteringWithoutBeingCastCreatesOneTokenForItsController() {
+        harness.enterBattlefieldAndReturn(player2, new PreeningChampion());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player2, "Elemental")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Elemental")).isZero();
+        Permanent token = findPermanent(player2, "Elemental");
+        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(token.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
+        assertThat(token.getCard().getColors()).containsExactlyInAnyOrder(CardColor.BLUE, CardColor.RED);
+        assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.ELEMENTAL);
     }
 }
