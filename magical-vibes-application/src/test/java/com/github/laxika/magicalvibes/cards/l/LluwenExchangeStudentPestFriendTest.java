@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,7 +12,9 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LluwenExchangeStudentPestFriend.class})
 class LluwenExchangeStudentPestFriendTest extends BaseCardTest {
 
     @Test
@@ -32,7 +34,7 @@ class LluwenExchangeStudentPestFriendTest extends BaseCardTest {
     @DisplayName("Exiling a creature card from the graveyard prepares Lluwen at sorcery speed")
     void graveyardAbilityPreparesLluwen() {
         Permanent lluwen = addCreatureReady(player1, new LluwenExchangeStudentPestFriend());
-        GrizzlyBears creature = new GrizzlyBears();
+        LluwenExchangeStudentPestFriend creature = new LluwenExchangeStudentPestFriend();
         harness.setGraveyard(player1, List.of(creature));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -80,8 +82,94 @@ class LluwenExchangeStudentPestFriendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         return findPermanent(player1, "Lluwen, Exchange Student");
+    }
+
+    @Test
+    void becomesUnpreparedWhenSpellIsCastBeforeItResolves() {
+        Permanent lluwen = castLluwen();
+        UUID copyId = lluwen.getPreparedSpellCardId();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castFromExile(player1, copyId);
+
+        assertThat(lluwen.isPrepared()).isFalse();
+        assertThat(lluwen.getPreparedSpellCardId()).isNull();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
+    }
+
+    @Test
+    void canPrepareAgainAfterCastingPestFriend() {
+        Permanent lluwen = castLluwen();
+        UUID oldCopyId = lluwen.getPreparedSpellCardId();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castFromExile(player1, oldCopyId);
+        resolveAllTriggers();
+        harness.setGraveyard(player1, List.of(new LluwenExchangeStudentPestFriend()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleGraveyardCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(lluwen.isPrepared()).isTrue();
+        assertThat(lluwen.getPreparedSpellCardId()).isNotEqualTo(oldCopyId);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castFromExile(player1, lluwen.getPreparedSpellCardId());
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(2);
+    }
+
+    @Test
+    void preparingWhileAlreadyPreparedPaysCostWithoutAddingAnotherCopy() {
+        Permanent lluwen = castLluwen();
+        UUID copyId = lluwen.getPreparedSpellCardId();
+        LluwenExchangeStudentPestFriend creature = new LluwenExchangeStudentPestFriend();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleGraveyardCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(lluwen.getPreparedSpellCardId()).isEqualTo(copyId);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2).contains(creature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void cannotActivateOutsideMainPhase() {
+        Permanent lluwen = addCreatureReady(player1, new LluwenExchangeStudentPestFriend());
+        harness.setGraveyard(player1, List.of(new LluwenExchangeStudentPestFriend()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(lluwen.isPrepared()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void cannotExileAnOpponentsCreatureToPayCost() {
+        Permanent lluwen = addCreatureReady(player1, new LluwenExchangeStudentPestFriend());
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new LluwenExchangeStudentPestFriend()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(lluwen.isPrepared()).isFalse();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
     }
 }
