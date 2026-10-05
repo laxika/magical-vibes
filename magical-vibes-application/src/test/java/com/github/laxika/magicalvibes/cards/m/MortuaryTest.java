@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 class MortuaryTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Puts a creature that dies on top of its controller's library")
+    @DisplayName("Puts a creature that dies on top of its owner's library")
     void putsDyingCreatureOnTopOfLibrary() {
         Card libraryCard = new MoxDiamond();
         harness.setLibrary(player1, List.of(libraryCard));
@@ -47,24 +47,22 @@ class MortuaryTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Fizzles if the dying creature leaves the graveyard before resolution")
-    void fizzlesIfDyingCreatureLeavesGraveyard() {
+    @DisplayName("Does nothing if the dying creature leaves the graveyard before resolution")
+    void doesNothingIfDyingCreatureLeavesGraveyard() {
         harness.setLibrary(player1, List.of());
         harness.addToBattlefield(player1, new Mortuary());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new WallOfRazors());
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, creature));
-        Card deadCard = gd.playerGraveyards.get(player1.getId()).stream()
-                .filter(card -> card.getId().equals(creature.getCard().getId()))
-                .findFirst()
-                .orElseThrow();
-        gd.playerGraveyards.get(player1.getId()).remove(deadCard);
+        Card deadCard = creature.getCard();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removeCardFromGraveyardByIdForExile(gd, deadCard.getId()));
         gd.addToExile(player1.getId(), deadCard);
 
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gameLogContains("fizzles")).isTrue();
+        assertThat(gd.findExiledCard(deadCard.getId())).isNotNull();
     }
 
     @Test
@@ -119,5 +117,61 @@ class MortuaryTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(creatureCard);
+    }
+
+    @Test
+    @DisplayName("A pending trigger still resolves after Mortuary leaves the battlefield")
+    void resolvesAfterMortuaryLeavesBattlefield() {
+        Card libraryCard = new MoxDiamond();
+        harness.setLibrary(player1, List.of(libraryCard));
+        Permanent mortuary = harness.addToBattlefieldAndReturn(player1, new Mortuary());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new WallOfRazors());
+
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, creature);
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, mortuary);
+        });
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature.getCard(), libraryCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(mortuary.getCard());
+    }
+
+    @Test
+    @DisplayName("Does not trigger for a creature card put into the graveyard without dying")
+    void doesNotTriggerForCreatureCardFromAnotherZone() {
+        harness.setLibrary(player1, List.of());
+        harness.addToBattlefield(player1, new Mortuary());
+        Card creature = new WallOfRazors();
+
+        harness.setGraveyard(player1, List.of(creature));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(creature);
+    }
+
+    @Test
+    @DisplayName("Cannot find a creature that leaves the graveyard and dies again before resolution")
+    void doesNotMoveNewGraveyardIncarnation() {
+        Card libraryCard = new MoxDiamond();
+        harness.setLibrary(player1, List.of(libraryCard));
+        Permanent mortuary = harness.addToBattlefieldAndReturn(player1, new Mortuary());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new WallOfRazors());
+
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, creature);
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, mortuary);
+            harness.getPermanentRemovalService().removeCardFromGraveyardById(gd, creature.getCard().getId());
+        });
+        Permanent returnedCreature = harness.addToBattlefieldAndReturn(player1, creature.getCard());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, returnedCreature));
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(mortuary.getCard(), creature.getCard());
     }
 }
