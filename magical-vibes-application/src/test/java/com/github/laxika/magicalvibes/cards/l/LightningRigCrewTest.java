@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.d.DireFleetCaptain;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RavenousDaggertooth;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,16 +9,17 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LightningRigCrew.class, DireFleetCaptain.class, RavenousDaggertooth.class})
 class LightningRigCrewTest extends BaseCardTest {
-
-    // ===== Activated ability: {T}: deal 1 damage to each opponent =====
 
     @Test
     @DisplayName("Tap ability deals 1 damage to each opponent")
@@ -42,8 +43,6 @@ class LightningRigCrewTest extends BaseCardTest {
 
         assertThat(perm.isTapped()).isTrue();
     }
-
-    // ===== Pirate spell trigger untaps =====
 
     @Test
     @DisplayName("Casting a Pirate spell triggers untap")
@@ -84,8 +83,8 @@ class LightningRigCrewTest extends BaseCardTest {
     @DisplayName("Casting a non-Pirate creature does not trigger untap")
     void nonPirateDoesNotTrigger() {
         addCrewReady(player1);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new RavenousDaggertooth()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.castCreature(player1, 0);
 
@@ -115,8 +114,6 @@ class LightningRigCrewTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
     }
-
-    // ===== Tap + untap interaction =====
 
     @Test
     @DisplayName("Can tap for damage, then cast Pirate to untap and tap again")
@@ -148,12 +145,57 @@ class LightningRigCrewTest extends BaseCardTest {
         harness.assertLife(player2, 18);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("A summoning-sick crew cannot activate its tap ability")
+    void summoningSickCrewCannotActivate() {
+        harness.addToBattlefield(player1, new LightningRigCrew());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Each crew untaps itself when its controller casts a Pirate")
+    void pirateSpellUntapsEachCrewSeparately() {
+        Permanent first = addCrewReady(player1);
+        Permanent second = addCrewReady(player1);
+        Permanent opposing = addCrewReady(player2);
+        first.tap();
+        second.tap();
+        opposing.tap();
+        harness.setHand(player1, List.of(new DireFleetCaptain()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        assertThat(List.of(first, second).stream().filter(p -> !p.isTapped()).count()).isEqualTo(1);
+        assertThat(opposing.isTapped()).isTrue();
+        harness.passBothPriorities();
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isFalse();
+        assertThat(opposing.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A Pirate entering without being cast does not untap the crew")
+    void pirateEnteringWithoutCastDoesNotUntap() {
+        Permanent crew = addCrewReady(player1);
+        crew.tap();
+
+        harness.enterBattlefieldAndReturn(player1, new DireFleetCaptain());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(crew.isTapped()).isTrue();
+    }
 
     private Permanent addCrewReady(Player player) {
-        Permanent perm = new Permanent(new LightningRigCrew());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new LightningRigCrew());
     }
 }
