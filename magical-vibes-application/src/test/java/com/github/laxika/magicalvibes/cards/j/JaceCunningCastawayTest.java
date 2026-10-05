@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.p.PerilousVoyage;
+import com.github.laxika.magicalvibes.cards.s.SirenStormtamer;
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -21,24 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({JaceCunningCastaway.class, PerilousVoyage.class, SirenStormtamer.class, Island.class})
 class JaceCunningCastawayTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has three loyalty abilities")
-    void hasThreeLoyaltyAbilities() {
-        JaceCunningCastaway card = new JaceCunningCastaway();
-        assertThat(card.getActivatedAbilities()).hasSize(3);
-    }
-
-    
-
-    
-
-    
-
-    // ===== +1 ability: delayed combat damage loot trigger =====
 
     @Test
     @DisplayName("+1 ability increases loyalty and registers delayed loot trigger")
@@ -68,10 +55,8 @@ class JaceCunningCastawayTest extends BaseCardTest {
         assertThat(gd.getDelayedActions(DelayedCombatDamageLoot.class)).hasSize(1);
         DelayedCombatDamageLoot loot = gd.getDelayedActions(DelayedCombatDamageLoot.class).getFirst();
         assertThat(loot.sourceCard()).isNotNull();
-        assertThat(loot.sourceCard().getName()).isEqualTo("Jace, Cunning Castaway");
+        assertThat(loot.sourceCard()).isSameAs(jace.getCard());
     }
-
-    // ===== -2 ability: Create Illusion token =====
 
     @Test
     @DisplayName("-2 ability creates a 2/2 Illusion token and decreases loyalty")
@@ -84,12 +69,7 @@ class JaceCunningCastawayTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(1); // 3 - 2
 
-        List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
-        Permanent illusionToken = bf.stream()
-                .filter(p -> p.getCard().getName().equals("Illusion"))
-                .findFirst()
-                .orElse(null);
-        assertThat(illusionToken).isNotNull();
+        Permanent illusionToken = findPermanent(player1, "Illusion");
         assertThat(illusionToken.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(illusionToken.getCard().getPower()).isEqualTo(2);
         assertThat(illusionToken.getCard().getToughness()).isEqualTo(2);
@@ -109,11 +89,11 @@ class JaceCunningCastawayTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         Permanent illusionToken = findPermanent(player1, "Illusion");
 
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new PerilousVoyage()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
         harness.castInstant(player2, 0, illusionToken.getId());
 
-        // The non-targeting sacrifice trigger resolves above Shock, sacrificing the token.
+        // The non-targeting sacrifice trigger resolves above Perilous Voyage, sacrificing the token.
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -130,8 +110,6 @@ class JaceCunningCastawayTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough loyalty");
     }
-
-    // ===== -5 ability: Create two non-legendary copies =====
 
     @Test
     @DisplayName("-5 ability creates two non-legendary token copies of Jace")
@@ -159,8 +137,6 @@ class JaceCunningCastawayTest extends BaseCardTest {
             assertThat(copy.getCard().getSupertypes()).doesNotContain(CardSupertype.LEGENDARY);
             // Tokens should have loyalty counters
             assertThat(copy.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // initial loyalty of Jace
-            // Tokens should have the same loyalty abilities
-            assertThat(copy.getCard().getActivatedAbilities()).hasSize(3);
             // Tokens are planeswalkers
             assertThat(copy.getCard().getType()).isEqualTo(CardType.PLANESWALKER);
         }
@@ -175,8 +151,6 @@ class JaceCunningCastawayTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough loyalty");
     }
-
-    // ===== Loyalty ability restrictions =====
 
     @Test
     @DisplayName("Cannot activate loyalty ability during opponent's turn")
@@ -202,14 +176,101 @@ class JaceCunningCastawayTest extends BaseCardTest {
                 .hasMessageContaining("one loyalty ability");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("+1 loots once for simultaneous combat damage by multiple creatures")
+    void simultaneousCombatDamageLootsOnce() {
+        addReadyJace(player1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of());
+        Island drawn = new Island();
+        harness.setLibrary(player1, List.of(drawn, new Island()));
+        Permanent first = addCreatureReady(player1, new SirenStormtamer());
+        Permanent second = addCreatureReady(player1, new SirenStormtamer());
+        first.setAttacking(true);
+        second.setAttacking(true);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(drawn);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("+1 does not trigger for combat damage to a planeswalker")
+    void planeswalkerCombatDamageDoesNotLoot() {
+        addReadyJace(player1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        Permanent defender = harness.addToBattlefieldAndReturn(player2, new JaceCunningCastaway());
+        defender.setCounterCount(CounterType.LOYALTY, 3);
+        Permanent attacker = addCreatureReady(player1, new SirenStormtamer());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(defender.getId());
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+
+        harness.resolveCombatDamage();
+
+        assertThat(defender.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Token copies can activate their own loyalty abilities immediately")
+    void tokenCopiesCanEachActivateLoyaltyAbilities() {
+        Permanent jace = addReadyJace(player1);
+        jace.setCounterCount(CounterType.LOYALTY, 6);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 2, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Illusion")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("+1 delayed loot remains active after Jace leaves the battlefield")
+    void delayedLootSurvivesJaceLeaving() {
+        Permanent jace = addReadyJace(player1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new PerilousVoyage()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player2, 0, jace.getId());
+        harness.assertNotOnBattlefield(player1, "Jace, Cunning Castaway");
+        harness.setHand(player1, List.of());
+        Island drawn = new Island();
+        harness.setLibrary(player1, List.of(drawn, new Island()));
+        Permanent attacker = addCreatureReady(player1, new SirenStormtamer());
+        attacker.setAttacking(true);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+
+        harness.resolveCombatDamage();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(drawn);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
 
     private Permanent addReadyJace(Player player) {
-        JaceCunningCastaway card = new JaceCunningCastaway();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new JaceCunningCastaway());
         perm.setCounterCount(CounterType.LOYALTY, 3);
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
