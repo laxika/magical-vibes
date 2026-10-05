@@ -69,8 +69,7 @@ class KaerveksTorchTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 1, player2.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, torch.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, torch.getId());
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(torch);
         harness.assertLife(player2, 20);
@@ -101,6 +100,41 @@ class KaerveksTorchTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0, player2.getId());
 
         harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Kaervek's Torch");
+    }
+
+    @Test
+    @DisplayName("Can deal damage to its controller")
+    void dealsDamageToItsController() {
+        harness.setHand(player1, List.of(new KaerveksTorch()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 3, player1.getId());
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Does not tax spells targeting another spell while Torch is on the stack")
+    void doesNotTaxSpellsTargetingOtherSpells() {
+        KaerveksTorch torch = new KaerveksTorch();
+        Dissipate opposingCounter = new Dissipate();
+        harness.setHand(player1, List.of(torch, new Dissipate()));
+        harness.setHand(player2, List.of(opposingCounter));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player2, ManaColor.BLUE, 5);
+
+        harness.castSorcery(player1, 0, 1, player2.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, torch.getId());
+        harness.passPriority(player2);
+        harness.castAndResolveInstant(player1, 0, opposingCounter.getId());
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(opposingCounter);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
         harness.assertInGraveyard(player1, "Kaervek's Torch");
     }
 }
