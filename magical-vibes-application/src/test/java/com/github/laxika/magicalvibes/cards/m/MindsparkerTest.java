@@ -4,10 +4,12 @@ import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.f.Fog;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Mindsparker.class, Divination.class, Fog.class, HolyDay.class, SuntailHawk.class, Unsummon.class})
 class MindsparkerTest extends BaseCardTest {
 
     /** Player1 controls Mindsparker; it is player2's (the opponent's) turn. */
@@ -39,7 +42,8 @@ class MindsparkerTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Mindsparker");
+        assertThat(gd.stack.getLast().getSourcePermanentId())
+                .isEqualTo(harness.getPermanentId(player1, "Mindsparker"));
 
         harness.passBothPriorities();
 
@@ -56,8 +60,7 @@ class MindsparkerTest extends BaseCardTest {
 
         int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
-        harness.castSorcery(player2, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, 0);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore - 2);
     }
@@ -116,5 +119,58 @@ class MindsparkerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(controllerLifeBefore);
+    }
+
+    @Test
+    void opponentBlueInstantTriggersBeforeItResolves() {
+        setUpOpponentTurn();
+        var sourceId = harness.getPermanentId(player1, "Mindsparker");
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castInstant(player2, 0, sourceId);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void triggerStillDealsDamageAfterSourceLeavesBattlefield() {
+        setUpOpponentTurn();
+        var sourceId = harness.getPermanentId(player1, "Mindsparker");
+        harness.setHand(player2, List.of(new HolyDay()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castInstant(player2, 0);
+        harness.castAndResolveInstant(player1, 0, sourceId);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    void eachMindsparkerTriggersSeparately() {
+        setUpOpponentTurn();
+        harness.addToBattlefield(player1, new Mindsparker());
+        harness.setHand(player2, List.of(new HolyDay()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castInstant(player2, 0);
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 4);
     }
 }
