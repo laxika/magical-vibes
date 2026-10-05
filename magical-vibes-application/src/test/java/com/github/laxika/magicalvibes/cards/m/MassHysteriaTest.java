@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,8 +11,30 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MassHysteria.class, AlphaMyr.class})
+@CardUsed({MassHysteria.class, AlphaMyr.class, Opalescence.class})
 class MassHysteriaTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Mass Hysteria grants itself haste when it becomes a creature")
+    void animatedMassHysteriaHasHaste() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent massHysteria = harness.addToBattlefieldAndReturn(player1, new MassHysteria());
+
+        assertThat(gqs.isCreature(gd, massHysteria)).isTrue();
+        assertThat(gqs.hasKeyword(gd, massHysteria, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Removing one of two Mass Hysterias preserves haste")
+    void hasteRemainsWithAnotherSource() {
+        Permanent myr = harness.addToBattlefieldAndReturn(player1, new AlphaMyr());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new MassHysteria());
+        harness.addToBattlefield(player2, new MassHysteria());
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+
+        assertThat(gqs.hasKeyword(gd, myr, Keyword.HASTE)).isTrue();
+    }
 
     @Test
     @DisplayName("Creatures you control have haste")
