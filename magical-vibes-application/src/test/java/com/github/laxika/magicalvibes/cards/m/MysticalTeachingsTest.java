@@ -93,8 +93,7 @@ class MysticalTeachingsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         GameData gameData = harness.getGameData();
         var search = gameData.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -103,6 +102,57 @@ class MysticalTeachingsTest extends BaseCardTest {
 
         assertThat(gameData.getPlayerExiledCards(player1.getId())).contains(teachings);
         assertThat(gameData.playerGraveyards.get(player1.getId())).doesNotContain(teachings);
+    }
+
+    @Test
+    @DisplayName("An instant without flash can be revealed and put into hand")
+    void choosingInstantWithoutFlash() {
+        Card instant = new Cancel();
+        Card creature = new FledglingMawcor();
+        castWithLibrary(List.of(instant, creature));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(instant);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+        assertThat(gameLogContains("reveals Cancel")).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(MysticalTeachings.class::isInstance);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The search may find nothing even when matching cards are present")
+    void mayDeclineMatchingCardsAndStillShuffle() {
+        Card instant = new Cancel();
+        Card flashCreature = new CrookclawTransmuter();
+        castWithLibrary(List.of(instant, flashCreature));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(instant, flashCreature);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(instant, flashCreature);
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library still allows flashback to resolve and exile the spell")
+    void flashbackWithEmptyLibraryExilesSpell() {
+        MysticalTeachings teachings = new MysticalTeachings();
+        harness.setGraveyard(player1, List.of(teachings));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(teachings);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(teachings);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
     }
 
     private void castWithLibrary(List<Card> library) {
