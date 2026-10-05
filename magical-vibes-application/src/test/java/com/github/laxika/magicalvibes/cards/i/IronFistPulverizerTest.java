@@ -61,4 +61,56 @@ class IronFistPulverizerTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
+
+    @Test
+    @CardUsed({IronFistPulverizer.class, GrizzlyBears.class})
+    @DisplayName("Entering as the second spell does not trigger its own ability")
+    void enteringAsSecondSpellDoesNotTrigger() {
+        harness.setHand(player1, List.of(new GrizzlyBears(), new IronFistPulverizer()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.battlefield.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @CardUsed(IronFistPulverizer.class)
+    @DisplayName("Scry can bottom the top card and the third spell does not trigger again")
+    void thirdSpellDoesNotTriggerAndScryCanBottom() {
+        harness.setHand(player1, List.of(
+                new IronFistPulverizer(), new IronFistPulverizer(), new IronFistPulverizer()));
+        IronFistPulverizer top = new IronFistPulverizer();
+        IronFistPulverizer next = new IronFistPulverizer();
+        harness.setLibrary(player1, List.of(top, next));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 12);
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(next, top);
+        harness.passBothPriorities();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }
