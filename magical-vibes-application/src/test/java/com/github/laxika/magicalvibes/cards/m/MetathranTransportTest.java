@@ -13,7 +13,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -53,14 +52,12 @@ class MetathranTransportTest extends BaseCardTest {
     @DisplayName("{U}: target creature becomes blue, replacing its other colors")
     void targetBecomesBlue() {
         harness.addToBattlefield(player1, new MetathranTransport());
-        harness.addToBattlefield(player1, new RazorfootGriffin());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new RazorfootGriffin());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        UUID targetId = harness.getPermanentId(player1, "Razorfoot Griffin");
-        harness.activateAbility(player1, 0, 0, null, targetId);
+        harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
 
-        Permanent target = findPermanent(player1, "Razorfoot Griffin");
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.BLUE);
     }
 
@@ -68,14 +65,12 @@ class MetathranTransportTest extends BaseCardTest {
     @DisplayName("Blue wears off at end of turn")
     void blueWearsOffAtEndOfTurn() {
         harness.addToBattlefield(player1, new MetathranTransport());
-        harness.addToBattlefield(player1, new RazorfootGriffin());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new RazorfootGriffin());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        UUID targetId = harness.getPermanentId(player1, "Razorfoot Griffin");
-        harness.activateAbility(player1, 0, 0, null, targetId);
+        harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
 
-        Permanent target = findPermanent(player1, "Razorfoot Griffin");
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.BLUE);
 
         gd.expireEndOfTurnFloatingEffects();
@@ -114,5 +109,41 @@ class MetathranTransportTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, island.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A tapped, newly entered Transport can activate repeatedly without tapping")
+    void tappedTransportCanActivateRepeatedly() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new MetathranTransport());
+        source.setTapped(true);
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new RazorfootGriffin());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new RazorfootGriffin());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, first.getId());
+        harness.activateAbility(player1, 0, 0, null, second.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveColors(gd, first)).containsExactly(CardColor.BLUE);
+        assertThat(gqs.getEffectiveColors(gd, second)).containsExactly(CardColor.BLUE);
+        assertThat(source.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The ability requires blue mana even when generic mana is available")
+    void cannotActivateWithoutBlueMana() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new MetathranTransport());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RazorfootGriffin());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(source.isTapped()).isFalse();
+        assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.WHITE);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
     }
 }
