@@ -116,6 +116,60 @@ class MonkIdealistTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Coral Merfolk");
     }
 
+    @Test
+    @DisplayName("ETB requires exactly one target when enchantments are available")
+    void cannotDeclineOrChooseMultipleTargets() {
+        Pacifism first = new Pacifism();
+        Pacifism second = new Pacifism();
+        harness.setGraveyard(player1, List.of(first, second));
+
+        castMonkIdealist();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(card -> card.getId()).containsExactly(first.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(card -> card.getId()).containsExactly(second.getId());
+    }
+
+    @Test
+    @DisplayName("ETB cannot return an opponent's enchantment when its controller's graveyard is empty")
+    void opponentsEnchantmentDoesNotProvideATarget() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new Pacifism()));
+
+        castMonkIdealist();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Monk Idealist");
+        harness.assertNotInHand(player1, "Pacifism");
+        harness.assertInGraveyard(player2, "Pacifism");
+    }
+    @Test
+    @DisplayName("ETB still returns the enchantment after Monk Idealist leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Pacifism pacifism = new Pacifism();
+        harness.setGraveyard(player1, List.of(pacifism));
+
+        castMonkIdealist();
+        harness.handleMultipleCardsChosen(player1, List.of(pacifism.getId()));
+        var monk = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, monk));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Monk Idealist");
+        harness.assertInGraveyard(player1, "Monk Idealist");
+        harness.assertInHand(player1, "Pacifism");
+        harness.assertNotInGraveyard(player1, "Pacifism");
+    }
     private void castMonkIdealist() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
