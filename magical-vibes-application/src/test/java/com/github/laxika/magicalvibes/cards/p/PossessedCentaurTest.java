@@ -131,6 +131,50 @@ class PossessedCentaurTest extends BaseCardTest {
         assertThat(gs.getEffectiveActivatedAbilities(gd, centaur)).isEmpty();
     }
 
+    @Test
+    @DisplayName("Reaching seven graveyard cards grants the ability to a centaur already on the battlefield")
+    void reachingThresholdEnablesActivation() {
+        fillGraveyard(player1, 6);
+        Permanent centaur = addReadyCentaur();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new KrosanConstrictor());
+
+        assertThat(gs.getEffectiveActivatedAbilities(gd, centaur)).isEmpty();
+        gd.playerGraveyards.get(player1.getId()).add(new PardicLancer());
+
+        assertThat(gqs.getEffectivePower(gd, centaur)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, centaur)).isEqualTo(4);
+        assertThat(gqs.getEffectiveColors(gd, centaur)).containsExactly(CardColor.BLACK);
+        prepareActivation();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Krosan Constrictor");
+        harness.assertInGraveyard(player1, "Krosan Constrictor");
+    }
+
+    @Test
+    @DisplayName("The ability does not destroy a target that stops being green before resolution")
+    void abilityRechecksTargetColorAtResolution() {
+        fillGraveyard(player1, 7);
+        fillGraveyard(player2, 6);
+        addReadyCentaur();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PossessedCentaur());
+
+        prepareActivation();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerGraveyards.get(player2.getId()).add(new PardicLancer());
+
+        assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.BLACK);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Possessed Centaur");
+        harness.assertNotInGraveyard(player2, "Possessed Centaur");
+    }
+
     private Permanent addReadyCentaur() {
         return addCreatureReady(player1, new PossessedCentaur());
     }
