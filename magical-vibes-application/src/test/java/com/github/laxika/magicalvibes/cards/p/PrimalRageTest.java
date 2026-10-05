@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.FlowstoneShambler;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.s.SkyshroudFalcon;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -87,10 +87,7 @@ class PrimalRageTest extends BaseCardTest {
         blocker.setBlocking(true);
         blocker.addBlockingTarget(1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         // 2/2 trample blocked by 1/1 → assign lethal to blocker, excess to player
         harness.handleCombatDamageAssigned(player1, 1, Map.of(
@@ -99,5 +96,44 @@ class PrimalRageTest extends BaseCardTest {
         ));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+    @Test
+    @DisplayName("Primal Rage grants trample only after its spell resolves")
+    void grantsTrampleAfterResolution() {
+        Permanent creature = addCreatureReady(player1, new FlowstoneShambler());
+        harness.setHand(player1, List.of(new PrimalRage()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castEnchantment(player1, 0);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Trample remains until the last Primal Rage leaves")
+    void overlappingSourcesGrantTrampleIndependently() {
+        Permanent creature = addCreatureReady(player1, new FlowstoneShambler());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new PrimalRage());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new PrimalRage());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(second);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
+    }
+    @Test
+    @CardUsed(Opalescence.class)
+    @DisplayName("Primal Rage grants itself trample when it becomes a creature")
+    void animatedPrimalRageHasTrample() {
+        Permanent rage = harness.addToBattlefieldAndReturn(player1, new PrimalRage());
+        harness.addToBattlefield(player1, new Opalescence());
+
+        assertThat(gqs.isCreature(gd, rage)).isTrue();
+        assertThat(gqs.hasKeyword(gd, rage, Keyword.TRAMPLE)).isTrue();
     }
 }
