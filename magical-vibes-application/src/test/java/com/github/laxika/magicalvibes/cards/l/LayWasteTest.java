@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
+import com.github.laxika.magicalvibes.cards.g.GoblinRaider;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LayWaste.class, GlorySeeker.class, Mountain.class})
+@CardUsed({LayWaste.class, GoblinRaider.class, Mountain.class})
 class LayWasteTest extends BaseCardTest {
 
     @Test
@@ -84,11 +84,11 @@ class LayWasteTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a nonland permanent")
     void cannotTargetNonlandPermanent() {
-        harness.addToBattlefield(player2, new GlorySeeker());
+        harness.addToBattlefield(player2, new GoblinRaider());
         harness.setHand(player1, List.of(new LayWaste()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Glory Seeker");
+        UUID targetId = harness.getPermanentId(player2, "Goblin Raider");
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
@@ -98,13 +98,53 @@ class LayWasteTest extends BaseCardTest {
     @DisplayName("Cycling {2} discards Lay Waste and draws a card")
     void cyclingDrawsACard() {
         harness.setHand(player1, List.of(new LayWaste()));
-        harness.setLibrary(player1, List.of(new GlorySeeker()));
+        harness.setLibrary(player1, List.of(new GoblinRaider()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Lay Waste");
-        harness.assertInHand(player1, "Glory Seeker");
+        harness.assertInHand(player1, "Goblin Raider");
+    }
+
+    @Test
+    @DisplayName("Cycling pays mana and discards immediately, then draws on resolution without destroying a land")
+    void cyclingPaysCostsBeforeDrawing() {
+        harness.addToBattlefield(player2, new Mountain());
+        harness.setHand(player1, List.of(new LayWaste()));
+        harness.setLibrary(player1, List.of(new GoblinRaider(), new Mountain()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Lay Waste");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Goblin Raider");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertOnBattlefield(player2, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Cycling cannot be activated with less than two mana")
+    void cyclingRequiresTwoMana() {
+        harness.setHand(player1, List.of(new LayWaste()));
+        harness.setLibrary(player1, List.of(new GoblinRaider()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Lay Waste");
+        harness.assertNotInGraveyard(player1, "Lay Waste");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 }
