@@ -87,11 +87,82 @@ class OverseerOfTheDamnedTest extends BaseCardTest {
         assertThat(zombieTokens()).isEmpty();
     }
 
+    @Test
+    @DisplayName("The ETB destruction also triggers creation of a tapped Zombie")
+    void etbDestructionCreatesZombie() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new OverseerOfTheDamned()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+
+        harness.castCreature(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(zombieTokens()).hasSize(1);
+        Permanent zombie = zombieTokens().getFirst();
+        assertThat(zombie.isTapped()).isTrue();
+        assertThat(zombie.getEffectivePower()).isEqualTo(2);
+        assertThat(zombie.getEffectiveToughness()).isEqualTo(2);
+        assertThat(zombie.getCard().getColor()).isEqualTo(CardColor.BLACK);
+        assertThat(zombie.getCard().getSubtypes()).contains(CardSubtype.ZOMBIE);
+    }
+
+    @Test
+    @DisplayName("The ETB can destroy your own creature without creating a Zombie")
+    void etbCanDestroyOwnCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new OverseerOfTheDamned()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+
+        harness.castCreature(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(zombieTokens()).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ETB can target Overseer itself even on an otherwise empty battlefield")
+    void etbCanDestroyItself() {
+        harness.setHand(player1, List.of(new OverseerOfTheDamned()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent overseer = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.handlePermanentChosen(player1, overseer.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Overseer of the Damned");
+        assertThat(zombieTokens()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each opponent creature death creates its own Zombie")
+    void multipleDeathsCreateMultipleZombies() {
+        harness.addToBattlefield(player1, new OverseerOfTheDamned());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        killWithDoomBlade(first);
+        harness.passBothPriorities();
+        killWithDoomBlade(second);
+        harness.passBothPriorities();
+
+        assertThat(zombieTokens()).hasSize(2).allSatisfy(zombie -> assertThat(zombie.isTapped()).isTrue());
+    }
+
     private void killWithDoomBlade(Permanent target) {
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private List<Permanent> zombieTokens() {
