@@ -47,12 +47,63 @@ class PetrahydroxTest extends BaseCardTest {
     @DisplayName("Returns itself to its owner's hand when targeted by an ability")
     void returnsToHandWhenTargetedByAbility() {
         Permanent petrahydrox = harness.addToBattlefieldAndReturn(player1, new Petrahydrox());
-        Permanent gelectrode = addCreatureReady(player2, new Gelectrode());
+        addCreatureReady(player2, new Gelectrode());
 
         harness.activateAbility(player2, 0, null, petrahydrox.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Petrahydrox");
         harness.assertInHand(player1, "Petrahydrox");
+    }
+
+    @Test
+    @DisplayName("Returns to its owner's hand when controlled by another player")
+    void returnsToOwnerRatherThanController() {
+        Petrahydrox card = new Petrahydrox();
+        card.setOwnerId(player1.getId());
+        Permanent petrahydrox = harness.addToBattlefieldAndReturn(player2, card);
+        addCreatureReady(player1, new Gelectrode());
+
+        harness.activateAbility(player1, 0, null, petrahydrox.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Petrahydrox");
+        harness.assertInHand(player1, "Petrahydrox");
+        harness.assertNotInHand(player2, "Petrahydrox");
+    }
+
+    @Test
+    @DisplayName("Targeting does not return the creature before its trigger resolves")
+    void returnUsesTheStack() {
+        Permanent petrahydrox = harness.addToBattlefieldAndReturn(player1, new Petrahydrox());
+        harness.setHand(player2, List.of(new Pyromatics()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, petrahydrox.getId());
+
+        harness.assertOnBattlefield(player1, "Petrahydrox");
+        harness.assertNotInHand(player1, "Petrahydrox");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Petrahydrox");
+        harness.assertNotInGraveyard(player1, "Petrahydrox");
+    }
+
+    @Test
+    @DisplayName("Does not return when a spell targets a player instead")
+    void doesNotTriggerForAnUnrelatedTarget() {
+        harness.addToBattlefield(player1, new Petrahydrox());
+        harness.setHand(player2, List.of(new Pyromatics()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Petrahydrox");
+        harness.assertNotInHand(player1, "Petrahydrox");
+        harness.assertLife(player1, 19);
     }
 }
