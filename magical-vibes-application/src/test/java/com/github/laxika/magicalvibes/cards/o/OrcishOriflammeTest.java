@@ -8,9 +8,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OrcishOriflamme.class, GrizzlyBears.class, Opalescence.class})
+@CardUsed({OrcishOriflamme.class, GrizzlyBears.class})
 class OrcishOriflammeTest extends BaseCardTest {
 
     @Test
@@ -56,6 +58,7 @@ class OrcishOriflammeTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(Opalescence.class)
     void animatedOriflammeAlsoBuffsItselfWhileAttacking() {
         harness.addToBattlefield(player1, new Opalescence());
         Permanent oriflamme = addCreatureReady(player1, new OrcishOriflamme());
@@ -83,5 +86,39 @@ class OrcishOriflammeTest extends BaseCardTest {
         Permanent creature = addCreatureReady(controller, new GrizzlyBears());
         creature.setAttacking(true);
         return creature;
+    }
+
+    @Test
+    void multipleOriflammesApplyIndependentlyToEveryOwnAttacker() {
+        harness.addToBattlefield(player1, new OrcishOriflamme());
+        Permanent secondOriflamme = harness.addToBattlefieldAndReturn(player1, new OrcishOriflamme());
+        Permanent firstAttacker = addAttackingBears(player1);
+        Permanent secondAttacker = addAttackingBears(player1);
+        Permanent nonAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentAttacker = addAttackingBears(player2);
+
+        assertThat(gqs.getEffectivePower(gd, firstAttacker)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, secondAttacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, firstAttacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, secondAttacker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, nonAttacker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentAttacker)).isEqualTo(2);
+
+        gd.playerBattlefields.get(player1.getId()).remove(secondOriflamme);
+
+        assertThat(gqs.getEffectivePower(gd, firstAttacker)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, secondAttacker)).isEqualTo(3);
+    }
+
+    @Test
+    void unblockedAttackerDealsBoostedCombatDamage() {
+        harness.addToBattlefield(player1, new OrcishOriflamme());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(1));
+        resolveCombat();
+
+        harness.assertLife(player2, 17);
     }
 }
