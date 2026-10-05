@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LunarchMantle.class, GrizzlyBears.class, Forest.class, FountainOfYouth.class})
 class LunarchMantleTest extends BaseCardTest {
 
     @Test
@@ -25,7 +27,7 @@ class LunarchMantleTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LunarchMantle()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        gs.playCard(gd, player1, 0, 0, bears.getId(), null);
+        harness.castEnchantment(player1, 0, bears.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -114,14 +116,70 @@ class LunarchMantleTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private Permanent attachMantleToBears() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+    @Test
+    @DisplayName("Sacrificing Lunarch Mantle pays the cost without stopping the flying ability")
+    void canSacrificeMantleToGrantedAbility() {
+        Permanent bears = attachMantleToBears();
+        Permanent aura = findPermanent(player1, "Lunarch Mantle");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent aura = new Permanent(new LunarchMantle());
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, aura.getId());
+
+        harness.assertInGraveyard(player1, "Lunarch Mantle");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The enchanted creature itself can be sacrificed to pay the cost")
+    void canSacrificeEnchantedCreature() {
+        Permanent bears = attachMantleToBears();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Lunarch Mantle");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opposing enchanted creature's controller pays for and activates its granted ability")
+    void opposingCreatureControllerActivatesAbility() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new LunarchMantle()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.handlePermanentChosen(player2, forest.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Forest");
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Lunarch Mantle"));
+    }
+
+    private Permanent attachMantleToBears() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setSummoningSick(false);
+
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new LunarchMantle());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return bears;
     }
 }
