@@ -105,4 +105,24 @@ class ChitteringHostTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("mana value 3 or less");
     }
+
+    @Test
+    void returningMeldedHostToHandReturnsBothFrontFaces() {
+        GrafRats rats = new GrafRats();
+        MidnightScavengers scavengers = new MidnightScavengers();
+        harness.addToBattlefield(player1, rats);
+        harness.addToBattlefield(player1, scavengers);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        Permanent host = findPermanent(player1, "Chittering Host");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, host));
+
+        harness.assertNotOnBattlefield(player1, "Chittering Host");
+        assertThat(gd.playerHands.get(player1.getId())).contains(rats, scavengers);
+        harness.assertNotInHand(player1, "Chittering Host");
+    }
 }

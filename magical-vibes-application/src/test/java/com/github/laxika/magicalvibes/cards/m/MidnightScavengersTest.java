@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.g.GrafRats;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({MidnightScavengers.class, LlanowarElves.class, GrizzlyBears.class,
-        HillGiant.class, LeoninScimitar.class, PhyrexianRager.class})
+        HillGiant.class, LeoninScimitar.class, PhyrexianRager.class, GrafRats.class})
 class MidnightScavengersTest extends BaseCardTest {
 
     private void castMidnightScavengers() {
@@ -138,5 +139,35 @@ class MidnightScavengersTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
                 .containsExactly(rager.getId());
+    }
+
+    @Test
+    void graveyardContainingOnlyIneligibleCreaturesProducesNoChoice() {
+        harness.setGraveyard(player1, List.of(new MidnightScavengers()));
+
+        castMidnightScavengers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Midnight Scavengers");
+        harness.assertNotInHand(player1, "Midnight Scavengers");
+        harness.assertOnBattlefield(player1, "Midnight Scavengers");
+    }
+
+    @Test
+    void returnRemainsOptionalAfterScavengersLeaveBattlefield() {
+        GrafRats rats = new GrafRats();
+        harness.setGraveyard(player1, List.of(rats));
+        castMidnightScavengers();
+        harness.handleMultipleCardsChosen(player1, List.of(rats.getId()));
+        var scavengers = findPermanent(player1, "Midnight Scavengers");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToExile(gd, scavengers));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Graf Rats");
+        harness.assertNotInHand(player1, "Graf Rats");
     }
 }
