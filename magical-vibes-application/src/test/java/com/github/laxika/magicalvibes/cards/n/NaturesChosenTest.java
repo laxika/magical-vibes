@@ -187,4 +187,76 @@ class NaturesChosenTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, opponentCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void canEnchantOwnCreatureAndUntapIt() {
+        Permanent creature = addCreatureReady(player1, new GorillaChieftain());
+        creature.tap();
+        harness.setHand(player1, List.of(new NaturesChosen()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        assertThat(findPermanent(player1, "Nature's Chosen").getAttachedTo()).isEqualTo(creature.getId());
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    void canTapSummoningSickEnchantedCreatureAsCost() {
+        enchant(harness.addToBattlefieldAndReturn(player1, new WildAesthir()));
+        enchanted.setSummoningSick(true);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AshnodsCylix());
+        artifact.tap();
+
+        harness.activateAbility(player1, 1, 1, null, artifact.getId());
+
+        assertThat(enchanted.isTapped()).isTrue();
+        assertThat(artifact.isTapped()).isTrue();
+        harness.passBothPriorities();
+        assertThat(artifact.isTapped()).isFalse();
+    }
+
+    @Test
+    void canUntapTargetDuringOpponentsTurn() {
+        enchant(addCreatureReady(player1, new WildAesthir()));
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new AshnodsCylix());
+        artifact.tap();
+        harness.forceActivePlayer(player2);
+
+        harness.activateAbility(player1, 1, 1, null, artifact.getId());
+        harness.passBothPriorities();
+
+        assertThat(enchanted.isTapped()).isTrue();
+        assertThat(artifact.isTapped()).isFalse();
+    }
+
+    @Test
+    void canTargetEnchantedCreatureItself() {
+        enchant(addCreatureReady(player1, new WildAesthir()));
+
+        harness.activateAbility(player1, 1, 1, null, enchanted.getId());
+
+        assertThat(enchanted.isTapped()).isTrue();
+        harness.passBothPriorities();
+        assertThat(enchanted.isTapped()).isFalse();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 1, null, enchanted.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void untapAbilityLimitAppliesBeforeResolution() {
+        enchant(addCreatureReady(player1, new GorillaChieftain()));
+        enchanted.tap();
+
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.passBothPriorities();
+        assertThat(enchanted.isTapped()).isFalse();
+    }
 }
