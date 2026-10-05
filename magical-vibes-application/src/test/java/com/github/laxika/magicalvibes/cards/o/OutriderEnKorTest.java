@@ -130,6 +130,64 @@ class OutriderEnKorTest extends BaseCardTest {
         assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Redirected damage can be redirected again by another en-Kor")
+    void redirectsDamageThroughAnotherEnKor() {
+        Permanent first = addCreatureReady(player1, new OutriderEnKor());
+        Permanent second = addCreatureReady(player1, new OutriderEnKor());
+        Permanent destination = addCreatureReady(player1, new FledglingMawcor());
+        Permanent source = addCreatureReady(player1, new FledglingMawcor());
+
+        harness.activateAbility(player1, indexOf(player1, second), null, destination.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(player1, first), null, second.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(player1, source), null, first.getId());
+        harness.passBothPriorities();
+
+        assertThat(first.getMarkedDamage()).isZero();
+        assertThat(second.getMarkedDamage()).isZero();
+        assertThat(destination.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The ability may target Outrider itself without preventing damage")
+    void mayRedirectDamageToItself() {
+        Permanent outrider = addCreatureReady(player1, new OutriderEnKor());
+        Permanent source = addCreatureReady(player1, new FledglingMawcor());
+
+        harness.activateAbility(player1, indexOf(player1, outrider), null, outrider.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(player1, source), null, outrider.getId());
+        harness.passBothPriorities();
+
+        assertThat(outrider.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Multiple activations redirect separate points of damage")
+    void multipleActivationsProtectAgainstSeparateDamageEvents() {
+        Permanent outrider = addCreatureReady(player1, new OutriderEnKor());
+        Permanent destination = addCreatureReady(player1, new OutriderEnKor());
+        Permanent firstSource = addCreatureReady(player1, new FledglingMawcor());
+        Permanent secondSource = addCreatureReady(player1, new FledglingMawcor());
+
+        harness.activateAbility(player1, indexOf(player1, outrider), null, destination.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(player1, outrider), null, destination.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(player1, firstSource), null, outrider.getId());
+        harness.passBothPriorities();
+        assertThat(destination.getMarkedDamage()).isEqualTo(1);
+
+        harness.activateAbility(player1, indexOf(player1, secondSource), null, outrider.getId());
+        harness.passBothPriorities();
+
+        assertThat(outrider.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(outrider).doesNotContain(destination);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(destination.getCard());
+    }
+
     private int indexOf(Player player, Permanent perm) {
         return gd.playerBattlefields.get(player.getId()).indexOf(perm);
     }
