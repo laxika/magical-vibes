@@ -49,10 +49,8 @@ class PulseOfTheForgeTest extends BaseCardTest {
     void dealsDamageToPlaneswalkerAndChecksControllerLife() {
         harness.setLife(player1, 10);
         harness.setLife(player2, 20);
-        ElspethKnightErrant elspethCard = new ElspethKnightErrant();
-        Permanent elspeth = new Permanent(elspethCard);
+        Permanent elspeth = harness.addToBattlefieldAndReturn(player2, new ElspethKnightErrant());
         elspeth.setCounterCount(CounterType.LOYALTY, 5);
-        gd.playerBattlefields.get(player2.getId()).add(elspeth);
 
         castAt(elspeth.getId());
 
@@ -65,10 +63,8 @@ class PulseOfTheForgeTest extends BaseCardTest {
     void doesNotReturnWhenTargetingOwnPlaneswalker() {
         harness.setLife(player1, 10);
         harness.setLife(player2, 20);
-        ElspethKnightErrant elspethCard = new ElspethKnightErrant();
-        Permanent elspeth = new Permanent(elspethCard);
+        Permanent elspeth = harness.addToBattlefieldAndReturn(player1, new ElspethKnightErrant());
         elspeth.setCounterCount(CounterType.LOYALTY, 5);
-        gd.playerBattlefields.get(player1.getId()).add(elspeth);
 
         castAt(elspeth.getId());
 
@@ -89,11 +85,98 @@ class PulseOfTheForgeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void doesNotReturnWhenLifeTotalsAreEqualAfterDamage() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 14);
+
+        castAt(player2.getId());
+
+        harness.assertLife(player2, 10);
+        harness.assertNotInHand(player1, "Pulse of the Forge");
+        harness.assertInGraveyard(player1, "Pulse of the Forge");
+    }
+
+    @Test
+    void canTargetItsControllerWithoutReturning() {
+        harness.setLife(player1, 10);
+
+        castAt(player1.getId());
+
+        harness.assertLife(player1, 6);
+        harness.assertNotInHand(player1, "Pulse of the Forge");
+        harness.assertInGraveyard(player1, "Pulse of the Forge");
+    }
+
+    @Test
+    void returnsEvenWhenDamageRemovesAllPlaneswalkerLoyalty() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        Permanent elspeth = harness.addToBattlefieldAndReturn(player2, new ElspethKnightErrant());
+        elspeth.setCounterCount(CounterType.LOYALTY, 4);
+
+        castAt(elspeth.getId());
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player2, "Elspeth, Knight-Errant");
+        harness.assertInHand(player1, "Pulse of the Forge");
+        harness.assertNotInGraveyard(player1, "Pulse of the Forge");
+    }
+
+    @Test
+    void doesNotReturnWhenOpposingPlaneswalkerControllerHasEqualLife() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+        Permanent elspeth = harness.addToBattlefieldAndReturn(player2, new ElspethKnightErrant());
+        elspeth.setCounterCount(CounterType.LOYALTY, 5);
+
+        castAt(elspeth.getId());
+
+        assertThat(elspeth.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        harness.assertLife(player2, 10);
+        harness.assertNotInHand(player1, "Pulse of the Forge");
+        harness.assertInGraveyard(player1, "Pulse of the Forge");
+    }
+
+    @Test
+    void checksLifeTotalsAtResolutionRatherThanWhenCast() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new PulseOfTheForge()));
+        addMana();
+        harness.castInstant(player1, 0, player2.getId());
+        harness.setLife(player1, 17);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        harness.assertNotInHand(player1, "Pulse of the Forge");
+        harness.assertInGraveyard(player1, "Pulse of the Forge");
+    }
+
+    @Test
+    void doesNotResolveOrReturnWhenPlaneswalkerTargetLeavesBattlefield() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        Permanent elspeth = harness.addToBattlefieldAndReturn(player2, new ElspethKnightErrant());
+        elspeth.setCounterCount(CounterType.LOYALTY, 4);
+        harness.setHand(player1, List.of(new PulseOfTheForge()));
+        addMana();
+        harness.castInstant(player1, 0, elspeth.getId());
+        elspeth.setCounterCount(CounterType.LOYALTY, 0);
+        harness.runStateBasedActions();
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertNotInHand(player1, "Pulse of the Forge");
+        harness.assertInGraveyard(player1, "Pulse of the Forge");
+    }
+
     private void castAt(UUID targetId) {
         harness.setHand(player1, List.of(new PulseOfTheForge()));
         addMana();
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 
     private void addMana() {
