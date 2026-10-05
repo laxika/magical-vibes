@@ -60,8 +60,7 @@ class NomadsEnKorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, nomads.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, nomads.getId());
 
         assertThat(destination.getMarkedDamage()).isEqualTo(1);
         assertThat(nomads.getMarkedDamage()).isEqualTo(1);
@@ -114,6 +113,84 @@ class NomadsEnKorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.creatureDamageRedirectShields).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Two activations redirect both damage from Shock")
+    void repeatedActivationsRedirectTwoDamage() {
+        Permanent nomads = addCreatureReady(player1, new NomadsEnKor());
+        Permanent destination = addCreatureReady(player1, new WallOfEssence());
+
+        for (int i = 0; i < 2; i++) {
+            harness.activateAbility(player1, indexOf(player1, nomads), null, destination.getId());
+            harness.passBothPriorities();
+        }
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, nomads.getId());
+
+        assertThat(nomads.getMarkedDamage()).isZero();
+        assertThat(destination.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(nomads);
+    }
+
+    @Test
+    @DisplayName("Redirected damage can be redirected again by another en-Kor")
+    void redirectedDamageUsesDestinationsRedirectShield() {
+        Permanent nomads = addCreatureReady(player1, new NomadsEnKor());
+        Permanent intermediate = addCreatureReady(player1, new NomadsEnKor());
+        Permanent destination = addCreatureReady(player1, new WallOfEssence());
+
+        for (int i = 0; i < 2; i++) {
+            harness.activateAbility(player1, indexOf(player1, intermediate), null, destination.getId());
+            harness.passBothPriorities();
+            harness.activateAbility(player1, indexOf(player1, nomads), null, intermediate.getId());
+            harness.passBothPriorities();
+        }
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, nomads.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(nomads, intermediate);
+        assertThat(nomads.getMarkedDamage()).isZero();
+        assertThat(intermediate.getMarkedDamage()).isZero();
+        assertThat(destination.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A destination leaving the battlefield does not prevent damage")
+    void absentDestinationDoesNotPreventDamage() {
+        Permanent nomads = addCreatureReady(player1, new NomadsEnKor());
+        Permanent destination = addCreatureReady(player1, new HonorGuard());
+
+        harness.activateAbility(player1, indexOf(player1, nomads), null, destination.getId());
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, destination.getId());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, nomads.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(nomads, destination);
+        harness.assertInGraveyard(player1, "Nomads en-Kor");
+    }
+
+    @Test
+    @DisplayName("Targeting itself does not prevent damage")
+    void selfRedirectionDoesNotPreventDamage() {
+        Permanent nomads = addCreatureReady(player1, new NomadsEnKor());
+
+        harness.activateAbility(player1, indexOf(player1, nomads), null, nomads.getId());
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, nomads.getId());
+
+        harness.assertNotOnBattlefield(player1, "Nomads en-Kor");
+        harness.assertInGraveyard(player1, "Nomads en-Kor");
     }
 
     private int indexOf(Player player, Permanent perm) {
