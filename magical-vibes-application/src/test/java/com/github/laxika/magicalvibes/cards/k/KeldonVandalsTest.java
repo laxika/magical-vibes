@@ -83,6 +83,33 @@ class KeldonVandalsTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Keldon Vandals");
     }
 
+    @Test
+    @DisplayName("Echo still requires payment when there are no artifacts to destroy")
+    void echoTriggersWithoutArtifactTargets() {
+        prepareVandals();
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Keldon Vandals");
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Keldon Vandals");
+        harness.assertNotOnBattlefield(player1, "Keldon Vandals");
+    }
+
+    @Test
+    @DisplayName("The artifact destruction ability can destroy an artifact its controller owns")
+    void etbDestroysOwnArtifact() {
+        castAndResolveVandals(harness.addToBattlefieldAndReturn(player1, new FodderCannon()).getId());
+
+        harness.assertOnBattlefield(player1, "Keldon Vandals");
+        harness.assertNotOnBattlefield(player1, "Fodder Cannon");
+        harness.assertInGraveyard(player1, "Fodder Cannon");
+    }
+
     private void prepareVandals() {
         harness.setHand(player1, List.of(new KeldonVandals()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -92,7 +119,6 @@ class KeldonVandalsTest extends BaseCardTest {
     private void castAndResolveVandals(java.util.UUID targetId) {
         prepareVandals();
         harness.castCreature(player1, 0, 0, targetId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
