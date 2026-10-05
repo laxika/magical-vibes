@@ -8,10 +8,37 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({MudbrawlerCohort.class, RageReflection.class, ZealousGuardian.class})
 class MudbrawlerCohortTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Can attack immediately after resolving even without another red creature")
+    void canAttackTheTurnItEnters() {
+        MudbrawlerCohort card = new MudbrawlerCohort();
+        harness.castFromHand(player1, card, "{1}{R}");
+        harness.passBothPriorities();
+
+        declareAttackers(player1, List.of(0));
+
+        Permanent cohort = findPermanent(player1, "Mudbrawler Cohort");
+        assertThat(cohort.getOriginalCard()).isSameAs(card);
+        assertThat(cohort.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Multiple other red creatures grant only one +1/+1 bonus")
+    void bonusDoesNotScaleWithNumberOfRedCreatures() {
+        Permanent cohort = harness.addToBattlefieldAndReturn(player1, new MudbrawlerCohort());
+        harness.addToBattlefield(player1, new MudbrawlerCohort());
+        harness.addToBattlefield(player1, new MudbrawlerCohort());
+
+        assertThat(gqs.getEffectivePower(gd, cohort)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, cohort)).isEqualTo(2);
+    }
 
     @Test
     @DisplayName("Base 1/1 when no other red creature is controlled")
