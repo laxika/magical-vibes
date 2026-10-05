@@ -17,12 +17,13 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AwakenedSkyclave.class, FarmMarket.class, Forest.class, InvasionOfZendikar.class,
-        Market.class, OvergrownPest.class, Shock.class})
+@CardUsed({AwakenedSkyclave.class, Forest.class, InvasionOfZendikar.class, OvergrownPest.class})
 class OvergrownPestTest extends BaseCardTest {
 
     @Test
+    @CardUsed({FarmMarket.class, Market.class, Shock.class})
     @DisplayName("ETB offers a land or double-faced card from the top five")
     void offersLandOrDoubleFacedCard() {
         Card land = new Forest();
@@ -49,6 +50,7 @@ class OvergrownPestTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({FarmMarket.class, Market.class, Shock.class})
     @DisplayName("With no land or double-faced card, all five cards go to the bottom")
     void noEligibleCardBottomsAllFive() {
         List<Card> topFive = List.of(new Shock(), new Shock(), new FarmMarket(), new Shock(), new Shock());
@@ -58,6 +60,97 @@ class OvergrownPestTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrderElementsOf(topFive);
+    }
+
+    @Test
+    @DisplayName("Choosing a land preserves the unexamined library above the remaining cards")
+    void choosesLandAndPreservesUnexaminedCards() {
+        Card land = new Forest();
+        List<Card> rest = List.of(new OvergrownPest(), new OvergrownPest(),
+                new OvergrownPest(), new OvergrownPest());
+        Card sixth = new InvasionOfZendikar();
+        Card seventh = new Forest();
+        setLibrary(List.of(rest.get(0), land, rest.get(1), rest.get(2), rest.get(3), sixth, seventh));
+
+        castAndResolve();
+
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(land.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(land.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
+        List<Card> library = gd.playerDecks.get(player1.getId());
+        assertThat(library).hasSize(6);
+        assertThat(library.subList(0, 2)).containsExactly(sixth, seventh);
+        assertThat(library.subList(2, 6)).containsExactlyInAnyOrderElementsOf(rest);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The player may decline even when eligible cards are available")
+    void mayDeclineEligibleCards() {
+        List<Card> topFive = List.of(new Forest(), new InvasionOfZendikar(),
+                new OvergrownPest(), new OvergrownPest(), new OvergrownPest());
+        Card sixth = new Forest();
+        setLibrary(List.of(topFive.get(0), topFive.get(1), topFive.get(2),
+                topFive.get(3), topFive.get(4), sixth));
+
+        castAndResolve();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        List<Card> library = gd.playerDecks.get(player1.getId());
+        assertThat(library).hasSize(6);
+        assertThat(library.getFirst()).isSameAs(sixth);
+        assertThat(library.subList(1, 6)).containsExactlyInAnyOrderElementsOf(topFive);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A library with fewer than five cards still allows a selection")
+    void shortLibraryAllowsSelection() {
+        Card land = new Forest();
+        Card other = new OvergrownPest();
+        setLibrary(List.of(other, land));
+
+        castAndResolve();
+        harness.handleMultipleCardsChosen(player1, List.of(land.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(other);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library does not require a choice or cause a loss")
+    void emptyLibraryResolvesWithoutChoice() {
+        setLibrary(List.of());
+
+        castAndResolve();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Overgrown Pest");
+    }
+
+    @Test
+    @DisplayName("Only one eligible card may be selected")
+    void cannotChooseBothLandAndDoubleFacedCard() {
+        Card land = new Forest();
+        Card doubleFaced = new InvasionOfZendikar();
+        setLibrary(List.of(land, doubleFaced));
+
+        castAndResolve();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(land.getId(), doubleFaced.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(doubleFaced.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(doubleFaced);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
     }
 
     private void castAndResolve() {
@@ -70,7 +163,6 @@ class OvergrownPestTest extends BaseCardTest {
     }
 
     private void setLibrary(List<Card> cards) {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(cards);
+        harness.setLibrary(player1, cards);
     }
 }
