@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(LightningWolf.class)
+@CardUsed({LightningWolf.class})
 class LightningWolfTest extends BaseCardTest {
 
     @Test
@@ -47,5 +47,55 @@ class LightningWolfTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sorcery speed");
+    }
+
+    @Test
+    @DisplayName("Lightning Wolf cannot activate during an opponent's main phase")
+    void activationRequiresOwnTurn() {
+        addCreatureReady(player1, new LightningWolf());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Lightning Wolf cannot activate again while its ability is on the stack")
+    void activationRequiresEmptyStack() {
+        Permanent wolf = addCreatureReady(player1, new LightningWolf());
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gqs.hasKeyword(gd, wolf, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, wolf, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Lightning Wolf grants first strike only to itself")
+    void activationDoesNotRequireUntappedOrReadyCreature() {
+        Permanent wolf = harness.addToBattlefieldAndReturn(player1, new LightningWolf());
+        wolf.setSummoningSick(true);
+        wolf.setTapped(true);
+        Permanent otherWolf = addCreatureReady(player1, new LightningWolf());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, wolf, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherWolf, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(wolf.isTapped()).isTrue();
     }
 }
