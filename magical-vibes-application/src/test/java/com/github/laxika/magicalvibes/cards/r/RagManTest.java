@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.b.BogRats;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.i.Inspiration;
 import com.github.laxika.magicalvibes.cards.t.TamiyoCollectorOfTales;
+import com.github.laxika.magicalvibes.cards.w.WiltLeafLiege;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -19,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RagMan.class, BogImp.class, BogRats.class, Disenchant.class, Inspiration.class})
+@CardUsed({RagMan.class, BogImp.class, BogRats.class, Disenchant.class, Inspiration.class,
+        DarkRitual.class, TamiyoCollectorOfTales.class, RielleTheEverwise.class, WiltLeafLiege.class})
 class RagManTest extends BaseCardTest {
 
     private Permanent readyRagMan() {
@@ -113,7 +115,7 @@ class RagManTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(RielleTheEverwise.class)
+    @CardUsed({RielleTheEverwise.class, DarkRitual.class})
     @DisplayName("Triggers the target opponent's first discard event")
     void triggersTargetOpponentsDiscardEvent() {
         harness.setLibrary(player2, List.of(new DarkRitual()));
@@ -122,8 +124,7 @@ class RagManTest extends BaseCardTest {
         readyRagMan();
 
         harness.activateAbility(player1, 0, null, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player2.getId()))
                 .extracting(card -> card.getName())
@@ -165,5 +166,78 @@ class RagManTest extends BaseCardTest {
         assertThat(ragMan.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
         harness.passBothPriorities();
+    }
+
+    @Test
+    @CardUsed(WiltLeafLiege.class)
+    @DisplayName("Opponent-caused discard puts Wilt-Leaf Liege onto the battlefield")
+    void appliesDiscardToBattlefieldReplacement() {
+        harness.setHand(player2, List.of(new WiltLeafLiege()));
+        readyRagMan();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Wilt-Leaf Liege");
+        harness.assertNotInGraveyard(player2, "Wilt-Leaf Liege");
+        harness.assertNotInHand(player2, "Wilt-Leaf Liege");
+    }
+
+    @Test
+    @DisplayName("Can activate during its controller's end step")
+    void canActivateDuringOwnEndStep() {
+        harness.setHand(player2, List.of(new BogImp()));
+        readyRagMan();
+        harness.forceStep(TurnStep.END_STEP);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Bog Imp");
+        harness.assertNotInHand(player2, "Bog Imp");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent ragMan = readyRagMan();
+        ragMan.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(ragMan.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent ragMan = readyRagMan();
+        ragMan.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate with fewer than three black mana")
+    void cannotActivateWithInsufficientMana() {
+        Permanent ragMan = addCreatureReady(player1, new RagMan());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(ragMan.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
     }
 }
