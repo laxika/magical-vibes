@@ -52,21 +52,98 @@ class MysteriousTomeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void backFaceCanTargetItsOwnTappedArtifact() {
+        Permanent tome = addTransformedTome(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, indexOf(player1, tome), null, tome.getId());
+        harness.passBothPriorities();
+
+        assertThat(tome.isTapped()).isTrue();
+        assertThat(tome.isTransformed()).isFalse();
+    }
+
+    @Test
+    void backFaceTransformsWhenTargetIsAlreadyTapped() {
+        Permanent tome = addTransformedTome(player1);
+        Permanent target = addTomeReady(player2);
+        target.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, indexOf(player1, tome), null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(tome.isTransformed()).isFalse();
+    }
+
+    @Test
+    void backFaceDoesNotTransformWhenTargetLeavesBattlefield() {
+        Permanent tome = addTransformedTome(player1);
+        Permanent target = addTomeReady(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, indexOf(player1, tome), null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(tome.isTapped()).isTrue();
+        assertThat(tome.isTransformed()).isTrue();
+    }
+
+    @Test
+    void frontFaceDrawsEvenWhenSourceLeavesBattlefield() {
+        Permanent tome = addTomeReady(player1);
+        gd.playerDecks.get(player1.getId()).add(0, new Island());
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, indexOf(player1, tome), null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(tome);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+    }
+
+    @Test
+    void transformsBackAndCanUseFrontFaceAgain() {
+        Permanent tome = addTomeReady(player1);
+        Permanent target = addTomeReady(player2);
+        gd.playerDecks.get(player1.getId()).add(0, new Island());
+        gd.playerDecks.get(player1.getId()).add(0, new Island());
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, indexOf(player1, tome), null, null);
+        harness.passBothPriorities();
+        assertThat(tome.isTransformed()).isTrue();
+        assertThat(tome.isTapped()).isTrue();
+
+        tome.setTapped(false);
+        harness.activateAbility(player1, indexOf(player1, tome), null, target.getId());
+        harness.passBothPriorities();
+        assertThat(tome.isTransformed()).isFalse();
+        assertThat(tome.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+
+        tome.setTapped(false);
+        harness.activateAbility(player1, indexOf(player1, tome), null, null);
+        harness.passBothPriorities();
+
+        assertThat(tome.isTransformed()).isTrue();
+        assertThat(tome.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 2);
+    }
+
     private Permanent addTomeReady(Player player) {
-        MysteriousTome card = new MysteriousTome();
-        Permanent tome = new Permanent(card);
-        tome.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(tome);
-        return tome;
+        return addCreatureReady(player, new MysteriousTome());
     }
 
     private Permanent addTransformedTome(Player player) {
-        MysteriousTome card = new MysteriousTome();
-        Permanent tome = new Permanent(card);
-        tome.setSummoningSick(false);
-        tome.setCard(card.getBackFaceCard());
+        Permanent tome = addTomeReady(player);
+        tome.setCard(tome.getOriginalCard().getBackFaceCard());
         tome.setTransformed(true);
-        gd.playerBattlefields.get(player.getId()).add(tome);
         return tome;
     }
 
