@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.e.EnvironmentalSciences;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PracticalResearch.class, Forest.class, Island.class, Mountain.class,
+        Opt.class, GrizzlyBears.class, JalumTome.class, EnvironmentalSciences.class})
 class PracticalResearchTest extends BaseCardTest {
 
     @Test
@@ -77,6 +81,49 @@ class PracticalResearchTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("A sorcery drawn during resolution can be the single discard")
+    void canDiscardDrawnSorcery() {
+        EnvironmentalSciences sorcery = new EnvironmentalSciences();
+        castResearch(List.of(new Forest(), new Island(), new Mountain(), sorcery),
+                List.of(new PracticalResearch()));
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        harness.handleMayAbilityChosen(player1, true);
+
+        int index = gd.playerHands.get(player1.getId()).indexOf(sorcery);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).validIndices())
+                .containsExactly(index);
+        harness.handleCardChosen(player1, index);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3).doesNotContain(sorcery);
+        harness.assertInGraveyard(player1, "Environmental Sciences");
+        harness.assertInGraveyard(player1, "Practical Research");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The single-discard option rejects a noninstant nonsorcery card")
+    void singleDiscardRejectsNonmatchingCard() {
+        Opt instant = new Opt();
+        Forest forest = new Forest();
+        castResearch(List.of(forest, new Island(), new Mountain(), instant),
+                List.of(new PracticalResearch()));
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.handleCardChosen(player1, gd.playerHands.get(player1.getId()).indexOf(forest));
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4).contains(forest, instant);
+        int index = gd.playerHands.get(player1.getId()).indexOf(instant);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).validIndices())
+                .containsExactly(index);
+        harness.handleCardChosen(player1, index);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3).contains(forest).doesNotContain(instant);
+        harness.assertInGraveyard(player1, "Opt");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castResearch(List<Card> library, List<Card> hand) {
         harness.setLibrary(player1, library);
         harness.setHand(player1, hand);
@@ -84,7 +131,6 @@ class PracticalResearchTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
     }
 }
