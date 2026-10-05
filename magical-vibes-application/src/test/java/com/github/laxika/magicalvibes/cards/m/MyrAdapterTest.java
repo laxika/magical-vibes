@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
 import com.github.laxika.magicalvibes.cards.a.Arrest;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -82,8 +83,44 @@ class MyrAdapterTest extends BaseCardTest {
     }
 
     private Permanent addScimitarReady(Player player) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, new LeoninScimitar());
-        permanent.setSummoningSick(false);
-        return permanent;
+        return addCreatureReady(player, new LeoninScimitar());
+    }
+
+    @Test
+    void movingEquipmentAwayRemovesItsBonusAndTheAdapterBonus() {
+        Permanent adapter = addAdapterReady(player1);
+        Permanent otherCreature = addCreatureReady(player1, new AlphaMyr());
+        Permanent scimitar = addScimitarReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 2, null, adapter.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, adapter)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, adapter)).isEqualTo(3);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 2, null, otherCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(scimitar.getAttachedTo()).isEqualTo(otherCreature.getId());
+        assertThat(gqs.getEffectivePower(gd, adapter)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, adapter)).isEqualTo(1);
+    }
+
+    @Test
+    void equipmentLeavingBattlefieldNoLongerCounts() {
+        Permanent adapter = addAdapterReady(player1);
+        Permanent scimitar = addScimitarReady(player1);
+        scimitar.setAttachedTo(adapter.getId());
+
+        assertThat(gqs.getEffectivePower(gd, adapter)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, adapter)).isEqualTo(3);
+
+        gd.playerBattlefields.get(player1.getId()).remove(scimitar);
+        gd.playerGraveyards.get(player1.getId()).add(scimitar.getCard());
+
+        assertThat(gqs.getEffectivePower(gd, adapter)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, adapter)).isEqualTo(1);
     }
 }
