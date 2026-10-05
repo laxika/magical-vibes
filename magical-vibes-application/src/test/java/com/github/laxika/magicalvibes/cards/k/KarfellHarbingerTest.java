@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.a.AuguryRaven;
+import com.github.laxika.magicalvibes.cards.b.BeholdTheMultiverse;
 import com.github.laxika.magicalvibes.cards.d.Divination;
+import com.github.laxika.magicalvibes.cards.s.StrategicPlanning;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +15,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KarfellHarbinger.class, AuguryRaven.class, Divination.class})
+@CardUsed({KarfellHarbinger.class, AuguryRaven.class, Divination.class,
+        BeholdTheMultiverse.class, StrategicPlanning.class})
 class KarfellHarbingerTest extends BaseCardTest {
 
     @Test
@@ -58,9 +61,71 @@ class KarfellHarbingerTest extends BaseCardTest {
                 .getForetellOrInstantSorceryOnlyColored(ManaColor.BLUE)).isEqualTo(1);
     }
 
+    @Test
+    void manaAbilityResolvesImmediatelyWithoutUsingTheStack() {
+        Permanent harbinger = addReadyHarbinger();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(harbinger.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getForetellOrInstantSorceryOnlyColored(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
+    void addsManaThatCanCastInstant() {
+        addReadyHarbinger();
+        harness.setHand(player1, List.of(new BeholdTheMultiverse()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.castInstant(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getForetellOrInstantSorceryOnlyColored(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    void restrictedBlueManaCanPayGenericSorceryCost() {
+        addReadyHarbinger();
+        harness.setHand(player1, List.of(new StrategicPlanning()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.castSorcery(player1, 0, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getForetellOrInstantSorceryOnlyColored(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent harbinger = harness.addToBattlefieldAndReturn(player1, new KarfellHarbinger());
+        harbinger.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(harbinger.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getForetellOrInstantSorceryOnlyColored(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    void cannotActivateTwiceWithoutUntapping() {
+        addReadyHarbinger();
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getForetellOrInstantSorceryOnlyColored(ManaColor.BLUE)).isEqualTo(1);
+    }
+
     private Permanent addReadyHarbinger() {
-        harness.addToBattlefield(player1, new KarfellHarbinger());
-        Permanent harbinger = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent harbinger = harness.addToBattlefieldAndReturn(player1, new KarfellHarbinger());
         harbinger.setSummoningSick(false);
         return harbinger;
     }
