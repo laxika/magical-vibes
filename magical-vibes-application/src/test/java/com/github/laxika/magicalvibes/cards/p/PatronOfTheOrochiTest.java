@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GnarledMass;
 import com.github.laxika.magicalvibes.cards.g.GoblinCohort;
 import com.github.laxika.magicalvibes.cards.m.MatsuTribeSniper;
+import com.github.laxika.magicalvibes.cards.s.SphereOfResistance;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -18,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({PatronOfTheOrochi.class, Forest.class, GnarledMass.class, GoblinCohort.class,
-        MatsuTribeSniper.class})
+        MatsuTribeSniper.class, SphereOfResistance.class})
 class PatronOfTheOrochiTest extends BaseCardTest {
 
     @Test
@@ -104,6 +105,89 @@ class PatronOfTheOrochiTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Patron of the Orochi");
         harness.assertNotOnBattlefield(player1, "Matsu-Tribe Sniper");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void canCastNormallyWithoutSacrificingSnake() {
+        harness.setHand(player1, List.of(new PatronOfTheOrochi()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Patron of the Orochi");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void canActivateDuringOpponentsTurn() {
+        Permanent patron = addCreatureReady(player1, new PatronOfTheOrochi());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        forest.tap();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(patron.isTapped()).isFalse();
+        assertThat(forest.isTapped()).isFalse();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new PatronOfTheOrochi());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void activationLimitResetsOnOpponentsTurn() {
+        Permanent patron = addCreatureReady(player1, new PatronOfTheOrochi());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(patron.isTapped()).isFalse();
+    }
+
+    @Test
+    void offeringStillRequiresRemainingGreenMana() {
+        Permanent snake = harness.addToBattlefieldAndReturn(player1, new MatsuTribeSniper());
+        harness.setHand(player1, List.of(new PatronOfTheOrochi()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        assertThatThrownBy(() -> harness.castCreatureWithAlternateCost(player1, 0, List.of(snake.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Matsu-Tribe Sniper");
+        harness.assertInHand(player1, "Patron of the Orochi");
+    }
+
+    @Test
+    void offeringPaysSpellCostIncreases() {
+        harness.addToBattlefield(player2, new SphereOfResistance());
+        Permanent snake = harness.addToBattlefieldAndReturn(player1, new MatsuTribeSniper());
+        harness.setHand(player1, List.of(new PatronOfTheOrochi()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castCreatureWithAlternateCost(player1, 0, List.of(snake.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Patron of the Orochi");
+        harness.assertInGraveyard(player1, "Matsu-Tribe Sniper");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }
