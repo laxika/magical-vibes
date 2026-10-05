@@ -87,4 +87,52 @@ class RadjanSpiritTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("Ability resolves even if Radjan Spirit leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent spirit = addCreatureReady(player1, new RadjanSpirit());
+        Permanent elemental = addCreatureReady(player2, new AirElemental());
+
+        harness.activateAbility(player1, 0, null, elemental.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, spirit));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spirit.getCard());
+        assertThat(gqs.hasKeyword(gd, elemental, Keyword.FLYING)).isFalse();
+
+        harness.passUntil(player1, TurnStep.CLEANUP);
+
+        assertThat(gqs.hasKeyword(gd, elemental, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent spirit = harness.addToBattlefieldAndReturn(player1, new RadjanSpirit());
+        spirit.setSummoningSick(true);
+        Permanent elemental = addCreatureReady(player2, new AirElemental());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, elemental.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(spirit.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, elemental, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while already tapped")
+    void cannotActivateWhileTapped() {
+        Permanent spirit = addCreatureReady(player1, new RadjanSpirit());
+        spirit.setTapped(true);
+        Permanent elemental = addCreatureReady(player2, new AirElemental());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, elemental.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gqs.hasKeyword(gd, elemental, Keyword.FLYING)).isTrue();
+    }
 }
