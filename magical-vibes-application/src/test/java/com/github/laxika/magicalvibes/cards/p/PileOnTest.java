@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IchorDrinker;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.model.Card;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PileOn.class, GrizzlyBears.class, Island.class, JaceBeleren.class})
+@CardUsed({PileOn.class, GrizzlyBears.class, IchorDrinker.class, Island.class, JaceBeleren.class})
 class PileOnTest extends BaseCardTest {
 
     @Test
@@ -31,8 +32,7 @@ class PileOnTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         GameData gameData = harness.getGameData();
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -53,8 +53,7 @@ class PileOnTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castInstant(player1, 0, jace.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, jace.getId());
 
         harness.assertNotOnBattlefield(player2, "Jace Beleren");
         harness.assertInGraveyard(player2, "Jace Beleren");
@@ -70,5 +69,110 @@ class PileOnTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, island.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature or planeswalker");
+    }
+
+    @Test
+    void convokeCanPayEntireCostWithSummoningSickCreaturesIncludingTheTarget() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new IchorDrinker());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new IchorDrinker());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new IchorDrinker());
+        Permanent fourth = harness.addToBattlefieldAndReturn(player1, new IchorDrinker());
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new PileOn()));
+
+        harness.castInstantWithConvoke(player1, 0, List.of(first.getId()),
+                List.of(first.getId(), second.getId(), third.getId(), fourth.getId()));
+
+        assertThat(List.of(first, second, third, fourth)).allMatch(Permanent::isTapped);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(second, third, fourth);
+        harness.assertInGraveyard(player1, "Ichor Drinker");
+        harness.assertInGraveyard(player1, "Pile On");
+    }
+
+    @Test
+    void convokeWithGreenCreaturePaysGenericManaAlongsideBlackMana() {
+        Permanent convoker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new PileOn()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstantWithConvoke(player1, 0, List.of(target.getId()), List.of(convoker.getId()));
+        harness.passBothPriorities();
+
+        assertThat(convoker.isTapped()).isTrue();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void doesNotSurveilWhenItsOnlyTargetLeavesTheBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new IchorDrinker());
+        Card first = new IchorDrinker();
+        Card second = new PileOn();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new PileOn()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, second);
+        harness.assertInGraveyard(player1, "Pile On");
+    }
+
+    @Test
+    void canKeepBothSurveilledCardsInReverseOrderWithoutLookingAtThirdCard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new IchorDrinker());
+        Card first = new IchorDrinker();
+        Card second = new PileOn();
+        Card third = new IchorDrinker();
+        harness.setLibrary(player1, List.of(first, second, third));
+        harness.setHand(player1, List.of(new PileOn()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(1, 0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first, third);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(first, second, third);
+    }
+
+    @Test
+    void canPutBothSurveilledCardsIntoGraveyard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new IchorDrinker());
+        Card first = new IchorDrinker();
+        Card second = new PileOn();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new PileOn()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0, 1)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second);
+    }
+
+    @Test
+    void surveilsOnlyAvailableCardWhenLibraryHasOneCard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new IchorDrinker());
+        Card top = new IchorDrinker();
+        harness.setLibrary(player1, List.of(top));
+        harness.setHand(player1, List.of(new PileOn()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(top);
     }
 }
