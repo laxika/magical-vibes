@@ -136,6 +136,32 @@ class MidnightRitualTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only selected creatures are exiled; other graveyard cards remain")
+    void unchosenCardsRemainInGraveyards() {
+        Card chosen = new DeepwoodGhoul();
+        Card unchosen = new DeepwoodGhoul();
+        Card noncreature = new DarkRitual();
+        Card opponentCreature = new DeepwoodGhoul();
+        Card ritual = new MidnightRitual();
+        harness.setGraveyard(player1, List.of(chosen, unchosen, noncreature));
+        harness.setGraveyard(player2, List.of(opponentCreature));
+        harness.setHand(player1, List.of(ritual));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorcery(player1, 0, 1);
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(unchosen, noncreature, ritual);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCreature);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(countPermanents(player1, "Zombie")).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("Zombie tokens have correct properties")
     void zombieTokensHaveCorrectProperties() {
         Card bears = new DeepwoodGhoul();
@@ -183,8 +209,7 @@ class MidnightRitualTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MidnightRitual()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // No creatures exiled, no tokens created; graveyard has bears + Midnight Ritual
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
