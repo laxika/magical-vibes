@@ -57,6 +57,40 @@ class MikokoroCenterOfTheSeaTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
+    @Test
+    @DisplayName("A newly entered noncreature land can tap for mana immediately")
+    void newlyEnteredLandCanTapForMana() {
+        Permanent mikokoro = harness.addToBattlefieldAndReturn(player1, new MikokoroCenterOfTheSea());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(mikokoro.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The draw ability accepts colored mana and waits for resolution")
+    void drawAbilityAcceptsColoredManaAndUsesStack() {
+        harness.addToBattlefield(player1, new MikokoroCenterOfTheSea());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
     private Permanent addReadyMikokoro(Player player) {
         Permanent perm = harness.addToBattlefieldAndReturn(player, new MikokoroCenterOfTheSea());
         perm.setSummoningSick(false);
