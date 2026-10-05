@@ -4,9 +4,8 @@ import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.f.FelotharDawnOfTheAbzan;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.o.Opt;
+import com.github.laxika.magicalvibes.cards.o.ObNixilisUnshackled;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Lotuslight Dancers")
-@CardUsed({LotuslightDancers.class, DarkRitual.class, FelotharDawnOfTheAbzan.class, GiantGrowth.class, Opt.class})
+@CardUsed({LotuslightDancers.class, DarkRitual.class, FelotharDawnOfTheAbzan.class, GiantGrowth.class, Opt.class,
+        ObNixilisUnshackled.class})
 class LotuslightDancersTest extends BaseCardTest {
 
     @Test
@@ -31,9 +31,9 @@ class LotuslightDancersTest extends BaseCardTest {
 
         resolveTrigger();
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getId)
@@ -55,7 +55,7 @@ class LotuslightDancersTest extends BaseCardTest {
 
         resolveTrigger();
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getId)
@@ -73,9 +73,9 @@ class LotuslightDancersTest extends BaseCardTest {
 
         resolveTrigger();
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
+        harness.handleCardChosen(player1, -1);
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getId)
@@ -83,13 +83,65 @@ class LotuslightDancersTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @CardUsed({LotuslightDancers.class})
+    @DisplayName("Three distinct multicolored cards can fill all three color requirements")
+    void threeMulticoloredCardsCanBeFound() {
+        Card first = new LotuslightDancers();
+        Card second = new LotuslightDancers();
+        Card third = new LotuslightDancers();
+        castWithLibrary(List.of(first, second, third));
+
+        resolveTrigger();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactlyInAnyOrder(first.getId(), second.getId(), third.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @CardUsed({LotuslightDancers.class})
+    @DisplayName("Found cards move to the graveyard only after all search choices are complete")
+    void foundCardsWaitUntilSearchIsComplete() {
+        Card first = new LotuslightDancers();
+        Card second = new LotuslightDancers();
+        Card third = new LotuslightDancers();
+        castWithLibrary(List.of(first, second, third));
+
+        resolveTrigger();
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactlyInAnyOrder(first.getId(), second.getId(), third.getId());
+    }
+
+    @Test
+    @CardUsed({LotuslightDancers.class, ObNixilisUnshackled.class})
+    @DisplayName("Searching for three colors is one library search even when no cards are found")
+    void abilityCausesOnlyOneSearchTrigger() {
+        harness.addToBattlefield(player2, new ObNixilisUnshackled());
+        castWithLibrary(List.of());
+
+        resolveTrigger();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(ObNixilisUnshackled.class);
+    }
+
     private void castWithLibrary(List<Card> library) {
-        harness.setHand(player1, List.of(new LotuslightDancers()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new LotuslightDancers(), "{2}{B}{G}{U}");
         harness.setLibrary(player1, library);
     }
 
