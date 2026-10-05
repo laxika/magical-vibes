@@ -84,14 +84,61 @@ class MirrorStrikeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Cannot target an attacker before blockers have been declared")
+    void cannotTargetAttackerBeforeBlockersDeclared() {
+        Permanent target = addAttacker(player2, player1, new VintaraElephant());
+        harness.setHand(player1, List.of(new MirrorStrike()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature that is not attacking")
+    void cannotTargetNonattackingCreature() {
+        Permanent target = addCreatureReady(player2, new VintaraElephant());
+        harness.setHand(player1, List.of(new MirrorStrike()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Redirects every combat damage event from the target during the turn")
+    void redirectsRepeatedCombatDamageDuringTurn() {
+        Permanent target = addAttacker(player2, player1, new VintaraElephant());
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> castMirrorStrike(target));
+
+        harness.resolveCombatDamage();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+
+        // Model a second combat in the same turn without advancing through cleanup.
+        target.setAttacking(true);
+        target.setAttackTarget(player1.getId());
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.resolveCombatDamage();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(12);
+    }
+
     private void castMirrorStrike(Permanent target) {
         harness.setHand(player1, List.of(new MirrorStrike()));
         harness.addMana(player1, ManaColor.WHITE, 4);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private Permanent addAttacker(Player controller, Player defender, Card card) {
