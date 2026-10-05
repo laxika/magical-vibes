@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,14 +16,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({OakStreetInnkeeper.class, GrizzlyBears.class, Shock.class})
 class OakStreetInnkeeperTest extends BaseCardTest {
 
     @Test
     @DisplayName("Tapped creature you control has hexproof during an opponent's turn")
     void tappedCreatureHasHexproofOnOpponentTurn() {
         harness.addToBattlefield(player1, new OakStreetInnkeeper());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.tap();
 
         harness.forceActivePlayer(player2);
@@ -34,8 +35,7 @@ class OakStreetInnkeeperTest extends BaseCardTest {
     @DisplayName("Untapped creature you control has no hexproof during an opponent's turn")
     void untappedCreatureHasNoHexproof() {
         harness.addToBattlefield(player1, new OakStreetInnkeeper());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.forceActivePlayer(player2);
 
@@ -46,8 +46,7 @@ class OakStreetInnkeeperTest extends BaseCardTest {
     @DisplayName("Tapped creature has no hexproof during your own turn")
     void noHexproofDuringOwnTurn() {
         harness.addToBattlefield(player1, new OakStreetInnkeeper());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.tap();
 
         harness.forceActivePlayer(player1);
@@ -58,8 +57,7 @@ class OakStreetInnkeeperTest extends BaseCardTest {
     @Test
     @DisplayName("Oak Street Innkeeper grants hexproof to itself while tapped on an opponent's turn")
     void grantsHexproofToItself() {
-        harness.addToBattlefield(player1, new OakStreetInnkeeper());
-        Permanent innkeeper = findPermanent(player1, "Oak Street Innkeeper");
+        Permanent innkeeper = harness.addToBattlefieldAndReturn(player1, new OakStreetInnkeeper());
         innkeeper.tap();
 
         harness.forceActivePlayer(player2);
@@ -71,8 +69,7 @@ class OakStreetInnkeeperTest extends BaseCardTest {
     @DisplayName("Opponent's tapped creatures do not gain hexproof")
     void opponentCreaturesUnaffected() {
         harness.addToBattlefield(player1, new OakStreetInnkeeper());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent opponentBears = findPermanent(player2, "Grizzly Bears");
+        Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         opponentBears.tap();
 
         harness.forceActivePlayer(player2);
@@ -84,8 +81,7 @@ class OakStreetInnkeeperTest extends BaseCardTest {
     @DisplayName("Hexproof is gone once Oak Street Innkeeper leaves the battlefield")
     void hexproofGoneWhenSourceLeaves() {
         harness.addToBattlefield(player1, new OakStreetInnkeeper());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.tap();
         harness.forceActivePlayer(player2);
 
@@ -101,17 +97,15 @@ class OakStreetInnkeeperTest extends BaseCardTest {
     @DisplayName("Opponent cannot target a tapped creature you control on their turn")
     void opponentCannotTargetTappedCreature() {
         harness.addToBattlefield(player1, new OakStreetInnkeeper());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.tap();
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
 
-        assertThatThrownBy(() -> gs.playCard(gd, player2, 0, 0, bears.getId(), null))
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("hexproof");
     }
@@ -120,19 +114,70 @@ class OakStreetInnkeeperTest extends BaseCardTest {
     @DisplayName("Opponent can target the same creature on your turn")
     void opponentCanTargetOnYourTurn() {
         harness.addToBattlefield(player1, new OakStreetInnkeeper());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.tap();
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passPriority(player1);
 
-        gs.playCard(gd, player2, 0, 0, bears.getId(), null);
+        harness.castInstant(player2, 0, bears.getId());
 
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Hexproof updates as a creature taps, untaps, and the active player changes")
+    void protectionTracksCurrentState() {
+        harness.addToBattlefield(player1, new OakStreetInnkeeper());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HEXPROOF)).isFalse();
+        bears.tap();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HEXPROOF)).isTrue();
+        bears.untap();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HEXPROOF)).isFalse();
+        bears.tap();
+        harness.forceActivePlayer(player1);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HEXPROOF)).isFalse();
+        harness.forceActivePlayer(player2);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HEXPROOF)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Controller can target their own protected creature during an opponent's turn")
+    void controllerCanTargetProtectedCreature() {
+        harness.addToBattlefield(player1, new OakStreetInnkeeper());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.tap();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Opponent's spell loses its target if the creature becomes tapped before resolution")
+    void gainingHexproofInvalidatesPendingSpell() {
+        harness.addToBattlefield(player1, new OakStreetInnkeeper());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, bears.getId());
+        bears.tap();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Shock");
     }
 }
