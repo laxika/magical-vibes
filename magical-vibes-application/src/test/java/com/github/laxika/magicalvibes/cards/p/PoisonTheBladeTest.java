@@ -27,8 +27,7 @@ class PoisonTheBladeTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         addSpellMana();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isTrue();
         assertThat(harness.getGameData().playerHands.get(player1.getId())).hasSize(1);
@@ -42,8 +41,7 @@ class PoisonTheBladeTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         addSpellMana();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -55,14 +53,50 @@ class PoisonTheBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
         harness.setHand(player1, List.of(new PoisonTheBlade()));
         addSpellMana();
 
-        Permanent artifact = harness.getGameData().playerBattlefields.get(player2.getId()).getFirst();
         assertThatThrownBy(() -> harness.castInstant(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Can give a creature you control deathtouch and draw the top card")
+    void canTargetOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        GrizzlyBears drawnCard = new GrizzlyBears();
+        harness.setHand(player1, List.of(new PoisonTheBlade()));
+        harness.setLibrary(player1, List.of(drawnCard));
+        addSpellMana();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Poison the Blade");
+    }
+
+    @Test
+    @DisplayName("Does not draw when the target leaves the battlefield before resolution")
+    void doesNotDrawWhenTargetLeavesBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        GrizzlyBears undrawnCard = new GrizzlyBears();
+        harness.setHand(player1, List.of(new PoisonTheBlade()));
+        harness.setLibrary(player1, List.of(undrawnCard));
+        addSpellMana();
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawnCard);
+        harness.assertInGraveyard(player1, "Poison the Blade");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addSpellMana() {
