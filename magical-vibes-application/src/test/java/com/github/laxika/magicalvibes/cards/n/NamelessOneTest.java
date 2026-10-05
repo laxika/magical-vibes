@@ -58,9 +58,7 @@ class NamelessOneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreatureWithMorph(player1, 0);
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent namelessOne = findPermanent(player1, "Nameless One");
         assertThat(namelessOne.isFaceDown()).isTrue();
@@ -74,5 +72,43 @@ class NamelessOneTest extends BaseCardTest {
         assertThat(namelessOne.isFaceDown()).isFalse();
         assertThat(gqs.getEffectivePower(gd, namelessOne)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, namelessOne)).isEqualTo(1);
+    }
+
+    @Test
+    void ignoresWizardsOutsideTheBattlefield() {
+        Permanent namelessOne = addCreatureReady(player1, new NamelessOne());
+        harness.setHand(player1, List.of(new NamelessOne()));
+        harness.setLibrary(player2, List.of(new NamelessOne()));
+        harness.setGraveyard(player1, List.of(new NamelessOne()));
+        harness.setExile(player2, List.of(new NamelessOne()));
+
+        assertThat(gqs.getEffectivePower(gd, namelessOne)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, namelessOne)).isEqualTo(1);
+    }
+
+    @Test
+    void faceDownWizardDoesNotCountUntilTurnedFaceUp() {
+        Permanent faceUpWizard = addCreatureReady(player1, new NamelessOne());
+        harness.setHand(player1, List.of(new NamelessOne()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+
+        Permanent faceDownWizard = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(Permanent::isFaceDown).findFirst().orElseThrow();
+        assertThat(gqs.getEffectivePower(gd, faceUpWizard)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, faceUpWizard)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, faceDownWizard)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, faceDownWizard)).isEqualTo(2);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(faceDownWizard));
+
+        assertThat(faceDownWizard.isFaceDown()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, faceUpWizard)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, faceUpWizard)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, faceDownWizard)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, faceDownWizard)).isEqualTo(2);
     }
 }
