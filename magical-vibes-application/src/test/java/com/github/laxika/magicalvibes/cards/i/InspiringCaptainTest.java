@@ -1,26 +1,21 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Inspiring Captain")
+@CardUsed({InspiringCaptain.class, GrizzlyBears.class})
 class InspiringCaptainTest extends BaseCardTest {
 
     private void castCaptain() {
-        harness.setHand(player1, new ArrayList<>(List.of(new InspiringCaptain())));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new InspiringCaptain(), "{3}{W}");
     }
 
     @Test
@@ -29,8 +24,7 @@ class InspiringCaptainTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         castCaptain();
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB boost
+        resolveAllTriggers();
 
         Permanent captain = findPermanent(player1, "Inspiring Captain");
 
@@ -46,8 +40,7 @@ class InspiringCaptainTest extends BaseCardTest {
         Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         castCaptain();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(opponentBears.getPowerModifier()).isEqualTo(0);
         assertThat(opponentBears.getToughnessModifier()).isEqualTo(0);
@@ -59,8 +52,7 @@ class InspiringCaptainTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         castCaptain();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -68,5 +60,35 @@ class InspiringCaptainTest extends BaseCardTest {
 
         assertThat(bears.getPowerModifier()).isEqualTo(0);
         assertThat(bears.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Creatures entering before the ETB trigger resolves receive the boost")
+    void includesCreaturesPresentAtResolution() {
+        castCaptain();
+        harness.passBothPriorities();
+
+        Permanent bears = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(bears.getPowerModifier()).isZero();
+        assertThat(bears.getToughnessModifier()).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(bears.getPowerModifier()).isEqualTo(1);
+        assertThat(bears.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Creatures entering after the ETB trigger resolves do not receive the boost")
+    void excludesCreaturesEnteringAfterResolution() {
+        castCaptain();
+        resolveAllTriggers();
+
+        Permanent bears = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(bears.getPowerModifier()).isZero();
+        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(findPermanent(player1, "Inspiring Captain").getPowerModifier()).isEqualTo(1);
+        assertThat(findPermanent(player1, "Inspiring Captain").getToughnessModifier()).isEqualTo(1);
     }
 }
