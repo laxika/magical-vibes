@@ -78,6 +78,39 @@ class MysticalTutorTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrderElementsOf(deck);
     }
 
+    @Test
+    @DisplayName("Choosing a sorcery reveals it and leaves it on top after shuffling")
+    void choosingSorceryPutsOnTop() {
+        List<Card> deck = setupLibrary();
+        Card chosen = deck.get(1);
+        cast();
+        harness.passBothPriorities();
+
+        List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
+        harness.handleCardChosen(player1, offered.indexOf(chosen));
+
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(chosen);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrderElementsOf(deck);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("reveals")).isTrue();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+        harness.assertInGraveyard(player1, "Mystical Tutor");
+        harness.assertNotInHand(player1, "Stone Rain");
+    }
+
+    @Test
+    @DisplayName("An empty library is shuffled without requesting a card choice")
+    void emptyLibraryResolvesWithoutChoice() {
+        harness.setLibrary(player1, List.of());
+        cast();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+        harness.assertInGraveyard(player1, "Mystical Tutor");
+    }
+
     private void cast() {
         harness.castFromHand(player1, new MysticalTutor(), "{U}");
     }
