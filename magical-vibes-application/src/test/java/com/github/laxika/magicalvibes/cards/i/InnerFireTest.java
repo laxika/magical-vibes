@@ -36,4 +36,32 @@ class InnerFireTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
     }
+
+    @Test
+    @DisplayName("Counts cards in hand at resolution rather than at casting")
+    void countsHandAtResolution() {
+        harness.setHand(player1, List.of(new InnerFire(), new InnerChamberGuard()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.setHand(player1, List.of(new InnerChamberGuard(), new InnerChamberGuard(), new InnerChamberGuard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Counts only the controller's hand and adds mana only to that player")
+    void ignoresOpponentsHand() {
+        harness.setHand(player1, List.of(new InnerFire(), new InnerChamberGuard()));
+        harness.setHand(player2, List.of(new InnerChamberGuard(), new InnerChamberGuard(), new InnerChamberGuard()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isZero();
+    }
 }
