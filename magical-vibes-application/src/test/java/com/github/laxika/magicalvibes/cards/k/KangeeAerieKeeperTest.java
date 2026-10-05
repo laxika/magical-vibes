@@ -40,6 +40,7 @@ class KangeeAerieKeeperTest extends BaseCardTest {
         gs.playCard(gd, player1, 0, 3, null, null, List.of(), List.of(), false,
                 null, null, null, null, null, true);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         Permanent kangee = findPermanent(player1, "Kangee, Aerie Keeper");
         assertThat(kangee.getCounterCount(CounterType.FEATHER)).isEqualTo(3);
@@ -63,6 +64,73 @@ class KangeeAerieKeeperTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, nonBird)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, kangee)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, kangee)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Feather counters and the Bird boost wait for the enters trigger to resolve")
+    void featherCountersWaitForTriggerResolution() {
+        Permanent bird = addCreatureReady(player1, new DreamThrush());
+        harness.setHand(player1, List.of(new KangeeAerieKeeper()));
+        addKangeeMana(3);
+        harness.ensurePriority(player1);
+
+        gs.playCard(gd, player1, 0, 3, null, null, List.of(), List.of(), false,
+                null, null, null, null, null, true);
+        harness.withAutoStop(gd.currentStep, () -> {
+            harness.passBothPriorities();
+
+            Permanent kangee = findPermanent(player1, "Kangee, Aerie Keeper");
+            assertThat(kangee.getCounterCount(CounterType.FEATHER)).isZero();
+            assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(1);
+            assertThat(gd.stack).hasSize(1);
+
+            harness.passBothPriorities();
+
+            assertThat(kangee.getCounterCount(CounterType.FEATHER)).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(4);
+            assertThat(gd.stack).isEmpty();
+        });
+    }
+
+    @Test
+    @DisplayName("Kicking with X zero still creates a trigger and pays the fixed kicker cost")
+    void kickedWithZeroCreatesTrigger() {
+        harness.setHand(player1, List.of(new KangeeAerieKeeper()));
+        addKangeeMana(0);
+        harness.castKickedCreature(player1, 0);
+
+        harness.withAutoStop(gd.currentStep, () -> {
+            harness.passBothPriorities();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+
+            harness.passBothPriorities();
+            assertThat(findPermanent(player1, "Kangee, Aerie Keeper")
+                    .getCounterCount(CounterType.FEATHER)).isZero();
+            assertThat(gd.stack).isEmpty();
+        });
+    }
+
+    @Test
+    @DisplayName("Bird bonuses follow the current feather count and disappear with Kangee")
+    void boostUpdatesWithCountersAndSourceLeaving() {
+        Permanent kangee = addCreatureReady(player1, new KangeeAerieKeeper());
+        Permanent bird = addCreatureReady(player2, new DreamThrush());
+
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(1);
+        kangee.setCounterCount(CounterType.FEATHER, 3);
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(4);
+
+        kangee.setCounterCount(CounterType.FEATHER, 1);
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(2);
+
+        gd.playerBattlefields.get(player1.getId()).remove(kangee);
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(1);
     }
 
     private void addKangeeMana(int kickerX) {
