@@ -122,6 +122,42 @@ class IndomitableWillTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Multiple Indomitable Wills stack their bonuses on the same creature")
+    void multipleAurasStackTheirBonuses() {
+        Permanent creature = addCreatureReady(player1, new LanternKami());
+        harness.setHand(player1, List.of(new IndomitableWill(), new IndomitableWill()));
+        addCastingMana();
+        addCastingMana();
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Indomitable Will")).hasSize(2)
+                .allSatisfy(aura -> assertThat(aura.getAttachedTo()).isEqualTo(creature.getId()));
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Indomitable Will goes to its owner's graveyard when the enchanted creature leaves")
+    void auraGoesToGraveyardWhenEnchantedCreatureLeaves() {
+        Permanent creature = addCreatureReady(player2, new LanternKami());
+        harness.setHand(player1, List.of(new IndomitableWill()));
+        addCastingMana();
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Indomitable Will");
+        harness.assertNotOnBattlefield(player1, "Indomitable Will");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
     private void addCastingMana() {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
