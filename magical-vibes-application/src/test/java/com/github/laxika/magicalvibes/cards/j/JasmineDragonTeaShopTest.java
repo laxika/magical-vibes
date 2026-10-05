@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.cards.s.SokkaLateralStrategist;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -21,7 +22,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(JasmineDragonTeaShop.class)
+@CardUsed({JasmineDragonTeaShop.class, SokkaLateralStrategist.class})
 class JasmineDragonTeaShopTest extends BaseCardTest {
 
     @Test
@@ -84,6 +85,7 @@ class JasmineDragonTeaShopTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 1);
+        pool.addSubtypeSpellOrAbilityMana(CardSubtype.ALLY, ManaColor.WHITE, 1);
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -106,10 +108,77 @@ class JasmineDragonTeaShopTest extends BaseCardTest {
         assertThat(shop.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Mana produced by the shop pays an Ally spell's hybrid mana cost")
+    void producedManaPaysForAllySpell() {
+        addReadyShop();
+        harness.setHand(player1, List.of(new SokkaLateralStrategist()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "BLUE");
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Sokka, Lateral Strategist");
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getSubtypeSpellOrAbilityManaForColor(Set.of(CardSubtype.ALLY), ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Ally-restricted mana cannot pay the shop's token ability")
+    void restrictedManaCannotPayTokenAbility() {
+        Permanent shop = addReadyShop();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        gd.playerManaPools.get(player1.getId())
+                .addSubtypeSpellOrAbilityMana(CardSubtype.ALLY, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(shop.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Ally");
+    }
+
+    @Test
+    @DisplayName("Token creation uses the stack and accepts colored mana for its generic cost")
+    void tokenAppearsOnlyWhenAbilityResolves() {
+        addReadyShop();
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Ally");
+        harness.passBothPriorities();
+
+        Permanent token = findPermanent(player1, "Ally");
+        assertThat(token.isTapped()).isFalse();
+        assertThat(token.isSummoningSick()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().isToken()).hasSize(1);
+        harness.assertNotOnBattlefield(player2, "Ally");
+    }
+
+    @Test
+    @DisplayName("A tapped shop cannot activate another ability")
+    void abilitiesShareTapCost() {
+        addReadyShop();
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyShop() {
-        Permanent shop = new Permanent(new JasmineDragonTeaShop());
+        Permanent shop = harness.addToBattlefieldAndReturn(player1, new JasmineDragonTeaShop());
         shop.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(shop);
         return shop;
     }
 
