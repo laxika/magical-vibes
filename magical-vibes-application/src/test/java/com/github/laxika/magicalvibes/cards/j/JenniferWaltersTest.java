@@ -80,23 +80,117 @@ class JenniferWaltersTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         Permanent opposingCreature = gd.playerBattlefields.get(player2.getId()).getFirst();
-        harness.castInstant(player2, 0, opposingCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, opposingCreature.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
-        harness.castInstant(player2, 0, sheHulk.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, sheHulk.getId());
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player2.getId());
         resolveAllTriggers();
 
-        harness.castInstant(player2, 0, sheHulk.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, sheHulk.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Declining damage reflection leaves a later opportunity available")
+    void canReflectLaterDamageAfterDeclining() {
+        Permanent sheHulk = addBackReady();
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveInstant(player2, 0, sheHulk.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.castAndResolveInstant(player2, 0, sheHulk.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Front face also prevents opposing spells during your turn")
+    void frontFaceRestrictsOpposingSpells() {
+        addFrontReady();
+        prepareMainPhase();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Cannot activate transformation outside a main phase")
+    void cannotTransformDuringCombat() {
+        Permanent jennifer = addFrontReady();
+        prepareMainPhase();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(jennifer.isTransformed()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Reflects lethal damage dealt to another creature you control")
+    void reflectsDamageToAnotherControlledCreature() {
+        addBackReady();
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveInstant(player2, 0, bear.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bear);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Damage reflection target is chosen before players respond to the trigger")
+    void choosesReflectionTargetBeforeResolution() {
+        Permanent sheHulk = addBackReady();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveInstant(player2, 0, sheHulk.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
     }
 
     private Permanent addFrontReady() {
