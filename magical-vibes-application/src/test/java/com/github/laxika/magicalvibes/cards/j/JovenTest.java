@@ -20,10 +20,9 @@ class JovenTest extends BaseCardTest {
     @DisplayName("Destroys a target noncreature artifact")
     void destroysNoncreatureArtifact() {
         addCreatureReady(player1, new Joven());
-        harness.addToBattlefield(player2, new SerratedArrows());
+        Permanent arrows = harness.addToBattlefieldAndReturn(player2, new SerratedArrows());
         harness.addMana(player1, ManaColor.RED, 3);
 
-        Permanent arrows = findPermanent(player2, "Serrated Arrows");
         harness.activateAbility(player1, 0, null, arrows.getId());
         harness.passBothPriorities();
 
@@ -34,10 +33,9 @@ class JovenTest extends BaseCardTest {
     @DisplayName("Cannot target an artifact creature")
     void cannotTargetArtifactCreature() {
         addCreatureReady(player1, new Joven());
-        harness.addToBattlefield(player2, new Roterothopter());
+        Permanent thopter = harness.addToBattlefieldAndReturn(player2, new Roterothopter());
         harness.addMana(player1, ManaColor.RED, 3);
 
-        Permanent thopter = findPermanent(player2, "Roterothopter");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, thopter.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -78,5 +76,45 @@ class JovenTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can destroy its controller's noncreature artifact")
+    void destroysOwnArtifact() {
+        addCreatureReady(player1, new Joven());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SerratedArrows());
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Serrated Arrows");
+        harness.assertInGraveyard(player1, "Serrated Arrows");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent joven = addCreatureReady(player1, new Joven());
+        joven.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SerratedArrows());
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Serrated Arrows");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while already tapped")
+    void cannotActivateWhileTapped() {
+        Permanent joven = addCreatureReady(player1, new Joven());
+        joven.setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SerratedArrows());
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Serrated Arrows");
     }
 }
