@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.b.BearCub;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -21,8 +22,7 @@ class NorwoodRidersTest extends BaseCardTest {
         addCreatureReady(player1, new NorwoodRiders());
         addCreatureReady(player2, new BearCub());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -44,5 +44,40 @@ class NorwoodRidersTest extends BaseCardTest {
         )))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be blocked by more than 1 creature");
+    }
+
+    @Test
+    @DisplayName("Norwood Riders may be left unblocked even when a blocker is available")
+    void canBeLeftUnblocked() {
+        addCreatureReady(player1, new NorwoodRiders());
+        addCreatureReady(player2, new BearCub());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        harness.assertLife(player2, 17);
+        assertThat(countPermanents(player2, "Bear Cub")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Norwood Riders does not restrict the blockers of another attacker")
+    void otherAttackerCanBeBlockedByTwoCreatures() {
+        addCreatureReady(player1, new NorwoodRiders());
+        addCreatureReady(player1, new BearCub());
+        Permanent ridersBlocker = addCreatureReady(player2, new BearCub());
+        Permanent firstBearBlocker = addCreatureReady(player2, new BearCub());
+        Permanent secondBearBlocker = addCreatureReady(player2, new BearCub());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 1),
+                new BlockerAssignment(2, 1)
+        ));
+
+        assertThat(ridersBlocker.isBlocking()).isTrue();
+        assertThat(firstBearBlocker.isBlocking()).isTrue();
+        assertThat(secondBearBlocker.isBlocking()).isTrue();
     }
 }
