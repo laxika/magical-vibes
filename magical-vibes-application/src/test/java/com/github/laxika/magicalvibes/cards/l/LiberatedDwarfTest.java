@@ -20,6 +20,29 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class LiberatedDwarfTest extends BaseCardTest {
 
     @Test
+    void tappedDwarfPaysSacrificeAndManaBeforeAbilityResolves() {
+        Permanent dwarf = harness.addToBattlefieldAndReturn(player1, new LiberatedDwarf());
+        dwarf.setTapped(true);
+        Permanent warthog = harness.addToBattlefieldAndReturn(player1, new GiantWarthog());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, warthog.getId());
+
+        harness.assertNotOnBattlefield(player1, "Liberated Dwarf");
+        harness.assertInGraveyard(player1, "Liberated Dwarf");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, warthog)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, warthog, Keyword.FIRST_STRIKE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, warthog)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, warthog)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, warthog, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
     void sacrificesItselfAndBoostsGreenCreatureWithFirstStrike() {
         harness.addToBattlefield(player1, new LiberatedDwarf());
         Permanent warthog = harness.addToBattlefieldAndReturn(player1, new GiantWarthog());
