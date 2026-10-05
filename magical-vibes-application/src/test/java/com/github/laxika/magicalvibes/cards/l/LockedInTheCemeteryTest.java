@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -72,13 +71,68 @@ class LockedInTheCemeteryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Reaching five graveyard cards after entry does not create a tap trigger")
+    void thresholdReachedAfterEntryDoesNotTrigger() {
+        Permanent creature = addCreatureReady(player2);
+        harness.setGraveyard(player1, graveyardWithFiveCards().subList(0, 4));
+        castAura(creature);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.setGraveyard(player1, graveyardWithFiveCards());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Noncreature cards count toward the graveyard threshold")
+    void noncreatureCardsEnableTap() {
+        Permanent creature = addCreatureReady(player2);
+        harness.setGraveyard(player1, List.of(
+                new LockedInTheCemetery(), new LockedInTheCemetery(),
+                new LockedInTheCemetery(), new LockedInTheCemetery(),
+                new LockedInTheCemetery()));
+        castAura(creature);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The Aura can tap and prevent untapping of its controller's own creature")
+    void canEnchantOwnCreature() {
+        Permanent creature = addCreatureReady(player1);
+        harness.setGraveyard(player1, graveyardWithFiveCards());
+        castAura(creature);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The untap restriction does not tap an untapped creature")
+    void untapRestrictionDoesNotTapCreature() {
+        Permanent creature = addCreatureReady(player2);
+        attachAura(player1, creature);
+
+        harness.performUntapStep(player2);
+
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("The enchanted creature does not untap while the Aura remains attached")
     void enchantedCreatureDoesNotUntap() {
         Permanent creature = addCreatureReady(player2);
         creature.tap();
         attachAura(player1, creature);
 
-        advanceToNextTurn(player1);
+        harness.performUntapStep(player2);
 
         assertThat(creature.isTapped()).isTrue();
     }
@@ -91,7 +145,7 @@ class LockedInTheCemeteryTest extends BaseCardTest {
         Permanent aura = attachAura(player1, creature);
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
-        advanceToNextTurn(player1);
+        harness.performUntapStep(player2);
 
         assertThat(creature.isTapped()).isFalse();
     }
@@ -107,9 +161,8 @@ class LockedInTheCemeteryTest extends BaseCardTest {
     }
 
     private Permanent attachAura(Player controller, Permanent creature) {
-        Permanent aura = new Permanent(new LockedInTheCemetery());
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new LockedInTheCemetery());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
         return aura;
     }
 
@@ -119,14 +172,4 @@ class LockedInTheCemeteryTest extends BaseCardTest {
                 new GrizzlyBears(), new GrizzlyBears());
     }
 
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
 }
