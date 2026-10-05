@@ -15,6 +15,38 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class PearlDragonTest extends BaseCardTest {
 
     @Test
+    @DisplayName("The toughness boost waits for the activated ability to resolve")
+    void boostWaitsForResolution() {
+        Permanent dragon = addCreatureReady(player1, new PearlDragon());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(dragon.getToughnessModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(dragon.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Only the Pearl Dragon that activated the ability gets the boost")
+    void boostAffectsOnlyItsSource() {
+        Permanent firstDragon = addCreatureReady(player1, new PearlDragon());
+        Permanent secondDragon = addCreatureReady(player1, new PearlDragon());
+        Permanent opposingDragon = addCreatureReady(player2, new PearlDragon());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(firstDragon.getToughnessModifier()).isZero();
+        assertThat(secondDragon.getToughnessModifier()).isEqualTo(1);
+        assertThat(opposingDragon.getToughnessModifier()).isZero();
+    }
+
+    @Test
     @DisplayName("Resolving ability gives +0/+1 to Pearl Dragon")
     void resolvingAbilityBoostsToughness() {
         Permanent dragon = addCreatureReady(player1, new PearlDragon());
