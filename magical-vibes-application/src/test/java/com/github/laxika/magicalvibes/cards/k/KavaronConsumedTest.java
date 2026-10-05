@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.c.CourserOfKruphix;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.model.Card;
@@ -18,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KavaronConsumed.class, GrizzlyBears.class, SolRing.class})
+@CardUsed({KavaronConsumed.class, GrizzlyBears.class, SolRing.class, CourserOfKruphix.class})
 class KavaronConsumedTest extends BaseCardTest {
 
     @Test
@@ -27,8 +28,7 @@ class KavaronConsumedTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KavaronConsumed(), new GrizzlyBears(), new SolRing()));
         addMana();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandChoice.class);
@@ -42,8 +42,7 @@ class KavaronConsumedTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KavaronConsumed(), new SolRing()));
         addMana();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
 
@@ -70,6 +69,73 @@ class KavaronConsumedTest extends BaseCardTest {
         assertThat(graveyardCard.getPower()).isEqualTo(4);
         assertThat(graveyardCard.getToughness()).isEqualTo(4);
         assertThat(graveyardCard.hasKeyword(Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Declining leaves the eligible card in hand")
+    void canDeclinePuttingCardOntoBattlefield() {
+        harness.setHand(player1, List.of(new KavaronConsumed(), new GrizzlyBears()));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Kavaron Consumed");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Resolves without an eligible card in hand")
+    void resolvesWithNoEligibleCards() {
+        harness.setHand(player1, List.of(new KavaronConsumed(), new KavaronConsumed()));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInHand(player1, "Kavaron Consumed");
+        harness.assertInGraveyard(player1, "Kavaron Consumed");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A creature becomes a hasty 4/4 artifact creature without paying its mana cost")
+    void changesChosenCreature() {
+        harness.setHand(player1, List.of(new KavaronConsumed(), new GrizzlyBears()));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        Permanent chosen = findPermanent(player1, "Grizzly Bears");
+        assertThat(gqs.isArtifact(gd, chosen)).isTrue();
+        assertThat(gqs.isCreature(gd, chosen)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, chosen)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, chosen)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, chosen, Keyword.HASTE)).isTrue();
+        harness.assertNotInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Becoming an artifact creature retains the enchantment card type")
+    void retainsEnchantmentType() {
+        harness.setHand(player1, List.of(new KavaronConsumed(), new CourserOfKruphix()));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        Permanent chosen = findPermanent(player1, "Courser of Kruphix");
+        assertThat(gqs.isArtifact(gd, chosen)).isTrue();
+        assertThat(gqs.isCreature(gd, chosen)).isTrue();
+        assertThat(gqs.isEnchantment(gd, chosen)).isTrue();
     }
 
     private void addMana() {
