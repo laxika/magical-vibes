@@ -97,6 +97,79 @@ class LordSkitterSewerKingTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Lord Skitter does not trigger its own graveyard exile when it enters")
+    void ownEntryDoesNotTrigger() {
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new LordSkitterSewerKing()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Lord Skitter, Sewer King");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("An opponent's Rat entering does not trigger Lord Skitter")
+    void opposingRatDoesNotTrigger() {
+        harness.addToBattlefield(player1, new LordSkitterSewerKing());
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new RuinRat()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Ruin Rat");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The combat Rat token triggers graveyard exile")
+    void combatTokenTriggersExile() {
+        Card opponentCard = new LordSkitterSewerKing();
+        harness.setGraveyard(player2, List.of(opponentCard));
+        harness.addToBattlefield(player1, new LordSkitterSewerKing());
+
+        advanceToCombat(player1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Rat")).hasSize(1);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(opponentCard.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(opponentCard.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(opponentCard);
+    }
+
+    @Test
+    @DisplayName("A chosen card that leaves the graveyard before resolution is not exiled")
+    void departedTargetIsNotExiled() {
+        Card opponentCard = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(opponentCard));
+        harness.addToBattlefield(player1, new LordSkitterSewerKing());
+        castRuinRat();
+        harness.handleMultipleCardsChosen(player1, List.of(opponentCard.getId()));
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player2, List.of(opponentCard));
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castRuinRat() {
         harness.setHand(player1, List.of(new RuinRat()));
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -107,7 +180,6 @@ class LordSkitterSewerKingTest extends BaseCardTest {
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 }
