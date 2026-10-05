@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GolemsHeart;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -43,5 +44,34 @@ class MouserMarkIIITest extends BaseCardTest {
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Two Mousers can enable each other to attack together")
+    void canAttackTogetherWithAnotherMouser() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new MouserMarkIII());
+        addCreatureReady(player1, new MouserMarkIII());
+
+        declareAttackers(player1, List.of(0, 1));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("Can block without controlling another artifact")
+    void canBlockWhenOnlyArtifactIsItself() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new MouserMarkIII());
+        harness.addToBattlefield(player1, new MouserMarkIII());
+        addCreatureReady(player2, new MouserMarkIII());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 }
