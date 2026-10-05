@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.b.BakuAltar;
 import com.github.laxika.magicalvibes.cards.h.HerosDemise;
+import com.github.laxika.magicalvibes.cards.h.HideousLaughter;
 import com.github.laxika.magicalvibes.cards.i.IwamoriOfTheOpenFist;
 import com.github.laxika.magicalvibes.cards.n.NezumiShadowWatcher;
 import com.github.laxika.magicalvibes.cards.t.TerashisGrasp;
@@ -17,11 +18,13 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({
         PatronOfTheNezumi.class,
         BakuAltar.class,
         HerosDemise.class,
+        HideousLaughter.class,
         IwamoriOfTheOpenFist.class,
         NezumiShadowWatcher.class,
         TerashisGrasp.class
@@ -100,5 +103,57 @@ class PatronOfTheNezumiTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Patron of the Nezumi");
         harness.assertNotOnBattlefield(player1, "Nezumi Shadow-Watcher");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Rat offering allows casting during an opponent's combat")
+    void castsWithRatOfferingDuringOpponentsCombat() {
+        Permanent rat = harness.addToBattlefieldAndReturn(player1, new NezumiShadowWatcher());
+        harness.setHand(player1, List.of(new PatronOfTheNezumi()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+
+        harness.castCreatureWithAlternateCost(player1, 0, List.of(rat.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Patron of the Nezumi");
+        harness.assertInGraveyard(player1, "Nezumi Shadow-Watcher");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Casting without Rat offering retains normal creature timing")
+    void cannotCastDuringOpponentsCombatWithoutOffering() {
+        harness.setHand(player1, List.of(new PatronOfTheNezumi()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertNotOnBattlefield(player1, "Patron of the Nezumi");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Patron sees opposing permanents die at the same time as itself")
+    void triggersWhenPatronAndOpposingCreatureDieSimultaneously() {
+        Permanent patron = harness.addToBattlefieldAndReturn(player1, new PatronOfTheNezumi());
+        patron.setMarkedDamage(5);
+        harness.addToBattlefield(player2, new NezumiShadowWatcher());
+        harness.setLife(player2, 20);
+        harness.castFromHand(player1, new HideousLaughter(), "{2}{B}{B}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Patron of the Nezumi");
+        harness.assertInGraveyard(player2, "Nezumi Shadow-Watcher");
+        harness.assertLife(player2, 19);
     }
 }
