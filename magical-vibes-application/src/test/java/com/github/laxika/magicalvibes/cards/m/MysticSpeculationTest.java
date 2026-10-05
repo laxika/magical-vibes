@@ -31,8 +31,7 @@ class MysticSpeculationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MysticSpeculation()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, (java.util.UUID) null);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
@@ -104,6 +103,72 @@ class MysticSpeculationTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(speculation);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Scry can put all three cards on the bottom in any order")
+    void putsAllThreeOnBottom() {
+        Card first = new Forest();
+        Card second = new GrizzlyBears();
+        Card third = new Mountain();
+        Card fourth = new Forest();
+        MysticSpeculation speculation = new MysticSpeculation();
+        harness.setLibrary(player1, List.of(first, second, third, fourth));
+        harness.setHand(player1, List.of(speculation));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, (java.util.UUID) null);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(first, second, third);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(2, 0, 1)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth, third, first, second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(speculation);
+    }
+
+    @Test
+    @DisplayName("Scry 3 uses the available cards when the library has fewer than three")
+    void scriesShortLibrary() {
+        Card first = new Forest();
+        Card second = new Mountain();
+        MysticSpeculation speculation = new MysticSpeculation();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setHand(player1, List.of(speculation));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorceryWithBuyback(player1, 0, null);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(first, second);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(speculation);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(speculation);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(1), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(speculation);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Buyback returns the spell even when the library is empty")
+    void buybackWithEmptyLibrary() {
+        MysticSpeculation speculation = new MysticSpeculation();
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(speculation));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorceryWithBuyback(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(speculation);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
 }
