@@ -45,6 +45,46 @@ class KindredDominanceTest extends BaseCardTest {
                 .allMatch(permanent -> permanent.getCard() instanceof AvianChangeling);
     }
 
+    @Test
+    @DisplayName("Destroys the caster's nonmatching creatures as well as the opponent's")
+    void destroysNonmatchingCreaturesOnBothBattlefields() {
+        harness.addToBattlefield(player1, new BayouDragonfly());
+        harness.addToBattlefield(player2, new BayouDragonfly());
+        harness.addToBattlefield(player2, new BenthicBehemoth());
+
+        castAndChoose(player1, "SERPENT");
+
+        harness.assertNotOnBattlefield(player1, "Bayou Dragonfly");
+        harness.assertNotOnBattlefield(player2, "Bayou Dragonfly");
+        harness.assertInGraveyard(player1, "Bayou Dragonfly");
+        harness.assertInGraveyard(player2, "Bayou Dragonfly");
+        harness.assertOnBattlefield(player2, "Benthic Behemoth");
+        harness.assertInGraveyard(player1, "Kindred Dominance");
+    }
+
+    @Test
+    @DisplayName("Choosing a type absent from the battlefield destroys every creature")
+    void canChooseAnAbsentCreatureType() {
+        harness.addToBattlefield(player1, new BenthicBehemoth());
+        harness.addToBattlefield(player2, new BayouDragonfly());
+
+        castAndChoose(player1, "GOBLIN");
+
+        assertThat(harness.getGameData().playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(harness.getGameData().playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Benthic Behemoth");
+        harness.assertInGraveyard(player2, "Bayou Dragonfly");
+    }
+
+    @Test
+    @DisplayName("Resolves on an empty battlefield after choosing a creature type")
+    void resolvesOnEmptyBattlefield() {
+        castAndChoose(player1, "GOBLIN");
+
+        assertThat(harness.getGameData().stack).isEmpty();
+        harness.assertInGraveyard(player1, "Kindred Dominance");
+    }
+
     private void castAndChoose(Player player, String creatureType) {
         harness.castFromHand(player, new KindredDominance(), "{5}{B}{B}");
         harness.passBothPriorities();
