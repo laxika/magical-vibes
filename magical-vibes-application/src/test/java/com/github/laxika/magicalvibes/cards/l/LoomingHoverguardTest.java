@@ -22,8 +22,7 @@ class LoomingHoverguardTest extends BaseCardTest {
     @Test
     @DisplayName("ETB puts target artifact on top of its owner's library")
     void etbPutsTargetArtifactOnTopOfOwnersLibrary() {
-        harness.addToBattlefield(player2, new Ornithopter());
-        UUID targetId = harness.getPermanentId(player2, "Ornithopter");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new Ornithopter()).getId();
         int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
 
         harness.setHand(player1, List.of(new LoomingHoverguard()));
@@ -76,5 +75,82 @@ class LoomingHoverguardTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Ornithopter");
         assertThat(gd.gameLog.stream().map(entry -> entry.plainText()))
                 .anyMatch(log -> log.contains("fizzles"));
+    }
+
+    @Test
+    @DisplayName("ETB can put an artifact you control on top of your library")
+    void etbCanTargetOwnArtifact() {
+        Ornithopter artifact = new Ornithopter();
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, artifact).getId();
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+
+        harness.setHand(player1, List.of(new LoomingHoverguard()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0, targetId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ornithopter");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore + 1);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(artifact);
+    }
+
+    @Test
+    @DisplayName("A controlled artifact goes to its owner's library, not its controller's")
+    void controlledArtifactReturnsToOwnersLibrary() {
+        Ornithopter artifact = new Ornithopter();
+        artifact.setOwnerId(player2.getId());
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, artifact).getId();
+        int controllerDeckSize = gd.playerDecks.get(player1.getId()).size();
+        int ownerDeckSize = gd.playerDecks.get(player2.getId()).size();
+
+        harness.setHand(player1, List.of(new LoomingHoverguard()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0, targetId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ornithopter");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(controllerDeckSize);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(ownerDeckSize + 1);
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst()).isSameAs(artifact);
+    }
+
+    @Test
+    @DisplayName("Hoverguard can enter when no artifacts are available to target")
+    void entersWithoutAvailableArtifactTargets() {
+        harness.setHand(player1, List.of(new LoomingHoverguard()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Looming Hoverguard");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ETB ability resolves after Hoverguard leaves the battlefield")
+    void etbResolvesAfterSourceLeaves() {
+        Ornithopter artifact = new Ornithopter();
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, artifact).getId();
+        harness.setHand(player1, List.of(new LoomingHoverguard()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        Permanent hoverguard = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof LoomingHoverguard)
+                .findFirst().orElseThrow();
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, hoverguard));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Looming Hoverguard");
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst()).isSameAs(artifact);
     }
 }
