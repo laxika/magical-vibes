@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
+import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Larceny.class, GrizzlyBears.class, FreshVolunteers.class})
+@CardUsed({Larceny.class, GrizzlyBears.class, GlorySeeker.class})
 class LarcenyTest extends BaseCardTest {
 
     @Test
@@ -134,12 +134,12 @@ class LarcenyTest extends BaseCardTest {
     @Test
     @DisplayName("Triggers once for each creature that deals combat damage")
     void triggersForEachCreatureThatDealsCombatDamage() {
-        harness.setHand(player2, List.of(new FreshVolunteers(), new FreshVolunteers()));
+        harness.setHand(player2, List.of(new GlorySeeker(), new GlorySeeker()));
         harness.addToBattlefield(player1, new Larceny());
 
-        Permanent firstAttacker = addCreatureReady(player1, new FreshVolunteers());
+        Permanent firstAttacker = addCreatureReady(player1, new GlorySeeker());
         firstAttacker.setAttacking(true);
-        Permanent secondAttacker = addCreatureReady(player1, new FreshVolunteers());
+        Permanent secondAttacker = addCreatureReady(player1, new GlorySeeker());
         secondAttacker.setAttacking(true);
 
         resolveCombat();
@@ -153,5 +153,51 @@ class LarcenyTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The damaged player chooses exactly one card to discard regardless of damage amount")
+    void damagedPlayerChoosesOneCard() {
+        harness.setHand(player2, List.of(new GrizzlyBears(), new GlorySeeker()));
+        harness.addToBattlefield(player1, new Larceny());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleCardChosen(player2, 1);
+        resolveAllTriggers();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Glory Seeker");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Two copies of Larceny each trigger for the same damaging creature")
+    void multipleCopiesTriggerIndependently() {
+        harness.setHand(player2, List.of(new GrizzlyBears(), new GlorySeeker()));
+        harness.addToBattlefield(player1, new Larceny());
+        harness.addToBattlefield(player1, new Larceny());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player2, 0);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
