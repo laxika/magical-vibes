@@ -72,6 +72,61 @@ class KingpinWilsonFiskTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Sacrificing Kingpin after another creature does not trigger again that turn")
+    void selfSacrificeSharesOncePerTurnLimit() {
+        Permanent kingpin = harness.addToBattlefieldAndReturn(player1, new KingpinWilsonFisk());
+        harness.addToBattlefield(player1, new ClawsOfGix());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        sacrificeWithClaws(bears.getId());
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
+
+        sacrificeWithClaws(kingpin.getId());
+
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Sacrificing a noncreature does not consume the once-per-turn trigger")
+    void noncreatureSacrificeDoesNotConsumeTrigger() {
+        harness.addToBattlefield(player1, new KingpinWilsonFisk());
+        harness.addToBattlefield(player1, new ClawsOfGix());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        sacrificeWithClaws(forest.getId());
+        assertThat(countPermanents(player1, "Treasure")).isZero();
+        sacrificeWithClaws(bears.getId());
+
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An opponent's creature sacrifice does not trigger Kingpin")
+    void opponentsSacrificeDoesNotTrigger() {
+        harness.addToBattlefield(player1, new KingpinWilsonFisk());
+        harness.addToBattlefield(player2, new ClawsOfGix());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.handlePermanentChosen(player2, bears.getId());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Treasure")).isZero();
+        assertThat(countPermanents(player2, "Treasure")).isZero();
+    }
+
+    private void sacrificeWithClaws(UUID permanentId) {
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int clawsIndex = gd.playerBattlefields.get(player1.getId()).indexOf(
+                findPermanent(player1, "Claws of Gix"));
+        harness.activateAbility(player1, clawsIndex, 0, null, null);
+        harness.handlePermanentChosen(player1, permanentId);
+        resolveAllTriggers();
+    }
+
     private void sacrifice(Permanent permanent) {
         Card card = permanent.getCard();
         gd.playerBattlefields.get(player1.getId()).remove(permanent);
