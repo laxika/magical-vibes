@@ -119,4 +119,63 @@ class KnightOfTheMistsTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Knight of Valor");
     }
+
+    @Test
+    @DisplayName("Declining payment bypasses an existing regeneration shield")
+    void destructionCannotBeRegenerated() {
+        harness.addToBattlefield(player2, new KnightOfValor());
+        Permanent target = findPermanent(player2, "Knight of Valor");
+        target.setRegenerationShield(1);
+
+        castKnightOfTheMists();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player2, "Knight of Valor");
+        harness.assertInGraveyard(player2, "Knight of Valor");
+        harness.assertOnBattlefield(player1, "Knight of the Mists");
+    }
+
+    @Test
+    @DisplayName("Paying {U} can save Knight of the Mists itself")
+    void payingSavesItself() {
+        castKnightOfTheMists();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Knight of the Mists"));
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Knight of the Mists");
+        harness.assertNotInGraveyard(player1, "Knight of the Mists");
+    }
+
+    @Test
+    @DisplayName("Nonblue mana cannot pay to save the targeted Knight")
+    void nonblueManaDoesNotPreventDestruction() {
+        harness.addToBattlefield(player2, new KnightOfValor());
+        castKnightOfTheMists();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Knight of Valor"));
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player2, "Knight of Valor");
+        harness.assertOnBattlefield(player1, "Knight of the Mists");
+    }
+
+    @Test
+    @DisplayName("Flanking does not trigger against a blocker with flanking")
+    void flankingDoesNotWeakenFlankingBlocker() {
+        Permanent attacker = addCreatureReady(player1, new KnightOfTheMists());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new KnightOfValor());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(blocker.getEffectivePower()).isEqualTo(2);
+        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+    }
 }
