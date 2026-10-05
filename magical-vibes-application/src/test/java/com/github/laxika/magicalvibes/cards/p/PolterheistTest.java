@@ -71,4 +71,99 @@ class PolterheistTest extends BaseCardTest {
                 .contains(land)
                 .allMatch(card -> !card.getId().equals(chosenId));
     }
+
+    @Test
+    void wardAllowsSpellWhenOpponentPaysThreeLife() {
+        Permanent polterheist = addCreatureReady(player1, new Polterheist());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, polterheist.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+        harness.assertOnBattlefield(player1, "Polterheist");
+        harness.assertInGraveyard(player2, "Shock");
+    }
+
+    @Test
+    void wardDoesNotTriggerForControllersSpell() {
+        Permanent polterheist = addCreatureReady(player1, new Polterheist());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, polterheist.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertOnBattlefield(player1, "Polterheist");
+        harness.assertInGraveyard(player1, "Shock");
+        assertThat(gd.pendingMayAbilities).isEmpty();
+    }
+
+    @Test
+    void wardCountersSpellWhenOpponentHasTooLittleLife() {
+        Permanent polterheist = addCreatureReady(player1, new Polterheist());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setLife(player2, 2);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, polterheist.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 2);
+        harness.assertInGraveyard(player2, "Shock");
+        assertThat(gd.pendingMayAbilities).isEmpty();
+    }
+
+    @Test
+    void heistOffersOnlyAvailableNonlandsAndAllowsCastingWithOtherMana() {
+        Permanent polterheist = addCreatureReady(player1, new Polterheist());
+        Card land = new Forest();
+        Card stolen = new Shock();
+        harness.setLibrary(player2, List.of(land, stolen));
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(polterheist)));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.HeistCardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.HeistCardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.cards()).containsExactly(stolen);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleMultipleCardsChosen(player1, List.of(stolen.getId())));
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castFromExile(player1, stolen.getId(), player2.getId());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
+
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player2, "Shock");
+        assertThat(gd.findExiledCard(stolen.getId())).isNull();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(land);
+    }
+
+    @Test
+    void heistDoesNothingWhenLibraryContainsOnlyLands() {
+        Permanent polterheist = addCreatureReady(player1, new Polterheist());
+        Card land = new Forest();
+        harness.setLibrary(player2, List.of(land));
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(polterheist)));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HeistCardChoice.class)).isNull();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(land);
+        assertThat(gd.stack).isEmpty();
+    }
 }
