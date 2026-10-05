@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.d.DefenderEnVec;
+import com.github.laxika.magicalvibes.cards.f.FlaringPain;
+import com.github.laxika.magicalvibes.cards.s.SealOfRemoval;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -13,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LaccolithRig.class, DefenderEnVec.class})
+@CardUsed({LaccolithRig.class, DefenderEnVec.class, SealOfRemoval.class, FlaringPain.class})
 class LaccolithRigTest extends BaseCardTest {
 
     @Test
@@ -158,6 +160,117 @@ class LaccolithRigTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+    }
+
+    @Test
+    @DisplayName("The enchanted creature still deals damage after leaving the battlefield")
+    void departedEnchantedCreatureDealsLastKnownPowerDamage() {
+        Permanent attacker = addCreatureReady(player1, new DefenderEnVec());
+        addRigAttachedTo(attacker);
+        Permanent seal = harness.addToBattlefieldAndReturn(player1, new SealOfRemoval());
+        Permanent blocker = addCreatureReady(player2, new DefenderEnVec());
+        Permanent victim = addCreatureReady(player2, new DefenderEnVec());
+        attacker.setAttacking(true);
+
+        declareBlock(attacker, blocker);
+        harness.handlePermanentChosen(player1, victim.getId());
+        attacker.setPowerModifier(1);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(seal),
+                null, attacker.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        harness.assertInHand(player1, "Defender en-Vec");
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(victim.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Assigning no combat damage still applies when damage cannot be prevented")
+    void unpreventableDamageDoesNotOverrideNoCombatDamageAssignment() {
+        Permanent attacker = addCreatureReady(player1, new DefenderEnVec());
+        addRigAttachedTo(attacker);
+        Permanent blocker = addCreatureReady(player2, new DefenderEnVec());
+        Permanent victim = addCreatureReady(player2, new DefenderEnVec());
+        harness.castFromHand(player1, new FlaringPain(), "{1}{R}");
+        harness.passBothPriorities();
+        attacker.setAttacking(true);
+
+        declareBlock(attacker, blocker);
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveCombat();
+
+        assertThat(victim.getMarkedDamage()).isEqualTo(2);
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+        assertThat(blocker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Choosing to deal zero damage still stops combat damage assignment")
+    void zeroPowerStillStopsCombatDamageAssignment() {
+        Permanent attacker = addCreatureReady(player1, new DefenderEnVec());
+        addRigAttachedTo(attacker);
+        Permanent blocker = addCreatureReady(player2, new DefenderEnVec());
+        Permanent victim = addCreatureReady(player2, new DefenderEnVec());
+        attacker.setAttacking(true);
+
+        declareBlock(attacker, blocker);
+        harness.handlePermanentChosen(player1, victim.getId());
+        attacker.setPowerModifier(-2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(victim.getMarkedDamage()).isZero();
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+    }
+
+    @Test
+    @DisplayName("An illegal target stops the whole trigger, including the combat damage restriction")
+    void departedTargetDoesNotStopCombatDamageAssignment() {
+        Permanent attacker = addCreatureReady(player1, new DefenderEnVec());
+        addRigAttachedTo(attacker);
+        Permanent seal = harness.addToBattlefieldAndReturn(player1, new SealOfRemoval());
+        Permanent blocker = addCreatureReady(player2, new DefenderEnVec());
+        Permanent victim = addCreatureReady(player2, new DefenderEnVec());
+        attacker.setAttacking(true);
+
+        declareBlock(attacker, blocker);
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(seal),
+                null, victim.getId());
+        harness.passBothPriorities();
+        resolveCombat();
+
+        harness.assertInHand(player2, "Defender en-Vec");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(blocker.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+    }
+
+    @Test
+    @DisplayName("The Aura controller chooses the target and optional damage for an opponent's creature")
+    void auraControllerMakesChoicesForOpponentsCreature() {
+        Permanent attacker = addCreatureReady(player2, new DefenderEnVec());
+        addRigAttachedTo(attacker);
+        Permanent blocker = addCreatureReady(player1, new DefenderEnVec());
+        Permanent victim = addCreatureReady(player2, new DefenderEnVec());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player1.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player2.getId()).indexOf(attacker))));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveCombat(player2);
+
+        assertThat(victim.getMarkedDamage()).isEqualTo(2);
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
     }
 
     private Permanent addRigAttachedTo(Permanent creature) {
