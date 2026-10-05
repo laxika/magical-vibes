@@ -42,7 +42,7 @@ class NimDevourerTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        harness.handlePermanentChosen(player1, hunter.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(hunter.getId()));
 
         harness.assertOnBattlefield(player1, "Nim Devourer");
         harness.assertInGraveyard(player1, "Fangren Hunter");
@@ -101,5 +101,68 @@ class NimDevourerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("upkeep");
+    }
+
+    @Test
+    @DisplayName("An older activation cannot return Nim Devourer after it returns and dies again")
+    void olderActivationCannotReturnNewGraveyardObject() {
+        harness.setGraveyard(player1, List.of(new NimDevourer()));
+        harness.addToBattlefield(player1, new FangrenHunter());
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1,
+                List.of(harness.getPermanentId(player1, "Nim Devourer")));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Nim Devourer");
+        harness.assertInGraveyard(player1, "Nim Devourer");
+        harness.assertNotOnBattlefield(player1, "Fangren Hunter");
+        harness.assertInGraveyard(player1, "Fangren Hunter");
+    }
+
+    @Test
+    @DisplayName("Returning one Nim Devourer does not return another copy in the graveyard")
+    void returnsOnlySourceCopy() {
+        NimDevourer source = new NimDevourer();
+        NimDevourer other = new NimDevourer();
+        harness.setGraveyard(player1, List.of(source, other));
+        Permanent hunter = harness.addToBattlefieldAndReturn(player1, new FangrenHunter());
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(hunter.getId()));
+
+        assertThat(harness.getPermanentId(player1, "Nim Devourer")).isNotNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().getId().equals(source.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(other).doesNotContain(source);
+    }
+
+    @Test
+    @DisplayName("Power bonus updates when an artifact creature is sacrificed after returning")
+    void powerBonusUpdatesAfterArtifactSacrifice() {
+        harness.setGraveyard(player1, List.of(new NimDevourer()));
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getId().equals(harness.getPermanentId(player1, "Nim Devourer")))
+                .findFirst().orElseThrow();
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(5);
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(artifact.getId()));
+
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Ornithopter");
     }
 }
