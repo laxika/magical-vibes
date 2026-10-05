@@ -93,4 +93,42 @@ class PlaneswalkersMirthTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(land);
     }
+
+    @Test
+    @DisplayName("Reveals from the opponent's hand at resolution")
+    void usesHandAtResolution() {
+        harness.addToBattlefieldAndReturn(player1, new PlaneswalkersMirth());
+        harness.setHand(player2, List.of(new ForsakenCity()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        VoiceOfAll revealed = new VoiceOfAll();
+        harness.setHand(player2, List.of(revealed));
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 4);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(revealed);
+    }
+
+    @Test
+    @DisplayName("Can activate twice without tapping and gains life for each resolution")
+    void canActivateRepeatedly() {
+        var mirth = harness.addToBattlefieldAndReturn(player1, new PlaneswalkersMirth());
+        VoiceOfAll revealed = new VoiceOfAll();
+        harness.setHand(player2, List.of(revealed));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 8);
+        assertThat(mirth.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(revealed);
+    }
 }
