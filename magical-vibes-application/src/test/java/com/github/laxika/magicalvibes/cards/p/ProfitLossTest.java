@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MelekIzzetParagon;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -18,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Profit // Loss is one card whose two halves (and their fusion) are the three modes of a single
  * modal instant, each paying its own total cost.
  */
+@CardUsed({ProfitLoss.class, GrizzlyBears.class, FugitiveWizard.class, MelekIzzetParagon.class})
 class ProfitLossTest extends BaseCardTest {
 
     private static final int PROFIT = 0;
@@ -123,6 +126,59 @@ class ProfitLossTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+
+        assertThat(mine.getEffectivePower()).isEqualTo(2);
+        assertThat(mine.getEffectiveToughness()).isEqualTo(2);
+        assertThat(theirs.getEffectivePower()).isEqualTo(2);
+        assertThat(theirs.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Fuse cannot be cast from the library through Melek")
+    void fuseCannotBeCastFromLibrary() {
+        harness.addToBattlefield(player1, new MelekIzzetParagon());
+        harness.setLibrary(player1, List.of(new ProfitLoss()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.ensurePriority(player1);
+
+        assertThatThrownBy(() -> gs.playCardFromLibraryTop(gd, player1, FUSE, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("This mode can only be cast from hand");
+    }
+
+    @Test
+    @DisplayName("Fuse affects creatures present at resolution, including those entering after casting")
+    void affectsCreaturesEnteringBeforeResolution() {
+        harness.setHand(player1, List.of(new ProfitLoss()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castModalInstant(player1, 0, FUSE, List.of());
+
+        Permanent mine = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent theirs = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertThat(mine.getEffectivePower()).isEqualTo(3);
+        assertThat(mine.getEffectiveToughness()).isEqualTo(3);
+        assertThat(theirs.getEffectivePower()).isEqualTo(1);
+        assertThat(theirs.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Fuse does not affect creatures entering after resolution")
+    void doesNotAffectCreaturesEnteringAfterResolution() {
+        harness.setHand(player1, List.of(new ProfitLoss()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castModalInstant(player1, 0, FUSE, List.of());
+        harness.passBothPriorities();
+
+        Permanent mine = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent theirs = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         assertThat(mine.getEffectivePower()).isEqualTo(2);
         assertThat(mine.getEffectiveToughness()).isEqualTo(2);
