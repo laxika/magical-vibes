@@ -57,10 +57,30 @@ class PullUnderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Multiple copies accumulate their penalties only on the targeted creature")
+    void penaltiesAccumulateOnTargetOnly() {
+        Permanent target = addBigCreature(player2);
+        Permanent other = addBigCreature(player2);
+
+        castPullUnder(target);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(7);
+
+        castPullUnder(target);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target).contains(other);
+        harness.assertInGraveyard(player2, "Kami of Old Stone");
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(7);
+    }
+
+    @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new Island());
-        Permanent island = findPermanent(player2, "Island");
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
         harness.setHand(player1, List.of(new PullUnder()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
