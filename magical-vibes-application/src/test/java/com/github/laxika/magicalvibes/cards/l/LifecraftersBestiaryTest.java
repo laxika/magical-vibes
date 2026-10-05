@@ -7,8 +7,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LifecraftersBestiary.class, Forest.class, GrizzlyBears.class, Shock.class})
 class LifecraftersBestiaryTest extends BaseCardTest {
 
     @Test
@@ -97,5 +100,69 @@ class LifecraftersBestiaryTest extends BaseCardTest {
 
         assertThat(gd.stack).noneMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && entry.getCard().getName().equals("Lifecrafter's Bestiary"));
+    }
+
+    @Test
+    @DisplayName("Keeping the scried card on top makes it the next draw")
+    void canKeepScriedCardOnTop() {
+        Card top = new Forest();
+        Card bottom = new GrizzlyBears();
+        harness.addToBattlefield(player1, new LifecraftersBestiary());
+        harness.setLibrary(player1, List.of(top, bottom));
+        gd.turnNumber = 2;
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(top);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(top);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bottom);
+    }
+
+    @Test
+    @DisplayName("An opponent casting a creature does not trigger the Bestiary")
+    void opponentsCreatureDoesNotTrigger() {
+        harness.addToBattlefield(player1, new LifecraftersBestiary());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.castCreature(player2, 0);
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                && entry.getCard().getName().equals("Lifecrafter's Bestiary"));
+    }
+
+    @Test
+    @DisplayName("A creature entering without being cast does not trigger the Bestiary")
+    void enteringCreatureDoesNotTrigger() {
+        harness.addToBattlefield(player1, new LifecraftersBestiary());
+
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("The draw requires green mana even when other mana is available")
+    void cannotDrawWithoutGreenMana() {
+        Card drawn = new Forest();
+        harness.addToBattlefield(player1, new LifecraftersBestiary());
+        harness.setLibrary(player1, List.of(drawn));
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawn);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
     }
 }
