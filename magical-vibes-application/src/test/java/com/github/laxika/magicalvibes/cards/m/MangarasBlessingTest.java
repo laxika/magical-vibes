@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GiantMantis;
+import com.github.laxika.magicalvibes.cards.e.EbonyCharm;
 import com.github.laxika.magicalvibes.cards.s.Stupor;
 import com.github.laxika.magicalvibes.cards.t.TaintedSpecter;
 import com.github.laxika.magicalvibes.cards.u.UnfulfilledDesires;
@@ -11,13 +12,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({MangarasBlessing.class, Stupor.class, TaintedSpecter.class, UnfulfilledDesires.class,
-        GiantMantis.class})
+        GiantMantis.class, EbonyCharm.class})
 class MangarasBlessingTest extends BaseCardTest {
 
     @Test
@@ -37,7 +37,7 @@ class MangarasBlessingTest extends BaseCardTest {
     @Test
     @DisplayName("Discarded by an opponent's spell: gains 2 life without prompting for a target")
     void discardedByOpponentGains2Life() {
-        harness.setHand(player2, new ArrayList<>(List.of(new MangarasBlessing())));
+        harness.setHand(player2, List.of(new MangarasBlessing()));
         harness.setLife(player2, 20);
 
         harness.setHand(player1, List.of(new Stupor()));
@@ -58,7 +58,7 @@ class MangarasBlessingTest extends BaseCardTest {
     @Test
     @DisplayName("Returns from the graveyard to hand at the beginning of the next end step")
     void returnsToHandAtNextEndStep() {
-        harness.setHand(player2, new ArrayList<>(List.of(new MangarasBlessing())));
+        harness.setHand(player2, List.of(new MangarasBlessing()));
 
         harness.setHand(player1, List.of(new Stupor()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -72,10 +72,12 @@ class MangarasBlessingTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd); // -> END_STEP
 
+        harness.assertInGraveyard(player2, "Mangara's Blessing");
+        harness.assertNotInHand(player2, "Mangara's Blessing");
+        harness.passBothPriorities();
+
         harness.assertNotInGraveyard(player2, "Mangara's Blessing");
-        assertThat(gd.playerHands.get(player2.getId()))
-                .extracting(c -> c.getName())
-                .contains("Mangara's Blessing");
+        harness.assertInHand(player2, "Mangara's Blessing");
     }
 
     @Test
@@ -107,9 +109,7 @@ class MangarasBlessingTest extends BaseCardTest {
     void doesNotTriggerOnSelfDiscard() {
         harness.setLife(player1, 20);
 
-        gd.playerDecks.get(player1.getId()).add(new GiantMantis());
-        gd.playerDecks.get(player1.getId()).add(new GiantMantis());
-        gd.playerDecks.get(player1.getId()).add(new GiantMantis());
+        harness.setLibrary(player1, List.of(new GiantMantis(), new GiantMantis(), new GiantMantis()));
 
         harness.addToBattlefield(player1, new UnfulfilledDesires());
         harness.setHand(player1, List.of(new MangarasBlessing()));
@@ -128,5 +128,33 @@ class MangarasBlessingTest extends BaseCardTest {
 
         // No delayed return was registered
         harness.assertInGraveyard(player1, "Mangara's Blessing");
+    }
+
+    @Test
+    @DisplayName("Does not return a card exiled in response to its delayed return trigger")
+    void doesNotReturnAfterExiledInResponse() {
+        MangarasBlessing blessing = new MangarasBlessing();
+        harness.setHand(player2, List.of(blessing));
+        harness.setHand(player1, List.of(new Stupor()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+        harness.assertInGraveyard(player2, "Mangara's Blessing");
+
+        harness.setHand(player1, List.of(new EbonyCharm()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castInstant(player1, 0, 1, null);
+        harness.handleMultipleCardsChosen(player1, List.of(blessing.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player2, "Mangara's Blessing");
+        harness.assertNotInGraveyard(player2, "Mangara's Blessing");
+        assertThat(gd.exiledCards).anyMatch(exiled -> exiled.card().getId().equals(blessing.getId()));
+        harness.assertLife(player2, 22);
     }
 }
