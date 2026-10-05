@@ -59,6 +59,45 @@ class LightOfHopeTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    void canDestroyOwnEnchantmentWithoutGainingLife() {
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new PhyrexianArena());
+        castMode(1, List.of(enchantment.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(enchantment);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(enchantment.getCard());
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void canPutCounterOnOpponentsCreatureWithoutGainingLife() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castMode(2, List.of(creature.getId()));
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void counterModeDoesNotGainLifeOrAffectAnotherCreatureWhenTargetLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new LightOfHope()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castModalInstant(player1, 0, 2, List.of(target.getId()));
+
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerGraveyards.get(player1.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof LightOfHope);
+    }
+
     private void castMode(int modeIndex, List<java.util.UUID> targetIds) {
         harness.setHand(player1, List.of(new LightOfHope()));
         harness.addMana(player1, ManaColor.WHITE, 1);
