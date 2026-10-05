@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -24,8 +25,7 @@ class KnightOfOldBenaliaTest extends BaseCardTest {
         Permanent opposingBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castKnight();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent knight = findPermanent(player1, "Knight of Old Benalia");
         assertThat(ownBears.getPowerModifier()).isEqualTo(1);
@@ -42,8 +42,7 @@ class KnightOfOldBenaliaTest extends BaseCardTest {
         Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         castKnight();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -79,10 +78,65 @@ class KnightOfOldBenaliaTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
-        assertThat(findPermanent(player1, "Knight of Old Benalia")).isNotNull();
+        Permanent knight = findPermanent(player1, "Knight of Old Benalia");
+        assertThat(knight).isNotNull();
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.HASTE)).isTrue();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(card);
+    }
+
+    @Test
+    @DisplayName("Suspend removes counters only on its owner's upkeep and on trigger resolution")
+    void suspendCounterRemovalTiming() {
+        KnightOfOldBenalia card = suspendKnight();
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 5);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 5);
+        resolveAllTriggers();
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+    }
+
+    @Test
+    @DisplayName("Declining the suspend cast leaves the card exiled without a later cast offer")
+    void mayDeclineSuspendCast() {
+        KnightOfOldBenalia card = suspendKnight();
+        for (int i = 0; i < 5; i++) {
+            advanceToUpkeep(player1);
+            resolveAllTriggers();
+        }
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        harness.assertNotOnBattlefield(player1, "Knight of Old Benalia");
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("ETB boosts creatures present when it resolves, but not creatures arriving later")
+    void etbLocksInCreaturesAtResolution() {
+        castKnight();
+        harness.passBothPriorities();
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new KnightOfOldBenalia());
+
+        resolveAllTriggers();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new KnightOfOldBenalia());
+
+        assertThat(beforeResolution.getPowerModifier()).isEqualTo(1);
+        assertThat(beforeResolution.getToughnessModifier()).isEqualTo(1);
+        assertThat(afterResolution.getPowerModifier()).isZero();
+        assertThat(afterResolution.getToughnessModifier()).isZero();
     }
 
     private void castKnight() {
