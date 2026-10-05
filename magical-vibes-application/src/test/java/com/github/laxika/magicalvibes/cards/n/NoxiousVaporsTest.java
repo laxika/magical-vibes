@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.f.ForsakenCity;
 import com.github.laxika.magicalvibes.cards.g.GaeasMight;
 import com.github.laxika.magicalvibes.cards.g.Gainsay;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({NoxiousVapors.class, Gainsay.class, GaeasMight.class, MorgueToad.class,
-        ForsakenCity.class, StarCompass.class, SamitePilgrim.class, Terminate.class})
+        ForsakenCity.class, StarCompass.class, SamitePilgrim.class, Terminate.class, DryadArbor.class})
 class NoxiousVaporsTest extends BaseCardTest {
 
     @Test
@@ -39,8 +40,7 @@ class NoxiousVaporsTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Gainsay(), new ForsakenCity()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.EachPlayerChoosesOneCardOfEachColorChoice.class);
@@ -78,8 +78,7 @@ class NoxiousVaporsTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId()))
@@ -96,8 +95,7 @@ class NoxiousVaporsTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Gainsay(), new Gainsay(), new ForsakenCity()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.EachPlayerChoosesOneCardOfEachColorChoice.class);
@@ -110,5 +108,72 @@ class NoxiousVaporsTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .extracting(Card::getName)
                 .containsExactly("Gainsay");
+    }
+
+    @Test
+    void canChooseAColoredLandInsteadOfKeepingAGreenNonland() {
+        Card land = new DryadArbor();
+        Card green = new GaeasMight();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new NoxiousVapors(), land, green));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(green);
+    }
+
+    @Test
+    void canChooseDifferentMulticoloredCardsForBlackAndRed() {
+        Card blackChoice = new Terminate();
+        Card redChoice = new Terminate();
+        Card discarded = new MorgueToad();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new NoxiousVapors(), blackChoice, redChoice, discarded));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(blackChoice, redChoice);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+    }
+
+    @Test
+    void waitsForBothPlayersChoicesBeforeDiscardingAnyCards() {
+        Card firstKept = new Gainsay();
+        Card firstDiscarded = new Gainsay();
+        Card secondKept = new Gainsay();
+        Card secondDiscarded = new Gainsay();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new NoxiousVapors(), firstKept, firstDiscarded));
+        harness.setHand(player2, List.of(secondKept, secondDiscarded));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstKept, firstDiscarded);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(secondKept, secondDiscarded);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(firstDiscarded);
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(secondDiscarded);
+
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstKept);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(secondDiscarded);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(firstDiscarded);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(secondKept);
     }
 }
