@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +15,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GrizzlyBears.class, KrosanVerge.class, LeadAstray.class, SuntailHawk.class})
+@CardUsed({KrosanVerge.class, LeadAstray.class, SuntailHawk.class})
 class LeadAstrayTest extends BaseCardTest {
 
     @Test
@@ -88,11 +87,11 @@ class LeadAstrayTest extends BaseCardTest {
     @Test
     @DisplayName("Taps only the chosen creatures regardless of controller")
     void tapsOnlyChosenCreaturesRegardlessOfController() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent unchosenCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        Permanent unchosenCreature = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
 
-        castLeadAstrayForJudReview(List.of(ownCreature.getId(), opponentCreature.getId()));
+        castLeadAstray(List.of(ownCreature.getId(), opponentCreature.getId()));
 
         assertThat(ownCreature.isTapped()).isTrue();
         assertThat(opponentCreature.isTapped()).isTrue();
@@ -102,25 +101,63 @@ class LeadAstrayTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot choose more than two target creatures")
     void cannotChooseMoreThanTwoTargets() {
-        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent third = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
 
-        assertThatThrownBy(() -> castLeadAstrayForJudReview(List.of(first.getId(), second.getId(), third.getId())))
+        assertThatThrownBy(() -> castLeadAstray(List.of(first.getId(), second.getId(), third.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void castLeadAstrayForJudReview() {
+    @Test
+    @DisplayName("Cannot choose the same creature twice")
+    void cannotChooseTheSameCreatureTwice() {
+        Permanent hawk = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
         harness.setHand(player1, List.of(new LeadAstray()));
         addMana();
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(hawk.getId(), hawk.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 
-    private void castLeadAstrayForJudReview(List<java.util.UUID> targets) {
+    @Test
+    @DisplayName("May target an already tapped creature")
+    void mayTargetAlreadyTappedCreature() {
+        Permanent tapped = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        Permanent untapped = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        tapped.setTapped(true);
+
+        castLeadAstray(List.of(tapped.getId(), untapped.getId()));
+
+        assertThat(tapped.isTapped()).isTrue();
+        assertThat(untapped.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Lead Astray");
+    }
+
+    @Test
+    @DisplayName("May be cast with no creatures on the battlefield")
+    void mayBeCastOnEmptyBattlefield() {
+        castLeadAstray(List.of());
+
+        harness.assertInGraveyard(player1, "Lead Astray");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Still taps the remaining target when one target leaves before resolution")
+    void tapsRemainingLegalTarget() {
+        Permanent departing = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        Permanent remaining = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
         harness.setHand(player1, List.of(new LeadAstray()));
         addMana();
-        harness.castInstant(player1, 0, targets);
+        harness.castInstant(player1, 0, List.of(departing.getId(), remaining.getId()));
+        harness.getPermanentRemovalService().removePermanentToHand(gd, departing);
+
         harness.passBothPriorities();
+
+        assertThat(remaining.isTapped()).isTrue();
+        assertThat(departing.isTapped()).isFalse();
+        harness.assertInHand(player2, "Suntail Hawk");
+        harness.assertInGraveyard(player1, "Lead Astray");
     }
 }
