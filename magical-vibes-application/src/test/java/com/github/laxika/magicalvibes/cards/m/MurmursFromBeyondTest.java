@@ -98,4 +98,61 @@ class MurmursFromBeyondTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
     }
+
+    @Test
+    @DisplayName("The opponent must choose exactly one revealed physical card")
+    void invalidSelectionsLeaveTheChoiceAvailable() {
+        Card first = new ArabaMothrider();
+        Card second = new ArabaMothrider();
+        Card third = new AkkiUnderling();
+        Card untouched = new CloudhoofKirin();
+        harness.setLibrary(player1, List.of(first, second, third, untouched));
+        harness.castFromHand(player1, new MurmursFromBeyond(), "{2}{U}");
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2, List.of()))
+                .hasMessageContaining("Invalid number");
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2,
+                List.of(first.getId(), second.getId())))
+                .hasMessageContaining("Invalid number");
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2,
+                List.of(first.getId(), first.getId())))
+                .hasMessageContaining("Duplicate");
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2, List.of(untouched.getId())))
+                .hasMessageContaining("Invalid card");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class))
+                .isNotNull();
+
+        harness.handleMultipleCardsChosen(player2, List.of(second.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, third);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(second).doesNotContain(first);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The spell uses its controller's library and sends the rest to that controller's hand")
+    void otherPlayerCanCastAndReceivesTheCards() {
+        Card first = new ArabaMothrider();
+        Card second = new AkkiUnderling();
+        Card third = new CloudhoofKirin();
+        Card opposingLibraryCard = new ArabaMothrider();
+        harness.setLibrary(player2, List.of(first, second, third));
+        harness.setLibrary(player1, List.of(opposingLibraryCard));
+        harness.setHand(player1, List.of());
+        harness.castFromHand(player2, new MurmursFromBeyond(), "{2}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(third.getId()));
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(first, second);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(third);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(opposingLibraryCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }
