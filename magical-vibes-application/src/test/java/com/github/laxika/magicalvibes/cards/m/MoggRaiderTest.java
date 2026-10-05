@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MoggRaider.class, FightingDrake.class})
+@CardUsed({MoggRaider.class, FightingDrake.class, BoggartShenanigans.class})
 class MoggRaiderTest extends BaseCardTest {
 
     @Test
@@ -64,7 +64,6 @@ class MoggRaiderTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(BoggartShenanigans.class)
     @DisplayName("Can sacrifice a noncreature Goblin permanent to pay the cost")
     void sacrificesNoncreatureGoblinPermanent() {
         setupRaider();
@@ -89,6 +88,90 @@ class MoggRaiderTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid before the boost resolves")
+    void paysSacrificeBeforeResolution() {
+        setupRaider();
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new FightingDrake());
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+
+        harness.assertNotOnBattlefield(player1, "Mogg Raider");
+        harness.assertInGraveyard(player1, "Mogg Raider");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(creature.getPowerModifier()).isZero();
+        assertThat(creature.getToughnessModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(creature.getPowerModifier()).isEqualTo(1);
+        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Raider can activate repeatedly")
+    void activatesRepeatedlyWhileTappedAndSummoningSick() {
+        setupRaider();
+        Permanent raider = gd.playerBattlefields.get(player1.getId()).getFirst();
+        raider.setTapped(true);
+        raider.setSummoningSick(true);
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new MoggRaider());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new FightingDrake());
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.handlePermanentChosen(player1, goblin.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getPowerModifier()).isEqualTo(2);
+        assertThat(creature.getToughnessModifier()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Mogg Raider");
+    }
+
+    @Test
+    @DisplayName("Sacrificing the targeted Raider leaves no legal target")
+    void canTargetAndSacrificeItself() {
+        setupRaider();
+        Permanent raider = gd.playerBattlefields.get(player1.getId()).getFirst();
+
+        harness.activateAbility(player1, 0, null, raider.getId());
+
+        harness.assertInGraveyard(player1, "Mogg Raider");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Mogg Raider");
+        assertThat(raider.getPowerModifier()).isZero();
+        assertThat(raider.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Only controlled Goblins can be chosen for the sacrifice cost")
+    void sacrificeChoicesExcludeOpponentsAndNonGoblins() {
+        setupRaider();
+        Permanent raider = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new MoggRaider());
+        harness.addToBattlefield(player2, new MoggRaider());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new FightingDrake());
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validPermanentIds()).containsExactlyInAnyOrder(raider.getId(), goblin.getId());
+
+        harness.handlePermanentChosen(player1, goblin.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Mogg Raider");
+        assertThat(creature.getPowerModifier()).isEqualTo(1);
+        assertThat(creature.getToughnessModifier()).isEqualTo(1);
     }
 
     private void setupRaider() {
