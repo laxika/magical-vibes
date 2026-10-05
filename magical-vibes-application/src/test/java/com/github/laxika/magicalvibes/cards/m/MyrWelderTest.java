@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
+import com.github.laxika.magicalvibes.cards.p.PrototypePortal;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,9 +22,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MyrWelder.class, RodOfRuin.class, GrizzlyBears.class, PrototypePortal.class})
 class MyrWelderTest extends BaseCardTest {
 
-    // ===== Imprint ability — exile target artifact from a graveyard =====
 
     @Test
     @DisplayName("Imprint ability puts exile effect on the stack (targeting artifact in graveyard)")
@@ -147,7 +149,6 @@ class MyrWelderTest extends BaseCardTest {
         assertThat(gd.getCardsExiledByPermanent(welder.getId())).isEmpty();
     }
 
-    // ===== Gaining activated abilities from exiled cards =====
 
     @Test
     @DisplayName("Gains activated abilities from exiled artifact card")
@@ -158,11 +159,15 @@ class MyrWelderTest extends BaseCardTest {
         Card rod = new RodOfRuin();
         gd.addToExile(player1.getId(), rod, welder.getId());
 
-        List<ActivatedAbility> granted = gqs.computeStaticBonus(gd, welder).grantedActivatedAbilities();
-
-        assertThat(granted).hasSize(1);
-        assertThat(granted.getFirst().isRequiresTap()).isTrue();
-        assertThat(granted.getFirst().getManaCost()).isEqualTo("{3}");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(welder.isTapped()).isFalse();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        assertThat(welder.isTapped()).isTrue();
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -195,7 +200,6 @@ class MyrWelderTest extends BaseCardTest {
         assertThat(granted).isEmpty();
     }
 
-    // ===== Activating gained abilities =====
 
     @Test
     @DisplayName("Can activate gained ability from exiled artifact")
@@ -265,13 +269,60 @@ class MyrWelderTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 
-    // ===== Helper methods =====
+
+    @Test
+    @DisplayName("Borrowed Portal ability cannot use cards exiled by Welder's imprint ability")
+    void borrowedPortalAbilityHasNoLinkedExiledCard() {
+        Permanent welder = addWelderReady(player1);
+        Card portal = new PrototypePortal();
+        harness.setGraveyard(player1, new ArrayList<>(List.of(portal)));
+
+        harness.activateAbility(player1, 0, 0, null, portal.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        welder.untap();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, 4, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(welder);
+    }
+
+    @Test
+    @DisplayName("Loses a borrowed ability when its card leaves exile")
+    void losesAbilityWhenImprintedCardLeavesExile() {
+        addWelderReady(player1);
+        Card rod = new RodOfRuin();
+        harness.setGraveyard(player1, new ArrayList<>(List.of(rod)));
+        harness.activateAbility(player1, 0, 0, null, rod.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        assertThat(gd.removeFromExile(rod.getId())).isTrue();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        findPermanent(player1, "Myr Welder").untap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A borrowed ability already on the stack survives its card leaving exile")
+    void stackedBorrowedAbilitySurvivesCardLeavingExile() {
+        Permanent welder = addWelderReady(player1);
+        Card rod = new RodOfRuin();
+        harness.setGraveyard(player1, new ArrayList<>(List.of(rod)));
+        harness.activateAbility(player1, 0, 0, null, rod.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        welder.untap();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        assertThat(gd.removeFromExile(rod.getId())).isTrue();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
 
     private Permanent addWelderReady(Player player) {
-        MyrWelder card = new MyrWelder();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new MyrWelder());
     }
 }
