@@ -16,6 +16,69 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class MarshalOfZhalfirTest extends BaseCardTest {
 
     @Test
+    void twoMarshalsBoostEachOther() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new MarshalOfZhalfir());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new MarshalOfZhalfir());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+    }
+
+    @Test
+    void canTapAnotherMarshalYouControl() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new MarshalOfZhalfir());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new MarshalOfZhalfir());
+        source.setSummoningSick(false);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(target.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void canTargetAnAlreadyTappedCreature() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new MarshalOfZhalfir());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MarshalOfZhalfir());
+        source.setSummoningSick(false);
+        target.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void summoningSickMarshalCannotPayTapCost() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new MarshalOfZhalfir());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MarshalOfZhalfir());
+        source.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(source.isTapped()).isFalse();
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Other Knights you control get +1/+1")
     void buffsOtherKnightsYouControl() {
         Permanent marshal = harness.addToBattlefieldAndReturn(player1, new MarshalOfZhalfir());
