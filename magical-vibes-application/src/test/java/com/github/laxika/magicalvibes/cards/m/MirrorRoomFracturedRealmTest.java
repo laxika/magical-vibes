@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishVisionary;
+import com.github.laxika.magicalvibes.cards.t.TunnelSurveyor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -14,8 +15,9 @@ import java.util.List;
 import static com.github.laxika.magicalvibes.model.ManaColor.BLUE;
 import static com.github.laxika.magicalvibes.model.ManaColor.GREEN;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MirrorRoomFracturedRealm.class, ElvishVisionary.class})
+@CardUsed({MirrorRoomFracturedRealm.class, ElvishVisionary.class, TunnelSurveyor.class})
 class MirrorRoomFracturedRealmTest extends BaseCardTest {
 
     @Test
@@ -47,6 +49,109 @@ class MirrorRoomFracturedRealmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    void mirrorRoomRequiresATargetWhenALegalCreatureExists() {
+        Permanent target = addCreatureReady(player1, new TunnelSurveyor());
+        castRoom(0);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+        assertThat(countPermanents(player1, "Tunnel Surveyor")).isEqualTo(2);
+    }
+
+    @Test
+    void mirrorRoomCopiesTheCreaturesTriggeredAbility() {
+        Permanent target = addCreatureReady(player1, new TunnelSurveyor());
+        castRoom(0);
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Tunnel Surveyor")).isEqualTo(2);
+        assertThat(countPermanents(player1, "Glimmer")).isEqualTo(1);
+        Permanent copy = findPermanents(player1, "Tunnel Surveyor").stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .findFirst().orElseThrow();
+        assertThat(copy.getCard().getSubtypes())
+                .contains(CardSubtype.HUMAN, CardSubtype.DETECTIVE, CardSubtype.REFLECTION);
+    }
+
+    @Test
+    void mirrorRoomCanCopyAnEnchantmentCreatureToken() {
+        harness.setHand(player1, List.of(new TunnelSurveyor()));
+        harness.addMana(player1, BLUE, 3);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        Permanent original = findPermanent(player1, "Glimmer");
+
+        castRoom(0);
+        harness.handlePermanentChosen(player1, original.getId());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Glimmer")).isEqualTo(2);
+        Permanent copy = findPermanents(player1, "Glimmer").stream()
+                .filter(permanent -> !permanent.getId().equals(original.getId()))
+                .findFirst().orElseThrow();
+        assertThat(copy.getCard().hasType(CardType.ENCHANTMENT)).isTrue();
+        assertThat(copy.getCard().hasType(CardType.CREATURE)).isTrue();
+        assertThat(copy.getCard().getSubtypes()).contains(CardSubtype.GLIMMER, CardSubtype.REFLECTION);
+    }
+
+    @Test
+    void fracturedRealmDoublesItsOwnMirrorRoomUnlockTrigger() {
+        Permanent target = addCreatureReady(player1, new TunnelSurveyor());
+        Permanent room = castRoom(1);
+        harness.addMana(player1, BLUE, 3);
+        harness.unlockRoomDoor(player1, gd.playerBattlefields.get(player1.getId()).indexOf(room), 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Tunnel Surveyor")).isEqualTo(3);
+        assertThat(countPermanents(player1, "Glimmer")).isEqualTo(4);
+    }
+
+    @Test
+    void lockedFracturedRealmDoesNotDoubleTriggeredAbilities() {
+        castRoom(0);
+        resolveAllTriggers();
+        harness.setHand(player1, List.of(new TunnelSurveyor()));
+        harness.addMana(player1, BLUE, 3);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Glimmer")).isEqualTo(1);
+    }
+
+    @Test
+    void fracturedRealmDoesNotDoubleOpponentsTriggeredAbilities() {
+        castRoom(1);
+        harness.setHand(player2, List.of(new TunnelSurveyor()));
+        harness.addMana(player2, BLUE, 3);
+        harness.forceActivePlayer(player2);
+        harness.castCreature(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player2, "Glimmer")).isEqualTo(1);
+    }
+
+    @Test
+    void multipleFracturedRealmsAddOneTriggerEach() {
+        castRoom(1);
+        castRoom(1);
+        harness.setHand(player1, List.of(new TunnelSurveyor()));
+        harness.addMana(player1, BLUE, 3);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Glimmer")).isEqualTo(3);
     }
 
     private Permanent castRoom(int doorIndex) {
