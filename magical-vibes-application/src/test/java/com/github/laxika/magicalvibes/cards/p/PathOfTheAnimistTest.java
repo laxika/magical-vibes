@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.t.TheValeyard;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
@@ -21,7 +22,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PathOfTheAnimist.class, Panopticon.class, Forest.class, Island.class, GrizzlyBears.class})
+@CardUsed({PathOfTheAnimist.class, Panopticon.class, Forest.class, Island.class, GrizzlyBears.class,
+        TheValeyard.class})
 class PathOfTheAnimistTest extends BaseCardTest {
 
     private PlanarObject startingPlane;
@@ -83,11 +85,90 @@ class PathOfTheAnimistTest extends BaseCardTest {
         assertThat(gd.planechase.faceUp).noneMatch(object -> object == startingPlane).hasSize(1);
     }
 
+    @Test
+    void canChooseNoLandsAndChaosEnsuesOnAChaosMajority() {
+        Forest forest = new Forest();
+        Island island = new Island();
+        harness.setLibrary(player1, List.of(forest, island));
+        cast();
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(forest, island);
+        int handBeforeChaos = gd.playerHands.get(player1.getId()).size();
+
+        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.passBothPriorities();
+
+        assertThat(gd.planechase.faceUp).containsExactly(startingPlane);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBeforeChaos + 1);
+        harness.assertInGraveyard(player1, "Path of the Animist");
+    }
+
+    @Test
+    void canStopAfterOneLandEvenWhenAnotherBasicLandIsAvailable() {
+        Forest forest = new Forest();
+        Island island = new Island();
+        harness.setLibrary(player1, List.of(forest, island));
+        cast();
+
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement()
+                .satisfies(permanent -> {
+                    assertThat(permanent.getCard()).isSameAs(forest);
+                    assertThat(permanent.isTapped()).isTrue();
+                });
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(island);
+
+        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
+        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
+
+        assertThat(gd.planechase.faceUp).noneMatch(object -> object == startingPlane).hasSize(1);
+        harness.assertInGraveyard(player1, "Path of the Animist");
+    }
+
+    @Test
+    void stillVotesWhenTheLibraryContainsNoBasicLands() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(bears));
+        cast();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bears);
+
+        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.passBothPriorities();
+
+        assertThat(gd.planechase.faceUp).containsExactly(startingPlane);
+        assertThat(gd.playerHands.get(player1.getId())).contains(bears);
+        harness.assertInGraveyard(player1, "Path of the Animist");
+    }
+
+    @Test
+    void offersAdditionalVoteToPlayerControllingTheValeyard() {
+        harness.addToBattlefield(player1, new TheValeyard());
+        harness.setLibrary(player1, List.of(new Forest(), new Island()));
+        cast();
+        harness.handleCardChosen(player1, -1);
+
+        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
+
+        PendingInteraction.ColorChoice additionalVote =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(additionalVote).isNotNull();
+        assertThat(additionalVote.playerId()).isEqualTo(player1.getId());
+    }
+
     private void cast() {
         harness.setHand(player1, List.of(new PathOfTheAnimist()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 }
