@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.d.Deathsprout;
+import com.github.laxika.magicalvibes.cards.d.DovinsVeto;
+import com.github.laxika.magicalvibes.cards.t.TeferisTimeTwist;
+import com.github.laxika.magicalvibes.cards.u.UginTheIneffable;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(NivMizzetReborn.class)
+@CardUsed({NivMizzetReborn.class, DovinsVeto.class, Deathsprout.class,
+        TeferisTimeTwist.class, UginTheIneffable.class, NicolBolasDragonGod.class})
 class NivMizzetRebornTest extends BaseCardTest {
 
     @Test
@@ -111,6 +113,78 @@ class NivMizzetRebornTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(monoWhite, monoRed, colorless);
     }
 
+    @Test
+    @DisplayName("An empty library resolves without requiring a choice")
+    void emptyLibraryNeedsNoChoice() {
+        setLibrary();
+
+        castAndResolve();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Niv-Mizzet Reborn");
+    }
+
+    @Test
+    @DisplayName("Every represented pair must be selected and other colors cannot be selected")
+    void rejectsMissingPairsAndIneligibleCards() {
+        Card azorius = new DovinsVeto();
+        Card golgari = new Deathsprout();
+        Card monocolored = new TeferisTimeTwist();
+        Card colorless = new UginTheIneffable();
+        Card threeColor = new NicolBolasDragonGod();
+        Card fiveColor = new NivMizzetReborn();
+        setLibrary(azorius, golgari, monocolored, colorless, threeColor, fiveColor);
+
+        castAndResolve();
+
+        assertThatThrownBy(() -> answer(List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> answer(List.of(azorius.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> answer(List.of(azorius.getId(), azorius.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        for (Card ineligible : List.of(monocolored, colorless, threeColor, fiveColor)) {
+            assertThatThrownBy(() -> answer(List.of(azorius.getId(), ineligible.getId())))
+                    .isInstanceOf(IllegalStateException.class);
+        }
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        answer(List.of(azorius.getId(), golgari.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(azorius, golgari);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactlyInAnyOrder(monocolored, colorless, threeColor, fiveColor);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Unrevealed cards stay above the unchosen revealed cards")
+    void preservesUnrevealedLibraryOrder() {
+        Card azorius = new DovinsVeto();
+        List<Card> unchosen = java.util.stream.IntStream.range(0, 9)
+                .mapToObj(i -> (Card) new TeferisTimeTwist()).toList();
+        Card eleventh = new Deathsprout();
+        Card twelfth = new UginTheIneffable();
+        List<Card> library = new java.util.ArrayList<>();
+        library.add(azorius);
+        library.addAll(unchosen);
+        library.add(eleventh);
+        library.add(twelfth);
+        harness.setLibrary(player1, library);
+
+        castAndResolve();
+        answer(List.of(azorius.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(azorius);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(11)
+                .startsWith(eleventh, twelfth);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(2, 11))
+                .containsExactlyInAnyOrderElementsOf(unchosen);
+    }
+
     private static Card card(String name, CardColor... colors) {
         Card card = new Card();
         card.setName(name);
@@ -119,25 +193,16 @@ class NivMizzetRebornTest extends BaseCardTest {
     }
 
     private void setLibrary(Card... cards) {
-        GameData gameData = harness.getGameData();
-        gameData.playerDecks.get(player1.getId()).clear();
-        gameData.playerDecks.get(player1.getId()).addAll(List.of(cards));
+        harness.setLibrary(player1, List.of(cards));
     }
 
     private void castAndResolve() {
-        harness.setHand(player1, List.of(new NivMizzetReborn()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new NivMizzetReborn(), "{W}{U}{B}{R}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
 
     private void answer(List<java.util.UUID> cardIds) {
-        harness.getGameService().handleInteractionAnswer(
-                gd, player1, new InteractionAnswer.CardsChosen(cardIds));
+        harness.handleMultipleCardsChosen(player1, cardIds);
     }
 }
