@@ -99,4 +99,79 @@ class NantukoShrineTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertInGraveyard(player2, "Words of Wisdom");
     }
+
+    @Test
+    @DisplayName("The Shrine's controller also creates tokens when casting a spell")
+    void controllerCreatesTokensForTheirOwnSpell() {
+        harness.addToBattlefield(player1, new NantukoShrine());
+        harness.setGraveyard(player2, List.of(new AngelicWall()));
+
+        harness.castFromHand(player1, new AngelicWall(), "{1}{W}");
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Squirrel")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Squirrel")).isZero();
+        harness.assertNotOnBattlefield(player1, "Angelic Wall");
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Angelic Wall");
+    }
+
+    @Test
+    @DisplayName("Each Shrine triggers independently and gives tokens to the caster")
+    void multipleShrinesCreateTokensForTheSameCaster() {
+        harness.addToBattlefield(player1, new NantukoShrine());
+        harness.addToBattlefield(player2, new NantukoShrine());
+        harness.setGraveyard(player1, List.of(new AngelicWall()));
+        harness.setGraveyard(player2, List.of(new AngelicWall()));
+
+        harness.castFromHand(player1, new AngelicWall(), "{1}{W}");
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Squirrel")).isEqualTo(2);
+
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Squirrel")).isEqualTo(4);
+        assertThat(countPermanents(player2, "Squirrel")).isZero();
+        harness.assertNotOnBattlefield(player1, "Angelic Wall");
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Angelic Wall");
+    }
+
+    @Test
+    @DisplayName("Matching cards removed before resolution are not counted")
+    void removedGraveyardCardsAreNotCounted() {
+        harness.addToBattlefield(player1, new NantukoShrine());
+        harness.setGraveyard(player1, List.of(new AngelicWall()));
+        harness.setGraveyard(player2, List.of(new AngelicWall()));
+
+        harness.castFromHand(player1, new AngelicWall(), "{1}{W}");
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new DuskImp()));
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Squirrel")).isZero();
+        assertThat(countPermanents(player2, "Squirrel")).isZero();
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Angelic Wall");
+    }
+
+    @Test
+    @DisplayName("An already triggered ability resolves after the Shrine leaves the battlefield")
+    void triggerResolvesAfterShrineLeavesBattlefield() {
+        harness.addToBattlefield(player1, new NantukoShrine());
+        harness.setGraveyard(player2, List.of(new AngelicWall()));
+        harness.forceActivePlayer(player2);
+
+        harness.castFromHand(player2, new AngelicWall(), "{1}{W}");
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player2, "Squirrel")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Squirrel")).isZero();
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Angelic Wall");
+    }
 }
