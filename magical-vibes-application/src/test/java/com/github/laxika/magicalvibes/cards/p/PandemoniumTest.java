@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GideonJura;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,18 +20,57 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Pandemonium.class, RecklessOgre.class, WallOfNets.class, HillGiant.class,
-        WurmcoilEngine.class, Unsummon.class, GideonJura.class})
+        WurmcoilEngine.class, Unsummon.class, GideonJura.class, Opalescence.class})
 class PandemoniumTest extends BaseCardTest {
+
+    @Test
+    @CardUsed({Pandemonium.class, Opalescence.class})
+    void animatedPandemoniumTriggersForItsOwnEntry() {
+        harness.addToBattlefield(player1, new Opalescence());
+        harness.castFromHand(player1, new Pandemonium(), "{3}{R}");
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void damageUsesPowerAtResolution() {
+        harness.addToBattlefield(player1, new Pandemonium());
+        harness.castFromHand(player1, new RecklessOgre(), "{3}{R}");
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, player2.getId());
+        findPermanent(player1, "Reckless Ogre").setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    void zeroPowerCreatureDealsNoDamage() {
+        harness.addToBattlefield(player1, new Pandemonium());
+        harness.castFromHand(player1, new WallOfNets(), "{1}{W}{W}");
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 20);
+    }
 
     @Test
     void enteringCreatureControllerMayHaveItDealItsPowerToAnyTarget() {
         harness.addToBattlefield(player1, new Pandemonium());
         harness.setLife(player2, 20);
-        harness.setHand(player1, List.of(new RecklessOgre()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RecklessOgre(), "{3}{R}");
         resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
@@ -53,11 +93,7 @@ class PandemoniumTest extends BaseCardTest {
     void enteringCreatureMayDealItsPowerToAnotherCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new WallOfNets());
         harness.addToBattlefield(player1, new Pandemonium());
-        harness.setHand(player1, List.of(new RecklessOgre()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RecklessOgre(), "{3}{R}");
         resolveAllTriggers();
 
         harness.handlePermanentChosen(player1, target.getId());
@@ -74,11 +110,7 @@ class PandemoniumTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GideonJura());
         target.setCounterCount(CounterType.LOYALTY, 6);
         harness.addToBattlefield(player1, new Pandemonium());
-        harness.setHand(player1, List.of(new RecklessOgre()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RecklessOgre(), "{3}{R}");
         resolveAllTriggers();
         harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
@@ -91,12 +123,8 @@ class PandemoniumTest extends BaseCardTest {
     void opponentCreatureControllerMakesTheChoice() {
         harness.addToBattlefield(player1, new Pandemonium());
         harness.setLife(player1, 20);
-        harness.setHand(player2, List.of(new RecklessOgre()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 3);
         harness.forceActivePlayer(player2);
-
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new RecklessOgre(), "{3}{R}");
         resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
@@ -120,11 +148,7 @@ class PandemoniumTest extends BaseCardTest {
     void decliningTheMayAbilityDealsNoDamage() {
         harness.addToBattlefield(player1, new Pandemonium());
         harness.setLife(player2, 20);
-        harness.setHand(player1, List.of(new RecklessOgre()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RecklessOgre(), "{3}{R}");
         resolveAllTriggers();
         harness.handlePermanentChosen(player1, player2.getId());
         resolveAllTriggers();
