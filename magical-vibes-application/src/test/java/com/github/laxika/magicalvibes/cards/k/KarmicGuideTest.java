@@ -112,6 +112,56 @@ class KarmicGuideTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Karmic Guide");
     }
 
+    @Test
+    @DisplayName("Echo does not create an enters-the-battlefield trigger")
+    void echoDoesNotTriggerOnEntry() {
+        harness.setGraveyard(player1, List.of());
+
+        harness.castFromHand(player1, new KarmicGuide(), "{3}{W}{W}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Karmic Guide");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Echo still requires payment when there was no creature to return")
+    void echoTriggersWithEmptyGraveyard() {
+        harness.setGraveyard(player1, List.of());
+        harness.castFromHand(player1, new KarmicGuide(), "{3}{W}{W}");
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Karmic Guide");
+        harness.assertNotOnBattlefield(player1, "Karmic Guide");
+    }
+
+    @Test
+    @DisplayName("Echo waits for the controller's upkeep rather than the opponent's upkeep")
+    void echoDoesNotTriggerDuringOpponentsUpkeep() {
+        Card creature = new AngelicCurator();
+        harness.setGraveyard(player1, List.of(creature));
+        castAndResolveGuide(creature);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Karmic Guide");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Karmic Guide");
+    }
+
     private void castAndResolveGuide(Card target) {
         harness.castFromHand(player1, new KarmicGuide(), "{3}{W}{W}");
         harness.passBothPriorities();
