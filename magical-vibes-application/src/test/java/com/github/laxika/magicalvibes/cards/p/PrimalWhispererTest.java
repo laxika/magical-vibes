@@ -71,6 +71,30 @@ class PrimalWhispererTest extends BaseCardTest {
         assertThat(whisperer.isFaceDown()).isFalse();
     }
 
+    @Test
+    void turningFaceUpEnablesItsBoostAndImmediatelyReducesOtherWhisperersBoost() {
+        Permanent faceUpWhisperer = harness.addToBattlefieldAndReturn(player1, new PrimalWhisperer());
+        Permanent turningWhisperer = addCreatureReady(player1, new PrimalWhisperer());
+        turningWhisperer.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        addFaceDownCreature(player2);
+
+        assertThat(gqs.getEffectivePower(gd, faceUpWhisperer)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, faceUpWhisperer)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, turningWhisperer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, turningWhisperer)).isEqualTo(2);
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(turningWhisperer));
+
+        assertThat(turningWhisperer.isFaceDown()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, faceUpWhisperer)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, faceUpWhisperer)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, turningWhisperer)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, turningWhisperer)).isEqualTo(4);
+    }
+
     private Permanent addFaceDownCreature(Player player) {
         Permanent permanent = addCreatureReady(player, new FugitiveWizard());
         permanent.setFaceDown(2, 2, Set.of(CardType.CREATURE));
