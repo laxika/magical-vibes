@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PrecognitionField;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -56,15 +55,63 @@ class JemLightfooteSkyExplorerTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Shock(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castFromLibraryTop(player1, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveFromLibraryTop(player1, player2.getId());
         advanceToEndStep(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
 
-    private Permanent addJem() {
-        return harness.addToBattlefieldAndReturn(player1, new JemLightfooteSkyExplorer());
+    @Test
+    @DisplayName("Does not trigger during the opponent's end step")
+    void doesNotDrawDuringOpponentsEndStep() {
+        addJem();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Shock()));
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Casting Jem from hand counts against its own condition")
+    void castingJemFromHandPreventsTrigger() {
+        harness.setHand(player1, List.of(new JemLightfooteSkyExplorer()));
+        harness.setLibrary(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        advanceToEndStep(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Rechecks the condition after casting from hand in response")
+    void handSpellInResponsePreventsDraw() {
+        addJem();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void addJem() {
+        harness.addToBattlefield(player1, new JemLightfooteSkyExplorer());
     }
 
     private void advanceToEndStep(Player activePlayer) {
