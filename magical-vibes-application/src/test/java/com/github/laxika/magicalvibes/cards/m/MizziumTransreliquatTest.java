@@ -36,8 +36,7 @@ class MizziumTransreliquatTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(transreliquat.getCard()).isSameAs(transreliquat.getOriginalCard());
     }
@@ -89,6 +88,89 @@ class MizziumTransreliquatTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The copy-with-exception effect survives cleanup and retains its ability")
+    void permanentCopySurvivesCleanup() {
+        Permanent transreliquat = harness.addToBattlefieldAndReturn(player1, new MizziumTransreliquat());
+        Permanent izzetSignet = harness.addToBattlefieldAndReturn(player2, new IzzetSignet());
+        Permanent gruulSignet = harness.addToBattlefieldAndReturn(player2, new GruulSignet());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, null, izzetSignet.getId());
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(transreliquat.getCard().getName()).isEqualTo("Izzet Signet");
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, 1, null, gruulSignet.getId());
+        harness.passBothPriorities();
+
+        assertThat(transreliquat.getCard().getName()).isEqualTo("Gruul Signet");
+    }
+
+    @Test
+    @DisplayName("A temporary copy on top of a permanent copy reverts to the permanent copy")
+    void temporaryCopyRevealsUnderlyingPermanentCopy() {
+        Permanent transreliquat = harness.addToBattlefieldAndReturn(player1, new MizziumTransreliquat());
+        Permanent izzetSignet = harness.addToBattlefieldAndReturn(player2, new IzzetSignet());
+        Permanent gruulSignet = harness.addToBattlefieldAndReturn(player2, new GruulSignet());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 0, null, gruulSignet.getId());
+        harness.activateAbility(player1, 0, 1, null, izzetSignet.getId());
+        harness.passBothPriorities();
+        assertThat(transreliquat.getCard().getName()).isEqualTo("Izzet Signet");
+        harness.passBothPriorities();
+        assertThat(transreliquat.getCard().getName()).isEqualTo("Gruul Signet");
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(transreliquat.getCard().getName()).isEqualTo("Izzet Signet");
+    }
+
+    @Test
+    @DisplayName("The first ability may copy itself and then copy another artifact")
+    void selfCopyRetainsOriginalAbilities() {
+        Permanent transreliquat = harness.addToBattlefieldAndReturn(player1, new MizziumTransreliquat());
+        Permanent signet = harness.addToBattlefieldAndReturn(player2, new IzzetSignet());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, 0, null, transreliquat.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, signet.getId());
+        harness.passBothPriorities();
+
+        assertThat(transreliquat.getCard().getName()).isEqualTo("Izzet Signet");
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(transreliquat.getCard()).isSameAs(transreliquat.getOriginalCard());
+    }
+
+    @Test
+    @DisplayName("A temporary copy loses the original copy-with-exception ability")
+    void temporaryCopyLosesCopyAbility() {
+        harness.addToBattlefield(player1, new MizziumTransreliquat());
+        Permanent signet = harness.addToBattlefieldAndReturn(player2, new IzzetSignet());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 0, null, signet.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, signet.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }
