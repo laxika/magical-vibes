@@ -43,4 +43,40 @@ class OvereagerApprenticeTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Apprentice can produce mana without using the stack")
+    void tappedSummoningSickApprenticeCanActivate() {
+        var apprentice = harness.addToBattlefieldAndReturn(player1, new OvereagerApprentice());
+        apprentice.setSummoningSick(true);
+        apprentice.tap();
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Overeager Apprentice");
+        harness.assertInGraveyard(player1, "Overeager Apprentice");
+        harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("A creature card can be discarded and mana goes only to the activating player")
+    void canDiscardCreatureCard() {
+        harness.addToBattlefield(player2, new OvereagerApprentice());
+        harness.setHand(player2, List.of(new OvereagerApprentice()));
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        harness.assertNotOnBattlefield(player2, "Overeager Apprentice");
+    }
 }
