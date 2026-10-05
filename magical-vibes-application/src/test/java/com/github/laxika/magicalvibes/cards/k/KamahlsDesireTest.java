@@ -118,10 +118,47 @@ class KamahlsDesireTest extends BaseCardTest {
     }
 
     private Permanent attachAura(Player controller, Permanent creature) {
-        Permanent aura = new Permanent(new KamahlsDesire());
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new KamahlsDesire());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
         return aura;
+    }
+
+    @Test
+    @DisplayName("Threshold turns on immediately when the seventh card enters the graveyard")
+    void thresholdStartsAtSevenCards() {
+        harness.setGraveyard(player1, graveyardWithSevenCards().subList(0, 6));
+        Permanent creature = addCreatureReady(player1, new WildMongrel());
+        attachAura(player1, creature);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Casting attaches to an opposing creature and affects only that creature")
+    void castingAttachesToOpponentCreature() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new WildMongrel());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new WildMongrel());
+        harness.setHand(player1, List.of(new KamahlsDesire()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Kamahl's Desire").getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(2);
     }
 
     private List<Card> graveyardWithSevenCards() {
