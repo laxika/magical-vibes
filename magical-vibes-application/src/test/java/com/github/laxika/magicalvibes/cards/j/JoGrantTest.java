@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DressDown;
 import com.github.laxika.magicalvibes.cards.s.SarahJaneSmith;
+import com.github.laxika.magicalvibes.cards.s.SonicScrewdriver;
+import com.github.laxika.magicalvibes.cards.t.TheCavesOfAndrozani;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({JoGrant.class, SarahJaneSmith.class, GrizzlyBears.class})
+@CardUsed({JoGrant.class, SarahJaneSmith.class, GrizzlyBears.class, SonicScrewdriver.class,
+        TheCavesOfAndrozani.class, DressDown.class})
 class JoGrantTest extends BaseCardTest {
 
     @Test
@@ -59,5 +63,82 @@ class JoGrantTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateHandAbility(player2, 0, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Card has no hand-activated ability");
+    }
+
+    @Test
+    @DisplayName("A nonlegendary artifact gains cycling, with the counter resolving before the draw")
+    void artifactCyclingCounterResolvesBeforeDraw() {
+        Permanent jo = harness.addToBattlefieldAndReturn(player1, new JoGrant());
+        harness.setHand(player1, List.of(new SonicScrewdriver()));
+        harness.setLibrary(player1, List.of(new SarahJaneSmith()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Sonic Screwdriver");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(jo.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(jo.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Sarah Jane Smith");
+        assertThat(jo.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A nonlegendary Saga gains cycling")
+    void sagaGainsCycling() {
+        Permanent jo = harness.addToBattlefieldAndReturn(player1, new JoGrant());
+        harness.setHand(player1, List.of(new TheCavesOfAndrozani()));
+        harness.setLibrary(player1, List.of(new SarahJaneSmith()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "The Caves of Androzani");
+        harness.assertInHand(player1, "Sarah Jane Smith");
+        assertThat(jo.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cycling requires white mana and does not discard the card when payment fails")
+    void cyclingRequiresWhiteMana() {
+        Permanent jo = harness.addToBattlefieldAndReturn(player1, new JoGrant());
+        harness.setHand(player1, List.of(new SarahJaneSmith()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Sarah Jane Smith");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(jo.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Jo Grant cannot grant cycling while Dress Down removes its abilities")
+    void losingAbilitiesStopsGrantingCycling() {
+        harness.addToBattlefield(player1, new JoGrant());
+        harness.addToBattlefield(player1, new DressDown());
+        harness.setHand(player1, List.of(new SarahJaneSmith()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Card has no hand-activated ability");
+
+        harness.assertInHand(player1, "Sarah Jane Smith");
+        assertThat(gd.stack).isEmpty();
     }
 }
