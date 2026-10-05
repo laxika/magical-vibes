@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.c.Conspiracy;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.Lhurgoyf;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Pyrogoyf.class, Lhurgoyf.class, Forest.class, Shock.class, GrizzlyBears.class})
+@CardUsed({Pyrogoyf.class, Lhurgoyf.class, Forest.class, Shock.class, GrizzlyBears.class, Conspiracy.class})
 class PyrogoyfTest extends BaseCardTest {
 
     @Test
@@ -36,16 +36,13 @@ class PyrogoyfTest extends BaseCardTest {
     void lhurgoyfEntryDealsItsPowerToAnyTarget() {
         harness.addToBattlefield(player1, new Pyrogoyf());
         setThreeCardTypesInGraveyards();
-        harness.setHand(player1, List.of(new Lhurgoyf()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-
-        harness.castCreature(player1, 0);
-        resolveUntilInputOrEmpty();
+        harness.castFromHand(player1, new Lhurgoyf(), "{2}{G}{G}");
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Lhurgoyf"))).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
@@ -54,16 +51,12 @@ class PyrogoyfTest extends BaseCardTest {
     @DisplayName("Pyrogoyf triggers for itself entering the battlefield")
     void selfEntryDealsItsPowerToAnyTarget() {
         setThreeCardTypesInGraveyards();
-        harness.setHand(player1, List.of(new Pyrogoyf()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreature(player1, 0);
-        resolveUntilInputOrEmpty();
+        harness.castFromHand(player1, new Pyrogoyf(), "{3}{R}");
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
@@ -72,14 +65,85 @@ class PyrogoyfTest extends BaseCardTest {
     @DisplayName("Pyrogoyf does not trigger for a non-Lhurgoyf creature")
     void doesNotTriggerForNonLhurgoyf() {
         harness.addToBattlefield(player1, new Pyrogoyf());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
-        resolveUntilInputOrEmpty();
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        resolveAllTriggers();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void selfEntryStillTriggersWhenConspiracyReplacesItsCreatureType() {
+        harness.castFromHand(player1, new Conspiracy(), "{3}{B}{B}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
+        setThreeCardTypesInGraveyards();
+
+        harness.castFromHand(player1, new Pyrogoyf(), "{3}{R}");
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    void damageUsesPowerAtResolutionAfterGraveyardsChange() {
+        setThreeCardTypesInGraveyards();
+        harness.castFromHand(player1, new Pyrogoyf(), "{3}{R}");
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.setGraveyard(player2, List.of());
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    void doesNotTriggerForOpponentsLhurgoyf() {
+        harness.addToBattlefield(player1, new Pyrogoyf());
+        setThreeCardTypesInGraveyards();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new Lhurgoyf(), "{2}{G}{G}");
+
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void entryDamageCanDestroyTargetCreature() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        setThreeCardTypesInGraveyards();
+        harness.castFromHand(player1, new Pyrogoyf(), "{3}{R}");
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, findPermanent(player2, "Grizzly Bears").getId());
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    void emptyGraveyardsCauseNoEntryDamage() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        harness.castFromHand(player1, new Pyrogoyf(), "{3}{R}");
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
     }
 
     private void setThreeCardTypesInGraveyards() {
@@ -87,13 +151,4 @@ class PyrogoyfTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(new GrizzlyBears()));
     }
 
-    private void resolveUntilInputOrEmpty() {
-        for (int i = 0; i < 12; i++) {
-            GameData gameData = harness.getGameData();
-            if (gameData.interaction.isAwaitingInput() || gameData.stack.isEmpty()) {
-                return;
-            }
-            harness.passBothPriorities();
-        }
-    }
 }
