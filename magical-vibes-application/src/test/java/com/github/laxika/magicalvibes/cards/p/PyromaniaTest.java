@@ -73,6 +73,68 @@ class PyromaniaTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Random discard is paid before damage resolves and discards exactly one card")
+    void paysRandomDiscardBeforeResolution() {
+        harness.addToBattlefield(player1, new Pyromania());
+        harness.setHand(player1, List.of(new Forest(), new GrizzlyBears()));
+        harness.setLife(player2, 20);
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        harness.assertOnBattlefield(player1, "Pyromania");
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid before resolution and can damage its controller with an empty hand")
+    void paysSacrificeBeforeResolutionAndTargetsController() {
+        harness.addToBattlefield(player1, new Pyromania());
+        harness.setHand(player1, List.of());
+        harness.setLife(player1, 20);
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, 1, null, player1.getId());
+
+        harness.assertNotOnBattlefield(player1, "Pyromania");
+        harness.assertInGraveyard(player1, "Pyromania");
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Discard and sacrifice abilities can both resolve and deal lethal creature damage")
+    void discardThenSacrificeDealsLethalDamage() {
+        harness.addToBattlefield(player1, new Pyromania());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Forest()));
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        addActivationMana();
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Pyromania");
+        harness.assertInGraveyard(player1, "Forest");
+    }
     private void addActivationMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);
