@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.cards.p.PlanarCleansing;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -19,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({KumanosBlessing.class, FountainOfYouth.class, GrizzlyBears.class,
-        LlanowarElves.class, ProdigalPyromancer.class})
+        LlanowarElves.class, ProdigalPyromancer.class, PlanarCleansing.class})
 class KumanosBlessingTest extends BaseCardTest {
 
     private boolean isExiled(String cardName) {
@@ -148,5 +149,66 @@ class KumanosBlessingTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Damage dealt before the Aura entered still qualifies for the replacement")
+    void damageBeforeAuraEnteredQualifies() {
+        Permanent pyro = addCreatureReady(player1, new ProdigalPyromancer());
+        addCreatureReady(player1, new ProdigalPyromancer());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new KumanosBlessing()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castEnchantment(player1, 0, pyro.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 1, null, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        assertThat(isExiled("Grizzly Bears")).isTrue();
+    }
+
+    @Test
+    @DisplayName("The replacement applies when the Aura and damaged creature are destroyed simultaneously")
+    void simultaneousDestructionStillExilesDamagedCreature() {
+        enchantPyromancer();
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new PlanarCleansing()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+        harness.castAndResolveSorcery(player1, 0, (UUID) null);
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        assertThat(isExiled("Grizzly Bears")).isTrue();
+        harness.assertInGraveyard(player1, "Kumano's Blessing");
+        harness.assertInGraveyard(player1, "Prodigal Pyromancer");
+    }
+
+    @Test
+    @DisplayName("The Aura does not resolve if its target leaves the battlefield in response")
+    void auraFizzlesWhenTargetLeaves() {
+        addCreatureReady(player1, new ProdigalPyromancer());
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new KumanosBlessing()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castEnchantment(player1, 0, elves.getId());
+
+        harness.activateAbility(player1, 0, null, elves.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertInGraveyard(player1, "Kumano's Blessing");
+        harness.assertNotOnBattlefield(player1, "Kumano's Blessing");
+        assertThat(gd.stack).isEmpty();
     }
 }
