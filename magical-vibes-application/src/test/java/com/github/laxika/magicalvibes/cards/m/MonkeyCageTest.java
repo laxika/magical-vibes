@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.a.Afterlife;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MonkeyCage.class, FreshVolunteers.class, Memnite.class, Disenchant.class})
+@CardUsed({MonkeyCage.class, FreshVolunteers.class, Memnite.class, Disenchant.class, Afterlife.class})
 class MonkeyCageTest extends BaseCardTest {
 
     @Test
@@ -72,8 +73,8 @@ class MonkeyCageTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Removing the Cage before its trigger resolves prevents token creation")
-    void noTokensIfCageLeavesBeforeTriggerResolves() {
+    @DisplayName("Removing the Cage before its trigger resolves does not prevent token creation")
+    void createsTokensIfCageLeavesBeforeTriggerResolves() {
         Permanent cage = harness.addToBattlefieldAndReturn(player1, new MonkeyCage());
         harness.castFromHand(player1, new FreshVolunteers(), "{1}{W}");
         harness.passBothPriorities();
@@ -81,12 +82,56 @@ class MonkeyCageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Disenchant()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, cage.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, cage.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Monkey Cage");
         harness.assertInGraveyard(player1, "Disenchant");
+        assertThat(findPermanents(player1, "Monkey")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Each pending creature-entry trigger creates tokens even after the Cage is sacrificed")
+    void multiplePendingTriggersEachCreateTokens() {
+        harness.addToBattlefield(player1, new MonkeyCage());
+        harness.enterBattlefieldAndReturn(player1, new FreshVolunteers());
+        harness.enterBattlefieldAndReturn(player2, new FreshVolunteers());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Monkey Cage");
+        assertThat(findPermanents(player1, "Monkey")).hasSize(4);
+        assertThat(findPermanents(player2, "Monkey")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The entering creature's last known mana value is used after it dies")
+    void enteringCreatureLeavingDoesNotPreventTokens() {
+        harness.addToBattlefield(player1, new MonkeyCage());
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new FreshVolunteers());
+        harness.setHand(player1, List.of(new Afterlife()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Fresh Volunteers");
+        harness.assertInGraveyard(player1, "Monkey Cage");
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1);
+        assertThat(findPermanents(player1, "Monkey")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A noncreature artifact entering does not trigger the Cage")
+    void noncreatureEntryDoesNotTrigger() {
+        harness.addToBattlefield(player1, new MonkeyCage());
+        harness.enterBattlefieldAndReturn(player2, new MonkeyCage());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Monkey Cage");
+        harness.assertOnBattlefield(player2, "Monkey Cage");
         assertThat(findPermanents(player1, "Monkey")).isEmpty();
     }
 }
