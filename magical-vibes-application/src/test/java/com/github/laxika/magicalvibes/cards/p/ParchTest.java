@@ -67,6 +67,50 @@ class ParchTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The 4-damage mode can target your own blue creature")
+    void fourDamageModeDestroysOwnBlueCreature() {
+        Permanent faeries = harness.addToBattlefieldAndReturn(player1, new ThornwindFaeries());
+
+        cast(1, faeries.getId());
+
+        harness.assertNotOnBattlefield(player1, "Thornwind Faeries");
+        harness.assertInGraveyard(player1, "Thornwind Faeries");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("The 2-damage mode can target its controller")
+    void twoDamageModeDealsDamageToController() {
+        cast(0, player1.getId());
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The 4-damage mode does not deal damage when its target leaves the battlefield")
+    void fourDamageModeDoesNothingWhenTargetLeaves() {
+        Permanent faeries = harness.addToBattlefieldAndReturn(player2, new ThornwindFaeries());
+        harness.setHand(player1, List.of(new Parch(), new Parch()));
+        addMana();
+        addMana();
+        harness.castInstant(player1, 0, 1, faeries.getId());
+        harness.castInstant(player1, 0, 0, faeries.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Thornwind Faeries");
+        assertThat(faeries.getMarkedDamage()).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(faeries.getMarkedDamage()).isEqualTo(2);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof Parch).hasSize(2);
+    }
+
     private void cast(int mode, java.util.UUID targetId) {
         harness.setHand(player1, List.of(new Parch()));
         addMana();
