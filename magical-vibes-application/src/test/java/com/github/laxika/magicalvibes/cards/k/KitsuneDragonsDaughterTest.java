@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -72,10 +69,73 @@ class KitsuneDragonsDaughterTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(ownCreature);
     }
 
+    @Test
+    @DisplayName("Targets exclude Kitsune and the second target must have a different controller")
+    void targetsExcludeSourceAndSameController() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent otherOwnCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castKitsune();
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice firstChoice =
+                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(firstChoice.validPermanentIds()).containsExactlyInAnyOrder(
+                ownCreature.getId(), otherOwnCreature.getId(), opponentCreature.getId());
+        harness.handlePermanentChosen(player1, ownCreature.getId());
+        PendingInteraction.PermanentChoice secondChoice =
+                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(secondChoice.validPermanentIds()).containsExactly(opponentCreature.getId());
+        harness.handlePermanentChosen(player1, opponentCreature.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(opponentCreature, otherOwnCreature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(ownCreature);
+    }
+
+    @Test
+    @DisplayName("If one target leaves before resolution, neither creature changes controller")
+    void missingTargetPreventsEntireExchange() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castKitsune();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, ownCreature.getId());
+        harness.handlePermanentChosen(player1, opponentCreature.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .sacrificePermanentToGraveyard(gd, opponentCreature));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature).doesNotContain(opponentCreature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(ownCreature, opponentCreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opponentCreature.getCard());
+    }
+
+    @Test
+    @DisplayName("The exchange still resolves after Kitsune leaves the battlefield")
+    void sourceLeavingDoesNotPreventExchange() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castKitsune();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, ownCreature.getId());
+        harness.handlePermanentChosen(player1, opponentCreature.getId());
+        Permanent kitsune = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof KitsuneDragonsDaughter)
+                .findFirst().orElseThrow();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .sacrificePermanentToGraveyard(gd, kitsune));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(opponentCreature).doesNotContain(kitsune);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(ownCreature);
+    }
     private void castKitsune() {
-        harness.setHand(player1, List.of(new KitsuneDragonsDaughter()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new KitsuneDragonsDaughter(), "{4}{U}{U}");
     }
 }
