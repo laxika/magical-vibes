@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PeakEruption.class, Mountain.class, Forest.class})
 class PeakEruptionTest extends BaseCardTest {
 
     @Test
@@ -24,13 +26,12 @@ class PeakEruptionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
 
         UUID targetId = harness.getPermanentId(player2, "Mountain");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
-        GameData gd = harness.getGameData();
         harness.assertNotOnBattlefield(player2, "Mountain");
         harness.assertInGraveyard(player2, "Mountain");
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player2, 17);
+        harness.assertLife(player1, 20);
     }
 
     @Test
@@ -73,6 +74,37 @@ class PeakEruptionTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
+    }
+    @Test
+    @DisplayName("Can destroy your own Mountain and deals the damage to you")
+    void destroysOwnMountainAndDamagesItsController() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.setHand(player1, List.of(new PeakEruption()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player1, "Mountain"));
+
+        harness.assertNotOnBattlefield(player1, "Mountain");
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Deals damage even when the Mountain is indestructible")
+    void damagesControllerEvenWhenMountainCannotBeDestroyed() {
+        harness.addToBattlefield(player2, new Mountain());
+        harness.getGameData().playerBattlefields.get(player2.getId()).getFirst()
+                .getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        harness.setHand(player1, List.of(new PeakEruption()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player2, "Mountain"));
+
+        harness.assertOnBattlefield(player2, "Mountain");
+        harness.assertNotInGraveyard(player2, "Mountain");
+        harness.assertLife(player2, 17);
+        harness.assertLife(player1, 20);
     }
 }
