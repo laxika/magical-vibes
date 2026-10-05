@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,15 +14,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PleaForGuidance.class, Pacifism.class, GrizzlyBears.class})
 class PleaForGuidanceTest extends BaseCardTest {
 
     @Test
     @DisplayName("Searches for up to two revealed enchantment cards")
     void searchesForUpToTwoEnchantments() {
         cast();
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Pacifism(), new Pacifism(), new Pacifism(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Pacifism(), new Pacifism(), new Pacifism(), new GrizzlyBears()));
 
         harness.passBothPriorities();
 
@@ -33,8 +32,8 @@ class PleaForGuidanceTest extends BaseCardTest {
         assertThat(search.params().remainingCount()).isEqualTo(2);
         assertThat(search.params().reveals()).isTrue();
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
                 .containsExactly("Pacifism", "Pacifism");
@@ -47,13 +46,77 @@ class PleaForGuidanceTest extends BaseCardTest {
     @DisplayName("Does not prompt when the library has no enchantments")
     void noEnchantmentsInLibrary() {
         cast();
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.add(new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("May find zero cards even when enchantments are available")
+    void mayChooseZeroCards() {
+        cast();
+        Pacifism enchantment = new Pacifism();
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(enchantment, creature));
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(enchantment, creature);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("May stop after finding one enchantment when another is available")
+    void mayStopAfterOneCard() {
+        cast();
+        Pacifism chosen = new Pacifism();
+        Pacifism remaining = new Pacifism();
+        harness.setLibrary(player1, List.of(chosen, remaining));
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Finishes after finding the only enchantment in the library")
+    void finishesWhenNoMoreEnchantmentsRemain() {
+        cast();
+        Pacifism enchantment = new Pacifism();
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(enchantment, creature));
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(enchantment);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Resolves with an empty library")
+    void emptyLibrary() {
+        cast();
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void cast() {
