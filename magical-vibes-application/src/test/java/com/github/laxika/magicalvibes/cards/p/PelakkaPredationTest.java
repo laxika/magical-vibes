@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.s.ShatterskullSmashing;
+import com.github.laxika.magicalvibes.cards.s.ShatterskullTheHammerPass;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PelakkaPredation.class, PelakkaCaverns.class, HillGiant.class, GrizzlyBears.class, Forest.class})
+@CardUsed({PelakkaPredation.class, PelakkaCaverns.class, HillGiant.class, GrizzlyBears.class, Forest.class,
+        ShatterskullSmashing.class, ShatterskullTheHammerPass.class})
 class PelakkaPredationTest extends BaseCardTest {
 
     @Test
@@ -29,8 +32,7 @@ class PelakkaPredationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PelakkaPredation()));
         addSpellMana();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         PendingInteraction.RevealedHandChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
@@ -49,8 +51,7 @@ class PelakkaPredationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PelakkaPredation()));
         addSpellMana();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
@@ -63,6 +64,106 @@ class PelakkaPredationTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void choosesExactlyOneOfMultipleCardsAtTheManaValueBoundary() {
+        PelakkaPredation first = new PelakkaPredation();
+        PelakkaPredation second = new PelakkaPredation();
+        harness.setHand(player2, List.of(first, second));
+        harness.setHand(player1, List.of(new PelakkaPredation()));
+        addSpellMana();
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        PendingInteraction.RevealedHandChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+        assertThat(choice.validIndices()).containsExactly(0, 1);
+        assertThatThrownBy(() -> harness.handleCardChosen(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(second);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(first);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotChooseAnIneligibleCardWhenAnEligibleCardExists() {
+        Forest land = new Forest();
+        PelakkaPredation eligibleCard = new PelakkaPredation();
+        harness.setHand(player2, List.of(land, eligibleCard));
+        harness.setHand(player1, List.of(new PelakkaPredation()));
+        addSpellMana();
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(land, eligibleCard);
+
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(land);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(eligibleCard);
+    }
+
+    @Test
+    void resolvesAgainstAnEmptyHandWithoutRequestingAChoice() {
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new PelakkaPredation()));
+        addSpellMana();
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Pelakka Predation");
+    }
+
+    @Test
+    void treatsXAsZeroForCardsInTheOpponentsHand() {
+        ShatterskullSmashing xCard = new ShatterskullSmashing();
+        PelakkaPredation eligibleCard = new PelakkaPredation();
+        harness.setHand(player2, List.of(xCard, eligibleCard));
+        harness.setHand(player1, List.of(new PelakkaPredation()));
+        addSpellMana();
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        PendingInteraction.RevealedHandChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+        assertThat(choice.validIndices()).containsExactly(1);
+
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(xCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(eligibleCard);
+    }
+
+    @Test
+    void landFaceCannotProduceManaWhileTapped() {
+        harness.setHand(player1, List.of(new PelakkaPredation()));
+
+        gs.playCard(gd, player1, 0, 1, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+
+        gd.playerBattlefields.get(player1.getId()).getFirst().untap();
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
