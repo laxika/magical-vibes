@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.n.Necropanther;
+import com.github.laxika.magicalvibes.cards.v.VivienMonstersAdvocate;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,14 +17,14 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MythosOfVadrok.class, HillGiant.class, ChandraNalaar.class})
+@CardUsed({MythosOfVadrok.class, Necropanther.class, VivienMonstersAdvocate.class})
 class MythosOfVadrokTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals five damage divided among target creatures")
     void dealsFiveDamageDividedAmongCreatures() {
-        Permanent lightlyDamaged = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        Permanent lethallyDamaged = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent lightlyDamaged = harness.addToBattlefieldAndReturn(player2, new Necropanther());
+        Permanent lethallyDamaged = harness.addToBattlefieldAndReturn(player2, new Necropanther());
         castWithMana(Map.of(lightlyDamaged.getId(), 2, lethallyDamaged.getId(), 3), false);
 
         assertThat(lightlyDamaged.getMarkedDamage()).isEqualTo(2);
@@ -34,9 +35,8 @@ class MythosOfVadrokTest extends BaseCardTest {
     @Test
     @DisplayName("Spending white and blue prevents a surviving creature from attacking until the caster's next turn")
     void enhancedModeLocksCreatureFromAttacking() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        target.setSummoningSick(false);
-        Permanent other = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent target = addCreatureReady(player2, new Necropanther());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new Necropanther());
         castWithMana(Map.of(target.getId(), 1, other.getId(), 4), true);
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
@@ -51,15 +51,109 @@ class MythosOfVadrokTest extends BaseCardTest {
     @Test
     @DisplayName("Can target a planeswalker and lock its activated abilities")
     void enhancedModeTargetsAndLocksPlaneswalker() {
-        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new VivienMonstersAdvocate());
         planeswalker.setCounterCount(CounterType.LOYALTY, 6);
         castWithMana(Map.of(planeswalker.getId(), 5), true);
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
         int planeswalkerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(planeswalker);
-        assertThatThrownBy(() -> harness.activateAbility(player2, planeswalkerIndex, 0, null, player1.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player2, planeswalkerIndex, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be activated");
+    }
+
+    @Test
+    void enhancedModePreventsBlocking() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Necropanther());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new Necropanther());
+        addCreatureReady(player1, new Necropanther());
+        castWithMana(Map.of(target.getId(), 1, other.getId(), 4), true);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void ordinaryModeDoesNotPreventAttacking() {
+        Permanent target = addCreatureReady(player2, new Necropanther());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new Necropanther());
+        castWithMana(Map.of(target.getId(), 1, other.getId(), 4), false);
+
+        declareAttackers(player2, List.of(0));
+    }
+
+    @Test
+    void spendingOnlyOneBonusColorDoesNotLockCreature() {
+        Permanent target = addCreatureReady(player2, new Necropanther());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new Necropanther());
+        harness.setHand(player1, List.of(new MythosOfVadrok()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castSorcery(player1, 0, Map.of(target.getId(), 1, other.getId(), 4));
+        harness.passBothPriorities();
+
+        declareAttackers(player2, List.of(0));
+    }
+
+    @Test
+    void rejectsPlayerTargets() {
+        assertThatThrownBy(() -> castWithMana(Map.of(player2.getId(), 5), false))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void rejectsZeroDamageAssignments() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Necropanther());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new Necropanther());
+        assertThatThrownBy(() -> castWithMana(Map.of(target.getId(), 0, other.getId(), 5), true))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void lostTargetDoesNotRedistributeDamage() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Necropanther());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new Necropanther());
+        harness.setHand(player1, List.of(new MythosOfVadrok()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castSorcery(player1, 0, Map.of(target.getId(), 2, other.getId(), 3));
+        gd.playerBattlefields.get(player2.getId()).remove(other);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    void preventedDamageStillLocksEveryLegalTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Necropanther());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new Necropanther());
+        Permanent untargeted = harness.addToBattlefieldAndReturn(player2, new Necropanther());
+        target.setDamagePreventionShield(3);
+        other.setDamagePreventionShield(3);
+        castWithMana(Map.of(target.getId(), 2, other.getId(), 3), true);
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(other.getMarkedDamage()).isZero();
+        for (Permanent permanent : List.of(target, other)) {
+            assertThat(gqs.isLockedFromAttacking(gd, permanent.getId())).isTrue();
+            assertThat(gqs.isLockedFromBlocking(gd, permanent.getId())).isTrue();
+            assertThat(gqs.isLockedFromActivatingAbilities(gd, permanent.getId())).isTrue();
+        }
+        assertThat(gqs.isLockedFromAttacking(gd, untargeted.getId())).isFalse();
+        assertThat(gqs.isLockedFromBlocking(gd, untargeted.getId())).isFalse();
+        assertThat(gqs.isLockedFromActivatingAbilities(gd, untargeted.getId())).isFalse();
+
+        gd.expireFloatingEffectsAtTurnStart(player2.getId());
+        assertThat(gqs.isLockedFromAttacking(gd, target.getId())).isTrue();
+        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        for (Permanent permanent : List.of(target, other)) {
+            assertThat(gqs.isLockedFromAttacking(gd, permanent.getId())).isFalse();
+            assertThat(gqs.isLockedFromBlocking(gd, permanent.getId())).isFalse();
+            assertThat(gqs.isLockedFromActivatingAbilities(gd, permanent.getId())).isFalse();
+        }
     }
 
     private void castWithMana(Map<java.util.UUID, Integer> assignments, boolean enhanced) {
