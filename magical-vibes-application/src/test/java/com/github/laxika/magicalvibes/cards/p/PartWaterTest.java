@@ -13,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -62,7 +63,6 @@ class PartWaterTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.ISLANDWALK)).isTrue();
 
-        harness.passUntil(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UNTAP);
 
         assertThat(gqs.hasKeyword(gd, bear, Keyword.ISLANDWALK)).isFalse();
@@ -124,6 +124,64 @@ class PartWaterTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can target creatures controlled by both players")
+    void grantsIslandwalkAcrossControllers() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new DurkwoodBoars());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new DurkwoodBoars());
+        harness.setHand(player1, List.of(new PartWater()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castSorcery(player1, 0, 2, List.of(own.getId(), opposing.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, own, Keyword.ISLANDWALK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposing, Keyword.ISLANDWALK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Must pay both X symbols in the mana cost")
+    void cannotCastWithManaForOnlyOneXSymbol() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DurkwoodBoars());
+        harness.setHand(player1, List.of(new PartWater()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot choose the same creature twice")
+    void rejectsDuplicateCreatureTargets() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DurkwoodBoars());
+        harness.setHand(player1, List.of(new PartWater()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 2,
+                List.of(target.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can grant islandwalk to more than one hundred creatures")
+    void canChooseXGreaterThanOneHundred() {
+        List<Permanent> targets = IntStream.range(0, 101)
+                .mapToObj(i -> harness.addToBattlefieldAndReturn(player1, new DurkwoodBoars()))
+                .toList();
+        harness.setHand(player1, List.of(new PartWater()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 202);
+
+        harness.castSorcery(player1, 0, 101, targets.stream().map(Permanent::getId).toList());
+        harness.passBothPriorities();
+
+        assertThat(targets).allSatisfy(target ->
+                assertThat(gqs.hasKeyword(gd, target, Keyword.ISLANDWALK)).isTrue());
     }
 
     private void grantIslandwalk(Permanent target) {
