@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.c.ColossusOfTheBloodAge;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,8 +16,64 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PoisonersApprentice.class, HillGiant.class})
+@CardUsed({PoisonersApprentice.class, HillGiant.class, ColossusOfTheBloodAge.class})
 class PoisonersApprenticeTest extends BaseCardTest {
+
+    @Test
+    void modifierIsExactlyMinusFourAndExpiresAtEndOfTurn() {
+        var target = harness.addToBattlefieldAndReturn(player2, new ColossusOfTheBloodAge());
+        int initialPower = gqs.getEffectivePower(gd, target);
+        int initialToughness = gqs.getEffectiveToughness(gd, target);
+        harness.setHand(player1, List.of(new PoisonersApprentice()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        gd.lifeGainedThisTurn.put(player1.getId(), 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(initialPower - 4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(initialToughness - 4);
+        harness.assertOnBattlefield(player2, "Colossus of the Blood Age");
+
+        harness.passUntil(player2, TurnStep.UNTAP);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(initialPower);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(initialToughness);
+    }
+
+    @Test
+    void opponentsLifeGainDoesNotEnableEffect() {
+        var target = harness.addToBattlefieldAndReturn(player2, new ColossusOfTheBloodAge());
+        int initialPower = gqs.getEffectivePower(gd, target);
+        int initialToughness = gqs.getEffectiveToughness(gd, target);
+        harness.setHand(player1, List.of(new PoisonersApprentice()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        gd.lifeGainedThisTurn.put(player2.getId(), 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(initialPower);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(initialToughness);
+    }
+
+    @Test
+    void entersNormallyWhenOpponentHasNoCreatures() {
+        harness.setHand(player1, List.of(new PoisonersApprentice()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        gd.lifeGainedThisTurn.put(player1.getId(), 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Poisoner's Apprentice");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("With life gained, the ETB gives an opponent's creature -4/-4 (killing a 3/3)")
