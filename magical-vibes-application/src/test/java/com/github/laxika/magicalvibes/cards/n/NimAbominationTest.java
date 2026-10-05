@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.l.LoxodonMystic;
+import com.github.laxika.magicalvibes.cards.e.EchoingTruth;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -10,7 +11,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({NimAbomination.class, LoxodonMystic.class})
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@CardUsed({NimAbomination.class, LoxodonMystic.class, EchoingTruth.class})
 class NimAbominationTest extends BaseCardTest {
 
     private void reachEndStep(Player activePlayer) {
@@ -75,6 +80,64 @@ class NimAbominationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.activateAbility(player1, 0, null, nimAbomination.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("An untapped Nim Abomination leaving the battlefield does not prevent life loss")
+    void losesLifeUsingLastKnownUntappedState() {
+        Permanent nimAbomination = harness.addToBattlefieldAndReturn(player1, new NimAbomination());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new EchoingTruth()));
+
+        reachEndStep();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0, nimAbomination.getId());
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Nim Abomination");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A source tapped before leaving the battlefield uses its tapped departure state")
+    void doesNotLoseLifeUsingLastKnownTappedState() {
+        addCreatureReady(player1, new LoxodonMystic());
+        Permanent nimAbomination = harness.addToBattlefieldAndReturn(player1, new NimAbomination());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new EchoingTruth()));
+
+        reachEndStep();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, nimAbomination.getId());
+        harness.passBothPriorities();
+        assertThat(nimAbomination.isTapped()).isTrue();
+
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0, nimAbomination.getId());
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Nim Abomination");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("A tapped source creates no end-step trigger even if untapped later in that step")
+    void untappingAfterEndStepBeginsDoesNotCreateTrigger() {
+        Permanent nimAbomination = harness.addToBattlefieldAndReturn(player1, new NimAbomination());
+        nimAbomination.tap();
+        harness.setLife(player1, 20);
+
+        reachEndStep();
+        assertThat(gd.stack).isEmpty();
+        nimAbomination.untap();
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
