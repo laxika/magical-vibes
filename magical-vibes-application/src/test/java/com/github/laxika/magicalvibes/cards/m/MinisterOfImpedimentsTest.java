@@ -75,13 +75,57 @@ class MinisterOfImpedimentsTest extends BaseCardTest {
     @Test
     @DisplayName("Ability cannot be activated while the Minister has summoning sickness")
     void cannotActivateWithSummoningSickness() {
-        Permanent minister = new Permanent(new MinisterOfImpediments());
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(minister);
+        harness.addToBattlefield(player1, new MinisterOfImpediments());
         Permanent target = addCreatureReady(player2, new AzoriusFirstWing());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sick");
+    }
+
+    @Test
+    @DisplayName("Ability can target an already tapped creature")
+    void canTargetTappedCreature() {
+        Permanent minister = addCreatureReady(player1, new MinisterOfImpediments());
+        Permanent target = addCreatureReady(player2, new AzoriusFirstWing());
+        target.setTapped(true);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(minister.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Minister cannot pay the tap cost")
+    void cannotActivateWhileTapped() {
+        Permanent minister = addCreatureReady(player1, new MinisterOfImpediments());
+        Permanent target = addCreatureReady(player2, new AzoriusFirstWing());
+        minister.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability resolves after the Minister leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent minister = addCreatureReady(player1, new MinisterOfImpediments());
+        Permanent target = addCreatureReady(player2, new AzoriusFirstWing());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(minister);
+        gd.playerGraveyards.get(player1.getId()).add(minister.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
 }
