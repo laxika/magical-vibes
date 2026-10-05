@@ -110,9 +110,7 @@ class KukemssaSerpentTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, forestId);
         harness.handlePermanentChosen(player1, sacrificedIslandId);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Island"))
-                .count()).isEqualTo(1);
+        assertThat(countPermanents(player1, "Island")).isEqualTo(1);
         harness.assertInGraveyard(player1, "Island");
     }
 
@@ -196,5 +194,88 @@ class KukemssaSerpentTest extends BaseCardTest {
         int index = gd.playerBattlefields.get(player1.getId()).indexOf(serpent);
         assertThatThrownBy(() -> declareAttackers(List.of(index)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Sacrificing the last Island sacrifices the Serpent before its ability resolves")
+    void sacrificingLastIslandDoesNotStopActivatedAbility() {
+        harness.addToBattlefield(player1, new KukemssaSerpent());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        UUID forestId = harness.getPermanentId(player2, "Forest");
+        UUID islandId = harness.getPermanentId(player1, "Island");
+
+        harness.activateAbility(player1, 0, null, forestId);
+        harness.handlePermanentChosen(player1, islandId);
+
+        harness.assertOnBattlefield(player1, "Kukemssa Serpent");
+        harness.assertInGraveyard(player1, "Island");
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Kukemssa Serpent");
+        assertThat(gqs.findPermanentById(gd, forestId).getEffectiveLandTypeOverride()).isNull();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.findPermanentById(gd, forestId).getEffectiveLandTypeOverride())
+                .isEqualTo(CardSubtype.ISLAND);
+    }
+
+    @Test
+    @DisplayName("An opponent's Island does not prevent the sacrifice trigger")
+    void opponentsIslandDoesNotKeepSerpentAlive() {
+        harness.addToBattlefield(player2, new Island());
+        harness.setHand(player1, List.of(new KukemssaSerpent()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Kukemssa Serpent");
+        harness.assertInGraveyard(player1, "Kukemssa Serpent");
+    }
+
+    @Test
+    @DisplayName("Converting the defender's Forest to an Island allows the Serpent to attack")
+    void convertedLandAllowsAttack() {
+        Permanent serpent = addCreatureReady(player1, new KukemssaSerpent());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        UUID forestId = harness.getPermanentId(player2, "Forest");
+        UUID islandId = harness.getPermanentId(player1, "Island");
+
+        harness.activateAbility(player1, 0, null, forestId);
+        harness.handlePermanentChosen(player1, islandId);
+        harness.passBothPriorities();
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(serpent)));
+
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("A converted Forest produces blue mana instead of green mana")
+    void convertedForestProducesBlueMana() {
+        harness.addToBattlefield(player1, new KukemssaSerpent());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        UUID forestId = harness.getPermanentId(player2, "Forest");
+        UUID islandId = harness.getPermanentId(player1, "Island");
+
+        harness.activateAbility(player1, 0, null, forestId);
+        harness.handlePermanentChosen(player1, islandId);
+        harness.passBothPriorities();
+        harness.tapPermanent(player2, 0);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
     }
 }
