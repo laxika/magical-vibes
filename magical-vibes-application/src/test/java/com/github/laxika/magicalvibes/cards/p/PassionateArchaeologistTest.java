@@ -33,8 +33,7 @@ class PassionateArchaeologistTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -72,6 +71,73 @@ class PassionateArchaeologistTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void eachCommanderCreatureDealsDamageFromTheSameExiledSpell() {
+        harness.addToBattlefield(player1, new PassionateArchaeologist());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        gd.playerCommanders.put(player1.getId(), List.of(first.getOriginalCard(), second.getOriginalCard()));
+        WalkingCorpse spell = new WalkingCorpse();
+        harness.setExile(player1, List.of(spell));
+        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        prepareMainPhase();
+
+        harness.castFromExile(player1, spell.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.damageDealtThisTurnBySource.get(first.getId())).isEqualTo(2);
+        assertThat(gd.damageDealtThisTurnBySource.get(second.getId())).isEqualTo(2);
+    }
+
+    @Test
+    void ownedCommanderControlledByOpponentTriggersForItsController() {
+        harness.addToBattlefield(player1, new PassionateArchaeologist());
+        WalkingCorpse commanderCard = new WalkingCorpse();
+        commanderCard.setOwnerId(player1.getId());
+        Permanent commander = harness.addToBattlefieldAndReturn(player2, commanderCard);
+        gd.makeCommander(player1.getId(), commanderCard);
+        WalkingCorpse spell = new WalkingCorpse();
+        harness.setExile(player2, List.of(spell));
+        gd.exilePlayPermissions.put(spell.getId(), player2.getId());
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromExile(player2, spell.getId());
+        harness.handlePermanentChosen(player2, player1.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        assertThat(gd.damageDealtThisTurnBySource.get(commander.getId())).isEqualTo(2);
+    }
+
+    @Test
+    void opponentsCommanderYouControlDoesNotGainTheAbility() {
+        harness.addToBattlefield(player1, new PassionateArchaeologist());
+        WalkingCorpse commanderCard = new WalkingCorpse();
+        commanderCard.setOwnerId(player2.getId());
+        harness.addToBattlefield(player1, commanderCard);
+        gd.makeCommander(player2.getId(), commanderCard);
+        WalkingCorpse spell = new WalkingCorpse();
+        harness.setExile(player1, List.of(spell));
+        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        prepareMainPhase();
+
+        harness.castFromExile(player1, spell.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        harness.assertLife(player2, 20);
     }
 
     private void prepareMainPhase() {
