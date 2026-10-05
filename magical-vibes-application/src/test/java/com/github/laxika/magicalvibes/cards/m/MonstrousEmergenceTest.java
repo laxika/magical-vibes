@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MonstrousEmergence.class, AirElemental.class, GiantGrowth.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({MonstrousEmergence.class, AirElemental.class, GiantGrowth.class, GrizzlyBears.class, HillGiant.class, Maro.class, Unsummon.class})
 class MonstrousEmergenceTest extends BaseCardTest {
 
     @Test
@@ -29,8 +30,7 @@ class MonstrousEmergenceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castInstantWithBehold(player1, 0, target.getId(), List.of(chosen.getId()), List.of());
-        harness.castInstant(player1, 0, chosen.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, chosen.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Air Elemental");
@@ -63,5 +63,78 @@ class MonstrousEmergenceTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstantWithBehold(player1, 0, target.getId(), List.of(), List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
+    }
+
+    @Test
+    @DisplayName("Uses the chosen creature's last power after it returns to hand")
+    void usesLastKnownPowerAfterChosenCreatureLeaves() {
+        Permanent chosen = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new MonstrousEmergence(), new GiantGrowth(), new Unsummon()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstantWithBehold(player1, 0, target.getId(), List.of(chosen.getId()), List.of());
+        harness.castAndResolveInstant(player1, 0, chosen.getId());
+        harness.castAndResolveInstant(player1, 0, chosen.getId());
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Air Elemental");
+        harness.assertInGraveyard(player2, "Air Elemental");
+    }
+
+    @Test
+    @DisplayName("Can choose and damage the same creature")
+    void canChooseTheTargetCreature() {
+        Permanent chosen = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MonstrousEmergence()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstantWithBehold(player1, 0, chosen.getId(), List.of(chosen.getId()), List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cannot choose an opponent's creature for the additional cost")
+    void cannotChooseOpponentsCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new MonstrousEmergence()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castInstantWithBehold(player1, 0, target.getId(),
+                List.of(target.getId()), List.of())).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot reveal a noncreature card for the additional cost")
+    void cannotRevealNoncreatureCard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new MonstrousEmergence(), new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castInstantWithBehold(player1, 0, target.getId(),
+                List.of(), List.of(1))).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Evaluates a revealed creature's characteristic-defining power at resolution")
+    void evaluatesRevealedVariablePowerAtResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Maro revealed = new Maro();
+        harness.setHand(player1, List.of(new MonstrousEmergence(), revealed, new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castInstantWithBehold(player1, 0, target.getId(), List.of(), List.of(1));
+        harness.castAndResolveInstant(player1, 1, other.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(revealed);
     }
 }
