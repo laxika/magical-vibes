@@ -26,8 +26,7 @@ class JunkbladeBruiserTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         for (int i = 0; i < 4; i++) {
-            harness.castInstant(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            harness.castAndResolveInstant(player1, 0, player2.getId());
         }
 
         Permanent bruiser = findPermanent(player1, "Junkblade Bruiser");
@@ -45,8 +44,7 @@ class JunkbladeBruiserTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
 
         for (int i = 0; i < 3; i++) {
-            harness.castInstant(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            harness.castAndResolveInstant(player1, 0, player2.getId());
         }
 
         Permanent bruiser = findPermanent(player1, "Junkblade Bruiser");
@@ -64,19 +62,101 @@ class JunkbladeBruiserTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         for (int i = 0; i < 4; i++) {
-            harness.castInstant(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            harness.castAndResolveInstant(player1, 0, player2.getId());
         }
 
         Permanent bruiser = findPermanent(player1, "Junkblade Bruiser");
         assertThat(bruiser.getPowerModifier()).isEqualTo(2);
         assertThat(bruiser.getToughnessModifier()).isEqualTo(1);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(bruiser.getPowerModifier()).isZero();
         assertThat(bruiser.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Crossing four with one spell boosts only the existing Bruiser and only once")
+    void crossingThresholdWithOneSpellTriggersOnlyOnce() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent bruiser = harness.addToBattlefieldAndReturn(player1, new JunkbladeBruiser());
+        harness.setHand(player1, List.of(new JunkbladeBruiser(), new JunkbladeBruiser()));
+        harness.addMana(player1, ManaColor.RED, 10);
+
+        harness.castCreature(player1, 0);
+        assertThat(bruiser.getPowerModifier()).isZero();
+        assertThat(bruiser.getToughnessModifier()).isZero();
+        harness.passBothPriorities();
+        assertThat(bruiser.getPowerModifier()).isEqualTo(2);
+        assertThat(bruiser.getToughnessModifier()).isEqualTo(1);
+        harness.passBothPriorities();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(bruiser.getPowerModifier()).isEqualTo(2);
+        assertThat(bruiser.getToughnessModifier()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent != bruiser)
+                .allSatisfy(permanent -> {
+                    assertThat(permanent.getPowerModifier()).isZero();
+                    assertThat(permanent.getToughnessModifier()).isZero();
+                });
+    }
+
+    @Test
+    @DisplayName("Opponent spending four mana does not boost the Bruiser")
+    void opponentsSpendingDoesNotTriggerBoost() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent bruiser = harness.addToBattlefieldAndReturn(player1, new JunkbladeBruiser());
+        harness.setHand(player2, List.of(new JunkbladeBruiser()));
+        harness.addMana(player2, ManaColor.RED, 5);
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(bruiser.getPowerModifier()).isZero();
+        assertThat(bruiser.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Bruiser entering after four mana was spent does not trigger retroactively")
+    void enteringAfterThresholdDoesNotTriggerBoost() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new JunkbladeBruiser(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent bruiser = findPermanent(player1, "Junkblade Bruiser");
+        assertThat(bruiser.getPowerModifier()).isZero();
+        assertThat(bruiser.getToughnessModifier()).isZero();
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(bruiser.getPowerModifier()).isZero();
+        assertThat(bruiser.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Expend can trigger during the opponent's turn")
+    void triggersDuringOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent bruiser = harness.addToBattlefieldAndReturn(player1, new JunkbladeBruiser());
+        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        for (int i = 0; i < 4; i++) {
+            harness.castAndResolveInstant(player1, 0, player2.getId());
+        }
+
+        assertThat(bruiser.getPowerModifier()).isEqualTo(2);
+        assertThat(bruiser.getToughnessModifier()).isEqualTo(1);
     }
 }
