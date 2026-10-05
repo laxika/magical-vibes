@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.s.SchoolOfTheUnseen;
 import com.github.laxika.magicalvibes.cards.s.SolGrail;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -124,6 +126,54 @@ class MishrasGroundbreakerTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.isCreature(gd, land)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Animation survives actual cleanup into the next turn")
+    void animationSurvivesIntoNextTurn() {
+        addCreatureReady(player1, new MishrasGroundbreaker());
+        Permanent land = addCreatureReady(player1, new SchoolOfTheUnseen());
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+        assertThat(gqs.isArtifact(gd, land)).isTrue();
+        assertThat(gqs.isLand(gd, land)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Animated land retains its original mana ability")
+    void animatedLandCanStillProduceMana() {
+        addCreatureReady(player1, new MishrasGroundbreaker());
+        Permanent land = addCreatureReady(player1, new SchoolOfTheUnseen());
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A newly entered noncreature Groundbreaker can activate its tap ability")
+    void newlyEnteredGroundbreakerCanActivate() {
+        harness.addToBattlefield(player1, new MishrasGroundbreaker());
+        Permanent land = addCreatureReady(player1, new SchoolOfTheUnseen());
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(3);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof MishrasGroundbreaker);
     }
 
 }
