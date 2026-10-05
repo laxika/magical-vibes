@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +17,73 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({JudgesFamiliar.class, CruelEdict.class, GrizzlyBears.class, Shock.class, Mountain.class})
 class JudgesFamiliarTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Sacrifice is paid immediately and the controller may decline payment")
+    void sacrificeIsPaidBeforeResolutionAndPaymentCanBeDeclined() {
+        harness.addToBattlefield(player1, new JudgesFamiliar());
+        Shock shock = new Shock();
+        harness.setHand(player2, List.of(shock));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.forceActivePlayer(player2);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, shock.getId());
+        harness.assertNotOnBattlefield(player1, "Judge's Familiar");
+        harness.assertInGraveyard(player1, "Judge's Familiar");
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player2, "Shock");
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can counter its controller's own instant")
+    void canCounterOwnInstant() {
+        harness.addToBattlefield(player1, new JudgesFamiliar());
+        Shock shock = new Shock();
+        harness.setHand(player1, List.of(shock));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+
+        harness.activateAbility(player1, 0, null, shock.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Shock");
+        harness.assertInGraveyard(player1, "Judge's Familiar");
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Offers payment with an empty pool when an untapped land can produce mana")
+    void offersPaymentWhenManaCanBeProducedDuringResolution() {
+        harness.addToBattlefield(player1, new JudgesFamiliar());
+        harness.addToBattlefield(player2, new Mountain());
+        Shock shock = new Shock();
+        harness.setHand(player2, List.of(shock));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, shock.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.assertNotInGraveyard(player2, "Shock");
+    }
 
     @Test
     @DisplayName("Counters an instant when its controller cannot pay {1}")
