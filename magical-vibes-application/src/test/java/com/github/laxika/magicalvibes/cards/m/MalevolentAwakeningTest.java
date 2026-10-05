@@ -103,6 +103,62 @@ class MalevolentAwakeningTest extends BaseCardTest {
         assertThat(gameLogContains("fizzles")).isTrue();
     }
 
+    @Test
+    @DisplayName("A tapped, summoning-sick creature can be sacrificed")
+    void canSacrificeTappedSummoningSickCreature() {
+        harness.addToBattlefield(player1, new MalevolentAwakening());
+        var sacrifice = harness.addToBattlefieldAndReturn(player1, new DuskImp());
+        sacrifice.setTapped(true);
+        sacrifice.setSummoningSick(true);
+        Card target = new Gravedigger();
+        harness.setGraveyard(player1, List.of(target));
+        addActivationMana();
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
+        harness.assertNotOnBattlefield(player1, "Dusk Imp");
+        harness.assertInGraveyard(player1, "Dusk Imp");
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Gravedigger");
+        harness.assertNotInGraveyard(player1, "Gravedigger");
+    }
+
+    @Test
+    @DisplayName("The creature to be sacrificed cannot be chosen as the graveyard target")
+    void cannotTargetCreatureThatHasNotYetBeenSacrificed() {
+        harness.addToBattlefield(player1, new MalevolentAwakening());
+        Card sacrifice = new DuskImp();
+        harness.addToBattlefield(player1, sacrifice);
+        addActivationMana();
+
+        assertThatThrownBy(() ->
+                harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(sacrifice.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Dusk Imp");
+        harness.assertNotInGraveyard(player1, "Dusk Imp");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Activation requires two black mana even when enough total mana is available")
+    void cannotActivateWithoutEnoughBlackMana() {
+        harness.addToBattlefield(player1, new MalevolentAwakening());
+        harness.addToBattlefield(player1, new DuskImp());
+        Card target = new Gravedigger();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() ->
+                harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Dusk Imp");
+        harness.assertInGraveyard(player1, "Gravedigger");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void addActivationMana() {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
