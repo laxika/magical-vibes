@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.b.BumpInTheNight;
 import com.github.laxika.magicalvibes.cards.c.ChapelGeist;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,7 +20,91 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MausoleumWanderer.class, ChapelGeist.class, GrizzlyBears.class, Shock.class,
+        BumpInTheNight.class})
 class MausoleumWandererTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Mausoleum Wanderer does not trigger for its own entry")
+    void ownEntryDoesNotBoost() {
+        harness.castFromHand(player1, new MausoleumWanderer(), "{U}");
+        harness.passBothPriorities();
+
+        Permanent wanderer = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(wanderer.getPowerModifier()).isZero();
+        assertThat(wanderer.getToughnessModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's Spirit does not boost Mausoleum Wanderer")
+    void opposingSpiritDoesNotBoost() {
+        Permanent wanderer = harness.addToBattlefieldAndReturn(player1, new MausoleumWanderer());
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new MausoleumWanderer(), "{U}");
+        harness.passBothPriorities();
+
+        assertThat(wanderer.getPowerModifier()).isZero();
+        assertThat(wanderer.getToughnessModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each other Spirit entry creates its own cumulative boost")
+    void multipleSpiritEntriesBoostSeparately() {
+        Permanent wanderer = harness.addToBattlefieldAndReturn(player1, new MausoleumWanderer());
+        for (int i = 0; i < 2; i++) {
+            castChapelGeist(player1);
+            harness.passBothPriorities();
+            assertThat(wanderer.getPowerModifier()).isEqualTo(i);
+            harness.passBothPriorities();
+            assertThat(wanderer.getPowerModifier()).isEqualTo(i + 1);
+            assertThat(wanderer.getToughnessModifier()).isEqualTo(i + 1);
+        }
+    }
+
+    @Test
+    @DisplayName("Sacrifice counters a sorcery and is paid before the ability resolves")
+    void countersSorcery() {
+        harness.addToBattlefield(player1, new MausoleumWanderer());
+        BumpInTheNight spell = new BumpInTheNight();
+        harness.setHand(player2, List.of(spell));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.forceActivePlayer(player2);
+        harness.castSorcery(player2, 0, player1.getId());
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, spell.getId());
+        harness.assertNotOnBattlefield(player1, "Mausoleum Wanderer");
+        harness.assertInGraveyard(player1, "Mausoleum Wanderer");
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Bump in the Night");
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A spell is countered when its controller can pay but declines")
+    void decliningPaymentCountersSpell() {
+        harness.addToBattlefield(player1, new MausoleumWanderer());
+        Shock spell = new Shock();
+        harness.setHand(player2, List.of(spell));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.forceActivePlayer(player2);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+        harness.activateAbility(player1, 0, null, spell.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player2, "Shock");
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Another Spirit entering gives Mausoleum Wanderer +1/+1 until end of turn")
@@ -36,9 +122,7 @@ class MausoleumWandererTest extends BaseCardTest {
     @DisplayName("A non-Spirit creature entering does not boost Mausoleum Wanderer")
     void nonSpiritDoesNotBoost() {
         Permanent wanderer = harness.addToBattlefieldAndReturn(player1, new MausoleumWanderer());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(wanderer.getPowerModifier()).isEqualTo(0);
@@ -116,10 +200,7 @@ class MausoleumWandererTest extends BaseCardTest {
     }
 
     private void castChapelGeist(com.github.laxika.magicalvibes.model.Player controller) {
-        harness.setHand(controller, List.of(new ChapelGeist()));
-        harness.addMana(controller, ManaColor.WHITE, 2);
-        harness.addMana(controller, ManaColor.COLORLESS, 1);
-        harness.castCreature(controller, 0);
+        harness.castFromHand(controller, new ChapelGeist(), "{1}{W}{W}");
     }
 
     @Test
@@ -158,11 +239,8 @@ class MausoleumWandererTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MausoleumWanderer());
 
         GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player2, List.of(bears));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-
         harness.forceActivePlayer(player2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, bears, "{1}{G}");
         harness.passPriority(player2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
