@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.e.ExpeditionDiviner;
+import com.github.laxika.magicalvibes.cards.r.RoilEruption;
 import com.github.laxika.magicalvibes.cards.s.SkitterOfLizards;
 import com.github.laxika.magicalvibes.cards.t.TazeemRoilmage;
 import com.github.laxika.magicalvibes.model.Card;
@@ -14,7 +15,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MurasaSproutling.class, TazeemRoilmage.class, SkitterOfLizards.class, LightningBolt.class})
+@CardUsed({MurasaSproutling.class, TazeemRoilmage.class, ExpeditionDiviner.class,
+        SkitterOfLizards.class, RoilEruption.class})
 class MurasaSproutlingTest extends BaseCardTest {
 
     @Test
@@ -35,7 +37,7 @@ class MurasaSproutlingTest extends BaseCardTest {
     void kickedReturnsTargetCardWithKickerFromTheGraveyard() {
         Card kickerCard = new TazeemRoilmage();
         Card multikickerCard = new SkitterOfLizards();
-        Card nonKickerCard = new LightningBolt();
+        Card nonKickerCard = new ExpeditionDiviner();
         harness.setGraveyard(player1, List.of(kickerCard, multikickerCard, nonKickerCard));
         harness.setHand(player1, List.of(new MurasaSproutling()));
         addKickedMana();
@@ -52,12 +54,12 @@ class MurasaSproutlingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Tazeem Roilmage");
-        harness.assertInGraveyard(player1, "Lightning Bolt");
+        harness.assertInGraveyard(player1, "Expedition Diviner");
     }
 
     @Test
     void kickedDoesNotCreateAChoiceWhenNoCardHasKicker() {
-        Card nonKickerCard = new LightningBolt();
+        Card nonKickerCard = new ExpeditionDiviner();
         harness.setGraveyard(player1, List.of(nonKickerCard));
         harness.setHand(player1, List.of(new MurasaSproutling()));
         addKickedMana();
@@ -66,8 +68,85 @@ class MurasaSproutlingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
-        harness.assertInGraveyard(player1, "Lightning Bolt");
+        harness.assertInGraveyard(player1, "Expedition Diviner");
         harness.assertOnBattlefield(player1, "Murasa Sproutling");
+    }
+
+    @Test
+    void kickedReturnsANoncreatureCardWithKicker() {
+        Card kickerCard = new RoilEruption();
+        harness.setGraveyard(player1, List.of(kickerCard));
+        harness.setHand(player1, List.of(new MurasaSproutling()));
+        addKickedMana();
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(kickerCard.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Roil Eruption");
+        harness.assertNotInGraveyard(player1, "Roil Eruption");
+    }
+
+    @Test
+    void kickedReturnsAMultikickerCard() {
+        Card multikickerCard = new SkitterOfLizards();
+        harness.setGraveyard(player1, List.of(multikickerCard));
+        harness.setHand(player1, List.of(new MurasaSproutling()));
+        addKickedMana();
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(multikickerCard.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Skitter of Lizards");
+        harness.assertNotInGraveyard(player1, "Skitter of Lizards");
+    }
+
+    @Test
+    void kickedCannotTargetACardInAnOpponentsGraveyard() {
+        Card ownCard = new TazeemRoilmage();
+        Card opponentCard = new MurasaSproutling();
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opponentCard));
+        harness.setHand(player1, List.of(new MurasaSproutling()));
+        addKickedMana();
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(ownCard.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(ownCard.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Tazeem Roilmage");
+        harness.assertInGraveyard(player2, "Murasa Sproutling");
+    }
+
+    @Test
+    void targetLeavingGraveyardDoesNotReturnAnotherEligibleCard() {
+        Card target = new TazeemRoilmage();
+        Card otherCard = new MurasaSproutling();
+        harness.setGraveyard(player1, List.of(target, otherCard));
+        harness.setHand(player1, List.of(new MurasaSproutling()));
+        addKickedMana();
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of(otherCard));
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Tazeem Roilmage");
+        harness.assertNotInHand(player1, "Murasa Sproutling");
+        harness.assertInGraveyard(player1, "Murasa Sproutling");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
     }
 
     private void addBaseMana() {
