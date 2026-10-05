@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.a.AshenmoorCohort;
 import com.github.laxika.magicalvibes.cards.b.BoggartRamGang;
 import com.github.laxika.magicalvibes.cards.b.BriarberryCohort;
+import com.github.laxika.magicalvibes.cards.c.CeruleanWisps;
 import com.github.laxika.magicalvibes.cards.p.PowerOfFire;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({InquisitorsSnare.class, AshenmoorCohort.class, BoggartRamGang.class,
-        BriarberryCohort.class, PowerOfFire.class})
+        BriarberryCohort.class, CeruleanWisps.class, PowerOfFire.class})
 class InquisitorsSnareTest extends BaseCardTest {
 
     // ===== Prevention =====
@@ -127,7 +128,11 @@ class InquisitorsSnareTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // POSTCOMBAT_MAIN -> END_STEP
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(gd.permanentsPreventedFromDealingDamage).contains(attacker.getId());
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.permanentsPreventedFromDealingDamage).isEmpty();
     }
@@ -143,9 +148,71 @@ class InquisitorsSnareTest extends BaseCardTest {
 
         UUID targetId = harness.getPermanentId(player2, "Briarberry Cohort");
 
-        assertThatThrownBy(() -> harness.getGameService()
-                .playCard(harness.getGameData(), player1, 0, 0, targetId, null))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A creature removed from combat before resolution is an illegal target")
+    void doesNotAffectCreatureThatLeavesCombatBeforeResolution() {
+        Permanent attacker = addAttacker(player2, new AshenmoorCohort());
+        harness.setHand(player1, List.of(new InquisitorsSnare()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castInstant(player1, 0, attacker.getId());
+
+        attacker.setAttacking(false);
+        attacker.setAttackTarget(null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Ashenmoor Cohort");
+        assertThat(gd.permanentsPreventedFromDealingDamage).doesNotContain(attacker.getId());
+        harness.assertInGraveyard(player1, "Inquisitor's Snare");
+    }
+
+    @Test
+    @DisplayName("The destruction condition uses the creature's color at resolution")
+    void doesNotDestroyCreatureThatBecomesBlueInResponse() {
+        Permanent attacker = addAttacker(player2, new BoggartRamGang());
+        harness.setHand(player1, List.of(new InquisitorsSnare(), new CeruleanWisps()));
+        harness.setLibrary(player1, List.of(new BriarberryCohort()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, attacker.getId());
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Boggart Ram-Gang");
+        assertThat(gd.permanentsPreventedFromDealingDamage).contains(attacker.getId());
+    }
+
+    @Test
+    @DisplayName("A black blocking creature is destroyed")
+    void destroysBlackBlocker() {
+        addAttacker(player2, new AshenmoorCohort());
+        Permanent blocker = addCreatureReady(player1, new AshenmoorCohort());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        castSnare(blocker);
+
+        harness.assertNotOnBattlefield(player1, "Ashenmoor Cohort");
+        harness.assertInGraveyard(player1, "Ashenmoor Cohort");
+    }
+
+    @Test
+    @DisplayName("Prevented blocker deals no combat damage to its attacker")
+    void preventsBlockerCombatDamage() {
+        Permanent attacker = addAttacker(player2, new BriarberryCohort());
+        Permanent blocker = addCreatureReady(player1, new BriarberryCohort());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        castSnare(blocker);
+
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player2, "Briarberry Cohort");
+        harness.assertInGraveyard(player1, "Briarberry Cohort");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
     }
 
     // ===== Helpers =====
