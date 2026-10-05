@@ -56,4 +56,49 @@ class MegafloraJungleTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, butterfly, Keyword.FLYING)).isTrue();
         assertThat(findPermanents(player2, "Butterfly")).isEmpty();
     }
+
+    @Test
+    void boostAppliesToOpponentsSmallCreatures() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+    }
+
+    @Test
+    void butterflyGetsBoostWhilePlaneIsFaceUpAndLosesItWhenPlaneLeaves() {
+        harness.inMutationScope(() -> planar.chaos(gd));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Butterfly")).hasSize(1);
+        Permanent butterfly = findPermanent(player1, "Butterfly");
+        assertThat(gqs.getEffectivePower(gd, butterfly)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, butterfly)).isEqualTo(3);
+        assertThat(butterfly.isTapped()).isFalse();
+
+        harness.inMutationScope(() -> gd.planechase.faceUp.clear());
+
+        assertThat(gqs.getEffectivePower(gd, butterfly)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, butterfly)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, butterfly, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void queuedChaosRetainsItsControllerAfterPlaneLeavesAndControllerChanges() {
+        harness.forceActivePlayer(player2);
+        gd.planechase.controllerId = player2.getId();
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> {
+            gd.planechase.faceUp.clear();
+            gd.planechase.controllerId = player1.getId();
+        });
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Butterfly")).isEmpty();
+        assertThat(findPermanents(player2, "Butterfly")).hasSize(1);
+        Permanent butterfly = findPermanent(player2, "Butterfly");
+        assertThat(gqs.getEffectivePower(gd, butterfly)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, butterfly)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, butterfly, Keyword.FLYING)).isTrue();
+    }
 }
