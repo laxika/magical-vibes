@@ -8,15 +8,18 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LegionsToAshes.class, GrizzlyBears.class, Forest.class})
 class LegionsToAshesTest extends BaseCardTest {
 
     @Test
@@ -32,11 +35,11 @@ class LegionsToAshesTest extends BaseCardTest {
 
         cast(targetId);
 
-        assertThat(permanentsNamed(player2, "Grizzly Bears"))
+        assertThat(findPermanents(player2, "Grizzly Bears"))
                 .hasSize(1)
                 .allMatch(permanent -> !permanent.getCard().isToken());
-        assertThat(permanentsNamed(player2, "Saproling")).hasSize(1);
-        assertThat(permanentsNamed(player1, "Grizzly Bears")).hasSize(1);
+        assertThat(findPermanents(player2, "Saproling")).hasSize(1);
+        assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(1);
     }
 
     @Test
@@ -63,20 +66,72 @@ class LegionsToAshesTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a nonland permanent an opponent controls");
     }
 
+    @Test
+    void canTargetTokenAndExilesMatchingLandTokens() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, token("Grizzly Bears"));
+        Card landToken = token("Grizzly Bears");
+        landToken.setType(CardType.LAND);
+        harness.addToBattlefield(player2, landToken);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        cast(target.getId());
+
+        assertThat(findPermanents(player2, "Grizzly Bears"))
+                .hasSize(1)
+                .allMatch(permanent -> !permanent.getCard().isToken());
+    }
+
+    @Test
+    void missingTargetDoesNotExileMatchingTokens() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent matchingToken = harness.addToBattlefieldAndReturn(player2, token("Grizzly Bears"));
+        prepareSpell();
+        harness.castSorcery(player1, 0, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, target));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(matchingToken);
+        harness.assertInGraveyard(player1, "Legions to Ashes");
+    }
+
+    @Test
+    void faceDownTargetDoesNotMatchItsPrintedName() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Permanent matchingPrintedName = harness.addToBattlefieldAndReturn(player2, token("Grizzly Bears"));
+
+        cast(target.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .doesNotContain(target)
+                .contains(matchingPrintedName);
+    }
+
+    @Test
+    void faceDownTokenDoesNotMatchItsPrintedName() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent faceDownToken = harness.addToBattlefieldAndReturn(player2, token("Grizzly Bears"));
+        faceDownToken.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        cast(target.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .doesNotContain(target)
+                .contains(faceDownToken);
+    }
+
     private void cast(UUID targetId) {
+        prepareSpell();
+        harness.castAndResolveSorcery(player1, 0, targetId);
+    }
+
+    private void prepareSpell() {
         harness.forceActivePlayer(player1);
         harness.setHand(player1, List.of(new LegionsToAshes()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
-    }
-
-    private List<Permanent> permanentsNamed(com.github.laxika.magicalvibes.model.Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> name.equals(permanent.getCard().getName()))
-                .toList();
     }
 
     private Card token(String name) {
