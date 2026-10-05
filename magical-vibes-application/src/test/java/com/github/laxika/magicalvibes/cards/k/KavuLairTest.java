@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.r.Repulse;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KavuLair.class, KavuChameleon.class, KavuTitan.class})
+@CardUsed({KavuLair.class, KavuChameleon.class, KavuTitan.class, Repulse.class})
 class KavuLairTest extends BaseCardTest {
 
     @Test
@@ -72,5 +73,46 @@ class KavuLairTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Each Kavu Lair makes the entering creature's controller draw")
+    void multipleLairsEachDrawForSameCreature() {
+        harness.addToBattlefield(player1, new KavuLair());
+        harness.addToBattlefield(player2, new KavuLair());
+        harness.setHand(player1, List.of(new KavuChameleon()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new KavuTitan(), new KavuTitan()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The draw still resolves after the entering creature leaves the battlefield")
+    void drawsAfterEnteringCreatureLeaves() {
+        harness.addToBattlefield(player1, new KavuLair());
+        harness.setHand(player1, List.of(new KavuChameleon()));
+        harness.setLibrary(player1, List.of(new KavuTitan()));
+        harness.setHand(player2, List.of(new Repulse()));
+        harness.setLibrary(player2, List.of(new KavuTitan()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Kavu Chameleon"));
+        harness.assertNotOnBattlefield(player1, "Kavu Chameleon");
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.assertInHand(player1, "Kavu Titan");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 }
