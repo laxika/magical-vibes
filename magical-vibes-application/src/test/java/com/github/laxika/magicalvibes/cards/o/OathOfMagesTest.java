@@ -98,4 +98,39 @@ class OathOfMagesTest extends BaseCardTest {
         harness.assertLife(player1, 10);
         harness.assertLife(player2, 10);
     }
+
+    @Test
+    @DisplayName("An opponent-upkeep target becomes illegal when the active player gains enough life")
+    void activePlayerLifeGainInvalidatesOpponentUpkeepTarget() {
+        harness.setLife(player1, 11);
+        harness.setLife(player2, 10);
+        harness.addToBattlefield(player1, new OathOfMages());
+
+        advanceToUpkeep(player2);
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.setLife(player2, 12);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 11);
+        harness.assertLife(player2, 12);
+    }
+
+    @Test
+    @DisplayName("A still-legal opponent-upkeep target takes exactly one damage after life totals change")
+    void stillLegalOpponentUpkeepTargetTakesOneDamage() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 10);
+        harness.addToBattlefield(player1, new OathOfMages());
+
+        advanceToUpkeep(player2);
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.setLife(player2, 15);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 15);
+    }
 }
