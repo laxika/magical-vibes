@@ -131,6 +131,38 @@ class OrderChaosTest extends BaseCardTest {
                 gd.playerBattlefields.get(player2.getId()))).isTrue();
     }
 
+    @Test
+    void orderCanExileAnAttackingCreatureYouControl() {
+        Permanent attacker = addAttacker(player1);
+        harness.setHand(player1, List.of(new OrderChaos()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castModalInstant(player1, 0, 0, List.of(attacker.getId()));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Urborg Elf");
+        assertThat(gd.exiledCards)
+                .anyMatch(exiled -> exiled.card().getId().equals(attacker.getCard().getId()));
+    }
+
+    @Test
+    void chaosCanResolveWithoutCreaturesAndAffectsLaterCreatures() {
+        harness.setHand(player1, List.of(new OrderChaos()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castModalInstant(player1, 0, 1, List.of());
+        harness.passBothPriorities();
+        Permanent attacker = addCreatureReady(player1, new UrborgElf());
+        Permanent blocker = addCreatureReady(player2, new UrborgElf());
+
+        assertThat(bls.canBlockAttacker(gd, blocker, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+        assertThat(bls.canBlockAttacker(gd, attacker, blocker,
+                gd.playerBattlefields.get(player1.getId()))).isFalse();
+    }
+
     private Permanent addAttacker(com.github.laxika.magicalvibes.model.Player owner) {
         Permanent attacker = addCreatureReady(owner, new UrborgElf());
         attacker.setAttacking(true);
