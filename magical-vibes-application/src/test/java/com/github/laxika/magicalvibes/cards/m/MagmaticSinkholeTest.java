@@ -69,4 +69,64 @@ class MagmaticSinkholeTest extends BaseCardTest {
                 player1, 0, harness.getPermanentId(player2, "Mountain")))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void canPayWithPartialDelveAndMana() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        Mountain exiled = new Mountain();
+        Mountain remaining = new Mountain();
+        harness.setGraveyard(player1, List.of(exiled, remaining));
+        harness.setHand(player1, List.of(new MagmaticSinkhole()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castInstantWithMultipleGraveyardExile(player1, 0, target.getId(), List.of(0));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(exiled);
+        harness.passBothPriorities();
+        assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+    }
+
+    @Test
+    void delveCannotPayTheRedManaRequirement() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(
+                new Mountain(), new Mountain(), new Mountain(), new Mountain(), new Mountain()));
+        harness.setHand(player1, List.of(new MagmaticSinkhole()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithMultipleGraveyardExile(
+                player1, 0, harness.getPermanentId(player2, "Grizzly Bears"), List.of(0, 1, 2, 3, 4)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(5);
+    }
+
+    @Test
+    void cannotExileMoreThanTheGenericCost() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(
+                new Mountain(), new Mountain(), new Mountain(),
+                new Mountain(), new Mountain(), new Mountain()));
+        harness.setHand(player1, List.of(new MagmaticSinkhole()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithMultipleGraveyardExile(
+                player1, 0, harness.getPermanentId(player2, "Grizzly Bears"), List.of(0, 1, 2, 3, 4, 5)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(6);
+    }
+
+    @Test
+    void cannotTargetPlayer() {
+        harness.setHand(player1, List.of(new MagmaticSinkhole()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }
