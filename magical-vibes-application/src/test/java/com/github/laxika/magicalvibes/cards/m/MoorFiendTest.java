@@ -18,6 +18,34 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class MoorFiendTest extends BaseCardTest {
 
     @Test
+    @DisplayName("A tapped Swamp enables swampwalk only while it remains on the battlefield")
+    void tappedSwampEnablesSwampwalkUntilItLeaves() {
+        harness.addToBattlefield(player2, new Swamp());
+        Permanent swamp = findPermanent(player2, "Swamp");
+        swamp.setTapped(true);
+        Permanent blocker = addCreatureReady(player2, new BalduvianBears());
+        Permanent attacker = addCreatureReady(player1, new MoorFiend());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+
+        gd.playerBattlefields.get(player2.getId()).remove(swamp);
+        gd.playerGraveyards.get(player2.getId()).add(swamp.getCard());
+        prepareDeclareBlockers();
+        int remainingBlockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(remainingBlockerIndex, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Moor Fiend cannot be blocked when defending player controls a Swamp")
     void cannotBeBlockedWhenDefenderControlsSwamp() {
         harness.addToBattlefield(player2, new Swamp());
