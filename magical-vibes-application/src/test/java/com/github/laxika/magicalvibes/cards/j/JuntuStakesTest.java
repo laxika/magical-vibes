@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.b.BenalishLancer;
 import com.github.laxika.magicalvibes.cards.s.StormscapeApprentice;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -72,5 +73,45 @@ class JuntuStakesTest extends BaseCardTest {
         advanceToUpkeep(player1);
 
         assertThat(stakes.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature raised above power 1 by a counter untaps")
+    void increasedPowerCreatureUntaps() {
+        harness.addToBattlefield(player1, new JuntuStakes());
+        Permanent creature = addCreatureReady(player1, new StormscapeApprentice());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        creature.tap();
+
+        advanceToUpkeep(player1);
+
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature reduced to power 1 by a counter stays tapped")
+    void reducedPowerCreatureStaysTapped() {
+        harness.addToBattlefield(player1, new JuntuStakes());
+        Permanent creature = addCreatureReady(player1, new BenalishLancer());
+        creature.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        creature.tap();
+
+        advanceToUpkeep(player1);
+
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped Juntu Stakes still prevents low-power creatures from untapping")
+    void tappedStakesStillPreventsUntapping() {
+        Permanent stakes = harness.addToBattlefieldAndReturn(player2, new JuntuStakes());
+        stakes.tap();
+        Permanent creature = addCreatureReady(player1, new StormscapeApprentice());
+        creature.tap();
+
+        advanceToUpkeep(player1);
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(stakes.isTapped()).isTrue();
     }
 }
