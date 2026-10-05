@@ -65,4 +65,62 @@ class KylerSigardianEmissaryTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, kyler)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, kyler)).isEqualTo(4);
     }
+
+    @Test
+    void countsEveryCounterIncludingMultipleCountersOfTheSameType() {
+        Permanent kyler = addCreatureReady(player1, new KylerSigardianEmissary());
+        kyler.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        kyler.setCounterCount(CounterType.VIGILANCE, 1);
+        kyler.setCounterCount(CounterType.STUN, 2);
+        Permanent human = addCreatureReady(player1, new FugitiveWizard());
+        Permanent opposingHuman = addCreatureReady(player2, new FugitiveWizard());
+
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, opposingHuman)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingHuman)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, kyler)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, kyler)).isEqualTo(4);
+    }
+
+    @Test
+    void givesOtherHumansABonusWithNoPlusOneCounters() {
+        Permanent kyler = addCreatureReady(player1, new KylerSigardianEmissary());
+        kyler.setCounterCount(CounterType.VIGILANCE, 1);
+        Permanent human = addCreatureReady(player1, new FugitiveWizard());
+
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(2);
+    }
+
+    @Test
+    void bonusUpdatesWhenCountersChangeAndEndsWhenKylerLeaves() {
+        Permanent kyler = addCreatureReady(player1, new KylerSigardianEmissary());
+        Permanent human = addCreatureReady(player1, new FugitiveWizard());
+
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(1);
+        kyler.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(4);
+        kyler.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(2);
+        gd.playerBattlefields.get(player1.getId()).remove(kyler);
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(1);
+    }
+
+    @Test
+    void doesNotTriggerForItsOwnEntry() {
+        harness.setHand(player1, List.of(new KylerSigardianEmissary()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        Permanent kyler = findPermanent(player1, "Kyler, Sigardian Emissary");
+        assertThat(kyler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
 }
