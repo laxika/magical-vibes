@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -14,9 +15,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({NantukoVigilante.class, FountainOfYouth.class, GloriousAnthem.class, GrizzlyBears.class,
-        Juggernaut.class})
+        Juggernaut.class, Boomerang.class})
 class NantukoVigilanteTest extends BaseCardTest {
 
     @Test
@@ -68,6 +70,96 @@ class NantukoVigilanteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Juggernaut");
+    }
+
+    @Test
+    void turningFaceUpDestroysAnEnchantment() {
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
+        Permanent vigilante = castFaceDown();
+
+        turnFaceUp(vigilante);
+        harness.handlePermanentChosen(player1, enchantment.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
+        harness.assertInGraveyard(player2, "Glorious Anthem");
+        harness.assertOnBattlefield(player1, "Nantuko Vigilante");
+    }
+
+    @Test
+    void castingFaceUpDoesNotTriggerDestruction() {
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.castFromHand(player1, new NantukoVigilante(), "{3}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Nantuko Vigilante");
+        harness.assertOnBattlefield(player2, "Fountain of Youth");
+    }
+
+    @Test
+    void destructionResolvesAfterVigilanteLeavesTheBattlefield() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent vigilante = castFaceDown();
+        turnFaceUp(vigilante);
+        harness.handlePermanentChosen(player1, artifact.getId());
+
+        harness.setHand(player2, List.of(new Boomerang()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player2, 0, vigilante.getId());
+        harness.assertInHand(player1, "Nantuko Vigilante");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+        harness.assertInGraveyard(player2, "Fountain of Youth");
+    }
+
+    @Test
+    void destructionDoesNotRetargetWhenItsTargetLeavesTheBattlefield() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new GloriousAnthem());
+        Permanent vigilante = castFaceDown();
+        turnFaceUp(vigilante);
+        harness.handlePermanentChosen(player1, artifact.getId());
+
+        harness.setHand(player2, List.of(new Boomerang()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player2, 0, artifact.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInHand(player2, "Fountain of Youth");
+        harness.assertNotInGraveyard(player2, "Fountain of Youth");
+        harness.assertOnBattlefield(player2, "Glorious Anthem");
+    }
+
+    @Test
+    void castingFaceDownDoesNotTriggerDestruction() {
+        harness.addToBattlefield(player2, new FountainOfYouth());
+
+        Permanent vigilante = castFaceDown();
+
+        assertThat(vigilante.isFaceDown()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player2, "Fountain of Youth");
+    }
+
+    @Test
+    void turningFaceUpRequiresGreenMana() {
+        Permanent vigilante = castFaceDown();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.turnFaceUp(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(vigilante)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(vigilante.isFaceDown()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private Permanent castFaceDown() {
