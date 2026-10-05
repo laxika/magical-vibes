@@ -47,8 +47,7 @@ class KitsuneLoreweaverTest extends BaseCardTest {
         assertThat(loreweaver.getEffectiveToughness()).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(loreweaver.getEffectiveToughness()).isEqualTo(1);
     }
@@ -66,6 +65,49 @@ class KitsuneLoreweaverTest extends BaseCardTest {
 
         assertThat(loreweaver.getEffectivePower()).isEqualTo(2);
         assertThat(loreweaver.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Repeated activations accumulate independently and keep their resolved bonuses")
+    void repeatedActivationsKeepResolvedBonuses() {
+        Permanent loreweaver = addLoreweaverReady(player1);
+        harness.setHand(player1, hand(2));
+        harness.setHand(player2, hand(6));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(loreweaver.getEffectiveToughness()).isEqualTo(3);
+
+        harness.setHand(player1, hand(4));
+        assertThat(loreweaver.getEffectiveToughness()).isEqualTo(3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(loreweaver.getEffectiveToughness()).isEqualTo(7);
+
+        harness.setHand(player1, hand(0));
+        assertThat(loreweaver.getEffectivePower()).isEqualTo(2);
+        assertThat(loreweaver.getEffectiveToughness()).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("The ability can be activated while tapped and summoning sick")
+    void abilityWorksWhileTappedAndSummoningSick() {
+        harness.addToBattlefield(player1, new KitsuneLoreweaver());
+        Permanent loreweaver = findPermanent(player1, "Kitsune Loreweaver");
+        loreweaver.setSummoningSick(true);
+        loreweaver.setTapped(true);
+        harness.setHand(player1, hand(2));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(loreweaver.getEffectivePower()).isEqualTo(2);
+        assertThat(loreweaver.getEffectiveToughness()).isEqualTo(3);
+        assertThat(loreweaver.isTapped()).isTrue();
     }
 
     private Permanent addLoreweaverReady(Player player) {
