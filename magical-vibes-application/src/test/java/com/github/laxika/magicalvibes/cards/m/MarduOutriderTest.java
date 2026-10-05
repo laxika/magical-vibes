@@ -30,6 +30,42 @@ class MarduOutriderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can discard another creature card, paying the cost before resolution")
+    void canDiscardAnotherCreatureBeforeResolution() {
+        MarduOutrider discarded = new MarduOutrider();
+        harness.setHand(player1, List.of(new MarduOutrider(), discarded));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castSorceryWithDiscard(player1, 0, 1);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Mardu Outrider");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Mardu Outrider");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
+    }
+
+    @Test
+    @DisplayName("Discards the selected card before the spell's hand index and preserves the other card")
+    void discardsCardBeforeSpellInHand() {
+        Forest discarded = new Forest();
+        Forest retained = new Forest();
+        harness.setHand(player1, List.of(discarded, new MarduOutrider(), retained));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castSorceryWithDiscard(player1, 1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(retained);
+        harness.assertOnBattlefield(player1, "Mardu Outrider");
+    }
+
+    @Test
     @DisplayName("Cannot be cast without another card to discard")
     void cannotCastWithoutCardToDiscard() {
         harness.setHand(player1, List.of(new MarduOutrider()));
