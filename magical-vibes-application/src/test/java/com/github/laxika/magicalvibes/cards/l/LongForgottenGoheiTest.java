@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.g.GlacialRay;
 import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
 import com.github.laxika.magicalvibes.cards.h.HonorWornShaku;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
+import com.github.laxika.magicalvibes.cards.x.Xenograft;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({LongForgottenGohei.class, GlacialRay.class, HonorWornShaku.class,
-        LanternKami.class, HumbleBudoka.class})
+        LanternKami.class, HumbleBudoka.class, MarchOfTheMachines.class, Xenograft.class})
 class LongForgottenGoheiTest extends BaseCardTest {
 
     @Test
@@ -83,5 +85,57 @@ class LongForgottenGoheiTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, kami)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, kami)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Multiple Gohei stack their Spirit bonuses")
+    void multipleGoheiBoostsStack() {
+        Permanent kami = addCreatureReady(player1, new LanternKami());
+        harness.addToBattlefield(player1, new LongForgottenGohei());
+        harness.addToBattlefield(player1, new LongForgottenGohei());
+
+        assertThat(gqs.getEffectivePower(gd, kami)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, kami)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Multiple Gohei cannot reduce the colored part of an Arcane cost")
+    void costReductionDoesNotPayColoredMana() {
+        harness.addToBattlefield(player1, new LongForgottenGohei());
+        harness.addToBattlefield(player1, new LongForgottenGohei());
+        harness.setHand(player1, List.of(new GlacialRay()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Gohei boosts itself when it becomes a Spirit creature")
+    void animatedSpiritGoheiReceivesItsOwnBonus() {
+        Permanent gohei = harness.addToBattlefieldAndReturn(player1, new LongForgottenGohei());
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+        harness.castFromHand(player1, new Xenograft(), "{4}{U}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "SPIRIT");
+
+        assertThat(gqs.getEffectivePower(gd, gohei)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, gohei)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Gohei reductions stack and apply to the total cost including splice")
+    void reductionsStackIncludingSpliceCost() {
+        harness.addToBattlefield(player1, new LongForgottenGohei());
+        harness.addToBattlefield(player1, new LongForgottenGohei());
+        GlacialRay splicedRay = new GlacialRay();
+        harness.setHand(player1, List.of(new GlacialRay(), splicedRay));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castWithSplice(player1, 0, player2.getId(), List.of(1));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(splicedRay);
     }
 }
