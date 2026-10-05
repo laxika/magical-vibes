@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.e.EssenceWarden;
 import com.github.laxika.magicalvibes.cards.g.GiantDustwasp;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
@@ -19,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PiracyCharm.class, GiantDustwasp.class, Island.class})
+@CardUsed({PiracyCharm.class, GiantDustwasp.class, Island.class, EssenceWarden.class})
 class PiracyCharmTest extends BaseCardTest {
 
     @Test
@@ -84,6 +85,55 @@ class PiracyCharmTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The targeted player chooses exactly one card to discard")
+    void targetedPlayerChoosesOneCardFromMultipleCards() {
+        harness.setHand(player2, List.of(new GiantDustwasp(), new EssenceWarden()));
+
+        cast(2, player2.getId());
+        harness.handleCardChosen(player2, 1);
+
+        harness.assertInGraveyard(player2, "Essence Warden");
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(Card::getName).containsExactly("Giant Dustwasp");
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The toughness reduction puts a one-toughness creature into its owner's graveyard")
+    void toughnessReductionKillsOneToughnessCreature() {
+        Permanent target = addCreatureReady(player2, new EssenceWarden());
+
+        cast(1, target.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        harness.assertInGraveyard(player2, "Essence Warden");
+    }
+
+    @Test
+    @DisplayName("Mode 2 rejects a creature target")
+    void discardModeRejectsCreatureTarget() {
+        Permanent creature = addCreatureReady(player2, new GiantDustwasp());
+        harness.setHand(player1, List.of(new PiracyCharm()));
+        preparePiracyCharmCast();
+
+        assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 2, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Two power and toughness modifications accumulate on the same creature")
+    void repeatedBoostsAccumulate() {
+        Permanent target = addCreatureReady(player1, new GiantDustwasp());
+
+        cast(1, target.getId());
+        cast(1, target.getId());
+
+        assertThat(target.getEffectivePower()).isEqualTo(7);
+        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.ISLANDWALK)).isFalse();
     }
 
     @Test
