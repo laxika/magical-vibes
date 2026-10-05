@@ -58,7 +58,7 @@ class NecrosynthesisTest extends BaseCardTest {
         Card forest = new Forest();
         Card mountain = new Mountain();
         Card island = new Island();
-        setDeck(player1, List.of(forest, mountain, island));
+        harness.setLibrary(player1, List.of(forest, mountain, island));
 
         enchanted.setMarkedDamage(3);
         harness.runStateBasedActions();
@@ -75,14 +75,78 @@ class NecrosynthesisTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
     }
 
-    private void attachAura(Permanent creature) {
-        Permanent aura = new Permanent(new Necrosynthesis());
-        aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
+    @Test
+    @DisplayName("Aura controller uses their own library when an opponent's enchanted creature dies")
+    void auraControllerUsesOwnLibrary() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        attachAura(enchanted);
+        Card forest = new Forest();
+        Card mountain = new Mountain();
+        Card island = new Island();
+        harness.setLibrary(player1, List.of(forest, mountain, island));
+        Card opposingCard = new Forest();
+        harness.setLibrary(player2, List.of(opposingCard));
+
+        enchanted.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice.allCards()).containsExactly(forest, mountain);
+        harness.handleMultipleCardsChosen(player1, List.of(mountain.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(mountain);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(island, forest);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opposingCard);
     }
 
-    private void setDeck(com.github.laxika.magicalvibes.model.Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+    @Test
+    @DisplayName("Death trigger uses power including counters accumulated from earlier deaths")
+    void deathTriggerIncludesAccumulatedCounters() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        attachAura(enchanted);
+        other.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        Card forest = new Forest();
+        Card mountain = new Mountain();
+        Card island = new Island();
+        Card unseen = new Forest();
+        harness.setLibrary(player1, List.of(forest, mountain, island, unseen));
+
+        enchanted.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice.allCards()).containsExactly(forest, mountain, island);
+        harness.handleMultipleCardsChosen(player1, List.of(mountain.getId()));
+        assertThat(gd.playerHands.get(player1.getId())).contains(mountain);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(unseen);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(unseen, forest, island);
+    }
+
+    @Test
+    @DisplayName("A library with only one card puts that card into hand even when power is greater")
+    void shortLibraryPutsOnlyCardIntoHand() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        attachAura(enchanted);
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+
+        enchanted.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(forest);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    private void attachAura(Permanent creature) {
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Necrosynthesis());
+        aura.setAttachedTo(creature.getId());
     }
 }
