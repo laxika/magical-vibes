@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
+import com.github.laxika.magicalvibes.cards.h.HowlingMine;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -14,11 +16,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Negate.class, LlanowarElves.class, MightOfOaks.class})
+@CardUsed({Negate.class, LlanowarElves.class, MightOfOaks.class, HowlingMine.class, Ornithopter.class, RodOfRuin.class})
 class NegateTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -80,8 +83,7 @@ class NegateTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, target.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, might.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, might.getId());
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
@@ -103,8 +105,7 @@ class NegateTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, target.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, might.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, might.getId());
 
         GameData gd = harness.getGameData();
         harness.assertInGraveyard(player2, "Negate");
@@ -135,8 +136,81 @@ class NegateTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
         // Negate still goes to graveyard
         harness.assertInGraveyard(player2, "Negate");
+    }
+
+    @Test
+    @DisplayName("Counters a noncreature artifact spell")
+    void countersArtifactSpell() {
+        HowlingMine mine = new HowlingMine();
+        harness.setHand(player1, List.of(mine));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setHand(player2, List.of(new Negate()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castArtifact(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, mine.getId());
+
+        harness.assertInGraveyard(player1, "Howling Mine");
+        harness.assertNotOnBattlefield(player1, "Howling Mine");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target an artifact creature spell")
+    void cannotTargetArtifactCreatureSpell() {
+        Ornithopter thopter = new Ornithopter();
+        harness.setHand(player1, List.of(thopter));
+        harness.setHand(player2, List.of(new Negate()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, thopter.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player2, "Negate");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Ornithopter");
+    }
+
+    @Test
+    @DisplayName("Cannot target an activated ability")
+    void cannotTargetActivatedAbility() {
+        harness.addToBattlefield(player1, new RodOfRuin());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player2, List.of(new Negate()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        UUID abilityId = gd.stack.getLast().getTargetableId();
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, abilityId))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player2, "Negate");
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Can counter a spell controlled by its caster")
+    void countersOwnSpell() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        MightOfOaks might = new MightOfOaks();
+        harness.setHand(player1, List.of(might, new Negate()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, might.getId());
+
+        harness.assertInGraveyard(player1, "Might of Oaks");
+        harness.assertInGraveyard(player1, "Negate");
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 }
