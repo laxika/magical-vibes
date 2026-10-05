@@ -76,6 +76,17 @@ class PhantomWarriorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Phantom Warrior can block an opposing ground creature")
+    void canBlockOpposingGroundCreature() {
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new PhantomWarrior());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
     @DisplayName("A face-down Phantom Warrior can be blocked")
     void faceDownPhantomWarriorCanBeBlocked() {
         addCreatureReady(player2, new GrizzlyBears());
