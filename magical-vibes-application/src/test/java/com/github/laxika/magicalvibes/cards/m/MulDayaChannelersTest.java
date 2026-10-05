@@ -1,27 +1,31 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.n.NestInvader;
+import com.github.laxika.magicalvibes.cards.f.FlameSlash;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MulDayaChannelers.class, Forest.class, NestInvader.class, FlameSlash.class})
 class MulDayaChannelersTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gets +3/+3 while a creature card is on top of its library")
     void getsBoostForCreatureTopCard() {
         Permanent channelers = addCreatureReady(player1, new MulDayaChannelers());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new NestInvader()));
 
         assertThat(gqs.getEffectivePower(gd, channelers)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, channelers)).isEqualTo(5);
@@ -31,7 +35,7 @@ class MulDayaChannelersTest extends BaseCardTest {
     @DisplayName("Does not get +3/+3 while a noncreature card is on top of its library")
     void doesNotGetBoostForNonCreatureTopCard() {
         Permanent channelers = addCreatureReady(player1, new MulDayaChannelers());
-        harness.setLibrary(player1, List.of(new Shock()));
+        harness.setLibrary(player1, List.of(new FlameSlash()));
 
         assertThat(gqs.getEffectivePower(gd, channelers)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, channelers)).isEqualTo(2);
@@ -56,7 +60,7 @@ class MulDayaChannelersTest extends BaseCardTest {
     @DisplayName("Does not have the mana ability while a nonland card is on top of its library")
     void doesNotHaveManaAbilityForNonlandTopCard() {
         addCreatureReady(player1, new MulDayaChannelers());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new NestInvader()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -66,7 +70,7 @@ class MulDayaChannelersTest extends BaseCardTest {
     @DisplayName("The conditions change as the top card changes")
     void conditionsChangeWithTopCard() {
         Permanent channelers = addCreatureReady(player1, new MulDayaChannelers());
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest()));
+        harness.setLibrary(player1, List.of(new NestInvader(), new Forest()));
 
         assertThat(gqs.getEffectivePower(gd, channelers)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, channelers)).isEqualTo(5);
@@ -76,5 +80,97 @@ class MulDayaChannelersTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, channelers)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, channelers)).isEqualTo(2);
         harness.activateAbility(player1, 0, null, null);
+    }
+
+    @Test
+    void revealsTopCardToBothPlayersAndStopsWhenSourceLeaves() {
+        Permanent channelers = addCreatureReady(player1, new MulDayaChannelers());
+        harness.setLibrary(player1, List.of(new NestInvader()));
+        harness.setLibrary(player2, List.of(new FlameSlash()));
+        harness.clearMessages();
+
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages())
+                .anyMatch(message -> message.contains("\"revealedLibraryTopCards\":[[{")
+                        && message.contains("Nest Invader"));
+        assertThat(harness.getConn2().getSentMessages())
+                .anyMatch(message -> message.contains("\"revealedLibraryTopCards\":[[{")
+                        && message.contains("Nest Invader"));
+
+        gd.playerBattlefields.get(player1.getId()).remove(channelers);
+        harness.clearMessages();
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages())
+                .anyMatch(message -> message.contains("\"revealedLibraryTopCards\":[[],[]]"));
+        assertThat(harness.getConn2().getSentMessages())
+                .anyMatch(message -> message.contains("\"revealedLibraryTopCards\":[[],[]]"));
+    }
+
+    @Test
+    void emptyLibraryGrantsNeitherBonusNorManaAbility() {
+        Permanent channelers = addCreatureReady(player1, new MulDayaChannelers());
+        harness.setLibrary(player1, List.of());
+
+        assertThat(gqs.getEffectivePower(gd, channelers)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, channelers)).isEqualTo(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void opponentLibraryDoesNotGrantControllerBonusOrManaAbility() {
+        Permanent channelers = addCreatureReady(player1, new MulDayaChannelers());
+        harness.setLibrary(player1, List.of(new FlameSlash()));
+        harness.setLibrary(player2, List.of(new NestInvader()));
+
+        assertThat(gqs.getEffectivePower(gd, channelers)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, channelers)).isEqualTo(2);
+
+        harness.setLibrary(player2, List.of(new Forest()));
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    void producesTwoManaOfTheChosenColorWithoutUsingTheStack(ManaColor color) {
+        Permanent channelers = addCreatureReady(player1, new MulDayaChannelers());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, color.name());
+
+        for (ManaColor manaColor : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor))
+                    .isEqualTo(manaColor == color ? 2 : 0);
+        }
+        assertThat(channelers.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void losesManaAbilityWhenLandIsNoLongerOnTop() {
+        addCreatureReady(player1, new MulDayaChannelers());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(false);
+        harness.setLibrary(player1, List.of(new FlameSlash()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(2);
+    }
+
+    @Test
+    void summoningSicknessPreventsActivatingGrantedTapAbility() {
+        harness.addToBattlefield(player1, new MulDayaChannelers());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
