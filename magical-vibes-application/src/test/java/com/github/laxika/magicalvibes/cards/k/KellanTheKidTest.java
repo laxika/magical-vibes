@@ -26,8 +26,7 @@ class KellanTheKidTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castFlashback(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
@@ -38,15 +37,14 @@ class KellanTheKidTest extends BaseCardTest {
     }
 
     @Test
-    void offersALandAfterDecliningThePermanentSpellChoice() {
+    void offersALandWhenThePermanentSpellIsTooExpensive() {
         harness.addToBattlefield(player1, new KellanTheKid());
         harness.setGraveyard(player1, List.of(new Firebolt()));
         harness.setHand(player1, List.of(new GrizzlyBears(), new Mountain()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castFlashback(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, player2.getId());
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -64,10 +62,86 @@ class KellanTheKidTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Firebolt(), new DoomedTraveler()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.pendingMayAbilities).isEmpty();
+    }
+
+    @Test
+    void decliningOneCandidateThenCastingAnotherDoesNotAlsoAllowALand() {
+        harness.addToBattlefield(player1, new KellanTheKid());
+        harness.setGraveyard(player1, List.of(new Firebolt()));
+        harness.setHand(player1, List.of(new DoomedTraveler(), new DoomedTraveler(), new Mountain()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveFlashback(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Doomed Traveler");
+        harness.assertInHand(player1, "Mountain");
+        harness.assertNotOnBattlefield(player1, "Mountain");
+    }
+
+    @Test
+    void decliningAllCandidatesAllowsOnlyOneLand() {
+        harness.addToBattlefield(player1, new KellanTheKid());
+        harness.setGraveyard(player1, List.of(new Firebolt()));
+        harness.setHand(player1, List.of(new DoomedTraveler(), new DoomedTraveler(),
+                new Mountain(), new Mountain()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveFlashback(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleCardChosen(player1, 2);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Mountain"))
+                .hasSize(1);
+        harness.assertInHand(player1, "Mountain");
+    }
+
+    @Test
+    void canDeclineBothAnEligiblePermanentAndTheLand() {
+        harness.addToBattlefield(player1, new KellanTheKid());
+        harness.setGraveyard(player1, List.of(new Firebolt()));
+        harness.setHand(player1, List.of(new DoomedTraveler(), new Mountain()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveFlashback(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInHand(player1, "Doomed Traveler");
+        harness.assertInHand(player1, "Mountain");
+        harness.assertNotOnBattlefield(player1, "Doomed Traveler");
+        harness.assertNotOnBattlefield(player1, "Mountain");
+    }
+
+    @Test
+    void doesNotTriggerForAnOpponentsSpellCastFromGraveyard() {
+        harness.addToBattlefield(player1, new KellanTheKid());
+        harness.setHand(player1, List.of(new DoomedTraveler(), new Mountain()));
+        harness.setGraveyard(player2, List.of(new Firebolt()));
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+
+        harness.castAndResolveFlashback(player2, 0, player1.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        harness.assertInHand(player1, "Doomed Traveler");
+        harness.assertInHand(player1, "Mountain");
+        harness.assertLife(player1, 18);
     }
 }
