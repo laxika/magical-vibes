@@ -64,8 +64,7 @@ class KryShieldTest extends BaseCardTest {
         activateShield(archer);
         assertThat(gd.permanentsPreventedFromDealingDamage).contains(archer.getId());
 
-        declareAttackers(List.of(2));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(2));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 2)));
         assertThat(gd.permanentsPreventedFromDealingDamage).contains(archer.getId());
 
@@ -122,6 +121,49 @@ class KryShieldTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, shield.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(shield.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Uses the target creature's mana value and still allows damage to it")
+    void usesTargetManaValueAndDoesNotPreventIncomingDamage() {
+        addReadyShield(player1);
+        Permanent giant = addReadyCrawGiant(player1);
+        addReadyArcher(player2);
+
+        activateShield(giant);
+
+        assertThat(giant.getPowerModifier()).isZero();
+        assertThat(giant.getToughnessModifier()).isEqualTo(7);
+
+        declareAttackersAndPrepareBlockers(List.of(1));
+        gs.declareBlockers(gd, player2, List.of());
+        harness.activateAbility(player2, 0, null, giant.getId());
+        harness.passBothPriorities();
+
+        assertThat(giant.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Requires two mana and an untapped shield")
+    void requiresManaAndUntappedShield() {
+        Permanent shield = addReadyShield(player1);
+        Permanent archer = addReadyArcher(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, archer.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(shield.isTapped()).isFalse();
+        assertThat(archer.getToughnessModifier()).isZero();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, archer.getId());
+        harness.passBothPriorities();
+        assertThat(shield.isTapped()).isTrue();
+        assertThat(archer.getToughnessModifier()).isEqualTo(3);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, archer.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private Permanent addReadyShield(Player player) {
