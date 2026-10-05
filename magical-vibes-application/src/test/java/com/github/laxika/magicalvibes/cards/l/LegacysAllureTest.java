@@ -107,4 +107,46 @@ class LegacysAllureTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Mogg Conscripts");
         harness.assertNotOnBattlefield(player1, "Mogg Conscripts");
     }
+
+    @Test
+    @DisplayName("The opponent's upkeep does not add a treasure counter")
+    void opponentUpkeepDoesNotTrigger() {
+        Permanent allure = addAllureWithCounters(2);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(allure.getCounterCount(CounterType.TREASURE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid before resolution and control uses the sacrificed source's counters")
+    void sacrificeIsPaidBeforeControlChanges() {
+        addAllureWithCounters(2);
+        harness.addToBattlefield(player1, new LegacysAllure());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MoggConscripts());
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+
+        harness.assertInGraveyard(player1, "Legacy's Allure");
+        harness.assertOnBattlefield(player2, "Mogg Conscripts");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Mogg Conscripts");
+        harness.assertNotOnBattlefield(player2, "Mogg Conscripts");
+    }
+
+    @Test
+    @DisplayName("The ability can target a creature already controlled by its controller")
+    void canTargetOwnCreature() {
+        addAllureWithCounters(2);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new MoggConscripts());
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Legacy's Allure");
+        harness.assertOnBattlefield(player1, "Mogg Conscripts");
+    }
 }
