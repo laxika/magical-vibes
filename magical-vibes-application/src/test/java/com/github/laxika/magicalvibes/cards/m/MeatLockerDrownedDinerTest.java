@@ -60,6 +60,67 @@ class MeatLockerDrownedDinerTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
+    @Test
+    void meatLockerAddsStunCountersToAnAlreadyTappedCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.tap();
+
+        castRoom(0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(2);
+    }
+
+    @Test
+    void unlockingDrownedDinerAfterMeatLockerDrawsThenDiscardsWithoutRetargeting() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+
+        Permanent room = castRoom(0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, BLUE, 5);
+        harness.unlockRoomDoor(player1, gd.playerBattlefields.get(player1.getId()).indexOf(room), 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(2);
+    }
+
+    @Test
+    void unlockingMeatLockerAfterDrownedDinerOnlyTapsAndAddsCounters() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+
+        Permanent room = castRoom(1);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.addMana(player1, BLUE, 3);
+        harness.unlockRoomDoor(player1, gd.playerBattlefields.get(player1.getId()).indexOf(room), 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
     private Permanent castRoom(int doorIndex) {
         harness.setHand(player1, List.of(new MeatLockerDrownedDiner()));
         harness.addMana(player1, BLUE, doorIndex == 0 ? 3 : 5);
