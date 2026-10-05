@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.a.ArtificialEvolution;
+import com.github.laxika.magicalvibes.cards.b.Bitterblossom;
+import com.github.laxika.magicalvibes.cards.k.KiteShield;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -16,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(Pentavus.class)
+@CardUsed({Pentavus.class, ArtificialEvolution.class, Bitterblossom.class, KiteShield.class})
 class PentavusTest extends BaseCardTest {
 
     @Test
@@ -73,11 +76,17 @@ class PentavusTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot make a token with no +1/+1 counters left")
     void cannotMakeTokenWithoutCounters() {
-        addCreatureReady(player1, new Pentavus());
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        Permanent pentavus = addCreatureReady(player1, new Pentavus());
+        pentavus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addToBattlefield(player1, new KiteShield());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 1, 0, null, pentavus.getId());
+        harness.passBothPriorities();
+        pentavus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Pentavus");
     }
 
     @Test
@@ -119,5 +128,81 @@ class PentavusTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(countPermanents(player1, "Pentavus")).isEqualTo(2);
+    }
+
+    @Test
+    void removingLastCounterStillCreatesTokenAfterPentavusDies() {
+        addCreatureReady(player1, new Pentavus())
+                .setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Pentavus");
+        harness.assertInGraveyard(player1, "Pentavus");
+        harness.assertNotOnBattlefield(player1, "Pentavite");
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Pentavite")).isEqualTo(1);
+    }
+
+    @Test
+    void sacrificeIsPaidBeforeCounterAddingAbilityResolves() {
+        Permanent pentavus = addCreatureReady(player1, new Pentavus());
+        pentavus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Pentavite");
+        assertThat(pentavus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+
+        harness.passBothPriorities();
+
+        assertThat(pentavus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+    }
+
+    @Test
+    void cannotSacrificeOpponentsPentavite() {
+        Permanent ownPentavus = addCreatureReady(player1, new Pentavus());
+        ownPentavus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+        Permanent opposingPentavus = addCreatureReady(player2, new Pentavus());
+        opposingPentavus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Pentavite");
+        assertThat(ownPentavus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+    }
+
+    @Test
+    @CardUsed({ArtificialEvolution.class, Bitterblossom.class})
+    void canSacrificeNoncreatureKindredPentavite() {
+        Permanent pentavus = addCreatureReady(player1, new Pentavus());
+        pentavus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+        Permanent bitterblossom = harness.addToBattlefieldAndReturn(player1, new Bitterblossom());
+        harness.setHand(player1, List.of(new ArtificialEvolution()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, bitterblossom.getId());
+        harness.handleListChoice(player1, "FAERIE");
+        harness.handleListChoice(player1, "PENTAVITE");
+        assertThat(gqs.hasEffectiveSubtype(gd, bitterblossom, CardSubtype.PENTAVITE)).isTrue();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Bitterblossom");
+        harness.assertInGraveyard(player1, "Bitterblossom");
+        assertThat(pentavus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
     }
 }
