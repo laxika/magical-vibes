@@ -60,6 +60,76 @@ class NephaliaTest extends BaseCardTest {
     }
 
     @Test
+    void emptyLibraryStillReturnsAnExistingNoncreatureCard() {
+        Card existingCard = new Shock();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of());
+        harness.setGraveyard(player1, List.of(existingCard));
+
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
+                .handleEndStepTriggers(gd));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(existingCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void shortLibraryMillsAllAvailableCardsAndReturnsOneWithoutAChoice() {
+        Card milledCard = new Shock();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(milledCard));
+        harness.setGraveyard(player1, List.of());
+
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
+                .handleEndStepTriggers(gd));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(milledCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void endStepUsesTheNewActivePlayersLibraryAndGraveyard() {
+        Card returnedCard = new Shock();
+        Card unaffectedCard = new GrizzlyBears();
+        harness.forceActivePlayer(player2);
+        harness.setLibrary(player1, List.of(unaffectedCard));
+        harness.setLibrary(player2, List.of(returnedCard));
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player2, List.of());
+
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
+                .handleEndStepTriggers(gd));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unaffectedCard);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(returnedCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void chaosDoesNotReturnAnotherCardWhenItsTargetLeavesTheGraveyard() {
+        Card target = new Shock();
+        Card otherCard = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(target, otherCard));
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> triggers.processNextSpellGraveyardTargetTrigger(gd));
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of(otherCard));
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(otherCard);
+    }
+
+    @Test
     void chaosReturnsOnlyATargetCardFromTheControllersGraveyard() {
         Card ownCard = new GrizzlyBears();
         Card opposingCard = new Shock();
