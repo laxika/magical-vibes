@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.m.Meteorite;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KurkeshOnakkeAncient.class, RodOfRuin.class, LlanowarElves.class,
+        ProdigalPyromancer.class, Meteorite.class})
 class KurkeshOnakkeAncientTest extends BaseCardTest {
 
     @Test
@@ -124,10 +128,43 @@ class KurkeshOnakkeAncientTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("An opponent's artifact activation does not trigger Kurkesh")
+    void opponentArtifactAbilityDoesNotTrigger() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new KurkeshOnakkeAncient());
+        addReadyPermanent(player2, new RodOfRuin());
+        harness.addMana(player2, ManaColor.RED, 4);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        harness.assertLife(player1, 19);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An artifact's mana ability does not trigger Kurkesh")
+    void artifactManaAbilityDoesNotTrigger() {
+        harness.addToBattlefield(player1, new KurkeshOnakkeAncient());
+        addReadyPermanent(player1, new Meteorite());
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
     private Permanent addReadyPermanent(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
