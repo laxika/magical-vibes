@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({NantukoSlicer.class, GrizzlyBears.class, Shock.class})
 class NantukoSlicerTest extends BaseCardTest {
@@ -59,7 +60,7 @@ class NantukoSlicerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Card duplicate = gd.playerHands.get(player1.getId()).stream()
-                .filter(card -> card.getName().equals("Grizzly Bears") && card.isTokenCard())
+                .filter(card -> card.getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCard);
 
@@ -68,5 +69,126 @@ class NantukoSlicerTest extends BaseCardTest {
         harness.castCreature(player1, duplicateIndex);
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void kickedOpponentTargetCannotBeDeclined() {
+        Shock ownCard = new Shock();
+        GrizzlyBears opponentCard = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opponentCard));
+        harness.setHand(player1, List.of(new NantukoSlicer()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(ownCard.getId()));
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(opponentCard.getId()));
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void kickedTriggerCannotReturnACardWhenOpponentHasNoLegalTarget() {
+        Shock ownCard = new Shock();
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player1, List.of(new NantukoSlicer()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        resolveAllTriggers();
+        harness.assertInGraveyard(player1, "Shock");
+        harness.assertNotInHand(player1, "Shock");
+        harness.assertOnBattlefield(player1, "Nantuko Slicer");
+    }
+
+    @Test
+    void stillConjuresWhenOwnTargetLeavesTheGraveyard() {
+        Shock ownCard = new Shock();
+        GrizzlyBears opponentCard = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opponentCard));
+        harness.setHand(player1, List.of(new NantukoSlicer()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(ownCard.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(opponentCard.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(ownCard));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Shock");
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCard);
+    }
+
+    @Test
+    void stillReturnsOwnTargetWhenOpponentTargetLeavesTheGraveyard() {
+        Shock ownCard = new Shock();
+        GrizzlyBears opponentCard = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opponentCard));
+        harness.setHand(player1, List.of(new NantukoSlicer()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(ownCard.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(opponentCard.getId()));
+        harness.setGraveyard(player2, List.of());
+        harness.setExile(player2, List.of(opponentCard));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Shock");
+        harness.assertNotInGraveyard(player1, "Shock");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void conjuredCreatureCountsAsANontokenCreatureWhenItDies() {
+        Shock ownCard = new Shock();
+        GrizzlyBears opponentCard = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opponentCard));
+        harness.setHand(player1, List.of(new NantukoSlicer()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(ownCard.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(opponentCard.getId()));
+        harness.passBothPriorities();
+
+        Card duplicate = gd.playerHands.get(player1.getId()).stream()
+                .filter(card -> card.getName().equals("Grizzly Bears"))
+                .findFirst().orElseThrow();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, gd.playerHands.get(player1.getId()).indexOf(duplicate));
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, gd.playerHands.get(player1.getId()).indexOf(ownCard),
+                harness.getPermanentId(player1, "Grizzly Bears"));
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.nontokenCreatureDeathCountThisTurn.getOrDefault(player1.getId(), 0)).isEqualTo(1);
     }
 }
