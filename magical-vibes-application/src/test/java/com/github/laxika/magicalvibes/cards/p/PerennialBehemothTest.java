@@ -6,13 +6,16 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PerennialBehemoth.class, Forest.class})
 class PerennialBehemothTest extends BaseCardTest {
 
     @Test
@@ -42,7 +45,7 @@ class PerennialBehemothTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent behemoth = findPermanent(player1, "Perennial Behemoth");
-        assertThat(behemoth.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, behemoth, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -52,5 +55,179 @@ class PerennialBehemothTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Perennial Behemoth");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(cardInExile -> cardInExile.getName().equals("Perennial Behemoth"));
+    }
+
+    @Test
+    void graveyardLandUsesNormalLandPlay() {
+        harness.addToBattlefield(player1, new PerennialBehemoth());
+        harness.setGraveyard(player1, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new Forest()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.playGraveyardLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.playGraveyardLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.playLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    void doesNotGrantOpponentPermission() {
+        harness.addToBattlefield(player1, new PerennialBehemoth());
+        harness.setGraveyard(player2, List.of(new Forest()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.playGraveyardLand(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player2, "Forest");
+    }
+
+    @Test
+    void cannotPlayLandFromOpponentsGraveyard() {
+        harness.addToBattlefield(player1, new PerennialBehemoth());
+        Forest forest = new Forest();
+        harness.setGraveyard(player2, List.of(forest));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.playGraveyardLand(player1, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player2, "Forest");
+    }
+
+    @Test
+    void cannotPlayGraveyardLandDuringCombat() {
+        harness.addToBattlefield(player1, new PerennialBehemoth());
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.playGraveyardLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    void losingAbilitiesRemovesLandPermission() {
+        Permanent behemoth = harness.addToBattlefieldAndReturn(player1, new PerennialBehemoth());
+        behemoth.setLosesAllAbilitiesUntilEndOfTurn(true);
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.playGraveyardLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    void unearthCannotBeActivatedDuringCombat() {
+        harness.setGraveyard(player1, List.of(new PerennialBehemoth()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Perennial Behemoth");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void unearthCannotBeActivatedDuringOpponentsTurn() {
+        harness.setGraveyard(player1, List.of(new PerennialBehemoth()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Perennial Behemoth");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void unearthRequiresTwoGreenMana() {
+        harness.setGraveyard(player1, List.of(new PerennialBehemoth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Perennial Behemoth");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void unearthAndGraveyardLandPlayRequireEmptyStack() {
+        harness.addToBattlefield(player1, new PerennialBehemoth());
+        harness.setGraveyard(player1, List.of(new PerennialBehemoth(), new Forest()));
+        harness.setHand(player1, List.of(new PerennialBehemoth()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castCreature(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.playGraveyardLand(player1, 1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        harness.playGraveyardLand(player1, 0);
+
+        assertThat(countPermanents(player1, "Perennial Behemoth")).isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    void unearthedBehemothGrantsLandPermission() {
+        harness.setGraveyard(player1, List.of(new PerennialBehemoth(), new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        harness.playGraveyardLand(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void lethalDamageExilesUnearthedBehemothInsteadOfPuttingItInGraveyard() {
+        harness.setGraveyard(player1, List.of(new PerennialBehemoth(), new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent behemoth = findPermanent(player1, "Perennial Behemoth");
+        behemoth.setMarkedDamage(7);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Perennial Behemoth");
+        harness.assertNotInGraveyard(player1, "Perennial Behemoth");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Perennial Behemoth"));
+        assertThatThrownBy(() -> harness.playGraveyardLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Forest");
     }
 }
