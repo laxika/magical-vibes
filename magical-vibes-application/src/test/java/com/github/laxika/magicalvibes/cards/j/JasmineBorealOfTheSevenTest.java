@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -23,8 +22,7 @@ class JasmineBorealOfTheSevenTest extends BaseCardTest {
     @Test
     @DisplayName("Tap ability adds green and white mana restricted to abilityless creature spells")
     void tapAbilityAddsRestrictedMana() {
-        harness.addToBattlefield(player1, new JasmineBorealOfTheSeven());
-        gd.playerBattlefields.get(player1.getId()).getFirst().setSummoningSick(false);
+        addCreatureReady(player1, new JasmineBorealOfTheSeven());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -44,8 +42,7 @@ class JasmineBorealOfTheSevenTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerManaPools.get(player1.getId()).getCreatureSpellWithoutAbilitiesOnlyManaTotal())
                 .isZero();
     }
@@ -84,13 +81,64 @@ class JasmineBorealOfTheSevenTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(log -> log.contains("declares 1 blocker"));
+        assertThat(gameLogContains("declares 1 blocker")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Keyword abilities prevent spending Jasmine's mana")
+    void restrictedManaCannotCastCreatureWithKeyword() {
+        addJasmineMana();
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new AirElemental()));
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getCreatureSpellWithoutAbilitiesOnlyManaTotal())
+                .isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A blocker with a mana ability cannot block an abilityless creature")
+    void manaAbilityPreventsBlocking() {
+        harness.addToBattlefield(player1, new JasmineBorealOfTheSeven());
+        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
+        addCreatureReady(player2, new LlanowarElves());
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Creatures with abilities can't block creatures you control with no abilities");
+    }
+
+    @Test
+    @DisplayName("Jasmine does not protect attacking creatures with abilities")
+    void creatureWithAbilityCanBeBlocked() {
+        harness.addToBattlefield(player1, new JasmineBorealOfTheSeven());
+        addCreatureReady(player1, new LlanowarElves()).setAttacking(true);
+        addCreatureReady(player2, new LlanowarElves());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+
+        assertThat(gameLogContains("declares 1 blocker")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Jasmine does not protect opponents' abilityless creatures")
+    void opponentsAbilitylessCreatureCanBeBlocked() {
+        harness.addToBattlefield(player2, new JasmineBorealOfTheSeven());
+        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
+        addCreatureReady(player2, new LlanowarElves());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
+
+        assertThat(gameLogContains("declares 1 blocker")).isTrue();
     }
 
     private void addJasmineMana() {
-        harness.addToBattlefield(player1, new JasmineBorealOfTheSeven());
-        gd.playerBattlefields.get(player1.getId()).getFirst().setSummoningSick(false);
+        addCreatureReady(player1, new JasmineBorealOfTheSeven());
         harness.activateAbility(player1, 0, 0, null, null);
     }
 }
