@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
+import com.github.laxika.magicalvibes.cards.h.HuntedWitness;
+import com.github.laxika.magicalvibes.cards.w.WaryOkapi;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -8,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MephiticVapors.class, AvatarOfMight.class, WaryOkapi.class, HuntedWitness.class})
 class MephiticVaporsTest extends BaseCardTest {
 
     @Test
@@ -63,11 +67,94 @@ class MephiticVaporsTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Avatar of Might");
     }
 
+    @Test
+    void zeroToughnessCreaturesDieAfterSurveilFinishes() {
+        addCreatureReady(player1, new HuntedWitness());
+        addCreatureReady(player2, new HuntedWitness());
+        harness.setLibrary(player1, List.of(new WaryOkapi(), new MephiticVapors()));
+
+        castMephiticVapors();
+
+        harness.assertOnBattlefield(player1, "Hunted Witness");
+        harness.assertOnBattlefield(player2, "Hunted Witness");
+
+        finishSurveil();
+
+        harness.assertNotOnBattlefield(player1, "Hunted Witness");
+        harness.assertNotOnBattlefield(player2, "Hunted Witness");
+        harness.assertInGraveyard(player1, "Hunted Witness");
+        harness.assertInGraveyard(player2, "Hunted Witness");
+    }
+
+    @Test
+    void canKeepBothCardsInReverseOrder() {
+        Card first = new WaryOkapi();
+        Card second = new MephiticVapors();
+        Card third = new WaryOkapi();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        castMephiticVapors();
+        finishSurveil(List.of(1, 0), List.of());
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first, third);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(first, second);
+    }
+
+    @Test
+    void canPutBothCardsIntoGraveyard() {
+        Card first = new WaryOkapi();
+        Card second = new MephiticVapors();
+        Card third = new WaryOkapi();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        castMephiticVapors();
+        finishSurveil(List.of(), List.of(0, 1));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second);
+    }
+
+    @Test
+    void surveilsOnlyAvailableCardInShortLibrary() {
+        Card onlyCard = new WaryOkapi();
+        harness.setLibrary(player1, List.of(onlyCard));
+
+        castMephiticVapors();
+        finishSurveil(List.of(), List.of(0));
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(onlyCard);
+    }
+
+    @Test
+    void stillWeakensCreaturesWithEmptyLibrary() {
+        Permanent creature = addCreatureReady(player2, new WaryOkapi());
+        harness.setLibrary(player1, List.of());
+
+        castMephiticVapors();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Mephitic Vapors");
+    }
+
+    @Test
+    void doesNotWeakenCreaturesEnteringAfterResolution() {
+        harness.setLibrary(player1, List.of(new WaryOkapi(), new MephiticVapors()));
+        castMephiticVapors();
+        finishSurveil();
+
+        Permanent laterCreature = addCreatureReady(player2, new WaryOkapi());
+
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(2);
+    }
+
     private void castMephiticVapors() {
         harness.setHand(player1, List.of(new MephiticVapors()));
         harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.castSorcery(player1, 0, (UUID) null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, (UUID) null);
     }
 
     private void finishSurveil() {
