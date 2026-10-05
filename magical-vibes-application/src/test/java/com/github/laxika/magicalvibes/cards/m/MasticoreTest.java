@@ -130,9 +130,7 @@ class MasticoreTest extends BaseCardTest {
         for (int i = 0; i < 4; i++) {
             harness.activateAbility(player1, 0, 0, null, masticore.getId());
         }
-        for (int i = 0; i < 4; i++) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Masticore");
         Permanent survivor = findPermanent(player1, "Masticore");
@@ -150,5 +148,40 @@ class MasticoreTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Masticore");
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void tappedSummoningSickMasticoreCanActivateBothAbilitiesWithColoredMana() {
+        harness.addToBattlefield(player1, new Masticore());
+        Permanent masticore = findPermanent(player1, "Masticore");
+        masticore.setTapped(true);
+        masticore.setSummoningSick(true);
+        harness.addToBattlefield(player2, new Masticore());
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateAbility(player1, 0, 0, null, harness.getPermanentId(player2, "Masticore"));
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player2, "Masticore").getMarkedDamage()).isEqualTo(1);
+        assertThat(masticore.getRegenerationShield()).isEqualTo(1);
+        assertThat(masticore.isTapped()).isTrue();
+    }
+
+    @Test
+    void regenerationCannotPreventUpkeepSacrifice() {
+        harness.addToBattlefield(player1, new Masticore());
+        harness.setHand(player1, List.of());
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        assertThat(findPermanent(player1, "Masticore").getRegenerationShield()).isEqualTo(1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Masticore");
+        harness.assertInGraveyard(player1, "Masticore");
     }
 }
