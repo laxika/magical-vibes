@@ -82,14 +82,78 @@ class OvertakerTest extends BaseCardTest {
     void cannotTargetNoncreature() {
         addReadyOvertaker(player1);
         addCreatureReady(player2, new ChamberedNautilus());
-        Permanent artifact = new Permanent(new IronLance());
-        gd.playerBattlefields.get(player2.getId()).add(artifact);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new IronLance());
         harness.setHand(player1, List.of(new Forest()));
         addActivationMana();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Can target itself, paying the tap cost before untapping on resolution")
+    void canTargetItself() {
+        Permanent overtaker = addReadyOvertaker(player1);
+        harness.setHand(player1, List.of(new IronLance()));
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, overtaker.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(overtaker.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Iron Lance");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(overtaker.isTapped()).isFalse();
+        assertThat(overtaker.hasKeyword(Keyword.HASTE)).isTrue();
+        harness.assertOnBattlefield(player1, "Overtaker");
+        harness.assertNotOnBattlefield(player2, "Overtaker");
+    }
+
+    @Test
+    @DisplayName("Ability resolves even if Overtaker leaves the battlefield")
+    void resolvesWithoutSource() {
+        Permanent overtaker = addReadyOvertaker(player1);
+        Permanent target = addCreatureReady(player2, new ChamberedNautilus());
+        target.tap();
+        harness.setHand(player1, List.of(new Forest()));
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handleCardChosen(player1, 0);
+        gd.playerBattlefields.get(player1.getId()).remove(overtaker);
+        gd.playerGraveyards.get(player1.getId()).add(overtaker.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        harness.assertOnBattlefield(player1, "Chambered Nautilus");
+        harness.assertNotOnBattlefield(player2, "Chambered Nautilus");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped or summoning sick")
+    void cannotActivateWhenNotReady() {
+        Permanent overtaker = addReadyOvertaker(player1);
+        Permanent target = addCreatureReady(player2, new ChamberedNautilus());
+        harness.setHand(player1, List.of(new Forest()));
+        addActivationMana();
+        overtaker.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+
+        overtaker.untap();
+        overtaker.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        harness.assertInHand(player1, "Forest");
     }
 
     private void addActivationMana() {
