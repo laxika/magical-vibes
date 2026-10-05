@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ParadoxSurveyor.class, Forest.class, Hurricane.class, GrizzlyBears.class,
+        Shock.class, Divination.class})
 class ParadoxSurveyorTest extends BaseCardTest {
 
     @Test
@@ -72,10 +75,63 @@ class ParadoxSurveyorTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
     }
 
-    private void setupTopCards(List<Card> cards) {
+    @Test
+    @DisplayName("Choosing a land preserves the untouched library above the bottomed cards")
+    void choosingLandPreservesUntouchedLibrary() {
+        Card forest = new Forest();
+        List<Card> unchosen = List.of(new Hurricane(), new GrizzlyBears(), new Shock(), new Divination());
+        Card sixth = new Forest();
+        Card seventh = new Forest();
+        setupTopCards(List.of(forest, unchosen.get(0), unchosen.get(1), unchosen.get(2),
+                unchosen.get(3), sixth, seventh));
+        castAndResolveEtb();
+
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice.allCards()).containsExactly(forest, unchosen.get(0), unchosen.get(1),
+                unchosen.get(2), unchosen.get(3));
+        assertThat(choice.validCardIds()).doesNotContain(sixth.getId(), seventh.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
         List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(cards);
+        assertThat(deck).hasSize(6);
+        assertThat(deck.subList(0, 2)).containsExactly(sixth, seventh);
+        assertThat(deck.subList(2, 6)).containsExactlyInAnyOrderElementsOf(unchosen);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A single eligible card in a short library may still be declined")
+    void singleEligibleCardMayBeDeclined() {
+        Card forest = new Forest();
+        setupTopCards(List.of(forest));
+        castAndResolveEtb();
+
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice.allCards()).containsExactly(forest);
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library resolves without a choice or a draw")
+    void emptyLibraryResolvesWithoutChoice() {
+        setupTopCards(List.of());
+        castAndResolveEtb();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void setupTopCards(List<Card> cards) {
+        harness.setLibrary(player1, cards);
     }
 
     private void castAndResolveEtb() {
