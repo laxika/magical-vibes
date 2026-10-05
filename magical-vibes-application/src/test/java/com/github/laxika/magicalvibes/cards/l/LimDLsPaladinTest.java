@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.s.Skullcrack;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +16,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(LimDLsPaladin.class)
+@CardUsed({LimDLsPaladin.class, Skullcrack.class})
 class LimDLsPaladinTest extends BaseCardTest {
 
     @Test
@@ -44,10 +45,9 @@ class LimDLsPaladinTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.CombatDamageAssigned(0, Map.of(
-                        blocker.getId(), 3,
-                        player2.getId(), 3)));
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 3,
+                player2.getId(), 3));
 
         assertThat(paladin.getPowerModifier()).isEqualTo(6);
         assertThat(paladin.getToughnessModifier()).isEqualTo(3);
@@ -70,10 +70,9 @@ class LimDLsPaladinTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         harness.passBothPriorities();
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.CombatDamageAssigned(0, Map.of(
-                        firstBlocker.getId(), 3,
-                        secondBlocker.getId(), 3)));
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                firstBlocker.getId(), 3,
+                secondBlocker.getId(), 3));
 
         assertThat(paladin.getPowerModifier()).isEqualTo(6);
         assertThat(paladin.getToughnessModifier()).isEqualTo(3);
@@ -132,6 +131,40 @@ class LimDLsPaladinTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(countPermanents(player1, "Lim-Dûl's Paladin")).isZero();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+    }
+
+
+    @Test
+    void assignsNoCombatDamageEvenWhenDamageCannotBePrevented() {
+        Permanent paladin = addAttackingPaladin(player1, player2);
+        paladin.setPowerModifier(1);
+        harness.setHand(player1, List.of(new Skullcrack()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 13);
+    }
+
+    @Test
+    void decliningDiscardStillDrawsAfterPaladinLeavesBattlefield() {
+        Permanent paladin = addCreatureReady(player1, new LimDLsPaladin());
+        harness.setHand(player1, List.of(new LimDLsPaladin()));
+        Card topCard = gd.playerDecks.get(player1.getId()).getFirst();
+
+        advanceToUpkeep(player1);
+        harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, paladin);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(paladin);
     }
 
     private Permanent addAttackingPaladin(Player attacker, Player defender) {
