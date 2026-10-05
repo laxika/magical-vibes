@@ -49,8 +49,7 @@ class LooterIlKorTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new AshcoatBear()));
 
         harness.activateAbility(player1, 0, 0, null, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);
@@ -94,13 +93,73 @@ class LooterIlKorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AshcoatBear()));
 
         harness.activateAbility(player1, 0, 0, null, player1.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
         harness.assertInGraveyard(player1, "Looter il-Kor");
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("May discard the card just drawn")
+    void canDiscardTheDrawnCard() {
+        Permanent looter = addCreatureReady(player1, new LooterIlKor());
+        AshcoatBear handCard = new AshcoatBear();
+        PsionicSliver drawnCard = new PsionicSliver();
+        harness.setHand(player1, List.of(handCard));
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        looter.setAttacking(true);
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(handCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    @DisplayName("With an empty hand, must discard the card drawn")
+    void discardsDrawnCardWithEmptyHand() {
+        Permanent looter = addCreatureReady(player1, new LooterIlKor());
+        AshcoatBear drawnCard = new AshcoatBear();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        looter.setAttacking(true);
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    @DisplayName("Can block another shadow creature without triggering from creature damage")
+    void canBlockShadowCreatureWithoutLooting() {
+        addCreatureReady(player1, new LooterIlKor());
+        addCreatureReady(player2, new LooterIlKor());
+        AshcoatBear handCard = new AshcoatBear();
+        harness.setHand(player1, List.of(handCard));
+        harness.setHand(player2, List.of());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Looter il-Kor");
+        harness.assertInGraveyard(player2, "Looter il-Kor");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(handCard);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
