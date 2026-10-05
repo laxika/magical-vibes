@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LilianaTheLastHope;
+import com.github.laxika.magicalvibes.cards.m.MycosynthLattice;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -23,7 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
         AvatarOfMight.class,
         Forest.class,
         GrizzlyBears.class,
-        LilianaTheLastHope.class
+        LilianaTheLastHope.class,
+        MycosynthLattice.class
 })
 class OverlordOfTheBalemurkTest extends BaseCardTest {
 
@@ -109,14 +111,136 @@ class OverlordOfTheBalemurkTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, overlord)).isTrue();
     }
 
-    private void castNormally() {
-        harness.setHand(player1, List.of(new OverlordOfTheBalemurk()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+    @Test
+    void canReturnACreatureMilledByTheSameAbility() {
+        harness.setGraveyard(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears(), new Forest(), new Forest()));
+        castNormally();
 
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        PendingInteraction.GraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        assertThat(choice.validIndices()).hasSize(1);
+        harness.handleGraveyardCardChosen(player1, choice.validIndices().getFirst());
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void shortLibraryStillAllowsReturningAnExistingCreature() {
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        castNormally();
+
+        harness.handleMayAbilityChosen(player1, true);
+        PendingInteraction.GraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        harness.handleGraveyardCardChosen(player1, choice.validIndices().getFirst());
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void returnDoesNotOfferOpponentsCreaturesOrAvatarCreatures() {
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.setGraveyard(player1, List.of(new AvatarOfMight()));
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        castNormally();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Avatar of Might");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Avatar of Might");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void impendingStillMillsAndReturnsACreatureOnEntry() {
+        harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears(), new Forest(), new Forest()));
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new OverlordOfTheBalemurk()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        resolveAllTriggers();
+
+        Permanent overlord = findPermanent(player1, "Overlord of the Balemurk");
+        assertThat(overlord.getCounterCount(CounterType.TIME)).isEqualTo(5);
+        assertThat(gqs.isCreature(gd, overlord)).isFalse();
+        harness.handleMayAbilityChosen(player1, true);
+        PendingInteraction.GraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        harness.handleGraveyardCardChosen(player1, choice.validIndices().getFirst());
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void impendingRemovesOnlyOneCounterAtOwnEndStep() {
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        Permanent overlord = castWithImpending();
+
+        advanceToOwnEndStep();
+
+        assertThat(overlord.getCounterCount(CounterType.TIME)).isEqualTo(4);
+        assertThat(gqs.isCreature(gd, overlord)).isFalse();
+    }
+
+    @Test
+    void impendingDoesNotRemoveCountersAtOpponentsEndStep() {
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        Permanent overlord = castWithImpending();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(overlord.getCounterCount(CounterType.TIME)).isEqualTo(5);
+        assertThat(gqs.isCreature(gd, overlord)).isFalse();
+    }
+
+    @Test
+    void impendingPreservesArtifactTypeGrantedByAnOlderLattice() {
+        harness.addToBattlefield(player1, new MycosynthLattice());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+
+        Permanent overlord = castWithImpending();
+
+        assertThat(gqs.isCreature(gd, overlord)).isFalse();
+        assertThat(gqs.isEnchantment(gd, overlord)).isTrue();
+        assertThat(gqs.isArtifact(gd, overlord)).isTrue();
+    }
+
+    @Test
+    void normalCastRemainsACreatureEvenWithATimeCounter() {
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.setGraveyard(player1, List.of());
+        castNormally();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, false);
+        }
+        Permanent overlord = findPermanent(player1, "Overlord of the Balemurk");
+        assertThat(overlord.getCounterCount(CounterType.TIME)).isZero();
+        overlord.setCounterCount(CounterType.TIME, 1);
+
+        advanceToOwnEndStep();
+
+        assertThat(overlord.getCounterCount(CounterType.TIME)).isEqualTo(1);
+        assertThat(gqs.isCreature(gd, overlord)).isTrue();
+    }
+
+    private void castNormally() {
+        harness.castFromHand(player1, new OverlordOfTheBalemurk(), "{3}{B}{B}");
+        resolveAllTriggers();
     }
 
     private Permanent castWithImpending() {
@@ -125,8 +249,7 @@ class OverlordOfTheBalemurkTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
             harness.handleMayAbilityChosen(player1, false);
         }
