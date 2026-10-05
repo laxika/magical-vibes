@@ -34,8 +34,7 @@ class IsaoEnlightenedBushiTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, 3, isao.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(isao.getId()));
@@ -100,6 +99,60 @@ class IsaoEnlightenedBushiTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(samurai.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    void bushidoTriggersOnlyOnceWhenBlockedByMultipleCreatures() {
+        Permanent isao = addCreatureReady(player1, new IsaoEnlightenedBushi());
+        isao.setAttacking(true);
+        addCreatureReady(player2, new GnarledMass());
+        addCreatureReady(player2, new GnarledMass());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, isao)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, isao)).isEqualTo(3);
+    }
+
+    @Test
+    void canRegenerateItselfWhileTappedAndSummoningSick() {
+        Permanent isao = harness.addToBattlefieldAndReturn(player1, new IsaoEnlightenedBushi());
+        isao.setSummoningSick(true);
+        isao.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, isao.getId());
+        harness.passBothPriorities();
+
+        assertThat(isao.getRegenerationShield()).isEqualTo(1);
+        assertThat(isao.isTapped()).isTrue();
+    }
+
+    @Test
+    void regenerationSavesItselfFromLethalCombatDamage() {
+        Permanent attacker = addCreatureReady(player1, new GnarledMass());
+        attacker.setAttacking(true);
+        Permanent isao = addCreatureReady(player2, new IsaoEnlightenedBushi());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+        harness.activateAbility(player2, 0, null, isao.getId());
+        harness.passBothPriorities();
+        harness.resolveCombatDamage();
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(isao);
+        assertThat(isao.getRegenerationShield()).isZero();
+        assertThat(isao.isTapped()).isTrue();
+        assertThat(isao.isBlocking()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(attacker.getCard().getId()));
     }
 
     @Test
