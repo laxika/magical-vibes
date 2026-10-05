@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({MagicPot.class, GrizzlyBears.class, WrathOfGod.class})
 class MagicPotTest extends BaseCardTest {
@@ -44,10 +45,71 @@ class MagicPotTest extends BaseCardTest {
     }
 
     private Permanent addReadyPot() {
-        Permanent pot = new Permanent(new MagicPot());
-        pot.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(pot);
-        return pot;
+        return addCreatureReady(player1, new MagicPot());
+    }
+
+    @Test
+    void exilesNoncreatureCardFromOwnGraveyardAndTapsAsCost() {
+        Permanent pot = addReadyPot();
+        Card target = new WrathOfGod();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbilityWithGraveyardTargets(player1, battlefieldIndex(pot), 0, List.of(target.getId()));
+
+        assertThat(pot.isTapped()).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(target);
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent pot = harness.addToBattlefieldAndReturn(player1, new MagicPot());
+        pot.setSummoningSick(true);
+        Card target = new MagicPot();
+        harness.setGraveyard(player2, List.of(target));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, battlefieldIndex(pot), 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(pot.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(target);
+    }
+
+    @Test
+    void cannotActivateWithOnlyOneMana() {
+        Permanent pot = addReadyPot();
+        Card target = new MagicPot();
+        harness.setGraveyard(player2, List.of(target));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, battlefieldIndex(pot), 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(pot.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(target);
+    }
+
+    @Test
+    void doesNotExileAnotherCardWhenTargetLeavesGraveyard() {
+        Permanent first = addReadyPot();
+        Permanent second = addReadyPot();
+        Card target = new MagicPot();
+        Card other = new MagicPot();
+        harness.setGraveyard(player2, List.of(target, other));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbilityWithGraveyardTargets(player1, battlefieldIndex(first), 0, List.of(target.getId()));
+        harness.activateAbilityWithGraveyardTargets(player1, battlefieldIndex(second), 0, List.of(target.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(other);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(target);
     }
 
     private int battlefieldIndex(Permanent permanent) {
