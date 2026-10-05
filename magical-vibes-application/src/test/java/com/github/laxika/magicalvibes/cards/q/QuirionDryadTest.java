@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.q;
 
+import com.github.laxika.magicalvibes.cards.f.FleetfootPanther;
 import com.github.laxika.magicalvibes.cards.m.MaggotCarrier;
 import com.github.laxika.magicalvibes.cards.m.MoggSentry;
 import com.github.laxika.magicalvibes.cards.s.SamitePilgrim;
@@ -23,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({
         QuirionDryad.class,
+        FleetfootPanther.class,
         SamitePilgrim.class,
         ThornscapeFamiliar.class,
         StormscapeFamiliar.class,
@@ -128,6 +130,47 @@ class QuirionDryadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(getDryad().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A green-white spell triggers Quirion Dryad once")
+    void greenWhiteSpellAddsOneCounter() {
+        harness.addToBattlefield(player1, new QuirionDryad());
+        harness.castFromHand(player1, new FleetfootPanther(), "{1}{G}{W}");
+
+        assertThat(dryadTriggersOnStack()).isEqualTo(1);
+        harness.passBothPriorities();
+
+        assertThat(getDryad().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
+
+    @Test
+    @DisplayName("Each Quirion Dryad receives its own counter from one qualifying spell")
+    void multipleDryadsEachReceiveCounter() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new QuirionDryad());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new QuirionDryad());
+        harness.castFromHand(player1, new SamitePilgrim(), "{1}{W}");
+
+        assertThat(dryadTriggersOnStack()).isEqualTo(2);
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Casting Quirion Dryad does not trigger itself or another Dryad")
+    void castingDryadDoesNotAddCounters() {
+        harness.addToBattlefield(player1, new QuirionDryad());
+        harness.castFromHand(player1, new QuirionDryad(), "{1}{G}");
+
+        assertThat(dryadTriggersOnStack()).isZero();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Quirion Dryad")).hasSize(2)
+                .allSatisfy(dryad -> assertThat(dryad.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero());
     }
 
     private Permanent getDryad() {
