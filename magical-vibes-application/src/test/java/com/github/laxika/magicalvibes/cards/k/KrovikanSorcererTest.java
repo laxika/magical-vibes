@@ -12,10 +12,13 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({KrovikanSorcerer.class, Forest.class, GrizzlyBears.class, Island.class, Mountain.class,
         ScatheZombies.class})
@@ -128,6 +131,76 @@ class KrovikanSorcererTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices())
                 .containsExactly(1, 2);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    @DisplayName("Neither ability can be activated while summoning sick")
+    void cannotActivateWhileSummoningSick(int abilityIndex) {
+        harness.addToBattlefield(player1, new KrovikanSorcerer());
+        harness.setHand(player1, List.of(new GrizzlyBears(), new ScatheZombies()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, abilityIndex, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    @DisplayName("Neither ability can be activated while tapped")
+    void cannotActivateWhileTapped(int abilityIndex) {
+        Permanent sorcerer = addCreatureReady(player1, new KrovikanSorcerer());
+        sorcerer.setTapped(true);
+        harness.setHand(player1, List.of(new GrizzlyBears(), new ScatheZombies()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, abilityIndex, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    @DisplayName("Neither ability can be activated without a card of the required color")
+    void cannotActivateWithoutEligibleDiscard(int abilityIndex) {
+        Permanent sorcerer = addCreatureReady(player1, new KrovikanSorcerer());
+        harness.setHand(player1, abilityIndex == 0
+                ? List.of(new ScatheZombies()) : List.of(new Forest()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, abilityIndex, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("card to activate ability");
+
+        assertThat(sorcerer.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Black ability can discard the second drawn card and keeps the preexisting hand")
+    void blackAbilityCanDiscardSecondDrawnCard() {
+        addCreatureReady(player1, new KrovikanSorcerer());
+        harness.setHand(player1, List.of(new GrizzlyBears(), new ScatheZombies()));
+        harness.setLibrary(player1, List.of(new Forest(), new Island(), new Mountain()));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleCardChosen(player1, 1);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 2);
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(card -> card.getName())
+                .containsExactly("Grizzly Bears", "Forest");
+        harness.assertInGraveyard(player1, "Scathe Zombies");
+        harness.assertInGraveyard(player1, "Island");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(card -> card.getName())
+                .containsExactly("Mountain");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
 }
