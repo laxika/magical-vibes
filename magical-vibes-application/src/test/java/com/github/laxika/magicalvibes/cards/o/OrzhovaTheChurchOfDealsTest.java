@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(OrzhovaTheChurchOfDeals.class)
+@CardUsed({OrzhovaTheChurchOfDeals.class})
 class OrzhovaTheChurchOfDealsTest extends BaseCardTest {
 
     @Test
@@ -71,5 +71,63 @@ class OrzhovaTheChurchOfDealsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, orzhova.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("player");
+    }
+
+    @Test
+    @DisplayName("Life changes wait for resolution and the ability survives removal of its source")
+    void lifeAbilityUsesStackAndSurvivesSourceRemoval() {
+        Permanent orzhova = harness.addToBattlefieldAndReturn(player1, new OrzhovaTheChurchOfDeals());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(orzhova.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, orzhova));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(orzhova);
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("A tapped land cannot activate either ability")
+    void tappedLandCannotActivate() {
+        Permanent orzhova = harness.addToBattlefieldAndReturn(player1, new OrzhovaTheChurchOfDeals());
+        orzhova.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Colorless mana cannot replace the white and black activation costs")
+    void lifeAbilityRequiresColoredMana() {
+        Permanent orzhova = harness.addToBattlefieldAndReturn(player1, new OrzhovaTheChurchOfDeals());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(orzhova.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(5);
     }
 }
