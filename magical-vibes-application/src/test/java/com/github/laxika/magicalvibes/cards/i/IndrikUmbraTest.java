@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -98,24 +99,101 @@ class IndrikUmbraTest extends BaseCardTest {
         harness.setHand(player2, List.of(new DoomBlade()));
         harness.addMana(player2, ManaColor.BLACK, 2);
         harness.forceActivePlayer(player2);
-        harness.castInstant(player2, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, creature.getId());
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Indrik Umbra");
     }
 
+    @Test
+    @DisplayName("Can cast Indrik Umbra on an opponent's creature without boosting other creatures")
+    void resolvesOnOpponentsCreature() {
+        Permanent enchanted = addReadyCreature(player2);
+        Permanent other = addReadyCreature(player1);
+        harness.setHand(player1, List.of(new IndrikUmbra()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Indrik Umbra");
+        assertThat(gqs.getEffectivePower(gd, enchanted)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, enchanted)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, enchanted, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Tapped creatures are not required to block")
+    void tappedCreatureDoesNotHaveToBlock() {
+        Permanent attacker = addReadyCreature(player1);
+        attacker.setAttacking(true);
+        attachAura(attacker);
+        Permanent ableBlocker = addReadyCreature(player2);
+        Permanent tappedBlocker = addReadyCreature(player2);
+        tappedBlocker.setTapped(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(ableBlocker.isBlocking()).isTrue();
+        assertThat(tappedBlocker.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Umbra armor clears deathtouch damage without tapping or removing the creature from combat")
+    void umbraArmorClearsDeathtouchAndPreservesCombat() {
+        Permanent creature = addReadyCreature(player1);
+        attachAura(creature);
+        creature.setAttacking(true);
+        creature.setMarkedDamage(1);
+        creature.setDamagedByDeathtouch(true);
+        creature.setCantRegenerateThisTurn(true);
+
+        harness.runStateBasedActions();
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Indrik Umbra");
+        assertThat(creature.getMarkedDamage()).isZero();
+        assertThat(creature.isDamagedByDeathtouch()).isFalse();
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(creature.isAttacking()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Umbra armor cannot save a creature with zero toughness")
+    void umbraArmorDoesNotSaveZeroToughnessCreature() {
+        Permanent creature = addReadyCreature(player1);
+        attachAura(creature);
+        creature.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 6);
+
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Indrik Umbra");
+    }
+
     private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent creature = new Permanent(new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
         creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
         return creature;
     }
 
     private Permanent attachAura(Permanent creature) {
-        Permanent aura = new Permanent(new IndrikUmbra());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new IndrikUmbra());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return aura;
     }
 }
