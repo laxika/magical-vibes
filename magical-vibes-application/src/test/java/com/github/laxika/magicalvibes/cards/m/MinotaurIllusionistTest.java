@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.c.CavesOfKoilos;
 import com.github.laxika.magicalvibes.cards.k.KavuMauler;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -54,8 +55,7 @@ class MinotaurIllusionistTest extends BaseCardTest {
     @DisplayName("The red ability cannot target a land")
     void cannotTargetLand() {
         harness.addToBattlefield(player1, new MinotaurIllusionist());
-        harness.addToBattlefield(player2, new CavesOfKoilos());
-        Permanent target = findPermanent(player2, "Caves of Koilos");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CavesOfKoilos());
         harness.addMana(player1, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
@@ -82,5 +82,88 @@ class MinotaurIllusionistTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("shroud");
         harness.assertOnBattlefield(player1, "Minotaur Illusionist");
+    }
+
+    @Test
+    @DisplayName("Damage uses the power with counters immediately before sacrifice")
+    void usesLastKnownPowerWithCounters() {
+        Permanent illusionist = harness.addToBattlefieldAndReturn(player1, new MinotaurIllusionist());
+        illusionist.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.addToBattlefield(player2, new KavuMauler());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, null, harness.getPermanentId(player2, "Kavu Mauler"));
+        harness.assertInGraveyard(player1, "Minotaur Illusionist");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Kavu Mauler");
+        harness.assertNotOnBattlefield(player2, "Kavu Mauler");
+    }
+
+    @Test
+    @DisplayName("An Illusionist with zero power deals no damage")
+    void zeroPowerDealsNoDamage() {
+        Permanent illusionist = harness.addToBattlefieldAndReturn(player1, new MinotaurIllusionist());
+        illusionist.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 3);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new KavuMauler());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Kavu Mauler");
+        harness.assertInGraveyard(player1, "Minotaur Illusionist");
+    }
+
+    @Test
+    @DisplayName("Without shroud the Illusionist can target itself and is sacrificed as a cost")
+    void canTargetSelfBeforeSacrifice() {
+        Permanent illusionist = harness.addToBattlefieldAndReturn(player1, new MinotaurIllusionist());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, null, illusionist.getId());
+        harness.assertInGraveyard(player1, "Minotaur Illusionist");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Minotaur Illusionist");
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Shroud gained in response makes the damage target illegal")
+    void shroudInResponsePreventsDamage() {
+        harness.addToBattlefield(player1, new MinotaurIllusionist());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MinotaurIllusionist());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.SHROUD)).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Minotaur Illusionist");
+        harness.assertInGraveyard(player1, "Minotaur Illusionist");
+    }
+
+    @Test
+    @DisplayName("The shroud ability can be activated again while the source already has shroud")
+    void shroudAbilityDoesNotTargetSource() {
+        Permanent illusionist = harness.addToBattlefieldAndReturn(player1, new MinotaurIllusionist());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, illusionist, Keyword.SHROUD)).isTrue();
     }
 }
