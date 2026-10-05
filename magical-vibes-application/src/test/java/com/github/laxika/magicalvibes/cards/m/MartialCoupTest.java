@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MartialCoup.class, GrizzlyBears.class, SerraAngel.class})
 class MartialCoupTest extends BaseCardTest {
 
     private long soldierTokenCount(com.github.laxika.magicalvibes.model.Player player) {
@@ -18,6 +20,53 @@ class MartialCoupTest extends BaseCardTest {
                 .filter(p -> p.getCard().isToken())
                 .filter(p -> "Soldier".equals(p.getCard().getName()))
                 .count();
+    }
+
+    @Test
+    void zeroCreatesNoTokensAndLeavesCreaturesAlone() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MartialCoup()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        assertThat(soldierTokenCount(player1)).isZero();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Martial Coup");
+    }
+
+    @Test
+    void fourDoesNotDestroyOtherCreatures() {
+        harness.addToBattlefield(player2, new SerraAngel());
+        harness.setHand(player1, List.of(new MartialCoup()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+
+        harness.castSorcery(player1, 0, 4);
+        harness.passBothPriorities();
+
+        assertThat(soldierTokenCount(player1)).isEqualTo(4);
+        harness.assertOnBattlefield(player2, "Serra Angel");
+    }
+
+    @Test
+    void laterCoupDestroysSoldiersFromEarlierResolution() {
+        harness.setHand(player1, List.of(new MartialCoup(), new MartialCoup()));
+        harness.addMana(player1, ManaColor.WHITE, 11);
+
+        harness.castSorcery(player1, 0, 2);
+        harness.passBothPriorities();
+        var earlierSoldierIds = gd.playerBattlefields.get(player1.getId()).stream()
+                .map(com.github.laxika.magicalvibes.model.Permanent::getId)
+                .toList();
+        assertThat(earlierSoldierIds).hasSize(2);
+
+        harness.castSorcery(player1, 0, 5);
+        harness.passBothPriorities();
+
+        assertThat(soldierTokenCount(player1)).isEqualTo(5);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> earlierSoldierIds.contains(permanent.getId()));
     }
 
     @Test
