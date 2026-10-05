@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -24,6 +25,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MyrTurbine.class, GoldMyr.class, IronMyr.class, LeadenMyr.class, SilverMyr.class,
+        CopperMyr.class, LlanowarElves.class, MyrSire.class})
 class MyrTurbineTest extends BaseCardTest {
 
     // ===== First ability: {T}: Create a 1/1 colorless Myr artifact creature token =====
@@ -111,8 +114,7 @@ class MyrTurbineTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CopperMyr());
         setAllNotSummoningSick(player1);
 
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new GoldMyr());
+        harness.setLibrary(player1, List.of(new GoldMyr()));
 
         harness.activateAbility(player1, 0, 1, null, null);
 
@@ -162,8 +164,7 @@ class MyrTurbineTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MyrSire());
         setAllNotSummoningSick(player1);
 
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new GoldMyr());
+        harness.setLibrary(player1, List.of(new GoldMyr()));
 
         UUID goldMyrId = findPermanent(player1, "Gold Myr").getId();
         UUID ironMyrId = findPermanent(player1, "Iron Myr").getId();
@@ -207,8 +208,7 @@ class MyrTurbineTest extends BaseCardTest {
         setAllNotSummoningSick(player1);
 
         // Seed library with a Myr creature and a non-Myr
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(new MyrSire(), new LlanowarElves()));
+        harness.setLibrary(player1, List.of(new MyrSire(), new LlanowarElves()));
 
         // Exactly 5 Myr -> auto-tap
         harness.activateAbility(player1, 0, 1, null, null);
@@ -239,8 +239,7 @@ class MyrTurbineTest extends BaseCardTest {
         setAllNotSummoningSick(player1);
 
         // Library has only non-Myr creatures
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new LlanowarElves());
+        harness.setLibrary(player1, List.of(new LlanowarElves()));
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
@@ -268,7 +267,73 @@ class MyrTurbineTest extends BaseCardTest {
                 .hasMessageContaining("Not enough untapped permanents to tap");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("A newly entered noncreature Turbine can create a token")
+    void newlyEnteredTurbineCanCreateToken() {
+        harness.addToBattlefield(player1, new MyrTurbine());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Myr")).hasSize(1);
+        assertThat(findPermanent(player1, "Myr Turbine").isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Summoning-sick Myr can pay the second ability's tap cost")
+    void summoningSickMyrCanPayTapCost() {
+        harness.addToBattlefield(player1, new MyrTurbine());
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player1, new MyrSire());
+        }
+        harness.setLibrary(player1, List.of(new MyrSire()));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(findPermanents(player1, "Myr Sire")).allMatch(Permanent::isTapped);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        assertThat(findPermanents(player1, "Myr Sire")).hasSize(6);
+        assertThat(findPermanents(player1, "Myr Sire").getLast().isTapped()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Opposing Myr cannot pay the second ability's tap cost")
+    void opposingMyrCannotPayTapCost() {
+        harness.addToBattlefield(player1, new MyrTurbine());
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, new MyrSire());
+        }
+        harness.addToBattlefield(player2, new MyrSire());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough untapped permanents to tap");
+        assertThat(findPermanent(player2, "Myr Sire").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A restricted Myr search may find nothing even with a matching card")
+    void mayDeclineToFindMatchingMyr() {
+        harness.addToBattlefield(player1, new MyrTurbine());
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player1, new MyrSire());
+        }
+        MyrSire libraryMyr = new MyrSire();
+        harness.setLibrary(player1, List.of(libraryMyr));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+
+        assertThat(findPermanents(player1, "Myr Sire")).hasSize(5);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryMyr);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
 
     private void setAllNotSummoningSick(Player player) {
         gd.playerBattlefields.get(player.getId()).forEach(p -> p.setSummoningSick(false));
