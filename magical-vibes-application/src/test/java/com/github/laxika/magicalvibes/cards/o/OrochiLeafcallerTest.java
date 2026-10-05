@@ -69,4 +69,57 @@ class OrochiLeafcallerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Choosing green replaces the green mana spent")
+    void canChooseGreen() {
+        harness.addToBattlefield(player1, new OrochiLeafcaller());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Leafcaller can activate its ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent leafcaller = harness.addToBattlefieldAndReturn(player1, new OrochiLeafcaller());
+        leafcaller.setTapped(true);
+        leafcaller.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.WHITE.name());
+
+        assertThat(leafcaller.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Non-green mana cannot pay for the ability")
+    void cannotPayWithOtherColorsOrColorless() {
+        harness.addToBattlefield(player1, new OrochiLeafcaller());
+        for (ManaColor color : ManaColor.values()) {
+            if (color != ManaColor.GREEN) {
+                harness.addMana(player1, color, 1);
+            }
+        }
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        for (ManaColor color : ManaColor.values()) {
+            if (color != ManaColor.GREEN) {
+                assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
+            }
+        }
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 }
