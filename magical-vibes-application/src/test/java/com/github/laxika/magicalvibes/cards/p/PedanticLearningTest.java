@@ -166,6 +166,44 @@ class PedanticLearningTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isNotEmpty();
     }
 
+    @Test
+    @DisplayName("Only one card is drawn when mana can pay for only one of two land triggers")
+    void insufficientManaForSecondTriggerDoesNotDrawAgain() {
+        harness.addToBattlefield(player1, new PedanticLearning());
+        harness.addToBattlefield(player1, new Millstone());
+        GrizzlyBears firstDraw = new GrizzlyBears();
+        GrizzlyBears remainingCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), firstDraw, remainingCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        harness.activateAbility(player1, 1, null, player1.getId());
+        resolveAllChoices(true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1).contains(firstDraw);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each Pedantic Learning offers its own payment for the same land")
+    void multipleCopiesTriggerIndependently() {
+        harness.addToBattlefield(player1, new PedanticLearning());
+        harness.addToBattlefield(player1, new PedanticLearning());
+        harness.addToBattlefield(player1, new Millstone());
+        harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        harness.activateAbility(player1, 2, null, player1.getId());
+        resolveAllChoices(true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
     private void resolveAllChoices(boolean acceptPayment) {
         int guard = 0;
         while ((!gd.stack.isEmpty() || gd.interaction.activeInteraction() != null) && guard++ < 50) {
