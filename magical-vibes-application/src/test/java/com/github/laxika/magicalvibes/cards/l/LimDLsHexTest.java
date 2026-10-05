@@ -140,4 +140,64 @@ class LimDLsHexTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 19);
     }
+
+    @Test
+    @DisplayName("Both players can independently pay different alternatives")
+    void bothPlayersPayDifferentAlternatives() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new LimDLsHex());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Two nonblack mana cannot pay and are not partially consumed")
+    void insufficientGenericManaIsNotConsumed() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new LimDLsHex());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 19);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        harness.handleMayAbilityChosen(player2, false);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("A player can decline despite having enough mana while the opponent pays")
+    void declineWithManaDoesNotProtectOpponent() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new LimDLsHex());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertLife(player1, 19);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isZero();
+    }
 }
