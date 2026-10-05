@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({OildeepGearhulk.class, GrizzlyBears.class, Forest.class, Island.class})
 class OildeepGearhulkTest extends BaseCardTest {
 
     @Test
@@ -80,11 +82,50 @@ class OildeepGearhulkTest extends BaseCardTest {
                 .containsExactly("Island");
     }
 
+    @Test
+    @DisplayName("The controller can target themselves and discard their own card to draw")
+    void canTargetOwnHand() {
+        harness.setHand(player1, List.of(new OildeepGearhulk(), new Forest()));
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castCreature(player1, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Island");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Choosing the only card still draws after the hand becomes empty")
+    void discardingLastCardStillDraws() {
+        harness.setHand(player2, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Island()));
+        resolveOildeepGearhulkTargeting(player2.getId());
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player2, "Forest");
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Island");
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
     private void resolveOildeepGearhulkTargeting(UUID targetPlayerId) {
         harness.setHand(player1, new ArrayList<>(List.of(new OildeepGearhulk())));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.getGameService().playCard(gd, player1, 0, 0, targetPlayerId, null);
+        harness.castCreature(player1, 0, targetPlayerId);
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
