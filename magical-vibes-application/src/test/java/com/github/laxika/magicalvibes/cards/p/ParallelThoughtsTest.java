@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.a.AvenMindcensor;
 import com.github.laxika.magicalvibes.cards.s.ScornfulEgotist;
+import com.github.laxika.magicalvibes.cards.s.SharedFate;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
+import com.github.laxika.magicalvibes.service.JacksonConfig;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ParallelThoughts.class, ScornfulEgotist.class, AvenMindcensor.class})
+@CardUsed({ParallelThoughts.class, ScornfulEgotist.class, AvenMindcensor.class, SharedFate.class})
 class ParallelThoughtsTest extends BaseCardTest {
 
     @Test
@@ -25,10 +27,7 @@ class ParallelThoughtsTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(
                 new ScornfulEgotist(), new ScornfulEgotist(), new ScornfulEgotist(), new ScornfulEgotist(),
                 new ScornfulEgotist(), new ScornfulEgotist(), new ScornfulEgotist(), new ScornfulEgotist()));
-        harness.setHand(player1, List.of(new ParallelThoughts()));
-        harness.addMana(player1, ManaColor.BLUE, 5);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new ParallelThoughts(), "{3}{U}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -49,10 +48,7 @@ class ParallelThoughtsTest extends BaseCardTest {
     void etbExilesEveryAvailableCardFromShortLibrary() {
         List<Card> library = List.of(new ScornfulEgotist(), new ScornfulEgotist(), new ScornfulEgotist());
         harness.setLibrary(player1, library);
-        harness.setHand(player1, List.of(new ParallelThoughts()));
-        harness.addMana(player1, ManaColor.BLUE, 5);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new ParallelThoughts(), "{3}{U}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -74,10 +70,7 @@ class ParallelThoughtsTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(
                 new ScornfulEgotist(), new ScornfulEgotist(), new ScornfulEgotist(), new ScornfulEgotist(),
                 new ScornfulEgotist(), new ScornfulEgotist(), new ScornfulEgotist(), new ScornfulEgotist()));
-        harness.setHand(player1, List.of(new ParallelThoughts()));
-        harness.addMana(player1, ManaColor.BLUE, 5);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new ParallelThoughts(), "{3}{U}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
@@ -95,10 +88,7 @@ class ParallelThoughtsTest extends BaseCardTest {
                 new ScornfulEgotist(), new ScornfulEgotist(), new ScornfulEgotist(), new ScornfulEgotist());
         harness.addToBattlefield(player2, new AvenMindcensor());
         harness.setLibrary(player1, library);
-        harness.setHand(player1, List.of(new ParallelThoughts()));
-        harness.addMana(player1, ManaColor.BLUE, 5);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new ParallelThoughts(), "{3}{U}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -222,6 +212,61 @@ class ParallelThoughtsTest extends BaseCardTest {
                 .containsExactly(pileCard.getId());
         assertThat(gd.getCardsExiledByPermanent(sourcePermanentId)).isEmpty();
         assertThat(gd.winnerPlayerId).isNull();
+    }
+
+    @Test
+    @DisplayName("Neither player may inspect the face-down pile")
+    void faceDownPileIsHiddenFromBothPlayers() throws Exception {
+        UUID sourcePermanentId = setupWithPile(List.of(new ScornfulEgotist(), new ScornfulEgotist()));
+        harness.publishState();
+
+        for (var connection : List.of(harness.getConn1(), harness.getConn2())) {
+            String message = connection.getMessagesContaining("\"type\":\"GAME_STATE\"").getLast();
+            GameStateMessage state = new JacksonConfig().objectMapper().readValue(message, GameStateMessage.class);
+            var sourceView = state.battlefields().stream().flatMap(List::stream)
+                    .filter(permanent -> permanent.id().equals(sourcePermanentId)).findFirst().orElseThrow();
+            assertThat(sourceView.faceDownExiledCards()).isEmpty();
+            assertThat(sourceView.faceDownExiledCount()).isEqualTo(2);
+        }
+    }
+
+    @Test
+    @CardUsed(SharedFate.class)
+    @DisplayName("The drawing player may choose Parallel Thoughts instead of Shared Fate")
+    void canChoosePileReplacementOverSharedFate() {
+        ScornfulEgotist pileCard = new ScornfulEgotist();
+        ScornfulEgotist opponentLibraryCard = new ScornfulEgotist();
+        UUID sourcePermanentId = setupWithPile(List.of(pileCard));
+        harness.addToBattlefield(player2, new SharedFate());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player2, List.of(opponentLibraryCard));
+
+        resolveDrawChoice();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(pileCard.getId());
+        assertThat(gd.getCardsExiledByPermanent(sourcePermanentId)).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).extracting(Card::getId)
+                .containsExactly(opponentLibraryCard.getId());
+    }
+
+    @Test
+    @DisplayName("An opponent's draw is unaffected by Parallel Thoughts")
+    void doesNotReplaceOpponentsDraw() {
+        ScornfulEgotist pileCard = new ScornfulEgotist();
+        ScornfulEgotist libraryCard = new ScornfulEgotist();
+        UUID sourcePermanentId = setupWithPile(List.of(pileCard));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(libraryCard));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player2.getId()));
+
+        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getId)
+                .containsExactly(libraryCard.getId());
+        assertThat(gd.getCardsExiledByPermanent(sourcePermanentId)).extracting(Card::getId)
+                .containsExactly(pileCard.getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private UUID setupWithPile(List<Card> pile) {
