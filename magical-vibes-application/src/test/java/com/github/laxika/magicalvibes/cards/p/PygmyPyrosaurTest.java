@@ -93,4 +93,54 @@ class PygmyPyrosaurTest extends BaseCardTest {
         assertThat(pyrosaur.getPowerModifier()).isEqualTo(1);
         assertThat(pyrosaur.isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("Can activate while summoning sick")
+    void canActivateWhileSummoningSick() {
+        Permanent pyrosaur = harness.addToBattlefieldAndReturn(player1, new PygmyPyrosaur());
+        pyrosaur.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(pyrosaur.getPowerModifier()).isEqualTo(1);
+        assertThat(pyrosaur.getToughnessModifier()).isEqualTo(0);
+        assertThat(pyrosaur.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Colorless mana cannot pay the red activation cost")
+    void requiresRedMana() {
+        Permanent pyrosaur = addCreatureReady(player1, new PygmyPyrosaur());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(pyrosaur.getPowerModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Stacked activations boost only their source when they resolve")
+    void stackedActivationsBoostOnlySource() {
+        Permanent pyrosaur = addCreatureReady(player1, new PygmyPyrosaur());
+        Permanent otherPyrosaur = addCreatureReady(player1, new PygmyPyrosaur());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(pyrosaur.getPowerModifier()).isEqualTo(0);
+
+        resolveAllTriggers();
+
+        assertThat(pyrosaur.getPowerModifier()).isEqualTo(2);
+        assertThat(pyrosaur.getToughnessModifier()).isEqualTo(0);
+        assertThat(otherPyrosaur.getPowerModifier()).isEqualTo(0);
+        assertThat(otherPyrosaur.getToughnessModifier()).isEqualTo(0);
+    }
 }
