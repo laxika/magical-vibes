@@ -38,6 +38,7 @@ class LibraryOfLatNamTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
         harness.passBothPriorities();
 
         List<DrawCardsAtNextUpkeep> scheduled = gd.getDelayedActions(DrawCardsAtNextUpkeep.class);
@@ -59,6 +60,7 @@ class LibraryOfLatNamTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 3);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 3);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+
     }
 
     @Test
@@ -106,9 +108,29 @@ class LibraryOfLatNamTest extends BaseCardTest {
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
     }
 
+    @Test
+    @DisplayName("The search can find a noncreature card and finishes during spell resolution")
+    void searchFindsNoncreatureCardDuringResolution() {
+        LibraryOfLatNam searchedCard = new LibraryOfLatNam();
+        harness.setLibrary(player1, List.of(searchedCard));
+        setupAndCast();
+
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.stack).isEmpty();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(searchedCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
+
     private void setupAndCast() {
         harness.castFromHand(player1, new LibraryOfLatNam(), "{4}{U}");
-        harness.passBothPriorities();
     }
 
     private void setupLibrary() {
