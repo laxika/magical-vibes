@@ -7,12 +7,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({NirkanaCutthroat.class})
 class NirkanaCutthroatTest extends BaseCardTest {
 
     @Test
@@ -60,6 +62,56 @@ class NirkanaCutthroatTest extends BaseCardTest {
         assertThat(cutthroat.getCounterCount(CounterType.LEVEL)).isZero();
     }
 
+    @Test
+    @DisplayName("Deathtouch is available only at level one or higher")
+    void deathtouchRequiresLevelCounter() {
+        Permanent cutthroat = addCreatureReady(player1, new NirkanaCutthroat());
+
+        assertThat(gqs.hasKeyword(gd, cutthroat, Keyword.DEATHTOUCH)).isFalse();
+
+        prepareForLeveling(player1);
+        for (int level = 1; level <= 4; level++) {
+            levelUp(player1);
+            assertThat(gqs.hasKeyword(gd, cutthroat, Keyword.DEATHTOUCH)).isTrue();
+            assertThat(gqs.hasKeyword(gd, cutthroat, Keyword.FIRST_STRIKE)).isEqualTo(level >= 3);
+        }
+        assertStats(cutthroat, 5, 4);
+    }
+
+    @Test
+    @DisplayName("Level counters are added on resolution and level up requires an empty stack")
+    void levelUpUsesTheStack() {
+        Permanent cutthroat = addCreatureReady(player1, new NirkanaCutthroat());
+        prepareForLeveling(player1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(cutthroat.getCounterCount(CounterType.LEVEL)).isZero();
+        assertStats(cutthroat, 3, 2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+
+        harness.passBothPriorities();
+
+        assertThat(cutthroat.getCounterCount(CounterType.LEVEL)).isEqualTo(1);
+        assertStats(cutthroat, 4, 3);
+    }
+
+    @Test
+    @DisplayName("Level up does not require tapping or haste")
+    void canLevelUpWhileTappedAndSummoningSick() {
+        Permanent cutthroat = addCreatureReady(player1, new NirkanaCutthroat());
+        cutthroat.setTapped(true);
+        cutthroat.setSummoningSick(true);
+        prepareForLeveling(player1);
+
+        levelUp(player1);
+
+        assertThat(cutthroat.getCounterCount(CounterType.LEVEL)).isEqualTo(1);
+        assertStats(cutthroat, 4, 3);
+        assertThat(cutthroat.isTapped()).isTrue();
+    }
     private void prepareForLeveling(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
