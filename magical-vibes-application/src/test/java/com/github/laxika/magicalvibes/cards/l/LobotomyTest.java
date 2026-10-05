@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -95,7 +94,7 @@ class LobotomyTest extends BaseCardTest {
     @Test
     @DisplayName("Shuffling after a choice triggers an opponent's library-shuffle ability")
     void successfulExileTriggersOpponentShuffleAbility() {
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new PsychicSurgery()));
+        harness.addToBattlefield(player1, new PsychicSurgery());
         harness.setLibrary(player2, List.of(new Forest(), new StalkingStones()));
         castLobotomyAt(List.of(new TrainedArmodon()));
 
@@ -122,12 +121,53 @@ class LobotomyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.options()).containsExactly("Trained Armodon");
+    }
+
+    @Test
+    @DisplayName("The entire hand is revealed before the caster chooses a card")
+    void revealsHandBeforeCardChoice() {
+        castLobotomyAt(List.of(new TrainedArmodon(), new Forest()));
+
+        assertThat(gameLogContains("reveals their hand")).isTrue();
+        assertThat(gd.gameLog.stream()
+                .filter(entry -> entry.plainText().contains("reveals their hand"))
+                .map(entry -> entry.plainText()))
+                .anyMatch(text -> text.contains("Trained Armodon") && text.contains("Forest"));
+    }
+
+    @Test
+    @DisplayName("The target reveals an all-basic-land hand even though no card can be chosen")
+    void revealsHandWithNoChoosableCard() {
+        castLobotomyAt(List.of(new Forest()));
+
+        assertThat(gd.gameLog.stream()
+                .filter(entry -> entry.plainText().contains("reveals their hand"))
+                .map(entry -> entry.plainText()))
+                .anyMatch(text -> text.contains("Forest"));
+    }
+
+    @Test
+    @DisplayName("The caster can leave matching library cards unfound while exiling graveyard copies")
+    void mayDeclineToFindLibraryCopies() {
+        harness.setGraveyard(player2, List.of(new TrainedArmodon()));
+        harness.setLibrary(player2, List.of(new TrainedArmodon(), new Forest()));
+        castLobotomyAt(List.of(new TrainedArmodon()));
+
+        harness.handleListChoice(player1, "Trained Armodon");
+
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Trained Armodon"));
+        harness.assertNotInGraveyard(player2, "Trained Armodon");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Trained Armodon"));
     }
 
     private void castLobotomyAt(List<Card> targetHand) {
@@ -137,7 +177,6 @@ class LobotomyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 }
