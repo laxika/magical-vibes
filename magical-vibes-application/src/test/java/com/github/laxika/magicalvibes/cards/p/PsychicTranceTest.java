@@ -62,6 +62,68 @@ class PsychicTranceTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Wizards entering after resolution do not gain the ability")
+    void laterWizardsDoNotGainAbility() {
+        addCreatureReady(player1, new NamelessOne());
+        castPsychicTrance();
+        addCreatureReady(player1, new NamelessOne());
+
+        PsychicTrance spell = new PsychicTrance();
+        harness.castFromHand(player1, spell, "{2}{U}{U}");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, spell.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no activated ability");
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Wizard cannot pay the granted tap cost")
+    void summoningSickWizardCannotActivate() {
+        Permanent wizard = addCreatureReady(player1, new NamelessOne());
+        wizard.setSummoningSick(true);
+        castPsychicTrance();
+
+        PsychicTrance spell = new PsychicTrance();
+        harness.castFromHand(player1, spell, "{2}{U}{U}");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, spell.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(wizard.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Wizard cannot pay the granted tap cost")
+    void tappedWizardCannotActivate() {
+        Permanent wizard = addCreatureReady(player1, new NamelessOne());
+        wizard.setTapped(true);
+        castPsychicTrance();
+
+        PsychicTrance spell = new PsychicTrance();
+        harness.castFromHand(player1, spell, "{2}{U}{U}");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, spell.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    @DisplayName("A Wizard can counter its controller's spell")
+    void canCounterOwnSpell() {
+        Permanent wizard = addCreatureReady(player1, new NamelessOne());
+        castPsychicTrance();
+
+        GlorySeeker spell = new GlorySeeker();
+        harness.castFromHand(player1, spell, "{1}{W}");
+        harness.activateAbility(player1, 0, null, spell.getId());
+        harness.passBothPriorities();
+
+        assertThat(wizard.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Glory Seeker");
+        harness.assertNotOnBattlefield(player1, "Glory Seeker");
+    }
+
     private void castPsychicTrance() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
