@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -40,9 +41,8 @@ class OverwhelmingVictoryTest extends BaseCardTest {
     @Test
     @DisplayName("gives no power boost when no excess damage is dealt")
     void givesNoBoostWithoutExcessDamage() {
-        HillGiant targetCard = new HillGiant();
-        targetCard.setToughness(5);
-        Permanent target = addCreatureReady(player2, targetCard);
+        Permanent target = addCreatureReady(player2, new HillGiant());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
 
         castOverwhelmingVictory(target);
@@ -80,11 +80,69 @@ class OverwhelmingVictoryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void castOverwhelmingVictory(Permanent target) {
+    @Test
+    @DisplayName("excess damage accounts for damage already marked on the target")
+    void countsPreviouslyMarkedDamage() {
+        Permanent target = addCreatureReady(player2, new HillGiant());
+        target.setMarkedDamage(2);
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+
+        castOverwhelmingVictory(target);
+
+        assertThat(ownCreature.getEffectivePower()).isEqualTo(6);
+        assertThat(ownCreature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        harness.assertInGraveyard(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("prevented damage does not count toward excess damage")
+    void countsOnlyDamageActuallyDealt() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.setDamagePreventionShield(4);
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+
+        castOverwhelmingVictory(target);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(ownCreature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("an illegal sole target prevents the boost and trample")
+    void illegalTargetStopsEntireSpell() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new OverwhelmingVictory()));
         addMana();
         harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+
         harness.passBothPriorities();
+
+        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(ownCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        harness.assertInGraveyard(player1, "Overwhelming Victory");
+    }
+
+    @Test
+    @DisplayName("creatures entering after resolution receive neither benefit")
+    void laterCreaturesAreUnaffected() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        castOverwhelmingVictory(target);
+
+        Permanent laterCreature = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(laterCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+    }
+
+    private void castOverwhelmingVictory(Permanent target) {
+        harness.setHand(player1, List.of(new OverwhelmingVictory()));
+        addMana();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void addMana() {
