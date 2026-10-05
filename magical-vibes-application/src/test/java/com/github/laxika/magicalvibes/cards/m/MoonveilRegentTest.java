@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CandlegroveWitch;
+import com.github.laxika.magicalvibes.cards.d.DawnhartMentor;
+import com.github.laxika.magicalvibes.cards.s.SilverBolt;
 import com.github.laxika.magicalvibes.cards.s.SavannahLions;
 import com.github.laxika.magicalvibes.cards.t.Terminate;
 import com.github.laxika.magicalvibes.model.Card;
@@ -16,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MoonveilRegent.class, Terminate.class, GrizzlyBears.class, SavannahLions.class})
+@CardUsed({MoonveilRegent.class, Terminate.class, GrizzlyBears.class, SavannahLions.class,
+        CandlegroveWitch.class, DawnhartMentor.class, SilverBolt.class})
 class MoonveilRegentTest extends BaseCardTest {
 
     @Test
@@ -80,5 +84,87 @@ class MoonveilRegentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    void drawsForAColoredSpellWithAnEmptyHand() {
+        harness.addToBattlefield(player1, new MoonveilRegent());
+        Card draw = new SilverBolt();
+        harness.setLibrary(player1, List.of(draw));
+
+        harness.castFromHand(player1, new CandlegroveWitch(), "{1}{W}");
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(draw);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void discardsTheWholeHandButDrawsNothingForAColorlessSpell() {
+        harness.addToBattlefield(player1, new MoonveilRegent());
+        Card spell = new SilverBolt();
+        Card firstDiscard = new CandlegroveWitch();
+        Card secondDiscard = new DawnhartMentor();
+        Card undrawn = new MoonveilRegent();
+        harness.setHand(player1, List.of(spell, firstDiscard, secondDiscard));
+        harness.setLibrary(player1, List.of(undrawn));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castArtifact(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(firstDiscard, secondDiscard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);
+    }
+
+    @Test
+    void opposingSpellDoesNotTriggerDiscardAndDraw() {
+        harness.addToBattlefield(player1, new MoonveilRegent());
+        Card kept = new DawnhartMentor();
+        Card undrawn = new SilverBolt();
+        harness.setHand(player1, List.of(kept));
+        harness.setLibrary(player1, List.of(undrawn));
+
+        harness.castFromHand(player2, new CandlegroveWitch(), "{1}{W}");
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);
+    }
+
+    @Test
+    void deathTriggerDoesNotCountTheDeadRegentOrOpposingPermanents() {
+        Permanent regent = harness.addToBattlefieldAndReturn(player1, new MoonveilRegent());
+        harness.addToBattlefield(player1, new SilverBolt());
+        harness.addToBattlefield(player2, new CandlegroveWitch());
+        harness.setLife(player2, 20);
+        TestCards.mutableCard(regent).setToughness(0);
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(regent.getCard());
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void deathTriggerCountsColorsAtResolutionAndCanDamageACreature() {
+        Permanent regent = harness.addToBattlefieldAndReturn(player1, new MoonveilRegent());
+        harness.addToBattlefield(player1, new DawnhartMentor());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CandlegroveWitch());
+        TestCards.mutableCard(regent).setToughness(0);
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.addToBattlefield(player1, new CandlegroveWitch());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(target.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
     }
 }
