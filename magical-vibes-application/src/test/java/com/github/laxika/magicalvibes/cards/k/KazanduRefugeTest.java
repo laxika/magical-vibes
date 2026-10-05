@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -10,6 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KazanduRefuge.class})
 class KazanduRefugeTest extends BaseCardTest {
 
     @Test
@@ -53,9 +55,40 @@ class KazanduRefugeTest extends BaseCardTest {
     }
 
     private Permanent addReadyRefuge() {
-        Permanent refuge = new Permanent(new KazanduRefuge());
-        refuge.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(refuge);
-        return refuge;
+        return addCreatureReady(player1, new KazanduRefuge());
+    }
+
+    @Test
+    @DisplayName("Entering without being played still enters tapped and gains life for its controller")
+    void enteringWithoutBeingPlayedGainsLifeForController() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 10);
+
+        Permanent refuge = harness.enterBattlefieldAndReturn(player2, new KazanduRefuge());
+
+        assertThat(refuge.isTapped()).isTrue();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 10);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 11);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A newly controlled noncreature land produces exactly one mana without using the stack")
+    void newlyControlledLandProducesManaImmediately() {
+        Permanent refuge = harness.addToBattlefieldAndReturn(player1, new KazanduRefuge());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(refuge.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 }
