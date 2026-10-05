@@ -70,6 +70,51 @@ class Pain101Test extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The returned creature does not retain either grant")
+    void returnedCreatureDoesNotRetainGrants() {
+        Permanent creature = addCreature(player1);
+        Card creatureCard = creature.getCard();
+
+        castOn(creature);
+        destroy(player2, creature);
+        harness.passBothPriorities();
+
+        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getId().equals(creatureCard.getId()))
+                .findFirst().orElseThrow();
+        assertThat(returned.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+
+        destroy(player2, returned);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getId().equals(creatureCard.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getId().equals(creatureCard.getId()));
+    }
+
+    @Test
+    @DisplayName("A creature controlled by another player returns under its owner's control")
+    void stolenCreatureReturnsToOwner() {
+        Permanent creature = addCreature(player2);
+        Card creatureCard = creature.getCard();
+        creatureCard.setOwnerId(player2.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        gd.playerBattlefields.get(player1.getId()).add(creature);
+
+        castOn(creature);
+        destroy(player2, creature);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getCard().getId().equals(creatureCard.getId()) && p.isTapped());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getId().equals(creatureCard.getId()));
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .noneMatch(c -> c.getId().equals(creatureCard.getId()));
+    }
+
+    @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreaturePermanent() {
         harness.addToBattlefield(player1, new Forest());
@@ -83,8 +128,7 @@ class Pain101Test extends BaseCardTest {
     }
 
     private Permanent addCreature(Player player) {
-        harness.addToBattlefield(player, new GrizzlyBears());
-        return gd.playerBattlefields.get(player.getId()).getLast();
+        return harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
     }
 
     private void castOn(Permanent target) {
@@ -94,8 +138,7 @@ class Pain101Test extends BaseCardTest {
         harness.setHand(player1, List.of(new Pain101()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void destroy(Player caster, Permanent target) {
@@ -104,7 +147,6 @@ class Pain101Test extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(caster, List.of(new DoomBlade()));
         harness.addMana(caster, ManaColor.BLACK, 2);
-        harness.castInstant(caster, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, target.getId());
     }
 }
