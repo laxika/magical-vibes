@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.d.DromarsAttendant;
+import com.github.laxika.magicalvibes.cards.c.ClayStatue;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
@@ -13,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Powerleech.class, DromarsAttendant.class, GrizzlyBears.class, IcyManipulator.class, Ornithopter.class})
+@CardUsed({Powerleech.class, ClayStatue.class, DromarsAttendant.class, GrizzlyBears.class, IcyManipulator.class, Ornithopter.class})
 class PowerleechTest extends BaseCardTest {
 
     @Test
@@ -55,7 +56,7 @@ class PowerleechTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player2, 0, null, null);
-        resolveStackFully();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
     }
@@ -70,7 +71,7 @@ class PowerleechTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player2, 0, null, target.getId());
-        resolveStackFully();
+        resolveAllTriggers();
 
         assertThat(manipulator.isTapped()).isTrue();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
@@ -85,14 +86,73 @@ class PowerleechTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 1, null, null);
-        resolveStackFully();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 
-    private void resolveStackFully() {
-        for (int i = 0; i < 8 && (!gd.stack.isEmpty() || !gd.pendingManaAbilityTriggers.isEmpty()); i++) {
-            harness.passBothPriorities();
-        }
+    @Test
+    @DisplayName("An effect tapping an opponent's artifact gains life")
+    void effectTappingOpponentArtifactGainsLife() {
+        harness.addToBattlefield(player1, new Powerleech());
+        harness.addToBattlefield(player1, new IcyManipulator());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, null, artifact.getId());
+        resolveAllTriggers();
+
+        assertThat(artifact.isTapped()).isTrue();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+    }
+
+    @Test
+    @DisplayName("An effect tapping an already tapped artifact does not trigger")
+    void effectTappingAlreadyTappedArtifactDoesNotTrigger() {
+        harness.addToBattlefield(player1, new Powerleech());
+        harness.addToBattlefield(player1, new IcyManipulator());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        artifact.tap();
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, null, artifact.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Each non-tap artifact activation triggers even while the artifact is tapped")
+    void repeatedNonTapArtifactActivationsEachGainLife() {
+        harness.addToBattlefield(player1, new Powerleech());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new ClayStatue());
+        artifact.tap();
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player2, 0, null, null);
+        resolveAllTriggers();
+        harness.activateAbility(player2, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
+    }
+
+    @Test
+    @DisplayName("An effect tapping an own artifact does not trigger")
+    void effectTappingOwnArtifactDoesNotTrigger() {
+        harness.addToBattlefield(player1, new Powerleech());
+        harness.addToBattlefield(player1, new IcyManipulator());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, null, artifact.getId());
+        resolveAllTriggers();
+
+        assertThat(artifact.isTapped()).isTrue();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 }
