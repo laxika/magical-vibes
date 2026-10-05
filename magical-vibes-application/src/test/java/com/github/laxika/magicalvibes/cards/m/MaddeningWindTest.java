@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.p.PaleBears;
 import com.github.laxika.magicalvibes.cards.z.ZuranOrb;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -17,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MaddeningWind.class, PaleBears.class, ZuranOrb.class})
+@CardUsed({MaddeningWind.class, PaleBears.class, ZuranOrb.class, Disenchant.class})
 class MaddeningWindTest extends BaseCardTest {
 
     private Permanent attachToOpponentCreature() {
@@ -35,6 +36,37 @@ class MaddeningWindTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("Damage still resolves after the Aura is destroyed in response to its trigger")
+    void damageResolvesAfterAuraIsDestroyed() {
+        attachToOpponentCreature();
+        UUID auraId = harness.getPermanentId(player1, "Maddening Wind");
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        advanceToUpkeep(player2);
+        harness.castAndResolveInstant(player2, 0, auraId);
+
+        harness.assertInGraveyard(player1, "Maddening Wind");
+        resolveAllTriggers();
+        harness.assertLife(player2, lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("The enchanted creature's controller does not pay the Aura's cumulative upkeep")
+    void opponentUpkeepDoesNotAddAgeCounter() {
+        attachToOpponentCreature();
+        Permanent aura = findPermanent(player1, "Maddening Wind");
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(aura.getCounterCount(CounterType.AGE)).isZero();
+        harness.assertOnBattlefield(player1, "Maddening Wind");
+        harness.assertLife(player2, 18);
     }
 
     @Test
