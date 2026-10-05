@@ -107,13 +107,57 @@ class PygmyTrollTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, new ElvishBerserker());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Pygmy Troll");
         assertThat(troll.isTapped()).isTrue();
         assertThat(troll.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("The blocking boost expires at cleanup")
+    void blockingBoostExpiresAtCleanup() {
+        Permanent troll = addCreatureReady(player1, new PygmyTroll());
+        troll.setAttacking(true);
+        addCreatureReady(player2, new ElvishBerserker());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(troll.getPowerModifier()).isEqualTo(1);
+        assertThat(troll.getToughnessModifier()).isEqualTo(1);
+
+        harness.passUntil(player1, TurnStep.CLEANUP);
+
+        harness.assertOnBattlefield(player1, "Pygmy Troll");
+        assertThat(troll.getPowerModifier()).isZero();
+        assertThat(troll.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Activating regeneration saves a blocking Troll and consumes the shield")
+    void activatedRegenerationSavesBlockingTroll() {
+        Permanent troll = addCreatureReady(player1, new PygmyTroll());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(troll.isTapped()).isFalse();
+
+        troll.setBlocking(true);
+        troll.addBlockingTarget(0);
+        Permanent attacker = addCreatureReady(player2, new ElvishBerserker());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Pygmy Troll");
+        assertThat(troll.isTapped()).isTrue();
+        assertThat(troll.isBlocking()).isFalse();
+        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(troll.getPowerModifier()).isZero();
+        assertThat(troll.getToughnessModifier()).isZero();
     }
 }
