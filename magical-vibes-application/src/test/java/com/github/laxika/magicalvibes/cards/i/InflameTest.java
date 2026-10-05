@@ -43,10 +43,8 @@ class InflameTest extends BaseCardTest {
     @DisplayName("Does not damage creatures that have not been dealt damage this turn")
     void doesNothingWithoutPreviouslyDamagedCreatures() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new DarksteelColossus());
-        harness.setHand(player1, List.of(new Inflame()));
-        harness.addMana(player1, ManaColor.RED, 1);
-
-        harness.castAndResolveInstant(player1, 0);
+        harness.castFromHand(player1, new Inflame(), "{R}");
+        harness.passBothPriorities();
 
         assertThat(creature.getMarkedDamage()).isZero();
     }
@@ -55,10 +53,8 @@ class InflameTest extends BaseCardTest {
     @DisplayName("Does not damage noncreature permanents")
     void ignoresNoncreaturePermanents() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new DarksteelIngot());
-        harness.setHand(player1, List.of(new Inflame()));
-        harness.addMana(player1, ManaColor.RED, 1);
-
-        harness.castAndResolveInstant(player1, 0);
+        harness.castFromHand(player1, new Inflame(), "{R}");
+        harness.passBothPriorities();
 
         assertThat(artifact.getMarkedDamage()).isZero();
     }
@@ -73,9 +69,8 @@ class InflameTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
-        harness.setHand(player1, List.of(new Inflame()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castAndResolveInstant(player1, 0);
+        harness.castFromHand(player1, new Inflame(), "{R}");
+        harness.passBothPriorities();
 
         assertThat(attacker.getMarkedDamage()).isEqualTo(5);
         assertThat(damagedCreature.getMarkedDamage()).isEqualTo(5);
@@ -103,5 +98,28 @@ class InflameTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         assertThat(creature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Includes creatures first dealt damage in response to Inflame")
+    void checksDamageHistoryAtResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new DarksteelColossus());
+        Permanent undamagedCreature = harness.addToBattlefieldAndReturn(player1, new DarksteelGargoyle());
+        harness.setHand(player1, List.of(new Inflame(), new BarbedLightning()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0);
+        harness.castModalInstantWithModes(
+                player1, 0, 1, 2, new int[]{0}, List.of(creature.getId()));
+        harness.passBothPriorities();
+        assertThat(creature.getMarkedDamage()).isEqualTo(3);
+
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(5);
+        assertThat(undamagedCreature.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }
