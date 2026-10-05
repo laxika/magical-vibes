@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.e.EyeOfNowhere;
 import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
 import com.github.laxika.magicalvibes.cards.w.WanderingOnes;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -16,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({KondasHatamoto.class, KondaLordOfEiganjo.class, WanderingOnes.class,
-        IsamaruHoundOfKonda.class})
+        IsamaruHoundOfKonda.class, EyeOfNowhere.class})
 class KondasHatamotoTest extends BaseCardTest {
 
     @Test
@@ -45,6 +47,25 @@ class KondasHatamotoTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, hatamoto)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, hatamoto)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Bushido triggers once for multiple blockers and combines with the Samurai bonus")
+    void multipleBlockersGiveOneBushidoBonusWithLegendarySamurai() {
+        Permanent hatamoto = addCreatureReady(player1, new KondasHatamoto());
+        addCreatureReady(player1, new KondaLordOfEiganjo());
+        addCreatureReady(player2, new WanderingOnes());
+        addCreatureReady(player2, new WanderingOnes());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, hatamoto)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, hatamoto)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, hatamoto, Keyword.VIGILANCE)).isTrue();
+        assertThat(hatamoto.isTapped()).isFalse();
     }
 
     @Test
@@ -86,6 +107,39 @@ class KondasHatamotoTest extends BaseCardTest {
         Permanent hatamoto = addCreatureReady(player1, new KondasHatamoto());
         addCreatureReady(player2, new KondaLordOfEiganjo());
 
+        assertThat(gqs.getEffectivePower(gd, hatamoto)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, hatamoto)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, hatamoto, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Legendary and Samurai must describe the same permanent")
+    void separateLegendaryAndSamuraiDoNotGrantBonus() {
+        Permanent hatamoto = addCreatureReady(player1, new KondasHatamoto());
+        addCreatureReady(player1, new KondasHatamoto());
+        addCreatureReady(player1, new IsamaruHoundOfKonda());
+
+        assertThat(gqs.getEffectivePower(gd, hatamoto)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, hatamoto)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, hatamoto, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The bonus and vigilance disappear when the legendary Samurai leaves")
+    void losesBonusWhenLegendarySamuraiLeaves() {
+        Permanent hatamoto = addCreatureReady(player1, new KondasHatamoto());
+        Permanent konda = addCreatureReady(player1, new KondaLordOfEiganjo());
+
+        assertThat(gqs.getEffectivePower(gd, hatamoto)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, hatamoto)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, hatamoto, Keyword.VIGILANCE)).isTrue();
+
+        harness.setHand(player1, List.of(new EyeOfNowhere()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveSorcery(player1, 0, konda.getId());
+
+        harness.assertInHand(player1, "Konda, Lord of Eiganjo");
+        harness.assertNotOnBattlefield(player1, "Konda, Lord of Eiganjo");
         assertThat(gqs.getEffectivePower(gd, hatamoto)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, hatamoto)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, hatamoto, Keyword.VIGILANCE)).isFalse();
