@@ -20,6 +20,48 @@ import static org.assertj.core.api.Assertions.assertThat;
 class NeyamShaiMuradTest extends BaseCardTest {
 
     @Test
+    void canDeclineReturnWhenTargetedAbilityResolves() {
+        Card opponentForest = new Forest();
+        harness.setGraveyard(player2, List.of(opponentForest));
+        harness.setGraveyard(player1, List.of(new Forest()));
+
+        Permanent neyam = addCreatureReady(player1, new NeyamShaiMurad());
+        neyam.setAttacking(true);
+        resolveCombat();
+        harness.handleMultipleCardsChosen(player1, List.of(opponentForest.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
+                .isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(findPermanents(player1, "Forest")).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void illegalGraveyardTargetPreventsBothReturns() {
+        Card opponentForest = new Forest();
+        harness.setGraveyard(player2, List.of(opponentForest));
+        harness.setGraveyard(player1, List.of(new Forest()));
+
+        Permanent neyam = addCreatureReady(player1, new NeyamShaiMurad());
+        neyam.setAttacking(true);
+        resolveCombat();
+        harness.handleMultipleCardsChosen(player1, List.of(opponentForest.getId()));
+        harness.setGraveyard(player2, List.of());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(findPermanents(player1, "Forest")).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+
+    @Test
     @DisplayName("Returns a targeted opponent permanent, then returns the defending player's choice")
     void returnsTargetedPermanentThenDefendingPlayerChoosesOwnPermanent() {
         Card opponentForest = new Forest();
