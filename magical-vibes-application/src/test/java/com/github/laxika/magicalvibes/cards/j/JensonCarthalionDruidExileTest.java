@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.j;
 
-import com.github.laxika.magicalvibes.cards.c.ChildOfAlara;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CoilingOracle;
+import com.github.laxika.magicalvibes.cards.f.FusionElemental;
+import com.github.laxika.magicalvibes.cards.m.MycosynthLattice;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,19 +18,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({JensonCarthalionDruidExile.class, ChildOfAlara.class, GrizzlyBears.class})
+@CardUsed({JensonCarthalionDruidExile.class, FusionElemental.class, CoilingOracle.class, MycosynthLattice.class})
 class JensonCarthalionDruidExileTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting an all-color spell scries 1 and creates a 4/4 Angel")
     void allColorSpellScriesAndCreatesAngel() {
         harness.addToBattlefield(player1, new JensonCarthalionDruidExile());
-        List<Card> library = List.of(new GrizzlyBears());
+        List<Card> library = List.of(new JensonCarthalionDruidExile());
         harness.setLibrary(player1, library);
-        harness.setHand(player1, List.of(new ChildOfAlara()));
-        addFiveColors();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new FusionElemental(), "{W}{U}{B}{R}{G}");
         resolveTriggerAndScry();
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(library);
@@ -57,12 +55,60 @@ class JensonCarthalionDruidExileTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 
-    private void addFiveColors() {
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
+    @Test
+    @DisplayName("A two-color spell scries without creating an Angel")
+    void twoColorSpellOnlyScries() {
+        harness.addToBattlefield(player1, new JensonCarthalionDruidExile());
+        Card top = new FusionElemental();
+        harness.setLibrary(player1, List.of(top));
+        harness.castFromHand(player1, new CoilingOracle(), "{G}{U}");
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getName().equals("Angel"));
+        resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("An opponent's all-color spell does not trigger Jenson")
+    void opponentSpellDoesNotTrigger() {
+        harness.addToBattlefield(player1, new JensonCarthalionDruidExile());
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new FusionElemental(), "{W}{U}{B}{R}{G}");
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A colorless spell does not trigger Jenson")
+    void colorlessSpellDoesNotTrigger() {
+        harness.addToBattlefield(player1, new JensonCarthalionDruidExile());
+        harness.castFromHand(player1, new MycosynthLattice(), "{6}");
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Mycosynth Lattice makes an otherwise multicolored spell colorless")
+    void latticePreventsMulticoloredCastTrigger() {
+        harness.addToBattlefield(player1, new JensonCarthalionDruidExile());
+        harness.addToBattlefield(player1, new MycosynthLattice());
+        harness.setLibrary(player1, List.of(new CoilingOracle()));
+        harness.castFromHand(player1, new FusionElemental(), "{W}{U}{B}{R}{G}");
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getName().equals("Angel"));
     }
 
     private void resolveTriggerAndScry() {
