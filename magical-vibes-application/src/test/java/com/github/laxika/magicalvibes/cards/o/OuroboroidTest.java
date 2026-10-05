@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IntrepidTenderfoot;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Ouroboroid.class, GrizzlyBears.class})
+@CardUsed({Ouroboroid.class, IntrepidTenderfoot.class})
 class OuroboroidTest extends BaseCardTest {
 
     @Test
@@ -20,8 +20,8 @@ class OuroboroidTest extends BaseCardTest {
     void putsCountersEqualToPowerOnControlledCreatures() {
         Permanent ouroboroid = addCreatureReady(player1, new Ouroboroid());
         ouroboroid.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent opposingCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent ownCreature = addCreatureReady(player1, new IntrepidTenderfoot());
+        Permanent opposingCreature = addCreatureReady(player2, new IntrepidTenderfoot());
 
         advanceToCombat(player1);
         harness.passBothPriorities();
@@ -35,7 +35,7 @@ class OuroboroidTest extends BaseCardTest {
     @DisplayName("Does not trigger at the beginning of combat on an opponent's turn")
     void doesNotTriggerOnOpponentsCombat() {
         Permanent ouroboroid = addCreatureReady(player1, new Ouroboroid());
-        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ownCreature = addCreatureReady(player1, new IntrepidTenderfoot());
 
         advanceToCombat(player2);
         harness.passBothPriorities();
@@ -47,7 +47,56 @@ class OuroboroidTest extends BaseCardTest {
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
+    }
+
+    @Test
+    void usesPowerAtResolution() {
+        Permanent ouroboroid = addCreatureReady(player1, new Ouroboroid());
+
+        advanceToCombat(player1);
+        ouroboroid.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         harness.passBothPriorities();
+
+        assertThat(ouroboroid.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+    }
+
+    @Test
+    void zeroPowerPlacesNoCounters() {
+        Permanent ouroboroid = addCreatureReady(player1, new Ouroboroid());
+        ouroboroid.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+
+        advanceToCombat(player1);
+        harness.passBothPriorities();
+
+        assertThat(ouroboroid.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(ouroboroid.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void multipleTriggersUsePowerAfterEarlierTriggerResolves() {
+        Permanent first = addCreatureReady(player1, new Ouroboroid());
+        Permanent second = addCreatureReady(player1, new Ouroboroid());
+
+        advanceToCombat(player1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void usesLastKnownPowerWhenSourceLeavesBeforeResolution() {
+        Permanent ouroboroid = addCreatureReady(player1, new Ouroboroid());
+        Permanent survivor = addCreatureReady(player1, new IntrepidTenderfoot());
+
+        advanceToCombat(player1);
+        ouroboroid.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToHand(gd, ouroboroid));
+        harness.passBothPriorities();
+
+        assertThat(survivor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 }
