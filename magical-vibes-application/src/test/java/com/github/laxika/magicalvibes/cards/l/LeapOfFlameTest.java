@@ -105,8 +105,7 @@ class LeapOfFlameTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new IzzetSignet());
-        UUID targetId = harness.getPermanentId(player2, "Izzet Signet");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new IzzetSignet()).getId();
         harness.setHand(player1, List.of(new LeapOfFlame()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.RED, 1);
@@ -114,6 +113,48 @@ class LeapOfFlameTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
+    }
+
+    @Test
+    @DisplayName("A replicate copy can target another creature after the original target is sacrificed")
+    void replicateCanRetargetAfterOriginalTargetLeaves() {
+        Permanent originalTarget = harness.addToBattlefieldAndReturn(player1, new Gristleback());
+        Permanent newTarget = harness.addToBattlefieldAndReturn(player2, new Gristleback());
+        castLeapOfFlame(originalTarget.getId(), List.of("{U}{R}"));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Gristleback");
+        harness.passBothPriorities();
+
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, newTarget.getId());
+        resolveAllTriggers();
+
+        assertThat(newTarget.getPowerModifier()).isEqualTo(1);
+        assertThat(newTarget.getToughnessModifier()).isZero();
+        assertThat(newTarget.getGrantedKeywords()).contains(Keyword.FLYING, Keyword.FIRST_STRIKE);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Leap of Flame");
+    }
+
+    @Test
+    @DisplayName("A spell whose target is sacrificed does not boost another creature")
+    void removedTargetReceivesNoEffects() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Gristleback());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new Gristleback());
+        castLeapOfFlame(target.getId(), List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Gristleback");
+        harness.assertInGraveyard(player1, "Leap of Flame");
+        assertThat(otherCreature.getPowerModifier()).isZero();
+        assertThat(otherCreature.getToughnessModifier()).isZero();
+        assertThat(otherCreature.getGrantedKeywords()).doesNotContain(Keyword.FLYING, Keyword.FIRST_STRIKE);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void castLeapOfFlame(UUID targetId, List<String> replicatePayments) {
