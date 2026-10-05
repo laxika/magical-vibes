@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GhostQuarter;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GatewayPlaza;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.Snarespinner;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -19,14 +16,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NissasTriumph.class, Forest.class, GhostQuarter.class, GrizzlyBears.class,
-        Island.class, NissaGenesisMage.class, Plains.class})
+@CardUsed({NissasTriumph.class, Forest.class, GatewayPlaza.class, Snarespinner.class,
+        Island.class, NissaWhoShakesTheWorld.class, Plains.class})
 class NissasTriumphTest extends BaseCardTest {
 
     @Test
     @DisplayName("Without a Nissa, offers up to two basic Forest cards")
     void withoutNissaOffersBasicForests() {
-        setLibrary(new Forest(), new Island(), new GhostQuarter(), new GrizzlyBears());
+        setLibrary(new Forest(), new Island(), new GatewayPlaza(), new Snarespinner());
 
         castTriumph();
 
@@ -40,9 +37,8 @@ class NissasTriumphTest extends BaseCardTest {
     @Test
     @DisplayName("With a Nissa, offers up to three land cards")
     void withNissaOffersThreeLands() {
-        Permanent nissa = harness.addToBattlefieldAndReturn(player1, new NissaGenesisMage());
-        nissa.setCounterCount(CounterType.LOYALTY, 5);
-        setLibrary(new Forest(), new Island(), new GhostQuarter(), new GrizzlyBears(), new Plains());
+        harness.enterBattlefieldAndReturn(player1, new NissaWhoShakesTheWorld());
+        setLibrary(new Forest(), new Island(), new GatewayPlaza(), new Snarespinner(), new Plains());
 
         castTriumph();
 
@@ -50,13 +46,121 @@ class NissasTriumphTest extends BaseCardTest {
         assertThat(search.params().remainingCount()).isEqualTo(3);
         assertThat(search.params().reveals()).isTrue();
         assertThat(search.params().cards()).extracting(Card::getName)
-                .containsExactlyInAnyOrder("Forest", "Island", "Ghost Quarter", "Plains");
+                .containsExactlyInAnyOrder("Forest", "Island", "Gateway Plaza", "Plains");
+    }
+
+    @Test
+    void putsTwoBasicForestsIntoHandAndLeavesOtherCardsInLibrary() {
+        Forest first = new Forest();
+        Forest second = new Forest();
+        Forest third = new Forest();
+        Island island = new Island();
+        setLibrary(first, second, third, island);
+
+        castTriumph();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(third, island);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(librarySearch()).isNull();
+        harness.assertInGraveyard(player1, "Nissa's Triumph");
+    }
+
+    @Test
+    void withNissaPutsThreeLandsIncludingNonbasicIntoHand() {
+        harness.enterBattlefieldAndReturn(player1, new NissaWhoShakesTheWorld());
+        Forest forest = new Forest();
+        Island island = new Island();
+        GatewayPlaza plaza = new GatewayPlaza();
+        Plains plains = new Plains();
+        Snarespinner creature = new Snarespinner();
+        setLibrary(forest, island, plaza, plains, creature);
+
+        castTriumph();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest, island, plaza);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(plains, creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(librarySearch()).isNull();
+        harness.assertInGraveyard(player1, "Nissa's Triumph");
+    }
+
+    @Test
+    void canChooseZeroEvenWhenForestsAreAvailable() {
+        Forest forest = new Forest();
+        Island island = new Island();
+        setLibrary(forest, island);
+
+        castTriumph();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(forest, island);
+        assertThat(librarySearch()).isNull();
+        harness.assertInGraveyard(player1, "Nissa's Triumph");
+    }
+
+    @Test
+    void canStopAfterOneForest() {
+        Forest first = new Forest();
+        Forest second = new Forest();
+        setLibrary(first, second);
+
+        castTriumph();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second);
+        assertThat(librarySearch()).isNull();
+    }
+
+    @Test
+    void opponentsNissaDoesNotUpgradeSearch() {
+        harness.enterBattlefieldAndReturn(player2, new NissaWhoShakesTheWorld());
+        setLibrary(new Forest(), new Island(), new GatewayPlaza());
+
+        castTriumph();
+
+        assertThat(librarySearch().params().remainingCount()).isEqualTo(2);
+        assertThat(librarySearch().params().cards()).extracting(Card::getName)
+                .containsExactly("Forest");
+    }
+
+    @Test
+    void nissaEnteringAfterCastingUpgradesSearchAtResolution() {
+        setLibrary(new Forest(), new Island(), new GatewayPlaza());
+        harness.castFromHand(player1, new NissasTriumph(), "{G}{G}");
+        harness.enterBattlefieldAndReturn(player1, new NissaWhoShakesTheWorld());
+
+        harness.passBothPriorities();
+
+        assertThat(librarySearch().params().remainingCount()).isEqualTo(3);
+        assertThat(librarySearch().params().cards()).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Forest", "Island", "Gateway Plaza");
+    }
+
+    @Test
+    void resolvesWhenNoBasicForestsExist() {
+        Island island = new Island();
+        GatewayPlaza plaza = new GatewayPlaza();
+        setLibrary(island, plaza);
+
+        castTriumph();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(island, plaza);
+        assertThat(librarySearch()).isNull();
+        harness.assertInGraveyard(player1, "Nissa's Triumph");
     }
 
     private void castTriumph() {
-        harness.setHand(player1, List.of(new NissasTriumph()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new NissasTriumph(), "{G}{G}");
         harness.passBothPriorities();
     }
 
