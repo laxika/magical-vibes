@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -101,14 +103,58 @@ class KongmingsContraptionsTest extends BaseCardTest {
     @DisplayName("Cannot activate if not being attacked")
     void cannotActivateWhenNotAttacked() {
         harness.forceActivePlayer(player1);
-        // Attacker aims at the active player, not the Contraptions controller.
-        Permanent attacker = addAttackerTargeting(player1, player1);
+        Permanent creature = addCreatureReady(player1, new WuInfantry());
         addContraptionsReady(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("attacked this step");
+    }
+
+    @Test
+    @DisplayName("Can activate after an attacker is redirected from you to a battle")
+    void canActivateAfterAttackerIsRedirectedToBattle() {
+        Permanent attacker = addCreatureReady(player1, new WuInfantry());
+        Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfKamigawa());
+        battle.setProtectorPlayerId(player2.getId());
+        battle.setCounterCount(CounterType.DEFENSE, 4);
+        addContraptionsReady(player2);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+
+        // Model an effect reselecting the defender without removing the attacker from combat.
+        attacker.setAttackTarget(battle.getId());
+
+        harness.activateAbility(player2, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Wu Infantry");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        harness.forceActivePlayer(player1);
+        Permanent attacker = addAttackerTargeting(player1, player2);
+        addContraptionsReady(player2).setTapped(true);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, attacker.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("attacked this step");
+                .hasMessageContaining("tapped");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.forceActivePlayer(player1);
+        Permanent attacker = addAttackerTargeting(player1, player2);
+        harness.addToBattlefield(player2, new KongmingsContraptions());
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
     }
 
     @Test
