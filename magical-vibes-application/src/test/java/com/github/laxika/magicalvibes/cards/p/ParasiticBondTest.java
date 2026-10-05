@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ParasiticBond.class, Forest.class, GorillaWarrior.class})
+@CardUsed({ParasiticBond.class, Forest.class, GorillaWarrior.class, Disenchant.class})
 class ParasiticBondTest extends BaseCardTest {
 
     @Test
@@ -108,9 +109,65 @@ class ParasiticBondTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 4);
     }
 
-    private void attachParasiticBond(Permanent creature) {
+    @Test
+    @DisplayName("Enchanting your own creature damages you during your upkeep")
+    void damagesAuraControllerWhenTheyControlEnchantedCreature() {
+        Permanent creature = addCreature(player1);
+        attachParasiticBond(creature);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Removing the Aura after its upkeep trigger does not stop the damage")
+    void damageResolvesAfterAuraIsDestroyed() {
+        Permanent creature = addCreature(player2);
+        Permanent aura = attachParasiticBond(creature);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Disenchant()));
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+
+        harness.assertInGraveyard(player1, "Parasitic Bond");
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("An Aura removed before upkeep does not trigger")
+    void noDamageAfterAuraIsDestroyedBeforeUpkeep() {
+        Permanent creature = addCreature(player2);
+        Permanent aura = attachParasiticBond(creature);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        harness.assertInGraveyard(player1, "Parasitic Bond");
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    private Permanent attachParasiticBond(Permanent creature) {
         Permanent parasiticBond = harness.addToBattlefieldAndReturn(player1, new ParasiticBond());
         parasiticBond.setAttachedTo(creature.getId());
+        return parasiticBond;
     }
 
     private Permanent addCreature(Player player) {
