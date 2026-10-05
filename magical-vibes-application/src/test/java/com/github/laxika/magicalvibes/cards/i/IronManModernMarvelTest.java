@@ -52,4 +52,80 @@ class IronManModernMarvelTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
     }
+
+    @Test
+    void doesNotBoostOpponentsArtifactCreatures() {
+        addCreatureReady(player1, new IronManModernMarvel());
+        Permanent memnite = addCreatureReady(player2, new Memnite());
+
+        assertThat(gqs.getEffectivePower(gd, memnite)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, memnite)).isEqualTo(1);
+    }
+
+    @Test
+    void boostEndsWhenIronManLeavesBattlefield() {
+        Permanent ironMan = addCreatureReady(player1, new IronManModernMarvel());
+        Permanent memnite = addCreatureReady(player1, new Memnite());
+        assertThat(gqs.getEffectivePower(gd, memnite)).isEqualTo(2);
+
+        harness.getPermanentRemovalService().removePermanentToHand(gd, ironMan);
+
+        assertThat(gqs.getEffectivePower(gd, memnite)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, memnite)).isEqualTo(1);
+    }
+
+    @Test
+    void nonartifactCreatureAndOpponentsArtifactCreatureDoNotEnableDraw() {
+        addCreatureReady(player1, new IronManModernMarvel());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new Memnite());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        declareAttackers(List.of(0));
+        assertThat(gd.stack).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    void doesNotDrawIfLastOtherArtifactCreatureLeavesBeforeResolution() {
+        addCreatureReady(player1, new IronManModernMarvel());
+        Permanent memnite = addCreatureReady(player1, new Memnite());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        declareAttackers(List.of(0));
+        assertThat(gd.stack).hasSize(1);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, memnite);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    void drawsIfAnotherArtifactCreatureRemainsAfterIronManLeaves() {
+        Permanent ironMan = addCreatureReady(player1, new IronManModernMarvel());
+        addCreatureReady(player1, new Memnite());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        declareAttackers(List.of(0));
+        assertThat(gd.stack).hasSize(1);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, ironMan);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    void anotherArtifactCreatureAttackingWithoutIronManDoesNotDraw() {
+        addCreatureReady(player1, new IronManModernMarvel());
+        addCreatureReady(player1, new Memnite());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        declareAttackers(List.of(1));
+        assertThat(gd.stack).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
 }
