@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.FlameJet;
 import com.github.laxika.magicalvibes.cards.m.Magnify;
 import com.github.laxika.magicalvibes.cards.m.MetathranSoldier;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -33,8 +34,7 @@ class QuashTest extends BaseCardTest {
 
         harness.castInstant(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, castCopy.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, castCopy.getId());
 
         assertThat(gd.stack).isEmpty();
         assertThat(creature.getEffectivePower()).isEqualTo(1);
@@ -84,8 +84,7 @@ class QuashTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, player2.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, castCopy.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, castCopy.getId());
 
         assertThat(harness.getGameData().stack).isEmpty();
         harness.assertLife(player2, 20);
@@ -121,5 +120,64 @@ class QuashTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Magnify"));
         harness.assertInGraveyard(player2, "Quash");
+    }
+
+    @Test
+    @DisplayName("May leave same-name cards in hidden zones while exiling all graveyard matches")
+    void mayFailToFindHiddenZoneCopies() {
+        Magnify castCopy = new Magnify();
+        Magnify handCopy = new Magnify();
+        Magnify graveyardCopy = new Magnify();
+        Magnify libraryCopy = new Magnify();
+        harness.setHand(player1, List.of(castCopy, handCopy));
+        harness.setGraveyard(player1, List.of(graveyardCopy));
+        harness.setLibrary(player1, List.of(libraryCopy));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player2, List.of(new Quash()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+
+        harness.castInstant(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, castCopy.getId());
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MultiZoneExileChoice.class);
+        harness.handleMultipleCardsChosen(player2, List.of());
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .contains(castCopy, graveyardCopy)
+                .doesNotContain(handCopy, libraryCopy);
+        assertThat(gd.playerHands.get(player1.getId())).contains(handCopy);
+        assertThat(gd.playerDecks.get(player1.getId())).contains(libraryCopy);
+        harness.assertNotInGraveyard(player1, "Magnify");
+        harness.assertInGraveyard(player2, "Quash");
+    }
+
+    @Test
+    @DisplayName("Can counter its controller's own spell without searching the other player's zones")
+    void canCounterOwnSpell() {
+        Magnify castCopy = new Magnify();
+        Magnify opposingHandCopy = new Magnify();
+        Magnify opposingGraveyardCopy = new Magnify();
+        Magnify opposingLibraryCopy = new Magnify();
+        harness.setHand(player1, List.of(castCopy, new Quash()));
+        harness.setGraveyard(player1, List.of());
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player2, List.of(opposingHandCopy));
+        harness.setGraveyard(player2, List.of(opposingGraveyardCopy));
+        harness.setLibrary(player2, List.of(opposingLibraryCopy));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castInstant(player1, 0);
+        harness.castAndResolveInstant(player1, 0, castCopy.getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(castCopy);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).contains(opposingHandCopy);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opposingGraveyardCopy);
+        assertThat(gd.playerDecks.get(player2.getId())).contains(opposingLibraryCopy);
+        harness.assertInGraveyard(player1, "Quash");
     }
 }
