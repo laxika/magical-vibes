@@ -81,11 +81,34 @@ class KitsuneBlademasterTest extends BaseCardTest {
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
+        resolveCombat();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(blademaster);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+    }
+
+    @Test
+    @DisplayName("Both Kitsune Blademasters gain Bushido and deal lethal first-strike damage to each other")
+    void opposingBlademastersBothDealFirstStrikeDamage() {
+        Permanent attacker = addCreatureReady(player1, new KitsuneBlademaster());
+        Permanent blocker = addCreatureReady(player2, new KitsuneBlademaster());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+        assertThat(blocker.getPowerModifier()).isEqualTo(1);
+        assertThat(blocker.getToughnessModifier()).isEqualTo(1);
+
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        harness.assertInGraveyard(player1, "Kitsune Blademaster");
+        harness.assertInGraveyard(player2, "Kitsune Blademaster");
     }
 
     @Test
