@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(KrosanColossus.class)
 class KrosanColossusTest extends BaseCardTest {
@@ -20,7 +21,6 @@ class KrosanColossusTest extends BaseCardTest {
 
         harness.castCreatureWithMorph(player1, 0);
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         Permanent colossus = findPermanent(player1, "Krosan Colossus");
@@ -33,5 +33,63 @@ class KrosanColossusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(colossus.isFaceDown()).isFalse();
+    }
+
+    @Test
+    void turningFaceUpRequiresTwoGreenMana() {
+        harness.setHand(player1, List.of(new KrosanColossus()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent colossus = findPermanent(player1, "Krosan Colossus");
+        int colossusIndex = gd.playerBattlefields.get(player1.getId()).indexOf(colossus);
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.turnFaceUp(player1, colossusIndex))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(colossus.isFaceDown()).isTrue();
+    }
+
+    @Test
+    void turningFaceUpRequiresTheFullGenericCost() {
+        harness.setHand(player1, List.of(new KrosanColossus()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent colossus = findPermanent(player1, "Krosan Colossus");
+        int colossusIndex = gd.playerBattlefields.get(player1.getId()).indexOf(colossus);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.turnFaceUp(player1, colossusIndex))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(colossus.isFaceDown()).isTrue();
+    }
+
+    @Test
+    void turningFaceUpIsImmediateAndDoesNotUseTheStack() {
+        harness.setHand(player1, List.of(new KrosanColossus()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent colossus = findPermanent(player1, "Krosan Colossus");
+        int colossusIndex = gd.playerBattlefields.get(player1.getId()).indexOf(colossus);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.turnFaceUp(player1, colossusIndex);
+
+        assertThat(colossus.isFaceDown()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }
