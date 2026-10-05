@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.a.Acridian;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.t.TolarianAcademy;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LingeringMirage.class, Forest.class, Acridian.class})
+@CardUsed({LingeringMirage.class, Forest.class, Acridian.class, TolarianAcademy.class})
 class LingeringMirageTest extends BaseCardTest {
 
     @Test
@@ -93,8 +94,7 @@ class LingeringMirageTest extends BaseCardTest {
     @DisplayName("Cannot cast Lingering Mirage targeting a non-land permanent")
     void cannotTargetNonLand() {
         harness.addToBattlefield(player1, new Forest());
-        harness.addToBattlefield(player1, new Acridian());
-        Permanent acridian = findPermanent(player1, "Acridian");
+        Permanent acridian = harness.addToBattlefieldAndReturn(player1, new Acridian());
         harness.setHand(player1, List.of(new LingeringMirage()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -102,5 +102,54 @@ class LingeringMirageTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, acridian.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
+    }
+
+    @Test
+    @DisplayName("A nonbasic land loses its printed mana ability and taps for one blue")
+    void replacesNonbasicLandManaAbility() {
+        Permanent academy = harness.addToBattlefieldAndReturn(player1, new TolarianAcademy());
+        harness.setHand(player1, List.of(new LingeringMirage()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castEnchantment(player1, 0, academy.getId());
+        harness.passBothPriorities();
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gqs.effectiveBasicLandTypes(gd, academy)).containsExactly(CardSubtype.ISLAND);
+    }
+
+    @Test
+    @DisplayName("Cycling pays and discards immediately but draws only on resolution")
+    void cyclingDiscardsBeforeDrawing() {
+        harness.setHand(player1, List.of(new LingeringMirage()));
+        harness.setLibrary(player1, List.of(new Acridian()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Lingering Mirage");
+        harness.assertNotInHand(player1, "Lingering Mirage");
+        harness.assertNotInHand(player1, "Acridian");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Acridian");
+    }
+
+    @Test
+    @DisplayName("Cycling cannot be activated without two mana")
+    void cyclingRequiresTwoMana() {
+        harness.setHand(player1, List.of(new LingeringMirage()));
+        harness.setLibrary(player1, List.of(new Acridian()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Lingering Mirage");
+        harness.assertNotInGraveyard(player1, "Lingering Mirage");
+        harness.assertNotInHand(player1, "Acridian");
     }
 }
