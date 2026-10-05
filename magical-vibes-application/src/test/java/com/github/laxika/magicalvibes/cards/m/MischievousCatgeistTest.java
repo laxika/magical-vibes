@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.c.CatlikeCuriosity;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -25,7 +24,7 @@ class MischievousCatgeistTest extends BaseCardTest {
     @Test
     @DisplayName("Mischievous Catgeist draws a card when it deals combat damage to a player")
     void frontFaceDrawsOnCombatDamage() {
-        Permanent catgeist = addReadyCreature(player1, new MischievousCatgeist());
+        Permanent catgeist = addCreatureReady(player1, new MischievousCatgeist());
         catgeist.setAttacking(true);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
@@ -39,10 +38,9 @@ class MischievousCatgeistTest extends BaseCardTest {
     @Test
     @DisplayName("Catlike Curiosity grants its combat-damage draw ability to the enchanted creature")
     void auraGrantsDrawOnCombatDamage() {
-        Permanent creature = addReadyCreature(player1, new GrizzlyBears());
-        Permanent aura = new Permanent(new CatlikeCuriosity());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new CatlikeCuriosity());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         creature.setAttacking(true);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
@@ -116,10 +114,55 @@ class MischievousCatgeistTest extends BaseCardTest {
                 .contains(card.getId());
     }
 
-    private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("The enchanted creature's controller draws, even when the opponent controls the Aura")
+    void enchantedOpponentDraws() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new CatlikeCuriosity());
+        aura.setAttachedTo(creature.getId());
+        creature.setAttacking(true);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+
+        resolveCombat(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Disturbed Catlike Curiosity is exiled when its target leaves before resolution")
+    void disturbWithRemovedTargetIsExiled() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        MischievousCatgeist card = new MischievousCatgeist();
+        harness.setGraveyard(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFlashback(player1, 0, creature.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, creature));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
+        assertThat(gd.exiledCards.stream().map(exiled -> exiled.card().getId())).contains(card.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The front face goes to the graveyard normally and remains available for disturb")
+    void frontFaceIsNotExiledWhenItDies() {
+        MischievousCatgeist card = new MischievousCatgeist();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, card);
+        harness.setGraveyard(player1, List.of());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, creature));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        assertThat(gd.exiledCards.stream().map(exiled -> exiled.card().getId())).doesNotContain(card.getId());
     }
 }
