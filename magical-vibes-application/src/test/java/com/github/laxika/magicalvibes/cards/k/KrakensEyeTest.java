@@ -21,8 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({KrakensEye.class, NeurokProdigy.class, CrazedGoblin.class, EchoingTruth.class})
 class KrakensEyeTest extends BaseCardTest {
 
-    // ===== Casting and resolving =====
-
     @Test
     @DisplayName("Casting Kraken's Eye puts it on the stack as an artifact spell")
     void castingPutsItOnStack() {
@@ -47,8 +45,6 @@ class KrakensEyeTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getCard() instanceof KrakensEye);
     }
 
-    // ===== Triggered ability: controller casts blue spell =====
-
     @Test
     @DisplayName("Controller casts blue spell, accepts may ability, gains 1 life")
     void controllerCastsBlueSpellAndAccepts() {
@@ -58,17 +54,15 @@ class KrakensEyeTest extends BaseCardTest {
 
         harness.castFromHand(player1, new NeurokProdigy(), "{2}{U}");
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                && e.getCard() instanceof KrakensEye);
+        harness.passBothPriorities();
+
         // Player1 should be prompted for may ability
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
-
-        // Triggered ability should be on the stack
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getCard() instanceof KrakensEye);
-
-        // Resolve the triggered ability
-        harness.passBothPriorities();
 
         harness.assertLife(player1, lifeBefore + 1);
     }
@@ -81,6 +75,9 @@ class KrakensEyeTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player1.getId());
 
         harness.castFromHand(player1, new NeurokProdigy(), "{2}{U}");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         // No triggered ability on stack
@@ -94,8 +91,6 @@ class KrakensEyeTest extends BaseCardTest {
         harness.assertLife(player1, lifeBefore);
     }
 
-    // ===== Triggered ability: opponent casts blue spell =====
-
     @Test
     @DisplayName("Opponent casts blue spell, controller accepts may ability, gains 1 life")
     void opponentCastsBlueSpellControllerAccepts() {
@@ -108,6 +103,9 @@ class KrakensEyeTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player1.getId());
 
         harness.castFromHand(player2, new NeurokProdigy(), "{2}{U}");
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.passBothPriorities();
 
         // Player1 (controller of Kraken's Eye) should be prompted
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
@@ -132,6 +130,8 @@ class KrakensEyeTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player1.getId());
 
         harness.castInstant(player1, 0, targetId);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -151,13 +151,19 @@ class KrakensEyeTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player1.getId());
 
         harness.castFromHand(player1, new NeurokProdigy(), "{2}{U}");
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.setHand(player1, List.of(new EchoingTruth()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castInstant(player1, 0, eyeId);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() instanceof KrakensEye);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         resolveAllTriggers();
 
@@ -165,8 +171,6 @@ class KrakensEyeTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard() instanceof KrakensEye);
     }
-
-    // ===== Non-blue spell does NOT trigger =====
 
     @Test
     @DisplayName("Non-blue spell does not trigger Kraken's Eye")
@@ -182,8 +186,6 @@ class KrakensEyeTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
     }
 
-    // ===== Multiple eyes =====
-
     @Test
     @DisplayName("Multiple Kraken's Eyes each trigger independently")
     void multipleEyesTriggerIndependently() {
@@ -194,23 +196,19 @@ class KrakensEyeTest extends BaseCardTest {
 
         harness.castFromHand(player1, new NeurokProdigy(), "{2}{U}");
 
-        // First eye prompt
-        harness.handleMayAbilityChosen(player1, true);
-        // Second eye prompt
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack.stream()
+                .filter(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY).count()).isEqualTo(2);
 
-        // Two triggered abilities on the stack (plus the creature spell)
-        long triggeredCount = gd.stack.stream()
-                .filter(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
-                .count();
-        assertThat(triggeredCount).isEqualTo(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         resolveAllTriggers();
 
         harness.assertLife(player1, lifeBefore + 2);
     }
-
-    // ===== No trigger when not on battlefield =====
 
     @Test
     @DisplayName("Kraken's Eye does not trigger when not on the battlefield")
@@ -222,4 +220,39 @@ class KrakensEyeTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
     }
+    @Test
+    @DisplayName("Only the Eye's controller gains life when the other player casts blue")
+    void opponentControlledEyeGainsLifeForItsController() {
+        harness.addToBattlefield(player2, new KrakensEye());
+        int casterLife = gd.getLife(player1.getId());
+        int controllerLife = gd.getLife(player2.getId());
+
+        harness.castFromHand(player1, new NeurokProdigy(), "{2}{U}");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, casterLife);
+        harness.assertLife(player2, controllerLife + 1);
+    }
+
+    @Test
+    @DisplayName("Casting a colorless artifact does not trigger an existing Eye")
+    void colorlessSpellDoesNotTrigger() {
+        harness.addToBattlefield(player1, new KrakensEye());
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.castFromHand(player1, new KrakensEye(), "{2}");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, lifeBefore);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard() instanceof KrakensEye).hasSize(2);
+    }
+
 }
