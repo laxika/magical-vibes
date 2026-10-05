@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
@@ -17,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GrizzlyBears.class, HillGiant.class, Okk.class, ShivanDragon.class,
+@CardUsed({GiantGrowth.class, GrizzlyBears.class, HillGiant.class, Okk.class, ShivanDragon.class,
         TrumpetingArmodon.class})
 class OkkTest extends BaseCardTest {
 
@@ -236,6 +237,64 @@ class OkkTest extends BaseCardTest {
                 List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("greater power also blocks");
+    }
+
+    @Test
+    @DisplayName("Okk can attack with an ally whose current power was increased above its own")
+    void canAttackWithBoostedAlly() {
+        addCreatureReady(player1, new Okk());
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        resolveGrowthBeforeCombat(bear);
+
+        assertThatCode(() -> declareAttackers(player1, List.of(0, 1))).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Increasing Okk's power can make its previously stronger attacking ally insufficient")
+    void cannotAttackWhenBoostedAboveAlly() {
+        Permanent okk = addCreatureReady(player1, new Okk());
+        addCreatureReady(player1, new ShivanDragon());
+        resolveGrowthBeforeCombat(okk);
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0, 1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("greater power also attacks");
+    }
+
+    @Test
+    @DisplayName("Okk can block with an ally whose current power was increased above its own")
+    void canBlockWithBoostedAlly() {
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new Okk());
+        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
+        resolveGrowthBeforeCombat(bear);
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Increasing Okk's power can make its previously stronger blocking ally insufficient")
+    void cannotBlockWhenBoostedAboveAlly() {
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent okk = addCreatureReady(player2, new Okk());
+        addCreatureReady(player2, new ShivanDragon());
+        resolveGrowthBeforeCombat(okk);
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("greater power also blocks");
+    }
+
+    private void resolveGrowthBeforeCombat(Permanent target) {
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT,
+                () -> harness.castAndResolveInstant(player1, 0, target.getId()));
     }
 
     private Permanent addReadyAttacker(Player player) {
