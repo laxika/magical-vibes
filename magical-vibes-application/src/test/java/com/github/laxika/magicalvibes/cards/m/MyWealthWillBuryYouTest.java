@@ -16,6 +16,51 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MyWealthWillBuryYouTest extends BaseCardTest {
 
     @Test
+    void createsFourTreasuresWhenOpponentsControlNoPermanents() {
+        resolveScheme();
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(4);
+        assertThat(findPermanents(player2, "Treasure")).isEmpty();
+        assertThat(findPermanents(player1, "Treasure")).allMatch(permanent -> !permanent.isTapped());
+    }
+
+    @Test
+    void createsFourTreasuresAtTheExactMinimum() {
+        addOpponentArtifactsAndEnchantments(2, 2);
+
+        resolveScheme();
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(4);
+    }
+
+    @Test
+    void countsPermanentsAtResolutionRatherThanWhenTheAbilityTriggers() {
+        addOpponentArtifactsAndEnchantments(2, 1);
+        Card scheme = new MyWealthWillBuryYou();
+        gd.stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                scheme,
+                player1.getId(),
+                scheme.getName(),
+                scheme.getEffects(EffectSlot.SPELL)));
+        addOpponentArtifactsAndEnchantments(1, 1);
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(5);
+    }
+
+    @Test
+    void previouslyCreatedTreasuresDoNotIncreaseTheOpponentPermanentCount() {
+        addOpponentArtifactsAndEnchantments(3, 2);
+
+        resolveScheme();
+        resolveScheme();
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(10);
+    }
+
+    @Test
     void createsAtLeastFourTreasuresFromOpponentArtifactsAndEnchantments() {
         addOpponentArtifactsAndEnchantments(2, 1);
         harness.addToBattlefield(player1, new DarksteelIngot());
