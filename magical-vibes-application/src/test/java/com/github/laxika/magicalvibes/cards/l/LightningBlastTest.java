@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.i.InvasionOfRegatha;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.r.RedwoodTreefolk;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({LightningBlast.class, RagingGoblin.class, RedwoodTreefolk.class, Plains.class, ChandraNalaar.class,
-        InvasionOfRegatha.class, DisciplesOfTheInferno.class})
+        InvasionOfRegatha.class, DisciplesOfTheInferno.class, Unsummon.class})
 class LightningBlastTest extends BaseCardTest {
 
     @Test
@@ -134,5 +135,49 @@ class LightningBlastTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Lightning Blast");
+    }
+
+    @Test
+    @DisplayName("Can target a creature its controller controls")
+    void canTargetOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        harness.setHand(player1, List.of(new LightningBlast()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Raging Goblin");
+        harness.assertInGraveyard(player1, "Raging Goblin");
+    }
+
+    @Test
+    @DisplayName("Does not resolve when its only target has left the battlefield")
+    void doesNotResolveAfterTargetLeavesBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+        harness.setHand(player1, List.of(new LightningBlast(), new Unsummon()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player2, "Raging Goblin");
+        harness.assertNotInGraveyard(player2, "Raging Goblin");
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Lightning Blast");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Requires red mana even when four mana is available")
+    void cannotCastWithoutRedMana() {
+        harness.setHand(player1, List.of(new LightningBlast()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
     }
 }
