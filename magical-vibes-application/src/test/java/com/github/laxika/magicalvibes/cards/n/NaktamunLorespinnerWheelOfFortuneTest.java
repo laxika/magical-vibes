@@ -12,8 +12,10 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({NaktamunLorespinnerWheelOfFortune.class, WheelOfFortune.class, GrizzlyBears.class})
 class NaktamunLorespinnerWheelOfFortuneTest extends BaseCardTest {
@@ -89,12 +91,151 @@ class NaktamunLorespinnerWheelOfFortuneTest extends BaseCardTest {
         assertThat(gd.findExiledCard(copyId)).isNull();
     }
 
+    @Test
+    @DisplayName("An empty controller hand satisfies the upkeep condition")
+    void becomesPreparedWithEmptyControllerHand() {
+        Permanent lorespinner = harness.addToBattlefieldAndReturn(player1,
+                new NaktamunLorespinnerWheelOfFortune());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(lorespinner.isPrepared()).isTrue();
+        assertThat(gd.findExiledCard(lorespinner.getPreparedSpellCardId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("An opponent's upkeep does not prepare the creature")
+    void doesNotTriggerOnOpponentUpkeep() {
+        Permanent lorespinner = harness.addToBattlefieldAndReturn(player1,
+                new NaktamunLorespinnerWheelOfFortune());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(lorespinner.isPrepared()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A different player may satisfy the hand condition when the trigger resolves")
+    void qualifyingPlayerCanChangeBeforeResolution() {
+        Permanent lorespinner = harness.addToBattlefieldAndReturn(player1,
+                new NaktamunLorespinnerWheelOfFortune());
+        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.passBothPriorities();
+
+        assertThat(lorespinner.isPrepared()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An already prepared creature does not create a second spell copy")
+    void repeatedPreparationKeepsExistingCopy() {
+        Permanent lorespinner = harness.addToBattlefieldAndReturn(player1,
+                new NaktamunLorespinnerWheelOfFortune());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        UUID copyId = lorespinner.getPreparedSpellCardId();
+        int exileCount = gd.exiledCards.size();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(lorespinner.getPreparedSpellCardId()).isEqualTo(copyId);
+        assertThat(gd.exiledCards.size()).isEqualTo(exileCount);
+    }
+
+    @Test
+    @DisplayName("The prepared spell still requires its mana cost")
+    void insufficientManaDoesNotUnprepareCreature() {
+        Permanent lorespinner = harness.addToBattlefieldAndReturn(player1,
+                new NaktamunLorespinnerWheelOfFortune());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        UUID copyId = lorespinner.getPreparedSpellCardId();
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, copyId))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(lorespinner.isPrepared()).isTrue();
+        assertThat(lorespinner.getPreparedSpellCardId()).isEqualTo(copyId);
+        assertThat(gd.findExiledCard(copyId)).isNotNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Casting unprepares immediately and the resolved spell copy does not enter the graveyard")
+    void castingUnpreparesBeforeResolutionAndCopyCeasesToExist() {
+        Permanent lorespinner = harness.addToBattlefieldAndReturn(player1,
+                new NaktamunLorespinnerWheelOfFortune());
+        GrizzlyBears discarded = new GrizzlyBears();
+        harness.setHand(player1, List.of(discarded));
+        harness.setHand(player2, List.of());
+        fillLibraries(7);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        UUID copyId = lorespinner.getPreparedSpellCardId();
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castFromExile(player1, copyId);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(lorespinner.isPrepared()).isFalse();
+        assertThat(lorespinner.getPreparedSpellCardId()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(discarded);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(7);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.findExiledCard(copyId)).isNull();
+    }
+
+    @Test
+    @DisplayName("The prepared Wheel of Fortune cannot be cast during upkeep")
+    void preparedSpellStillRequiresSorceryTiming() {
+        Permanent lorespinner = harness.addToBattlefieldAndReturn(player1,
+                new NaktamunLorespinnerWheelOfFortune());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        UUID copyId = lorespinner.getPreparedSpellCardId();
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, copyId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery-speed");
+
+        assertThat(lorespinner.isPrepared()).isTrue();
+        assertThat(gd.findExiledCard(copyId)).isNotNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void fillLibraries(int cardsEach) {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player2.getId()).clear();
-        for (int i = 0; i < cardsEach; i++) {
-            gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-            gd.playerDecks.get(player2.getId()).add(new GrizzlyBears());
-        }
+        harness.setLibrary(player1, IntStream.range(0, cardsEach)
+                .mapToObj(i -> new GrizzlyBears()).toList());
+        harness.setLibrary(player2, IntStream.range(0, cardsEach)
+                .mapToObj(i -> new GrizzlyBears()).toList());
     }
 }
