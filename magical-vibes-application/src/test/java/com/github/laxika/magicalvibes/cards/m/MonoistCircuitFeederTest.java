@@ -31,8 +31,7 @@ class MonoistCircuitFeederTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 6);
 
         harness.castCreature(player1, 0, List.of(ownCreature.getId(), opposingCreature.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
         assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
@@ -51,8 +50,7 @@ class MonoistCircuitFeederTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 6);
 
         harness.castCreature(player1, 0, List.of(ownCreature.getId(), opposingCreature.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -92,5 +90,135 @@ class MonoistCircuitFeederTest extends BaseCardTest {
                 player1, 0, List.of(firstOwnCreature.getId(), secondOwnCreature.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature an opponent controls");
+    }
+
+    @Test
+    void canTargetItselfAfterEntering() {
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new MonoistCircuitFeeder()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent feeder = findPermanent(player1, "Monoist Circuit-Feeder");
+        harness.handlePermanentChosen(player1, feeder.getId());
+        harness.handlePermanentChosen(player1, opposingCreature.getId());
+        resolveAllTriggers();
+
+        assertThat(feeder.getEffectivePower()).isEqualTo(5);
+        assertThat(feeder.getEffectiveToughness()).isEqualTo(4);
+        assertThat(opposingCreature.getEffectivePower()).isEqualTo(4);
+        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    void artifactCountIsDeterminedAtResolutionAndThenStaysFixed() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new MonoistCircuitFeeder()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castCreature(player1, 0, List.of(ownCreature.getId(), opposingCreature.getId()));
+        harness.passBothPriorities();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        resolveAllTriggers();
+
+        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
+        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(2);
+
+        gd.playerBattlefields.get(player1.getId()).remove(artifact);
+        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.addToBattlefield(player1, new FountainOfYouth());
+
+        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
+        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    void stillWeakensOpponentWhenSourceAndFirstTargetLeave() {
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.setHand(player1, List.of(new MonoistCircuitFeeder()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent feeder = findPermanent(player1, "Monoist Circuit-Feeder");
+        harness.handlePermanentChosen(player1, feeder.getId());
+        harness.handlePermanentChosen(player1, opposingCreature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(feeder);
+        resolveAllTriggers();
+
+        assertThat(opposingCreature.getEffectivePower()).isEqualTo(4);
+        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(feeder.getPowerModifier()).isZero();
+    }
+
+    @Test
+    void stillBoostsOwnCreatureWhenOpposingTargetLeaves() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new MonoistCircuitFeeder()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castCreature(player1, 0, List.of(ownCreature.getId(), opposingCreature.getId()));
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player2.getId()).remove(opposingCreature);
+        resolveAllTriggers();
+
+        assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
+        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    void zeroArtifactsAtResolutionProducesNoModifiers() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new MonoistCircuitFeeder()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castCreature(player1, 0, List.of(ownCreature.getId(), opposingCreature.getId()));
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Monoist Circuit-Feeder"));
+        resolveAllTriggers();
+
+        assertThat(ownCreature.getPowerModifier()).isZero();
+        assertThat(opposingCreature.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void opponentCreatureDiesFromZeroToughnessWhileOwnCreatureGetsFullBoost() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.setHand(player1, List.of(new MonoistCircuitFeeder()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castCreature(player1, 0, List.of(ownCreature.getId(), opposingCreature.getId()));
+        resolveAllTriggers();
+
+        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
+        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opposingCreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opposingCreature.getCard());
+    }
+
+    @Test
+    void canEnterWithoutAnOpposingCreatureAndDoesNotApplyHalfTheAbility() {
+        harness.setHand(player1, List.of(new MonoistCircuitFeeder()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent feeder = findPermanent(player1, "Monoist Circuit-Feeder");
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, feeder.getId());
+        }
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(feeder.getPowerModifier()).isZero();
+        assertThat(feeder.getToughnessModifier()).isZero();
     }
 }
