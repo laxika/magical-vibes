@@ -11,7 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(JumboCactuar.class)
+@CardUsed({JumboCactuar.class})
 class JumboCactuarTest extends BaseCardTest {
 
     @Test
@@ -45,5 +45,44 @@ class JumboCactuarTest extends BaseCardTest {
         assertThat(cactuar.getPowerModifier()).isZero();
         assertThat(cactuar.getToughnessModifier()).isZero();
         assertThat(gqs.getEffectivePower(gd, cactuar)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Each attacking Cactuar is boosted only after its trigger resolves")
+    void attackTriggersBoostOnlyTheirSources() {
+        Permanent first = addCreatureReady(player1, new JumboCactuar());
+        Permanent second = addCreatureReady(player1, new JumboCactuar());
+        Permanent idle = addCreatureReady(player1, new JumboCactuar());
+        Permanent opponent = addCreatureReady(player2, new JumboCactuar());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0, 1));
+
+            assertThat(gd.stack).hasSize(2);
+            assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(1);
+
+            resolveAllTriggers();
+
+            assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(10000);
+            assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(10000);
+            assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(7);
+            assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(7);
+            assertThat(gqs.getEffectivePower(gd, idle)).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(1);
+        });
+    }
+
+    @Test
+    @DisplayName("An unblocked Cactuar deals 10000 combat damage")
+    void unblockedAttackDealsBoostedCombatDamage() {
+        addCreatureReady(player1, new JumboCactuar());
+        harness.setLife(player2, 20000);
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(10000);
     }
 }
