@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GoblinBrigand;
+import com.github.laxika.magicalvibes.cards.t.TorrentOfFire;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -13,17 +14,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KrosanWarchief.class, GoblinBrigand.class, Kurgadon.class})
+@CardUsed({KrosanWarchief.class, GoblinBrigand.class, Kurgadon.class, TorrentOfFire.class})
 class KrosanWarchiefTest extends BaseCardTest {
 
     @Test
     void reducesBeastSpellCost() {
         harness.addToBattlefield(player1, new KrosanWarchief());
-        harness.setHand(player1, List.of(new KrosanWarchief()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new KrosanWarchief(), "{1}{G}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
@@ -54,11 +51,7 @@ class KrosanWarchiefTest extends BaseCardTest {
     void multipleWarchiefsStackTheirCostReductions() {
         harness.addToBattlefield(player1, new KrosanWarchief());
         harness.addToBattlefield(player1, new KrosanWarchief());
-        harness.setHand(player1, List.of(new Kurgadon()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Kurgadon(), "{2}{G}");
 
         assertThat(gd.stack).hasSize(1);
     }
@@ -99,5 +92,78 @@ class KrosanWarchiefTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Beast");
+    }
+
+    @Test
+    void excessCostReductionLeavesColoredManaRequirement() {
+        harness.addToBattlefield(player1, new KrosanWarchief());
+        harness.addToBattlefield(player1, new KrosanWarchief());
+        harness.addToBattlefield(player1, new KrosanWarchief());
+
+        harness.castFromHand(player1, new KrosanWarchief(), "{G}");
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void costReductionCannotPayColoredMana() {
+        harness.addToBattlefield(player1, new KrosanWarchief());
+        harness.addToBattlefield(player1, new KrosanWarchief());
+        harness.addToBattlefield(player1, new KrosanWarchief());
+        harness.setHand(player1, List.of(new KrosanWarchief()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canRegenerateItselfWhileTappedAndSummoningSick() {
+        Permanent warchief = harness.addToBattlefieldAndReturn(player1, new KrosanWarchief());
+        warchief.setTapped(true);
+        warchief.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, warchief.getId());
+        harness.passBothPriorities();
+
+        assertThat(warchief.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    void spellCostReductionDoesNotReduceRegenerationActivationCost() {
+        Permanent warchief = harness.addToBattlefieldAndReturn(player1, new KrosanWarchief());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, warchief.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(warchief.getRegenerationShield()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void regenerationPreventsLethalDamageAndIsConsumed() {
+        Permanent warchief = harness.addToBattlefieldAndReturn(player1, new KrosanWarchief());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, warchief.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new TorrentOfFire(), new TorrentOfFire()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.castAndResolveSorcery(player1, 0, warchief.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(warchief);
+        assertThat(warchief.isTapped()).isTrue();
+        assertThat(warchief.getRegenerationShield()).isZero();
+        harness.assertNotInGraveyard(player1, "Krosan Warchief");
+
+        harness.castAndResolveSorcery(player1, 0, warchief.getId());
+
+        harness.assertNotOnBattlefield(player1, "Krosan Warchief");
+        harness.assertInGraveyard(player1, "Krosan Warchief");
     }
 }
