@@ -120,6 +120,56 @@ class IndebtedSamuraiTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Its own death triggers the ability even though it cannot receive the counter")
+    void ownDeathTriggersAbility() {
+        harness.addToBattlefield(player1, new IndebtedSamurai());
+        UUID sourceId = samurai().getId();
+
+        for (int i = 0; i < 3; i++) {
+            harness.setHand(player1, List.of(new FirstVolley()));
+            harness.addMana(player1, ManaColor.RED, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            harness.castAndResolveInstant(player1, 0, sourceId);
+        }
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Separate allied Samurai deaths each allow another counter")
+    void repeatedSamuraiDeathsAddCounters() {
+        harness.addToBattlefield(player1, new IndebtedSamurai());
+        harness.addToBattlefield(player1, new TakenosCavalry());
+        harness.addToBattlefield(player1, new TakenosCavalry());
+
+        killWithFirstVolley("Takeno's Cavalry");
+        harness.handleMayAbilityChosen(player1, true);
+        killWithFirstVolley("Takeno's Cavalry");
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(samurai().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Bushido triggers only once when multiple creatures block it")
+    void bushidoTriggersOnceForMultipleBlockers() {
+        Permanent attacker = addCreatureReady(player1, new IndebtedSamurai());
+        addCreatureReady(player2, new Frostling());
+        addCreatureReady(player2, new Frostling());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        harness.passBothPriorities();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Bushido 1 bonus wears off at end of turn")
     void bushidoWearsOffAtEndOfTurn() {
         Permanent attacker = addCreatureReady(player1, new IndebtedSamurai());
