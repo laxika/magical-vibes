@@ -142,6 +142,56 @@ class LeoninBattlemageTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The Battlemage can boost itself")
+    void canBoostItself() {
+        Permanent battlemage = addReadyBattlemage();
+
+        harness.activateAbility(player1, 0, null, battlemage.getId());
+        harness.passBothPriorities();
+
+        assertThat(battlemage.isTapped()).isTrue();
+        assertThat(battlemage.getPowerModifier()).isEqualTo(1);
+        assertThat(battlemage.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents paying the tap cost")
+    void summoningSicknessPreventsActivation() {
+        Permanent battlemage = harness.addToBattlefieldAndReturn(player1, new LeoninBattlemage());
+        Permanent target = addCreatureReady(player2, new CrazedGoblin());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(battlemage.isTapped()).isFalse();
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Untapping after casting a spell allows another cumulative boost")
+    void castTriggerAllowsAnotherBoost() {
+        Permanent battlemage = addReadyBattlemage();
+        Permanent target = addCreatureReady(player2, new CrazedGoblin());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.castFromHand(player1, new Nourish(), "{G}{G}");
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(battlemage.isTapped()).isFalse();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(battlemage.isTapped()).isTrue();
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(2);
+    }
+
     private Permanent addReadyBattlemage() {
         return addCreatureReady(player1, new LeoninBattlemage());
     }
