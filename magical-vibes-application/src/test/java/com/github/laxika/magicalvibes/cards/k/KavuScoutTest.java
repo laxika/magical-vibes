@@ -63,4 +63,42 @@ class KavuScoutTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, scout)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, scout)).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("Kavu Scout updates its bonus as lands enter and leave, regardless of whether they are tapped")
+    void updatesBonusWhenLandsEnterAndLeave() {
+        Permanent scout = addCreatureReady(player1, new KavuScout());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.setTapped(true);
+
+        assertThat(gqs.getEffectivePower(gd, scout)).isEqualTo(1);
+
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        assertThat(gqs.getEffectivePower(gd, scout)).isEqualTo(2);
+
+        gd.playerBattlefields.get(player1.getId()).remove(forest);
+        assertThat(gqs.getEffectivePower(gd, scout)).isEqualTo(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(island);
+        assertThat(gqs.getEffectivePower(gd, scout)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, scout)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each Kavu Scout uses its own controller's lands and boosts only itself")
+    void eachScoutUsesItsOwnControllersLands() {
+        Permanent firstScout = addCreatureReady(player1, new KavuScout());
+        Permanent secondScout = addCreatureReady(player1, new KavuScout());
+        Permanent opposingScout = addCreatureReady(player2, new KavuScout());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Island());
+        harness.addToBattlefield(player2, new Swamp());
+
+        assertThat(gqs.getEffectivePower(gd, firstScout)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, secondScout)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opposingScout)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, firstScout)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, secondScout)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingScout)).isEqualTo(2);
+    }
 }
