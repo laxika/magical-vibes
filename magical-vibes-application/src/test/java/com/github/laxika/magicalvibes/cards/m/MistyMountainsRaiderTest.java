@@ -39,4 +39,44 @@ class MistyMountainsRaiderTest extends BaseCardTest {
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ARMY, CardSubtype.GOBLIN);
     }
+
+    @Test
+    void attackingWithAnotherCreatureTriggersEachNonattackingRaiderOnce() {
+        harness.addToBattlefield(player1, new MistyMountainsRaider());
+        harness.addToBattlefield(player1, new MistyMountainsRaider());
+        addCreatureReady(player1, new MistyMountainsRaider());
+
+        declareAttackers(List.of(2));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Goblin Army")).hasSize(1);
+        assertThat(findPermanent(player1, "Goblin Army")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+    }
+
+    @Test
+    void multipleAttackersTriggerEachRaiderOnlyOnce() {
+        addCreatureReady(player1, new MistyMountainsRaider());
+        addCreatureReady(player1, new MistyMountainsRaider());
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Goblin Army")).hasSize(1);
+        assertThat(findPermanent(player1, "Goblin Army")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    void opponentsAttackDoesNotTriggerYourRaider() {
+        harness.addToBattlefield(player1, new MistyMountainsRaider());
+        addCreatureReady(player2, new MistyMountainsRaider());
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Goblin Army")).isEmpty();
+        assertThat(findPermanent(player2, "Goblin Army")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
 }
