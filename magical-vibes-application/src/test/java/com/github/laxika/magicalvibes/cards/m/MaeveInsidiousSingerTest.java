@@ -56,6 +56,53 @@ class MaeveInsidiousSingerTest extends BaseCardTest {
                 .hasMessageContaining("creature");
     }
 
+    @Test
+    @DisplayName("Each activation draws separately for the same attacking creature")
+    void repeatedActivationsDrawSeparately() {
+        addMaeveAndBears();
+        harness.setLibrary(player1, List.of(new Island(), new Island()));
+        activateMaeve(bears());
+        activateMaeve(bears());
+
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        declareAttackers(player1, List.of(1));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 2);
+    }
+
+    @Test
+    @DisplayName("Does not draw when the goaded creature attacks Maeve's controller")
+    void doesNotDrawWhenAttackingAbilityController() {
+        addCreatureReady(player1, new MaeveInsidiousSinger());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Island()));
+        activateMaeve(creature);
+
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+    }
+
+    @Test
+    @DisplayName("Does not draw for an unwatched creature attacking an opponent")
+    void doesNotDrawForUnwatchedAttacker() {
+        addCreatureReady(player1, new MaeveInsidiousSinger());
+        Permanent watched = addCreatureReady(player1, new GrizzlyBears());
+        watched.setTapped(true);
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Island()));
+        activateMaeve(watched);
+
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        declareAttackers(player1, List.of(2));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+    }
+
     private void addMaeveAndBears() {
         addCreatureReady(player1, new MaeveInsidiousSinger());
         addCreatureReady(player1, new GrizzlyBears());
