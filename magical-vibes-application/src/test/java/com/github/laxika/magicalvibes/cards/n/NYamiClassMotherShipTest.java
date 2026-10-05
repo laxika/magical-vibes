@@ -92,6 +92,65 @@ class NYamiClassMotherShipTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
     }
 
+    @Test
+    @DisplayName("A top land enters untapped and leaves the next card in the library")
+    void combatDamagePutsLandOntoBattlefieldUntapped() {
+        Permanent ship = addReadyShip();
+        ship.setAnimatedUntilEndOfTurn(true);
+        ship.setAnimatedPower(5);
+        ship.setAnimatedToughness(7);
+        ship.setAttacking(true);
+        Forest land = new Forest();
+        Shock nextCard = new Shock();
+        harness.setLibrary(player1, List.of(land, nextCard));
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        Permanent enteredLand = findPermanent(land);
+        assertThat(enteredLand).isNotNull();
+        assertThat(enteredLand.isTapped()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(land, nextCard);
+    }
+
+    @Test
+    @DisplayName("Combat damage with an empty library does not draw or offer a choice")
+    void emptyLibraryDoesNothing() {
+        Permanent ship = addReadyShip();
+        ship.setAnimatedUntilEndOfTurn(true);
+        ship.setAnimatedPower(5);
+        ship.setAnimatedToughness(7);
+        ship.setAttacking(true);
+        harness.setLibrary(player1, List.of());
+        List<Card> originalHand = List.copyOf(gd.playerHands.get(player1.getId()));
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(originalHand);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("Summoning-sick creatures can combine their power to crew")
+    void summoningSickCreaturesCanCrewTogether() {
+        Permanent ship = addReadyShip();
+        Permanent firstCrew = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent secondCrew = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        firstCrew.setSummoningSick(true);
+        secondCrew.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(firstCrew.isTapped()).isTrue();
+        assertThat(secondCrew.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, ship)).isTrue();
+    }
     private Permanent addReadyShip() {
         Permanent ship = harness.addToBattlefieldAndReturn(player1, new NYamiClassMotherShip());
         ship.setSummoningSick(false);
