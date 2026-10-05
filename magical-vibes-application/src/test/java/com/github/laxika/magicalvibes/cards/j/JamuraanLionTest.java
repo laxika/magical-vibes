@@ -83,4 +83,69 @@ class JamuraanLionTest extends BaseCardTest {
         harness.passUntil(player1, TurnStep.CLEANUP);
         assertThat(target.isCantBlockThisTurn()).isFalse();
     }
+
+    @Test
+    @DisplayName("Ability can target the Lion itself and takes effect only on resolution")
+    void canTargetItself() {
+        Permanent lion = addCreatureReady(player1, new JamuraanLion());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, lion.getId());
+
+        assertThat(lion.isTapped()).isTrue();
+        assertThat(lion.isCantBlockThisTurn()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(lion.isCantBlockThisTurn()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability requires white mana rather than mana of another color")
+    void cannotActivateWithoutWhiteMana() {
+        Permanent lion = addCreatureReady(player1, new JamuraanLion());
+        Permanent target = addCreatureReady(player2, new PhyrexianWalker());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(lion.isTapped()).isFalse();
+        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Lion cannot activate its ability")
+    void cannotActivateWhileTapped() {
+        Permanent lion = addCreatureReady(player1, new JamuraanLion());
+        lion.setTapped(true);
+        Permanent target = addCreatureReady(player2, new PhyrexianWalker());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Lion with summoning sickness cannot activate its tap ability")
+    void cannotActivateWithSummoningSickness() {
+        Permanent lion = harness.addToBattlefieldAndReturn(player1, new JamuraanLion());
+        lion.setSummoningSick(true);
+        Permanent target = addCreatureReady(player2, new PhyrexianWalker());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(lion.isTapped()).isFalse();
+        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 }
