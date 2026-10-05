@@ -62,4 +62,55 @@ class MouserFoundryTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Mouser Foundry");
     }
+
+    @Test
+    void sacrificeIsPaidImmediatelyAndRobotTriggerResolvesBeforeDamage() {
+        harness.addToBattlefield(player1, new MouserFoundry());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Mouser Foundry");
+        harness.assertInGraveyard(player1, "Mouser Foundry");
+        assertThat(findPermanents(player1, "Robot")).isEmpty();
+        assertThat(target.getMarkedDamage()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Robot")).hasSize(1);
+        assertThat(target.getMarkedDamage()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    void activationRequiresRedManaAndDoesNotSacrificeWhenPaymentFails() {
+        harness.addToBattlefield(player1, new MouserFoundry());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Mouser Foundry");
+        harness.assertNotInGraveyard(player1, "Mouser Foundry");
+        assertThat(findPermanents(player1, "Robot")).isEmpty();
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void returningToHandCreatesRobotForController() {
+        Permanent foundry = harness.addToBattlefieldAndReturn(player2, new MouserFoundry());
+
+        harness.getPermanentRemovalService().removePermanentToHand(gd, foundry);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Mouser Foundry");
+        harness.assertNotOnBattlefield(player2, "Mouser Foundry");
+        assertThat(findPermanents(player2, "Robot")).hasSize(1);
+        assertThat(findPermanents(player1, "Robot")).isEmpty();
+    }
 }
