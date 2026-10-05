@@ -25,10 +25,7 @@ class JoyfulStormsculptorTest extends BaseCardTest {
     @Test
     @DisplayName("Entering the battlefield creates two blue and red Elemental tokens")
     void createsElementalTokens() {
-        harness.setHand(player1, List.of(new JoyfulStormsculptor()));
-        addJoyfulStormsculptorMana();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new JoyfulStormsculptor(), "{3}{U}{R}");
         resolveAllTriggers();
 
         List<Permanent> tokens = findPermanents(player1, "Elemental");
@@ -54,7 +51,7 @@ class JoyfulStormsculptorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new StokeTheFlames()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        gs.playCard(gd, player1, 0, 0, player2.getId(), null, List.of(),
+        harness.castInstantWithConvoke(player1, 0, List.of(player2.getId()),
                 List.of(firstConvokeCreature.getId(), secondConvokeCreature.getId()));
         resolveAllTriggers();
 
@@ -77,9 +74,71 @@ class JoyfulStormsculptorTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
     }
 
-    private void addJoyfulStormsculptorMana() {
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+    @Test
+    @DisplayName("A convoke spell paid entirely with mana triggers before the spell resolves")
+    void convokeSpellTriggersWithoutTappingCreatures() {
+        harness.addToBattlefield(player1, new JoyfulStormsculptor());
+        Permanent protectedByOpponent = harness.addToBattlefieldAndReturn(player1, new InvasionOfKamigawa());
+        protectedByOpponent.setProtectorPlayerId(player2.getId());
+        protectedByOpponent.setCounterCount(CounterType.DEFENSE, 4);
+        Permanent protectedByController = harness.addToBattlefieldAndReturn(player2, new InvasionOfKamigawa());
+        protectedByController.setProtectorPlayerId(player1.getId());
+        protectedByController.setCounterCount(CounterType.DEFENSE, 4);
+        harness.setHand(player1, List.of(new StokeTheFlames()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+        assertThat(protectedByOpponent.getCounterCount(CounterType.DEFENSE)).isEqualTo(3);
+        assertThat(protectedByController.getCounterCount(CounterType.DEFENSE)).isEqualTo(4);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("The damage trigger still resolves after Joyful Stormsculptor leaves the battlefield")
+    void damageTriggerSurvivesSourceRemoval() {
+        Permanent sculptor = harness.addToBattlefieldAndReturn(player1, new JoyfulStormsculptor());
+        Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfKamigawa());
+        battle.setProtectorPlayerId(player2.getId());
+        battle.setCounterCount(CounterType.DEFENSE, 4);
+        harness.setHand(player1, List.of(new StokeTheFlames()));
+        harness.setHand(player2, List.of(new StokeTheFlames()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castInstant(player2, 0, sculptor.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Joyful Stormsculptor");
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 15);
+        assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An opponent's convoke spell does not trigger the damage ability")
+    void opponentConvokeSpellDoesNotTrigger() {
+        harness.addToBattlefield(player1, new JoyfulStormsculptor());
+        harness.setHand(player2, List.of(new StokeTheFlames()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
     }
 }
