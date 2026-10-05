@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MourningThrull.class, Stratozeppelid.class})
+@CardUsed({MourningThrull.class, Stratozeppelid.class, Delirium.class})
 class MourningThrullTest extends BaseCardTest {
 
     private void addAttacker(MourningThrull card) {
@@ -75,7 +75,6 @@ class MourningThrullTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Delirium.class)
     @DisplayName("Noncombat damage also gains that much life")
     void noncombatDamageAlsoGainsLife() {
         Permanent thrull = addCreatureReady(player2, new MourningThrull());
@@ -94,5 +93,45 @@ class MourningThrullTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Life gain waits for the damage trigger to resolve")
+    void lifeGainUsesDamageAmountCapturedWhenTriggered() {
+        MourningThrull card = new MourningThrull();
+        card.setPower(3);
+        addAttacker(card);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 17);
+        assertThat(gd.stack).hasSize(1);
+
+        card.setPower(5);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    @DisplayName("A blocking Thrull gains life for its controller even when it dies")
+    void blockingThrullGainsLifeForDefendingController() {
+        Permanent attacker = addCreatureReady(player1, new Stratozeppelid());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new MourningThrull());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Mourning Thrull");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 21);
     }
 }
