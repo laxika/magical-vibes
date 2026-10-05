@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.g.GoldenBear;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -41,11 +42,7 @@ class NightstalkerEngineTest extends BaseCardTest {
     void onlyCountsCreatureCards() {
         Permanent engine = addCreatureReady(player1, new NightstalkerEngine());
 
-        List<Card> graveyard = new ArrayList<>();
-        graveyard.addAll(createCreatureCards(2));
-        graveyard.add(new Plains());
-        graveyard.add(new Plains());
-        harness.setGraveyard(player1, graveyard);
+        harness.setGraveyard(player1, List.of(new GoldenBear(), new GoldenBear(), new Plains(), new Plains()));
 
         assertThat(gqs.getEffectivePower(gd, engine)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, engine)).isEqualTo(3);
@@ -99,6 +96,45 @@ class NightstalkerEngineTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, engine)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, engine)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The power-defining ability works in hand using the owner's graveyard")
+    void powerDefinedInHand() {
+        NightstalkerEngine engine = new NightstalkerEngine();
+        harness.setHand(player1, List.of(engine));
+        harness.setGraveyard(player1, createCreatureCards(2));
+        harness.setGraveyard(player2, createCreatureCards(4));
+
+        assertThat(gqs.getEffectiveCardPower(gd, engine)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, engine)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The power-defining ability counts itself while in its owner's graveyard")
+    void countsItselfInGraveyard() {
+        NightstalkerEngine engine = new NightstalkerEngine();
+        harness.setGraveyard(player1, List.of(engine, new GoldenBear(), new Plains()));
+        harness.setGraveyard(player2, createCreatureCards(4));
+
+        assertThat(gqs.getEffectiveCardPower(gd, engine)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, engine)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Counters modify the defined power and remain when the graveyard becomes empty")
+    void countersApplyAfterDefinedPower() {
+        Permanent engine = addCreatureReady(player1, new NightstalkerEngine());
+        engine.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setGraveyard(player1, createCreatureCards(3));
+
+        assertThat(gqs.getEffectivePower(gd, engine)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, engine)).isEqualTo(5);
+
+        harness.setGraveyard(player1, List.of());
+
+        assertThat(gqs.getEffectivePower(gd, engine)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, engine)).isEqualTo(5);
     }
 
     private List<Card> createCreatureCards(int count) {
