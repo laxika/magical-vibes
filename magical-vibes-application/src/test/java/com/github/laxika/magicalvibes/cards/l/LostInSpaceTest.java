@@ -80,11 +80,87 @@ class LostInSpaceTest extends BaseCardTest {
                 .hasMessageContaining("artifact or creature");
     }
 
-    private void cast(Permanent target) {
+    @Test
+    @DisplayName("Surveils the returned creature when targeting your own creature and choosing top")
+    void surveilsOwnReturnedCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Card previousTop = new Island();
+        harness.setLibrary(player1, List.of(previousTop));
+
+        cast(target);
+        harness.handleListChoice(player1, "Top");
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(previousTop);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Lost in Space");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The owner chooses the destination even when another player controls the creature")
+    void ownerChoosesForStolenCreature() {
+        Card creature = new GrizzlyBears();
+        creature.setOwnerId(player2.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, creature);
+        gd.stolenCreatures.put(target.getId(), player2.getId());
+        Card ownerTop = new Island();
+        Card casterTop = new Island();
+        harness.setLibrary(player2, List.of(ownerTop));
+        harness.setLibrary(player1, List.of(casterTop));
+
+        cast(target);
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "Bottom"))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleListChoice(player2, "Bottom");
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(ownerTop, creature);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(casterTop);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Does not surveil when its only target leaves before resolution")
+    void doesNotSurveilWithIllegalTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card top = new Island();
+        harness.setLibrary(player1, List.of(top));
         harness.setHand(player1, List.of(new LostInSpace()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.setGraveyard(player2, List.of(target.getCard()));
+
         harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        harness.assertInGraveyard(player1, "Lost in Space");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Resolves with an empty library for the caster")
+    void surveilsEmptyLibrary() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+
+        cast(target);
+        harness.handleListChoice(player2, "Bottom");
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(target.getCard());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Lost in Space");
+    }
+
+    private void cast(Permanent target) {
+        harness.setHand(player1, List.of(new LostInSpace()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }
