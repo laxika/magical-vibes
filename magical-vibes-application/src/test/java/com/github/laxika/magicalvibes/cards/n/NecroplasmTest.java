@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GolgariGuildmage;
+import com.github.laxika.magicalvibes.cards.w.Willbender;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -18,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Necroplasm.class, GolgariGuildmage.class, BorosRecruit.class, Forest.class})
+@CardUsed({Necroplasm.class, GolgariGuildmage.class, BorosRecruit.class, Forest.class, Willbender.class})
 class NecroplasmTest extends BaseCardTest {
 
     @Test
@@ -132,15 +134,110 @@ class NecroplasmTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(necroplasm);
     }
 
+    @Test
+    void destroysItselfWithThreeCounters() {
+        addNecroplasm(player1).setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        addNecroplasm(player2);
+
+        triggerEndStep(player1);
+
+        harness.assertNotOnBattlefield(player1, "Necroplasm");
+        harness.assertNotOnBattlefield(player2, "Necroplasm");
+        harness.assertInGraveyard(player1, "Necroplasm");
+        harness.assertInGraveyard(player2, "Necroplasm");
+    }
+
+    @Test
+    void readsCountersAtResolution() {
+        Permanent necroplasm = addNecroplasm(player1);
+        necroplasm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent guildmage = harness.addToBattlefieldAndReturn(player2, new GolgariGuildmage());
+        Permanent recruit = harness.addToBattlefieldAndReturn(player2, new BorosRecruit());
+
+        beginEndStep(player1);
+        necroplasm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(recruit).doesNotContain(guildmage);
+    }
+
+    @Test
+    void usesLastKnownCountersWhenSourceLeavesAndReturns() {
+        Necroplasm card = new Necroplasm();
+        Permanent original = harness.addToBattlefieldAndReturn(player1, card);
+        original.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent guildmage = harness.addToBattlefieldAndReturn(player2, new GolgariGuildmage());
+
+        beginEndStep(player1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, original));
+        harness.setHand(player1, List.of());
+        Permanent returned = harness.addToBattlefieldAndReturn(player1, card);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(returned);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(guildmage);
+        harness.assertInGraveyard(player2, "Golgari Guildmage");
+    }
+
+    @Test
+    void destroysFaceDownCreatureWithZeroCounters() {
+        Permanent faceDown = castFaceDownWillbender();
+        addNecroplasm(player1);
+
+        triggerEndStep(player1);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(faceDown);
+        harness.assertInGraveyard(player2, "Willbender");
+    }
+
+    @Test
+    void sparesFaceDownCreatureWithTwoCounters() {
+        Permanent faceDown = castFaceDownWillbender();
+        addNecroplasm(player1).setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        triggerEndStep(player1);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(faceDown);
+    }
+
+    @Test
+    void cannotDredgeWithOnlyOneCardInLibrary() {
+        Necroplasm necroplasm = new Necroplasm();
+        Forest topCard = new Forest();
+        harness.setGraveyard(player1, List.of(necroplasm));
+        harness.setLibrary(player1, List.of(topCard));
+
+        resolveDraw();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(topCard).doesNotContain(necroplasm);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(necroplasm);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.GraveyardChoice.class);
+    }
+
+    private Permanent castFaceDownWillbender() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new Willbender()));
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player2, 0);
+        harness.passBothPriorities();
+        return findPermanent(player2, "Willbender");
+    }
+
     private Permanent addNecroplasm(Player player) {
         return harness.addToBattlefieldAndReturn(player, new Necroplasm());
     }
 
     private void triggerEndStep(Player activePlayer) {
+        beginEndStep(activePlayer);
+        harness.passBothPriorities();
+    }
+
+    private void beginEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(activePlayer, TurnStep.END_STEP);
-        harness.passBothPriorities();
     }
 
     private void resolveDraw() {
