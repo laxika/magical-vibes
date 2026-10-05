@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({IncubationSac.class})
 class IncubationSacTest extends BaseCardTest {
 
     @Test
@@ -96,11 +98,87 @@ class IncubationSacTest extends BaseCardTest {
                 .hasMessageContaining("counter");
     }
 
+    @Test
+    void paysCostsBeforeTokenResolves() {
+        Permanent sac = addReadySac(player1, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(sac.isTapped()).isTrue();
+        assertThat(sac.getCounterCount(CounterType.OIL)).isEqualTo(2);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(sac);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void cannotActivateDuringCombat() {
+        addReadySac(player1, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotActivateWithNonemptyStack() {
+        Permanent sac = addReadySac(player1, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.activateAbility(player1, 0, null, null);
+        sac.setTapped(false);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(sac.getCounterCount(CounterType.OIL)).isEqualTo(2);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void cannotActivateWithOnlyThreeMana() {
+        Permanent sac = addReadySac(player1, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(sac.isTapped()).isFalse();
+        assertThat(sac.getCounterCount(CounterType.OIL)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canActivateOnTurnItEnters() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new IncubationSac()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(findPermanent(player1, "Incubation Sac").getCounterCount(CounterType.OIL)).isEqualTo(2);
+    }
+
     private Permanent addReadySac(Player player, int counters) {
-        Permanent sac = new Permanent(new IncubationSac());
+        Permanent sac = harness.addToBattlefieldAndReturn(player, new IncubationSac());
         sac.setSummoningSick(false);
         sac.setCounterCount(CounterType.OIL, counters);
-        gd.playerBattlefields.get(player.getId()).add(sac);
         return sac;
     }
 }
