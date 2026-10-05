@@ -76,6 +76,69 @@ class LandCapTest extends BaseCardTest {
         assertThat(landCap.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("The depletion counter remains until the upkeep trigger resolves")
+    void depletionRemovalUsesTheStack() {
+        Permanent landCap = addLandCap();
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gd.stack).isEmpty();
+
+        advanceToUpkeep(player1);
+
+        assertThat(landCap.isTapped()).isTrue();
+        assertThat(landCap.getCounterCount(CounterType.DEPLETION)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(landCap.getCounterCount(CounterType.DEPLETION)).isZero();
+        assertThat(landCap.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Land Cap untaps on the next untap step after its depletion counter is removed")
+    void untapsOnFollowingTurnAfterDepletionClears() {
+        Permanent landCap = addLandCap();
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(landCap.isTapped()).isTrue();
+        assertThat(landCap.getCounterCount(CounterType.DEPLETION)).isZero();
+
+        harness.performUntapStep(player1);
+
+        assertThat(landCap.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's upkeep does not remove Land Cap's depletion counter")
+    void opponentsUpkeepDoesNotRemoveCounter() {
+        Permanent landCap = addLandCap();
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(landCap.isTapped()).isTrue();
+        assertThat(landCap.getCounterCount(CounterType.DEPLETION)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Other counter types neither prevent untapping nor get removed by the upkeep trigger")
+    void ignoresOtherCounterTypes() {
+        Permanent landCap = addLandCap();
+        landCap.tap();
+        landCap.setCounterCount(CounterType.CHARGE, 2);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(landCap.isTapped()).isFalse();
+        assertThat(landCap.getCounterCount(CounterType.DEPLETION)).isZero();
+        assertThat(landCap.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+    }
+
     private Permanent addLandCap() {
         Permanent landCap = harness.addToBattlefieldAndReturn(player1, new LandCap());
         landCap.setSummoningSick(false);
