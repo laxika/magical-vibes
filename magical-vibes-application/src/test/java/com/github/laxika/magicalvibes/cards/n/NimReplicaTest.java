@@ -90,6 +90,61 @@ class NimReplicaTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("A tapped, summoning-sick Nim Replica can activate its ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent replica = harness.addToBattlefieldAndReturn(player1, new NimReplica());
+        replica.setTapped(true);
+        replica.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new NimReplica());
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertInGraveyard(player1, "Nim Replica");
+        harness.assertOnBattlefield(player2, "Nim Replica");
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Nim Replica");
+        harness.assertInGraveyard(player2, "Nim Replica");
+    }
+
+    @Test
+    @DisplayName("Nim Replica can target itself, then its ability has no legal target")
+    void canTargetItselfBeforePayingSacrificeCost() {
+        Permanent replica = harness.addToBattlefieldAndReturn(player1, new NimReplica());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new NimReplica());
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, replica.getId());
+        harness.assertNotOnBattlefield(player1, "Nim Replica");
+        harness.assertInGraveyard(player1, "Nim Replica");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Nim Replica");
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Colorless mana cannot replace the black activation cost")
+    void cannotActivateWithoutBlackMana() {
+        harness.addToBattlefield(player1, new NimReplica());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new NimReplica());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        harness.assertOnBattlefield(player1, "Nim Replica");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+    }
+
     private void addActivationMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLACK, 1);
