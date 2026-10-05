@@ -42,4 +42,62 @@ class JollyGerbilsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertNotOnBattlefield(player2, "Food");
     }
+
+    @Test
+    void drawWaitsForGiftAndThenForTriggeredAbilityToResolve() {
+        Permanent gerbils = addCreatureReady(player1, new JollyGerbils());
+        harness.setHand(player1, List.of(new CrumbAndGetIt()));
+        harness.setLibrary(player1, List.of(new CrumbAndGetIt()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstantWithGift(player1, 0, gerbils.getId(), true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertNotOnBattlefield(player2, "Food");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertOnBattlefield(player2, "Food");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Crumb and Get It");
+    }
+
+    @Test
+    void doesNotDrawWhenOpponentGivesGift() {
+        addCreatureReady(player1, new JollyGerbils());
+        Permanent opponentGerbils = addCreatureReady(player2, new JollyGerbils());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new CrumbAndGetIt()));
+        harness.setLibrary(player1, List.of(new CrumbAndGetIt()));
+        harness.setLibrary(player2, List.of(new CrumbAndGetIt()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.castInstantWithGift(player2, 0, opponentGerbils.getId(), true);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertOnBattlefield(player1, "Food");
+    }
+
+    @Test
+    void eachGerbilsDrawsForTheSameGift() {
+        Permanent gerbils = addCreatureReady(player1, new JollyGerbils());
+        addCreatureReady(player1, new JollyGerbils());
+        harness.setHand(player1, List.of(new CrumbAndGetIt()));
+        harness.setLibrary(player1, List.of(new CrumbAndGetIt(), new CrumbAndGetIt()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstantWithGift(player1, 0, gerbils.getId(), true);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.assertOnBattlefield(player2, "Food");
+    }
 }
