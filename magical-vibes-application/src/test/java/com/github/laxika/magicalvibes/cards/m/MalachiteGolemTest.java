@@ -100,4 +100,53 @@ class MalachiteGolemTest extends BaseCardTest {
         assertThat(golem.isTapped()).isTrue();
         assertThat(gqs.hasKeyword(gd, golem, Keyword.TRAMPLE)).isTrue();
     }
+
+    @Test
+    @DisplayName("The ability can be activated while the Golem has summoning sickness")
+    void canActivateWithSummoningSickness() {
+        Permanent golem = harness.addToBattlefieldAndReturn(player1, new MalachiteGolem());
+        golem.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(golem.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Trample is granted only when the activated ability resolves")
+    void abilityUsesTheStack() {
+        Permanent golem = addCreatureReady(player1, new MalachiteGolem());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.TRAMPLE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability may be activated again in the same turn")
+    void canActivateMultipleTimesInOneTurn() {
+        Permanent golem = addCreatureReady(player1, new MalachiteGolem());
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(golem.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.TRAMPLE)).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
 }
