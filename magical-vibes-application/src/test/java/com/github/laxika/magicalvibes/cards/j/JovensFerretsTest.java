@@ -88,8 +88,8 @@ class JovensFerretsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Nothing is scheduled when Joven's Ferrets goes unblocked")
-    void nothingScheduledWhenUnblocked() {
+    @DisplayName("The end-of-combat ability triggers even when Joven's Ferrets goes unblocked")
+    void triggersWhenUnblocked() {
         Permanent ferrets = addCreatureReady(player1, new JovensFerrets());
         ferrets.setAttacking(true);
 
@@ -97,6 +97,49 @@ class JovensFerretsTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
         harness.passUntil(TurnStep.END_OF_COMBAT);
 
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Every surviving blocker is tapped, but unrelated creatures are not")
+    void tapsAllBlockersOnly() {
+        Permanent ferrets = addCreatureReady(player1, new JovensFerrets());
+        ferrets.setAttacking(true);
+        Permanent first = addCreatureReady(player2, new Roterothopter());
+        Permanent second = addCreatureReady(player2, new Roterothopter());
+        Permanent unrelated = addCreatureReady(player2, new Roterothopter());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(first.getSkipUntapCount()).isEqualTo(1);
+        assertThat(second.getSkipUntapCount()).isEqualTo(1);
+        assertThat(unrelated.isTapped()).isFalse();
+        assertThat(unrelated.getSkipUntapCount()).isZero();
+    }
+
+    @Test
+    @DisplayName("Removing the Ferrets after its end-of-combat ability triggers does not stop it")
+    void resolvesAfterSourceLeaves() {
+        Permanent ferrets = addCreatureReady(player1, new JovensFerrets());
+        ferrets.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new Roterothopter());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        assertThat(gd.stack).hasSize(1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, ferrets));
+        resolveAllTriggers();
+
+        assertThat(blocker.isTapped()).isTrue();
+        assertThat(blocker.getSkipUntapCount()).isEqualTo(1);
     }
 }
