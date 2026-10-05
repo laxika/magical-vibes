@@ -58,6 +58,37 @@ class KashiTribeWarriorsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Blocking Warriors lock the attacker even when the Warriors die in combat")
+    void blockingWarriorsLockAttackerAfterDying() {
+        Permanent mossKami = addCreatureReady(player1, new MossKami());
+        mossKami.setAttacking(true);
+        mossKami.setTapped(true);
+        Permanent warriors = addCreatureReady(player2, new KashiTribeWarriors());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(warriors);
+        assertThat(mossKami.isTapped()).isTrue();
+        assertThat(mossKami.getSkipUntapCount()).isEqualTo(1);
+
+        harness.performUntapStep(player2);
+
+        assertThat(mossKami.getSkipUntapCount()).isEqualTo(1);
+
+        harness.performUntapStep(player1);
+
+        assertThat(mossKami.isTapped()).isTrue();
+        assertThat(mossKami.getSkipUntapCount()).isZero();
+
+        harness.performUntapStep(player1);
+
+        assertThat(mossKami.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Combat damage to a player does not tap or lock any creature")
     void unblockedDamageDoesNotTapCreatures() {
         Permanent warriors = addCreatureReady(player1, new KashiTribeWarriors());
