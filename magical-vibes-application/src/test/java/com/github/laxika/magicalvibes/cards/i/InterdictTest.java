@@ -9,12 +9,14 @@ import com.github.laxika.magicalvibes.cards.m.MoggFanatic;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -36,8 +38,7 @@ class InterdictTest extends BaseCardTest {
     }
 
     private void resolveInterdict(Permanent source) {
-        harness.castInstant(player1, 0, source.getCard().getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, source.getCard().getId());
     }
 
     @Test
@@ -196,5 +197,85 @@ class InterdictTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         harness.assertInGraveyard(player2, "Mogg Fanatic");
+    }
+
+    @Test
+    @DisplayName("The source lock also prevents mana abilities")
+    void locksManaAbilitiesOfSource() {
+        addReadyInterdict();
+        Permanent ghostTown = harness.addToBattlefieldAndReturn(player2, new GhostTown());
+
+        harness.forceActivePlayer(player1);
+        harness.passPriority(player1);
+        harness.activateAbility(player2, 0, 1, null, null);
+        resolveInterdict(ghostTown);
+
+        harness.passPriority(player1);
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(ghostTown.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The lock prevents a different ability of the same source")
+    void locksOtherAbilityOfSource() {
+        addReadyInterdict();
+        Permanent bottle = addEssenceBottle();
+        bottle.setCounterCount(CounterType.ELIXIR, 1);
+
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passPriority(player2);
+        resolveInterdict(bottle);
+
+        bottle.untap();
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(bottle.getCounterCount(CounterType.ELIXIR)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The source can activate abilities again on the next turn")
+    void lockExpiresAtEndOfTurn() {
+        addReadyInterdict();
+        Permanent bottle = addEssenceBottle();
+
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passPriority(player2);
+        resolveInterdict(bottle);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        bottle.untap();
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.passPriority(player1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(bottle.getCounterCount(CounterType.ELIXIR)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Does not draw when the targeted ability has already been countered")
+    void doesNotDrawWhenTargetLeavesStack() {
+        harness.setHand(player1, List.of(new Interdict(), new Interdict()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        Permanent bottle = addEssenceBottle();
+
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player2, 0, null, null);
+        UUID abilityId = gd.stack.getLast().getTargetableId();
+        harness.passPriority(player2);
+        harness.castInstant(player1, 0, abilityId);
+        harness.castInstant(player1, 0, abilityId);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(bottle.getCounterCount(CounterType.ELIXIR)).isZero();
     }
 }
