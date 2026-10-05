@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.ThievesGuildEnforcer;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -74,5 +75,62 @@ class ProsperousThiefTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Treasure")).isZero();
+    }
+
+    @Test
+    @DisplayName("Prosperous Thief creates a Treasure from its own combat damage")
+    void triggersForItsOwnCombatDamage() {
+        addCreatureReady(player1, new ProsperousThief());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
+        assertThat(findPermanent(player1, "Treasure").isTapped()).isFalse();
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Each Prosperous Thief triggers once for simultaneous Ninja combat damage")
+    void multipleThievesEachCreateOneTreasure() {
+        addCreatureReady(player1, new ProsperousThief());
+        addCreatureReady(player1, new ProsperousThief());
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    @DisplayName("An opposing Ninja's combat damage does not trigger your Prosperous Thief")
+    void doesNotTriggerForOpposingNinja() {
+        addCreatureReady(player1, new ProsperousThief()).tap();
+        addCreatureReady(player2, new ProsperousThief());
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Treasure")).isZero();
+        assertThat(countPermanents(player2, "Treasure")).isEqualTo(1);
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("Combat damage to a blocking creature does not create a Treasure")
+    void doesNotTriggerForCombatDamageToCreature() {
+        addCreatureReady(player1, new ProsperousThief());
+        addCreatureReady(player2, new ProsperousThief());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Treasure")).isZero();
+        assertThat(countPermanents(player2, "Treasure")).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }
