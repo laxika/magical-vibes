@@ -82,4 +82,57 @@ class RagamuffynTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no cards in hand");
     }
+
+    @Test
+    @DisplayName("Sacrifice is paid before resolution and a nonempty hand does not stop the draw")
+    void handRestrictionIsOnlyCheckedAtActivation() {
+        addCreatureReady(player1, new Ragamuffyn());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GuardianOfTheGuildpact()));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Ragamuffyn");
+        harness.assertInGraveyard(player1, "Ragamuffyn");
+        harness.assertNotInHand(player1, "Guardian of the Guildpact");
+        harness.setHand(player1, List.of(new HallowedFountain()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Hallowed Fountain");
+        harness.assertInHand(player1, "Guardian of the Guildpact");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A tapped Ragamuffyn cannot activate even with an empty hand")
+    void cannotActivateWhileTapped() {
+        Permanent ragamuffyn = addCreatureReady(player1, new Ragamuffyn());
+        ragamuffyn.tap();
+        harness.setHand(player1, List.of());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        harness.assertOnBattlefield(player1, "Ragamuffyn");
+        harness.assertNotInGraveyard(player1, "Ragamuffyn");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents paying the tap cost")
+    void cannotActivateWithSummoningSickness() {
+        Permanent ragamuffyn = addCreatureReady(player1, new Ragamuffyn());
+        ragamuffyn.setSummoningSick(true);
+        harness.setHand(player1, List.of());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(ragamuffyn.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Ragamuffyn");
+        harness.assertNotInGraveyard(player1, "Ragamuffyn");
+        assertThat(gd.stack).isEmpty();
+    }
 }
