@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.b.BarkshellBlessing;
+import com.github.laxika.magicalvibes.cards.e.EnvironmentalSciences;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,7 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PrismariPledgemage.class, BarkshellBlessing.class, GiantGrowth.class, GrizzlyBears.class})
+@CardUsed({PrismariPledgemage.class, BarkshellBlessing.class, GiantGrowth.class, GrizzlyBears.class,
+        EnvironmentalSciences.class})
 class PrismariPledgemageTest extends BaseCardTest {
 
     @Test
@@ -25,9 +26,8 @@ class PrismariPledgemageTest extends BaseCardTest {
     void cannotAttackBeforeMagecraft() {
         addCreatureReady(player1, new PrismariPledgemage());
         harness.addToBattlefield(player2, new GrizzlyBears());
-        beginAttackers();
 
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -43,8 +43,7 @@ class PrismariPledgemageTest extends BaseCardTest {
         harness.castInstant(player1, 0, pledgemage.getId());
         harness.passBothPriorities();
 
-        beginAttackers();
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
 
         assertThat(pledgemage.isAttacking()).isTrue();
     }
@@ -65,16 +64,106 @@ class PrismariPledgemageTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
-        beginAttackers();
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
 
         assertThat(pledgemage.isAttacking()).isTrue();
     }
 
-    private void beginAttackers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+    @Test
+    @DisplayName("Casting a sorcery grants attack permission before that spell resolves")
+    void castingSorceryAllowsAttack() {
+        Permanent pledgemage = addCreatureReady(player1, new PrismariPledgemage());
+        harness.addToBattlefield(player2, new PrismariPledgemage());
+        harness.setHand(player1, List.of(new EnvironmentalSciences()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(harness.getCombatAttackService().getAttackableCreatureIndices(gd, player1.getId())).contains(0);
+        assertThat(pledgemage.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Casting an instant does not grant permission until magecraft resolves")
+    void permissionWaitsForTriggerResolution() {
+        Permanent pledgemage = addCreatureReady(player1, new PrismariPledgemage());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstant(player1, 0, pledgemage.getId());
+
+        assertThat(harness.getCombatAttackService().getAttackableCreatureIndices(gd, player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(harness.getCombatAttackService().getAttackableCreatureIndices(gd, player1.getId())).contains(0);
+    }
+
+    @Test
+    @DisplayName("Opponent's instant does not grant attack permission")
+    void opponentsInstantDoesNotAllowAttack() {
+        Permanent pledgemage = addCreatureReady(player1, new PrismariPledgemage());
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castInstant(player2, 0, pledgemage.getId());
+        resolveAllTriggers();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Casting a creature does not grant attack permission")
+    void castingCreatureDoesNotAllowAttack() {
+        addCreatureReady(player1, new PrismariPledgemage());
+        harness.setHand(player1, List.of(new PrismariPledgemage()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Magecraft does not bypass summoning sickness")
+    void magecraftDoesNotGrantHaste() {
+        Permanent pledgemage = harness.addToBattlefieldAndReturn(player1, new PrismariPledgemage());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstant(player1, 0, pledgemage.getId());
+        resolveAllTriggers();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Magecraft attack permission expires at end of turn")
+    void permissionExpiresAtEndOfTurn() {
+        Permanent pledgemage = addCreatureReady(player1, new PrismariPledgemage());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstant(player1, 0, pledgemage.getId());
+        resolveAllTriggers();
+        assertThat(harness.getCombatAttackService().getAttackableCreatureIndices(gd, player1.getId())).contains(0);
+
+        harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
     }
 }
