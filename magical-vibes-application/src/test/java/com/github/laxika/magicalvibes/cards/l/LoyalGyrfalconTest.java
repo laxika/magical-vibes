@@ -81,10 +81,41 @@ class LoyalGyrfalconTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.hasKeyword(gd, falcon, Keyword.DEFENDER)).isFalse();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, falcon, Keyword.DEFENDER)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Defender is removed only when the cast trigger resolves, before the spell")
+    void defenderRemovalWaitsForTriggerResolution() {
+        Permanent falcon = addCreatureReady(player1, new LoyalGyrfalcon());
+
+        harness.castFromHand(player1, new SuntailHawk(), "{W}");
+
+        assertThat(gqs.hasKeyword(gd, falcon, Keyword.DEFENDER)).isTrue();
+        harness.assertNotOnBattlefield(player1, "Suntail Hawk");
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, falcon, Keyword.DEFENDER)).isFalse();
+        harness.assertNotOnBattlefield(player1, "Suntail Hawk");
+    }
+
+    @Test
+    @DisplayName("Casting another Gyrfalcon affects the existing one but not the arriving one")
+    void newlyCastGyrfalconDoesNotTriggerForItself() {
+        Permanent existing = addCreatureReady(player1, new LoyalGyrfalcon());
+        LoyalGyrfalcon arrivingCard = new LoyalGyrfalcon();
+
+        harness.castFromHand(player1, arrivingCard, "{3}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent arriving = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(arrivingCard.getId()))
+                .findFirst().orElseThrow();
+        assertThat(gqs.hasKeyword(gd, existing, Keyword.DEFENDER)).isFalse();
+        assertThat(gqs.hasKeyword(gd, arriving, Keyword.DEFENDER)).isTrue();
     }
 }
