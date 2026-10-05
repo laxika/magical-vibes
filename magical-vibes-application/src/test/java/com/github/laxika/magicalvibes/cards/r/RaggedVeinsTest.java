@@ -33,8 +33,7 @@ class RaggedVeinsTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         UUID kaijinId = harness.getPermanentId(player2, "River Kaijin");
-        harness.castInstant(player1, 0, kaijinId);
-        harness.passBothPriorities(); // Resolve Glacial Ray - 2 damage
+        harness.castAndResolveInstant(player1, 0, kaijinId);
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
@@ -55,8 +54,7 @@ class RaggedVeinsTest extends BaseCardTest {
         UUID kaijinId = harness.getPermanentId(player2, "River Kaijin");
         harness.setHand(player1, List.of(new BlindWithAnger()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castInstant(player1, 0, kaijinId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, kaijinId);
 
         harness.setHand(player1, List.of(new GlacialRay()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -64,8 +62,7 @@ class RaggedVeinsTest extends BaseCardTest {
         int ownerLifeBefore = gd.playerLifeTotals.get(player2.getId());
         int controllerLifeBefore = gd.playerLifeTotals.get(player1.getId());
 
-        harness.castInstant(player1, 0, kaijinId);
-        harness.passBothPriorities(); // Resolve Glacial Ray
+        harness.castAndResolveInstant(player1, 0, kaijinId);
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(controllerLifeBefore - 2);
@@ -88,13 +85,11 @@ class RaggedVeinsTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new GlacialRay()));
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.castInstant(player1, 0, kaijinId);
-        harness.passBothPriorities(); // Resolve Glacial Ray; Ragged Veins trigger remains on stack
+        harness.castAndResolveInstant(player1, 0, kaijinId); // Ragged Veins trigger remains on stack
 
         harness.setHand(player1, List.of(new BlindWithAnger()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castInstant(player1, 0, kaijinId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, kaijinId);
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(controllerLifeBefore - 2);
@@ -113,4 +108,53 @@ class RaggedVeinsTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("Life loss uses the creature's last controller when it dies after changing control")
+    void lifeLossUsesLastControllerAfterCreatureLeaves() {
+        Permanent kaijin = addCreatureReady(player2, new RiverKaijin());
+        UUID kaijinId = kaijin.getId();
+        harness.setHand(player1, List.of(new RaggedVeins()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castEnchantment(player1, 0, kaijinId);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new GlacialRay()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, kaijinId);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player1, List.of(new BlindWithAnger()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castAndResolveInstant(player1, 0, kaijinId);
+        harness.assertOnBattlefield(player1, "River Kaijin");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player1, List.of(new GlacialRay()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, kaijinId);
+        harness.assertInGraveyard(player2, "River Kaijin");
+        harness.assertInGraveyard(player1, "Ragged Veins");
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Flash allows Ragged Veins to resolve before pending damage")
+    void flashAuraTriggersForPendingDamage() {
+        Permanent kaijin = addCreatureReady(player2, new RiverKaijin());
+        harness.setHand(player1, List.of(new GlacialRay(), new RaggedVeins()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castInstant(player1, 0, kaijin.getId());
+        harness.castEnchantment(player1, 0, kaijin.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Ragged Veins");
+        harness.assertLife(player2, 20);
+        resolveAllTriggers();
+        harness.assertLife(player2, 18);
+    }
+
 }
