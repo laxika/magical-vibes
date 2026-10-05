@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,19 +19,18 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PrepareFight.class, GrizzlyBears.class, LlanowarElves.class, Forest.class})
 class PrepareFightTest extends BaseCardTest {
 
     @Test
     @DisplayName("Prepare untaps, pumps +2/+2, and grants lifelink until end of turn")
     void prepareUntapsPumpsAndGrantsLifelink() {
-        Permanent target = new Permanent(new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         target.tap();
-        gd.playerBattlefields.get(player1.getId()).add(target);
         harness.setHand(player1, List.of(new PrepareFight()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.isTapped()).isFalse();
         assertThat(target.getPowerModifier()).isEqualTo(2);
@@ -46,8 +46,7 @@ class PrepareFightTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PrepareFight()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -134,5 +133,99 @@ class PrepareFightTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFlashback(player1, 0, List.of(mine.getId(), theirs.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sorcery-speed");
+    }
+
+    @Test
+    @DisplayName("Prepare can untap and enhance an opponent's creature")
+    void prepareCanTargetOpponentsCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.tap();
+        harness.setHand(player1, List.of(new PrepareFight()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(target.hasKeyword(Keyword.LIFELINK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Prepare followed by Fight uses enhanced power and grants life from fight damage")
+    void prepareThenFightGainsLife() {
+        Permanent mine = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent theirs = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new PrepareFight()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, mine.getId());
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castFlashback(player1, 0, List.of(mine.getId(), theirs.getId()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 24);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(mine.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c instanceof PrepareFight);
+    }
+
+    @Test
+    @DisplayName("Fight deals both creatures' damage before lethal damage removes them")
+    void fightKillsBothCreatures() {
+        Permanent mine = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent theirs = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new PrepareFight()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castFlashback(player1, 0, List.of(mine.getId(), theirs.getId()));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Fight deals no damage if the first target changes controllers")
+    void fightDoesNothingWhenFirstTargetChangesController() {
+        Permanent mine = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent theirs = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new PrepareFight()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castFlashback(player1, 0, List.of(mine.getId(), theirs.getId()));
+
+        gd.playerBattlefields.get(player1.getId()).remove(mine);
+        gd.playerBattlefields.get(player2.getId()).add(mine);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(mine, theirs);
+        assertThat(mine.getMarkedDamage()).isZero();
+        assertThat(theirs.getMarkedDamage()).isZero();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c instanceof PrepareFight);
+    }
+
+    @Test
+    @DisplayName("Fight is still exiled if both targets leave the battlefield")
+    void fightExilesWhenBothTargetsAreGone() {
+        Permanent mine = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent theirs = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setGraveyard(player1, List.of(new PrepareFight()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castFlashback(player1, 0, List.of(mine.getId(), theirs.getId()));
+
+        gd.playerBattlefields.get(player1.getId()).remove(mine);
+        gd.playerBattlefields.get(player2.getId()).remove(theirs);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c instanceof PrepareFight);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(c -> c instanceof PrepareFight);
     }
 }
