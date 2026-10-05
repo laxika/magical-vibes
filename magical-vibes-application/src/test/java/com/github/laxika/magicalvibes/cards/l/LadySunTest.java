@@ -105,6 +105,72 @@ class LadySunTest extends BaseCardTest {
                 .hasMessageContaining("during your turn");
     }
 
+    @Test
+    @DisplayName("Returns another creature controlled by Lady Sun's controller")
+    void bouncesOwnCreature() {
+        setupLadySunOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new ForestBear());
+
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player1, "Forest Bear"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Lady Sun");
+        harness.assertNotOnBattlefield(player1, "Forest Bear");
+        harness.assertInHand(player1, "Lady Sun");
+        harness.assertInHand(player1, "Forest Bear");
+    }
+
+    @Test
+    @DisplayName("Lady Sun stays on the battlefield when the only target leaves before resolution")
+    void doesNotBounceSelfWhenTargetLeaves() {
+        setupLadySunOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player2, new ForestBear());
+        UUID targetId = harness.getPermanentId(player2, "Forest Bear");
+
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, findPermanent(player2, "Forest Bear")));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Lady Sun");
+        harness.assertNotInHand(player1, "Lady Sun");
+        assertThat(findPermanent(player1, "Lady Sun").isTapped()).isTrue();
+        harness.assertInGraveyard(player2, "Forest Bear");
+    }
+
+    @Test
+    @DisplayName("Still returns the target when Lady Sun leaves before resolution")
+    void bouncesTargetWhenSourceLeaves() {
+        setupLadySunOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player2, new ForestBear());
+        UUID targetId = harness.getPermanentId(player2, "Forest Bear");
+
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, findPermanent(player1, "Lady Sun")));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Lady Sun");
+        harness.assertNotInHand(player1, "Lady Sun");
+        harness.assertNotOnBattlefield(player2, "Forest Bear");
+        harness.assertInHand(player2, "Forest Bear");
+    }
+
+    @Test
+    @DisplayName("Cannot activate the tap ability while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new LadySun());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player2, new ForestBear());
+        UUID targetId = harness.getPermanentId(player2, "Forest Bear");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanent(player1, "Lady Sun").isTapped()).isFalse();
+    }
+
     private void setupLadySunOnMyTurn(TurnStep step) {
         addCreatureReady(player1, new LadySun());
         harness.forceActivePlayer(player1);
