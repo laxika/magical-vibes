@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.a.AngelOfDespair;
 import com.github.laxika.magicalvibes.cards.d.DouseInGloom;
 import com.github.laxika.magicalvibes.cards.m.MourningThrull;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,8 +18,74 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OrzhovEuthanist.class, DouseInGloom.class, MourningThrull.class, OrzhovBasilica.class})
+@CardUsed({OrzhovEuthanist.class, DouseInGloom.class, MourningThrull.class, OrzhovBasilica.class,
+        AngelOfDespair.class})
 class OrzhovEuthanistTest extends BaseCardTest {
+
+    @Test
+    void entersWithoutDestroyingAnUndamagedCreatureWhenThereIsNoLegalTarget() {
+        harness.addToBattlefield(player2, new MourningThrull());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new OrzhovEuthanist(), "{2}{B}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Orzhov Euthanist");
+        harness.assertOnBattlefield(player2, "Mourning Thrull");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void destroysOwnCreatureDamagedByAResolvedSpell() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AngelOfDespair());
+        destroyWithDouseInGloom(target.getId());
+        harness.assertOnBattlefield(player1, "Angel of Despair");
+
+        castEuthanist(target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Angel of Despair");
+        harness.assertInGraveyard(player1, "Angel of Despair");
+        harness.assertOnBattlefield(player1, "Orzhov Euthanist");
+    }
+
+    @Test
+    void remainsInGraveyardWhenItDiesWithoutACreatureToHaunt() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new OrzhovEuthanist(), "{2}{B}");
+        harness.passBothPriorities();
+
+        destroyWithDouseInGloom(harness.getPermanentId(player1, "Orzhov Euthanist"));
+
+        harness.assertInGraveyard(player1, "Orzhov Euthanist");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getName)
+                .doesNotContain("Orzhov Euthanist");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void remainsInGraveyardWhenHauntTargetDiesBeforeHauntResolves() {
+        Permanent euthanist = harness.addToBattlefieldAndReturn(player1, new OrzhovEuthanist());
+        Permanent hauntTarget = harness.addToBattlefieldAndReturn(player2, new MourningThrull());
+
+        destroyWithDouseInGloom(euthanist.getId());
+        harness.handlePermanentChosen(player1, hauntTarget.getId());
+
+        destroyWithDouseInGloom(hauntTarget.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Orzhov Euthanist");
+        harness.assertInGraveyard(player2, "Mourning Thrull");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getName)
+                .doesNotContain("Orzhov Euthanist");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     void entersAndDestroysCreatureThatWasDealtDamageThisTurn() {
