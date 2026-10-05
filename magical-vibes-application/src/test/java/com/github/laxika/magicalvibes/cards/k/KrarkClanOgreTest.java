@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.a.AvariceTotem;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -69,5 +70,93 @@ class KrarkClanOgreTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
         harness.assertOnBattlefield(player2, "Arachnoid");
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Ogre can activate the ability")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent ogre = harness.addToBattlefieldAndReturn(player1, new KrarkClanOgre());
+        ogre.setSummoningSick(true);
+        ogre.setTapped(true);
+        harness.addToBattlefield(player1, new AvariceTotem());
+        Permanent target = addCreatureReady(player2, new Arachnoid());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(ogre.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Avarice Totem");
+    }
+
+    @Test
+    @DisplayName("The Ogre can target itself, and the restriction expires after the turn")
+    void canTargetItselfAndRestrictionExpires() {
+        Permanent ogre = addCreatureReady(player1, new KrarkClanOgre());
+        harness.addToBattlefield(player1, new AvariceTotem());
+        Permanent attacker = addCreatureReady(player2, new Arachnoid());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, ogre.getId());
+        harness.passBothPriorities();
+
+        assertThat(ogre.isCantBlockThisTurn()).isTrue();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        attacker.setAttacking(true);
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        assertThat(ogre.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An artifact creature can be both the target and the sacrificed artifact")
+    void canSacrificeItsOwnTarget() {
+        addCreatureReady(player1, new KrarkClanOgre());
+        Permanent artifactCreature = addCreatureReady(player1, new Arachnoid());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, artifactCreature.getId());
+
+        harness.assertInGraveyard(player1, "Arachnoid");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertOnBattlefield(player1, "Krark-Clan Ogre");
+    }
+
+    @Test
+    @DisplayName("An opponent's artifact cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsArtifact() {
+        addCreatureReady(player1, new KrarkClanOgre());
+        Permanent target = addCreatureReady(player2, new Arachnoid());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Arachnoid");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The sacrifice cost cannot be paid without red mana")
+    void cannotActivateWithoutRedMana() {
+        addCreatureReady(player1, new KrarkClanOgre());
+        harness.addToBattlefield(player1, new AvariceTotem());
+        Permanent target = addCreatureReady(player2, new Arachnoid());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Avarice Totem");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 }
