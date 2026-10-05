@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -12,10 +13,57 @@ import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Pallimud.class, Mountain.class})
 class PallimudTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Casting Pallimud chooses the opponent as it enters without a triggered ability")
+    void castingChoosesOpponentAsItEnters() {
+        addOpponentLand(true);
+        addOpponentLand(true);
+        harness.setHand(player1, List.of(new Pallimud()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent pallimud = findPermanent(player1, "Pallimud");
+        assertThat(gqs.getEffectivePower(gd, pallimud)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, pallimud)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Entering without being cast still chooses the entering controller's opponent")
+    void enteringWithoutCastingChoosesOpponent() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        land.tap();
+        addOpponentLand(true);
+        addOpponentLand(true);
+
+        Permanent pallimud = harness.enterBattlefieldAndReturn(player2, new Pallimud());
+
+        assertThat(gqs.getEffectivePower(gd, pallimud)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, pallimud)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Power decreases immediately when the chosen opponent's land untaps")
+    void powerTracksLandsUntapping() {
+        Permanent land = addOpponentLand(true);
+        Permanent pallimud = harness.enterBattlefieldAndReturn(player1, new Pallimud());
+
+        assertThat(gqs.getEffectivePower(gd, pallimud)).isEqualTo(1);
+        land.untap();
+
+        assertThat(gqs.getEffectivePower(gd, pallimud)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, pallimud)).isEqualTo(3);
+    }
 
     @Test
     @DisplayName("Power equals the number of tapped lands the opponent controls; toughness stays 3")
