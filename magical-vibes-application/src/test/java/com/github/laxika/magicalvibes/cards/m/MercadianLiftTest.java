@@ -113,6 +113,60 @@ class MercadianLiftTest extends BaseCardTest {
         assertThat(lift.isTapped()).isFalse();
     }
 
+    @Test
+    void counterCostIsPaidBeforeTheCreatureChoiceResolves() {
+        Permanent lift = addLift();
+        lift.setCounterCount(CounterType.WINCH, 3);
+        harness.setHand(player1, List.of(new FreshVolunteers()));
+
+        harness.activateAbility(player1, 0, 1, 2, null);
+
+        assertThat(lift.getCounterCount(CounterType.WINCH)).isEqualTo(1);
+        assertThat(lift.isTapped()).isTrue();
+        harness.assertInHand(player1, "Fresh Volunteers");
+        harness.assertNotOnBattlefield(player1, "Fresh Volunteers");
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Fresh Volunteers");
+        assertThat(findPermanent(player1, "Fresh Volunteers").isTapped()).isFalse();
+    }
+
+    @Test
+    void cannotChooseANoncreatureWithMatchingManaValue() {
+        Permanent lift = addLift();
+        lift.setCounterCount(CounterType.WINCH, 2);
+        harness.setHand(player1, List.of(new MercadianLift(), new FreshVolunteers()));
+
+        harness.activateAbility(player1, 0, 1, 2, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInHand(player1, "Mercadian Lift");
+        harness.assertOnBattlefield(player1, "Fresh Volunteers");
+        assertThat(countPermanents(player1, "Mercadian Lift")).isEqualTo(1);
+    }
+
+    @Test
+    void resolvesWithTheAnnouncedXAfterTheLiftLeavesTheBattlefield() {
+        Permanent lift = addLift();
+        lift.setCounterCount(CounterType.WINCH, 2);
+        harness.setHand(player1, List.of(new FreshVolunteers()));
+
+        harness.activateAbility(player1, 0, 1, 2, null);
+        gd.playerBattlefields.get(player1.getId()).remove(lift);
+        gd.playerGraveyards.get(player1.getId()).add(lift.getCard());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertNotOnBattlefield(player1, "Mercadian Lift");
+        harness.assertOnBattlefield(player1, "Fresh Volunteers");
+    }
+
     private Permanent addLift() {
         return addCreatureReady(player1, new MercadianLift());
     }
