@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({JaceArchitectOfThought.class, GiantGrowth.class, GrizzlyBears.class, Shock.class})
 class JaceArchitectOfThoughtTest extends BaseCardTest {
 
     @Test
@@ -128,8 +130,8 @@ class JaceArchitectOfThoughtTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // The controller searches their own library first (they are the active player), then the opponent's.
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.exiledCards.stream().map(e -> e.card().getName()).toList())
                 .containsExactlyInAnyOrder("Shock", "Grizzly Bears");
@@ -152,8 +154,8 @@ class JaceArchitectOfThoughtTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         // Cast only the Grizzly Bears — no mana was added, so it can only resolve if it is free.
         harness.handleMultipleCardsChosen(player1, List.of(opponentBears.getId()));
@@ -173,12 +175,130 @@ class JaceArchitectOfThoughtTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.exiledCards.stream().map(e -> e.card().getName()).toList())
                 .containsExactly("Shock");
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.ImprovisationCapstoneCastChoice.class);
+    }
+
+    @Test
+    @DisplayName("−8: failing to find in your own library still searches the opponent's library")
+    void minusEightCanFailToFindInFirstLibrary() {
+        Card ownCard = new GiantGrowth();
+        Card opponentCard = new GrizzlyBears();
+        Permanent jace = addReadyJace(player1);
+        jace.setCounterCount(CounterType.LOYALTY, 8);
+        harness.setLibrary(player1, List.of(ownCard));
+        harness.setLibrary(player2, List.of(opponentCard));
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(opponentCard.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownCard);
+        assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(1);
+        assertThat(gd.hasPendingInteraction(PendingEachPlayerLibraryExile.class)).isFalse();
+    }
+
+    @Test
+    @DisplayName("−8: failing to find in the last library still offers previously exiled cards")
+    void minusEightCanFailToFindInLastLibrary() {
+        Card ownCard = new GrizzlyBears();
+        Card opponentCard = new GiantGrowth();
+        Permanent jace = addReadyJace(player1);
+        jace.setCounterCount(CounterType.LOYALTY, 8);
+        harness.setLibrary(player1, List.of(ownCard));
+        harness.setLibrary(player2, List.of(opponentCard));
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+        harness.handleMultipleCardsChosen(player1, List.of(ownCard.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(1);
+        assertThat(gd.hasPendingInteraction(PendingEachPlayerLibraryExile.class)).isFalse();
+    }
+
+    @Test
+    @DisplayName("−2: with fewer than three cards, the controller can choose an empty pile")
+    void minusTwoAllowsEmptyPileWithShortLibrary() {
+        Card first = new GiantGrowth();
+        Card second = new GrizzlyBears();
+        addReadyJace(player1);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(first, second));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player2, List.of());
+        harness.handleMayAbilityChosen(player1, true);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first);
+    }
+
+    @Test
+    @DisplayName("+1: the delayed ability continues after Jace leaves the battlefield")
+    void plusOneContinuesWithoutJace() {
+        Permanent jace = addReadyJace(player1);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        activatePlusOne();
+        jace.setCounterCount(CounterType.LOYALTY, 0);
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player1, "Jace, Architect of Thought");
+
+        declareAttackers(player2, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("−8: declining every free cast leaves the cards in exile with their original owners")
+    void minusEightCanDeclineAllCasts() {
+        Card ownCard = new GiantGrowth();
+        Card opponentCard = new GrizzlyBears();
+        Permanent jace = addReadyJace(player1);
+        jace.setCounterCount(CounterType.LOYALTY, 8);
+        harness.setLibrary(player1, List.of(ownCard));
+        harness.setLibrary(player2, List.of(opponentCard));
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.findExiledCard(ownCard.getId()).ownerId()).isEqualTo(player1.getId());
+        assertThat(gd.findExiledCard(opponentCard.getId()).ownerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.hasPendingInteraction(PendingEachPlayerLibraryExile.class)).isFalse();
+        assertThat(countPermanents(player1, "Grizzly Bears")).isZero();
+    }
+
+    @Test
+    @DisplayName("−2: revealing from an empty library neither draws nor opens a pile choice")
+    void minusTwoWithEmptyLibrary() {
+        addReadyJace(player1);
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void activatePlusOne() {
@@ -201,10 +321,9 @@ class JaceArchitectOfThoughtTest extends BaseCardTest {
     }
 
     private Permanent addReadyJace(Player player) {
-        Permanent perm = new Permanent(new JaceArchitectOfThought());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new JaceArchitectOfThought());
         perm.setCounterCount(CounterType.LOYALTY, 4);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
