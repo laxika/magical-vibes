@@ -41,7 +41,6 @@ class MagnifyTest extends BaseCardTest {
         assertThat(creature.getEffectiveToughness()).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(creature.getEffectivePower()).isEqualTo(2);
@@ -62,5 +61,37 @@ class MagnifyTest extends BaseCardTest {
         Permanent laterCreature = harness.addToBattlefieldAndReturn(player2, new WildColos());
         assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
         assertThat(laterCreature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Includes creatures entering while Magnify is on the stack")
+    void includesCreaturesEnteringBeforeResolution() {
+        harness.castFromHand(player1, new Magnify(), "{G}");
+
+        Permanent creature = harness.enterBattlefieldAndReturn(player2, new WildColos());
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(3);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Multiple Magnify spells stack and expire together")
+    void multipleBoostsStackAndExpire() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new WildColos());
+
+        harness.castFromHand(player1, new Magnify(), "{G}");
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new Magnify(), "{G}");
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(4);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
     }
 }
