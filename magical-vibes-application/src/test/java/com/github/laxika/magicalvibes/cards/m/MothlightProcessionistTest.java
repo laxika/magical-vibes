@@ -24,8 +24,7 @@ class MothlightProcessionistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castEnchantment(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Card unrelated = testCard("Unrelated card", CardType.INSTANT);
         gd.addCardToHand(player1.getId(), unrelated);
@@ -71,6 +70,80 @@ class MothlightProcessionistTest extends BaseCardTest {
 
         assertThat(convoker.isTapped()).isTrue();
         harness.passBothPriorities();
+    }
+
+    @Test
+    void roomEntryAndFullyUnlockingConjureSeparateCardsAndDiscardBoth() {
+        harness.addToBattlefield(player1, new MothlightProcessionist());
+        harness.setHand(player1, List.of(new DazzlingTheaterPropRoom()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castModalSorcery(player1, 0, 0, List.of());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.unlockRoomDoor(player1, 1, 1);
+        resolveAllTriggers();
+
+        List<Card> conjured = List.copyOf(gd.playerHands.get(player1.getId()));
+        assertThat(conjured).hasSize(2)
+                .allMatch(card -> card.getName().equals("Mothlight Processionist"));
+        assertThat(conjured.get(0).getId()).isNotEqualTo(conjured.get(1).getId());
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsAll(conjured);
+    }
+
+    @Test
+    void opponentsEnchantmentDoesNotTriggerEerie() {
+        harness.addToBattlefield(player1, new MothlightProcessionist());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new DazzlingTheaterPropRoom()));
+        harness.addMana(player2, ManaColor.WHITE, 4);
+
+        harness.castModalSorcery(player2, 0, 0, List.of());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void newlyEnteredProcessionistCanConvokeAWhiteRoomSpell() {
+        Permanent processionist = harness.addToBattlefieldAndReturn(player1, new MothlightProcessionist());
+        harness.setHand(player1, List.of(new DazzlingTheaterPropRoom()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(processionist.getId()));
+        resolveAllTriggers();
+
+        assertThat(processionist.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Dazzling Theater // Prop Room");
+        harness.assertInHand(player1, "Mothlight Processionist");
+    }
+
+    @Test
+    void castingConjuredCardPreventsItsDelayedDiscard() {
+        harness.addToBattlefield(player1, new MothlightProcessionist());
+        harness.setHand(player1, List.of(new DazzlingTheaterPropRoom()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castModalSorcery(player1, 0, 0, List.of());
+        resolveAllTriggers();
+
+        Card conjured = gd.playerHands.get(player1.getId()).get(0);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(conjured.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(conjured);
     }
 
     private Card testEnchantment() {
