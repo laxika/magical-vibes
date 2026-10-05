@@ -86,6 +86,92 @@ class NantukoCalmerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Threshold updates immediately when the graveyard grows and shrinks")
+    void thresholdTracksGraveyardChanges() {
+        Permanent calmer = harness.addToBattlefieldAndReturn(player1, new NantukoCalmer());
+        fillGraveyard(player1, 6);
+        assertThat(gqs.getEffectivePower(gd, calmer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, calmer)).isEqualTo(3);
+
+        fillGraveyard(player1, 8);
+        assertThat(gqs.getEffectivePower(gd, calmer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, calmer)).isEqualTo(4);
+
+        fillGraveyard(player1, 6);
+        assertThat(gqs.getEffectivePower(gd, calmer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, calmer)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid before resolution and can enable another Calmer's threshold")
+    void sacrificeIsImmediateAndCanDestroyOwnEnchantment() {
+        fillGraveyard(player1, 6);
+        Permanent calmer = addCreatureReady(player1, new NantukoCalmer());
+        Permanent otherCalmer = addCreatureReady(player1, new NantukoCalmer());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Compulsion());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(calmer), null,
+                target.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(calmer).contains(otherCalmer, target);
+        harness.assertInGraveyard(player1, "Nantuko Calmer");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gqs.getEffectivePower(gd, otherCalmer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, otherCalmer)).isEqualTo(4);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Compulsion");
+        harness.assertInGraveyard(player1, "Compulsion");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent calmer = harness.addToBattlefieldAndReturn(player1, new NantukoCalmer());
+        calmer.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Compulsion());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(calmer), null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Nantuko Calmer");
+        harness.assertOnBattlefield(player2, "Compulsion");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent calmer = addCreatureReady(player1, new NantukoCalmer());
+        calmer.tap();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Compulsion());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(calmer), null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Nantuko Calmer");
+        harness.assertOnBattlefield(player2, "Compulsion");
+    }
+
+    @Test
+    @DisplayName("Cannot activate without green mana")
+    void cannotActivateWithoutGreenMana() {
+        Permanent calmer = addCreatureReady(player1, new NantukoCalmer());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Compulsion());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(calmer), null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(calmer.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Nantuko Calmer");
+        harness.assertOnBattlefield(player2, "Compulsion");
+    }
+
     private void fillGraveyard(Player player, int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
