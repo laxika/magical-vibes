@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
@@ -12,9 +13,10 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Pillage.class, Millstone.class, Mountain.class, GrizzlyBears.class})
+@CardUsed({Pillage.class, Millstone.class, Mountain.class, GrizzlyBears.class, Boomerang.class})
 class PillageTest extends BaseCardTest {
 
     @Test
@@ -26,8 +28,7 @@ class PillageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Pillage()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castSorcery(player1, 0, millstone.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, millstone.getId());
 
         harness.assertNotOnBattlefield(player2, "Millstone");
         harness.assertInGraveyard(player2, "Millstone");
@@ -40,8 +41,7 @@ class PillageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Pillage()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castSorcery(player1, 0, mountain.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, mountain.getId());
 
         harness.assertNotOnBattlefield(player2, "Mountain");
         harness.assertInGraveyard(player2, "Mountain");
@@ -54,8 +54,7 @@ class PillageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Pillage()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castSorcery(player1, 0, mountain.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, mountain.getId());
 
         harness.assertNotOnBattlefield(player1, "Mountain");
         harness.assertInGraveyard(player1, "Mountain");
@@ -71,5 +70,40 @@ class PillageTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Pillage can destroy an artifact controlled by its caster")
+    void destroysOwnArtifact() {
+        Permanent millstone = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        harness.setHand(player1, List.of(new Pillage()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, millstone.getId());
+
+        harness.assertNotOnBattlefield(player1, "Millstone");
+        harness.assertInGraveyard(player1, "Millstone");
+    }
+
+    @Test
+    @DisplayName("Pillage does not destroy another permanent when its target leaves the battlefield")
+    void targetLeavesBeforeResolution() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        harness.addToBattlefield(player2, new Millstone());
+        harness.setHand(player1, List.of(new Pillage()));
+        harness.setHand(player2, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castSorcery(player1, 0, mountain.getId());
+        harness.castAndResolveInstant(player2, 0, mountain.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Mountain");
+        harness.assertNotOnBattlefield(player2, "Mountain");
+        harness.assertNotInGraveyard(player2, "Mountain");
+        harness.assertOnBattlefield(player2, "Millstone");
+        harness.assertInGraveyard(player1, "Pillage");
+        assertThat(gd.stack).isEmpty();
     }
 }
