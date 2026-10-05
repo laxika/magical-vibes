@@ -20,12 +20,8 @@ class MeticulousArtisanTest extends BaseCardTest {
     @Test
     @DisplayName("When Meticulous Artisan enters, it creates a Treasure token")
     void entersWithTreasureToken() {
-        harness.setHand(player1, List.of(new MeticulousArtisan()));
-        harness.addMana(player1, ManaColor.RED, 4);
-
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new MeticulousArtisan(), "{3}{R}");
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
     }
@@ -40,8 +36,7 @@ class MeticulousArtisanTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, artisan)).isEqualTo(initialPower + 1);
         assertThat(gqs.getEffectiveToughness(gd, artisan)).isEqualTo(initialToughness + 1);
@@ -54,9 +49,8 @@ class MeticulousArtisanTest extends BaseCardTest {
         int initialPower = gqs.getEffectivePower(gd, artisan);
         int initialToughness = gqs.getEffectiveToughness(gd, artisan);
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, artisan)).isEqualTo(initialPower);
         assertThat(gqs.getEffectiveToughness(gd, artisan)).isEqualTo(initialToughness);
@@ -72,8 +66,7 @@ class MeticulousArtisanTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, artisan)).isEqualTo(initialPower + 1);
         assertThat(gqs.getEffectiveToughness(gd, artisan)).isEqualTo(initialToughness + 1);
@@ -86,11 +79,64 @@ class MeticulousArtisanTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, artisan)).isEqualTo(initialToughness);
     }
 
+    @Test
+    @DisplayName("An opponent's noncreature spell does not trigger prowess")
+    void opponentSpellDoesNotPump() {
+        Permanent artisan = addArtisan();
+        int initialPower = gqs.getEffectivePower(gd, artisan);
+        int initialToughness = gqs.getEffectiveToughness(gd, artisan);
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, artisan)).isEqualTo(initialPower);
+        assertThat(gqs.getEffectiveToughness(gd, artisan)).isEqualTo(initialToughness);
+    }
+
+    @Test
+    @DisplayName("Prowess resolves before the spell and accumulates for repeated casts")
+    void repeatedCastsAccumulateProwess() {
+        Permanent artisan = addArtisan();
+        int initialPower = gqs.getEffectivePower(gd, artisan);
+        int initialToughness = gqs.getEffectiveToughness(gd, artisan);
+        int initialLife = gd.playerLifeTotals.get(player2.getId());
+
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, artisan)).isEqualTo(initialPower + 1);
+        assertThat(gqs.getEffectiveToughness(gd, artisan)).isEqualTo(initialToughness + 1);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(initialLife);
+        resolveAllTriggers();
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, artisan)).isEqualTo(initialPower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, artisan)).isEqualTo(initialToughness + 2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(initialLife - 4);
+    }
+
+    @Test
+    @DisplayName("Entering without being cast still creates an untapped Treasure for the controller")
+    void noncastEntryCreatesTreasure() {
+        harness.enterBattlefieldAndReturn(player2, new MeticulousArtisan());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player2, "Treasure")).hasSize(1);
+        assertThat(findPermanent(player2, "Treasure").isTapped()).isFalse();
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+    }
+
     private Permanent addArtisan() {
-        harness.addToBattlefield(player1, new MeticulousArtisan());
+        Permanent artisan = harness.addToBattlefieldAndReturn(player1, new MeticulousArtisan());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        return gd.playerBattlefields.get(player1.getId()).getFirst();
+        return artisan;
     }
 }
