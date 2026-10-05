@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
+import com.github.laxika.magicalvibes.cards.p.PlanarCleansing;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KnightOfDoves.class, GloriousAnthem.class, Naturalize.class})
+@CardUsed({KnightOfDoves.class, GloriousAnthem.class, Naturalize.class, PlanarCleansing.class})
 class KnightOfDovesTest extends BaseCardTest {
 
     private long birdCount() {
@@ -38,8 +39,7 @@ class KnightOfDovesTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, anthemId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, anthemId);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -63,10 +63,43 @@ class KnightOfDovesTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Naturalize()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castInstant(player1, 0, anthemId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, anthemId);
 
         assertThat(gd.stack).isEmpty();
         assertThat(birdCount()).isZero();
+    }
+
+    @Test
+    @DisplayName("Each Knight creates a Bird when a controlled enchantment dies")
+    void multipleKnightsEachTrigger() {
+        harness.addToBattlefield(player1, new KnightOfDoves());
+        harness.addToBattlefield(player1, new KnightOfDoves());
+        UUID anthemId = harness.addToBattlefieldAndReturn(player1, new GloriousAnthem()).getId();
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player1, 0, anthemId);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(birdCount()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Knight triggers for an enchantment destroyed simultaneously with it")
+    void simultaneousDestructionStillCreatesBird() {
+        harness.addToBattlefield(player1, new KnightOfDoves());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.setHand(player1, List.of(new PlanarCleansing()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertInGraveyard(player1, "Knight of Doves");
+        harness.assertInGraveyard(player1, "Glorious Anthem");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(birdCount()).isEqualTo(1);
     }
 }
