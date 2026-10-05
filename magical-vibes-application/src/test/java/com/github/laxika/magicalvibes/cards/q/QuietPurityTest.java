@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({QuietPurity.class, HondenOfCleansingFire.class, SenseisDiviningTop.class,
@@ -68,5 +69,28 @@ class QuietPurityTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, "Wandering Ones");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Does not destroy another enchantment when its target leaves before resolution")
+    void targetDestroyedBeforeResolution() {
+        harness.addToBattlefield(player2, new HondenOfCleansingFire());
+        harness.addToBattlefield(player1, new HondenOfCleansingFire());
+        harness.setHand(player1, List.of(new QuietPurity(), new QuietPurity()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        UUID targetId = harness.getPermanentId(player2, "Honden of Cleansing Fire");
+        harness.castInstant(player1, 0, targetId);
+        harness.castAndResolveInstant(player1, 0, targetId);
+        harness.assertNotOnBattlefield(player2, "Honden of Cleansing Fire");
+        harness.assertInGraveyard(player2, "Honden of Cleansing Fire");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Honden of Cleansing Fire");
+        harness.assertNotInGraveyard(player1, "Honden of Cleansing Fire");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof QuietPurity).hasSize(2);
     }
 }
