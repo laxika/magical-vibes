@@ -15,6 +15,54 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({MasterOfTheVeil.class, ChromeshellCrab.class, AvenEnvoy.class})
 class MasterOfTheVeilTest extends BaseCardTest {
+    @Test
+    void canTurnItselfFaceDownAndUseMorphAgain() {
+        harness.setHand(player1, List.of(new MasterOfTheVeil()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+
+        Permanent master = findPermanent(player1, "Master of the Veil");
+        for (int i = 0; i < 2; i++) {
+            harness.addMana(player1, ManaColor.COLORLESS, 2);
+            harness.addMana(player1, ManaColor.BLUE, 1);
+            harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(master));
+            assertThat(master.isFaceDown()).isFalse();
+
+            harness.handlePermanentChosen(player1, master.getId());
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+
+            assertThat(master.isFaceDown()).isTrue();
+            assertThat(master.getEffectivePower()).isEqualTo(2);
+            assertThat(master.getEffectiveToughness()).isEqualTo(2);
+        }
+    }
+
+    @Test
+    void faceDownCreatureWithPrintedMorphIsNotALegalTarget() {
+        harness.setHand(player1, List.of(new ChromeshellCrab(), new MasterOfTheVeil()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+        Permanent crab = findPermanent(player1, "Chromeshell Crab");
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+
+        Permanent master = findPermanent(player1, "Master of the Veil");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(master));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(master.getId())
+                .doesNotContain(crab.getId());
+        harness.handlePermanentChosen(player1, master.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(crab.isFaceDown()).isTrue();
+        assertThat(master.isFaceDown()).isFalse();
+    }
 
     @Test
     void turningFaceUpTurnsTargetCreatureWithMorphFaceDown() {
