@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GatherSpecimens;
 import com.github.laxika.magicalvibes.cards.z.Zombify;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NorthWindAvatar.class, GrizzlyBears.class, Zombify.class})
+@CardUsed({NorthWindAvatar.class, GrizzlyBears.class, Zombify.class, GatherSpecimens.class})
 class NorthWindAvatarTest extends BaseCardTest {
 
     @Test
@@ -68,14 +69,63 @@ class NorthWindAvatarTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getCard().getId().equals(avatar.getId()));
     }
 
+    @Test
+    @DisplayName("An empty outside-game pool does not leave a choice pending")
+    void emptyOutsideGamePool() {
+        setSideboard();
+
+        castAvatar();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "North Wind Avatar");
+    }
+
+    @Test
+    @DisplayName("Chooses exactly one owned card and excludes the opponent's outside-game pool")
+    void choosesOnlyOneOwnedCard() {
+        Card chosen = new GrizzlyBears();
+        Card remaining = new Zombify();
+        Card opposing = new GrizzlyBears();
+        setSideboard(chosen, remaining);
+        gd.playerSideboards.put(player2.getId(), new ArrayList<>(List.of(opposing)));
+
+        castAvatar();
+
+        assertThat(pendingSearch().params().cards()).containsExactly(chosen, remaining);
+        choose(chosen);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.playerSideboards.get(player2.getId())).containsExactly(opposing);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @CardUsed({NorthWindAvatar.class, GatherSpecimens.class})
+    @DisplayName("Does not trigger for a controller who did not cast it")
+    void enteringUnderOtherPlayersControlDoesNotTrigger() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Card available = new NorthWindAvatar();
+        gd.playerSideboards.put(player2.getId(), new ArrayList<>(List.of(available)));
+        harness.castFromHand(player2, new GatherSpecimens(), "{3}{U}{U}{U}");
+        harness.passBothPriorities();
+
+        harness.castFromHand(player1, new NorthWindAvatar(), "{2}{U}{U}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "North Wind Avatar");
+        harness.assertNotOnBattlefield(player1, "North Wind Avatar");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerSideboards.get(player2.getId())).containsExactly(available);
+    }
+
     private void castAvatar() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new NorthWindAvatar()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new NorthWindAvatar(), "{2}{U}{U}{R}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
