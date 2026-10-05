@@ -192,10 +192,7 @@ class MegrimTest extends BaseCardTest {
         Permanent specter = addCreatureReady(player1, new HypnoticSpecter());
         specter.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player1);
 
         // Player2 took 2 combat damage from Specter + random discard triggered Megrim for 2 more
         // Total: 20 - 2 (combat) - 2 (Megrim) = 16
@@ -264,6 +261,53 @@ class MegrimTest extends BaseCardTest {
 
         // Player2's Megrim triggers on player1's discard, dealing 2 damage to player1
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Discard damage waits for the Megrim trigger to resolve")
+    void discardDamageUsesTheStack() {
+        harness.addToBattlefield(player1, new Megrim());
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Distress()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.handleCardChosen(player1, 0);
+
+            harness.assertLife(player2, 20);
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            harness.passBothPriorities();
+            harness.assertLife(player2, 18);
+        });
+    }
+
+    @Test
+    @DisplayName("Megrim does not deal damage between the two discards of Mind Rot")
+    void damageWaitsUntilAllDiscardsFinish() {
+        harness.addToBattlefield(player1, new Megrim());
+        harness.setHand(player2, List.of(new Swamp(), new GrizzlyBears()));
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new MindRot()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.handleCardChosen(player2, 0);
+            harness.assertLife(player2, 20);
+
+            harness.handleCardChosen(player2, 0);
+            harness.assertLife(player2, 20);
+            assertThat(gd.stack).hasSize(2);
+            assertThat(gd.stack).allMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
+
+            harness.passBothPriorities();
+            harness.assertLife(player2, 18);
+            harness.passBothPriorities();
+            harness.assertLife(player2, 16);
+        });
     }
 }
 
