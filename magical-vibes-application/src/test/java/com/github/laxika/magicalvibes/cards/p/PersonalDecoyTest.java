@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.ImprisonedInTheMoon;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PersonalDecoy.class, GrizzlyBears.class, Shock.class})
+@CardUsed({PersonalDecoy.class, GrizzlyBears.class, Shock.class, Boomerang.class, ImprisonedInTheMoon.class})
 class PersonalDecoyTest extends BaseCardTest {
 
     @Test
@@ -78,7 +80,7 @@ class PersonalDecoyTest extends BaseCardTest {
     @Test
     @DisplayName("Personal Decoy's minus four ability draws a card")
     void minusFourDrawsCard() {
-        Permanent decoy = addReadyDecoy(player1, 4);
+        addReadyDecoy(player1, 4);
         harness.setLibrary(player1, List.of(new Shock()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -89,11 +91,78 @@ class PersonalDecoyTest extends BaseCardTest {
         harness.assertInHand(player1, "Shock");
     }
 
+    @Test
+    void planeswalkerCanStillBeAttacked() {
+        Permanent decoy = harness.enterBattlefieldAndReturn(player2, new PersonalDecoy());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThat(als.canAttackDefender(gd, attacker, decoy.getId())).isTrue();
+        assertThat(als.canAttackDefender(gd, attacker, player2.getId())).isFalse();
+    }
+
+    @Test
+    void bounceExilesInsteadOfReturningToHand() {
+        Permanent decoy = harness.enterBattlefieldAndReturn(player1, new PersonalDecoy());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new Boomerang()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player2, 0, decoy.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Personal Decoy");
+        harness.assertNotInHand(player1, "Personal Decoy");
+        harness.assertNotInGraveyard(player1, "Personal Decoy");
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getId())
+                .contains(decoy.getCard().getId());
+    }
+
+    @Test
+    void losingAbilitiesDisablesExileReplacement() {
+        Permanent decoy = harness.enterBattlefieldAndReturn(player1, new PersonalDecoy());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new ImprisonedInTheMoon(), new Boomerang()));
+        harness.addMana(player2, ManaColor.BLUE, 5);
+
+        harness.castEnchantment(player2, 0, decoy.getId());
+        harness.passBothPriorities();
+
+        harness.castInstant(player2, 0, decoy.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Personal Decoy");
+        harness.assertNotOnBattlefield(player1, "Personal Decoy");
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getId())
+                .doesNotContain(decoy.getCard().getId());
+    }
+
+    @Test
+    void payingLastFourLoyaltyExilesDecoyAndStillDraws() {
+        harness.setLife(player1, 4);
+        Permanent decoy = harness.enterBattlefieldAndReturn(player1, new PersonalDecoy());
+        harness.setLibrary(player1, List.of(new Shock()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Personal Decoy");
+        harness.assertNotInGraveyard(player1, "Personal Decoy");
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getId())
+                .contains(decoy.getCard().getId());
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Shock");
+        harness.assertLife(player1, 4);
+    }
+
     private Permanent addReadyDecoy(Player player, int loyalty) {
-        Permanent decoy = new Permanent(new PersonalDecoy());
+        Permanent decoy = harness.addToBattlefieldAndReturn(player, new PersonalDecoy());
         decoy.setCounterCount(CounterType.LOYALTY, loyalty);
         decoy.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(decoy);
         return decoy;
     }
 
