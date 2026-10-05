@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({NaturalState.class, HowlingMine.class, GloriousAnthem.class, IcyManipulator.class, GrizzlyBears.class})
@@ -60,10 +61,41 @@ class NaturalStateTest extends BaseCardTest {
                 .hasMessageContaining("artifact or enchantment");
     }
 
+    @Test
+    @DisplayName("Can destroy an artifact controlled by its caster")
+    void destroysOwnArtifact() {
+        harness.addToBattlefield(player1, new HowlingMine());
+
+        castNaturalState(harness.getPermanentId(player1, "Howling Mine"));
+
+        harness.assertNotOnBattlefield(player1, "Howling Mine");
+        harness.assertInGraveyard(player1, "Howling Mine");
+    }
+
+    @Test
+    @DisplayName("Does not resolve when its target has already been destroyed")
+    void fizzlesWhenTargetLeavesBattlefield() {
+        harness.addToBattlefield(player2, new HowlingMine());
+        UUID targetId = harness.getPermanentId(player2, "Howling Mine");
+        harness.setHand(player1, List.of(new NaturalState(), new NaturalState()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, targetId);
+        harness.castAndResolveInstant(player1, 0, targetId);
+        harness.assertInGraveyard(player2, "Howling Mine");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof NaturalState).hasSize(2);
+        harness.assertNotOnBattlefield(player2, "Howling Mine");
+    }
+
     private void castNaturalState(UUID targetId) {
         harness.setHand(player1, List.of(new NaturalState()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 }
