@@ -126,4 +126,46 @@ class ManiacalRageTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("Only the enchanted creature is boosted and prevented from blocking")
+    void effectsApplyOnlyToEnchantedCreatureAcrossControllers() {
+        Permanent enchanted = addCreatureReady(player2, new HoodedKavu());
+        Permanent otherOpponentCreature = addCreatureReady(player2, new HoodedKavu());
+        Permanent ownCreature = addCreatureReady(player1, new HoodedKavu());
+        harness.setHand(player1, List.of(new ManiacalRage()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, enchanted)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, enchanted)).isEqualTo(4);
+        assertThat(bls.canBlock(gd, enchanted)).isFalse();
+        for (Permanent unaffected : List.of(otherOpponentCreature, ownCreature)) {
+            assertThat(gqs.getEffectivePower(gd, unaffected)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, unaffected)).isEqualTo(2);
+            assertThat(bls.canBlock(gd, unaffected)).isTrue();
+        }
+    }
+
+    @Test
+    @DisplayName("Multiple Maniacal Rages stack their boosts and the remaining Aura still prevents blocking")
+    void multipleAurasStackAndRemainingAuraKeepsRestriction() {
+        Permanent creature = addCreatureReady(player1, new HoodedKavu());
+        Permanent firstAura = harness.addToBattlefieldAndReturn(player1, new ManiacalRage());
+        firstAura.setAttachedTo(creature.getId());
+        Permanent secondAura = harness.addToBattlefieldAndReturn(player2, new ManiacalRage());
+        secondAura.setAttachedTo(creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
+        assertThat(bls.canBlock(gd, creature)).isFalse();
+
+        gd.playerBattlefields.get(player1.getId()).remove(firstAura);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(bls.canBlock(gd, creature)).isFalse();
+    }
 }
