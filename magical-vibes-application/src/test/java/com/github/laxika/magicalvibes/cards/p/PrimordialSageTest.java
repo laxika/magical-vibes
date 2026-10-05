@@ -85,4 +85,71 @@ class PrimordialSageTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawn);
     }
+
+    @Test
+    @DisplayName("Primordial Sage does not trigger from its own casting")
+    void doesNotTriggerForItsOwnCasting() {
+        Card drawn = new Forest();
+        harness.setLibrary(player1, List.of(drawn));
+        harness.setHand(player1, List.of(new PrimordialSage()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Primordial Sage");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+    }
+
+    @Test
+    @DisplayName("Each Primordial Sage offers a separate draw before the creature resolves")
+    void multipleSagesTriggerIndependently() {
+        Card firstDraw = new Forest();
+        Card secondDraw = new Forest();
+        harness.addToBattlefield(player1, new PrimordialSage());
+        harness.addToBattlefield(player1, new PrimordialSage());
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.setHand(player1, List.of(new BirdsOfParadise()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondDraw);
+        harness.assertNotOnBattlefield(player1, "Birds of Paradise");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Birds of Paradise");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Primordial Sage triggers for every creature cast in the same turn")
+    void triggersForEachCreatureCast() {
+        Card firstDraw = new Forest();
+        Card secondDraw = new Forest();
+        harness.addToBattlefield(player1, new PrimordialSage());
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.setHand(player1, List.of(new BirdsOfParadise(), new BirdsOfParadise()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
 }
