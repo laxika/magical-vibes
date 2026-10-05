@@ -46,4 +46,55 @@ class PenumbraWurmTest extends BaseCardTest {
         assertThat(findPermanents(player2, "Wurm")).hasSize(1);
         assertThat(findPermanents(player1, "Wurm")).isEmpty();
     }
+
+    @Test
+    @DisplayName("The Wurm token is created only when the death trigger resolves")
+    void tokenCreationWaitsForTriggerResolution() {
+        Permanent wurm = harness.addToBattlefieldAndReturn(player1, new PenumbraWurm());
+        wurm.setMarkedDamage(6);
+
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Penumbra Wurm");
+        assertThat(findPermanents(player1, "Wurm")).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Wurm")).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The created Wurm token does not create another token when it dies")
+    void tokenDoesNotInheritDeathAbility() {
+        Permanent wurm = harness.addToBattlefieldAndReturn(player1, new PenumbraWurm());
+        wurm.setMarkedDamage(6);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        Permanent token = findPermanent(player1, "Wurm");
+        token.setMarkedDamage(6);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Wurm")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each Penumbra Wurm creates one token when two die simultaneously")
+    void simultaneousDeathsEachCreateOneToken() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new PenumbraWurm());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new PenumbraWurm());
+        first.setMarkedDamage(6);
+        second.setMarkedDamage(6);
+
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Penumbra Wurm")).isEmpty();
+        assertThat(findPermanents(player1, "Wurm")).hasSize(2);
+        assertThat(findPermanents(player2, "Wurm")).isEmpty();
+    }
 }
