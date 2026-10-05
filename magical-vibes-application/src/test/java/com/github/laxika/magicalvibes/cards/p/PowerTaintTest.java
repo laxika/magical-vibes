@@ -135,6 +135,74 @@ class PowerTaintTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Power Taint triggers when it enchants its controller's own enchantment")
+    void triggersOnOwnEnchantment() {
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new OpalCaryatid());
+        attachPowerTaint(enchantment);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertLife(player1, lifeBefore - 2);
+        harness.assertLife(player2, opponentLifeBefore);
+    }
+
+    @Test
+    @DisplayName("Only the enchanted enchantment's controller can fund the payment")
+    void cannotUseAuraControllersManaToPay() {
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new OpalCaryatid());
+        attachPowerTaint(enchantment);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player2, lifeBefore - 2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The generic upkeep payment can be paid with colored mana")
+    void paysUpkeepWithColoredMana() {
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new OpalCaryatid());
+        attachPowerTaint(enchantment);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player2, lifeBefore);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Cycling pays mana and discards immediately, then draws on resolution")
+    void cyclingPaysCostsBeforeDrawing() {
+        harness.setHand(player1, List.of(new PowerTaint()));
+        harness.setLibrary(player1, List.of(new GorillaWarrior()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Power Taint");
+        harness.assertNotInHand(player1, "Power Taint");
+        harness.assertNotInHand(player1, "Gorilla Warrior");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Gorilla Warrior");
+    }
+
     private void attachPowerTaint(Permanent enchantment) {
         Permanent powerTaint = harness.addToBattlefieldAndReturn(player1, new PowerTaint());
         powerTaint.setAttachedTo(enchantment.getId());
