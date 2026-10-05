@@ -15,7 +15,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -33,6 +32,55 @@ class ParishBladeTraineeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(trainee.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void trainingDoesNotTriggerWhenAttackingAloneWithLargerCreatureNotAttacking() {
+        Permanent trainee = addCreatureReady(player1, new ParishBladeTrainee());
+        addCreatureReady(player1, new HillGiant());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(trainee.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void trainingDoesNotTriggerWithEqualPowerAttacker() {
+        Permanent trainee = addCreatureReady(player1, new ParishBladeTrainee());
+        trainee.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1));
+        harness.passBothPriorities();
+
+        assertThat(trainee.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void trainingAddsOnlyOneCounterWithMultipleLargerAttackers() {
+        Permanent trainee = addCreatureReady(player1, new ParishBladeTrainee());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new HillGiant());
+
+        declareAttackers(List.of(0, 1, 2));
+        harness.passBothPriorities();
+
+        assertThat(trainee.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void trainingDoesNotRecheckOtherAttackersPowerOnResolution() {
+        Permanent trainee = addCreatureReady(player1, new ParishBladeTrainee());
+        Permanent otherTrainee = addCreatureReady(player1, new ParishBladeTrainee());
+        otherTrainee.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        declareAttackers(List.of(0, 1));
+        otherTrainee.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.passBothPriorities();
+
+        assertThat(trainee.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(otherTrainee.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -76,6 +124,37 @@ class ParishBladeTraineeTest extends BaseCardTest {
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    void deathTriggerAddsCountersToExistingCounters() {
+        Permanent trainee = addCreatureReady(player1, new ParishBladeTrainee());
+        trainee.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        trainee.setCounterCount(CounterType.CHARGE, 1);
+        Permanent recipient = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        recipient.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        recipient.setCounterCount(CounterType.CHARGE, 2);
+
+        killTrainee(trainee);
+        harness.handlePermanentChosen(player1, recipient.getId());
+        harness.passBothPriorities();
+
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(recipient.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+    }
+
+    @Test
+    void deathTriggerHasNoLegalTargetWhenOnlyOpposingCreaturesRemain() {
+        Permanent trainee = addCreatureReady(player1, new ParishBladeTrainee());
+        trainee.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+
+        killTrainee(trainee);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(opposingCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Parish-Blade Trainee");
+    }
+
     private void killTrainee(Permanent trainee) {
         trainee.tap();
         harness.forceActivePlayer(player2);
@@ -84,8 +163,6 @@ class ParishBladeTraineeTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
 
-        UUID traineeId = trainee.getId();
-        gs.playCard(gd, player2, 0, 0, traineeId, null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, trainee.getId());
     }
 }
