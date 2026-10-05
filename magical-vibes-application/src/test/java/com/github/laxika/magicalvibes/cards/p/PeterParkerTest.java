@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DailyBugleReporters;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PeterParker.class, GrizzlyBears.class})
+@CardUsed({PeterParker.class, DailyBugleReporters.class})
 class PeterParkerTest extends BaseCardTest {
 
     @Test
@@ -26,8 +26,7 @@ class PeterParkerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent spider = findPermanent(player1, "Spider");
         assertThat(spider.getCard().getKeywords()).contains(Keyword.REACH);
@@ -51,6 +50,7 @@ class PeterParkerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Amazing Spider-Man");
+        assertThat(countPermanents(player1, "Spider")).isZero();
     }
 
     @Test
@@ -66,6 +66,7 @@ class PeterParkerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Amazing Spider-Man");
+        assertThat(countPermanents(player1, "Spider")).isZero();
     }
 
     @Test
@@ -73,7 +74,7 @@ class PeterParkerTest extends BaseCardTest {
     void castsWithWebSlinging() {
         PeterParker source = new PeterParker();
         harness.addToBattlefieldAndReturn(player1, source.getBackFaceCard());
-        Permanent tappedCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent tappedCreature = harness.addToBattlefieldAndReturn(player1, new DailyBugleReporters());
         tappedCreature.tap();
         harness.setHand(player1, List.of(new PeterParker()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -81,11 +82,10 @@ class PeterParkerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castWithAlternateCost(player1, 0, List.of(tappedCreature.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Peter Parker");
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Daily Bugle Reporters");
     }
 
     @Test
@@ -93,7 +93,7 @@ class PeterParkerTest extends BaseCardTest {
     void webSlingingRequiresTappedCreature() {
         PeterParker source = new PeterParker();
         harness.addToBattlefieldAndReturn(player1, source.getBackFaceCard());
-        Permanent untappedCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent untappedCreature = harness.addToBattlefieldAndReturn(player1, new DailyBugleReporters());
         harness.setHand(player1, List.of(new PeterParker()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -103,5 +103,78 @@ class PeterParkerTest extends BaseCardTest {
                 player1, 0, List.of(untappedCreature.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("tapped creature");
+    }
+
+    @Test
+    void cannotTransformDuringCombat() {
+        addCreatureReady(player1, new PeterParker());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+        addTransformMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Peter Parker");
+    }
+
+    @Test
+    void cannotTransformDuringOpponentsMainPhase() {
+        addCreatureReady(player1, new PeterParker());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        addTransformMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Peter Parker");
+    }
+
+    @Test
+    void cannotTransformWithAnAbilityOnTheStack() {
+        addCreatureReady(player1, new PeterParker());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        addTransformMana();
+        addTransformMana();
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void webSlingingDoesNotApplyToNonlegendaryColoredSpells() {
+        harness.addToBattlefield(player1, new PeterParker().getBackFaceCard());
+        Permanent tappedCreature = harness.addToBattlefieldAndReturn(player1, new DailyBugleReporters());
+        tappedCreature.tap();
+        harness.setHand(player1, List.of(new DailyBugleReporters()));
+        addTransformMana();
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(
+                player1, 0, List.of(tappedCreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void webSlingingCannotReturnAnOpponentsTappedCreature() {
+        harness.addToBattlefield(player1, new PeterParker().getBackFaceCard());
+        Permanent tappedCreature = harness.addToBattlefieldAndReturn(player2, new DailyBugleReporters());
+        tappedCreature.tap();
+        harness.setHand(player1, List.of(new PeterParker()));
+        addTransformMana();
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(
+                player1, 0, List.of(tappedCreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    private void addTransformMana() {
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
     }
 }
