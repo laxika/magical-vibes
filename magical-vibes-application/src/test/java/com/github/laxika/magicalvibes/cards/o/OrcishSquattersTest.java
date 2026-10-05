@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.l.LeylineOfPunishment;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OrcishSquatters.class, Forest.class, BalduvianBears.class})
+@CardUsed({OrcishSquatters.class, Forest.class, BalduvianBears.class, LeylineOfPunishment.class})
 class OrcishSquattersTest extends BaseCardTest {
 
     private Permanent addAttacker() {
@@ -167,5 +168,63 @@ class OrcishSquattersTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Taking a land assigns no combat damage even when damage cannot be prevented")
+    void takingLandAssignsNoUnpreventableDamage() {
+        harness.addToBattlefield(player2, new LeylineOfPunishment());
+        Permanent forest = addDefenderLand();
+        addAttacker();
+
+        advanceToMayChoice(forest);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(forest);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A land removed in response cannot be stolen and the attacker still deals damage")
+    void removedTargetDoesNotSuppressCombatDamage() {
+        Permanent forest = addDefenderLand();
+        Permanent attacker = addAttacker();
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, forest.getId());
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, forest));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(forest);
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("A source removed in response does not gain control of the land")
+    void removedSourceCannotStartControlEffect() {
+        Permanent forest = addDefenderLand();
+        Permanent attacker = addAttacker();
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, forest.getId());
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, attacker));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(forest);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(forest);
+        harness.assertLife(player2, 20);
     }
 }
