@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -78,6 +77,8 @@ class InvasionOfShandalarTest extends BaseCardTest {
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
                 .checkAfterDefenseRemoved(gd, battle));
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         Permanent leyline = findPermanent(player1, "Leyline Surge");
@@ -94,5 +95,85 @@ class InvasionOfShandalarTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void mayChooseZeroGraveyardTargets() {
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new InvasionOfShandalar()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertNotInHand(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Invasion of Shandalar");
+    }
+
+    @Test
+    void returnsRemainingTargetWhenAnotherLeavesGraveyard() {
+        Card forest = new Forest();
+        Card island = new Island();
+        harness.setGraveyard(player1, List.of(forest, island));
+        harness.setGraveyard(player2, List.of(new Forest()));
+        harness.setHand(player1, List.of(new InvasionOfShandalar()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId(), island.getId()));
+        harness.setGraveyard(player1, List.of(island));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Island");
+        harness.assertNotInHand(player1, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
+    }
+
+    @Test
+    void leylineSurgeMayBeDeclined() {
+        harness.addToBattlefield(player1, new LeylineSurge());
+        harness.setHand(player1, List.of(new Forest()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void leylineSurgeCanPutALandOntoBattlefieldWithoutMana() {
+        harness.addToBattlefield(player1, new LeylineSurge());
+        harness.setHand(player1, List.of(new Forest()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertNotInHand(player1, "Forest");
+    }
+
+    @Test
+    void controllerMayLeaveDefeatedSiegeInExile() {
+        Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfShandalar());
+        battle.setCounterCount(CounterType.DEFENSE, 0);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
+                .checkAfterDefenseRemoved(gd, battle));
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.findExiledCard(battle.getCard().getId())).isNotNull();
+        harness.assertNotOnBattlefield(player1, "Leyline Surge");
+        assertThat(gd.stack).isEmpty();
     }
 }
