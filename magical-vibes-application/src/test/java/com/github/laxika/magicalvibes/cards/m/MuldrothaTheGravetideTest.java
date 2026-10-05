@@ -11,6 +11,12 @@ import com.github.laxika.magicalvibes.cards.l.Levitation;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.s.StoneGolem;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.a.AzusaLostButSeeking;
+import com.github.laxika.magicalvibes.cards.d.DeepFreeze;
+import com.github.laxika.magicalvibes.cards.k.KarnScionOfUrza;
+import com.github.laxika.magicalvibes.cards.h.HelmOfTheHost;
+import com.github.laxika.magicalvibes.cards.r.RaffCapashenShipsMage;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,9 +25,10 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MuldrothaTheGravetide.class, Forest.class, GrizzlyBears.class, DarksteelRelic.class,
+        Levitation.class, LightningBolt.class, StoneGolem.class, AzusaLostButSeeking.class,
+        DeepFreeze.class, KarnScionOfUrza.class, RaffCapashenShipsMage.class, HelmOfTheHost.class})
 class MuldrothaTheGravetideTest extends BaseCardTest {
-
-    // ===== Casting Muldrotha =====
 
     @Test
     @DisplayName("Muldrotha can be cast as a creature")
@@ -47,8 +54,6 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Muldrotha, the Gravetide");
     }
 
-    // ===== Playing lands from graveyard =====
-
     @Test
     @DisplayName("Can play a land from graveyard with Muldrotha on battlefield")
     void canPlayLandFromGraveyard() {
@@ -65,8 +70,6 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         harness.assertOnBattlefield(player1, "Forest");
     }
-
-    // ===== Casting creatures from graveyard =====
 
     @Test
     @DisplayName("Can cast a creature from graveyard with Muldrotha on battlefield")
@@ -92,8 +95,6 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
-    // ===== Casting artifacts from graveyard =====
-
     @Test
     @DisplayName("Can cast an artifact from graveyard with Muldrotha on battlefield")
     void canCastArtifactFromGraveyard() {
@@ -115,8 +116,6 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Darksteel Relic");
     }
-
-    // ===== Casting enchantments from graveyard =====
 
     @Test
     @DisplayName("Can cast an enchantment from graveyard with Muldrotha on battlefield")
@@ -140,8 +139,6 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Levitation");
     }
-
-    // ===== One of each type per turn =====
 
     @Test
     @DisplayName("Can cast one creature AND one artifact from graveyard in the same turn")
@@ -212,8 +209,6 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== Multi-type cards with type choice =====
 
     @Test
     @DisplayName("Player can choose CREATURE type for artifact creature, leaving ARTIFACT slot open")
@@ -302,8 +297,6 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== New Muldrotha instance resets tracking =====
-
     @Test
     @DisplayName("New Muldrotha entering resets graveyard cast type tracking")
     void newMuldrothaResetsTracking() {
@@ -339,8 +332,6 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
-    // ===== Cannot cast non-permanents from graveyard =====
-
     @Test
     @DisplayName("Cannot cast an instant from graveyard via Muldrotha")
     void cannotCastInstantFromGraveyard() {
@@ -356,8 +347,6 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== Muldrotha must be on battlefield =====
 
     @Test
     @DisplayName("Cannot cast permanent from graveyard without Muldrotha on battlefield")
@@ -394,8 +383,6 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Only affects controller =====
-
     @Test
     @DisplayName("Muldrotha only allows its controller to cast from graveyard")
     void onlyAffectsController() {
@@ -411,8 +398,6 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromGraveyard(player2, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== Timing restrictions =====
 
     @Test
     @DisplayName("Cannot cast permanent from graveyard during opponent's turn")
@@ -446,8 +431,6 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Resets each turn =====
-
     @Test
     @DisplayName("Graveyard casting type limits reset on new turn")
     void limitsResetOnNewTurn() {
@@ -466,20 +449,17 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
         harness.castFromGraveyard(player1, 0);
         harness.passBothPriorities();
 
-        // Simulate turn reset
-        gd.permanentTypesCastFromGraveyardThisTurn.clear();
-
-        // Second creature should now be castable
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castFromGraveyard(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
-
-    // ===== Land + permanent in same turn =====
 
     @Test
     @DisplayName("Can play a land AND cast a creature from graveyard in the same turn")
@@ -505,8 +485,6 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
-    // ===== Postcombat main phase =====
-
     @Test
     @DisplayName("Can cast permanent from graveyard during postcombat main phase")
     void worksInPostcombatMain() {
@@ -522,5 +500,114 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Darksteel Relic");
+    }
+
+    @Test
+    void cannotPlayTwoGraveyardLandsEvenWithAdditionalLandPlays() {
+        harness.addToBattlefield(player1, new MuldrothaTheGravetide());
+        harness.addToBattlefield(player1, new AzusaLostButSeeking());
+        harness.setGraveyard(player1, List.of(new Forest(), new Forest()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.playGraveyardLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.playGraveyardLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void cannotCastFlashPermanentDuringOpponentsTurn() {
+        harness.addToBattlefield(player1, new MuldrothaTheGravetide());
+        harness.setGraveyard(player1, List.of(new RaffCapashenShipsMage()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.ensurePriority(player1);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Raff Capashen, Ship's Mage");
+    }
+
+    @Test
+    void canCastFlashPermanentDuringOwnCombat() {
+        harness.addToBattlefield(player1, new MuldrothaTheGravetide());
+        harness.setGraveyard(player1, List.of(new RaffCapashenShipsMage()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+
+        harness.castFromGraveyard(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Raff Capashen, Ship's Mage");
+        harness.assertNotInGraveyard(player1, "Raff Capashen, Ship's Mage");
+    }
+
+    @Test
+    void losingAbilitiesDisablesGraveyardSpellCasting() {
+        var muldrotha = harness.addToBattlefieldAndReturn(player1, new MuldrothaTheGravetide());
+        harness.setHand(player1, List.of(new DeepFreeze()));
+        harness.setGraveyard(player1, List.of(new DarksteelRelic()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castEnchantment(player1, 0, muldrotha.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Darksteel Relic");
+    }
+
+    @Test
+    void canCastOnlyOnePlaneswalkerFromGraveyardPerTurn() {
+        harness.addToBattlefield(player1, new MuldrothaTheGravetide());
+        harness.setGraveyard(player1, List.of(new KarnScionOfUrza(), new KarnScionOfUrza()));
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromGraveyard(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Karn, Scion of Urza");
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void eachMuldrothaHasItsOwnCreaturePermission() {
+        var muldrotha = harness.addToBattlefieldAndReturn(player1, new MuldrothaTheGravetide());
+        var helm = harness.addToBattlefieldAndReturn(player1, new HelmOfTheHost());
+        helm.setAttachedTo(muldrotha.getId());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Muldrotha, the Gravetide")).isEqualTo(2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castFromGraveyard(player1, 0);
+        harness.passBothPriorities();
+        harness.castFromGraveyard(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 }
