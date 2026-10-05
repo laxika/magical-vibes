@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Persuasion;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +17,7 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Nyxathid.class, GrizzlyBears.class, Persuasion.class})
 class NyxathidTest extends BaseCardTest {
 
     @Test
@@ -70,11 +74,31 @@ class NyxathidTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Nyxathid");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Still counts the chosen player's hand after that player gains control")
+    void keepsChosenPlayerAfterControlChanges() {
+        harness.setHand(player1, handOf(3));
+        harness.setHand(player2, List.of());
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new Nyxathid(), "{1}{B}{B}");
+        harness.passBothPriorities();
+        Permanent nyxathid = findPermanent(player2, "Nyxathid");
+        assertThat(gqs.getEffectiveToughness(gd, nyxathid)).isEqualTo(4);
+
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new Persuasion(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castEnchantment(player1, 0, nyxathid.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Nyxathid");
+        assertThat(gqs.getEffectivePower(gd, nyxathid)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, nyxathid)).isEqualTo(4);
+    }
 
     private Permanent addNyxathid(Player player) {
-        harness.addToBattlefield(player, new Nyxathid());
-        return findPermanent(player, "Nyxathid");
+        return harness.addToBattlefieldAndReturn(player, new Nyxathid());
     }
 
     private List<Card> handOf(int count) {
