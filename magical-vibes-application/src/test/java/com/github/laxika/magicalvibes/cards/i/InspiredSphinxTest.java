@@ -22,11 +22,7 @@ class InspiredSphinxTest extends BaseCardTest {
     @DisplayName("Entering Inspired Sphinx draws one card for its opponent")
     void entersAndDrawsForEachOpponent() {
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
-        harness.setHand(player1, List.of(new InspiredSphinx()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new InspiredSphinx(), "{5}{U}{U}");
         harness.passBothPriorities();
         int handBeforeTrigger = gd.playerHands.get(player1.getId()).size();
         harness.passBothPriorities();
@@ -52,6 +48,46 @@ class InspiredSphinxTest extends BaseCardTest {
         assertThat(token.getCard().hasType(CardType.ARTIFACT)).isTrue();
         assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
         assertThat(token.getCard().isToken()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("An opposing Inspired Sphinx draws for its controller when it enters without being cast")
+    void enteringWithoutCastingDrawsForOpposingController() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+
+        harness.enterBattlefieldAndReturn(player2, new InspiredSphinx());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Inspired Sphinx can activate repeatedly without tapping or untapping")
+    void tappedSphinxCanCreateMultipleTokens() {
+        Permanent sphinx = harness.addToBattlefieldAndReturn(player1, new InspiredSphinx());
+        sphinx.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        int sphinxIndex = gd.playerBattlefields.get(player1.getId()).indexOf(sphinx);
+
+        harness.activateAbility(player1, sphinxIndex, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, sphinxIndex, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(2)
+                .allSatisfy(token -> {
+                    assertThat(token.getCard().hasType(CardType.CREATURE)).isTrue();
+                    assertThat(token.isTapped()).isFalse();
+                });
+        assertThat(sphinx.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }
