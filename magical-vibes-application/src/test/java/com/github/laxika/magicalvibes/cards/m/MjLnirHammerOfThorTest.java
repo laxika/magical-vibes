@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.z.ZacamaPrimalCalamity;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -45,11 +46,7 @@ class MjLnirHammerOfThorTest extends BaseCardTest {
     @Test
     @DisplayName("Mjolnir can enter without choosing an ETB target")
     void entersWithoutTarget() {
-        harness.setHand(player1, List.of(new MjLnirHammerOfThor()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.addMana(player1, ManaColor.RED, 1);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new MjLnirHammerOfThor(), "{3}{R}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -113,5 +110,69 @@ class MjLnirHammerOfThorTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Mjölnir, Hammer of Thor");
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Equip worthy rejects a nonlegendary white creature")
+    void rejectsNonlegendaryCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new SerraAngel());
+        Permanent hammer = harness.addToBattlefieldAndReturn(player1, new MjLnirHammerOfThor());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(hammer.getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("Equip worthy rejects a worthy creature controlled by an opponent")
+    void rejectsOpponentsWorthyCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CaptainAmericaSuperSoldier());
+        Permanent hammer = harness.addToBattlefieldAndReturn(player1, new MjLnirHammerOfThor());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(hammer.getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("The equipped creature deals double combat damage to a player")
+    void doublesCombatDamageToPlayer() {
+        Permanent creature = addCreatureReady(player1, new ZacamaPrimalCalamity());
+        Permanent hammer = harness.addToBattlefieldAndReturn(player1, new MjLnirHammerOfThor());
+        hammer.setAttachedTo(creature.getId());
+        harness.setLife(player2, 30);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player2, 12);
+    }
+
+    @Test
+    @DisplayName("Discarding Mjolnir is a cost and its damage waits for resolution")
+    void discardsBeforeHandAbilityResolves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MjLnirHammerOfThor()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof MjLnirHammerOfThor);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(creature.getMarkedDamage()).isZero();
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }
