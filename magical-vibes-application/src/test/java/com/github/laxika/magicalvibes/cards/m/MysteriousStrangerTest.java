@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -23,13 +22,11 @@ class MysteriousStrangerTest extends BaseCardTest {
         CounselOfTheSoratami opponentCounsel = new CounselOfTheSoratami();
         harness.setGraveyard(player1, List.of(ownCounsel));
         harness.setGraveyard(player2, List.of(opponentCounsel));
-        harness.setHand(player1, List.of(new MysteriousStranger()));
-        addStrangerMana();
-
-        harness.castCreature(player1, 0, List.of(ownCounsel.getId(), opponentCounsel.getId()));
+        harness.castFromHand(player1, new MysteriousStranger(), "{2}{R}{R}");
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(ownCounsel.getId(), opponentCounsel.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.findExiledCard(ownCounsel.getId())).isNotNull();
         assertThat(gd.findExiledCard(opponentCounsel.getId())).isNotNull();
@@ -45,10 +42,7 @@ class MysteriousStrangerTest extends BaseCardTest {
         CounselOfTheSoratami ownCounsel = new CounselOfTheSoratami();
         harness.setGraveyard(player1, List.of(ownCounsel));
         harness.setGraveyard(player2, List.of());
-        harness.setHand(player1, List.of(new MysteriousStranger()));
-        addStrangerMana();
-
-        harness.castCreature(player1, 0, List.of(ownCounsel.getId()));
+        harness.castFromHand(player1, new MysteriousStranger(), "{2}{R}{R}");
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(ownCounsel.getId()));
         harness.passBothPriorities();
@@ -61,16 +55,97 @@ class MysteriousStrangerTest extends BaseCardTest {
     @DisplayName("Cannot target a creature card in a graveyard")
     void rejectsCreatureCardTarget() {
         GrizzlyBears bears = new GrizzlyBears();
-        harness.setGraveyard(player1, List.of(bears));
-        harness.setHand(player1, List.of(new MysteriousStranger()));
-        addStrangerMana();
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        harness.setGraveyard(player1, List.of(bears, counsel));
+        harness.castFromHand(player1, new MysteriousStranger(), "{2}{R}{R}");
+        harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.castCreature(player1, 0, List.of(bears.getId())))
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(bears.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void addStrangerMana() {
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+    @Test
+    @DisplayName("The controller may decline to cast the random copy while both originals remain exiled")
+    void mayDeclineRandomCopy() {
+        CounselOfTheSoratami ownCounsel = new CounselOfTheSoratami();
+        CounselOfTheSoratami opponentCounsel = new CounselOfTheSoratami();
+        harness.setGraveyard(player1, List.of(ownCounsel));
+        harness.setGraveyard(player2, List.of(opponentCounsel));
+        harness.castFromHand(player1, new MysteriousStranger(), "{2}{R}{R}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(ownCounsel.getId(), opponentCounsel.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).noneMatch(StackEntry::isCopy);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.findExiledCard(ownCounsel.getId())).isNotNull();
+        assertThat(gd.findExiledCard(opponentCounsel.getId())).isNotNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
+
+    @Test
+    @DisplayName("No copy is cast if one of two targets leaves its graveyard before resolution")
+    void countsOnlyCardsActuallyExiled() {
+        CounselOfTheSoratami ownCounsel = new CounselOfTheSoratami();
+        CounselOfTheSoratami opponentCounsel = new CounselOfTheSoratami();
+        harness.setGraveyard(player1, List.of(ownCounsel));
+        harness.setGraveyard(player2, List.of(opponentCounsel));
+        harness.castFromHand(player1, new MysteriousStranger(), "{2}{R}{R}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(ownCounsel.getId(), opponentCounsel.getId()));
+        harness.setGraveyard(player2, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(ownCounsel.getId())).isNotNull();
+        assertThat(gd.findExiledCard(opponentCounsel.getId())).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot choose two cards from the same graveyard")
+    void rejectsTwoCardsFromSameGraveyard() {
+        CounselOfTheSoratami first = new CounselOfTheSoratami();
+        CounselOfTheSoratami second = new CounselOfTheSoratami();
+        CounselOfTheSoratami opponentCounsel = new CounselOfTheSoratami();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setGraveyard(player2, List.of(opponentCounsel));
+        harness.castFromHand(player1, new MysteriousStranger(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Must choose a card from every eligible graveyard")
+    void cannotOmitEligibleGraveyard() {
+        CounselOfTheSoratami ownCounsel = new CounselOfTheSoratami();
+        CounselOfTheSoratami opponentCounsel = new CounselOfTheSoratami();
+        harness.setGraveyard(player1, List.of(ownCounsel));
+        harness.setGraveyard(player2, List.of(opponentCounsel));
+        harness.castFromHand(player1, new MysteriousStranger(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(ownCounsel.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Enters without a target choice when neither graveyard has an instant or sorcery")
+    void noEligibleGraveyards() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player2, List.of());
+        harness.castFromHand(player1, new MysteriousStranger(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Mysterious Stranger");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.stack).noneMatch(StackEntry::isCopy);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
 }
