@@ -39,4 +39,20 @@ class IronBarbHellionTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid blocker index");
     }
+
+    @Test
+    @DisplayName("Can block after losing all abilities")
+    void canBlockAfterLosingAllAbilities() {
+        Permanent blocker = addCreatureReady(player2, new IronBarbHellion());
+        blocker.setLosesAllAbilitiesUntilEndOfTurn(true);
+        addCreatureReady(player1, new IronBarbHellion());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
 }
