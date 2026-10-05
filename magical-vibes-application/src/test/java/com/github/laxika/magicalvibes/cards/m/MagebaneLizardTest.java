@@ -25,9 +25,9 @@ class MagebaneLizardTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         harness.castInstant(player2, 0);
-        resolveAllStack();
+        resolveAllTriggers();
         harness.castInstant(player2, 0);
-        resolveAllStack();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 3);
     }
@@ -44,10 +44,10 @@ class MagebaneLizardTest extends BaseCardTest {
 
         harness.castCreature(player2, 0);
         assertThat(gd.stack).hasSize(1);
-        resolveAllStack();
+        resolveAllTriggers();
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.castInstant(player2, 0);
-        resolveAllStack();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);
     }
@@ -62,9 +62,68 @@ class MagebaneLizardTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         harness.castInstant(player1, 0);
-        resolveAllStack();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
+    }
+
+    @Test
+    void countsAdditionalSpellsCastInResponseWhenEachTriggerResolves() {
+        harness.addToBattlefield(player1, new MagebaneLizard());
+        prepareMainPhase(player2);
+        harness.setHand(player2, List.of(new HolyDay(), new HolyDay()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castInstant(player2, 0);
+        harness.castInstant(player2, 0);
+        assertThat(gd.stack).hasSize(4);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 4);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    void countsSpellsCastBeforeLizardEnteredTheBattlefield() {
+        prepareMainPhase(player2);
+        harness.setHand(player2, List.of(new HolyDay(), new HolyDay()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castInstant(player2, 0);
+        resolveAllTriggers();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+        harness.addToBattlefield(player1, new MagebaneLizard());
+        harness.castInstant(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    void tracksEachPlayersNoncreatureSpellsSeparately() {
+        harness.addToBattlefield(player1, new MagebaneLizard());
+        prepareMainPhase(player2);
+        harness.setHand(player1, List.of(new HolyDay()));
+        harness.setHand(player2, List.of(new HolyDay(), new HolyDay()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        int player1Life = gd.playerLifeTotals.get(player1.getId());
+        int player2Life = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castInstant(player2, 0);
+        harness.castInstant(player1, 0);
+        resolveAllTriggers();
+        harness.castInstant(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(player1Life - 1);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(player2Life - 3);
     }
 
     private void prepareMainPhase(com.github.laxika.magicalvibes.model.Player activePlayer) {
@@ -73,9 +132,4 @@ class MagebaneLizardTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    private void resolveAllStack() {
-        for (int i = 0; i < 8 && !gd.stack.isEmpty(); i++) {
-            harness.passBothPriorities();
-        }
-    }
 }
