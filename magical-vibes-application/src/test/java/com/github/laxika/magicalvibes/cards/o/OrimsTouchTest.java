@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.r.RagingKavu;
 import com.github.laxika.magicalvibes.cards.s.ScorchingLava;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,6 +16,68 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({OrimsTouch.class, RagingKavu.class, ScorchingLava.class})
 class OrimsTouchTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("A kicked shield prevents four damage across events and then allows further damage")
+    void kickedShieldIsConsumedAcrossDamageEvents() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new OrimsTouch(), new ScorchingLava(),
+                new ScorchingLava(), new ScorchingLava()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castKickedInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 20);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 20);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Two unkicked spells provide four total points of prevention")
+    void multipleShieldsAccumulate() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new OrimsTouch(), new OrimsTouch(),
+                new ScorchingLava(), new ScorchingLava(), new ScorchingLava()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 20);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 20);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Unused player and creature shields expire at the end of the turn")
+    void unusedShieldsExpireAtEndOfTurn() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingKavu());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new OrimsTouch(), new OrimsTouch()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        harness.setHand(player1, List.of(new ScorchingLava(), new ScorchingLava()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 18);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.assertInGraveyard(player2, "Raging Kavu");
+    }
 
     @Test
     @DisplayName("Without kicker, prevents the next 2 damage to a target creature")
