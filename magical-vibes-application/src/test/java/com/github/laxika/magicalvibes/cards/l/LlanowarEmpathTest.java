@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.w.Whetwheel;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -21,10 +20,7 @@ class LlanowarEmpathTest extends BaseCardTest {
     private void castLlanowarEmpath() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new LlanowarEmpath()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new LlanowarEmpath(), "{3}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
@@ -112,5 +108,52 @@ class LlanowarEmpathTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Bottoming both scry cards reveals the previously third card")
+    void bottomingBothRevealsThirdCard() {
+        Card first = new Whetwheel();
+        Card second = new Whetwheel();
+        Card third = new LlanowarEmpath();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        castLlanowarEmpath();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(third);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Bottoming the entire library still reveals its new top card")
+    void bottomingEntireLibraryStillRevealsCard() {
+        Card first = new Whetwheel();
+        Card second = new LlanowarEmpath();
+        harness.setLibrary(player1, List.of(first, second));
+
+        castLlanowarEmpath();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Keeping both scry cards permits reordering before the reveal")
+    void keepingBothPermitsReordering() {
+        Card first = new Whetwheel();
+        Card second = new LlanowarEmpath();
+        Card third = new Whetwheel();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        castLlanowarEmpath();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(1, 0), List.of()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, third);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
