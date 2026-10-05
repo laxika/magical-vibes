@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -50,6 +52,7 @@ class LaezelsAcrobaticsTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Forest");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         advanceToEndStep();
+        harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
@@ -74,10 +77,73 @@ class LaezelsAcrobaticsTest extends BaseCardTest {
 
         advanceToEndStep();
         harness.passBothPriorities();
+        harness.passBothPriorities();
         assertThat(gd.playerHands.get(player1.getId()))
                 .filteredOn(card -> card instanceof Forest)
                 .hasSize(2);
         harness.assertOnBattlefield(player1, "Elvish Visionary");
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 9, 10, 20})
+    void creaturesAreAlreadyExiledWhenTheDieIsRolled(int result) {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        boolean[] rolled = {false};
+        ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new D20RollService() {
+            @Override
+            public int roll() {
+                rolled[0] = true;
+                harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+                assertThat(gd.getPlayerExiledCards(player1.getId()))
+                        .extracting(card -> card.getName())
+                        .containsExactly("Grizzly Bears");
+                return result;
+            }
+        });
+
+        castAcrobatics();
+
+        assertThat(rolled[0]).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {9, 20})
+    void creatureTokensRemainOnTheBattlefield(int result) {
+        setRoll(result);
+        GrizzlyBears tokenCard = new GrizzlyBears();
+        tokenCard.setToken(true);
+        var token = harness.addToBattlefieldAndReturn(player1, tokenCard);
+        var creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castAcrobatics();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(token);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(creature.getCard());
+        advanceToEndStep();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(token).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 20})
+    void borrowedCreaturesReturnToTheirOwnerAfterBothRollOutcomes(int result) {
+        setRoll(result);
+        var creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        gd.stolenCreatures.put(creature.getId(), player2.getId());
+
+        castAcrobatics();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(creature.getCard());
+        advanceToEndStep();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }
 
     private void castAcrobatics() {
@@ -87,8 +153,7 @@ class LaezelsAcrobaticsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LaezelsAcrobatics()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
     }
 
     private void advanceToEndStep() {
