@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.cards.n.NightbirdsClutches;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PastInFlames.class, Shock.class, GrizzlyBears.class, NightbirdsClutches.class})
 class PastInFlamesTest extends BaseCardTest {
 
     @Test
@@ -25,8 +28,7 @@ class PastInFlamesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).contains(shock.getId());
     }
@@ -44,15 +46,13 @@ class PastInFlamesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         // Cast and resolve Past in Flames
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // Now cast Shock from graveyard with granted flashback
-        harness.castFlashback(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, creature.getId());
 
-        // Shock should have dealt 2 damage to the creature
-        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -68,8 +68,7 @@ class PastInFlamesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         // Cast and resolve Past in Flames
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // Cast Shock with granted flashback — costs {R}
         harness.castFlashback(player1, 0, creature.getId());
@@ -89,11 +88,9 @@ class PastInFlamesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
-        harness.castFlashback(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, creature.getId());
 
         harness.assertNotInGraveyard(player1, "Shock");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -109,26 +106,30 @@ class PastInFlamesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).doesNotContain(bears.getId());
     }
 
     @Test
-    @DisplayName("Does not grant flashback to cards already having flashback")
-    void doesNotGrantFlashbackToCardsAlreadyHavingFlashback() {
+    @DisplayName("Grants a second flashback cost to cards already having flashback")
+    void grantsFlashbackToCardsAlreadyHavingFlashback() {
         NightbirdsClutches clutches = new NightbirdsClutches();
         harness.setGraveyard(player1, List.of(clutches));
         harness.setHand(player1, List.of(new PastInFlames()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFlashback(player1, 0);
         harness.passBothPriorities();
 
-        // Nightbird's Clutches already has flashback, so it should not be in the granted set
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).doesNotContain(clutches.getId());
+        harness.assertNotInGraveyard(player1, "Nightbird's Clutches");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(clutches);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test
@@ -140,13 +141,11 @@ class PastInFlamesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).isNotEmpty();
 
-        // Simulate end-of-turn cleanup
-        gd.cardsGrantedFlashbackUntilEndOfTurn.clear();
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         // Cannot cast the Shock with flashback anymore
         harness.addMana(player1, ManaColor.RED, 1);
@@ -189,14 +188,78 @@ class PastInFlamesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can use the granted flashback cost even when the printed cost is affordable")
+    void canUseGrantedCostWhenPrintedCostIsAffordable() {
+        harness.setGraveyard(player1, List.of(new NightbirdsClutches()));
+        harness.setHand(player1, List.of(new PastInFlames()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castFlashback(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Nightbird's Clutches"));
+    }
+
+    @Test
+    @DisplayName("Offers flashback when only the granted cost is affordable")
+    void offersFlashbackWhenOnlyGrantedCostIsAffordable() {
+        harness.setGraveyard(player1, List.of(new NightbirdsClutches()));
+        harness.setHand(player1, List.of(new PastInFlames()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.ensurePriority(player1);
+        assertThat(harness.getGameActionAvailabilityService()
+                .getPlayableFlashbackIndices(gd, player1.getId())).contains(0);
+    }
+
+    @Test
+    @DisplayName("Does not grant flashback to the opponent's graveyard")
+    void doesNotGrantFlashbackToOpponentsCards() {
+        harness.setGraveyard(player2, List.of(new Shock()));
+        harness.setHand(player1, List.of(new PastInFlames()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player2, ManaColor.RED, 1);
+        assertThatThrownBy(() -> harness.castFlashback(player2, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cards put into the graveyard after resolution do not gain flashback")
+    void doesNotGrantFlashbackToLaterCards() {
+        harness.setHand(player1, List.of(new PastInFlames(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertInGraveyard(player1, "Shock");
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        assertThatThrownBy(() -> harness.castFlashback(player1, 1, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Past in Flames goes to graveyard after normal cast")
     void goesToGraveyardAfterNormalCast() {
         harness.setHand(player1, List.of(new PastInFlames()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertInGraveyard(player1, "Past in Flames");
     }
