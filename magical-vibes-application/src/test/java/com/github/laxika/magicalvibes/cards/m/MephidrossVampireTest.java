@@ -52,8 +52,7 @@ class MephidrossVampireTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new SkyhunterSkirmisher());
 
         harness.activateAbility(player1, 1, null, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(sorcerer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -65,8 +64,7 @@ class MephidrossVampireTest extends BaseCardTest {
         Permanent sorcerer = addCreatureReady(player1, new VulshokSorcerer());
 
         harness.activateAbility(player1, 1, null, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(sorcerer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
@@ -75,12 +73,58 @@ class MephidrossVampireTest extends BaseCardTest {
     @DisplayName("Does not grant the counter trigger to an opponent's creature")
     void doesNotGrantCounterTriggerToOpponentsCreature() {
         Permanent vampire = addCreatureReady(player1, new MephidrossVampire());
-        addCreatureReady(player2, new VulshokSorcerer());
+        Permanent opponentSorcerer = addCreatureReady(player2, new VulshokSorcerer());
 
         harness.activateAbility(player2, 0, null, vampire.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(vampire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opponentSorcerer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each Vampire grants a separate counter trigger")
+    void multipleVampiresGrantMultipleTriggers() {
+        addCreatureReady(player1, new MephidrossVampire());
+        addCreatureReady(player1, new MephidrossVampire());
+        Permanent sorcerer = addCreatureReady(player1, new VulshokSorcerer());
+        Permanent target = addCreatureReady(player2, new MephidrossVampire());
+
+        harness.activateAbility(player1, 2, null, target.getId());
+        resolveAllTriggers();
+
+        assertThat(sorcerer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Damage to a friendly creature also grants a counter")
+    void damageToFriendlyCreatureGrantsCounter() {
+        Permanent vampire = addCreatureReady(player1, new MephidrossVampire());
+        Permanent sorcerer = addCreatureReady(player1, new VulshokSorcerer());
+
+        harness.activateAbility(player1, 1, null, vampire.getId());
+        resolveAllTriggers();
+
+        assertThat(sorcerer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(vampire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Granted damage triggers survive the granting Vampire dying in the same combat damage step")
+    void grantedTriggerSurvivesVampireDyingInSameDamageStep() {
+        Permanent vampire = addCreatureReady(player1, new MephidrossVampire());
+        Permanent sorcerer = addCreatureReady(player1, new VulshokSorcerer());
+        sorcerer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        Permanent vampireBlocker = addCreatureReady(player2, new MephidrossVampire());
+        vampireBlocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        addCreatureReady(player2, new MephidrossVampire());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 1)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(vampire).contains(sorcerer);
+        assertThat(sorcerer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
     }
 }
