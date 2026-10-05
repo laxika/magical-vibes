@@ -73,4 +73,76 @@ class PullOfTheMistMoonTest extends BaseCardTest {
                 .extracting(card -> card.getName())
                 .containsExactly("Grizzly Bears");
     }
+
+    @Test
+    void returnsExiledPermanentWhenSourceLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PullOfTheMistMoon()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        Permanent source = findPermanent(player1, "Pull of the Mist Moon");
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, source);
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getCardsExiledByPermanent(source.getId())).isEmpty();
+    }
+
+    @Test
+    void kickedHandChoiceStillResolvesWhenExileTargetLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PullOfTheMistMoon(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castKickedCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.PerpetualEnterExileHandCardChoice.class);
+        harness.handleCardChosen(player1, 0);
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void doesNotExileWhenSourceLeavesBeforeTriggerResolves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PullOfTheMistMoon()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.getPermanentRemovalService().removePermanentToGraveyard(
+                gd, findPermanent(player1, "Pull of the Mist Moon"));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Pull of the Mist Moon");
+    }
+
+    @Test
+    void kickedWithOnlyLandInHandDoesNotPromptForHandCard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PullOfTheMistMoon(), new Island()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castKickedCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInHand(player1, "Island");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
 }
