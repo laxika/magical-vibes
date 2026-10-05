@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(MisterImmortal.class)
 class MisterImmortalTest extends BaseCardTest {
@@ -45,22 +44,55 @@ class MisterImmortalTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Both abilities require sorcery-speed timing")
-    void abilitiesRequireSorcerySpeedTiming() {
-        MisterImmortal graveyardCard = new MisterImmortal();
-        harness.setGraveyard(player1, List.of(graveyardCard));
+    @DisplayName("Returns from the graveyard during combat")
+    void returnsFromGraveyardDuringCombat() {
+        MisterImmortal card = new MisterImmortal();
+        harness.setGraveyard(player1, List.of(card));
         prepareActivation();
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
-        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("sorcery speed");
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        assertReturnedTapped(card);
+    }
 
-        MisterImmortal exiledCard = new MisterImmortal();
-        harness.setExile(player1, List.of(exiledCard));
-        assertThatThrownBy(() -> harness.activateExileAbility(player1, exiledCard.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("sorcery speed");
+    @Test
+    @DisplayName("Returns from exile during combat")
+    void returnsFromExileDuringCombat() {
+        MisterImmortal card = new MisterImmortal();
+        harness.setExile(player1, List.of(card));
+        prepareActivation();
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.activateExileAbility(player1, card.getId());
+        harness.passBothPriorities();
+        assertReturnedTapped(card);
+    }
+
+    @Test
+    @DisplayName("Returns from the graveyard during the opponent's turn")
+    void returnsFromGraveyardDuringOpponentsTurn() {
+        MisterImmortal card = new MisterImmortal();
+        harness.setGraveyard(player1, List.of(card));
+        prepareActivation();
+        harness.forceActivePlayer(player2);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        assertReturnedTapped(card);
+    }
+
+    @Test
+    @DisplayName("Returns from exile during the opponent's turn")
+    void returnsFromExileDuringOpponentsTurn() {
+        MisterImmortal card = new MisterImmortal();
+        harness.setExile(player1, List.of(card));
+        prepareActivation();
+        harness.forceActivePlayer(player2);
+
+        harness.activateExileAbility(player1, card.getId());
+        harness.passBothPriorities();
+        assertReturnedTapped(card);
     }
 
     private void prepareActivation() {
