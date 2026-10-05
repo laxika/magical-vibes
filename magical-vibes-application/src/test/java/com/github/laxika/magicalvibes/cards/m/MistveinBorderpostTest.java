@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MistveinBorderpost.class, Island.class, ArcaneSanctum.class})
 class MistveinBorderpostTest extends BaseCardTest {
 
     // ===== Enters tapped =====
@@ -106,16 +108,67 @@ class MistveinBorderpostTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
     }
 
-    // ===== Helpers =====
+    @Test
+    void alternateCostCanReturnTappedLandBeforeSpellResolves() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        island.tap();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player1, List.of(new MistveinBorderpost()));
+
+        harness.castWithAlternateCost(player1, 0, List.of(island.getId()));
+
+        harness.assertInHand(player1, "Island");
+        harness.assertNotOnBattlefield(player1, "Island");
+        harness.assertNotOnBattlefield(player1, "Mistvein Borderpost");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(borderpost(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    void alternateCostCannotReturnOpponentsLand() {
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new MistveinBorderpost()));
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of(island.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Island");
+        harness.assertInHand(player1, "Mistvein Borderpost");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tappedBorderpostCannotActivateManaAbility() {
+        harness.enterBattlefieldAndReturn(player1, new MistveinBorderpost());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void manaAbilityWorksImmediatelyAfterEnteringIfUntapped() {
+        Permanent borderpost = harness.enterBattlefieldAndReturn(player1, new MistveinBorderpost());
+        borderpost.untap();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(borderpost.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 
     private Permanent borderpost(Player player) {
         return findPermanent(player, "Mistvein Borderpost");
     }
 
     private Permanent addReadyBorderpost(Player player) {
-        Permanent perm = new Permanent(new MistveinBorderpost());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new MistveinBorderpost());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
