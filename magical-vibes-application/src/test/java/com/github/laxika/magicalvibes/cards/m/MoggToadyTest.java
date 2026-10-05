@@ -34,8 +34,7 @@ class MoggToadyTest extends BaseCardTest {
         addCreatureReady(player1, new Mossdog());
         addCreatureReady(player2, new Mossdog());
 
-        declareAttackers(player1, List.of(0));
-        harness.beginBlockerDeclarationInput();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
 
@@ -67,11 +66,10 @@ class MoggToadyTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot block when the creature counts are tied")
     void cannotBlockWhenCreatureCountsAreTied() {
-        Permanent attacker = addCreatureReady(player1, new Mossdog());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new Mossdog());
         addCreatureReady(player2, new MoggToady());
 
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
@@ -81,12 +79,11 @@ class MoggToadyTest extends BaseCardTest {
     @Test
     @DisplayName("Can block when controlling more creatures than attacking player")
     void canBlockWhenControllingMoreCreatures() {
-        Permanent attacker = addCreatureReady(player1, new Mossdog());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new Mossdog());
         Permanent toady = addCreatureReady(player2, new MoggToady());
         addCreatureReady(player2, new Mossdog());
 
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(toady.isBlocking()).isTrue();
@@ -95,12 +92,11 @@ class MoggToadyTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot block when attacking player controls more creatures")
     void cannotBlockWhenAttackingPlayerControlsMoreCreatures() {
-        Permanent attacker = addCreatureReady(player1, new Mossdog());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new Mossdog());
         addCreatureReady(player1, new Mossdog());
         addCreatureReady(player2, new MoggToady());
 
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
@@ -110,14 +106,67 @@ class MoggToadyTest extends BaseCardTest {
     @Test
     @DisplayName("Can block after losing all abilities even when creature counts are tied")
     void canBlockAfterLosingAllAbilities() {
-        Permanent attacker = addCreatureReady(player1, new Mossdog());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new Mossdog());
         Permanent toady = addCreatureReady(player2, new MoggToady());
         toady.setLosesAllAbilitiesUntilEndOfTurn(true);
 
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(toady.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Tapped nonattacking creatures count toward the attack restriction")
+    void tappedCreaturesCountTowardAttackRestriction() {
+        addCreatureReady(player1, new MoggToady());
+        Permanent support = addCreatureReady(player1, new Mossdog());
+        support.setTapped(true);
+        addCreatureReady(player2, new Mossdog());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Tapped creatures count toward the defending player's creature total")
+    void tappedDefendingCreaturesCountTowardAttackRestriction() {
+        addCreatureReady(player1, new MoggToady());
+        Permanent defender = addCreatureReady(player2, new Mossdog());
+        defender.setTapped(true);
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Tapped creatures count toward the blocker's creature total")
+    void tappedCreaturesCountTowardBlockRestriction() {
+        addCreatureReady(player1, new Mossdog());
+        Permanent toady = addCreatureReady(player2, new MoggToady());
+        Permanent support = addCreatureReady(player2, new Mossdog());
+        support.setTapped(true);
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(toady.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Nonattacking creatures count toward the attacking player's creature total")
+    void nonattackingCreaturesCountTowardBlockRestriction() {
+        addCreatureReady(player1, new Mossdog());
+        Permanent support = addCreatureReady(player1, new Mossdog());
+        support.setTapped(true);
+        addCreatureReady(player2, new MoggToady());
+        addCreatureReady(player2, new Mossdog());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
