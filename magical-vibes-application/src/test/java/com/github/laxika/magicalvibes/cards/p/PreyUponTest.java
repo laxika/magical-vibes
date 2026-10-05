@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PreyUpon.class, GrizzlyBears.class, HillGiant.class, LlanowarElves.class})
 class PreyUponTest extends BaseCardTest {
 
     @Test
@@ -31,8 +33,7 @@ class PreyUponTest extends BaseCardTest {
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID elvesId = harness.getPermanentId(player2, "Llanowar Elves");
-        harness.castSorcery(player1, 0, List.of(bearId, elvesId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(bearId, elvesId));
 
         // Llanowar Elves should be destroyed (2 damage >= 1 toughness)
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
@@ -53,8 +54,7 @@ class PreyUponTest extends BaseCardTest {
 
         UUID myBearId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID theirBearId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castSorcery(player1, 0, List.of(myBearId, theirBearId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(myBearId, theirBearId));
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -74,8 +74,7 @@ class PreyUponTest extends BaseCardTest {
 
         UUID giantId = harness.getPermanentId(player1, "Hill Giant");
         UUID elvesId = harness.getPermanentId(player2, "Llanowar Elves");
-        harness.castSorcery(player1, 0, List.of(giantId, elvesId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(giantId, elvesId));
 
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
         harness.assertInGraveyard(player2, "Llanowar Elves");
@@ -102,18 +101,12 @@ class PreyUponTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target own creature as second target")
     void cannotTargetOwnCreatureAsSecondTarget() {
-        GrizzlyBears bear1 = new GrizzlyBears();
-        GrizzlyBears bear2 = new GrizzlyBears();
-        harness.addToBattlefield(player1, bear1);
-        harness.addToBattlefield(player1, bear2);
+        Permanent bear1 = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bear2 = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new PreyUpon()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
-        UUID id1 = bf.get(0).getId();
-        UUID id2 = bf.get(1).getId();
-
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(id1, id2)))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(bear1.getId(), bear2.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -181,5 +174,42 @@ class PreyUponTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getMarkedDamage()).isZero();
+    }
+    @Test
+    @DisplayName("Tapped creatures still deal fight damage without untapping")
+    void tappedCreaturesFight() {
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        giant.tap();
+        bear.tap();
+        harness.setHand(player1, List.of(new PreyUpon()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(giant.getId(), bear.getId()));
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        assertThat(giant.getMarkedDamage()).isEqualTo(2);
+        assertThat(giant.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Neither creature fights if the second target becomes controlled by the caster")
+    void neitherFightsWhenSecondTargetChangesController() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new PreyUpon()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castSorcery(player1, 0, List.of(bear.getId(), elves.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(elves);
+        gd.playerBattlefields.get(player1.getId()).add(elves);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        assertThat(bear.getMarkedDamage()).isZero();
+        assertThat(elves.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Prey Upon");
     }
 }
