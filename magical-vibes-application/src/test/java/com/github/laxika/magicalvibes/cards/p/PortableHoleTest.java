@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
+import com.github.laxika.magicalvibes.cards.r.RayOfFrost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -18,7 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PortableHole.class, Forest.class, GrizzlyBears.class, HillGiant.class, Naturalize.class})
+@CardUsed({PortableHole.class, Forest.class, GrizzlyBears.class, HillGiant.class, Naturalize.class, RayOfFrost.class})
 class PortableHoleTest extends BaseCardTest {
 
     private void castAndResolve(UUID targetId) {
@@ -58,8 +59,7 @@ class PortableHoleTest extends BaseCardTest {
         UUID portableHoleId = harness.getPermanentId(player1, "Portable Hole");
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, portableHoleId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, portableHoleId);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -100,5 +100,76 @@ class PortableHoleTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castArtifact(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("opponent controls");
+    }
+
+    @Test
+    @DisplayName("Can exile an opposing noncreature artifact")
+    void exilesNoncreatureArtifact() {
+        Permanent opposingHole = harness.addToBattlefieldAndReturn(player2, new PortableHole());
+
+        castAndResolve(opposingHole.getId());
+
+        harness.assertNotOnBattlefield(player2, "Portable Hole");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getId().equals(opposingHole.getCard().getId()));
+    }
+
+    @Test
+    @DisplayName("Does not exile the target if Portable Hole leaves before its trigger resolves")
+    void sourceLeavesBeforeTriggerResolves() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PortableHole()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castArtifact(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Portable Hole"));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Portable Hole");
+    }
+
+    @Test
+    @DisplayName("The owner chooses a legal attachment when an exiled Aura returns")
+    void returningAuraChoosesAttachment() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new RayOfFrost());
+        aura.setAttachedTo(bears.getId());
+        castAndResolve(aura.getId());
+
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Portable Hole"));
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player2, bears.getId());
+        harness.assertOnBattlefield(player2, "Ray of Frost");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard().getName().equals("Ray of Frost")
+                        && bears.getId().equals(permanent.getAttachedTo()));
+    }
+
+    @Test
+    @DisplayName("An exiled Aura stays in exile when it has no legal attachment on return")
+    void returningAuraWithoutLegalAttachmentStaysExiled() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new RayOfFrost());
+        aura.setAttachedTo(bears.getId());
+        castAndResolve(aura.getId());
+        UUID firstHoleId = harness.getPermanentId(player1, "Portable Hole");
+        castAndResolve(bears.getId());
+
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player2, 0, firstHoleId);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getId().equals(aura.getCard().getId()));
+        harness.assertNotOnBattlefield(player2, "Ray of Frost");
+        harness.assertNotInGraveyard(player2, "Ray of Frost");
     }
 }
