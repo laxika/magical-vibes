@@ -16,6 +16,94 @@ import static org.assertj.core.api.Assertions.assertThat;
 class KangPrimeTest extends BaseCardTest {
 
     @Test
+    @DisplayName("The library dig stops at the first nonland card")
+    void leavesCardsAfterFirstNonlandInLibrary() {
+        Island land = new Island();
+        GrizzlyBears firstNonland = new GrizzlyBears();
+        GrizzlyBears nextCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(land, firstNonland, nextCard));
+
+        harness.enterBattlefieldAndReturn(player1, new KangPrime());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+        assertThat(gd.exiledCardTimeCounters).containsOnlyKeys(firstNonland.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(land, firstNonland);
+    }
+
+    @Test
+    @DisplayName("An empty library does not create a suspended card")
+    void emptyLibraryDoesNothing() {
+        harness.setLibrary(player1, List.of());
+
+        harness.enterBattlefieldAndReturn(player1, new KangPrime());
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.exiledCardTimeCounters).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Time counters are removed only during the card owner's upkeep")
+    void opponentsUpkeepDoesNotRemoveTimeCounter() {
+        GrizzlyBears nonland = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(nonland));
+        harness.enterBattlefieldAndReturn(player1, new KangPrime());
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        assertThat(gd.exiledCardTimeCounters).containsEntry(nonland.getId(), 2);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.exiledCardTimeCounters).containsEntry(nonland.getId(), 1);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Declining the suspend cast leaves the card exiled without another offer next upkeep")
+    void decliningCastLeavesCardExiled() {
+        GrizzlyBears nonland = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(nonland));
+        harness.enterBattlefieldAndReturn(player1, new KangPrime());
+        harness.passBothPriorities();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(nonland);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(nonland.getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A creature cast through suspend can attack immediately")
+    void suspendedCreatureGainsHaste() {
+        GrizzlyBears nonland = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(nonland));
+        harness.enterBattlefieldAndReturn(player1, new KangPrime());
+        harness.passBothPriorities();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        declareAttackers(List.of(1));
+
+        assertThat(findPermanent(player1, "Grizzly Bears").isAttacking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Entering exiles through the first nonland card and suspends it")
     void enteringExilesUntilNonlandAndSuspendsIt() {
         Island land = new Island();
