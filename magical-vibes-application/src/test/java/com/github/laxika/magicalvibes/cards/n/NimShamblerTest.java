@@ -43,6 +43,62 @@ class NimShamblerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrificing an artifact creature immediately removes its power bonus")
+    void sacrificingArtifactCreatureUpdatesPower() {
+        Permanent nim = addCreatureReady(player1, new NimShambler());
+        Permanent fodder = addCreatureReady(player1, new Ornithopter());
+
+        assertThat(gqs.getEffectivePower(gd, nim)).isEqualTo(3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, fodder.getId());
+
+        harness.assertInGraveyard(player1, "Ornithopter");
+        assertThat(gqs.getEffectivePower(gd, nim)).isEqualTo(2);
+        assertThat(nim.getRegenerationShield()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(nim.getRegenerationShield()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, nim)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Nim Shambler can sacrifice itself but regeneration does not return it")
+    void canSacrificeItself() {
+        Permanent nim = addCreatureReady(player1, new NimShambler());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, nim.getId());
+
+        harness.assertInGraveyard(player1, "Nim Shambler");
+        harness.assertNotOnBattlefield(player1, "Nim Shambler");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Nim Shambler");
+        harness.assertNotOnBattlefield(player1, "Nim Shambler");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Regeneration ability works while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        harness.addToBattlefield(player1, new NimShambler());
+        Permanent nim = findPermanent(player1, "Nim Shambler");
+        nim.setSummoningSick(true);
+        nim.tap();
+        Permanent fodder = addCreatureReady(player1, new DrossProwler());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.passBothPriorities();
+
+        assertThat(nim.getRegenerationShield()).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Dross Prowler");
+        harness.assertOnBattlefield(player1, "Nim Shambler");
+    }
+
+    @Test
     @DisplayName("Regeneration shield saves Nim Shambler from lethal combat damage")
     void regeneratesFromLethalCombatDamage() {
         Permanent nim = addCreatureReady(player1, new NimShambler());
