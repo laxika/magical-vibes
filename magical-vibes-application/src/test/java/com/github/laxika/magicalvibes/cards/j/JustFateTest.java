@@ -18,13 +18,33 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class JustFateTest extends BaseCardTest {
 
     @Test
+    @DisplayName("An attacker destroyed in response makes the original spell's target illegal")
+    void targetDestroyedInResponse() {
+        Permanent attacker = addCreatureReady(player1, new BearCub());
+        Permanent otherAttacker = addCreatureReady(player1, new BearCub());
+        harness.setHand(player2, List.of(new JustFate(), new JustFate()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0, 1));
+            harness.castInstant(player2, 0, attacker.getId());
+            harness.castAndResolveInstant(player2, 0, attacker.getId());
+            resolveAllTriggers();
+        });
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker).contains(otherAttacker);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(attacker.getCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2)
+                .allMatch(card -> card instanceof JustFate);
+    }
+
+    @Test
     @DisplayName("Cast during declare attackers while attacked: destroys the attacker")
     void destroysAttacker() {
         Permanent attacker = addCreatureReady(player1, new BearCub());
         addCreatureReady(player2, new BearCub());
-        declareAttackers(List.of(0));
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
         harness.setHand(player2, List.of(new JustFate()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
@@ -41,9 +61,7 @@ class JustFateTest extends BaseCardTest {
     void cannotTargetNonAttacker() {
         addCreatureReady(player1, new BearCub());
         Permanent nonAttacker = addCreatureReady(player2, new BearCub());
-        declareAttackers(List.of(0));
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
         harness.setHand(player2, List.of(new JustFate()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
@@ -74,9 +92,7 @@ class JustFateTest extends BaseCardTest {
     void cannotCastWhenNotAttacked() {
         Permanent attacker = addCreatureReady(player1, new BearCub());
         addCreatureReady(player2, new BearCub());
-        declareAttackers(List.of(0));
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
         harness.setHand(player1, List.of(new JustFate()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
