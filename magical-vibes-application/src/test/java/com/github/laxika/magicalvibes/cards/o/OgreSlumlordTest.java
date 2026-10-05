@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
+import com.github.laxika.magicalvibes.cards.d.Damnation;
+import com.github.laxika.magicalvibes.cards.m.Murder;
+import com.github.laxika.magicalvibes.cards.w.WingsOfVelisVel;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RatColony;
 import com.github.laxika.magicalvibes.model.Card;
@@ -11,6 +14,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +22,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({OgreSlumlord.class, DoomBlade.class, GrizzlyBears.class, RatColony.class})
 class OgreSlumlordTest extends BaseCardTest {
 
     @Test
@@ -108,11 +113,73 @@ class OgreSlumlordTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, colony, Keyword.DEATHTOUCH)).isFalse();
     }
 
+
+    @Test
+    @CardUsed({Damnation.class})
+    @DisplayName("Simultaneous deaths trigger for each other nontoken creature even when Slumlord dies")
+    void simultaneousDeathsStillCreateRats() {
+        harness.addToBattlefield(player1, new OgreSlumlord());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Damnation()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().getName().equals("Rat")).hasSize(2);
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Rat"), Keyword.DEATHTOUCH)).isFalse();
+    }
+
+    @Test
+    @CardUsed({WingsOfVelisVel.class})
+    @DisplayName("Slumlord gains deathtouch when it becomes a Rat")
+    void slumlordAsRatHasDeathtouch() {
+        Permanent slumlord = harness.addToBattlefieldAndReturn(player1, new OgreSlumlord());
+        harness.setHand(player1, List.of(new WingsOfVelisVel()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, slumlord.getId());
+
+        assertThat(gqs.hasKeyword(gd, slumlord, Keyword.DEATHTOUCH)).isTrue();
+    }
+
+    @Test
+    @CardUsed({Murder.class})
+    @DisplayName("Slumlord dying alone does not trigger its own ability")
+    void ownDeathDoesNotTrigger() {
+        Permanent slumlord = harness.addToBattlefieldAndReturn(player1, new OgreSlumlord());
+        harness.setHand(player1, List.of(new Murder()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0, slumlord.getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Ogre Slumlord");
+    }
+
+    @Test
+    @DisplayName("A creature you control dying also creates a Rat")
+    void ownOtherCreatureDeathCreatesRat() {
+        harness.addToBattlefield(player1, new OgreSlumlord());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        killWithDoomBlade(bears);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Rat");
+    }
+
     private void killWithDoomBlade(Permanent target) {
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities(); // resolve Doom Blade -> creature dies, trigger goes on the stack
+        harness.castAndResolveInstant(player1, 0, target.getId());
         harness.passBothPriorities(); // resolve the triggered ability -> may prompt
     }
 
