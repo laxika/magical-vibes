@@ -93,6 +93,87 @@ class OblivionSowerTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Oblivion Sower");
     }
 
+    @Test
+    void exilesOnlyTheTopFourCards() {
+        Forest first = new Forest();
+        Mountain second = new Mountain();
+        Forest fifth = new Forest();
+        List<Card> topFour = List.of(first, second, new GrizzlyBears(), new GrizzlyBears());
+        harness.setLibrary(player2, List.of(topFour.get(0), topFour.get(1),
+                topFour.get(2), topFour.get(3), fifth));
+        castSower();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(fifth);
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(Card::getId)
+                .containsExactlyElementsOf(topFour.stream().map(Card::getId).toList());
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .contains(first.getId(), second.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .allSatisfy(permanent -> assertThat(permanent.isTapped()).isFalse());
+        harness.assertNotOnBattlefield(player1, "Oblivion Sower");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Oblivion Sower");
+    }
+
+    @Test
+    void exilesAllRemainingCardsFromAShortLibrary() {
+        Forest land = new Forest();
+        GrizzlyBears nonland = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(land, nonland));
+        castSower();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(Card::getId).containsExactly(land.getId(), nonland.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(land.getId()));
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.findExiledCard(nonland.getId())).isNotNull();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Oblivion Sower");
+    }
+
+    @Test
+    void mayTakePreviouslyExiledLandsEvenWhenTheLibraryIsEmpty() {
+        Forest land = new Forest();
+        harness.setLibrary(player2, List.of());
+        harness.setExile(player2, List.of(land));
+        castSower();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.OblivionSowerLandChoice.class)
+                .validCardIds()).containsExactly(land.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(land.getId()));
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.findExiledCard(land.getId())).isNull();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Oblivion Sower");
+    }
+
+    @Test
+    void enteringWithoutBeingCastDoesNotExileCardsOrOfferLands() {
+        Forest land = new Forest();
+        List<Card> library = List.of(new Forest(), new GrizzlyBears());
+        harness.setLibrary(player2, library);
+        harness.setExile(player2, List.of(land));
+
+        harness.enterBattlefieldAndReturn(player1, new OblivionSower());
+
+        harness.assertOnBattlefield(player1, "Oblivion Sower");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(library);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(land);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.OblivionSowerLandChoice.class))
+                .isNull();
+    }
+
     private void castSower() {
         harness.forceActivePlayer(player1);
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
