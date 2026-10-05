@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,7 +23,7 @@ class MtendaGriffinTest extends BaseCardTest {
     void bouncesSelfAndReturnsGriffin() {
         Permanent mtenda = addCreatureReady(player1, new MtendaGriffin());
         Card ekundu = new EkunduGriffin();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(ekundu)));
+        harness.setGraveyard(player1, List.of(ekundu));
         enterUpkeep();
 
         harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(ekundu.getId()));
@@ -43,7 +42,7 @@ class MtendaGriffinTest extends BaseCardTest {
     void cannotTargetNonGriffin() {
         Permanent mtenda = addCreatureReady(player1, new MtendaGriffin());
         Card maro = new Maro();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(maro)));
+        harness.setGraveyard(player1, List.of(maro));
         enterUpkeep();
 
         assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(maro.getId())))
@@ -59,7 +58,7 @@ class MtendaGriffinTest extends BaseCardTest {
     void cannotTargetOpponentGraveyard() {
         Permanent mtenda = addCreatureReady(player1, new MtendaGriffin());
         Card ekundu = new EkunduGriffin();
-        harness.setGraveyard(player2, new ArrayList<>(List.of(ekundu)));
+        harness.setGraveyard(player2, List.of(ekundu));
         enterUpkeep();
 
         assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(ekundu.getId())))
@@ -86,7 +85,7 @@ class MtendaGriffinTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent mtenda = addCreatureReady(player1, new MtendaGriffin());
         Card ekundu = new EkunduGriffin();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(ekundu)));
+        harness.setGraveyard(player1, List.of(ekundu));
         enterUpkeep();
         mtenda.tap();
 
@@ -102,7 +101,7 @@ class MtendaGriffinTest extends BaseCardTest {
     void cannotActivateOutsideUpkeep() {
         Permanent mtenda = addCreatureReady(player1, new MtendaGriffin());
         Card ekundu = new EkunduGriffin();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(ekundu)));
+        harness.setGraveyard(player1, List.of(ekundu));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -113,6 +112,80 @@ class MtendaGriffinTest extends BaseCardTest {
                 .hasMessageContaining("upkeep");
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getId().equals(mtenda.getCard().getId()));
+    }
+
+    @Test
+    void illegalGraveyardTargetPreventsSelfReturn() {
+        Permanent mtenda = addCreatureReady(player1, new MtendaGriffin());
+        Card ekundu = new EkunduGriffin();
+        harness.setGraveyard(player1, List.of(ekundu));
+        enterUpkeep();
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(ekundu.getId()));
+        assertThat(mtenda.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(mtenda);
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(ekundu));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(mtenda);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getId).doesNotContain(mtenda.getCard().getId(), ekundu.getId());
+    }
+
+    @Test
+    void returnsGriffinEvenWhenSourceHasLeftBattlefield() {
+        Permanent mtenda = addCreatureReady(player1, new MtendaGriffin());
+        Card ekundu = new EkunduGriffin();
+        harness.setGraveyard(player1, List.of(ekundu));
+        enterUpkeep();
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(ekundu.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(mtenda);
+        harness.setGraveyard(player1, List.of(ekundu, mtenda.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getId).contains(ekundu.getId()).doesNotContain(mtenda.getCard().getId());
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId).containsExactly(mtenda.getCard().getId());
+    }
+
+    @Test
+    void cannotActivateDuringOpponentsUpkeep() {
+        addCreatureReady(player1, new MtendaGriffin());
+        Card ekundu = new EkunduGriffin();
+        harness.setGraveyard(player1, List.of(ekundu));
+        advanceToUpkeep(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(ekundu.getId())))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("upkeep");
+    }
+
+    @Test
+    void cannotActivateWithoutWhiteMana() {
+        Permanent mtenda = addCreatureReady(player1, new MtendaGriffin());
+        Card ekundu = new EkunduGriffin();
+        harness.setGraveyard(player1, List.of(ekundu));
+        advanceToUpkeep(player1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(ekundu.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(mtenda.isTapped()).isFalse();
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent mtenda = addCreatureReady(player1, new MtendaGriffin());
+        Card ekundu = new EkunduGriffin();
+        harness.setGraveyard(player1, List.of(ekundu));
+        enterUpkeep();
+        mtenda.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(ekundu.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(mtenda.isTapped()).isFalse();
     }
 
     private void enterUpkeep() {
