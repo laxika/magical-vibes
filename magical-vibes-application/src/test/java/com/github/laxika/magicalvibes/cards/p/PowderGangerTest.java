@@ -52,4 +52,33 @@ class PowderGangerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 7);
         harness.castCreatureWithRepeatedCosts(player1, 0, repeatedAdditionalCosts);
     }
+
+    @Test
+    void squadAndArtifactDestructionAreSeparateTriggeredAbilities() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+        castPowderGanger(List.of("{2}"));
+
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, artifact.getId());
+
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    void castingWithoutSquadPaymentCreatesNoCopies() {
+        castPowderGanger(List.of());
+
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Powder Ganger")).hasSize(1);
+    }
+
+    @Test
+    void enteringWithoutBeingCastCreatesNoSquadCopies() {
+        harness.enterBattlefieldAndReturn(player1, new PowderGanger());
+
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Powder Ganger")).hasSize(1);
+    }
 }
