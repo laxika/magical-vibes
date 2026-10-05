@@ -3,11 +3,13 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,11 +18,12 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LeoninRelicWarder.class, LeoninScimitar.class, GloriousAnthem.class, Shock.class, Unsummon.class, Ornithopter.class})
 class LeoninRelicWarderTest extends BaseCardTest {
 
     /**
-     * Casts Leonin Relic-Warder, resolves it, accepts the may ability,
-     * chooses a target, and resolves the ETB trigger.
+     * Casts Leonin Relic-Warder, resolves it, chooses a target,
+     * resolves the ETB trigger, and accepts the may ability.
      */
     private void castAndExileTarget(UUID targetId) {
         harness.forceActivePlayer(player1);
@@ -44,8 +47,6 @@ class LeoninRelicWarderTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    // ===== ETB exile =====
-
     @Test
     @DisplayName("Resolving triggers may ability prompt when artifact exists")
     void resolvingTriggersMayPrompt() {
@@ -64,8 +65,7 @@ class LeoninRelicWarderTest extends BaseCardTest {
     @Test
     @DisplayName("ETB exiles target artifact")
     void etbExilesTargetArtifact() {
-        harness.addToBattlefield(player2, new LeoninScimitar());
-        UUID artifactId = harness.getPermanentId(player2, "Leonin Scimitar");
+        UUID artifactId = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar()).getId();
         castAndExileTarget(artifactId);
 
         harness.assertNotOnBattlefield(player2, "Leonin Scimitar");
@@ -76,9 +76,7 @@ class LeoninRelicWarderTest extends BaseCardTest {
     @Test
     @DisplayName("ETB exiles target enchantment")
     void etbExilesTargetEnchantment() {
-        harness.addToBattlefield(player2, new GloriousAnthem());
-
-        UUID anthemId = harness.getPermanentId(player2, "Glorious Anthem");
+        UUID anthemId = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem()).getId();
         castAndExileTarget(anthemId);
 
         harness.assertNotOnBattlefield(player2, "Glorious Anthem");
@@ -107,11 +105,9 @@ class LeoninRelicWarderTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Casts with no artifacts or enchantments and the ETB never triggers")
+    @DisplayName("Casts with no artifacts or enchantments and the ETB is removed from the stack")
     void castsWithNoLegalTargets() {
-        // No artifacts or enchantments anywhere — the creature must still be castable
-        // (CR 601.2c), and its targeted "may" ETB has no legal target so it isn't put on the
-        // stack at all (CR 603.3c): the controller is never prompted.
+        // With no legal target, the triggered ability is removed from the stack.
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new LeoninRelicWarder()));
@@ -121,20 +117,17 @@ class LeoninRelicWarderTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell -> creature enters; ETB finds no legal target
 
         harness.assertOnBattlefield(player1, "Leonin Relic-Warder");
-        // No may prompt and nothing left on the stack — the ETB never triggered.
+        // No may prompt and nothing left on the stack — the targeted trigger cannot remain on the stack.
         assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
     }
 
-    // ===== LTB return =====
-
     @Test
     @DisplayName("Exiled card returns when Leonin Relic-Warder dies")
     void exiledCardReturnsWhenWarderDies() {
-        harness.addToBattlefield(player2, new LeoninScimitar());
-        UUID artifactId = harness.getPermanentId(player2, "Leonin Scimitar");
+        UUID artifactId = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar()).getId();
         castAndExileTarget(artifactId);
 
         // Verify artifact is exiled
@@ -149,8 +142,8 @@ class LeoninRelicWarderTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         UUID warderId = harness.getPermanentId(player1, "Leonin Relic-Warder");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, warderId);
-        harness.passBothPriorities(); // resolve Shock
+        harness.castAndResolveInstant(player2, 0, warderId);
+        harness.passBothPriorities(); // resolve the leaves-the-battlefield trigger
 
         // Leonin Relic-Warder is dead
         harness.assertNotOnBattlefield(player1, "Leonin Relic-Warder");
@@ -164,8 +157,7 @@ class LeoninRelicWarderTest extends BaseCardTest {
     @Test
     @DisplayName("Exiled card returns when Leonin Relic-Warder is bounced")
     void exiledCardReturnsWhenWarderBounced() {
-        harness.addToBattlefield(player2, new LeoninScimitar());
-        UUID artifactId = harness.getPermanentId(player2, "Leonin Scimitar");
+        UUID artifactId = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar()).getId();
         castAndExileTarget(artifactId);
 
         // Reset for follow-up spell
@@ -176,8 +168,8 @@ class LeoninRelicWarderTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 1);
         UUID warderId = harness.getPermanentId(player1, "Leonin Relic-Warder");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, warderId);
-        harness.passBothPriorities(); // resolve Unsummon
+        harness.castAndResolveInstant(player2, 0, warderId);
+        harness.passBothPriorities(); // resolve the leaves-the-battlefield trigger
 
         // Leonin Relic-Warder is back in hand
         harness.assertNotOnBattlefield(player1, "Leonin Relic-Warder");
@@ -191,8 +183,9 @@ class LeoninRelicWarderTest extends BaseCardTest {
     @Test
     @DisplayName("Exiled card returns under owner's control, not controller's")
     void exiledCardReturnsUnderOwnersControl() {
-        harness.addToBattlefield(player2, new LeoninScimitar());
-        UUID artifactId = harness.getPermanentId(player2, "Leonin Scimitar");
+        Permanent stolenArtifact = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        gd.stolenCreatures.put(stolenArtifact.getId(), player2.getId());
+        UUID artifactId = stolenArtifact.getId();
         castAndExileTarget(artifactId);
 
         // Reset for follow-up spell
@@ -203,8 +196,8 @@ class LeoninRelicWarderTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         UUID warderId = harness.getPermanentId(player1, "Leonin Relic-Warder");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, warderId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, warderId);
+        harness.passBothPriorities(); // resolve the leaves-the-battlefield trigger
 
         // Card returns under player2's control (the owner)
         harness.assertOnBattlefield(player2, "Leonin Scimitar");
@@ -212,13 +205,10 @@ class LeoninRelicWarderTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Leonin Scimitar");
     }
 
-    // ===== Edge cases =====
-
     @Test
     @DisplayName("Nothing returns if may was declined")
     void nothingReturnsIfMayDeclined() {
-        harness.addToBattlefield(player2, new LeoninScimitar());
-        UUID artifactId = harness.getPermanentId(player2, "Leonin Scimitar");
+        UUID artifactId = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar()).getId();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new LeoninRelicWarder()));
@@ -238,8 +228,8 @@ class LeoninRelicWarderTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         UUID warderId = harness.getPermanentId(player1, "Leonin Relic-Warder");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, warderId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, warderId);
+        harness.passBothPriorities(); // resolve the leaves-the-battlefield trigger
 
         // Leonin Scimitar is still on battlefield (was never exiled)
         harness.assertOnBattlefield(player2, "Leonin Scimitar");
@@ -250,8 +240,7 @@ class LeoninRelicWarderTest extends BaseCardTest {
     @Test
     @DisplayName("ETB fizzles if target is removed before resolution")
     void etbFizzlesIfTargetRemoved() {
-        harness.addToBattlefield(player2, new LeoninScimitar());
-        UUID artifactId = harness.getPermanentId(player2, "Leonin Scimitar");
+        UUID artifactId = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar()).getId();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -277,8 +266,7 @@ class LeoninRelicWarderTest extends BaseCardTest {
     @Test
     @DisplayName("Returned permanent has summoning sickness")
     void returnedPermanentHasSummoningSickness() {
-        harness.addToBattlefield(player2, new LeoninScimitar());
-        UUID artifactId = harness.getPermanentId(player2, "Leonin Scimitar");
+        UUID artifactId = harness.addToBattlefieldAndReturn(player2, new Ornithopter()).getId();
         castAndExileTarget(artifactId);
 
         // Reset for follow-up spell
@@ -289,19 +277,18 @@ class LeoninRelicWarderTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         UUID warderId = harness.getPermanentId(player1, "Leonin Relic-Warder");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, warderId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, warderId);
+        harness.passBothPriorities(); // resolve the leaves-the-battlefield trigger
 
         // The returned permanent should have summoning sickness
-        Permanent returned = findPermanent(player2, "Leonin Scimitar");
+        Permanent returned = findPermanent(player2, "Ornithopter");
         assertThat(returned.isSummoningSick()).isTrue();
     }
 
     @Test
     @DisplayName("Exile tracking is cleaned up after source leaves")
     void exileTrackingCleanedUpAfterSourceLeaves() {
-        harness.addToBattlefield(player2, new LeoninScimitar());
-        UUID artifactId = harness.getPermanentId(player2, "Leonin Scimitar");
+        UUID artifactId = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar()).getId();
         castAndExileTarget(artifactId);
 
         // There should be a tracking entry
@@ -315,10 +302,80 @@ class LeoninRelicWarderTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         UUID warderId = harness.getPermanentId(player1, "Leonin Relic-Warder");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, warderId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, warderId);
+        harness.passBothPriorities(); // resolve the leaves-the-battlefield trigger
 
         // Tracking entry should be removed
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Enter trigger still exiles after the Warder leaves first")
+    void enterTriggerExilesAfterWarderLeaves() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar()).getId();
+        harness.setHand(player1, List.of(new LeoninRelicWarder()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
+
+        UUID warderId = harness.getPermanentId(player1, "Leonin Relic-Warder");
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, warderId);
+        harness.assertInHand(player1, "Leonin Relic-Warder");
+
+        harness.passBothPriorities(); // resolve the empty leave trigger
+        harness.passBothPriorities(); // resolve the enter trigger
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player2, "Leonin Scimitar");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Leonin Scimitar"));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exiled card stays in exile until the leave trigger resolves")
+    void returnUsesTheStack() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar()).getId();
+        castAndExileTarget(targetId);
+        resetForFollowUpSpell();
+        UUID warderId = harness.getPermanentId(player1, "Leonin Relic-Warder");
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, warderId);
+
+        harness.assertInHand(player1, "Leonin Relic-Warder");
+        harness.assertNotOnBattlefield(player2, "Leonin Scimitar");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Leonin Scimitar"));
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Leonin Scimitar");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Losing abilities before leaving prevents the return trigger")
+    void noReturnIfWarderLostAbilities() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar()).getId();
+        castAndExileTarget(targetId);
+        resetForFollowUpSpell();
+        Permanent warder = findPermanent(player1, "Leonin Relic-Warder");
+        warder.setLosesAllAbilitiesUntilEndOfTurn(true);
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, warder.getId());
+
+        harness.assertInHand(player1, "Leonin Relic-Warder");
+        harness.assertNotOnBattlefield(player2, "Leonin Scimitar");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Leonin Scimitar"));
+        assertThat(gd.stack).isEmpty();
     }
 }
