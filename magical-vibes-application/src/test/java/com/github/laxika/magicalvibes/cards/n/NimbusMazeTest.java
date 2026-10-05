@@ -93,4 +93,70 @@ class NimbusMazeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(maze.isTapped()).isFalse();
     }
+
+    @Test
+    void tappedIslandStillEnablesWhiteManaImmediately() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        island.setTapped(true);
+        Permanent maze = harness.addToBattlefieldAndReturn(player1, new NimbusMaze());
+
+        harness.activateAbility(player1, 1, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(maze.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tappedPlainsStillEnablesBlueManaImmediately() {
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        plains.setTapped(true);
+        Permanent maze = harness.addToBattlefieldAndReturn(player1, new NimbusMaze());
+
+        harness.activateAbility(player1, 1, 2, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(maze.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void plainsDoesNotEnableWhiteMana() {
+        harness.addToBattlefield(player1, new Plains());
+        Permanent maze = harness.addToBattlefieldAndReturn(player1, new NimbusMaze());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(maze.isTapped()).isFalse();
+    }
+
+    @Test
+    void islandDoesNotEnableBlueMana() {
+        harness.addToBattlefield(player1, new Island());
+        Permanent maze = harness.addToBattlefieldAndReturn(player1, new NimbusMaze());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 2, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(maze.isTapped()).isFalse();
+    }
+
+    @Test
+    void whiteManaRestrictionIsRecheckedWhenIslandLeaves() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent maze = harness.addToBattlefieldAndReturn(player1, new NimbusMaze());
+        harness.activateAbility(player1, 1, 1, null, null);
+        maze.setTapped(false);
+        gd.playerBattlefields.get(player1.getId()).remove(island);
+        gd.playerGraveyards.get(player1.getId()).add(island.getCard());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(maze.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
 }
