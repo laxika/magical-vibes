@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -61,11 +62,66 @@ class ImposterMechTest extends BaseCardTest {
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validPermanentIds()).contains(target.getId());
+        assertThat(choice.validPermanentIds()).doesNotContainAnyElementsOf(
+                gd.playerBattlefields.get(player1.getId()).stream().map(Permanent::getId).toList());
         harness.handlePermanentChosen(player1, target.getId());
 
         return gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getOriginalCard().getId().equals(mech.getId()))
                 .findFirst()
                 .orElseThrow();
+    }
+
+    @Test
+    void decliningCopyLeavesAnUncrewedVehicle() {
+        harness.addToBattlefield(player2, new AirElemental());
+        harness.setHand(player1, List.of(new ImposterMech()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        Permanent mech = findPermanent(player1, "Imposter Mech");
+        assertThat(gqs.isArtifact(gd, mech)).isTrue();
+        assertThat(gqs.isCreature(gd, mech)).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void entersWithoutCopyingWhenOnlyItsControllerHasCreatures() {
+        harness.addToBattlefield(player1, new AirElemental());
+        harness.setHand(player1, List.of(new ImposterMech()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent mech = findPermanent(player1, "Imposter Mech");
+        assertThat(gqs.isArtifact(gd, mech)).isTrue();
+        assertThat(gqs.isCreature(gd, mech)).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void copyingPreservesFlyingButPermanentlyDiscardsCreatureSubtypes() {
+        Permanent crew = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent mech = castAndCopy(new ImposterMech(), target);
+
+        assertThat(gqs.hasKeyword(gd, mech, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, mech, CardSubtype.ELEMENTAL)).isFalse();
+
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(mech), null, null);
+        harness.passBothPriorities();
+
+        assertThat(crew.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, mech)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, mech)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, mech)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, mech, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, mech, CardSubtype.VEHICLE)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, mech, CardSubtype.ELEMENTAL)).isFalse();
     }
 }
