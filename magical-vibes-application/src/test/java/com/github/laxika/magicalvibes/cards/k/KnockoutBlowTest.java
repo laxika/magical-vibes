@@ -63,11 +63,68 @@ class KnockoutBlowTest extends BaseCardTest {
                 .hasMessageContaining("attacking or blocking creature");
     }
 
+    @Test
+    @DisplayName("The red-creature discount also applies to a blocking creature")
+    void reducedCostForRedBlocker() {
+        Permanent target = addBlocker(new FireElemental());
+        int lifeBefore = gd.getLife(player1.getId());
+
+        cast(target, 1);
+
+        harness.assertInGraveyard(player2, "Fire Elemental");
+        harness.assertLife(player1, lifeBefore + 2);
+    }
+
+    @Test
+    @DisplayName("The discount does not remove the white mana requirement")
+    void reducedCostStillRequiresWhiteMana() {
+        Permanent target = addAttacker(new FireElemental());
+        harness.setHand(player1, java.util.List.of(new KnockoutBlow()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("No damage or life gain when the target leaves combat before resolution")
+    void noLifeGainWhenTargetLeavesCombat() {
+        Permanent target = addAttacker(new FireElemental());
+        int lifeBefore = gd.getLife(player1.getId());
+        harness.setHand(player1, java.util.List.of(new KnockoutBlow()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, target.getId());
+
+        target.setAttacking(false);
+        target.setAttackTarget(null);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertLife(player1, lifeBefore);
+        harness.assertInGraveyard(player1, "Knockout Blow");
+    }
+
+    @Test
+    @DisplayName("No life gain when the only target leaves the battlefield before resolution")
+    void noLifeGainWhenTargetLeavesBattlefield() {
+        Permanent target = addAttacker(new FireElemental());
+        int lifeBefore = gd.getLife(player1.getId());
+        harness.setHand(player1, java.util.List.of(new KnockoutBlow()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore);
+        harness.assertInGraveyard(player1, "Knockout Blow");
+    }
+
     private void cast(Permanent target, int whiteMana) {
         harness.setHand(player1, java.util.List.of(new KnockoutBlow()));
         harness.addMana(player1, ManaColor.WHITE, whiteMana);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private Permanent addAttacker(Card card) {
@@ -79,10 +136,14 @@ class KnockoutBlowTest extends BaseCardTest {
     }
 
     private Permanent addBlocker(Card card) {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
         Permanent target = harness.addToBattlefieldAndReturn(player2, card);
         target.setSummoningSick(false);
         target.setBlocking(true);
-        target.addBlockingTargetId(player1.getId());
+        target.addBlockingTargetId(attacker.getId());
         return target;
     }
 }
