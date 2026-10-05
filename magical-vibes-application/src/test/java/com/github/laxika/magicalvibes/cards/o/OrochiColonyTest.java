@@ -38,7 +38,7 @@ class OrochiColonyTest extends BaseCardTest {
     void combatDamageMayPutBasicLandOntoBattlefieldTapped() {
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
-        Permanent attacker = addReadyCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         resolveCombat();
@@ -59,7 +59,7 @@ class OrochiColonyTest extends BaseCardTest {
     void decliningCombatDamageSearchDoesNothing() {
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
-        Permanent attacker = addReadyCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         resolveCombat();
@@ -78,7 +78,7 @@ class OrochiColonyTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.setLibrary(player2, List.of(new Forest()));
-        Permanent attacker = addReadyCreature(player2);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
 
         resolveCombat(player2);
@@ -91,7 +91,7 @@ class OrochiColonyTest extends BaseCardTest {
 
     @Test
     void chaosMakesTargetCreatureUnblockableUntilEndOfTurn() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.inMutationScope(() -> planar.chaos(gd));
         harness.passBothPriorities();
@@ -102,12 +102,61 @@ class OrochiColonyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.isCantBeBlocked()).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(creature.isCantBeBlocked()).isFalse();
     }
 
-    private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
+    @Test
+    void acceptedSearchWithNoBasicLandsFinishesWithoutPuttingACardOntoBattlefield() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(attacker);
+    }
+
+    @Test
+    void eachCreatureDealingCombatDamageTriggersItsOwnOptionalSearch() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
+        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard() instanceof Forest)
+                .hasSize(2)
+                .allSatisfy(land -> assertThat(land.isTapped()).isTrue());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void chaosCanTargetAnOpponentsCreature() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isCantBeBlocked()).isTrue();
     }
 }
