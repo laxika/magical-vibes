@@ -84,6 +84,55 @@ class KodamasMightTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can boost an opponent's creature when cast normally")
+    void boostsOpponentsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new WanderingOnes());
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new KodamasMight()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(creature.getEffectivePower()).isEqualTo(3);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Spliced card can later be cast normally and its boost stacks")
+    void castsCardAfterSplicingIt() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new WanderingOnes());
+        KodamasMight might = new KodamasMight();
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new KodamasMight(), might));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castWithSplice(player1, 0, creature.getId(), List.of(1));
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(5);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(might);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(creature.getEffectivePower()).isEqualTo(7);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Splicing requires mana for the splice cost in addition to the host spell")
+    void cannotSpliceWithoutAdditionalGreenMana() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new WanderingOnes());
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new KodamasMight(), new KodamasMight()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castWithSplice(player1, 0, creature.getId(), List.of(1)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Cannot splice onto a non-Arcane spell")
     void cannotSpliceOntoNonArcaneSpell() {
         harness.forceActivePlayer(player1);
