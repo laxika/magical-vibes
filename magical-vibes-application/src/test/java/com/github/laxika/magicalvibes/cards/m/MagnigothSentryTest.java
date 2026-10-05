@@ -21,8 +21,19 @@ class MagnigothSentryTest extends BaseCardTest {
         addCreatureReady(player1, new AirElemental());
         Permanent sentry = addCreatureReady(player2, new MagnigothSentry());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(sentry.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Reach does not prevent Magnigoth Sentry from blocking a ground creature")
+    void reachAllowsBlockingGroundCreature() {
+        addCreatureReady(player1, new MagnigothSentry());
+        Permanent sentry = addCreatureReady(player2, new MagnigothSentry());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(sentry.isBlocking()).isTrue();
