@@ -51,4 +51,71 @@ class OrimsPrayerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(startingLife);
     }
+
+    @Test
+    @DisplayName("Counts only creatures still attacking when the trigger resolves")
+    void countsRemainingAttackersAtResolution() {
+        harness.addToBattlefield(player1, new OrimsPrayer());
+        setUpAttack(3);
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+
+        declareAttackers(player2, List.of(0, 1, 2));
+        Permanent removedAttacker = gd.playerBattlefields.get(player2.getId()).removeFirst();
+        gd.playerGraveyards.get(player2.getId()).add(removedAttacker.getCard());
+
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife + 2);
+    }
+
+    @Test
+    @DisplayName("Gains no life if all attackers leave before resolution")
+    void gainsNoLifeWhenAllAttackersLeave() {
+        harness.addToBattlefield(player1, new OrimsPrayer());
+        setUpAttack(1);
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+
+        declareAttackers(player2, List.of(0));
+        Permanent removedAttacker = gd.playerBattlefields.get(player2.getId()).removeFirst();
+        gd.playerGraveyards.get(player2.getId()).add(removedAttacker.getCard());
+
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife);
+    }
+
+    @Test
+    @DisplayName("The trigger resolves after Orim's Prayer leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent prayer = harness.addToBattlefieldAndReturn(player1, new OrimsPrayer());
+        setUpAttack(2);
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+
+        declareAttackers(player2, List.of(0, 1));
+        gd.playerBattlefields.get(player1.getId()).remove(prayer);
+        gd.playerGraveyards.get(player1.getId()).add(prayer.getCard());
+
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife + 2);
+    }
+
+    @Test
+    @DisplayName("Each copy triggers once for the attacking group")
+    void multipleCopiesTriggerIndependently() {
+        harness.addToBattlefield(player1, new OrimsPrayer());
+        harness.addToBattlefield(player1, new OrimsPrayer());
+        setUpAttack(2);
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+
+        declareAttackers(player2, List.of(0, 1));
+
+        assertThat(gd.stack).hasSize(2);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife + 2);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife + 4);
+        assertThat(gd.stack).isEmpty();
+    }
 }
