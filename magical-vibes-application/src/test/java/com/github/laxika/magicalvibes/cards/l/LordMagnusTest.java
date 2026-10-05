@@ -96,6 +96,52 @@ class LordMagnusTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Durkwood Boars");
     }
 
+    @Test
+    @DisplayName("Plainswalk prevents blocking after Lord Magnus leaves the battlefield")
+    void plainswalkReturnsWhenLordMagnusLeaves() {
+        harness.addToBattlefield(player2, basicLand(CardSubtype.PLAINS));
+        Permanent lordMagnus = addCreatureReady(player2, new LordMagnus());
+        Permanent attacker = addAttacker(new RighteousAvengers());
+        Permanent blocker = addCreatureReady(player2, new DurkwoodBoars());
+        gd.playerBattlefields.get(player2.getId()).remove(lordMagnus);
+        gd.playerGraveyards.get(player2.getId()).add(lordMagnus.getCard());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> declareBlock(blocker, attacker))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Forestwalk prevents blocking when Lord Magnus has lost its abilities")
+    void forestwalkReturnsWhenLordMagnusLosesAbilities() {
+        harness.addToBattlefield(player2, basicLand(CardSubtype.FOREST));
+        Permanent lordMagnus = addCreatureReady(player2, new LordMagnus());
+        lordMagnus.setLosesAllAbilitiesUntilEndOfTurn(true);
+        Permanent attacker = addAttacker(new CatWarriors());
+        Permanent blocker = addCreatureReady(player2, new DurkwoodBoars());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> declareBlock(blocker, attacker))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Ignoring plainswalk does not allow a tapped creature to block")
+    void tappedCreatureStillCannotBlock() {
+        harness.addToBattlefield(player2, basicLand(CardSubtype.PLAINS));
+        harness.addToBattlefield(player2, new LordMagnus());
+        Permanent attacker = addAttacker(new RighteousAvengers());
+        Permanent blocker = addCreatureReady(player2, new DurkwoodBoars());
+        blocker.setTapped(true);
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> declareBlock(blocker, attacker))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void declareBlock(Permanent blocker, Permanent attacker) {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
