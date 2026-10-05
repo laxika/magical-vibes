@@ -59,10 +59,31 @@ class MistvaultBridgeTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Mistvault Bridge");
     }
 
+    @Test
+    @DisplayName("Enters tapped when put onto the battlefield without being played")
+    void entersTappedWithoutBeingPlayed() {
+        Permanent bridge = harness.enterBattlefieldAndReturn(player1, new MistvaultBridge());
+
+        assertThat(bridge.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A newly controlled noncreature bridge can produce mana after untapping")
+    void newlyControlledBridgeCanProduceMana() {
+        Permanent bridge = harness.enterBattlefieldAndReturn(player1, new MistvaultBridge());
+        bridge.untap();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.BLACK.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(bridge.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyBridge() {
-        Permanent bridge = new Permanent(new MistvaultBridge());
+        Permanent bridge = harness.addToBattlefieldAndReturn(player1, new MistvaultBridge());
         bridge.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bridge);
         return bridge;
     }
 }
