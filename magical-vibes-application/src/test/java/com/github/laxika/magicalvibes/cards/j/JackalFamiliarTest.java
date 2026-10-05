@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.j;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,24 +13,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({JackalFamiliar.class, RuneclawBear.class})
 class JackalFamiliarTest extends BaseCardTest {
-
-    // ===== Can't attack alone =====
 
     @Test
     @DisplayName("Jackal Familiar can't attack alone")
     void cantAttackAlone() {
-        Permanent familiar = new Permanent(new JackalFamiliar());
-        familiar.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(familiar);
+        addCreatureReady(player1, new JackalFamiliar());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
 
-        // The creature is filtered from available attackers when alone, so declaring it throws
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -39,22 +31,13 @@ class JackalFamiliarTest extends BaseCardTest {
     void canAttackWithAnother() {
         harness.setLife(player2, 20);
 
-        Permanent familiar = new Permanent(new JackalFamiliar());
-        familiar.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(familiar);
+        addCreatureReady(player1, new JackalFamiliar());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        addCreatureReady(player1, new RuneclawBear());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        declareAttackers(List.of(0, 1));
 
-        gs.declareAttackers(gd, player1, List.of(0, 1));
-
-        // Jackal Familiar (2/1) + Grizzly Bears (2/2) = 4 damage
+        // Jackal Familiar (2/2) + Runeclaw Bear (2/2) = 4 damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 
@@ -63,61 +46,35 @@ class JackalFamiliarTest extends BaseCardTest {
     void twoFamiliarsCanAttackTogether() {
         harness.setLife(player2, 20);
 
-        Permanent familiar1 = new Permanent(new JackalFamiliar());
-        familiar1.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(familiar1);
+        addCreatureReady(player1, new JackalFamiliar());
 
-        Permanent familiar2 = new Permanent(new JackalFamiliar());
-        familiar2.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(familiar2);
+        addCreatureReady(player1, new JackalFamiliar());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        declareAttackers(List.of(0, 1));
 
-        gs.declareAttackers(gd, player1, List.of(0, 1));
-
-        // Two Jackal Familiars (2/1 each) = 4 damage
+        // Two Jackal Familiars (2/2 each) = 4 damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 
     @Test
     @DisplayName("Jackal Familiar not included in available attackers when it's the only eligible creature")
     void notInAvailableAttackersWhenAlone() {
-        Permanent familiar = new Permanent(new JackalFamiliar());
-        familiar.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(familiar);
+        addCreatureReady(player1, new JackalFamiliar());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-
-        // The combat service should not include this creature in available attackers
-        // since it can't legally attack alone
-        // We verify by checking that declaring 0 attackers is valid (no "must attack" error)
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of());
+        assertThat(harness.getCombatAttackService()
+                .getAttackableCreatureIndices(gd, player1.getId())).isEmpty();
+        declareAttackers(List.of());
     }
-
-    // ===== Can't block alone =====
 
     @Test
     @DisplayName("Jackal Familiar can't block alone")
     void cantBlockAlone() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new RuneclawBear());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent familiar = new Permanent(new JackalFamiliar());
-        familiar.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(familiar);
+        addCreatureReady(player2, new JackalFamiliar());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         // The creature is filtered from available blockers when alone, so declaring it throws
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
@@ -127,28 +84,17 @@ class JackalFamiliarTest extends BaseCardTest {
     @Test
     @DisplayName("Jackal Familiar can block with another creature")
     void canBlockWithAnother() {
-        Permanent attacker1 = new Permanent(new GrizzlyBears());
-        attacker1.setSummoningSick(false);
+        Permanent attacker1 = addCreatureReady(player1, new RuneclawBear());
         attacker1.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker1);
 
-        Permanent attacker2 = new Permanent(new GrizzlyBears());
-        attacker2.setSummoningSick(false);
+        Permanent attacker2 = addCreatureReady(player1, new RuneclawBear());
         attacker2.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker2);
 
-        Permanent familiar = new Permanent(new JackalFamiliar());
-        familiar.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(familiar);
+        Permanent familiar = addCreatureReady(player2, new JackalFamiliar());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = addCreatureReady(player2, new RuneclawBear());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
@@ -157,5 +103,72 @@ class JackalFamiliarTest extends BaseCardTest {
 
         assertThat(familiar.isBlocking()).isTrue();
         assertThat(bears.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An idle eligible creature does not let Jackal Familiar attack alone")
+    void cantAttackAloneWithIdleCompanion() {
+        addCreatureReady(player1, new JackalFamiliar());
+        addCreatureReady(player1, new RuneclawBear());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An idle eligible creature does not let Jackal Familiar block alone")
+    void cantBlockAloneWithIdleCompanion() {
+        Permanent attacker = addCreatureReady(player1, new RuneclawBear());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new JackalFamiliar());
+        addCreatureReady(player2, new RuneclawBear());
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Two Jackal Familiars can block the same attacker together")
+    void twoFamiliarsCanBlockTogether() {
+        Permanent attacker = addCreatureReady(player1, new RuneclawBear());
+        attacker.setAttacking(true);
+        Permanent first = addCreatureReady(player2, new JackalFamiliar());
+        Permanent second = addCreatureReady(player2, new JackalFamiliar());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+
+        assertThat(first.isBlocking()).isTrue();
+        assertThat(second.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped companion cannot enable Jackal Familiar to attack")
+    void tappedCompanionCannotEnableAttack() {
+        addCreatureReady(player1, new JackalFamiliar());
+        Permanent companion = addCreatureReady(player1, new RuneclawBear());
+        companion.setTapped(true);
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped companion cannot enable Jackal Familiar to block")
+    void tappedCompanionCannotEnableBlock() {
+        Permanent attacker = addCreatureReady(player1, new RuneclawBear());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new JackalFamiliar());
+        Permanent companion = addCreatureReady(player2, new RuneclawBear());
+        companion.setTapped(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
