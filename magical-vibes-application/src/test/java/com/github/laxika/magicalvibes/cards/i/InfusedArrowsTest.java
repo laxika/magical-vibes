@@ -105,4 +105,55 @@ class InfusedArrowsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void colorlessManaDoesNotProduceSunburstCounters() {
+        harness.setHand(player1, List.of(new InfusedArrows()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Infused Arrows").getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    void enteringWithoutBeingCastDoesNotProduceSunburstCounters() {
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        Permanent arrows = harness.enterBattlefieldAndReturn(player1, new InfusedArrows());
+
+        assertThat(arrows.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    void canActivateWithZeroWhenThereAreNoChargeCounters() {
+        Permanent arrows = harness.addToBattlefieldAndReturn(player1, new InfusedArrows());
+        Permanent salvagers = harness.addToBattlefieldAndReturn(player2, new AuriokSalvagers());
+
+        harness.activateAbility(player1, 0, 0, salvagers.getId());
+        harness.passBothPriorities();
+
+        assertThat(arrows.isTapped()).isTrue();
+        assertThat(arrows.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(salvagers.getEffectivePower()).isEqualTo(2);
+        assertThat(salvagers.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    void removingAllCountersCanPutCreatureIntoGraveyardWithZeroToughness() {
+        Permanent arrows = harness.addToBattlefieldAndReturn(player1, new InfusedArrows());
+        arrows.setCounterCount(CounterType.CHARGE, 4);
+        Permanent salvagers = harness.addToBattlefieldAndReturn(player2, new AuriokSalvagers());
+
+        harness.activateAbility(player1, 0, 4, salvagers.getId());
+
+        assertThat(arrows.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(salvagers.getEffectiveToughness()).isEqualTo(4);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Auriok Salvagers");
+        harness.assertInGraveyard(player2, "Auriok Salvagers");
+    }
 }
