@@ -91,6 +91,60 @@ class MythicProportionsTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.TRAMPLE)).isFalse();
     }
 
+    @Test
+    void doesNotBoostCreatureWhileAuraIsOnStack() {
+        Permanent creature = addCreatureReady(player1, new ElvishWarrior());
+        harness.setHand(player1, List.of(new MythicProportions()));
+        addMana();
+
+        harness.castEnchantment(player1, 0, creature.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(11);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    void auraGoesToGraveyardWhenTargetLeavesBeforeResolution() {
+        Permanent creature = addCreatureReady(player1, new ElvishWarrior());
+        harness.setHand(player1, List.of(new MythicProportions()));
+        addMana();
+        harness.castEnchantment(player1, 0, creature.getId());
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, creature));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Mythic Proportions");
+        harness.assertInGraveyard(player1, "Mythic Proportions");
+    }
+
+    @Test
+    void multipleAurasStackTheirBoostsAndRemovingOnePreservesTheOther() {
+        Permanent creature = addCreatureReady(player1, new ElvishWarrior());
+        Permanent firstAura = attachAura(creature);
+        attachAura(creature);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(18);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(19);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, firstAura));
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(11);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+    }
+
     private Permanent attachAura(Permanent creature) {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new MythicProportions());
         aura.setAttachedTo(creature.getId());
