@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarVisionary;
-import com.github.laxika.magicalvibes.cards.y.YisanTheWandererBard;
+import com.github.laxika.magicalvibes.cards.c.CircleOfTheMoonDruid;
+import com.github.laxika.magicalvibes.cards.g.GnollHunter;
+import com.github.laxika.magicalvibes.cards.v.VarisSilverymoonRanger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -19,8 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({InstrumentOfTheBards.class, YisanTheWandererBard.class, LlanowarVisionary.class,
-        GrizzlyBears.class})
+@CardUsed({InstrumentOfTheBards.class, VarisSilverymoonRanger.class, CircleOfTheMoonDruid.class,
+        GnollHunter.class})
 class InstrumentOfTheBardsTest extends BaseCardTest {
 
     @Test
@@ -38,8 +37,8 @@ class InstrumentOfTheBardsTest extends BaseCardTest {
     @Test
     void searchesForCreatureWithExactHarmonyManaValue() {
         Permanent instrument = addInstrument(2);
-        Card higherManaValue = new YisanTheWandererBard();
-        Card matchingCreature = new GrizzlyBears();
+        Card higherManaValue = new VarisSilverymoonRanger();
+        Card matchingCreature = new GnollHunter();
         harness.setLibrary(player1, List.of(higherManaValue, matchingCreature));
 
         activate(instrument);
@@ -50,8 +49,7 @@ class InstrumentOfTheBardsTest extends BaseCardTest {
         assertThat(search.params().cards()).containsExactly(matchingCreature);
         assertThat(search.params().reveals()).isTrue();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(matchingCreature);
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
@@ -60,7 +58,7 @@ class InstrumentOfTheBardsTest extends BaseCardTest {
     @Test
     void legendaryCreatureSearchCreatesTreasure() {
         Permanent instrument = addInstrument(3);
-        Card legendaryCreature = new YisanTheWandererBard();
+        Card legendaryCreature = new VarisSilverymoonRanger();
         harness.setLibrary(player1, List.of(legendaryCreature));
 
         activate(instrument);
@@ -70,8 +68,7 @@ class InstrumentOfTheBardsTest extends BaseCardTest {
         assertThat(search).isNotNull();
         assertThat(search.params().cards()).containsExactlyInAnyOrder(legendaryCreature);
 
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(legendaryCreature);
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
@@ -80,16 +77,101 @@ class InstrumentOfTheBardsTest extends BaseCardTest {
     @Test
     void nonlegendaryCreatureSearchDoesNotCreateTreasure() {
         Permanent instrument = addInstrument(3);
-        Card nonlegendaryCreature = new LlanowarVisionary();
+        Card nonlegendaryCreature = new CircleOfTheMoonDruid();
         harness.setLibrary(player1, List.of(nonlegendaryCreature));
 
         activate(instrument);
 
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(nonlegendaryCreature);
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
+    }
+
+    @Test
+    void upkeepCounterCanBeDeclined() {
+        Permanent instrument = addInstrument(2);
+
+        runUpkeep(player1);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(instrument.getCounterCount(CounterType.HARMONY)).isEqualTo(2);
+    }
+
+    @Test
+    void opponentUpkeepDoesNotAddCounter() {
+        Permanent instrument = addInstrument(2);
+
+        runUpkeep(player2);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(instrument.getCounterCount(CounterType.HARMONY)).isEqualTo(2);
+    }
+
+    @Test
+    void mayFailToFindEvenWhenLegendaryCreatureMatches() {
+        Permanent instrument = addInstrument(3);
+        Card creature = new VarisSilverymoonRanger();
+        harness.setLibrary(player1, List.of(creature));
+
+        activate(instrument);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(creature);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void zeroCountersDoesNotFindPositiveManaValueCreature() {
+        Permanent instrument = addInstrument(0);
+        Card creature = new GnollHunter();
+        harness.setLibrary(player1, List.of(creature));
+
+        activate(instrument);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(creature);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void matchingManaValueNoncreatureCannotBeFound() {
+        Permanent instrument = addInstrument(1);
+        Card artifact = new InstrumentOfTheBards();
+        harness.setLibrary(player1, List.of(artifact));
+
+        activate(instrument);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(artifact);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(artifact);
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+    }
+
+    @Test
+    void searchUsesHarmonyCountersAtResolution() {
+        Permanent instrument = addInstrument(2);
+        Card oldMatch = new GnollHunter();
+        Card newMatch = new VarisSilverymoonRanger();
+        harness.setLibrary(player1, List.of(oldMatch, newMatch));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(instrument.isTapped()).isTrue();
+        instrument.setCounterCount(CounterType.HARMONY, 3);
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(newMatch);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(newMatch).doesNotContain(oldMatch);
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
     }
 
     private Permanent addInstrument(int harmonyCounters) {
@@ -110,7 +192,7 @@ class InstrumentOfTheBardsTest extends BaseCardTest {
         gd.turnNumber = 2;
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
         harness.passBothPriorities();
     }
 }
