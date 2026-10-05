@@ -43,10 +43,7 @@ class PredatoryImpetusTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         Permanent aura = attachAura(player1, attacker);
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        attacker.setAttacking(true);
-        attacker.setAttackTarget(player2.getId());
-
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)
@@ -85,6 +82,64 @@ class PredatoryImpetusTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Goad forces an opponent's creature to attack, even when the Aura controller is the only opponent")
+    void goadRequiresAttackInTwoPlayerGame() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        attachAura(player1, creature);
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        assertThat(creature.isAttacking()).isTrue();
+        assertThat(creature.getAttackTarget()).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Goad does not force a tapped creature to attack")
+    void tappedCreatureNeedNotAttack() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        attachAura(player1, creature);
+        creature.setTapped(true);
+
+        declareAttackers(player2, List.of());
+
+        assertThat(creature.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The blocking requirement does not force a tapped creature to block")
+    void tappedBlockerCannotSatisfyRequirement() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attachAura(player1, attacker);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setTapped(true);
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(blocker.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A defender cannot evade the blocking requirement by blocking a different attacker")
+    void cannotDivertOnlyBlockerToAnotherAttacker() {
+        Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        attachAura(player1, enchanted);
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0, 1));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must be blocked if able");
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
     }
 
     private Permanent attachAura(Player controller, Permanent creature) {
