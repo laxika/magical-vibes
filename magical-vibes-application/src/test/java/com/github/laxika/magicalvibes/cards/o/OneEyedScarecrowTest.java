@@ -1,27 +1,27 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.b.BattlegroundGeist;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
+import com.github.laxika.magicalvibes.cards.c.CobbledWings;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({OneEyedScarecrow.class, BattlegroundGeist.class, WalkingCorpse.class, CobbledWings.class})
 class OneEyedScarecrowTest extends BaseCardTest {
-
-    // ===== Static effect: debuffs opponent's flying creatures =====
 
     @Test
     @DisplayName("Opponent's flying creature gets -1/-0")
     void debuffsOpponentFlyingCreature() {
         harness.addToBattlefield(player1, new OneEyedScarecrow());
-        harness.addToBattlefield(player2, new BattlegroundGeist());
-
-        // BattlegroundGeist is 3/3 with flying; should become 2/3
-        Permanent geist = findPermanent(player2, "Battleground Geist");
+        Permanent geist = harness.addToBattlefieldAndReturn(player2, new BattlegroundGeist());
 
         assertThat(gqs.getEffectivePower(gd, geist)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, geist)).isEqualTo(3);
@@ -31,9 +31,7 @@ class OneEyedScarecrowTest extends BaseCardTest {
     @DisplayName("Opponent's non-flying creature is not affected")
     void doesNotDebuffOpponentNonFlyingCreature() {
         harness.addToBattlefield(player1, new OneEyedScarecrow());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
 
         // 2/2 base, unaffected
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
@@ -44,66 +42,50 @@ class OneEyedScarecrowTest extends BaseCardTest {
     @DisplayName("Own flying creature is not affected")
     void doesNotDebuffOwnFlyingCreature() {
         harness.addToBattlefield(player1, new OneEyedScarecrow());
-        harness.addToBattlefield(player1, new BattlegroundGeist());
-
-        Permanent geist = findPermanent(player1, "Battleground Geist");
+        Permanent geist = harness.addToBattlefieldAndReturn(player1, new BattlegroundGeist());
 
         // 3/3 base, unaffected by own Scarecrow
         assertThat(gqs.getEffectivePower(gd, geist)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, geist)).isEqualTo(3);
     }
 
-    // ===== Does not buff itself =====
-
     @Test
     @DisplayName("Does not affect itself")
     void doesNotAffectItself() {
-        harness.addToBattlefield(player1, new OneEyedScarecrow());
-
-        Permanent scarecrow = findPermanent(player1, "One-Eyed Scarecrow");
+        Permanent scarecrow = harness.addToBattlefieldAndReturn(player1, new OneEyedScarecrow());
 
         // 2/3 base, no self-debuff
         assertThat(gqs.getEffectivePower(gd, scarecrow)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, scarecrow)).isEqualTo(3);
     }
 
-    // ===== Defender keyword =====
-
     @Test
-    @DisplayName("One-Eyed Scarecrow has defender")
-    void hasDefender() {
-        harness.addToBattlefield(player1, new OneEyedScarecrow());
+    @DisplayName("One-Eyed Scarecrow cannot attack even when ready")
+    void cannotAttackWithDefender() {
+        addCreatureReady(player1, new OneEyedScarecrow());
 
-        Permanent scarecrow = findPermanent(player1, "One-Eyed Scarecrow");
-
-        assertThat(gqs.hasKeyword(gd, scarecrow, Keyword.DEFENDER)).isTrue();
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("defender");
     }
-
-    // ===== Multiple Scarecrows stack =====
 
     @Test
     @DisplayName("Two Scarecrows give -2/-0 to opponent's flying creature")
     void twoScarecrowsStack() {
         harness.addToBattlefield(player1, new OneEyedScarecrow());
         harness.addToBattlefield(player1, new OneEyedScarecrow());
-        harness.addToBattlefield(player2, new BattlegroundGeist());
-
-        Permanent geist = findPermanent(player2, "Battleground Geist");
+        Permanent geist = harness.addToBattlefieldAndReturn(player2, new BattlegroundGeist());
 
         // 3/3 base - 2/0 from two Scarecrows = 1/3
         assertThat(gqs.getEffectivePower(gd, geist)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, geist)).isEqualTo(3);
     }
 
-    // ===== Bonus gone when source leaves =====
-
     @Test
     @DisplayName("Debuff is removed when Scarecrow leaves the battlefield")
     void debuffRemovedWhenSourceLeaves() {
         harness.addToBattlefield(player1, new OneEyedScarecrow());
-        harness.addToBattlefield(player2, new BattlegroundGeist());
-
-        Permanent geist = findPermanent(player2, "Battleground Geist");
+        Permanent geist = harness.addToBattlefieldAndReturn(player2, new BattlegroundGeist());
 
         assertThat(gqs.getEffectivePower(gd, geist)).isEqualTo(2);
 
@@ -114,5 +96,34 @@ class OneEyedScarecrowTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, geist)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, geist)).isEqualTo(3);
     }
+    @Test
+    @DisplayName("Debuff follows flying granted by equipment and ends when equipment leaves")
+    void debuffFollowsGrantedFlying() {
+        harness.addToBattlefield(player1, new OneEyedScarecrow());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
+        Permanent wings = harness.addToBattlefieldAndReturn(player2, new CobbledWings());
 
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        wings.setAttachedTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+
+        gd.playerBattlefields.get(player2.getId()).remove(wings);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Multiple penalties can reduce power below zero without changing toughness")
+    void powerCanBecomeNegative() {
+        harness.addToBattlefield(player1, new OneEyedScarecrow());
+        harness.addToBattlefield(player1, new OneEyedScarecrow());
+        harness.addToBattlefield(player1, new OneEyedScarecrow());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
+        Permanent wings = harness.addToBattlefieldAndReturn(player2, new CobbledWings());
+        wings.setAttachedTo(creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
 }
