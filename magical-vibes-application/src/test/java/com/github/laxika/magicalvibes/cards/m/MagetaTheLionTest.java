@@ -90,4 +90,67 @@ class MagetaTheLionTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(4);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
+
+    @Test
+    @DisplayName("Only the source Mageta is spared, not another player's Mageta")
+    void destroysAnotherMageta() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new MagetaTheLion());
+        source.setSummoningSick(false);
+        harness.addToBattlefield(player2, new MagetaTheLion());
+        harness.setHand(player1, List.of(new Forest(), new Mountain()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(source);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Mageta the Lion");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Mountain");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents paying the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        Permanent mageta = harness.addToBattlefieldAndReturn(player1, new MagetaTheLion());
+        mageta.setSummoningSick(true);
+        harness.setHand(player1, List.of(new Forest(), new Mountain()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(mageta.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Four mana including only one white cannot pay the activation cost")
+    void cannotActivateWithoutTwoWhiteMana() {
+        Permanent mageta = harness.addToBattlefieldAndReturn(player1, new MagetaTheLion());
+        mageta.setSummoningSick(false);
+        harness.setHand(player1, List.of(new Forest(), new Mountain()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(mageta.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(4);
+    }
 }
