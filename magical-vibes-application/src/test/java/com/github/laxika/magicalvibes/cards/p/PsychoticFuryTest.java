@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.a.AssaultZeppelid;
 import com.github.laxika.magicalvibes.cards.m.MistralCharger;
+import com.github.laxika.magicalvibes.cards.s.SealOfDoom;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PsychoticFury.class, AssaultZeppelid.class, MistralCharger.class})
+@CardUsed({PsychoticFury.class, AssaultZeppelid.class, MistralCharger.class, SealOfDoom.class})
 class PsychoticFuryTest extends BaseCardTest {
 
     @Test
@@ -34,7 +35,6 @@ class PsychoticFuryTest extends BaseCardTest {
         harness.assertInHand(player1, "Mistral Charger");
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isFalse();
@@ -64,5 +64,26 @@ class PsychoticFuryTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Does not draw when the only target is destroyed before resolution")
+    void doesNotDrawWhenTargetLeavesBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AssaultZeppelid());
+        harness.addToBattlefield(player2, new SealOfDoom());
+        harness.setHand(player1, List.of(new PsychoticFury()));
+        harness.setLibrary(player1, List.of(new MistralCharger()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.activateAbility(player2, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Assault Zeppelid");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Psychotic Fury");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 }
