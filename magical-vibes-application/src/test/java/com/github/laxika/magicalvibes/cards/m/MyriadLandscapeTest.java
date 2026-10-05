@@ -31,10 +31,7 @@ class MyriadLandscapeTest extends BaseCardTest {
                 .singleElement()
                 .matches(Permanent::isTapped);
 
-        Permanent landscape = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard() instanceof MyriadLandscape)
-                .findFirst()
-                .orElseThrow();
+        Permanent landscape = gqs.findPermanentById(gd, harness.getPermanentId(player1, "Myriad Landscape"));
         landscape.untap();
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -95,5 +92,65 @@ class MyriadLandscapeTest extends BaseCardTest {
                 .hasSize(1)
                 .allMatch(Permanent::isTapped);
         harness.assertInGraveyard(player1, "Myriad Landscape");
+    }
+
+    @Test
+    @DisplayName("Both lands are chosen before either enters the battlefield")
+    void choosesBothLandsBeforePuttingThemOntoBattlefield() {
+        harness.addToBattlefield(player1, new MyriadLandscape());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Island()));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.assertInGraveyard(player1, "Myriad Landscape");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        harness.assertNotOnBattlefield(player1, "Forest");
+
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard() instanceof Forest)
+                .hasSize(2)
+                .allMatch(Permanent::isTapped);
+    }
+
+    @Test
+    @DisplayName("The search can find zero lands even when matching lands exist")
+    void canDeclineAllLands() {
+        harness.addToBattlefield(player1, new MyriadLandscape());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        harness.assertInGraveyard(player1, "Myriad Landscape");
+    }
+
+    @Test
+    @DisplayName("A single basic land can be found when no second land shares its type")
+    void findsOneLandWithoutMatchingSecondLand() {
+        harness.addToBattlefield(player1, new MyriadLandscape());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setLibrary(player1, List.of(new Forest(), new Island()));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard() instanceof Forest)
+                .singleElement()
+                .matches(Permanent::isTapped);
+        harness.assertNotOnBattlefield(player1, "Island");
+        assertThat(gd.playerDecks.get(player1.getId())).singleElement().isInstanceOf(Island.class);
     }
 }
