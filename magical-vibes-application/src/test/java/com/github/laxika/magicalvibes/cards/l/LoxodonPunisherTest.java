@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.a.Arrest;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -10,6 +11,30 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({LoxodonPunisher.class, LeoninScimitar.class, LightningGreaves.class, Arrest.class})
 class LoxodonPunisherTest extends BaseCardTest {
+
+    @Test
+    void movingEquipmentUpdatesBothCreaturesBonusesOnResolution() {
+        Permanent scimitar = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        Permanent punisher = addCreatureReady(player1, new LoxodonPunisher());
+        Permanent otherPunisher = addCreatureReady(player1, new LoxodonPunisher());
+        scimitar.setAttachedTo(punisher.getId());
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, otherPunisher.getId());
+
+        assertThat(gqs.getEffectivePower(gd, punisher)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, punisher)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, otherPunisher)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherPunisher)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(scimitar.getAttachedTo()).isEqualTo(otherPunisher.getId());
+        assertThat(gqs.getEffectivePower(gd, punisher)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, punisher)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherPunisher)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, otherPunisher)).isEqualTo(5);
+    }
 
     @Test
     void withoutEquipmentIs2x2() {
