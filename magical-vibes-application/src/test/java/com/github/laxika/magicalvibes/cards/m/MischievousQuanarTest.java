@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.Carbonize;
 import com.github.laxika.magicalvibes.cards.g.GoblinBrigand;
 import com.github.laxika.magicalvibes.cards.g.GoblinWarStrike;
 import com.github.laxika.magicalvibes.cards.s.ScornfulEgotist;
+import com.github.laxika.magicalvibes.cards.s.SeedsOfStrength;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({MischievousQuanar.class, Carbonize.class, GoblinBrigand.class,
-        GoblinWarStrike.class, ScornfulEgotist.class})
+        GoblinWarStrike.class, ScornfulEgotist.class, SeedsOfStrength.class})
 class MischievousQuanarTest extends BaseCardTest {
 
     @Test
@@ -111,6 +112,76 @@ class MischievousQuanarTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.assertOnBattlefield(player2, "Scornful Egotist");
+    }
+
+    @Test
+    void copiedSorceryCountsGoblinsControlledByQuanarController() {
+        Permanent quanar = castFaceDown();
+        addCreatureReady(player1, new GoblinBrigand());
+        addCreatureReady(player1, new GoblinBrigand());
+        addCreatureReady(player2, new GoblinBrigand());
+        GoblinWarStrike warStrike = new GoblinWarStrike();
+        castGoblinWarStrike(warStrike);
+
+        turnFaceUp(quanar);
+        harness.handlePermanentChosen(player1, warStrike.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void canTurnFaceUpAgainAfterActivatedAbilityTurnsItFaceDown() {
+        Permanent quanar = harness.addToBattlefieldAndReturn(player1, new MischievousQuanar());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(quanar.isFaceDown()).isTrue();
+
+        Carbonize carbonize = new Carbonize();
+        castCarbonize(carbonize);
+        turnFaceUp(quanar);
+        harness.handlePermanentChosen(player1, carbonize.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(quanar.isFaceDown()).isFalse();
+        harness.assertLife(player1, 14);
+    }
+
+    @Test
+    void mayChangeEveryTargetOfCopiedSpell() {
+        Permanent quanar = castFaceDown();
+        Permanent originalTarget = harness.addToBattlefieldAndReturn(player2, new GoblinBrigand());
+        SeedsOfStrength seeds = new SeedsOfStrength();
+        preparePlayerTwoMainPhase();
+        harness.setHand(player2, List.of(seeds));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castInstant(player2, 0, List.of(originalTarget.getId(), originalTarget.getId(), originalTarget.getId()));
+        harness.passPriority(player2);
+
+        turnFaceUp(quanar);
+        harness.handlePermanentChosen(player1, seeds.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, quanar.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+        harness.handlePermanentChosen(player1, quanar.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+        harness.handlePermanentChosen(player1, quanar.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, quanar)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, originalTarget)).isEqualTo(5);
     }
 
     private Permanent castFaceDown() {
