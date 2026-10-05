@@ -31,7 +31,7 @@ class ProtectiveBubbleTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ProtectiveBubble()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        gs.playCard(gd, player1, 0, 0, bears.getId(), null);
+        harness.castEnchantment(player1, 0, bears.getId());
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
@@ -45,7 +45,7 @@ class ProtectiveBubbleTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ProtectiveBubble()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        gs.playCard(gd, player1, 0, 0, bears.getId(), null);
+        harness.castEnchantment(player1, 0, bears.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -145,5 +145,58 @@ class ProtectiveBubbleTest extends BaseCardTest {
                 List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("Bubble can enchant an opponent's creature and grants only that creature its abilities")
+    void canEnchantOpponentsCreature() {
+        Permanent target = addReadyCreature(player2);
+        Permanent other = addReadyCreature(player1);
+        harness.setHand(player1, List.of(new ProtectiveBubble()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Protective Bubble").getAttachedTo()).isEqualTo(target.getId());
+        assertThat(gqs.hasKeyword(gd, target, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, other)).isFalse();
+        harness.assertNotInGraveyard(player1, "Protective Bubble");
+    }
+
+    @Test
+    @DisplayName("Shroud prevents an opponent's activated ability from targeting the enchanted creature")
+    void shroudStopsOpponentsActivatedAbility() {
+        Permanent target = addReadyCreature(player1);
+        attachBubble(target);
+        addReadyCreature(player2);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Bubble goes to the graveyard if its target dies before it resolves")
+    void targetDiesInResponse() {
+        Permanent target = addReadyCreature(player1);
+        harness.setHand(player1, List.of(new ProtectiveBubble()));
+        harness.setHand(player2, List.of(new NamelessInversion()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.addMana(player2, ManaColor.BLACK, 2);
+
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.castInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Goldmeadow Harrier");
+        harness.assertInGraveyard(player1, "Protective Bubble");
+        harness.assertNotOnBattlefield(player1, "Protective Bubble");
+        assertThat(gd.stack).isEmpty();
     }
 }
