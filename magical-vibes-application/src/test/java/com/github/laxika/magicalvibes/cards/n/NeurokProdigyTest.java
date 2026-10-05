@@ -80,4 +80,63 @@ class NeurokProdigyTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("A tapped, newly entered Neurok Prodigy can activate its return ability")
+    void tappedProdigyCanReturnToHand() {
+        var prodigy = harness.addToBattlefieldAndReturn(player1, new NeurokProdigy());
+        prodigy.setTapped(true);
+        harness.setHand(player1, List.of(new DarksteelIngot()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Neurok Prodigy");
+        harness.assertInGraveyard(player1, "Darksteel Ingot");
+        harness.assertNotOnBattlefield(player1, "Neurok Prodigy");
+    }
+
+    @Test
+    @DisplayName("A stolen Neurok Prodigy returns to its owner after its controller pays the cost")
+    void stolenProdigyReturnsToOwner() {
+        var prodigy = harness.addToBattlefieldAndReturn(player1, new NeurokProdigy());
+        gd.stolenCreatures.put(prodigy.getId(), player2.getId());
+        harness.setHand(player1, List.of(new DarksteelIngot()));
+        harness.setHand(player2, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Neurok Prodigy");
+        harness.assertNotInHand(player1, "Neurok Prodigy");
+        harness.assertInGraveyard(player1, "Darksteel Ingot");
+        harness.assertNotInGraveyard(player2, "Darksteel Ingot");
+        harness.assertNotOnBattlefield(player1, "Neurok Prodigy");
+    }
+
+    @Test
+    @DisplayName("Multiple activations return only their source and still consume both discard costs")
+    void repeatedActivationsDoNotReturnAnotherProdigy() {
+        harness.addToBattlefield(player1, new NeurokProdigy());
+        var otherProdigy = harness.addToBattlefieldAndReturn(player1, new NeurokProdigy());
+        harness.setHand(player1, List.of(new DarksteelIngot(), new DarksteelIngot()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(otherProdigy);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Neurok Prodigy");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        harness.assertInGraveyard(player1, "Darksteel Ingot");
+    }
 }
