@@ -1,15 +1,17 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AdamantWill;
+import com.github.laxika.magicalvibes.cards.g.GuardiansOfKoilos;
+import com.github.laxika.magicalvibes.cards.h.HistoryOfBenalia;
+import com.github.laxika.magicalvibes.cards.j.JoustingLance;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,18 +21,16 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({InvokeTheDivine.class, JoustingLance.class, HistoryOfBenalia.class, LlanowarElves.class, AdamantWill.class, GuardiansOfKoilos.class})
 class InvokeTheDivineTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting Invoke the Divine puts it on the stack with target")
     void castingPutsOnStack() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new JoustingLance()).getId();
         harness.setHand(player1, List.of(new InvokeTheDivine()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
         harness.castInstant(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
@@ -44,47 +44,39 @@ class InvokeTheDivineTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving destroys target artifact and gains 4 life")
     void destroysArtifactAndGainsLife() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new JoustingLance()).getId();
         harness.setHand(player1, List.of(new InvokeTheDivine()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
-        GameData gd = harness.getGameData();
-        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
-        harness.assertInGraveyard(player2, "Fountain of Youth");
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(24);
+        harness.assertNotOnBattlefield(player2, "Jousting Lance");
+        harness.assertInGraveyard(player2, "Jousting Lance");
+        harness.assertLife(player1, 24);
     }
 
     @Test
     @DisplayName("Resolving destroys target enchantment and gains 4 life")
     void destroysEnchantmentAndGainsLife() {
-        harness.addToBattlefield(player2, new AngelicChorus());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new HistoryOfBenalia()).getId();
         harness.setHand(player1, List.of(new InvokeTheDivine()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
-        GameData gd = harness.getGameData();
-        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
-        harness.assertInGraveyard(player2, "Angelic Chorus");
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(24);
+        harness.assertNotOnBattlefield(player2, "History of Benalia");
+        harness.assertInGraveyard(player2, "History of Benalia");
+        harness.assertLife(player1, 24);
     }
 
     @Test
     @DisplayName("Invoke the Divine goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new JoustingLance()).getId();
         harness.setHand(player1, List.of(new InvokeTheDivine()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
@@ -94,11 +86,10 @@ class InvokeTheDivineTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles and does not gain life when target is removed before resolution")
     void fizzlesAndDoesNotGainLifeWhenTargetRemoved() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new JoustingLance()).getId();
         harness.setHand(player1, List.of(new InvokeTheDivine()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
         harness.castInstant(player1, 0, targetId);
         harness.getGameData().playerBattlefields.get(player2.getId()).clear();
 
@@ -106,19 +97,69 @@ class InvokeTheDivineTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
         harness.assertInGraveyard(player1, "Invoke the Divine");
     }
 
     @Test
     @DisplayName("Cannot target a creature with Invoke the Divine")
     void cannotTargetCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID creatureId = harness.addToBattlefieldAndReturn(player2, new LlanowarElves()).getId();
         harness.setHand(player1, List.of(new InvokeTheDivine()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can destroy an artifact controlled by the caster")
+    void destroysOwnArtifactAndGainsLife() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new JoustingLance()).getId();
+        harness.setHand(player1, List.of(new InvokeTheDivine()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Jousting Lance");
+        harness.assertInGraveyard(player1, "Jousting Lance");
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Artifact creatures are legal targets")
+    void destroysArtifactCreatureAndGainsLife() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GuardiansOfKoilos()).getId();
+        harness.setHand(player1, List.of(new InvokeTheDivine()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player2, "Guardians of Koilos");
+        harness.assertInGraveyard(player2, "Guardians of Koilos");
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Still gains life when the legal target becomes indestructible")
+    void gainsLifeEvenWhenDestructionFails() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GuardiansOfKoilos()).getId();
+        harness.setHand(player1, List.of(new InvokeTheDivine()));
+        harness.setHand(player2, List.of(new AdamantWill()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        harness.castInstant(player1, 0, targetId);
+        harness.castInstant(player2, 0, targetId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Guardians of Koilos");
+        harness.assertNotInGraveyard(player2, "Guardians of Koilos");
+        harness.assertInGraveyard(player1, "Invoke the Divine");
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 20);
     }
 }
