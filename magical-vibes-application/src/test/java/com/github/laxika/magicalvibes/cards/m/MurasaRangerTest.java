@@ -63,4 +63,73 @@ class MurasaRangerTest extends BaseCardTest {
         assertThat(ranger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("Four mana without green cannot pay the landfall cost")
+    void paymentRequiresGreenMana() {
+        Permanent ranger = harness.addToBattlefieldAndReturn(player1, new MurasaRanger());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.playLand(player1, 0);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(ranger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Insufficient total mana cannot pay the landfall cost")
+    void paymentRequiresFourMana() {
+        Permanent ranger = harness.addToBattlefieldAndReturn(player1, new MurasaRanger());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.playLand(player1, 0);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(ranger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each Ranger requires its own payment and receives only its own counters")
+    void twoRangersHaveIndependentPayments() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new MurasaRanger());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new MurasaRanger());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.playLand(player1, 0);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(List.of(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE),
+                second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)))
+                .containsExactlyInAnyOrder(0, 2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A land entering without being played also triggers landfall")
+    void landEnteringWithoutBeingPlayedTriggers() {
+        Permanent ranger = harness.addToBattlefieldAndReturn(player1, new MurasaRanger());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(ranger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
 }
