@@ -26,8 +26,7 @@ class OstracizeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Ostracize()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.handleCardChosen(player1, 0);
 
@@ -45,8 +44,7 @@ class OstracizeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.clearMessages();
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(harness.getConn1().getSentMessages()).anyMatch(message -> message.contains("REVEAL_HAND"));
         assertThat(harness.getConn2().getSentMessages()).anyMatch(message -> message.contains("REVEAL_HAND"));
@@ -59,8 +57,7 @@ class OstracizeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Ostracize()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
         // Only index 1 (Grizzly Bears) is a creature
@@ -75,8 +72,7 @@ class OstracizeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Ostracize()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -90,8 +86,7 @@ class OstracizeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Ostracize()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
@@ -105,8 +100,7 @@ class OstracizeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Ostracize()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThatThrownBy(() -> harness.handleCardChosen(player2, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -122,5 +116,45 @@ class OstracizeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
+    }
+
+    @Test
+    @DisplayName("An empty hand resolves without a choice or discard")
+    void emptyHandResolvesWithoutChoice() {
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new Ostracize()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Ostracize");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The caster must choose exactly one of multiple creature cards")
+    void mustChooseExactlyOneCreature() {
+        GrizzlyBears unchosen = new GrizzlyBears();
+        GrizzlyBears chosen = new GrizzlyBears();
+        GiantGrowth noncreature = new GiantGrowth();
+        harness.setHand(player2, List.of(unchosen, noncreature, chosen));
+        harness.setHand(player1, List.of(new Ostracize()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid card index");
+        harness.handleCardChosen(player1, 2);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(unchosen, noncreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(chosen);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Ostracize");
+        assertThat(gd.stack).isEmpty();
     }
 }
