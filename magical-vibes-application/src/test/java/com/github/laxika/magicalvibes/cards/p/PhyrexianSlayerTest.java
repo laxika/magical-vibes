@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GlimmeringAngel;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -26,8 +28,7 @@ class PhyrexianSlayerTest extends BaseCardTest {
         block(blocker);
 
         harness.assertNotOnBattlefield(player2, "Glimmering Angel");
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(card -> card.getName().equals("Glimmering Angel"));
+        harness.assertInGraveyard(player2, "Glimmering Angel");
     }
 
     @Test
@@ -86,6 +87,43 @@ class PhyrexianSlayerTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .filteredOn(card -> card.getName().equals("Glimmering Angel"))
                 .hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Shroud does not protect a white blocker from the nontargeting trigger")
+    void destroysWhiteBlockerWithShroud() {
+        Permanent slayer = addReadySlayer();
+        Permanent blocker = addCreatureReady(player2, new GlimmeringAngel());
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.activateAbility(player2, 0, null, null);
+        resolveAllTriggers();
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(slayer)));
+        block(blocker);
+
+        harness.assertNotOnBattlefield(player2, "Glimmering Angel");
+        harness.assertInGraveyard(player2, "Glimmering Angel");
+    }
+
+    @Test
+    @DisplayName("A surviving blocker can regenerate a later destruction in the same turn")
+    void regenerationRestrictionAppliesOnlyToSlayerDestruction() {
+        Permanent slayer = addReadySlayer();
+        Permanent blocker = addCreatureReady(player2, new GlimmeringAngel());
+        blocker.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(slayer)));
+        block(blocker);
+        harness.assertOnBattlefield(player2, "Glimmering Angel");
+
+        blocker.getGrantedKeywords().remove(Keyword.INDESTRUCTIBLE);
+        blocker.setRegenerationShield(1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .tryDestroyPermanent(gd, blocker));
+
+        harness.assertOnBattlefield(player2, "Glimmering Angel");
+        harness.assertNotInGraveyard(player2, "Glimmering Angel");
+        assertThat(blocker.getRegenerationShield()).isZero();
     }
 
     private Permanent addReadySlayer() {
