@@ -46,16 +46,16 @@ class JubilantSkybonderTest extends BaseCardTest {
         Permanent secondFlyer = harness.addToBattlefieldAndReturn(player1, new AirElemental());
         prepareOpponentCast(new ForkedBolt(), 3);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player2, 0, 0, null,
-                Map.of(firstFlyer.getId(), 1, secondFlyer.getId(), 1),
-                List.of(firstFlyer.getId(), secondFlyer.getId()), List.of()))
+        assertThatThrownBy(() -> harness.castSorcery(player2, 0, null,
+                List.of(firstFlyer.getId(), secondFlyer.getId()),
+                Map.of(firstFlyer.getId(), 1, secondFlyer.getId(), 1)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana to pay targeting tax");
 
         harness.addMana(player2, ManaColor.RED, 2);
-        gs.playCard(gd, player2, 0, 0, null,
-                Map.of(firstFlyer.getId(), 1, secondFlyer.getId(), 1),
-                List.of(firstFlyer.getId(), secondFlyer.getId()), List.of());
+        harness.castSorcery(player2, 0, null,
+                List.of(firstFlyer.getId(), secondFlyer.getId()),
+                Map.of(firstFlyer.getId(), 1, secondFlyer.getId(), 1));
 
         assertThat(gd.stack).hasSize(1);
     }
@@ -91,6 +91,69 @@ class JubilantSkybonderTest extends BaseCardTest {
         addCreatureReady(player2, new ZuranSpellcaster());
 
         harness.activateAbility(player2, 0, null, flyer.getId());
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Jubilant Skybonder protects itself")
+    void skybonderProtectsItself() {
+        Permanent skybonder = harness.addToBattlefieldAndReturn(player1, new JubilantSkybonder());
+        prepareOpponentCast(new LightningBolt(), 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, skybonder.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana to pay targeting tax");
+
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castInstant(player2, 0, skybonder.getId());
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Two Skybonders grant two cumulative taxes to the same creature")
+    void multipleSkybondersStackTheirTaxes() {
+        Permanent skybonder = harness.addToBattlefieldAndReturn(player1, new JubilantSkybonder());
+        harness.addToBattlefield(player1, new JubilantSkybonder());
+        prepareOpponentCast(new LightningBolt(), 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, skybonder.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana to pay targeting tax");
+
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castInstant(player2, 0, skybonder.getId());
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Flying creatures controlled by the opponent are not protected")
+    void opponentFlyingCreatureIsNotProtected() {
+        harness.addToBattlefield(player1, new JubilantSkybonder());
+        Permanent flyer = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, flyer.getId());
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The granted tax disappears when Skybonder leaves the battlefield")
+    void taxDisappearsWhenSkybonderLeaves() {
+        Permanent skybonder = harness.addToBattlefieldAndReturn(player1, new JubilantSkybonder());
+        Permanent flyer = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        prepareOpponentCast(new LightningBolt(), 3);
+
+        harness.castAndResolveInstant(player2, 0, skybonder.getId());
+        harness.assertNotOnBattlefield(player1, "Jubilant Skybonder");
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, flyer.getId());
 
         assertThat(gd.stack).hasSize(1);
     }
