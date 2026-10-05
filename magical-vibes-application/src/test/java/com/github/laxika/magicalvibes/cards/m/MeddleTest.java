@@ -26,6 +26,65 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MeddleTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Meddle redirects an any-target spell only to another creature")
+    void anyTargetSpellCanOnlyBeRedirectedToAnotherCreature() {
+        Permanent originalTarget = harness.addToBattlefieldAndReturn(player1, new MtendaHerder());
+        Permanent replacementTarget = harness.addToBattlefieldAndReturn(player2, new MtendaHerder());
+        harness.addToBattlefield(player1, new CrystalVein());
+
+        UnyaroBeeSting beeSting = new UnyaroBeeSting();
+        harness.setHand(player1, List.of(beeSting));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castSorcery(player1, 0, originalTarget.getId());
+        harness.passPriority(player1);
+
+        harness.setHand(player2, List.of(new Meddle()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, beeSting.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(replacementTarget.getId());
+
+        harness.handlePermanentChosen(player2, replacementTarget.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(originalTarget);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(replacementTarget);
+        harness.assertInGraveyard(player2, "Mtenda Herder");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Meddle leaves a spell with two creature targets unchanged")
+    void doesNothingWhenBothTargetsAreCreatures() {
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player1, new MtendaHerder());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new MtendaHerder());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new MtendaHerder());
+
+        DjerusRenunciation renunciation = new DjerusRenunciation();
+        harness.setHand(player1, List.of(renunciation));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, List.of(firstTarget.getId(), secondTarget.getId()));
+        harness.passPriority(player1);
+
+        harness.setHand(player2, List.of(new Meddle()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, renunciation.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        harness.passBothPriorities();
+
+        assertThat(firstTarget.isTapped()).isTrue();
+        assertThat(secondTarget.isTapped()).isTrue();
+        assertThat(otherCreature.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Meddle retargets a single-target creature spell to another creature")
     void retargetsCreatureTargetSpell() {
         UUID bears1PermId = harness.addToBattlefieldAndReturn(player1, new MtendaHerder()).getId();
@@ -41,8 +100,7 @@ class MeddleTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, bears1PermId);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, boomerang.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, boomerang.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -75,8 +133,7 @@ class MeddleTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, player2.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, beeSting.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, beeSting.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
 
@@ -102,8 +159,7 @@ class MeddleTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, landId);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, boomerang.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, boomerang.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.stack.getLast().getTargetId()).isEqualTo(landId);
@@ -126,8 +182,7 @@ class MeddleTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, List.of(originalTarget.getId()));
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, renunciation.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, renunciation.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -155,8 +210,7 @@ class MeddleTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, bearsPermId);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, boomerang.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, boomerang.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
@@ -174,8 +228,7 @@ class MeddleTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player2, 0, waitingInTheWeeds.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, waitingInTheWeeds.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.stack.getLast().getCard().getId()).isEqualTo(waitingInTheWeeds.getId());
@@ -198,8 +251,7 @@ class MeddleTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player2, 0, politicalTrickery.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, politicalTrickery.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.stack.getLast().getCard().getId()).isEqualTo(politicalTrickery.getId());
