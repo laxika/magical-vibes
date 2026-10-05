@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MouthOfTheStorm.class, GrizzlyBears.class, Shock.class})
+@CardUsed({MouthOfTheStorm.class, GrizzlyBears.class, Shock.class, Unsummon.class, ProdigalPyromancer.class})
 class MouthOfTheStormTest extends BaseCardTest {
 
     @Test
@@ -56,12 +58,84 @@ class MouthOfTheStormTest extends BaseCardTest {
     }
 
     private void castMouthOfTheStorm() {
-        harness.setHand(player1, List.of(new MouthOfTheStorm()));
+        harness.castFromHand(player1, new MouthOfTheStorm(), "{6}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void payingWardAllowsOpposingSpellToResolve() {
+        Permanent mouth = addCreatureReady(player1, new MouthOfTheStorm());
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player2, 0, mouth.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMayAbilityChosen(player2, true);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Mouth of the Storm");
+        assertThat(gd.playerHands.get(player1.getId())).contains(mouth.getCard());
+    }
+
+    @Test
+    void decliningAffordableWardCountersSpell() {
+        Permanent mouth = addCreatureReady(player1, new MouthOfTheStorm());
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player2, 0, mouth.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Mouth of the Storm");
+        harness.assertInGraveyard(player2, "Unsummon");
+    }
+
+    @Test
+    void wardCountersOpposingActivatedAbility() {
+        Permanent mouth = addCreatureReady(player1, new MouthOfTheStorm());
+        Permanent pyromancer = addCreatureReady(player2, new ProdigalPyromancer());
+
+        harness.activateAbility(player2, 0, null, mouth.getId());
+        resolveAllTriggers();
+
+        assertThat(mouth.getMarkedDamage()).isZero();
+        assertThat(pyromancer.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void ownSpellDoesNotTriggerWardAndEntryTriggerSurvivesSourceLeaving() {
+        Permanent opposingCreature = addCreatureReady(player2, new MouthOfTheStorm());
+        Permanent mouth = harness.enterBattlefieldAndReturn(player1, new MouthOfTheStorm());
+        harness.setHand(player1, List.of(new Unsummon()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 6);
-        harness.castCreature(player1, 0);
+
+        harness.castInstant(player1, 0, mouth.getId());
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Mouth of the Storm");
+        assertThat(gd.playerHands.get(player1.getId())).contains(mouth.getCard());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(6);
+    }
+
+    @Test
+    void entryEffectSnapshotsCreaturesWhenTriggerResolves() {
+        harness.enterBattlefieldAndReturn(player1, new MouthOfTheStorm());
+        Permanent beforeResolution = addCreatureReady(player2, new MouthOfTheStorm());
+
+        resolveAllTriggers();
+
+        Permanent afterResolution = addCreatureReady(player2, new MouthOfTheStorm());
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(6);
     }
 
 }
