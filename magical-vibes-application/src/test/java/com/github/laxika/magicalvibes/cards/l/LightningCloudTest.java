@@ -53,8 +53,7 @@ class LightningCloudTest extends BaseCardTest {
     @DisplayName("Paying {R} can deal 1 damage to a creature")
     void payDealsDamageToCreature() {
         harness.addToBattlefield(player1, new LightningCloud());
-        harness.addToBattlefield(player2, new InfantryVeteran());
-        UUID veteranId = harness.getPermanentId(player2, "Infantry Veteran");
+        UUID veteranId = harness.addToBattlefieldAndReturn(player2, new InfantryVeteran()).getId();
         setUpOpponentTurn();
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -137,5 +136,43 @@ class LightningCloudTest extends BaseCardTest {
 
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getCard().getName().equals("Lightning Cloud"));
+    }
+
+    @Test
+    @DisplayName("Lightning Cloud can damage its controller")
+    void canTargetController() {
+        harness.addToBattlefield(player1, new LightningCloud());
+        setUpOpponentTurn();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player1, 20);
+
+        harness.castFromHand(player2, new SpittingDrake(), "{3}{R}");
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Each Lightning Cloud requires its own payment")
+    void onePaymentCannotPayForTwoClouds() {
+        harness.addToBattlefield(player1, new LightningCloud());
+        harness.addToBattlefield(player1, new LightningCloud());
+        setUpOpponentTurn();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        harness.castFromHand(player2, new SpittingDrake(), "{3}{R}");
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertLife(player2, 19);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player2, 19);
     }
 }
