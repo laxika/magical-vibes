@@ -28,7 +28,7 @@ class PersistentSpecimenTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Persistent Specimen");
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(specimen);
     }
 
     @Test
@@ -41,11 +41,7 @@ class PersistentSpecimenTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
-        Permanent returned = battlefield.stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Persistent Specimen"))
-                .findFirst()
-                .orElseThrow();
+        Permanent returned = findPermanent(player1, "Persistent Specimen");
         assertThat(returned.isTapped()).isTrue();
         harness.assertNotInGraveyard(player1, "Persistent Specimen");
     }
@@ -95,6 +91,87 @@ class PersistentSpecimenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Persistent Specimen");
+    }
+
+    @Test
+    @DisplayName("Only the activated specimen returns, leaving other copies in both graveyards")
+    void returnsOnlyTheSourceCard() {
+        PersistentSpecimen first = new PersistentSpecimen();
+        PersistentSpecimen source = new PersistentSpecimen();
+        PersistentSpecimen opponentsCopy = new PersistentSpecimen();
+        harness.setGraveyard(player1, List.of(first, source));
+        harness.setGraveyard(player2, List.of(opponentsCopy));
+        addActivationMana();
+
+        harness.activateGraveyardAbility(player1, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentsCopy);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        Permanent returned = findPermanent(player1, "Persistent Specimen");
+        assertThat(returned.getCard()).isSameAs(source);
+        assertThat(returned.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player2, "Persistent Specimen");
+    }
+
+    @Test
+    @DisplayName("Three generic mana cannot pay the black requirement")
+    void cannotActivateWithoutBlackMana() {
+        harness.setGraveyard(player1, List.of(new PersistentSpecimen()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Persistent Specimen");
+    }
+
+    @Test
+    @DisplayName("Two activations return the specimen only once")
+    void multipleStackedActivationsReturnOnlyOnce() {
+        PersistentSpecimen specimen = new PersistentSpecimen();
+        harness.setGraveyard(player1, List.of(specimen));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.activateGraveyardAbility(player1, 0);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(findPermanent(player1, "Persistent Specimen").getCard()).isSameAs(specimen);
+        assertThat(findPermanent(player1, "Persistent Specimen").isTapped()).isTrue();
+        harness.assertNotInGraveyard(player1, "Persistent Specimen");
+    }
+
+    @Test
+    @DisplayName("An older activation cannot return a specimen that returned and died again")
+    void olderActivationCannotReturnANewGraveyardObject() {
+        PersistentSpecimen specimen = new PersistentSpecimen();
+        harness.setGraveyard(player1, List.of(specimen));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        findPermanent(player1, "Persistent Specimen").setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Persistent Specimen");
+        harness.assertNotOnBattlefield(player1, "Persistent Specimen");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Persistent Specimen");
+        harness.assertNotOnBattlefield(player1, "Persistent Specimen");
     }
 
     private void addActivationMana() {
