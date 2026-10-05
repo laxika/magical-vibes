@@ -66,12 +66,15 @@ class MindleechMassTest extends BaseCardTest {
 
     @Test
     @CardUsed(Forest.class)
-    @DisplayName("Lands in the damaged player's hand are not offered")
+    @DisplayName("A land-only hand can be inspected but no land can be cast")
     void doesNotOfferLand() {
         addAttackingMindleechMass(player1);
         harness.setHand(player2, List.of(new Forest()));
 
         resolveCombatAndTrigger();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
@@ -125,6 +128,25 @@ class MindleechMassTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(firstCard.getId()));
+    }
+
+    @Test
+    @CardUsed({MindleechMass.class, BorosRecruit.class})
+    @DisplayName("Declining to cast does not publicly identify a card in the damaged player's hand")
+    void decliningDoesNotRevealPrivateHandCardInPublicLog() {
+        addAttackingMindleechMass(player1);
+        harness.setHand(player2, List.of(new BorosRecruit()));
+
+        resolveCombatAndTrigger();
+
+        if (gd.pendingMayAbilities.getFirst().sourceCard() instanceof MindleechMass) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gameLogContains("Boros Recruit")).isFalse();
+        harness.assertInHand(player2, "Boros Recruit");
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addAttackingMindleechMass(Player player) {
