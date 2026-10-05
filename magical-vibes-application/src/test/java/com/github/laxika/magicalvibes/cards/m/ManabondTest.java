@@ -95,6 +95,65 @@ class ManabondTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(darkRitual);
     }
 
+    @Test
+    @DisplayName("Accepting with an empty hand completes without further choices")
+    void acceptingWithEmptyHandCompletes() {
+        harness.addToBattlefield(player1, new Manabond());
+        harness.setHand(player1, List.of());
+
+        resolveManabondTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Accepting a hand containing only lands puts every land onto the battlefield")
+    void acceptingWithOnlyLandsDiscardsNothing() {
+        harness.addToBattlefield(player1, new Manabond());
+        Forest first = new Forest();
+        Forest second = new Forest();
+        harness.setHand(player1, List.of(first, second));
+
+        resolveManabondTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard()).contains(first, second);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The second player's Manabond affects only its controller's hand")
+    void secondPlayersTriggerAffectsOnlyTheirHand() {
+        harness.addToBattlefield(player2, new Manabond());
+        Forest controllerLand = new Forest();
+        DarkRitual controllerSpell = new DarkRitual();
+        Forest opponentLand = new Forest();
+        DarkRitual opponentSpell = new DarkRitual();
+        harness.setHand(player2, List.of(controllerLand, controllerSpell));
+        harness.setHand(player1, List.of(opponentLand, opponentSpell));
+
+        advanceToEndStep(player2);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard() == controllerLand);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(controllerSpell);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(opponentLand, opponentSpell);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
     private void resolveManabondTrigger() {
         advanceToEndStep(player1);
         harness.passBothPriorities();
