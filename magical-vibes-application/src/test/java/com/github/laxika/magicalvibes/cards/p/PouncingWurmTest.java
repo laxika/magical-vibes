@@ -41,6 +41,29 @@ class PouncingWurmTest extends BaseCardTest {
     }
 
     @Test
+    void kickedWurmCanAttackTheTurnItEnters() {
+        harness.setHand(player1, List.of(new PouncingWurm()));
+        harness.addMana(player1, ManaColor.GREEN, 7);
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    void unkickedWurmCannotAttackTheTurnItEnters() {
+        harness.castFromHand(player1, new PouncingWurm(), "{3}{G}");
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
     void castWithKickerWithoutEnoughManaThrowsException() {
         harness.setHand(player1, List.of(new PouncingWurm()));
         harness.addMana(player1, ManaColor.GREEN, 2);
