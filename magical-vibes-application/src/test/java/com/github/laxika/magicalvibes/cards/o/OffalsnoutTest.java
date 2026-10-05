@@ -25,14 +25,62 @@ class OffalsnoutTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new Offalsnout()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.passPriority(player2);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Offalsnout(), "{2}{B}");
 
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void normalCastDoesNotSacrificeOrExileOnEntry() {
+        Card card = new MorselTheft();
+        harness.setGraveyard(player2, List.of(card));
+
+        harness.castFromHand(player1, new Offalsnout(), "{2}{B}");
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Offalsnout");
+        harness.assertInGraveyard(player2, "Morsel Theft");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void evokedOffalsnoutCanExileItselfFromAnOtherwiseEmptyGraveyard() {
+        Offalsnout card = new Offalsnout();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castCreatureWithEvoke(player1, 0, null);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Offalsnout");
+        harness.handleMultipleCardsChosen(player1, List.of(card.getId()));
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Offalsnout");
+        harness.assertNotInGraveyard(player1, "Offalsnout");
+        assertThat(gd.exiledCards.stream().anyMatch(e -> e.card().getId().equals(card.getId()))).isTrue();
+    }
+
+    @Test
+    void leavingForExileAlsoTriggersGraveyardExile() {
+        Card card = new MorselTheft();
+        harness.setGraveyard(player2, List.of(card));
+        Permanent offalsnout = harness.addToBattlefieldAndReturn(player1, new Offalsnout());
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToExile(gd, offalsnout));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(card.getId()));
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Offalsnout");
+        harness.assertNotInGraveyard(player2, "Morsel Theft");
+        assertThat(gd.exiledCards.stream().anyMatch(e -> e.card().getId().equals(card.getId()))).isTrue();
     }
 
     @Test
