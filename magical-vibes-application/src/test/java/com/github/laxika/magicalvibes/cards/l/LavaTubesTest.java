@@ -76,6 +76,53 @@ class LavaTubesTest extends BaseCardTest {
         assertThat(lavaTubes.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("The mana ability resolves immediately, but depletion removal uses the stack")
+    void depletionRemovalWaitsForUpkeepTriggerResolution() {
+        Permanent lavaTubes = addLavaTubes();
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gd.stack).isEmpty();
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(lavaTubes.getCounterCount(CounterType.DEPLETION)).isEqualTo(1);
+        assertThat(lavaTubes.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(lavaTubes.getCounterCount(CounterType.DEPLETION)).isZero();
+        assertThat(lavaTubes.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's upkeep does not remove depletion counters")
+    void opponentsUpkeepDoesNotRemoveCounter() {
+        Permanent lavaTubes = addLavaTubes();
+        lavaTubes.tap();
+        lavaTubes.setCounterCount(CounterType.DEPLETION, 1);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(lavaTubes.getCounterCount(CounterType.DEPLETION)).isEqualTo(1);
+        assertThat(lavaTubes.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An untapped Lava Tubes can produce mana even with a depletion counter")
+    void existingCounterDoesNotPreventManaActivation() {
+        Permanent lavaTubes = addLavaTubes();
+        lavaTubes.setCounterCount(CounterType.DEPLETION, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(mana(ManaColor.RED)).isEqualTo(1);
+        assertThat(lavaTubes.isTapped()).isTrue();
+        assertThat(lavaTubes.getCounterCount(CounterType.DEPLETION)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addLavaTubes() {
         Permanent lavaTubes = harness.addToBattlefieldAndReturn(player1, new LavaTubes());
         lavaTubes.setSummoningSick(false);
