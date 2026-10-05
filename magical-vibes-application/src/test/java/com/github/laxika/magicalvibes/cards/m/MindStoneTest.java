@@ -41,6 +41,8 @@ class MindStoneTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(mindStone);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(mindStone.getCard());
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
@@ -75,9 +77,55 @@ class MindStoneTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
 
-    private Permanent addReadyMindStone() {
+    @Test
+    @DisplayName("A newly entered Mind Stone can produce mana immediately")
+    void newlyEnteredStoneCanProduceMana() {
         Permanent mindStone = harness.addToBattlefieldAndReturn(player1, new MindStone());
-        mindStone.setSummoningSick(false);
-        return mindStone;
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(mindStone.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A newly entered Mind Stone can be sacrificed using colored mana")
+    void newlyEnteredStoneCanDrawUsingColoredMana() {
+        Permanent mindStone = harness.addToBattlefieldAndReturn(player1, new MindStone());
+        MindStone drawnCard = new MindStone();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(mindStone);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(mindStone.getCard());
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    @DisplayName("Mind Stone cannot produce mana a second time while tapped")
+    void cannotProduceManaTwiceWithoutUntapping() {
+        Permanent mindStone = addReadyMindStone();
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(mindStone.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private Permanent addReadyMindStone() {
+        return addCreatureReady(player1, new MindStone());
     }
 }
