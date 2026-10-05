@@ -31,8 +31,7 @@ class PulseOfTheDrossTest extends BaseCardTest {
         harness.setHand(player2, List.of(glaivemaster, calm, goblin));
         addMana();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealCardsDiscardChoice.class);
         harness.handleCardChosen(player1, 1);
@@ -54,8 +53,7 @@ class PulseOfTheDrossTest extends BaseCardTest {
         harness.setHand(player2, List.of(glaivemaster, goblin));
         addMana();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(citadel);
@@ -76,8 +74,7 @@ class PulseOfTheDrossTest extends BaseCardTest {
         harness.setHand(player2, List.of(glaivemaster, calm, goblin, discardedCitadel));
         addMana();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         PendingInteraction.RevealCardsDiscardChoice reveal =
                 gd.interaction.activeInteraction(PendingInteraction.RevealCardsDiscardChoice.class);
@@ -106,12 +103,67 @@ class PulseOfTheDrossTest extends BaseCardTest {
         harness.setHand(player1, List.of(pulse, citadel, glaivemaster));
         addMana();
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(glaivemaster);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(pulse, citadel);
+    }
+
+    @Test
+    @DisplayName("An empty target hand resolves without a choice and does not return the spell")
+    void emptyTargetHandDoesNotRequireAChoice() {
+        PulseOfTheDross pulse = new PulseOfTheDross();
+        harness.setHand(player1, List.of(pulse));
+        harness.setHand(player2, List.of());
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(pulse);
+    }
+
+    @Test
+    @DisplayName("Discarding the target's only card leaves equal empty hands and does not return the spell")
+    void singleCardTargetHandBecomesEmpty() {
+        PulseOfTheDross pulse = new PulseOfTheDross();
+        DarksteelCitadel citadel = new DarksteelCitadel();
+        harness.setHand(player1, List.of(pulse));
+        harness.setHand(player2, List.of(citadel));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(pulse);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(citadel);
+    }
+
+    @Test
+    @DisplayName("The spell returns when the caster has no cards and the target retains one")
+    void resolvingSpellIsNotCountedInControllersHand() {
+        PulseOfTheDross pulse = new PulseOfTheDross();
+        DarksteelCitadel citadel = new DarksteelCitadel();
+        AuriokGlaivemaster glaivemaster = new AuriokGlaivemaster();
+        harness.setHand(player1, List.of(pulse));
+        harness.setHand(player2, List.of(citadel, glaivemaster));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(pulse);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(pulse);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(glaivemaster);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(citadel);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(pulse);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void addMana() {
