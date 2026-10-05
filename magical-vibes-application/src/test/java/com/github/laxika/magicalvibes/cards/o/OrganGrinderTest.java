@@ -108,6 +108,63 @@ class OrganGrinderTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Pays the exile and tap costs before the ability resolves")
+    void paysCostsBeforeResolution() {
+        Permanent organGrinder = addReadyOrganGrinder(player1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        List<Card> graveyard = List.of(new OrganGrinder(), new CabalCoffers(), new OrganGrinder());
+        harness.setGraveyard(player1, graveyard);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(organGrinder.isTapped()).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrderElementsOf(graveyard);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+        harness.assertLife(player1, 20);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrderElementsOf(graveyard);
+    }
+
+    @Test
+    @DisplayName("Cannot activate a tapped Organ Grinder or spend its graveyard cost")
+    void cannotActivateWhileTapped() {
+        Permanent organGrinder = addReadyOrganGrinder(player1);
+        organGrinder.setTapped(true);
+        List<Card> graveyard = List.of(new OrganGrinder(), new OrganGrinder(), new OrganGrinder());
+        harness.setGraveyard(player1, graveyard);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(graveyard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature and does not pay costs for an illegal target")
+    void cannotTargetCreature() {
+        Permanent organGrinder = addReadyOrganGrinder(player1);
+        Permanent otherCreature = addCreatureReady(player2, new OrganGrinder());
+        List<Card> graveyard = List.of(new OrganGrinder(), new OrganGrinder(), new OrganGrinder());
+        harness.setGraveyard(player1, graveyard);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, otherCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(organGrinder.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(graveyard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyOrganGrinder(Player player) {
         Permanent permanent = addCreatureReady(player, new OrganGrinder());
         prepareForAbilityActivation(player);
