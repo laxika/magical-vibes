@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -58,7 +57,7 @@ class QuietSpeculationTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerGraveyards.get(player2.getId()))
-                .containsExactly(battleScreech, flashOfInsight, grizzlyFate);
+                .containsExactlyInAnyOrder(battleScreech, flashOfInsight, grizzlyFate);
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .doesNotContain(battleScreech, flashOfInsight, grizzlyFate);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(avenFogbringer);
@@ -136,14 +135,91 @@ class QuietSpeculationTest extends BaseCardTest {
         castQuietSpeculation(player2.getId());
         harness.passBothPriorities();
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerGraveyards.get(player2.getId()))
-                .containsExactly(battleScreech, rayOfRevelation, prismaticStrands);
+                .containsExactlyInAnyOrder(battleScreech, rayOfRevelation, prismaticStrands);
         assertThat(gd.playerDecks.get(player2.getId()))
                 .containsExactlyInAnyOrder(flaringPain, suntailHawk);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Finds all selected cards before putting them into the graveyard together")
+    void finishesSearchingBeforeMovingSelectedCardsToGraveyard() {
+        Card battleScreech = new BattleScreech();
+        Card flashOfInsight = new FlashOfInsight();
+        Card grizzlyFate = new GrizzlyFate();
+        harness.setLibrary(player2, List.of(battleScreech, flashOfInsight, grizzlyFate));
+
+        castQuietSpeculation(player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .containsExactlyInAnyOrder(battleScreech, flashOfInsight, grizzlyFate);
+    }
+
+    @Test
+    @DisplayName("Can choose zero cards even when flashback cards are available")
+    void canChooseZeroCards() {
+        Card battleScreech = new BattleScreech();
+        Card flashOfInsight = new FlashOfInsight();
+        harness.setLibrary(player2, List.of(battleScreech, flashOfInsight));
+
+        castQuietSpeculation(player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyInAnyOrder(battleScreech, flashOfInsight);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+        harness.assertInGraveyard(player1, "Quiet Speculation");
+    }
+
+    @Test
+    @DisplayName("Can target its controller and find multiple copies of the same card")
+    void canSearchOwnLibraryForDuplicateCards() {
+        Card first = new BattleScreech();
+        Card second = new BattleScreech();
+        Card third = new BattleScreech();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        castQuietSpeculation(player1.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second, third);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gameLogContains("library is shuffled.")).isTrue();
+        harness.assertInGraveyard(player1, "Quiet Speculation");
+    }
+
+    @Test
+    @DisplayName("An empty target library still shuffles and the spell finishes resolving")
+    void emptyLibraryStillShuffles() {
+        harness.setLibrary(player2, List.of());
+
+        castQuietSpeculation(player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+        harness.assertInGraveyard(player1, "Quiet Speculation");
     }
 }
