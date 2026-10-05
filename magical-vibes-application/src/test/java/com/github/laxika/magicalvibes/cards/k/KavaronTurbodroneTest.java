@@ -41,8 +41,7 @@ class KavaronTurbodroneTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, bears.getId());
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -70,6 +69,95 @@ class KavaronTurbodroneTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Kavaron Turbodrone can target itself")
+    void canTargetItself() {
+        Permanent turbodrone = addCreatureReady(player1, new KavaronTurbodrone());
+        prepareForActivation();
+
+        harness.activateAbility(player1, 0, 0, null, turbodrone.getId());
+        harness.passBothPriorities();
+
+        assertThat(turbodrone.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, turbodrone)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, turbodrone)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, turbodrone, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Turbodrone cannot activate to give itself haste")
+    void cannotBypassSummoningSickness() {
+        Permanent turbodrone = harness.addToBattlefieldAndReturn(player1, new KavaronTurbodrone());
+        prepareForActivation();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, turbodrone.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(turbodrone.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Kavaron Turbodrone cannot activate during its controller's combat")
+    void cannotActivateDuringCombat() {
+        Permanent turbodrone = addCreatureReady(player1, new KavaronTurbodrone());
+        prepareForActivation();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, turbodrone.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(turbodrone.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Kavaron Turbodrone cannot activate with an ability on the stack")
+    void cannotActivateWithNonemptyStack() {
+        Permanent first = addCreatureReady(player1, new KavaronTurbodrone());
+        Permanent second = addCreatureReady(player1, new KavaronTurbodrone());
+        prepareForActivation();
+        harness.activateAbility(player1, 0, 0, null, first.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, second.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(second.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, first, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability still resolves after its source leaves the battlefield")
+    void resolvesWithoutSource() {
+        Permanent source = addCreatureReady(player1, new KavaronTurbodrone());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new KavaronTurbodrone());
+        prepareForActivation();
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability does not affect a target that changes controllers before resolution")
+    void changedControllerMakesTargetIllegal() {
+        addCreatureReady(player1, new KavaronTurbodrone());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new KavaronTurbodrone());
+        prepareForActivation();
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerBattlefields.get(player2.getId()).add(target);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }
 
     private void prepareForActivation() {
