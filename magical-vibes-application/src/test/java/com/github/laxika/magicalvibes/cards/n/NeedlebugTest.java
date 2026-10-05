@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.b.Bonesplitter;
 import com.github.laxika.magicalvibes.cards.b.BrownOuphe;
 import com.github.laxika.magicalvibes.cards.i.IronMyr;
+import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Needlebug.class, IronMyr.class, BrownOuphe.class, Bonesplitter.class})
+@CardUsed({Needlebug.class, IronMyr.class, BrownOuphe.class, Bonesplitter.class, Shatter.class})
 class NeedlebugTest extends BaseCardTest {
 
     @Test
@@ -30,6 +31,45 @@ class NeedlebugTest extends BaseCardTest {
         harness.castFromHand(player1, new Needlebug(), "{4}");
 
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Flash allows casting and resolving during the opponent's turn")
+    void canCastDuringOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new Needlebug(), "{4}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Needlebug");
+    }
+
+    @Test
+    @DisplayName("Protection from artifacts does not prevent Shatter from destroying Needlebug")
+    void nonArtifactSpellCanTargetAndDestroyNeedlebug() {
+        Permanent needlebug = harness.addToBattlefieldAndReturn(player2, new Needlebug());
+        harness.setHand(player1, List.of(new Shatter()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, needlebug.getId());
+
+        harness.assertNotOnBattlefield(player2, "Needlebug");
+        harness.assertInGraveyard(player2, "Needlebug");
+    }
+
+    @Test
+    @DisplayName("State-based actions detach artifact Equipment from Needlebug")
+    void protectionDetachesArtifactEquipment() {
+        Permanent needlebug = harness.addToBattlefieldAndReturn(player1, new Needlebug());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
+        equipment.setAttachedTo(needlebug.getId());
+
+        harness.runStateBasedActions();
+
+        assertThat(equipment.getAttachedTo()).isNull();
+        harness.assertOnBattlefield(player1, "Bonesplitter");
+        harness.assertOnBattlefield(player1, "Needlebug");
     }
 
     @Test
