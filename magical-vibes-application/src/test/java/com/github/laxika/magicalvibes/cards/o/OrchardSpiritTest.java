@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.a.AvenFisher;
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.ChapelGeist;
+import com.github.laxika.magicalvibes.cards.d.DarkthicketWolf;
+import com.github.laxika.magicalvibes.cards.s.SomberwaldSpider;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,19 +15,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({OrchardSpirit.class, ChapelGeist.class, DarkthicketWolf.class, SomberwaldSpider.class})
 class OrchardSpiritTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Orchard Spirit cannot be blocked by a creature without flying or reach")
     void cannotBeBlockedByNormalCreature() {
-        Permanent spirit = attackingSpirit();
-        gd.playerBattlefields.get(player1.getId()).add(spirit);
+        attackingSpirit();
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        addCreatureReady(player2, new DarkthicketWolf());
 
         prepareDeclareBlockers();
 
@@ -38,12 +35,9 @@ class OrchardSpiritTest extends BaseCardTest {
     @Test
     @DisplayName("Orchard Spirit can be blocked by a creature with flying")
     void canBeBlockedByFlyingCreature() {
-        Permanent spirit = attackingSpirit();
-        gd.playerBattlefields.get(player1.getId()).add(spirit);
+        attackingSpirit();
 
-        Permanent flyer = new Permanent(new AvenFisher());
-        flyer.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(flyer);
+        Permanent flyer = addCreatureReady(player2, new ChapelGeist());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -54,12 +48,9 @@ class OrchardSpiritTest extends BaseCardTest {
     @Test
     @DisplayName("Orchard Spirit can be blocked by a creature with reach")
     void canBeBlockedByReachCreature() {
-        Permanent spirit = attackingSpirit();
-        gd.playerBattlefields.get(player1.getId()).add(spirit);
+        attackingSpirit();
 
-        Permanent spider = new Permanent(new GiantSpider());
-        spider.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(spider);
+        Permanent spider = addCreatureReady(player2, new SomberwaldSpider());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -67,10 +58,21 @@ class OrchardSpiritTest extends BaseCardTest {
         assertThat(spider.isBlocking()).isTrue();
     }
 
-    private Permanent attackingSpirit() {
-        Permanent spirit = new Permanent(new OrchardSpirit());
-        spirit.setSummoningSick(false);
+    @Test
+    @DisplayName("Orchard Spirit can block a creature without flying or reach")
+    void canBlockNormalCreature() {
+        Permanent wolf = addCreatureReady(player1, new DarkthicketWolf());
+        wolf.setAttacking(true);
+        Permanent spirit = addCreatureReady(player2, new OrchardSpirit());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(spirit.isBlocking()).isTrue();
+    }
+
+    private void attackingSpirit() {
+        Permanent spirit = addCreatureReady(player1, new OrchardSpirit());
         spirit.setAttacking(true);
-        return spirit;
     }
 }
