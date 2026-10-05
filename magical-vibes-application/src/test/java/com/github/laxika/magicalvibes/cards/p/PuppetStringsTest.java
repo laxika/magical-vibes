@@ -82,8 +82,7 @@ class PuppetStringsTest extends BaseCardTest {
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetLand() {
         addStrings(player1);
-        Permanent land = new Permanent(new Forest());
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(land);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         addStringsMana(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
@@ -112,9 +111,71 @@ class PuppetStringsTest extends BaseCardTest {
     }
 
     private Permanent addStrings(Player player) {
-        Permanent perm = new Permanent(new PuppetStrings());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new PuppetStrings());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
+    }
+
+    @Test
+    @DisplayName("Uses the target's tapped state at resolution")
+    void usesTappedStateAtResolution() {
+        addStrings(player1);
+        Permanent target = addCreatureReady(player2, new TrainedArmodon());
+        addStringsMana(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        target.tap();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can leave a tapped creature unchanged by declining")
+    void decliningLeavesTappedCreatureUnchanged() {
+        addStrings(player1);
+        Permanent target = addCreatureReady(player1, new TrainedArmodon());
+        target.tap();
+        addStringsMana(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability still resolves after Puppet Strings leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent strings = addStrings(player1);
+        Permanent target = addCreatureReady(player2, new TrainedArmodon());
+        addStringsMana(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(strings);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A newly entered noncreature Puppet Strings can activate immediately")
+    void newlyEnteredArtifactCanActivate() {
+        Permanent strings = harness.addToBattlefieldAndReturn(player1, new PuppetStrings());
+        strings.setSummoningSick(true);
+        Permanent target = addCreatureReady(player1, new TrainedArmodon());
+        addStringsMana(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(strings.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
     }
 }
