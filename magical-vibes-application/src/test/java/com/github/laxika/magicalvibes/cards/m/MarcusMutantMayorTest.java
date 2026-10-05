@@ -52,4 +52,96 @@ class MarcusMutantMayorTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
+
+    @Test
+    void marcusGetsCounterFromHisOwnCombatDamage() {
+        harness.setHand(player1, List.of());
+        Card topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+        Permanent attacker = addCreatureReady(player1, new MarcusMutantMayor());
+        attacker.setAttacking(true);
+
+        harness.resolveCombatDamage();
+        harness.passBothPriorities();
+
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    void counterAddedBeforeResolutionCausesDrawInsteadOfAnotherCounter() {
+        harness.setHand(player1, List.of());
+        Card topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+        Permanent attacker = addCreatureReady(player1, new MarcusMutantMayor());
+        attacker.setAttacking(true);
+
+        harness.resolveCombatDamage();
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void lastCounterRemovedBeforeResolutionCausesCounterInsteadOfDraw() {
+        harness.setHand(player1, List.of());
+        Card topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+        Permanent attacker = addCreatureReady(player1, new MarcusMutantMayor());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        attacker.setAttacking(true);
+
+        harness.resolveCombatDamage();
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void opposingCreatureDoesNotTriggerMarcus() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        Card topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+        addCreatureReady(player1, new MarcusMutantMayor());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player2);
+
+        harness.resolveCombatDamage();
+        harness.passBothPriorities();
+
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    void eachDamagingCreatureChecksItsOwnCounters() {
+        harness.setHand(player1, List.of());
+        Card topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+        Permanent marcus = addCreatureReady(player1, new MarcusMutantMayor());
+        marcus.setAttacking(true);
+        Permanent otherAttacker = addCreatureReady(player1, new GrizzlyBears());
+        otherAttacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        otherAttacker.setAttacking(true);
+
+        harness.resolveCombatDamage();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(marcus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(otherAttacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
 }
