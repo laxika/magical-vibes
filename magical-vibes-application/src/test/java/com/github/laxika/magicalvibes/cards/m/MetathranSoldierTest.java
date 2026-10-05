@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -19,11 +18,8 @@ class MetathranSoldierTest extends BaseCardTest {
     @DisplayName("Metathran Soldier can't be blocked")
     void cannotBeBlocked() {
         addCreatureReady(player2, new MetathranSoldier());
-        Permanent attacker = addCreatureReady(player1, new MetathranSoldier());
-
-        attacker.setAttacking(true);
-        attacker.setAttackTarget(player2.getId());
-        prepareDeclareBlockers();
+        addCreatureReady(player1, new MetathranSoldier());
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
