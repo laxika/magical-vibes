@@ -79,7 +79,7 @@ class PeterParkersCameraTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an opponent's ability")
     void cannotTargetOpponentAbility() {
-        harness.addToBattlefield(player1, new PeterParkersCamera());
+        addCameraWithFilmCounters();
         addReadyPyromancer(player2);
         harness.forceActivePlayer(player2);
         harness.activateAbility(player2, 0, null, player1.getId());
@@ -91,13 +91,104 @@ class PeterParkersCameraTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void entersWithThreeFilmCountersWithoutATrigger() {
+        harness.castFromHand(player1, new PeterParkersCamera(), "{1}");
+        harness.passBothPriorities();
+
+        var camera = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(camera.getCounterCount(CounterType.FILM)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void paysTapAndFilmCostsImmediatelyAndKeepsOriginalTarget() {
+        var camera = harness.enterBattlefieldAndReturn(player1, new PeterParkersCamera());
+        addReadyPyromancer(player1);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 1, null, player2.getId());
+        UUID abilityId = gd.stack.getLast().getTargetableId();
+
+        harness.activateAbility(player1, 0, null, abilityId);
+
+        assertThat(camera.isTapped()).isTrue();
+        assertThat(camera.getCounterCount(CounterType.FILM)).isEqualTo(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(camera.getCounterCount(CounterType.FILM)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWithoutFilmCounters() {
+        var camera = harness.enterBattlefieldAndReturn(player1, new PeterParkersCamera());
+        camera.setCounterCount(CounterType.FILM, 0);
+        addReadyPyromancer(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 1, null, player2.getId());
+        UUID abilityId = gd.stack.getLast().getTargetableId();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, abilityId))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(camera.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        var camera = harness.enterBattlefieldAndReturn(player1, new PeterParkersCamera());
+        camera.setTapped(true);
+        addReadyPyromancer(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 1, null, player2.getId());
+        UUID abilityId = gd.stack.getLast().getTargetableId();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, abilityId))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(camera.getCounterCount(CounterType.FILM)).isEqualTo(3);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void cannotActivateWithoutTwoMana() {
+        var camera = harness.enterBattlefieldAndReturn(player1, new PeterParkersCamera());
+        addReadyPyromancer(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 1, null, player2.getId());
+        UUID abilityId = gd.stack.getLast().getTargetableId();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, abilityId))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(camera.isTapped()).isFalse();
+        assertThat(camera.getCounterCount(CounterType.FILM)).isEqualTo(3);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void cannotTargetASpell() {
+        var camera = harness.enterBattlefieldAndReturn(player1, new PeterParkersCamera());
+        harness.castFromHand(player1, new PeterParkersCamera(), "{1}");
+        UUID spellId = gd.stack.getLast().getTargetableId();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, spellId))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(camera.isTapped()).isFalse();
+        assertThat(camera.getCounterCount(CounterType.FILM)).isEqualTo(3);
+        assertThat(gd.stack).hasSize(1);
+    }
+
     private void addReadyPyromancer(Player player) {
         var permanent = harness.addToBattlefieldAndReturn(player, new ProdigalPyromancer());
         permanent.setSummoningSick(false);
     }
 
     private void addCameraWithFilmCounters() {
-        var camera = harness.addToBattlefieldAndReturn(player1, new PeterParkersCamera());
-        camera.setCounterCount(CounterType.FILM, 3);
+        harness.enterBattlefieldAndReturn(player1, new PeterParkersCamera());
     }
 }
