@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CourierBat;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OliviasAttendants.class, GrizzlyBears.class})
+@CardUsed({OliviasAttendants.class, CourierBat.class})
 class OliviasAttendantsTest extends BaseCardTest {
 
     @Test
@@ -42,7 +42,7 @@ class OliviasAttendantsTest extends BaseCardTest {
     @DisplayName("The activated ability deals damage to a creature and creates a Blood token")
     void activatedAbilityDamagesCreatureAndCreatesBlood() {
         addReadyAttendants(6);
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CourierBat());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -54,13 +54,96 @@ class OliviasAttendantsTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Blood")).hasSize(1);
     }
 
+    @Test
+    @DisplayName("The ability can damage a player while its source is tapped and summoning sick")
+    void activatedAbilityDamagesPlayerWhileTappedAndSummoningSick() {
+        Permanent attendants = harness.addToBattlefieldAndReturn(player1, new OliviasAttendants());
+        attendants.setSummoningSick(true);
+        attendants.setTapped(true);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(findPermanents(player1, "Blood")).hasSize(1);
+        assertThat(findPermanents(player2, "Blood")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Lethal self-damage still creates Blood after the source dies")
+    void lethalSelfDamageStillCreatesBlood() {
+        Permanent attendants = addReadyAttendants(6);
+        attendants.setMarkedDamage(5);
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, null, attendants.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Olivia's Attendants");
+        harness.assertNotOnBattlefield(player1, "Olivia's Attendants");
+        assertThat(findPermanents(player1, "Blood")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An ability with a target that left the battlefield creates no Blood")
+    void missingTargetCreatesNoBlood() {
+        addReadyAttendants(6);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CourierBat());
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Blood")).isEmpty();
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Damage from an ability whose source already left creates no Blood")
+    void sourceLeavingBeforeResolutionCreatesNoBlood() {
+        Permanent attendants = addReadyAttendants(6);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(attendants);
+        gd.playerGraveyards.get(player1.getId()).add(attendants.getCard());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(findPermanents(player1, "Blood")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Zero combat damage creates no Blood")
+    void zeroCombatDamageCreatesNoBlood() {
+        Permanent attendants = addReadyAttendants(0);
+        attendants.setAttacking(true);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        assertThat(findPermanents(player1, "Blood")).isEmpty();
+    }
+
     private Permanent addReadyAttendants(int power) {
         OliviasAttendants card = new OliviasAttendants();
         card.setPower(power);
         card.setToughness(6);
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
         return permanent;
     }
 }
