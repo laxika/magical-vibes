@@ -148,4 +148,42 @@ class NantukoShadeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
+
+    @Test
+    @DisplayName("A tapped Nantuko Shade can activate its ability")
+    void canActivateWhileTapped() {
+        Permanent shade = harness.addToBattlefieldAndReturn(player1, new NantukoShade());
+        shade.tap();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(shade.isTapped()).isTrue();
+        assertThat(shade.getEffectivePower()).isEqualTo(3);
+        assertThat(shade.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The ability boosts only the activating Shade, after it resolves")
+    void boostsOnlyItsSourceAfterResolution() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new NantukoShade());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new NantukoShade());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new NantukoShade());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(source.getEffectivePower()).isEqualTo(2);
+        assertThat(source.getEffectiveToughness()).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(source.getEffectivePower()).isEqualTo(3);
+        assertThat(source.getEffectiveToughness()).isEqualTo(2);
+        assertThat(other.getEffectivePower()).isEqualTo(2);
+        assertThat(other.getEffectiveToughness()).isEqualTo(1);
+        assertThat(opposing.getEffectivePower()).isEqualTo(2);
+        assertThat(opposing.getEffectiveToughness()).isEqualTo(1);
+    }
 }
