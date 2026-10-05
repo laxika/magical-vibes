@@ -57,10 +57,60 @@ class LanternLitGraveyardTest extends BaseCardTest {
         assertThat(land.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("An opponent's untap step does not consume the colored mana restriction")
+    void opponentsUntapDoesNotConsumeRestriction() {
+        Permanent land = addLand();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(gd.stack).isEmpty();
+
+        advanceToUpkeep(player2);
+        assertThat(land.isTapped()).isTrue();
+
+        advanceToUpkeep(player1);
+        assertThat(land.isTapped()).isTrue();
+
+        advanceToUpkeep(player1);
+        assertThat(land.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Colored mana does not prevent untapping during a new controller's untap step")
+    void newControllerCanUntapLand() {
+        Permanent land = addLand();
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        gd.playerBattlefields.get(player1.getId()).remove(land);
+        gd.playerBattlefields.get(player2.getId()).add(land);
+
+        advanceToUpkeep(player2);
+
+        assertThat(land.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Two colored mana activations before the next untap step skip only that step")
+    void repeatedColoredManaActivationsDoNotAccumulateSkippedSteps() {
+        Permanent land = addLand();
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        land.setTapped(false);
+        harness.activateAbility(player1, 0, 2, null, null);
+
+        assertThat(mana(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(mana(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+
+        advanceToUpkeep(player1);
+        assertThat(land.isTapped()).isTrue();
+
+        advanceToUpkeep(player1);
+        assertThat(land.isTapped()).isFalse();
+    }
+
     private Permanent addLand() {
-        Permanent land = harness.addToBattlefieldAndReturn(player1, new LanternLitGraveyard());
-        land.setSummoningSick(false);
-        return land;
+        return harness.addToBattlefieldAndReturn(player1, new LanternLitGraveyard());
     }
 
     private int mana(ManaColor color) {
