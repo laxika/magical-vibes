@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -124,9 +123,9 @@ class NaturalBalanceTest extends BaseCardTest {
         assertThat(search.params().playerId()).isEqualTo(player1.getId());
         assertThat(search.params().remainingCount()).isEqualTo(3);
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(landCount(player1)).isEqualTo(5);
@@ -143,7 +142,7 @@ class NaturalBalanceTest extends BaseCardTest {
         castNaturalBalance();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(landCount(player1)).isEqualTo(3);
@@ -160,7 +159,7 @@ class NaturalBalanceTest extends BaseCardTest {
         castNaturalBalance();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
         resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
@@ -168,18 +167,21 @@ class NaturalBalanceTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Searching without a basic land still triggers an opponent's search ability")
-    void searchWithoutBasicLandTriggersSearchAbility() {
+    @DisplayName("A player can decline searching even when their library has no basic lands")
+    void searchWithoutBasicLandMayBeDeclined() {
         harness.addToBattlefield(player2, new ObNixilisUnshackled());
         harness.addToBattlefield(player1, new FeralShadow());
         addForests(player2, 5);
         harness.setLibrary(player1, List.of(new FeralShadow()));
 
         castNaturalBalance();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, -1);
         resolveAllTriggers();
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(10);
-        assertThat(countPermanents(player1, "Feral Shadow")).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(countPermanents(player1, "Feral Shadow")).isEqualTo(1);
     }
 
     @Test
@@ -208,7 +210,7 @@ class NaturalBalanceTest extends BaseCardTest {
         assertThat(search.params().remainingCount()).isEqualTo(4);
 
         for (int i = 0; i < 4; i++) {
-            harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
+            harness.handleCardChosen(player2, 0);
         }
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -279,4 +281,66 @@ class NaturalBalanceTest extends BaseCardTest {
         assertThat(landCount(player1)).isEqualTo(5);
         assertThat(countPermanents(player1, "Feral Shadow")).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("A player may take fewer lands than allowed, and the lands enter untapped")
+    void mayStopAfterTakingOneUntappedLand() {
+        addForests(player1, 2);
+        addForests(player2, 5);
+        setForestLibrary(player1, 4);
+
+        castNaturalBalance();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(landCount(player1)).isEqualTo(3);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerBattlefields.get(player1.getId())).allMatch(p -> !p.isTapped());
+    }
+
+    @Test
+    @DisplayName("Both players with four lands can search for one basic land each")
+    void bothPlayersMaySearch() {
+        addForests(player1, 4);
+        addForests(player2, 4);
+        setForestLibrary(player1, 2);
+        setForestLibrary(player2, 2);
+
+        castNaturalBalance();
+        harness.handleCardChosen(player1, 0);
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().playerId()).isEqualTo(player2.getId());
+        assertThat(search.params().remainingCount()).isEqualTo(1);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(landCount(player1)).isEqualTo(5);
+        assertThat(landCount(player2)).isEqualTo(5);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+    }
+
+
+    @Test
+    @DisplayName("A player with an empty library can decline the optional search")
+    void emptyLibrarySearchMayBeDeclined() {
+        harness.addToBattlefield(player2, new ObNixilisUnshackled());
+        harness.addToBattlefield(player1, new FeralShadow());
+        addForests(player2, 5);
+        harness.setLibrary(player1, List.of());
+
+        castNaturalBalance();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, -1);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(countPermanents(player1, "Feral Shadow")).isEqualTo(1);
+    }
+
 }
