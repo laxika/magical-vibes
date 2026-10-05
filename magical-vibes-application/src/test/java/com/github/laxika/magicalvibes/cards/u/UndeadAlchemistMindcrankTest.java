@@ -3,11 +3,18 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mindcrank;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -20,31 +27,26 @@ import static org.assertj.core.api.Assertions.assertThatCode;
  * 3. Mindcrank triggers on the life loss, milling more cards
  * 4. Milled creature cards trigger Undead Alchemist again, creating tokens
  */
+@CardUsed({UndeadAlchemist.class, Mindcrank.class, GrizzlyBears.class, Shock.class})
 class UndeadAlchemistMindcrankTest extends BaseCardTest {
 
     @Test
     @DisplayName("Undead Alchemist + Mindcrank + non-Zombie attacker: full combat chain completes without error")
     void fullCombatChainDoesNotThrow() {
         // Player 1 has: Undead Alchemist (4/2 Zombie) + Mindcrank + GrizzlyBears (2/2 non-Zombie)
-        Permanent alchemist = new Permanent(new UndeadAlchemist());
-        alchemist.setSummoningSick(false);
+        Permanent alchemist = addCreatureReady(player1, new UndeadAlchemist());
         alchemist.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(alchemist);
 
         harness.addToBattlefield(player1, new Mindcrank());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
 
         harness.setLife(player2, 20);
 
         // Set up player2's deck with creature cards to trigger Undead Alchemist
-        gd.playerDecks.get(player2.getId()).clear();
-        for (int i = 0; i < 20; i++) {
-            gd.playerDecks.get(player2.getId()).add(new GrizzlyBears());
-        }
+        harness.setLibrary(player2, IntStream.range(0, 20)
+                .mapToObj(i -> new GrizzlyBears()).toList());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -73,29 +75,26 @@ class UndeadAlchemistMindcrankTest extends BaseCardTest {
     @DisplayName("Undead Alchemist + Mindcrank with many creature cards in deck")
     void manyCreatureCardsInDeck() {
         // Same setup but with a large deck of creatures to stress the recursive milling
-        Permanent alchemist = new Permanent(new UndeadAlchemist());
-        alchemist.setSummoningSick(false);
+        Permanent alchemist = addCreatureReady(player1, new UndeadAlchemist());
         alchemist.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(alchemist);
 
         harness.addToBattlefield(player1, new Mindcrank());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
 
         harness.setLife(player2, 20);
 
         // Larger deck with mix of creature and non-creature cards
-        gd.playerDecks.get(player2.getId()).clear();
+        List<Card> library = new ArrayList<>();
         for (int i = 0; i < 30; i++) {
             if (i % 3 == 0) {
-                gd.playerDecks.get(player2.getId()).add(new Shock());
+                library.add(new Shock());
             } else {
-                gd.playerDecks.get(player2.getId()).add(new GrizzlyBears());
+                library.add(new GrizzlyBears());
             }
         }
+        harness.setLibrary(player2, library);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -108,25 +107,19 @@ class UndeadAlchemistMindcrankTest extends BaseCardTest {
     @Test
     @DisplayName("Undead Alchemist + Mindcrank: deck runs out during mill chain")
     void deckRunsOutDuringMillChain() {
-        Permanent alchemist = new Permanent(new UndeadAlchemist());
-        alchemist.setSummoningSick(false);
+        Permanent alchemist = addCreatureReady(player1, new UndeadAlchemist());
         alchemist.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(alchemist);
 
         harness.addToBattlefield(player1, new Mindcrank());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
 
         harness.setLife(player2, 20);
 
         // Small deck that will run out during milling
-        gd.playerDecks.get(player2.getId()).clear();
-        for (int i = 0; i < 5; i++) {
-            gd.playerDecks.get(player2.getId()).add(new GrizzlyBears());
-        }
+        harness.setLibrary(player2, IntStream.range(0, 5)
+                .mapToObj(i -> new GrizzlyBears()).toList());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
