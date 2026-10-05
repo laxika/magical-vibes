@@ -84,6 +84,55 @@ class IxidorsWillTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Elvish Warrior");
     }
 
+    @Test
+    void controllerCanDeclineZeroManaPaymentAndHaveSpellCountered() {
+        castTargetSpell(2);
+
+        harness.passBothPriorities();
+        assertThat(harness.getGameData().interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Elvish Warrior");
+        harness.assertNotOnBattlefield(player1, "Elvish Warrior");
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    void controllerCanPayExactlyTwoManaForOpponentsWizard() {
+        harness.addToBattlefield(player2, new InformationDealer());
+        castTargetSpell(4);
+
+        harness.passBothPriorities();
+        assertThat(harness.getGameData().interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(harness.getGameData().playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Elvish Warrior");
+        harness.assertNotInGraveyard(player1, "Elvish Warrior");
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    void wizardsInHandAndGraveyardDoNotIncreaseTax() {
+        castTargetSpell(2);
+        harness.setHand(player1, List.of(new InformationDealer()));
+        harness.setGraveyard(player2, List.of(new InformationDealer()));
+        harness.addToBattlefield(player2, new ElvishWarrior());
+
+        harness.passBothPriorities();
+        assertThat(harness.getGameData().interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Elvish Warrior");
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
     private void castTargetSpell(int mana) {
         ElvishWarrior warrior = new ElvishWarrior();
         harness.setHand(player1, List.of(warrior));
