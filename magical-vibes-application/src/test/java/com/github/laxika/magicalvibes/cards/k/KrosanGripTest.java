@@ -69,7 +69,7 @@ class KrosanGripTest extends BaseCardTest {
         addMana();
         harness.setHand(player2, List.of(new ThinkTwice()));
         harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 5);
 
         harness.castInstant(player1, 0, target.getId());
 
@@ -108,6 +108,55 @@ class KrosanGripTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Krosan Grip");
+    }
+
+    @Test
+    @DisplayName("Split second stops restricting spells after Krosan Grip resolves")
+    void spellsCanBeCastAfterResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CandlesOfLeng());
+        harness.setHand(player1, List.of(new KrosanGrip()));
+        addMana();
+        harness.setHand(player2, List.of(new ThinkTwice()));
+        harness.setLibrary(player2, List.of(new AshcoatBear()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player2, 0);
+
+        harness.assertInHand(player2, "Ashcoat Bear");
+        harness.assertInGraveyard(player2, "Think Twice");
+    }
+
+    @Test
+    @DisplayName("Can destroy an artifact controlled by its caster")
+    void destroysOwnArtifact() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new PrismaticLens());
+        harness.setHand(player1, List.of(new KrosanGrip()));
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Prismatic Lens");
+        harness.assertInGraveyard(player1, "Prismatic Lens");
+    }
+
+    @Test
+    @DisplayName("Split second does not counter an ability already on the stack")
+    void previouslyActivatedAbilityStillResolves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CandlesOfLeng());
+        harness.setLibrary(player2, List.of(new AshcoatBear()));
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        harness.setHand(player1, List.of(new KrosanGrip()));
+        addMana();
+
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertInGraveyard(player2, "Candles of Leng");
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Ashcoat Bear");
     }
 
     private void addMana() {
