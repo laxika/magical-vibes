@@ -26,9 +26,7 @@ class MwonvuliAcidMossTest extends BaseCardTest {
         Permanent targetLand = harness.addToBattlefieldAndReturn(player2, new Island());
         Forest forest = new Forest();
         harness.setLibrary(player1, List.of(forest, new Island(), new AshcoatBear()));
-        castSpell(targetLand);
-
-        harness.passBothPriorities();
+        castAndResolveSpell(targetLand);
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(targetLand.getId()));
@@ -52,9 +50,7 @@ class MwonvuliAcidMossTest extends BaseCardTest {
     void canFailToFindForest() {
         Permanent targetLand = harness.addToBattlefieldAndReturn(player2, new Island());
         harness.setLibrary(player1, List.of(new Island(), new AshcoatBear()));
-        castSpell(targetLand);
-
-        harness.passBothPriorities();
+        castAndResolveSpell(targetLand);
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(targetLand.getId()));
@@ -74,10 +70,82 @@ class MwonvuliAcidMossTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void castSpell(Permanent targetLand) {
+    @Test
+    @DisplayName("Can fail to find even when a Forest is available")
+    void canDeclineAvailableForest() {
+        Permanent targetLand = harness.addToBattlefieldAndReturn(player2, new Island());
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(forest, new Island()));
+        castAndResolveSpell(targetLand);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertInGraveyard(player2, "Island");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).contains(forest).hasSize(2);
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Can destroy your own land and search your own library")
+    void canTargetOwnLand() {
+        Permanent targetLand = harness.addToBattlefieldAndReturn(player1, new Island());
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+        castAndResolveSpell(targetLand);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Island");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .singleElement().satisfies(permanent -> {
+                    assertThat(permanent.getCard()).isSameAs(forest);
+                    assertThat(permanent.isTapped()).isTrue();
+                });
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Still destroys the land and shuffles an empty library")
+    void resolvesWithEmptyLibrary() {
+        Permanent targetLand = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.setLibrary(player1, List.of());
+        castAndResolveSpell(targetLand);
+
+        harness.assertInGraveyard(player2, "Island");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Does not search or shuffle when the only target leaves before resolution")
+    void doesNotSearchWhenTargetIsGone() {
+        Permanent targetLand = harness.addToBattlefieldAndReturn(player2, new Island());
+        Forest forest = new Forest();
+        Island island = new Island();
+        harness.setLibrary(player1, List.of(forest, island));
         harness.setHand(player1, List.of(new MwonvuliAcidMoss()));
         addMana();
         harness.castSorcery(player1, 0, targetLand.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(targetLand);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest, island);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gameLogContains("Library is shuffled.")).isFalse();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Mwonvuli Acid-Moss");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void castAndResolveSpell(Permanent targetLand) {
+        harness.setHand(player1, List.of(new MwonvuliAcidMoss()));
+        addMana();
+        harness.castAndResolveSorcery(player1, 0, targetLand.getId());
     }
 
     private void addMana() {
