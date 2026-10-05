@@ -94,4 +94,38 @@ class IreOfKaminariTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
+
+    @Test
+    @DisplayName("Counts an Arcane spell that resolves in response")
+    void countsArcaneSpellThatResolvesInResponse() {
+        harness.addToBattlefield(player2, new BileUrchin());
+        harness.setHand(player1, List.of(new IreOfKaminari(), new FirstVolley()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Bile Urchin"));
+
+        harness.assertInGraveyard(player1, "First Volley");
+        harness.assertNotOnBattlefield(player2, "Bile Urchin");
+        harness.assertLife(player2, 19);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player1, "Ire of Kaminari");
+    }
+
+    @Test
+    @DisplayName("Counts another Ire of Kaminari already in the graveyard")
+    void countsAnotherIreInGraveyard() {
+        harness.setGraveyard(player1, List.of(new IreOfKaminari()));
+        harness.setHand(player1, List.of(new IreOfKaminari()));
+        giveCastingMana();
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
 }
