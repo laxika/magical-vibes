@@ -86,10 +86,73 @@ class PhabineBosssConfidantTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).contains(opponentNonland);
     }
 
+    @Test
+    @DisplayName("Two revealed lands create two unboosted Citizens and grant haste only while Phabine remains")
+    void allLandsCreateTwoCitizensWithContinuousHaste() {
+        Permanent phabine = addCreatureReady(player1, new PhabineBosssConfidant());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        advanceToBeginningOfCombat(player1);
+        harness.passBothPriorities();
+
+        List<Permanent> citizens = findPermanents(player1, "Citizen");
+        assertThat(citizens).hasSize(2);
+        assertThat(findPermanents(player2, "Citizen")).isEmpty();
+        for (Permanent citizen : citizens) {
+            assertThat(gqs.getEffectivePower(gd, citizen)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, citizen)).isEqualTo(1);
+            assertThat(gqs.hasKeyword(gd, citizen, Keyword.HASTE)).isTrue();
+        }
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, phabine, Keyword.HASTE)).isFalse();
+
+        gd.playerBattlefields.get(player1.getId()).remove(phabine);
+        for (Permanent citizen : citizens) {
+            assertThat(gqs.hasKeyword(gd, citizen, Keyword.HASTE)).isFalse();
+        }
+    }
+
+    @Test
+    @DisplayName("Parley does not trigger during an opponent's combat")
+    void opponentCombatDoesNotTriggerParley() {
+        addCreatureReady(player1, new PhabineBosssConfidant());
+        Card ownLand = new Forest();
+        Card opponentLand = new Forest();
+        harness.setLibrary(player1, List.of(ownLand));
+        harness.setLibrary(player2, List.of(opponentLand));
+
+        advanceToBeginningOfCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Citizen")).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownLand);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentLand);
+    }
+
+    @Test
+    @DisplayName("Creatures entering after Parley resolves do not receive its temporary boost")
+    void laterCreaturesDoNotReceiveParleyBoost() {
+        addCreatureReady(player1, new PhabineBosssConfidant());
+        Permanent opponentBears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        advanceToBeginningOfCombat(player1);
+        harness.passBothPriorities();
+
+        Permanent laterBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(gqs.getEffectivePower(gd, laterBears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterBears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentBears)).isEqualTo(2);
+    }
+
     private void advanceToBeginningOfCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 }
