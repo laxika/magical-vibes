@@ -59,6 +59,65 @@ class LeosGuidanceTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Can resolve with no targets without affecting other creatures")
+    void canResolveWithNoTargets() {
+        Permanent creature = addTappedCreature(player1);
+
+        cast(List.of());
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Leo's Guidance");
+    }
+
+    @Test
+    @DisplayName("Puts a counter on an already untapped creature")
+    void putsCounterOnUntappedCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        cast(List.of(creature.getId()));
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot target more than three creatures")
+    void cannotTargetFourCreatures() {
+        Permanent first = addTappedCreature(player1);
+        Permanent second = addTappedCreature(player1);
+        Permanent third = addTappedCreature(player2);
+        Permanent fourth = addTappedCreature(player2);
+        harness.setHand(player1, List.of(new LeosGuidance()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                List.of(first.getId(), second.getId(), third.getId(), fourth.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Resolves for the remaining creature when another target leaves the battlefield")
+    void resolvesForRemainingLegalTarget() {
+        Permanent departed = addTappedCreature(player1);
+        Permanent remaining = addTappedCreature(player2);
+        harness.setHand(player1, List.of(new LeosGuidance()));
+        addMana();
+        harness.castInstant(player1, 0, List.of(departed.getId(), remaining.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(departed);
+        gd.playerGraveyards.get(player1.getId()).add(departed.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(remaining.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(remaining.isTapped()).isFalse();
+        assertThat(departed.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(departed.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Leo's Guidance");
+    }
+
     private Permanent addTappedCreature(com.github.laxika.magicalvibes.model.Player player) {
         Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
         creature.tap();
@@ -68,8 +127,7 @@ class LeosGuidanceTest extends BaseCardTest {
     private void cast(List<UUID> targetIds) {
         harness.setHand(player1, List.of(new LeosGuidance()));
         addMana();
-        harness.castInstant(player1, 0, targetIds);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetIds);
     }
 
     private void addMana() {
