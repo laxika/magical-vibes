@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.b.BoggartRamGang;
+import com.github.laxika.magicalvibes.cards.b.BarrentonMedic;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.SafeholdSentry;
 import com.github.laxika.magicalvibes.cards.t.Tatterkite;
@@ -18,8 +19,40 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({PunctureBolt.class, BoggartRamGang.class, SafeholdSentry.class, Mountain.class,
-        Tatterkite.class})
+        Tatterkite.class, BarrentonMedic.class})
 class PunctureBoltTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Still puts a counter on the creature when all damage is prevented")
+    void putsCounterWhenDamageIsPrevented() {
+        addCreatureReady(player1, new BarrentonMedic());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SafeholdSentry());
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new PunctureBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Safehold Sentry");
+    }
+
+    @Test
+    @DisplayName("Places the counter before a creature with lethal damage dies")
+    void placesCounterBeforeLethalDamageIsChecked() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SafeholdSentry());
+        target.setMarkedDamage(1);
+        harness.setHand(player1, List.of(new PunctureBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        harness.assertNotOnBattlefield(player2, "Safehold Sentry");
+        harness.assertInGraveyard(player2, "Safehold Sentry");
+    }
 
     @Test
     @DisplayName("Deals 1 damage and puts a -1/-1 counter on the target creature")
