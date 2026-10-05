@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.z.Zombify;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({IvyElemental.class})
+@CardUsed({IvyElemental.class, Zombify.class})
 class IvyElementalTest extends BaseCardTest {
 
     @Test
@@ -40,5 +41,20 @@ class IvyElementalTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Ivy Elemental");
         harness.assertInGraveyard(player1, "Ivy Elemental");
+    }
+
+    @Test
+    @DisplayName("Reanimation enters with no counters and Ivy Elemental dies")
+    void reanimationEntersWithZeroCountersAndDies() {
+        IvyElemental ivyElemental = new IvyElemental();
+        harness.setGraveyard(player1, List.of(ivyElemental));
+        harness.setHand(player1, List.of(new Zombify()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveSorcery(player1, 0, ivyElemental.getId());
+
+        harness.assertNotOnBattlefield(player1, "Ivy Elemental");
+        harness.assertInGraveyard(player1, "Ivy Elemental");
+        assertThat(gd.stack).isEmpty();
     }
 }
