@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PiaAndKiranNalaar.class, Spellbook.class, LlanowarElves.class})
 class PiaAndKiranNalaarTest extends BaseCardTest {
 
     @Test
@@ -105,5 +107,45 @@ class PiaAndKiranNalaarTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("No permanent to sacrifice matching: an artifact");
+    }
+
+    @Test
+    @DisplayName("A generated Thopter can pay the sacrifice cost before damage resolves")
+    void sacrificesGeneratedThopter() {
+        harness.setHand(player1, List.of(new PiaAndKiranNalaar()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        UUID thopterId = findPermanent(player1, "Thopter").getId();
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.handlePermanentChosen(player1, thopterId);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getId().equals(thopterId));
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken())).hasSize(1);
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("An opponent's artifact cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsArtifact() {
+        harness.addToBattlefield(player1, new PiaAndKiranNalaar());
+        harness.addToBattlefield(player2, new Spellbook());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No permanent to sacrifice matching: an artifact");
+        harness.assertOnBattlefield(player2, "Spellbook");
     }
 }
