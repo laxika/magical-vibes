@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(Index.class)
+@CardUsed({Index.class})
 class IndexTest extends BaseCardTest {
 
     @Test
@@ -79,13 +79,17 @@ class IndexTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Index resolves a single available card without a reorder prompt")
-    void resolvesSingleAvailableCardWithoutReorderPrompt() {
+    @DisplayName("Index lets its controller look at and return the single available card")
+    void looksAtAndReturnsSingleAvailableCard() {
         Card onlyCard = new Index();
         harness.setLibrary(player1, List.of(onlyCard));
 
         harness.castFromHand(player1, new Index(), "{U}");
         harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards())
+                .containsExactly(onlyCard);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0)));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
@@ -103,6 +107,37 @@ class IndexTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Index");
+    }
+
+    @Test
+    @DisplayName("Index preserves cards below the top five and the opponent's library")
+    void preservesRemainingCardsAndOpponentsLibrary() {
+        Card first = new Index();
+        Card second = new Index();
+        Card third = new Index();
+        Card fourth = new Index();
+        Card fifth = new Index();
+        Card sixth = new Index();
+        Card seventh = new Index();
+        Card opponentCard = new Index();
+        harness.setLibrary(player1, List.of(first, second, third, fourth, fifth, sixth, seventh));
+        harness.setLibrary(player2, List.of(opponentCard));
+
+        harness.castFromHand(player1, new Index(), "{U}");
+        harness.passBothPriorities();
+
+        PendingInteraction.LibraryReorder interaction =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(interaction.playerId()).isEqualTo(player1.getId());
+        assertThat(interaction.cards()).containsExactly(first, second, third, fourth, fifth);
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 0, 4, 1, 3)));
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(third, first, fifth, second, fourth, sixth, seventh);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Index");
     }
 }
