@@ -127,4 +127,61 @@ class PlaneswalkersScornTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(originalToughness);
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(revealed);
     }
+
+    @Test
+    void canTargetOwnCreatureAndPutItIntoGraveyardWithZeroToughness() {
+        harness.addToBattlefieldAndReturn(player1, new PlaneswalkersScorn());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ErtaiTheCorrupted());
+        ErtaiTheCorrupted revealed = new ErtaiTheCorrupted();
+        harness.setHand(player2, List.of(revealed));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(player2.getId(), target.getId()));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ertai, the Corrupted");
+        harness.assertInGraveyard(player1, "Ertai, the Corrupted");
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(revealed);
+    }
+
+    @Test
+    void usesOpponentsHandAtResolutionRatherThanActivation() {
+        harness.addToBattlefieldAndReturn(player1, new PlaneswalkersScorn());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ErtaiTheCorrupted());
+        harness.setHand(player2, List.of(new ErtaiTheCorrupted()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        int originalPower = gqs.getEffectivePower(gd, target);
+        int originalToughness = gqs.getEffectiveToughness(gd, target);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(player2.getId(), target.getId()));
+        ForsakenCity revealed = new ForsakenCity();
+        harness.setHand(player2, List.of(revealed));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(originalPower);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(originalToughness);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(revealed);
+        assertThat(gameLogContains("reveals Forsaken City at random.")).isTrue();
+    }
+
+    @Test
+    void stillRevealsWhenCreatureTargetLeavesBattlefield() {
+        harness.addToBattlefieldAndReturn(player1, new PlaneswalkersScorn());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ErtaiTheCorrupted());
+        PlaneswalkersScorn revealed = new PlaneswalkersScorn();
+        harness.setHand(player2, List.of(revealed));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(player2.getId(), target.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gameLogContains("reveals Planeswalker's Scorn at random.")).isTrue();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(revealed);
+        assertThat(gd.stack).isEmpty();
+    }
 }
