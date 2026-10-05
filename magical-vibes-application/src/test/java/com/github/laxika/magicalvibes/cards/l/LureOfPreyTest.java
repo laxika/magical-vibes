@@ -20,6 +20,75 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class LureOfPreyTest extends BaseCardTest {
 
     @Test
+    void canRespondToUnresolvedOpponentCreatureSpell() {
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new MtendaLion(), "{G}");
+        harness.passPriority(player2);
+
+        harness.setHand(player1, List.of(new LureOfPrey(), new MtendaLion()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Mtenda Lion");
+        harness.assertNotOnBattlefield(player2, "Mtenda Lion");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Mtenda Lion");
+    }
+
+    @Test
+    void resolvesWithNoCardsRemainingInHand() {
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new MtendaLion(), "{G}");
+        harness.passBothPriorities();
+
+        harness.castFromHand(player1, new LureOfPrey(), "{2}{G}{G}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Lure of Prey");
+    }
+
+    @Test
+    void greenNoncreatureCardCannotBePutOntoBattlefield() {
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new MtendaLion(), "{G}");
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new LureOfPrey(), new LureOfPrey()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void putsOnlyOneCreatureOntoBattlefield() {
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new MtendaLion(), "{G}");
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new LureOfPrey(), new MtendaLion(), new MtendaLion()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getName).containsExactly("Mtenda Lion");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("After an opponent casts a creature spell, puts a green creature from hand onto the battlefield")
     void putsGreenCreatureAfterOpponentCreatureSpell() {
         harness.forceActivePlayer(player2);
@@ -29,8 +98,7 @@ class LureOfPreyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LureOfPrey(), new MtendaLion()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
 
@@ -73,8 +141,7 @@ class LureOfPreyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LureOfPrey(), new MtendaLion()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId()))
@@ -93,8 +160,7 @@ class LureOfPreyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LureOfPrey(), new BayFalcon()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId()))
@@ -122,10 +188,8 @@ class LureOfPreyTest extends BaseCardTest {
     @DisplayName("A countered opponent creature spell still enables the cast")
     void counteredOpponentCreatureSpellStillEnablesCast() {
         MtendaLion creatureSpell = new MtendaLion();
-        harness.setHand(player2, List.of(creatureSpell));
-        harness.addMana(player2, ManaColor.GREEN, 1);
         harness.forceActivePlayer(player2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, creatureSpell, "{G}");
         harness.passPriority(player2);
 
         harness.setHand(player1, List.of(new Dissipate(), new LureOfPrey(), new MtendaLion()));
@@ -133,16 +197,14 @@ class LureOfPreyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, creatureSpell.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creatureSpell.getId());
 
         harness.assertNotOnBattlefield(player2, "Mtenda Lion");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .extracting(Card::getName)
                 .contains("Mtenda Lion");
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
 
