@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.r.RiverMerfolk;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -27,7 +26,7 @@ class MerseineTest extends BaseCardTest {
         assertThat(aura.getCounterCount(CounterType.NET)).isEqualTo(3);
         creature.tap();
 
-        advanceToNextUpkeep();
+        advanceToUpkeep(player1);
 
         assertThat(creature.isTapped()).isTrue();
     }
@@ -65,12 +64,12 @@ class MerseineTest extends BaseCardTest {
 
         assertThat(aura.getCounterCount(CounterType.NET)).isZero();
         harness.addMana(player1, ManaColor.BLUE, 2);
-        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(aura), 0, null, null))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough counters");
+        harness.activateAbility(player1, indexOf(aura), 0, null, null);
+        harness.passBothPriorities();
+        assertThat(aura.getCounterCount(CounterType.NET)).isZero();
 
         creature.tap();
-        advanceToNextUpkeep();
+        advanceToUpkeep(player1);
 
         assertThat(creature.isTapped()).isFalse();
     }
@@ -95,6 +94,40 @@ class MerseineTest extends BaseCardTest {
         assertThat(aura.getCounterCount(CounterType.NET)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Net counters are removed on resolution, not while paying the activation cost")
+    void removesCounterOnlyOnResolution() {
+        Permanent creature = addCreatureReady(player1, new RiverMerfolk());
+        Permanent aura = castMerseine(creature);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, indexOf(aura), 0, null, null);
+
+        assertThat(aura.getCounterCount(CounterType.NET)).isEqualTo(3);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(aura.getCounterCount(CounterType.NET)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Entering does not tap the creature and the untap lock affects only the enchanted creature")
+    void onlyEnchantedCreatureIsPreventedFromUntapping() {
+        Permanent creature = addCreatureReady(player1, new RiverMerfolk());
+        Permanent other = addCreatureReady(player1, new RiverMerfolk());
+        castMerseine(creature);
+
+        assertThat(creature.isTapped()).isFalse();
+        creature.tap();
+        other.tap();
+
+        advanceToUpkeep(player1);
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(other.isTapped()).isFalse();
+    }
+
     private Permanent castMerseine(Permanent creature) {
         harness.setHand(player1, List.of(new Merseine()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -106,13 +139,6 @@ class MerseineTest extends BaseCardTest {
 
     private int indexOf(Permanent permanent) {
         return gd.playerBattlefields.get(player1.getId()).indexOf(permanent);
-    }
-
-    private void advanceToNextUpkeep() {
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.UPKEEP);
     }
 
 }
