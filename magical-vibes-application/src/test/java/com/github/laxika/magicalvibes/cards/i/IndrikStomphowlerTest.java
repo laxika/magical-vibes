@@ -4,15 +4,12 @@ import com.github.laxika.magicalvibes.cards.a.AzoriusSignet;
 import com.github.laxika.magicalvibes.cards.m.MistralCharger;
 import com.github.laxika.magicalvibes.cards.s.SealOfDoom;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -85,6 +82,48 @@ class IndrikStomphowlerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("The destruction trigger resolves even after Stomphowler dies")
+    void triggerResolvesAfterSourceDies() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new AzoriusSignet());
+        harness.addToBattlefield(player2, new SealOfDoom());
+
+        castIndrikSpell();
+        harness.handlePermanentChosen(player1, artifact.getId());
+
+        harness.activateAbility(player2, 1, null,
+                harness.getPermanentId(player1, "Indrik Stomphowler"));
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Indrik Stomphowler");
+        harness.assertOnBattlefield(player2, "Azorius Signet");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Azorius Signet");
+        harness.assertInGraveyard(player2, "Seal of Doom");
+    }
+
+    @Test
+    @DisplayName("The trigger does not choose a replacement when its target is sacrificed")
+    void sacrificedTargetDoesNotCauseRetargeting() {
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new SealOfDoom());
+        harness.addToBattlefield(player2, new AzoriusSignet());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new MistralCharger());
+
+        castIndrikSpell();
+        harness.handlePermanentChosen(player1, enchantment.getId());
+
+        harness.activateAbility(player2, 0, null, creature.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Seal of Doom");
+        harness.assertInGraveyard(player1, "Mistral Charger");
+        harness.assertOnBattlefield(player2, "Azorius Signet");
+        harness.assertOnBattlefield(player1, "Indrik Stomphowler");
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
     private void castIndrikStomphowler(Permanent target) {
         castIndrikSpell();
 
@@ -93,11 +132,7 @@ class IndrikStomphowlerTest extends BaseCardTest {
     }
 
     private void castIndrikSpell() {
-        harness.setHand(player1, List.of(new IndrikStomphowler()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new IndrikStomphowler(), "{4}{G}");
         harness.passBothPriorities();
     }
 }
