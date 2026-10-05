@@ -70,6 +70,69 @@ class LethalVaporsTest extends BaseCardTest {
         assertThat(gd.skipNextTurnCount.getOrDefault(player2.getId(), 0)).isZero();
     }
 
+    @Test
+    @DisplayName("Destroys creatures entering under its controller's control too")
+    void destroysControllersEnteringCreature() {
+        harness.addToBattlefield(player1, new LethalVapors());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new GoblinBrigand(), "{1}{R}");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Goblin Brigand");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Goblin Brigand");
+        harness.assertNotOnBattlefield(player1, "Goblin Brigand");
+    }
+
+    @Test
+    @DisplayName("Each stacked activation skips a separate turn even after the source is destroyed")
+    void stackedActivationsSkipSuccessiveTurns() {
+        harness.addToBattlefield(player1, new LethalVapors());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Lethal Vapors");
+        harness.passBothPriorities();
+
+        assertThat(gd.skipNextTurnCount.getOrDefault(player2.getId(), 0)).isEqualTo(2);
+        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+        advanceTurn(player1);
+        assertThat(gd.skipNextTurnCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        advanceTurn(player1);
+        assertThat(gd.skipNextTurnCount.getOrDefault(player2.getId(), 0)).isZero();
+        advanceTurn(player2);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Removing Lethal Vapors in response does not stop an already triggered destruction")
+    void enteringCreatureStillDiesAfterVaporsIsDestroyed() {
+        harness.addToBattlefield(player1, new LethalVapors());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new GoblinBrigand(), "{1}{R}");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Goblin Brigand");
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Lethal Vapors");
+        harness.assertOnBattlefield(player1, "Goblin Brigand");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Goblin Brigand");
+        harness.assertNotOnBattlefield(player1, "Goblin Brigand");
+        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextTurnCount.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
     private void advanceTurn(Player expectedActivePlayer) {
         harness.forceStep(TurnStep.CLEANUP);
         harness.clearPriorityPassed();
