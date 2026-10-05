@@ -99,4 +99,48 @@ class InnocenceKamiTest extends BaseCardTest {
     private Permanent addReadyKami(Player player) {
         return addCreatureReady(player, new InnocenceKami());
     }
+
+    @Test
+    @DisplayName("Innocence Kami can target itself")
+    void canTargetItself() {
+        Permanent kami = addReadyKami(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, kami.getId());
+        harness.passBothPriorities();
+
+        assertThat(kami.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents the tap ability")
+    void summoningSicknessPreventsActivation() {
+        Permanent kami = harness.addToBattlefieldAndReturn(player1, new InnocenceKami());
+        kami.setSummoningSick(true);
+        Permanent target = addCreatureReady(player2, new DevotedRetainer());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(kami.isTapped()).isFalse();
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Each controlled Innocence Kami untaps from the same Arcane spell")
+    void arcaneSpellUntapsEachControlledKami() {
+        Permanent first = addReadyKami(player1);
+        Permanent second = addReadyKami(player1);
+        Permanent opposing = addReadyKami(player2);
+        first.tap();
+        second.tap();
+        opposing.tap();
+
+        harness.castFromHand(player1, new DesperateRitual(), "{1}{R}");
+        resolveAllTriggers();
+
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isFalse();
+        assertThat(opposing.isTapped()).isTrue();
+    }
 }
