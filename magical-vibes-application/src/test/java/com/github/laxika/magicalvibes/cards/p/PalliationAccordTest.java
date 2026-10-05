@@ -118,6 +118,83 @@ class PalliationAccordTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Declaring an opponent's creature as an attacker adds a palliation counter")
+    void attackingOpponentCreatureAddsCounter() {
+        Permanent accord = harness.addToBattlefieldAndReturn(player1, new PalliationAccord());
+        addCreatureReady(player2, new AzoriusFirstWing());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player2, List.of(0));
+            resolveAllTriggers();
+        });
+
+        assertThat(accord.getCounterCount(CounterType.PALLIATION)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Multiple activations pay counters immediately and combine their prevention")
+    void multipleActivationsCombinePrevention() {
+        Permanent accord = harness.addToBattlefieldAndReturn(player1, new PalliationAccord());
+        accord.setCounterCount(CounterType.PALLIATION, 2);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(accord.getCounterCount(CounterType.PALLIATION)).isEqualTo(1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(accord.getCounterCount(CounterType.PALLIATION)).isZero();
+        resolveAllTriggers();
+
+        harness.setHand(player2, List.of(new CacklingFlames(), new CacklingFlames()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 19);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("The activated ability still prevents damage if Palliation Accord leaves before resolution")
+    void preventionResolvesAfterSourceLeaves() {
+        Permanent accord = harness.addToBattlefieldAndReturn(player1, new PalliationAccord());
+        accord.setCounterCount(CounterType.PALLIATION, 1);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(accord);
+        gd.playerGraveyards.get(player1.getId()).add(accord.getCard());
+        resolveAllTriggers();
+
+        harness.setHand(player2, List.of(new CacklingFlames(), new CacklingFlames()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
+    }
+    @Test
+    @DisplayName("Unused prevention expires at the end of the turn")
+    void unusedPreventionExpiresAtEndOfTurn() {
+        Permanent accord = harness.addToBattlefieldAndReturn(player1, new PalliationAccord());
+        accord.setCounterCount(CounterType.PALLIATION, 1);
+        harness.setLife(player1, 20);
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        harness.setHand(player2, List.of(new CacklingFlames(), new CacklingFlames()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 17);
+    }
     private void tap(Permanent permanent) {
         permanent.tap();
         harness.inMutationScope(
