@@ -80,6 +80,64 @@ class KingDarienXLVIIITest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, token, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
+    @Test
+    @DisplayName("The Soldier is still created when King Darien is sacrificed before resolution")
+    void createsSoldierAfterSourceIsSacrificed() {
+        Permanent king = addCreatureReady(player1, new KingDarienXLVIII());
+        addKingDarienMana();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(king);
+        harness.assertInGraveyard(player1, "King Darien XLVIII");
+        resolveAllTriggers();
+
+        Permanent soldier = findPermanent(player1, "Soldier");
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(1);
+        assertThat(king.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Protection applies only to your tokens present when the ability resolves")
+    void protectionExcludesOpponentAndLaterTokens() {
+        addCreatureReady(player1, new KingDarienXLVIII());
+        addCreatureReady(player2, new KingDarienXLVIII());
+        addKingDarienMana();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        Permanent protectedToken = findPermanent(player1, "Soldier");
+
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+        Permanent opponentToken = findPermanent(player2, "Soldier");
+
+        addKingDarienMana();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(2);
+        Permanent laterToken = findPermanents(player1, "Soldier").stream()
+                .filter(permanent -> permanent != protectedToken)
+                .findFirst().orElseThrow();
+        assertThat(gqs.hasKeyword(gd, protectedToken, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, protectedToken, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentToken, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentToken, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterToken, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterToken, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, protectedToken)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, protectedToken)).isEqualTo(1);
+    }
+
     private void addKingDarienMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.GREEN, 1);
