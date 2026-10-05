@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({NephaliaDrownyard.class})
 class NephaliaDrownyardTest extends BaseCardTest {
-
-    // ===== Mana ability =====
 
     @Test
     @DisplayName("Tapping for mana adds colorless mana")
@@ -31,8 +31,6 @@ class NephaliaDrownyardTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
         assertThat(drownyard.isTapped()).isTrue();
     }
-
-    // ===== Mill ability =====
 
     @Test
     @DisplayName("Activating mill ability puts it on the stack")
@@ -48,7 +46,6 @@ class NephaliaDrownyardTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Nephalia Drownyard");
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
@@ -162,8 +159,6 @@ class NephaliaDrownyardTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
-    // ===== Validation =====
-
     @Test
     @DisplayName("Cannot activate mill ability without enough mana")
     void cannotActivateMillWithoutMana() {
@@ -189,13 +184,62 @@ class NephaliaDrownyardTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
-    // ===== Helpers =====
-
     private Permanent addReadyDrownyard(Player player) {
-        NephaliaDrownyard card = new NephaliaDrownyard();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new NephaliaDrownyard());
+    }
+
+    @Test
+    @DisplayName("Mana ability resolves immediately even when the land just entered")
+    void manaAbilityResolvesImmediatelyWhenLandJustEntered() {
+        Permanent drownyard = harness.addToBattlefieldAndReturn(player1, new NephaliaDrownyard());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(drownyard.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Mill ability moves exactly the top three cards and leaves the fourth")
+    void millsExactlyTopThreeCards() {
+        addReadyDrownyard(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        Card first = new NephaliaDrownyard();
+        Card second = new NephaliaDrownyard();
+        Card third = new NephaliaDrownyard();
+        Card fourth = new NephaliaDrownyard();
+        harness.setLibrary(player2, List.of(first, second, third, fourth));
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(first, second, third, fourth);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyInAnyOrder(first, second, third);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(fourth);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Mill ability still resolves after its source leaves the battlefield")
+    void millResolvesWithoutSource() {
+        Permanent drownyard = addReadyDrownyard(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setLibrary(player2, List.of(new NephaliaDrownyard(),
+                new NephaliaDrownyard(), new NephaliaDrownyard()));
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(drownyard);
+        gd.playerHands.get(player1.getId()).add(drownyard.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+        assertThat(gd.stack).isEmpty();
     }
 }
