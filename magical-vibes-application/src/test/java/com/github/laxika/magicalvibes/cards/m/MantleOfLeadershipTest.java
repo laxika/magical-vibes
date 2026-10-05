@@ -98,6 +98,38 @@ class MantleOfLeadershipTest extends BaseCardTest {
         assertThat(enchantedCreature.getToughnessModifier()).isZero();
     }
 
+    @Test
+    @DisplayName("Flash allows enchanting an opponent's creature during their upkeep")
+    void flashCanEnchantOpponentsCreature() {
+        Permanent enchantedCreature = harness.addToBattlefieldAndReturn(player2, new HedgeTroll());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        castMantle(enchantedCreature);
+
+        assertThat(enchantedCreature.getPowerModifier()).isZero();
+        assertThat(enchantedCreature.getToughnessModifier()).isZero();
+        Permanent enteringCreature = harness.enterBattlefieldAndReturn(player1, new HedgeTroll());
+        harness.passBothPriorities();
+
+        assertThat(enchantedCreature.getPowerModifier()).isEqualTo(2);
+        assertThat(enchantedCreature.getToughnessModifier()).isEqualTo(2);
+        assertThat(enteringCreature.getPowerModifier()).isZero();
+        assertThat(enteringCreature.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("An Aura entering does not trigger Mantle of Leadership")
+    void noncreatureEnteringDoesNotBoostEnchantedCreature() {
+        Permanent enchantedCreature = harness.addToBattlefieldAndReturn(player1, new HedgeTroll());
+        castMantle(enchantedCreature);
+        castMantle(enchantedCreature);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(enchantedCreature.getPowerModifier()).isZero();
+        assertThat(enchantedCreature.getToughnessModifier()).isZero();
+    }
+
     private void castMantle(Permanent enchantedCreature) {
         harness.setHand(player1, List.of(new MantleOfLeadership()));
         harness.addMana(player1, ManaColor.WHITE, 1);
