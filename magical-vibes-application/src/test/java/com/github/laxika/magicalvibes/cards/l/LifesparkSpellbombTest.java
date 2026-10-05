@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CopperMyr;
+import com.github.laxika.magicalvibes.cards.t.TreeOfTales;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LifesparkSpellbomb.class, Forest.class, GrizzlyBears.class})
+@CardUsed({LifesparkSpellbomb.class, Forest.class, CopperMyr.class, TreeOfTales.class})
 class LifesparkSpellbombTest extends BaseCardTest {
 
     @Test
@@ -71,7 +72,7 @@ class LifesparkSpellbombTest extends BaseCardTest {
     @DisplayName("Colorless ability sacrifices the Spellbomb and draws a card")
     void sacrificesAndDrawsCard() {
         harness.addToBattlefield(player1, new LifesparkSpellbomb());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new CopperMyr()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -79,7 +80,7 @@ class LifesparkSpellbombTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Lifespark Spellbomb");
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Copper Myr");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
     }
 
@@ -87,7 +88,7 @@ class LifesparkSpellbombTest extends BaseCardTest {
     @DisplayName("Green ability cannot target a nonland permanent")
     void cannotTargetNonLand() {
         harness.addToBattlefield(player1, new LifesparkSpellbomb());
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new CopperMyr());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
@@ -110,6 +111,47 @@ class LifesparkSpellbombTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Lifespark Spellbomb");
+    }
+
+    @Test
+    @DisplayName("Animation preserves artifact type, colorlessness, and the land's mana ability")
+    void preservesArtifactLandCharacteristicsAndManaAbility() {
+        harness.addToBattlefield(player1, new LifesparkSpellbomb());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new TreeOfTales());
+        land.setSummoningSick(false);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.assertInGraveyard(player1, "Lifespark Spellbomb");
+        assertThat(gqs.isCreature(gd, land)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+        assertThat(gqs.isLand(gd, land)).isTrue();
+        assertThat(gqs.isArtifact(gd, land)).isTrue();
+        assertThat(gqs.getEffectiveColors(gd, land)).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(3);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A tapped Spellbomb can use the draw ability and pay with colored mana")
+    void tappedSpellbombCanDrawWithColoredMana() {
+        Permanent spellbomb = harness.addToBattlefieldAndReturn(player1, new LifesparkSpellbomb());
+        spellbomb.setTapped(true);
+        harness.setLibrary(player1, List.of(new CopperMyr()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.assertInGraveyard(player1, "Lifespark Spellbomb");
+        harness.assertNotInHand(player1, "Copper Myr");
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Copper Myr");
     }
 
     private Permanent addLand() {
