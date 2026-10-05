@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MartialLaw.class, GrizzlyBears.class, LlanowarElves.class})
 class MartialLawTest extends BaseCardTest {
 
     @Test
@@ -48,10 +49,7 @@ class MartialLawTest extends BaseCardTest {
 
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1))))
                 .isInstanceOf(IllegalStateException.class)
@@ -90,6 +88,94 @@ class MartialLawTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
+    @Test
+    @DisplayName("Does not trigger during the opponent's upkeep")
+    void doesNotTriggerDuringOpponentUpkeep() {
+        harness.addToBattlefield(player1, new MartialLaw());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Detain survives the beginning of the opponent's turn")
+    void detainSurvivesOpponentTurnStart() {
+        Permanent bears = detainOpponentCreature(new GrizzlyBears());
+
+        gd.expireFloatingEffectsAtTurnStart(player2.getId());
+
+        assertThatThrownBy(() -> declareAttack(bears))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Detain persists after Martial Law leaves the battlefield")
+    void detainPersistsAfterSourceLeaves() {
+        Permanent bears = detainOpponentCreature(new GrizzlyBears());
+        Permanent martialLaw = findPermanent(player1, "Martial Law");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, martialLaw));
+
+        assertThatThrownBy(() -> declareAttack(bears))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("An upkeep trigger resolves after Martial Law leaves the battlefield")
+    void triggerResolvesAfterSourceLeaves() {
+        harness.addToBattlefield(player1, new MartialLaw());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, bears.getId());
+        Permanent martialLaw = findPermanent(player1, "Martial Law");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, martialLaw));
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttack(bears))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Only opposing creatures are offered as upkeep targets")
+    void onlyOpposingCreaturesAreOfferedAsTargets() {
+        harness.addToBattlefield(player1, new MartialLaw());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingCreature = addCreatureReady(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new MartialLaw());
+
+        advanceToUpkeep(player1);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).containsExactly(opposingCreature.getId());
+    }
+
+    @Test
+    @DisplayName("A creature entering after the chosen target leaves is not detained")
+    void doesNotDetainReplacementForDepartedTarget() {
+        harness.addToBattlefield(player1, new MartialLaw());
+        Permanent original = addCreatureReady(player2, new GrizzlyBears());
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, original.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, original));
+        Permanent replacement = addCreatureReady(player2, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertThatCode(() -> declareAttack(replacement)).doesNotThrowAnyException();
+    }
+
     /** Resolves the upkeep trigger detaining the given creature put onto player2's battlefield. */
     private Permanent detainOpponentCreature(com.github.laxika.magicalvibes.model.Card card) {
         harness.addToBattlefield(player1, new MartialLaw());
@@ -106,11 +192,7 @@ class MartialLawTest extends BaseCardTest {
     /** Attempts to declare the given player2 creature as an attacker. */
     private void declareAttack(Permanent creature) {
         creature.setSummoningSick(false);
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
         int index = gd.playerBattlefields.get(player2.getId()).indexOf(creature);
-        gs.declareAttackers(gd, player2, List.of(index));
+        declareAttackers(player2, List.of(index));
     }
 }
