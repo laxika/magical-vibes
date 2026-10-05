@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.b.BasiliskCollar;
 import com.github.laxika.magicalvibes.cards.g.GrayOgre;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MishrasWarMachine.class, GrizzlyBears.class, GrayOgre.class})
+@CardUsed({MishrasWarMachine.class, GrizzlyBears.class, GrayOgre.class, BasiliskCollar.class})
 class MishrasWarMachineTest extends BaseCardTest {
 
     @Test
@@ -86,6 +87,56 @@ class MishrasWarMachineTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Mishra's War Machine").isTapped()).isFalse();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
         assertThat(gd.globalDamagePreventionShield).isZero();
+    }
+
+    @Test
+    @DisplayName("Partial prevention still taps the source when damage is dealt")
+    void partiallyPreventedPenaltyStillTapsSource() {
+        Permanent machine = harness.addToBattlefieldAndReturn(player1, new MishrasWarMachine());
+        harness.setHand(player1, List.of());
+        harness.setLife(player1, 20);
+        gd.globalDamagePreventionShield = 2;
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(machine.isTapped()).isTrue();
+        harness.assertLife(player1, 19);
+        assertThat(gd.globalDamagePreventionShield).isZero();
+    }
+
+    @Test
+    @DisplayName("Self-damage with lifelink still taps the source despite unchanged life")
+    void lifelinkPenaltyStillTapsSource() {
+        Permanent machine = harness.addToBattlefieldAndReturn(player1, new MishrasWarMachine());
+        Permanent collar = harness.addToBattlefieldAndReturn(player1, new BasiliskCollar());
+        collar.setAttachedTo(machine.getId());
+        harness.setHand(player1, List.of());
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(machine.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Declining the discard with lifelink still taps the source")
+    void declinedLifelinkPenaltyStillTapsSource() {
+        Permanent machine = harness.addToBattlefieldAndReturn(player1, new MishrasWarMachine());
+        Permanent collar = harness.addToBattlefieldAndReturn(player1, new BasiliskCollar());
+        collar.setAttachedTo(machine.getId());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertLife(player1, 20);
+        assertThat(machine.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
     @Test
