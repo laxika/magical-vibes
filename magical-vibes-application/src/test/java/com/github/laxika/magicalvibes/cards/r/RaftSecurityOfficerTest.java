@@ -54,6 +54,93 @@ class RaftSecurityOfficerTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Uses current power and includes power exactly three in the discount")
+    void reducesCostForCreatureWithCurrentPowerThree() {
+        addReadyOfficer();
+        Permanent target = addCreatureReady(player2, new RaftSecurityOfficer());
+        target.setPowerModifier(2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("One mana cannot pay for a target whose current power exceeds three")
+    void cannotUseDiscountWhenCurrentPowerExceedsThree() {
+        Permanent officer = addCreatureReady(player1, new RaftSecurityOfficer());
+        Permanent target = addCreatureReady(player2, new RaftSecurityOfficer());
+        target.setPowerModifier(3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(officer.isTapped()).isFalse();
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The discount still requires one mana")
+    void cannotActivateWithoutMana() {
+        Permanent officer = addCreatureReady(player1, new RaftSecurityOfficer());
+        Permanent target = addCreatureReady(player2, new RaftSecurityOfficer());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(officer.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Taps the officer as a cost before tapping the target on resolution")
+    void paysTapCostBeforeResolutionAndDoesNotRecheckPowerForCost() {
+        Permanent officer = addCreatureReady(player1, new RaftSecurityOfficer());
+        Permanent target = addCreatureReady(player2, new RaftSecurityOfficer());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(officer.isTapped()).isTrue();
+        assertThat(target.isTapped()).isFalse();
+        target.setPowerModifier(3);
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick officer cannot pay the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new RaftSecurityOfficer());
+        Permanent target = addCreatureReady(player2, new RaftSecurityOfficer());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can target itself even though paying the cost taps it")
+    void canTargetItself() {
+        Permanent officer = addCreatureReady(player1, new RaftSecurityOfficer());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, officer.getId());
+        harness.passBothPriorities();
+
+        assertThat(officer.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void addReadyOfficer() {
         addCreatureReady(player1, new RaftSecurityOfficer());
     }
