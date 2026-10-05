@@ -86,10 +86,68 @@ class OgreSavantTest extends BaseCardTest {
     void canTargetOnlyCreature() {
         var target = harness.addToBattlefieldAndReturn(player2, new GruulTurf());
         harness.setHand(player1, List.of(new OgreSavant()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        assertThatThrownBy(() -> harness.castCreature(player1, 0, target.getId()))
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Ogre Savant"));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Gruul Turf");
+        harness.assertInHand(player1, "Ogre Savant");
+    }
+
+    @Test
+    @DisplayName("Can return itself when blue mana was spent and it is the only creature")
+    void returnsItselfWhenItIsTheOnlyCreature() {
+        harness.setHand(player1, List.of(new OgreSavant()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Ogre Savant"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ogre Savant");
+        harness.assertInHand(player1, "Ogre Savant");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can return another creature controlled by its controller")
+    void returnsOwnCreature() {
+        var target = harness.addToBattlefieldAndReturn(player1, new GhostWarden());
+        harness.setHand(player1, List.of(new OgreSavant()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ghost Warden");
+        harness.assertInHand(player1, "Ghost Warden");
+        harness.assertOnBattlefield(player1, "Ogre Savant");
+    }
+
+    @Test
+    @DisplayName("Does not trigger when put onto the battlefield without being cast")
+    void doesNotTriggerWithoutBeingCast() {
+        harness.addToBattlefield(player2, new GhostWarden());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.enterBattlefieldAndReturn(player1, new OgreSavant());
+
+        harness.assertOnBattlefield(player1, "Ogre Savant");
+        harness.assertOnBattlefield(player2, "Ghost Warden");
+        assertThat(gd.stack).isEmpty();
     }
 }
