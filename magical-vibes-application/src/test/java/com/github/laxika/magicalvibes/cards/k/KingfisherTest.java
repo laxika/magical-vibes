@@ -57,6 +57,27 @@ class KingfisherTest extends BaseCardTest {
         harness.assertInHand(player2, "Metathran Soldier");
     }
 
+    @Test
+    @DisplayName("Sacrificing Kingfisher draws a card even when the ability targeting it cannot resolve")
+    void sacrificeDrawsDespiteInvalidAttritionTarget() {
+        harness.addToBattlefield(player1, new Attrition());
+        Permanent kingfisher = addCreatureReady(player1, new Kingfisher());
+        harness.setLibrary(player1, List.of(new MetathranSoldier(), new MetathranSoldier()));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, kingfisher.getId());
+
+        harness.assertInGraveyard(player1, "Kingfisher");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+        harness.assertInHand(player1, "Metathran Soldier");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertOnBattlefield(player1, "Attrition");
+    }
+
     private void killWithAttrition(Player abilityController, Permanent target) {
         Permanent attrition = harness.addToBattlefieldAndReturn(abilityController, new Attrition());
         addCreatureReady(abilityController, new MetathranSoldier());
