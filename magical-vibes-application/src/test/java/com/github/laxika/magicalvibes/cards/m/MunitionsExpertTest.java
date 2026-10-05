@@ -4,15 +4,12 @@ import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LilianaVess;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -72,11 +69,86 @@ class MunitionsExpertTest extends BaseCardTest {
                 .doesNotContain(player1.getId(), player2.getId());
     }
 
+    @Test
+    @DisplayName("Opposing Goblins and controlled non-Goblins do not increase damage")
+    void countsOnlyControlledGoblins() {
+        harness.addToBattlefield(player2, new MunitionsExpert());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castMunitionsExpert();
+        selectTarget(bears);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Goblins entering after the trigger is stacked count at resolution")
+    void countsGoblinsAddedBeforeResolution() {
+        Permanent liliana = harness.addToBattlefieldAndReturn(player2, new LilianaVess());
+        liliana.setCounterCount(CounterType.LOYALTY, 5);
+        castMunitionsExpert();
+        harness.handlePermanentChosen(player1, liliana.getId());
+        harness.addToBattlefield(player1, new MunitionsExpert());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Goblins leaving before resolution no longer count")
+    void excludesGoblinsThatLeftBeforeResolution() {
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new MunitionsExpert());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castMunitionsExpert();
+        harness.handlePermanentChosen(player1, bears.getId());
+        goblin.setMarkedDamage(1);
+        harness.runStateBasedActions();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The trigger resolves for zero damage when its source was the last Goblin and dies")
+    void dealsZeroDamageAfterLastGoblinLeaves() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castMunitionsExpert();
+        harness.handlePermanentChosen(player1, bears.getId());
+        Permanent source = gd.playerBattlefields.get(player1.getId()).getFirst();
+        source.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Munitions Expert");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bears.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Munitions Expert can target itself")
+    void canTargetItself() {
+        castMunitionsExpert();
+        Permanent source = gd.playerBattlefields.get(player1.getId()).getFirst();
+
+        selectTarget(source);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Munitions Expert");
+        harness.assertNotOnBattlefield(player1, "Munitions Expert");
+    }
+
     private void castMunitionsExpert() {
-        harness.setHand(player1, List.of(new MunitionsExpert()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MunitionsExpert(), "{B}{R}");
         harness.passBothPriorities();
     }
 
