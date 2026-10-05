@@ -3,7 +3,10 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.c.Commandeer;
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.d.DreamTwist;
+import com.github.laxika.magicalvibes.cards.d.DutifulKnowledgeSeeker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LeylineOfLifeforce;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +21,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MemoryLapse.class, GrizzlyBears.class, DarkRitual.class})
+@CardUsed({MemoryLapse.class, GrizzlyBears.class, DarkRitual.class, DreamTwist.class,
+        Commandeer.class, LeylineOfLifeforce.class, DutifulKnowledgeSeeker.class})
 class MemoryLapseTest extends BaseCardTest {
 
     @Test
@@ -167,5 +171,45 @@ class MemoryLapseTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Dark Ritual");
         assertThat(gd.playerDecks.get(player2.getId()).getFirst().getName()).isEqualTo("Memory Lapse");
+    }
+
+    @CardUsed(LeylineOfLifeforce.class)
+    @Test
+    @DisplayName("An uncounterable spell stays on the stack and is not put into its owner's library")
+    void doesNotMoveUncounterableSpellToLibrary() {
+        harness.addToBattlefield(player1, new LeylineOfLifeforce());
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.castFromHand(player1, bears, "{1}{G}");
+        harness.setHand(player2, List.of(new MemoryLapse()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.passPriority(player1);
+
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(bears.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(bears);
+        harness.assertInGraveyard(player2, "Memory Lapse");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @CardUsed(DutifulKnowledgeSeeker.class)
+    @Test
+    @DisplayName("Putting the countered spell into a library triggers library-entry abilities")
+    void triggersAbilitiesWhenCounteredSpellEntersLibrary() {
+        var seeker = harness.addToBattlefieldAndReturn(player2, new DutifulKnowledgeSeeker());
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.castFromHand(player1, bears, "{1}{G}");
+        harness.setHand(player2, List.of(new MemoryLapse()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.passPriority(player1);
+
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(bears);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(seeker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }
