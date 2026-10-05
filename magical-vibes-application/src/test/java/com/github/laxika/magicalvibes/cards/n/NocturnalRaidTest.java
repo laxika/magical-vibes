@@ -69,6 +69,39 @@ class NocturnalRaidTest extends BaseCardTest {
         assertThat(blackCreature.getEffectiveToughness()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Black creatures entering while the spell is on the stack are boosted")
+    void boostsBlackCreaturesPresentAtResolution() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new NocturnalRaid(), "{2}{B}{B}");
+
+        Permanent creature = harness.enterBattlefieldAndReturn(player2, new LoomingShade());
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(3);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Repeated casts stack their boosts until end of turn")
+    void repeatedCastsStack() {
+        Permanent creature = addCreatureReady(player1, new LoomingShade());
+
+        castNocturnalRaid();
+        castNocturnalRaid();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(5);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(1);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+    }
+
     private void castNocturnalRaid() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
