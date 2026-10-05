@@ -4,11 +4,13 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BlasphemousAct;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +18,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MurderOfCrows.class, CruelEdict.class, Forest.class, GrizzlyBears.class, BlasphemousAct.class})
 class MurderOfCrowsTest extends BaseCardTest {
 
-    // ===== Trigger: another creature dies, accept may =====
 
     @Test
     @DisplayName("When another creature dies, controller may draw then discard (accept)")
@@ -26,7 +28,7 @@ class MurderOfCrowsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MurderOfCrows());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -60,7 +62,6 @@ class MurderOfCrowsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore - 1);
     }
 
-    // ===== Trigger: another creature dies, decline may =====
 
     @Test
     @DisplayName("When another creature dies, controller may draw then discard (decline)")
@@ -87,7 +88,6 @@ class MurderOfCrowsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore - 1);
     }
 
-    // ===== Does NOT trigger when Murder of Crows itself dies =====
 
     @Test
     @DisplayName("Murder of Crows does not trigger when it dies itself (only 'another creature')")
@@ -108,7 +108,6 @@ class MurderOfCrowsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
-    // ===== Triggers on controller's own creature dying =====
 
     @Test
     @DisplayName("Murder of Crows triggers when controller's own creature dies")
@@ -116,7 +115,7 @@ class MurderOfCrowsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MurderOfCrows());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -145,10 +144,65 @@ class MurderOfCrowsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
     }
 
-    // ===== Helpers =====
 
-    private void setDeck(com.github.laxika.magicalvibes.model.Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+    @Test
+    @CardUsed({MurderOfCrows.class, BlasphemousAct.class, Forest.class})
+    @DisplayName("Each Murder of Crows triggers for the other when both die simultaneously")
+    void triggersForOtherCrowsDyingSimultaneously() {
+        harness.addToBattlefield(player1, new MurderOfCrows());
+        harness.addToBattlefield(player1, new MurderOfCrows());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new BlasphemousAct()));
+        harness.addMana(player1, ManaColor.RED, 7);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(2);
+        for (int i = 0; i < 2; i++) {
+            harness.passBothPriorities();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)
+                    .playerId()).isEqualTo(player1.getId());
+            harness.handleMayAbilityChosen(player1, true);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+            harness.handleCardChosen(player1, 0);
+        }
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @CardUsed({MurderOfCrows.class, CruelEdict.class, Forest.class, GrizzlyBears.class})
+    @DisplayName("The controller may discard an existing card and keep the drawn card")
+    void canKeepDrawnCardAndDiscardExistingCard() {
+        harness.addToBattlefield(player1, new MurderOfCrows());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Card drawnCard = new Forest();
+        Card existingCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of(new CruelEdict(), existingCard));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(existingCard, drawnCard);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(existingCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
