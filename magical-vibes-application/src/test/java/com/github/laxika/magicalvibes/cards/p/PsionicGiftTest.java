@@ -110,13 +110,60 @@ class PsionicGiftTest extends BaseCardTest {
     @Test
     @DisplayName("Psionic Gift can target only a creature")
     void cannotEnchantNonCreature() {
-        harness.addToBattlefield(player1, new Island());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Island());
         harness.setHand(player1, List.of(new PsionicGift()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        Permanent land = findPermanent(player1, "Island");
-
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Casting Psionic Gift attaches it and grants the damage ability")
+    void castingAuraGrantsAbility() {
+        Permanent creature = addCreatureReady(player1, new DuskImp());
+        harness.setHand(player1, List.of(new PsionicGift()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.setLife(player2, 20);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Psionic Gift").getAttachedTo()).isEqualTo(creature.getId());
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An activated damage ability still resolves after Psionic Gift leaves")
+    void activatedAbilitySurvivesAuraRemoval() {
+        Permanent creature = addCreatureReady(player1, new DuskImp());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new PsionicGift());
+        aura.setAttachedTo(creature.getId());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The enchanted creature can target itself with its damage ability")
+    void grantedAbilityCanTargetItsSource() {
+        Permanent creature = addCreatureReady(player1, new DuskImp());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new PsionicGift());
+        aura.setAttachedTo(creature.getId());
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Dusk Imp");
+        harness.assertNotOnBattlefield(player1, "Psionic Gift");
     }
 }
