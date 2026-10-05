@@ -82,4 +82,20 @@ class PlagueBeetleTest extends BaseCardTest {
 
         assertThat(blockerPerm.isBlocking()).isTrue();
     }
+
+    @Test
+    void opposingSwampwalkerCannotBlockEvenWhenDefendersSwampIsTapped() {
+        harness.addToBattlefieldAndReturn(player2, new Swamp()).setTapped(true);
+        Permanent blockerPerm = addCreatureReady(player2, new PlagueBeetle());
+        Permanent attackerPerm = addCreatureReady(player1, new PlagueBeetle());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attackerPerm);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
 }
