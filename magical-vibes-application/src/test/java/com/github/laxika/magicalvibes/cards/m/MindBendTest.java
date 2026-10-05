@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,7 +14,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DragonsClaw;
 import com.github.laxika.magicalvibes.cards.p.PaladinEnVec;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.v.VoiceOfAll;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -26,8 +29,74 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MindBend.class, GrizzlyBears.class, PaladinEnVec.class, VoiceOfAll.class})
+@CardUsed({MindBend.class, GrizzlyBears.class, PaladinEnVec.class, VoiceOfAll.class,
+        DragonsClaw.class, Swamp.class})
 class MindBendTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Successive color changes rewrite the protection created by earlier text changes")
+    void successiveChangesRewriteProtection() {
+        Permanent paladin = harness.addToBattlefieldAndReturn(player2, new PaladinEnVec());
+        harness.setHand(player1, List.of(new MindBend()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, paladin.getId());
+        harness.handleListChoice(player1, "BLACK");
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gqs.hasProtectionFrom(gd, paladin, CardColor.BLACK)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, paladin, CardColor.GREEN)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, paladin, CardColor.RED)).isTrue();
+
+        harness.setHand(player1, List.of(new MindBend()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, paladin.getId());
+        harness.handleListChoice(player1, "GREEN");
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gqs.hasProtectionFrom(gd, paladin, CardColor.GREEN)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, paladin, CardColor.BLUE)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, paladin, CardColor.RED)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Changing a basic land type changes its intrinsic mana ability")
+    void changingBasicLandTypeChangesManaAbility() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
+        harness.setHand(player1, List.of(new MindBend()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, swamp.getId());
+        harness.handleListChoice(player1, "SWAMP");
+        harness.handleListChoice(player1, "FOREST");
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, swamp)).containsExactly(CardSubtype.FOREST);
+        harness.tapPermanent(player2, 0);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("Changing a color word rewrites the color checked by a spell-cast trigger")
+    void changingColorRewritesSpellCastTrigger() {
+        Permanent claw = harness.addToBattlefieldAndReturn(player1, new DragonsClaw());
+        harness.setHand(player1, List.of(new MindBend()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, claw.getId());
+        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "GREEN");
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                && entry.getCard() instanceof DragonsClaw);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertLife(player1, lifeBefore + 1);
+    }
 
     // ===== Casting =====
 
