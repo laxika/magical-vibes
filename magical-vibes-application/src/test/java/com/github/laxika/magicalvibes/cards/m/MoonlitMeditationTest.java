@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.d.DevastatingOnslaught;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JadeMage;
 import com.github.laxika.magicalvibes.cards.p.PowerstoneShard;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MoonlitMeditation.class, GrizzlyBears.class, JadeMage.class, PowerstoneShard.class})
+@CardUsed({MoonlitMeditation.class, GrizzlyBears.class, JadeMage.class, PowerstoneShard.class, DevastatingOnslaught.class})
 class MoonlitMeditationTest extends BaseCardTest {
 
     @Test
@@ -81,6 +83,125 @@ class MoonlitMeditationTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, opponentCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("artifact or creature you control");
+    }
+
+    @Test
+    @DisplayName("Accepting the replacement does not replace a second token event")
+    void acceptingReplacementUsesItForTheTurn() {
+        Permanent enchanted = setupMoonlitMeditation(new GrizzlyBears());
+        addJadeMageActivationMana();
+
+        activateJadeMage();
+        harness.handleMayAbilityChosen(player1, true);
+        activateJadeMage();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .extracting(permanent -> permanent.getCard().getName())
+                .containsExactlyInAnyOrder(enchanted.getCard().getName(), "Saproling");
+    }
+
+    @Test
+    @DisplayName("An Aura entering after the first token event cannot replace later tokens")
+    void earlierTokenCreationPreventsReplacementAfterAuraEnters() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new JadeMage());
+        addJadeMageActivationMana();
+        harness.activateAbility(player1, 1, 0, null);
+        harness.passBothPriorities();
+
+        Permanent moonlit = harness.addToBattlefieldAndReturn(player1, new MoonlitMeditation());
+        moonlit.setAttachedTo(enchanted.getId());
+        harness.activateAbility(player1, 1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .extracting(permanent -> permanent.getCard().getName())
+                .containsExactly("Saproling", "Saproling");
+    }
+
+    @Test
+    @DisplayName("A second Aura cannot replace the second token event of the turn")
+    void multipleAurasOnlyApplyToFirstTokenEvent() {
+        Permanent enchanted = setupMoonlitMeditation(new GrizzlyBears());
+        Permanent secondAura = harness.addToBattlefieldAndReturn(player1, new MoonlitMeditation());
+        secondAura.setAttachedTo(enchanted.getId());
+        addJadeMageActivationMana();
+
+        activateJadeMage();
+        while (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, false);
+        }
+        activateJadeMage();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .extracting(permanent -> permanent.getCard().getName())
+                .containsExactly("Saproling", "Saproling");
+    }
+
+    @Test
+    @DisplayName("The replacement applies when the original tokens would be copies")
+    void replacesTokenCopiesAndPreservesTokenCount() {
+        Permanent enchanted = setupMoonlitMeditation(new GrizzlyBears());
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new PowerstoneShard());
+        harness.setHand(player1, List.of(new DevastatingOnslaught()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 2, original.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(2)
+                .allMatch(permanent -> permanent.getCard().getName().equals(enchanted.getCard().getName()));
+    }
+
+    @Test
+    @DisplayName("The replacement becomes available again on an opponent's turn")
+    void replacementResetsOnNextTurn() {
+        Permanent enchanted = setupMoonlitMeditation(new GrizzlyBears());
+        addJadeMageActivationMana();
+        activateJadeMage();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        addJadeMageActivationMana();
+        activateJadeMage();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .extracting(permanent -> permanent.getCard().getName())
+                .containsExactlyInAnyOrder("Saproling", enchanted.getCard().getName());
+    }
+
+    @Test
+    @DisplayName("Opponent token creation does not use the Aura controller's replacement")
+    void opponentTokenCreationDoesNotConsumeReplacement() {
+        setupMoonlitMeditation(new GrizzlyBears());
+        harness.addToBattlefield(player2, new JadeMage());
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player2, 0, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .extracting(permanent -> permanent.getCard().getName())
+                .containsExactly("Saproling");
+        addJadeMageActivationMana();
+        activateJadeMage();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
     }
 
     private Permanent setupMoonlitMeditation(com.github.laxika.magicalvibes.model.Card enchantedCard) {
