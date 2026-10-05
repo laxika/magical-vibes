@@ -60,4 +60,46 @@ class PinchyMcStingbuttTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
+
+    @Test
+    @DisplayName("The attacking controller receives and owns the conjured card")
+    void opponentControlledPinchyConjuresIntoOpponentsHand() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        Permanent pinchy = addCreatureReady(player2, new PinchyMcStingbutt());
+        pinchy.setAttacking(true);
+        pinchy.setAttackTarget(player1.getId());
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).singleElement().satisfies(card -> {
+            assertThat(card.getName())
+                    .isIn("Death of a Thousand Stings", "Lethal Sting", "Stinging Shot");
+            assertThat(card.getOwnerId()).isEqualTo(player2.getId());
+        });
+    }
+
+    @Test
+    @DisplayName("Each Pinchy dealing combat damage conjures a separate card")
+    void multipleUnblockedPinchysEachConjure() {
+        harness.setHand(player1, List.of());
+        for (int i = 0; i < 2; i++) {
+            Permanent pinchy = addCreatureReady(player1, new PinchyMcStingbutt());
+            pinchy.setAttacking(true);
+            pinchy.setAttackTarget(player2.getId());
+        }
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2).allSatisfy(card -> {
+            assertThat(card.getName())
+                    .isIn("Death of a Thousand Stings", "Lethal Sting", "Stinging Shot");
+            assertThat(card.getOwnerId()).isEqualTo(player1.getId());
+        });
+        assertThat(gd.playerHands.get(player1.getId()).get(0).getId())
+                .isNotEqualTo(gd.playerHands.get(player1.getId()).get(1).getId());
+    }
 }
