@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.f.FirstVolley;
 import com.github.laxika.magicalvibes.cards.f.Frostling;
+import com.github.laxika.magicalvibes.cards.h.HundredTalonStrike;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -13,7 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KiraGreatGlassSpinner.class, FirstVolley.class, Frostling.class})
+@CardUsed({KiraGreatGlassSpinner.class, FirstVolley.class, Frostling.class, HundredTalonStrike.class})
 class KiraGreatGlassSpinnerTest extends BaseCardTest {
 
     private UUID addKira() {
@@ -36,7 +38,7 @@ class KiraGreatGlassSpinnerTest extends BaseCardTest {
         harness.castInstant(player2, 0, frostlingId);
 
         assertThat(gd.stack).hasSizeGreaterThanOrEqualTo(2);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Frostling");
         harness.assertInGraveyard(player2, "First Volley");
@@ -53,7 +55,7 @@ class KiraGreatGlassSpinnerTest extends BaseCardTest {
         harness.castInstant(player2, 0, kiraId);
 
         assertThat(gd.stack).hasSizeGreaterThanOrEqualTo(2);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Kira, Great Glass-Spinner");
         harness.assertInGraveyard(player2, "First Volley");
@@ -70,12 +72,12 @@ class KiraGreatGlassSpinnerTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
         harness.castInstant(player2, 0, frostlingId);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.assertOnBattlefield(player1, "Frostling");
 
         harness.castInstant(player2, 0, frostlingId);
         assertThat(gd.stack).hasSize(1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Frostling");
         harness.assertInGraveyard(player1, "Frostling");
@@ -93,9 +95,9 @@ class KiraGreatGlassSpinnerTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
         harness.castInstant(player2, 0, firstFrostlingId);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.castInstant(player2, 0, secondFrostlingId);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Frostling")).isEqualTo(2);
     }
@@ -110,7 +112,7 @@ class KiraGreatGlassSpinnerTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, frostlingId);
 
         assertThat(gd.stack).hasSize(2);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Frostling");
         harness.assertInGraveyard(player2, "Frostling");
@@ -128,7 +130,7 @@ class KiraGreatGlassSpinnerTest extends BaseCardTest {
         harness.castInstant(player1, 0, frostlingId);
 
         assertThat(gd.stack).hasSize(2);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Frostling");
         harness.assertInGraveyard(player1, "First Volley");
@@ -138,8 +140,7 @@ class KiraGreatGlassSpinnerTest extends BaseCardTest {
     @DisplayName("Opponent's creatures do not get the ability")
     void opponentCreaturesUnaffected() {
         addKira();
-        harness.addToBattlefield(player2, new Frostling());
-        UUID theirFrostlingId = findPermanent(player2, "Frostling").getId();
+        UUID theirFrostlingId = harness.addToBattlefieldAndReturn(player2, new Frostling()).getId();
 
         harness.setHand(player2, List.of(new FirstVolley()));
         harness.addMana(player2, ManaColor.RED, 1);
@@ -147,7 +148,7 @@ class KiraGreatGlassSpinnerTest extends BaseCardTest {
         harness.castInstant(player2, 0, theirFrostlingId);
 
         assertThat(gd.stack).hasSize(1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Frostling");
     }
@@ -167,8 +168,71 @@ class KiraGreatGlassSpinnerTest extends BaseCardTest {
         harness.castInstant(player2, 0, frostlingId);
 
         assertThat(gd.stack).hasSize(1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Frostling");
+    }
+
+    @Test
+    @DisplayName("Targeting before Kira enters still counts as the first targeting that turn")
+    void targetingBeforeKiraEntersUsesFirstTargeting() {
+        UUID frostlingId = addFrostling();
+        harness.setHand(player1, List.of(new HundredTalonStrike()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, frostlingId);
+
+        harness.castFromHand(player1, new KiraGreatGlassSpinner(), "{1}{U}{U}");
+        resolveAllTriggers();
+
+        harness.setHand(player2, List.of(new FirstVolley()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, frostlingId);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Frostling");
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Protection resets on the next player's turn")
+    void protectionResetsOnNextTurn() {
+        addKira();
+        UUID frostlingId = addFrostling();
+        harness.setHand(player2, List.of(new FirstVolley(), new FirstVolley()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, frostlingId);
+        resolveAllTriggers();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, frostlingId);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Frostling");
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(card -> card.getName()).containsExactly("First Volley", "First Volley");
+    }
+
+    @Test
+    @DisplayName("A counter trigger survives Kira leaving before it resolves")
+    void pendingCounterSurvivesKiraLeaving() {
+        addKira();
+        UUID frostlingId = addFrostling();
+        harness.setHand(player2, List.of(new FirstVolley()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, frostlingId);
+
+        var kira = findPermanent(player1, "Kira, Great Glass-Spinner");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, kira));
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Frostling");
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player2, "First Volley");
     }
 }
