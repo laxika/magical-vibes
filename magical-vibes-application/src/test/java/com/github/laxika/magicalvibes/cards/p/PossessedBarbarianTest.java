@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AvenTrooper;
 import com.github.laxika.magicalvibes.cards.p.PardicLancer;
 import com.github.laxika.magicalvibes.cards.p.Pyromania;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -106,6 +107,55 @@ class PossessedBarbarianTest extends BaseCardTest {
         prepareActivation();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void activatedAbilityStillResolvesAfterThresholdIsLost() {
+        fillGraveyard(player1, 7);
+        addReadyBarbarian();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PardicLancer());
+        prepareActivation();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        fillGraveyard(player1, 6);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Pardic Lancer");
+        harness.assertInGraveyard(player2, "Pardic Lancer");
+    }
+
+    @Test
+    void abilityDoesNotDestroyTargetThatBecomesBlackBeforeResolution() {
+        fillGraveyard(player1, 7);
+        fillGraveyard(player2, 6);
+        addReadyBarbarian();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PossessedBarbarian());
+        prepareActivation();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        fillGraveyard(player2, 7);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Possessed Barbarian");
+        harness.assertNotInGraveyard(player2, "Possessed Barbarian");
+    }
+
+    @Test
+    void firstStrikeKillsBlockerBeforeItCanDealDamage() {
+        Permanent barbarian = addReadyBarbarian();
+        addCreatureReady(player2, new PardicLancer());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player1, "Possessed Barbarian");
+        assertThat(barbarian.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player2, "Pardic Lancer");
     }
 
     private Permanent addReadyBarbarian() {
