@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.r.RaiseDead;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,15 +14,16 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefieldUnderControl;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LilianaDefiantNecromancer.class, LilianaHereticalHealer.class, GrizzlyBears.class, HillGiant.class, Shock.class})
 class LilianaDefiantNecromancerTest extends BaseCardTest {
 
     @Test
@@ -76,11 +77,10 @@ class LilianaDefiantNecromancerTest extends BaseCardTest {
     @DisplayName("-X cannot target a legendary creature card")
     void minusXRejectsLegendaryCreature() {
         addReadyLiliana(player1, 5);
-        Card legendaryBears = new GrizzlyBears();
-        legendaryBears.setSupertypes(Set.of(CardSupertype.LEGENDARY));
-        harness.setGraveyard(player1, List.of(legendaryBears));
+        Card legendaryCreature = new LilianaHereticalHealer();
+        harness.setGraveyard(player1, List.of(legendaryCreature));
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, 2, legendaryBears.getId(), Zone.GRAVEYARD))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, 3, legendaryCreature.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -109,14 +109,75 @@ class LilianaDefiantNecromancerTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd);
 
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).isNotEmpty();
+        resolveAllTriggers();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
+    @Test
+    @CardUsed({RaiseDead.class})
+    void emblemDoesNotReturnCardThatLeftAndReenteredGraveyard() {
+        addReadyLiliana(player1, 8);
+        harness.activateAbility(player1, 0, 2, null, null);
+        resolveAllTriggers();
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Card bearsCard = bears.getCard();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, bears.getId());
+        resolveAllTriggers();
+
+        harness.setHand(player1, List.of(new RaiseDead()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castSorcery(player1, 0, bearsCard.getId());
+        resolveAllTriggers();
+        harness.assertInHand(player1, "Grizzly Bears");
+        addReadyLiliana(player1, 3);
+        harness.setHand(player2, List.of());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void minusXRejectsOpponentsGraveyard() {
+        addReadyLiliana(player1, 5);
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(bears));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, 2, bears.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void plusTwoWithEmptyHandsStillAddsLoyalty() {
+        Permanent liliana = addReadyLiliana(player1, 3);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
     private Permanent addReadyLiliana(Player player, int loyalty) {
-        Permanent perm = new Permanent(new LilianaDefiantNecromancer());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new LilianaDefiantNecromancer());
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
