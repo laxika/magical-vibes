@@ -104,12 +104,40 @@ class OpalChampionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Miscalculation()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
         resolveAllTriggers();
 
         assertThat(gqs.isCreature(gd, opal)).isTrue();
         assertThat(gqs.isEnchantment(gd, opal)).isFalse();
         harness.assertInGraveyard(player2, creature.getName());
+    }
+
+    @Test
+    void doesNotTriggerWhenOpponentCreatureEntersWithoutBeingCast() {
+        Permanent opal = addOpalChampion();
+        prepareOpponentCast();
+
+        harness.enterBattlefieldAndReturn(player2, new AngelicCurator());
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.isEnchantment(gd, opal)).isTrue();
+        assertThat(gqs.isCreature(gd, opal)).isFalse();
+    }
+
+    @Test
+    void remainsCreatureOnTheNextTurn() {
+        Permanent opal = addOpalChampion();
+        prepareOpponentCast();
+        castOpponentCreature();
+        resolveAllTriggers();
+
+        advanceToUpkeep(player1);
+
+        assertThat(gqs.isCreature(gd, opal)).isTrue();
+        assertThat(gqs.isEnchantment(gd, opal)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, opal)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opal)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, opal, Keyword.FIRST_STRIKE)).isTrue();
     }
 }
