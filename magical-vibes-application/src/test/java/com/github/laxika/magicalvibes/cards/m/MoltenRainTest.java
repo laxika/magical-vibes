@@ -49,6 +49,22 @@ class MoltenRainTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can destroy its caster's nonbasic land and damages that caster")
+    void destroysOwnNonbasicLandAndDamagesCaster() {
+        harness.addToBattlefield(player1, new GreatFurnace());
+        harness.setHand(player1, List.of(new MoltenRain()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        UUID targetId = harness.getPermanentId(player1, "Great Furnace");
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Great Furnace");
+        harness.assertInGraveyard(player1, "Great Furnace");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
     @DisplayName("Fizzles if the target land leaves before resolution")
     void fizzlesIfTargetRemoved() {
         harness.addToBattlefield(player2, new GreatFurnace());
