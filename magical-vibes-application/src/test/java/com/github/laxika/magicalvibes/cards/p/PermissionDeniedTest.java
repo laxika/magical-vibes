@@ -30,8 +30,7 @@ class PermissionDeniedTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, shock.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, shock.getId());
 
         harness.assertInGraveyard(player1, "Shock");
         assertThat(gd.playersCantCastNoncreatureSpellsThisTurn).contains(player1.getId());
@@ -104,6 +103,57 @@ class PermissionDeniedTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Can counter its controller's own noncreature spell")
+    void countersOwnSpell() {
+        Shock shock = new Shock();
+        harness.setHand(player1, List.of(shock, new PermissionDenied()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, shock.getId());
+
+        harness.assertInGraveyard(player1, "Shock");
+        harness.assertLife(player2, 20);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.ensurePriority(player2);
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Does not restrict opponents when its only target has left the stack")
+    void missingTargetPreventsRestriction() {
+        Shock shock = new Shock();
+        PermissionDenied first = new PermissionDenied();
+        harness.setHand(player1, List.of(shock, new PermissionDenied()));
+        harness.setHand(player2, List.of(first));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, shock.getId());
+        harness.passPriority(player2);
+        harness.castAndResolveInstant(player1, 0, shock.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Shock");
+        harness.assertInGraveyard(player2, "Permission Denied");
+        harness.assertLife(player2, 20);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.ensurePriority(player1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 18);
+    }
+
     private void resolveAgainstShock() {
         Shock shock = new Shock();
         harness.setHand(player1, List.of(shock));
@@ -115,7 +165,6 @@ class PermissionDeniedTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, shock.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, shock.getId());
     }
 }
