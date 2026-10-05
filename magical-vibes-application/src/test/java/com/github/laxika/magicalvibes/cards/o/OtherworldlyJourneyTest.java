@@ -83,4 +83,85 @@ class OtherworldlyJourneyTest extends BaseCardTest {
         harness.passUntil(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
     }
+
+    @Test
+    @DisplayName("A stolen creature returns to its owner rather than its previous controller")
+    void returnsStolenCreatureToOwner() {
+        Permanent stolen = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
+        gd.stolenCreatures.put(stolen.getId(), player2.getId());
+        stolen.getCard().setOwnerId(player2.getId());
+        harness.setHand(player1, List.of(new OtherworldlyJourney()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0, stolen.getId());
+        advanceToEndStep();
+
+        harness.assertNotOnBattlefield(player1, "Isamaru, Hound of Konda");
+        assertThat(findPermanent(player2, "Isamaru, Hound of Konda")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Returning creates an untapped new creature with only the new counter")
+    void discardsOldCountersAndTappedState() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
+        original.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        original.tap();
+        harness.setHand(player1, List.of(new OtherworldlyJourney()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0, original.getId());
+        advanceToEndStep();
+
+        Permanent returned = findPermanent(player1, "Isamaru, Hound of Konda");
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(returned.isTapped()).isFalse();
+        assertThat(returned.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Casting during an end step waits until the following turn's end step")
+    void castDuringEndStepReturnsAtFollowingEndStep() {
+        harness.addToBattlefield(player1, new IsamaruHoundOfKonda());
+        harness.setHand(player1, List.of(new OtherworldlyJourney()));
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player1, "Isamaru, Hound of Konda"));
+        harness.assertNotOnBattlefield(player1, "Isamaru, Hound of Konda");
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.POSTCOMBAT_MAIN);
+        harness.assertNotOnBattlefield(player1, "Isamaru, Hound of Konda");
+        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.assertNotOnBattlefield(player1, "Isamaru, Hound of Konda");
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Isamaru, Hound of Konda")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A second Journey removing the target makes the first spell fail to resolve")
+    void removedTargetDoesNotCreateAnotherReturnOrCounter() {
+        harness.addToBattlefield(player1, new IsamaruHoundOfKonda());
+        harness.setHand(player1, List.of(new OtherworldlyJourney()));
+        harness.setHand(player2, List.of(new OtherworldlyJourney()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        UUID targetId = harness.getPermanentId(player1, "Isamaru, Hound of Konda");
+
+        harness.castInstant(player1, 0, targetId);
+        harness.castAndResolveInstant(player2, 0, targetId);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Isamaru, Hound of Konda");
+        harness.assertInGraveyard(player1, "Otherworldly Journey");
+        harness.assertInGraveyard(player2, "Otherworldly Journey");
+
+        advanceToEndStep();
+
+        assertThat(findPermanent(player1, "Isamaru, Hound of Konda")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
 }
