@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PrismaticEnding.class, GrizzlyBears.class, HillGiant.class, Island.class, Forest.class})
+@CardUsed({PrismaticEnding.class, GrizzlyBears.class, HillGiant.class, Ornithopter.class, Forest.class})
 class PrismaticEndingTest extends BaseCardTest {
 
     @Test
@@ -26,8 +26,7 @@ class PrismaticEndingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0, 1, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -43,8 +42,7 @@ class PrismaticEndingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, 1, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1, target.getId());
 
         harness.assertOnBattlefield(player2, "Hill Giant");
     }
@@ -69,8 +67,7 @@ class PrismaticEndingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, 2, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
@@ -83,10 +80,63 @@ class PrismaticEndingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, target.getId());
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
+
+    @Test
+    @DisplayName("Repeated mana of one color does not increase converge")
+    void repeatedWhiteManaCountsAsOneColor() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PrismaticEnding()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 2, target.getId());
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Colorless mana does not count as another color")
+    void colorlessManaDoesNotIncreaseConverge() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PrismaticEnding()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 1, target.getId());
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Can exile a permanent controlled by the caster")
+    void exilesOwnPermanent() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PrismaticEnding()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 1, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+    }
+
+    @Test
+    @DisplayName("X zero can exile a permanent with mana value zero")
+    void exilesZeroManaValuePermanentWithZeroX() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        harness.setHand(player1, List.of(new PrismaticEnding()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Ornithopter"));
+    }
 }
