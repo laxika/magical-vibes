@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.cards.b.BorosSignet;
 import com.github.laxika.magicalvibes.cards.f.FaithsFetters;
+import com.github.laxika.magicalvibes.cards.l.LastGasp;
+import com.github.laxika.magicalvibes.cards.s.SunderingVitae;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({MarkOfEviction.class, BorosRecruit.class, BorosSignet.class, FaithsFetters.class,
-        MoldervineCloak.class})
+        MoldervineCloak.class, LastGasp.class, SunderingVitae.class})
 class MarkOfEvictionTest extends BaseCardTest {
 
     @Test
@@ -113,11 +115,55 @@ class MarkOfEvictionTest extends BaseCardTest {
                 .doesNotContain(creature);
     }
 
+    @Test
+    @DisplayName("Upkeep ability still returns the creature and remaining Auras after Mark is destroyed")
+    void returnsCreatureAfterMarkIsDestroyedInResponse() {
+        BorosRecruit creatureCard = new BorosRecruit();
+        creatureCard.setOwnerId(player2.getId());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, creatureCard);
+        Permanent mark = addAttachedAura(player1, player1, new MarkOfEviction(), creature);
+        Permanent otherAura = addAttachedAura(player2, player2, new MoldervineCloak(), creature);
+
+        advanceToUpkeep(player1);
+        harness.setHand(player1, List.of(new SunderingVitae()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castAndResolveInstant(player1, 0, mark.getId());
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(mark.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature, otherAura);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(creature.getCard(), otherAura.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(mark.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature, otherAura);
+    }
+
+    @Test
+    @DisplayName("Does not return the creature or orphaned Auras from the graveyard")
+    void doesNotReturnCardsAfterCreatureDiesInResponse() {
+        BorosRecruit creatureCard = new BorosRecruit();
+        creatureCard.setOwnerId(player2.getId());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, creatureCard);
+        Permanent mark = addAttachedAura(player1, player1, new MarkOfEviction(), creature);
+        Permanent otherAura = addAttachedAura(player1, player1, new FaithsFetters(), creature);
+
+        advanceToUpkeep(player1);
+        harness.setHand(player1, List.of(new LastGasp()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(creature.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(mark.getCard(), otherAura.getCard());
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(creature.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(mark.getCard(), otherAura.getCard());
+    }
+
     private Permanent addAttachedAura(Player controller, Player owner, Card auraCard, Permanent creature) {
         auraCard.setOwnerId(owner.getId());
-        Permanent aura = new Permanent(auraCard);
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, auraCard);
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
         return aura;
     }
 }
