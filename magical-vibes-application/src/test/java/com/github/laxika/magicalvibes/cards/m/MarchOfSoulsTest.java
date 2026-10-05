@@ -68,6 +68,49 @@ class MarchOfSoulsTest extends BaseCardTest {
         assertThat(findPermanents(player2, "Spirit")).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Creates no Spirits when there are no creatures")
+    void emptyBattlefieldCreatesNoSpirits() {
+        castMarchOfSouls();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "March of Souls");
+    }
+
+    @Test
+    @DisplayName("Destroyed Spirit tokens are replaced by new Spirits")
+    void destroyedCreatureTokensAlsoCreateSpirits() {
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        castMarchOfSouls();
+        Permanent firstSpirit = findPermanent(player1, "Spirit");
+        Permanent secondSpirit = findPermanent(player2, "Spirit");
+
+        castMarchOfSouls();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firstSpirit);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(secondSpirit);
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1).allSatisfy(this::assertSpirit);
+        assertThat(findPermanents(player2, "Spirit")).hasSize(1).allSatisfy(this::assertSpirit);
+    }
+
+    @Test
+    @DisplayName("The controller of a stolen creature receives the Spirit, rather than its owner")
+    void stolenCreatureCreatesSpiritForController() {
+        GrizzlyBears card = new GrizzlyBears();
+        card.setOwnerId(player1.getId());
+        Permanent stolen = harness.addToBattlefieldAndReturn(player2, card);
+        gd.stolenCreatures.put(stolen.getId(), player1.getId());
+
+        castMarchOfSouls();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+        assertThat(findPermanents(player2, "Spirit")).hasSize(1).allSatisfy(this::assertSpirit);
+    }
+
     private void castMarchOfSouls() {
         harness.castFromHand(player1, new MarchOfSouls(), "{4}{W}");
         harness.passBothPriorities();
