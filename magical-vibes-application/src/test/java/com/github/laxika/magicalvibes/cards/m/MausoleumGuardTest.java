@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.cards.s.SeverTheBloodline;
+import com.github.laxika.magicalvibes.cards.s.SilentDeparture;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -9,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -17,12 +20,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MausoleumGuard.class})
 class MausoleumGuardTest extends BaseCardTest {
-
-    // ===== Death trigger =====
 
     @Nested
     @DisplayName("Death trigger")
+    @CardUsed({MausoleumGuard.class, WrathOfGod.class})
     class DeathTriggerTests {
 
         @Test
@@ -30,10 +33,7 @@ class MausoleumGuardTest extends BaseCardTest {
         void deathTriggerCreatesTwoSpiritTokens() {
             harness.addToBattlefield(player1, new MausoleumGuard());
 
-            harness.setHand(player1, List.of(new WrathOfGod()));
-            harness.addMana(player1, ManaColor.WHITE, 4);
-
-            harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
+            harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
             harness.passBothPriorities(); // Resolve Wrath — Mausoleum Guard dies
 
             GameData gd = harness.getGameData();
@@ -67,10 +67,7 @@ class MausoleumGuardTest extends BaseCardTest {
         void deathTriggerBelongsToController() {
             harness.addToBattlefield(player2, new MausoleumGuard());
 
-            harness.setHand(player1, List.of(new WrathOfGod()));
-            harness.addMana(player1, ManaColor.WHITE, 4);
-
-            harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
+            harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
             harness.passBothPriorities(); // Resolve Wrath — Mausoleum Guard dies
             harness.passBothPriorities(); // Resolve death trigger
 
@@ -82,5 +79,44 @@ class MausoleumGuardTest extends BaseCardTest {
             List<Permanent> player1Tokens = findPermanents(player1, "Spirit");
             assertThat(player1Tokens).isEmpty();
         }
+    }
+
+    @Test
+    @CardUsed({SilentDeparture.class})
+    @DisplayName("Returning Mausoleum Guard to hand does not create Spirits")
+    void returningToHandDoesNotTrigger() {
+        Permanent guard = harness.addToBattlefieldAndReturn(player2, new MausoleumGuard());
+        harness.setHand(player1, List.of(new SilentDeparture()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0, guard.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Mausoleum Guard");
+        harness.assertNotInGraveyard(player2, "Mausoleum Guard");
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+        assertThat(findPermanents(player2, "Spirit")).isEmpty();
+    }
+
+    @Test
+    @CardUsed({SeverTheBloodline.class})
+    @DisplayName("Exiling Mausoleum Guard does not create Spirits")
+    void exilingDoesNotTrigger() {
+        Permanent guard = harness.addToBattlefieldAndReturn(player2, new MausoleumGuard());
+        harness.setHand(player1, List.of(new SeverTheBloodline()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0, guard.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Mausoleum Guard");
+        harness.assertNotInGraveyard(player2, "Mausoleum Guard");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Mausoleum Guard"));
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+        assertThat(findPermanents(player2, "Spirit")).isEmpty();
     }
 }
