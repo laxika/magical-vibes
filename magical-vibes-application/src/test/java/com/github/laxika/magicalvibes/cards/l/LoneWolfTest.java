@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.Rancor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,6 +16,28 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({LoneWolf.class, GrizzlyBears.class})
 class LoneWolfTest extends BaseCardTest {
+
+    @Test
+    @CardUsed({LoneWolf.class, GrizzlyBears.class, Rancor.class})
+    @DisplayName("Lone Wolf with trample can assign all damage as though unblocked")
+    void loneWolfWithTrampleCanBypassBlocker() {
+        harness.setLife(player2, 20);
+        Permanent loneWolf = addCreatureReady(player1, new LoneWolf());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Rancor());
+        aura.setAttachedTo(loneWolf.getId());
+        loneWolf.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(player2.getId(), 4));
+
+        harness.assertLife(player2, 16);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Lone Wolf");
+    }
 
     @Test
     @DisplayName("Blocked Lone Wolf can assign combat damage to defending player")
