@@ -78,4 +78,43 @@ class PardicSwordsmithTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("The ability requires red mana and does not discard when payment is unavailable")
+    void cannotActivateWithoutRedMana() {
+        Permanent swordsmith = harness.addToBattlefieldAndReturn(player1, new PardicSwordsmith());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertNotInGraveyard(player1, "Forest");
+        assertThat(swordsmith.getPowerModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped swordsmith can activate twice and the boosts accumulate")
+    void repeatedActivationsWhileTapped() {
+        Permanent swordsmith = harness.addToBattlefieldAndReturn(player1, new PardicSwordsmith());
+        swordsmith.setTapped(true);
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(swordsmith.getPowerModifier()).isZero();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(swordsmith.getPowerModifier()).isEqualTo(4);
+        assertThat(swordsmith.getToughnessModifier()).isZero();
+        assertThat(swordsmith.isTapped()).isTrue();
+    }
 }
