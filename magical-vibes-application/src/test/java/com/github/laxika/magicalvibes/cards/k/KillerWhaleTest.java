@@ -77,4 +77,48 @@ class KillerWhaleTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
+
+    @Test
+    @DisplayName("Flying is granted on resolution only to the activating Whale")
+    void grantsFlyingOnlyToSourceOnResolution() {
+        Permanent whale = addCreatureReady(player1, new KillerWhale());
+        Permanent otherWhale = addCreatureReady(player1, new KillerWhale());
+        Permanent opposingWhale = addCreatureReady(player2, new KillerWhale());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.hasKeyword(gd, whale, Keyword.FLYING)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, whale, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherWhale, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingWhale, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Repeated activations each cost blue mana and all expire at cleanup")
+    void repeatedActivationsExpireAtCleanup() {
+        Permanent whale = addCreatureReady(player1, new KillerWhale());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, whale, Keyword.FLYING)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(gqs.hasKeyword(gd, whale, Keyword.FLYING)).isFalse();
+    }
 }
