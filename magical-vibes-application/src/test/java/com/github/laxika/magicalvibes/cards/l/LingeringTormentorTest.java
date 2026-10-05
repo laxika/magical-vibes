@@ -30,6 +30,62 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class LingeringTormentorTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Persist returns a stolen creature under its owner's control")
+    void persistReturnsToOwnerInsteadOfController() {
+        LingeringTormentor card = new LingeringTormentor();
+        card.setOwnerId(player2.getId());
+        Permanent tormentor = harness.addToBattlefieldAndReturn(player1, card);
+        harness.setHand(player1, List.of(new Eviscerate()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorcery(player1, 0, 0, tormentor.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Lingering Tormentor");
+        Permanent returned = findPermanent(player2, "Lingering Tormentor");
+        assertThat(returned.getCard().getId()).isEqualTo(card.getId());
+        assertThat(returned.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        harness.assertNotInGraveyard(player2, "Lingering Tormentor");
+    }
+
+    @Test
+    @DisplayName("Lethal -1/-1 counters prevent persist from returning the creature")
+    void lethalMinusCountersPreventPersist() {
+        Permanent tormentor = harness.addToBattlefieldAndReturn(player1, new LingeringTormentor());
+        tormentor.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Lingering Tormentor");
+        harness.assertInGraveyard(player1, "Lingering Tormentor");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Removing the persist counter allows the returned creature to persist again")
+    void persistWorksAgainAfterReturnCounterIsRemoved() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new LingeringTormentor());
+        harness.setHand(player1, List.of(new Eviscerate(), new Eviscerate()));
+        harness.addMana(player1, ManaColor.BLACK, 8);
+
+        harness.castSorcery(player1, 0, 0, original.getId());
+        resolveAllTriggers();
+        Permanent firstReturn = findPermanent(player1, "Lingering Tormentor");
+        assertThat(firstReturn.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        firstReturn.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 0);
+
+        harness.castSorcery(player1, 0, 0, firstReturn.getId());
+        resolveAllTriggers();
+
+        Permanent secondReturn = findPermanent(player1, "Lingering Tormentor");
+        assertThat(secondReturn).isNotSameAs(firstReturn);
+        assertThat(secondReturn.getCard().getId()).isEqualTo(original.getCard().getId());
+        assertThat(secondReturn.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        harness.assertNotInGraveyard(player1, "Lingering Tormentor");
+    }
+
+    @Test
     @DisplayName("Persist returns Lingering Tormentor with a -1/-1 counter when it dies with none")
     void persistReturnsWithMinusCounter() {
         harness.addToBattlefield(player1, new LingeringTormentor());
