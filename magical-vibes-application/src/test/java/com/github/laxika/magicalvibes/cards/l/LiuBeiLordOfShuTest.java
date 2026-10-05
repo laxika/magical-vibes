@@ -136,4 +136,24 @@ class LiuBeiLordOfShuTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, liuBei)).isEqualTo(boostedToughness - 2);
     }
 
+    @Test
+    @DisplayName("Boost remains until both named permanents leave")
+    void boostRemainsWhileEitherNamedPermanentRemains() {
+        Permanent liuBei = harness.addToBattlefieldAndReturn(player1, new LiuBeiLordOfShu());
+        int unboostedPower = gqs.getEffectivePower(gd, liuBei);
+        int unboostedToughness = gqs.getEffectiveToughness(gd, liuBei);
+        Permanent guanYu = harness.addToBattlefieldAndReturn(player1, new GuanYuSaintedWarrior());
+        Permanent zhangFei = harness.addToBattlefieldAndReturn(player1, new ZhangFeiFierceWarrior());
+
+        gd.playerBattlefields.get(player1.getId()).remove(guanYu);
+
+        assertThat(gqs.getEffectivePower(gd, liuBei)).isEqualTo(unboostedPower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, liuBei)).isEqualTo(unboostedToughness + 2);
+
+        gd.playerBattlefields.get(player1.getId()).remove(zhangFei);
+
+        assertThat(gqs.getEffectivePower(gd, liuBei)).isEqualTo(unboostedPower);
+        assertThat(gqs.getEffectiveToughness(gd, liuBei)).isEqualTo(unboostedToughness);
+    }
+
 }
