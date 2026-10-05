@@ -51,6 +51,67 @@ class NorthStarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Casting a generic-cost spell can preserve the permission for a later spell")
+    void preservesPermissionWhenEarlierSpellNeedsNoManaConversion() {
+        harness.addToBattlefield(player1, new NorthStar());
+        harness.setHand(player1, List.of(new NorthStar(), new AislingLeprechaun()));
+        harness.addMana(player1, ManaColor.COLORLESS, 9);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Aisling Leprechaun");
+        assertThat(countPermanents(player1, "North Star")).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Two resolved activations allow two spells to use colorless mana")
+    void separateActivationsGrantSeparatePermissions() {
+        harness.addToBattlefield(player1, new NorthStar());
+        harness.addToBattlefield(player1, new NorthStar());
+        AislingLeprechaun third = new AislingLeprechaun();
+        harness.setHand(player1, List.of(new AislingLeprechaun(), new AislingLeprechaun(), third));
+        harness.addMana(player1, ManaColor.COLORLESS, 11);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Aisling Leprechaun")).isEqualTo(2);
+        assertThat(harness.getGameActionAvailabilityService().isCardPlayable(
+                gd, player1.getId(), third, gd.playerManaPools.get(player1.getId()), 0)).isFalse();
+    }
+
+    @Test
+    @DisplayName("North Star does not grant its opponent permission to spend any mana type")
+    void permissionIsLimitedToAbilityController() {
+        harness.addToBattlefield(player1, new NorthStar());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        AislingLeprechaun spell = new AislingLeprechaun();
+        harness.setHand(player2, List.of(spell));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        assertThat(harness.getGameActionAvailabilityService().isCardPlayable(
+                gd, player2.getId(), spell, gd.playerManaPools.get(player2.getId()), 0)).isFalse();
+    }
+
+    @Test
     @DisplayName("Permission expires at the end of the turn")
     void permissionExpiresAtEndOfTurn() {
         harness.addToBattlefield(player1, new NorthStar());
