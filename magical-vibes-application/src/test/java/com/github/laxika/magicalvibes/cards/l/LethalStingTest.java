@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,15 +16,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LethalSting.class, GrizzlyBears.class, HillGiant.class, Forest.class})
 class LethalStingTest extends BaseCardTest {
 
     @Test
     @DisplayName("Puts a -1/-1 counter on a creature you control as a cost, then destroys target creature")
     void putsCounterAsCostThenDestroys() {
-        Permanent counterBearer = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(counterBearer);
-        Permanent victim = new Permanent(new HillGiant());
-        gd.playerBattlefields.get(player2.getId()).add(victim);
+        Permanent counterBearer = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         harness.setHand(player1, List.of(new LethalSting()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -42,8 +42,7 @@ class LethalStingTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot be cast without a creature you control to receive the counter")
     void cannotCastWithoutControlledCreature() {
-        Permanent victim = new Permanent(new HillGiant());
-        gd.playerBattlefields.get(player2.getId()).add(victim);
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         harness.setHand(player1, List.of(new LethalSting()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -55,8 +54,7 @@ class LethalStingTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreature() {
-        Permanent counterBearer = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(counterBearer);
+        Permanent counterBearer = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new Forest());
         var land = harness.getPermanentId(player2, "Forest");
         harness.setHand(player1, List.of(new LethalSting()));
@@ -65,5 +63,62 @@ class LethalStingTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, land, counterBearer.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The creature receiving the cost counter may also be the spell's target")
+    void canTargetCounterBearer() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new LethalSting()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorceryWithSacrifice(player1, 0, creature.getId(), creature.getId());
+
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot receive the counter to pay the cost")
+    void cannotPayCostWithOpponentsCreature() {
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new LethalSting()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, victim.getId(), victim.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(victim.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        harness.assertOnBattlefield(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("A creature may pay the counter cost even when the counter kills it")
+    void counterBearerMayDieFromCost() {
+        Permanent counterBearer = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        counterBearer.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new LethalSting()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorceryWithSacrifice(player1, 0, victim.getId(), counterBearer.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Hill Giant");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Hill Giant");
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
     }
 }
