@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.e.EnergyChamber;
 import com.github.laxika.magicalvibes.cards.e.EternalWitness;
 import com.github.laxika.magicalvibes.cards.p.ParadiseMantle;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -21,10 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class LeoninSquireTest extends BaseCardTest {
 
     private void castLeoninSquire() {
-        harness.setHand(player1, List.of(new LeoninSquire()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new LeoninSquire(), "{1}{W}");
         harness.passBothPriorities();
     }
 
@@ -72,5 +68,41 @@ class LeoninSquireTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         harness.assertInGraveyard(player2, "Conjurer's Bauble");
+    }
+
+    @Test
+    @DisplayName("ETB returns a zero-mana artifact and leaves the unchosen artifact in the graveyard")
+    void returnsZeroManaArtifact() {
+        Card zeroManaArtifact = new ParadiseMantle();
+        Card oneManaArtifact = new ConjurersBauble();
+        harness.setGraveyard(player1, List.of(zeroManaArtifact, oneManaArtifact));
+
+        castLeoninSquire();
+        harness.handleMultipleCardsChosen(player1, List.of(zeroManaArtifact.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Paradise Mantle");
+        harness.assertNotInGraveyard(player1, "Paradise Mantle");
+        harness.assertInGraveyard(player1, "Conjurer's Bauble");
+        harness.assertNotInHand(player1, "Conjurer's Bauble");
+    }
+
+    @Test
+    @DisplayName("ETB does not choose a replacement when its target leaves the graveyard before resolution")
+    void removedTargetDoesNotReturnAnotherArtifact() {
+        Card target = new ConjurersBauble();
+        Card otherArtifact = new ParadiseMantle();
+        harness.setGraveyard(player1, List.of(target, otherArtifact));
+
+        castLeoninSquire();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of(otherArtifact));
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Conjurer's Bauble");
+        harness.assertNotInHand(player1, "Paradise Mantle");
+        harness.assertInGraveyard(player1, "Paradise Mantle");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
