@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.c.CrystalQuarry;
 import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,16 +13,15 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CrystalQuarry.class, KrosanVerge.class, MirarisWake.class, MossfireValley.class, SuntailHawk.class})
+@CardUsed({CrystalQuarry.class, KrosanVerge.class, MirarisWake.class, MossfireValley.class,
+        Opalescence.class, SuntailHawk.class})
 class MirarisWakeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gives creatures you control +1/+1")
     void boostsCreaturesYouControl() {
         harness.addToBattlefield(player1, new MirarisWake());
-        harness.addToBattlefield(player1, new SuntailHawk());
-
-        Permanent hawk = findPermanent(player1, "Suntail Hawk");
+        Permanent hawk = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
 
         assertThat(gqs.getEffectivePower(gd, hawk)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, hawk)).isEqualTo(2);
@@ -31,9 +31,7 @@ class MirarisWakeTest extends BaseCardTest {
     @DisplayName("Does not give the bonus to an opponent's creatures")
     void doesNotBoostOpponentsCreatures() {
         harness.addToBattlefield(player1, new MirarisWake());
-        harness.addToBattlefield(player2, new SuntailHawk());
-
-        Permanent hawk = findPermanent(player2, "Suntail Hawk");
+        Permanent hawk = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
 
         assertThat(gqs.getEffectivePower(gd, hawk)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, hawk)).isEqualTo(1);
@@ -62,7 +60,7 @@ class MirarisWakeTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(CrystalQuarry.class)
+    @CardUsed({MirarisWake.class, CrystalQuarry.class})
     @DisplayName("Adds only one additional mana when a land produces multiple colors")
     void addsOnlyOneManaWhenLandProducesMultipleColors() {
         harness.addToBattlefield(player1, new MirarisWake());
@@ -90,5 +88,32 @@ class MirarisWakeTest extends BaseCardTest {
         var manaPool = gd.playerManaPools.get(player1.getId());
         assertThat(manaPool.get(ManaColor.COLORLESS)).isZero();
         assertThat(manaPool.get(ManaColor.RED) + manaPool.get(ManaColor.GREEN)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Wake receives its own bonus when it becomes a creature")
+    void boostsItselfWhenAnimated() {
+        Permanent wake = harness.addToBattlefieldAndReturn(player1, new MirarisWake());
+        harness.addToBattlefield(player1, new Opalescence());
+
+        assertThat(gqs.isCreature(gd, wake)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, wake)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, wake)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Multiple Wakes each boost creatures and add mana immediately")
+    void multipleWakesStackBothAbilities() {
+        harness.addToBattlefield(player1, new MirarisWake());
+        harness.addToBattlefield(player1, new MirarisWake());
+        Permanent hawk = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        harness.addToBattlefield(player1, new KrosanVerge());
+
+        harness.activateAbility(player1, 3, 0, null, null);
+
+        assertThat(gqs.getEffectivePower(gd, hawk)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, hawk)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
     }
 }
