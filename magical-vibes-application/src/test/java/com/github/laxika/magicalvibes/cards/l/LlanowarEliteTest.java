@@ -12,15 +12,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(LlanowarElite.class)
+@CardUsed({LlanowarElite.class})
 class LlanowarEliteTest extends BaseCardTest {
 
     @Test
     void castWithoutKickerEntersWithoutCounters() {
-        harness.setHand(player1, List.of(new LlanowarElite()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new LlanowarElite(), "{G}");
         harness.passBothPriorities();
 
         Permanent elite = findPermanent(player1, "Llanowar Elite");
@@ -48,5 +45,49 @@ class LlanowarEliteTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castKickedCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void kickerRemainsOptionalWhenEnoughManaIsAvailable() {
+        harness.setHand(player1, List.of(new LlanowarElite()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 8);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Llanowar Elite")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void enteringWithoutBeingCastDoesNotGiveKickerCounters() {
+        Permanent elite = harness.enterBattlefieldAndReturn(player1, new LlanowarElite());
+
+        assertThat(elite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void kickedEliteTramplesOverAnUnkickedElite() {
+        harness.setHand(player1, List.of(new LlanowarElite()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 8);
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent attacker = findPermanent(player1, "Llanowar Elite");
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new LlanowarElite());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 15);
+        harness.assertInGraveyard(player2, "Llanowar Elite");
+        harness.assertOnBattlefield(player1, "Llanowar Elite");
     }
 }
