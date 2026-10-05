@@ -2,22 +2,29 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
+import com.github.laxika.magicalvibes.cards.c.Clone;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
+import com.github.laxika.magicalvibes.cards.p.PullFromEternity;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MimicVat.class, CruelEdict.class, GrizzlyBears.class, GiantSpider.class})
 class MimicVatTest extends BaseCardTest {
 
     // ===== Imprint trigger =====
@@ -31,8 +38,7 @@ class MimicVatTest extends BaseCardTest {
         // Player1 kills player2's creature with Cruel Edict
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities(); // Resolve Cruel Edict
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Mimic Vat's imprint trigger should present a may ability
         GameData gd = harness.getGameData();
@@ -47,8 +53,7 @@ class MimicVatTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities(); // Resolve Cruel Edict → creature dies → may trigger
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Accept the imprint
         harness.handleMayAbilityChosen(player1, true);
@@ -77,8 +82,7 @@ class MimicVatTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities(); // Resolve Cruel Edict
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Decline the imprint
         harness.handleMayAbilityChosen(player1, false);
@@ -119,8 +123,7 @@ class MimicVatTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities(); // Resolve Cruel Edict → player2 prompted to choose
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Player2 chooses to sacrifice Grizzly Bears
         harness.handlePermanentChosen(player2, bearsId);
@@ -139,8 +142,7 @@ class MimicVatTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities(); // Resolve Cruel Edict → auto-sacrifice Giant Spider
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Accept second imprint
         harness.handleMayAbilityChosen(player1, true);
@@ -172,8 +174,7 @@ class MimicVatTest extends BaseCardTest {
         // Imprint a creature
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities(); // Resolve Cruel Edict
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities(); // Resolve imprint
 
@@ -221,8 +222,7 @@ class MimicVatTest extends BaseCardTest {
         // Imprint a creature
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -239,6 +239,7 @@ class MimicVatTest extends BaseCardTest {
 
         // Advance to end step
         advanceToEndStep();
+        harness.passBothPriorities(); // Resolve the delayed exile trigger.
 
         // Token should be exiled
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -255,8 +256,7 @@ class MimicVatTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Should get a may ability prompt
         GameData gd = harness.getGameData();
@@ -272,14 +272,142 @@ class MimicVatTest extends BaseCardTest {
         setupPlayer2Active();
         harness.setHand(player2, List.of(new CruelEdict()));
         harness.addMana(player2, ManaColor.BLACK, 2);
-        harness.castSorcery(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
-    // ===== Helpers =====
+    @Test
+    @CardUsed({Naturalize.class})
+    @DisplayName("Imprint still exiles the dying card after Mimic Vat is destroyed")
+    void imprintResolvesAfterVatLeaves() {
+        imprintBears();
+        harness.addToBattlefield(player2, new GiantSpider());
+        harness.setHand(player1, List.of(new CruelEdict(), new Naturalize()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Mimic Vat"));
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player2, "Giant Spider");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Giant Spider"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @CardUsed({Naturalize.class})
+    @DisplayName("Token creation still resolves after Mimic Vat is destroyed")
+    void tokenCreationResolvesAfterVatLeaves() {
+        imprintBears();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Mimic Vat"));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().isToken()
+                        && permanent.getCard().getName().equals("Grizzly Bears"));
+    }
+
+    @Test
+    @CardUsed({PullFromEternity.class})
+    @DisplayName("A card that leaves exile cannot be copied by Mimic Vat")
+    void noTokenAfterImprintedCardLeavesExile() {
+        imprintBears();
+        UUID exiledId = gd.getPlayerExiledCards(player2.getId()).getFirst().getId();
+        harness.setHand(player1, List.of(new PullFromEternity()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, exiledId);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    @CardUsed({Clone.class})
+    @DisplayName("Copying a Mimic Vat token does not copy its granted haste")
+    void grantedHasteIsNotCopiable() {
+        imprintBears();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        Permanent token = findPermanent(player1, "Grizzly Bears");
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, token.getId());
+
+        Permanent clone = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getOriginalCard() instanceof Clone)
+                .findFirst().orElseThrow();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, clone, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An imprinted manifested sorcery cannot produce a token")
+    void noTokenCopyOfManifestedSorcery() {
+        harness.addToBattlefield(player1, new MimicVat());
+        harness.addToBattlefield(player2, new CruelEdict());
+        Permanent manifested = findPermanent(player2, "Cruel Edict");
+        manifested.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        manifested.setManifested(true);
+        harness.setHand(player1, List.of(new CruelEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Cruel Edict"));
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    @DisplayName("A token dying does not trigger imprint or replace the exiled card")
+    void tokenDeathDoesNotTriggerImprint() {
+        imprintBears();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        setupPlayer2Active();
+        harness.setHand(player2, List.of(new CruelEdict()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
+
+        assertThat(gd.interaction.activeInteraction())
+                .isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    private void imprintBears() {
+        harness.addToBattlefield(player1, new MimicVat());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CruelEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+    }
 
     private void setupPlayer2Active() {
         harness.forceActivePlayer(player2);
@@ -291,6 +419,6 @@ class MimicVatTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
     }
 }
