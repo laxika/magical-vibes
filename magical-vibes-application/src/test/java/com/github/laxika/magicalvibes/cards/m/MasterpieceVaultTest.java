@@ -38,7 +38,7 @@ class MasterpieceVaultTest extends BaseCardTest {
     @DisplayName("Sacrificing the Vault drafts an Equipment onto the battlefield and attaches it")
     void sacrificeDraftsAndAttachesEquipment() {
         Permanent vault = harness.addToBattlefieldAndReturn(player1, new MasterpieceVault());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         harness.activateAbility(player1, 0, null, null);
@@ -77,11 +77,88 @@ class MasterpieceVaultTest extends BaseCardTest {
                         && permanent.getAttachedTo() == null);
     }
 
+    @Test
+    @DisplayName("The Vault stays on the battlefield until its activated ability resolves")
+    void sacrificeHappensOnResolution() {
+        Permanent vault = harness.addToBattlefieldAndReturn(player1, new MasterpieceVault());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(vault);
+        harness.assertNotInGraveyard(player1, "Masterpiece Vault");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(vault);
+        harness.assertInGraveyard(player1, "Masterpiece Vault");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+
+        harness.passBothPriorities();
+        chooseDraftedCard();
+    }
+
+    @Test
+    @DisplayName("Drafting works without creatures to attach the Equipment to")
+    void draftsWithoutCreatures() {
+        harness.addToBattlefield(player1, new MasterpieceVault());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Card selected = chooseDraftedCard();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(selected.getId())
+                        && permanent.getAttachedTo() == null);
+    }
+
+    @Test
+    @DisplayName("Attachment targets only creatures its controller controls and uses the stack")
+    void attachmentExcludesOpposingCreatures() {
+        harness.addToBattlefield(player1, new MasterpieceVault());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Card selected = chooseDraftedCard();
+        PendingInteraction.PermanentChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).contains(ownCreature.getId())
+                .doesNotContain(opposingCreature.getId());
+
+        harness.handlePermanentChosen(player1, ownCreature.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(selected.getId())
+                        && permanent.getAttachedTo() == null);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(selected.getId())
+                        && ownCreature.getId().equals(permanent.getAttachedTo()));
+    }
+
     private Card chooseDraftedCard() {
         PendingInteraction.LibraryRevealChoice choice = gd.interaction
                 .activeInteraction(PendingInteraction.LibraryRevealChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.allCards()).hasSize(3);
+        assertThat(choice.allCards()).extracting(Card::getName)
+                .doesNotHaveDuplicates()
+                .isSubsetOf("Champion's Helm", "Lightning Greaves", "Sword of Body and Mind",
+                        "Sword of Feast and Famine", "Sword of Fire and Ice",
+                        "Sword of Light and Shadow", "Sword of War and Peace");
         Card selected = choice.allCards().getFirst();
         harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
         assertThat(gd.interaction.activeInteraction()).isNotNull();
