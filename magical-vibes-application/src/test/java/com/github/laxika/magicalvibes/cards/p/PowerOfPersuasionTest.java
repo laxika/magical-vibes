@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiantHerdgorger;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -23,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PowerOfPersuasion.class, GrizzlyBears.class, Island.class})
+@CardUsed({PowerOfPersuasion.class, HillGiantHerdgorger.class, Island.class})
 class PowerOfPersuasionTest extends BaseCardTest {
 
     private RollD20EffectHandler rollD20EffectHandler;
@@ -50,7 +50,7 @@ class PowerOfPersuasionTest extends BaseCardTest {
         castPowerOfPersuasion(target);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
-        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Hill Giant Herdgorger");
         harness.assertInGraveyard(player1, "Power of Persuasion");
     }
 
@@ -98,7 +98,7 @@ class PowerOfPersuasionTest extends BaseCardTest {
     @DisplayName("Cannot target a creature controlled by its caster")
     void cannotTargetOwnCreature() {
         setRoll(20);
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new HillGiantHerdgorger());
         harness.setHand(player1, List.of(new PowerOfPersuasion()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -107,16 +107,84 @@ class PowerOfPersuasionTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("A result of 1 returns the creature to its owner's hand")
+    void oneReturnsTargetToHand() {
+        setRoll(1);
+        Permanent target = addTarget();
+
+        castPowerOfPersuasion(target);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInHand(player2, "Hill Giant Herdgorger");
+        harness.assertInGraveyard(player1, "Power of Persuasion");
+    }
+
+    @Test
+    @DisplayName("A result of 19 lets the owner leave the creature on top")
+    void nineteenPutsTargetOnTop() {
+        setRoll(19);
+        Permanent target = addTarget();
+        Card previousTop = new Island();
+        harness.setLibrary(player2, List.of(previousTop));
+
+        castPowerOfPersuasion(target);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.TargetLibraryDestinationChoice.class)
+                .playerId()).isEqualTo(player2.getId());
+        harness.handleListChoice(player2, "Top");
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(target.getCard(), previousTop);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Power of Persuasion");
+    }
+
+    @Test
+    @DisplayName("Control persists through the current turn and ends at the next turn's cleanup")
+    void controlSurvivesCurrentTurnCleanup() {
+        setRoll(20);
+        Permanent target = addTarget();
+        target.setTapped(true);
+
+        castPowerOfPersuasion(target);
+
+        assertThat(target.isTapped()).isTrue();
+        passToCleanup(player1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        passToCleanup(player2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        passToCleanup(player1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("A creature that changes to the caster's control before resolution is illegal")
+    void targetBecomingControlledByCasterDoesNotResolve() {
+        setRoll(9);
+        Permanent target = addTarget();
+        harness.setHand(player1, List.of(new PowerOfPersuasion()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castSorcery(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerBattlefields.get(player1.getId()).add(target);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        harness.assertInGraveyard(player1, "Power of Persuasion");
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(target.getCard());
+    }
+
     private Permanent addTarget() {
-        return harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        return harness.addToBattlefieldAndReturn(player2, new HillGiantHerdgorger());
     }
 
     private void castPowerOfPersuasion(Permanent target) {
         harness.setHand(player1, List.of(new PowerOfPersuasion()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 
     private void passToCleanup(com.github.laxika.magicalvibes.model.Player activePlayer) {
