@@ -37,8 +37,7 @@ class IrencragFeatTest extends BaseCardTest {
         harness.setHand(player1, List.of(new IrencragFeat()));
         addFeatMana();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(7);
     }
@@ -50,8 +49,7 @@ class IrencragFeatTest extends BaseCardTest {
         addFeatMana();
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.castInstant(player1, 0, player2.getId());
 
@@ -67,6 +65,52 @@ class IrencragFeatTest extends BaseCardTest {
         GameTestEngineContext.get().getBean(TurnCleanupService.class).resetEndOfTurnModifiers(gd);
 
         assertThat(gd.playersMaxSpellsThisTurn).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Spells cast before Feat resolves do not consume its additional spell")
+    void spellsBeforeResolutionDoNotConsumeAdditionalSpell() {
+        harness.setHand(player1, List.of(new IrencragFeat(), new Shock(), new Shock(), new Shock()));
+        addFeatMana();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 16);
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A second Feat does not grant another spell beyond the first restriction")
+    void secondFeatDoesNotExtendFirstRestriction() {
+        harness.setHand(player1, List.of(new IrencragFeat(), new IrencragFeat(), new Shock()));
+        addFeatMana();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(10);
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Feat does not restrict the opponent's spell casts")
+    void opponentCanCastMultipleSpells() {
+        harness.setHand(player1, List.of(new IrencragFeat()));
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        addFeatMana();
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 16);
     }
 
     private void addFeatMana() {
