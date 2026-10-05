@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({OverchargedAmalgam.class, GrizzlyBears.class, IcyManipulator.class, LightningBolt.class})
 class OverchargedAmalgamTest extends BaseCardTest {
 
     /** Casts Overcharged Amalgam and advances to its exploit "Sacrifice a creature?" prompt. */
@@ -97,8 +99,7 @@ class OverchargedAmalgamTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.addToBattlefield(player2, new IcyManipulator());
-        Permanent icy = findPermanent(player2, "Icy Manipulator");
+        Permanent icy = harness.addToBattlefieldAndReturn(player2, new IcyManipulator());
         icy.setSummoningSick(false);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player2);
@@ -135,5 +136,61 @@ class OverchargedAmalgamTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertNotOnBattlefield(player1, "Overcharged Amalgam");
         harness.assertInGraveyard(player1, "Overcharged Amalgam");
+    }
+
+    @Test
+    @DisplayName("Exploit counters a triggered ability that has no targets")
+    void exploitCountersUntargetedTriggeredAbility() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new OverchargedAmalgam()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        UUID exploitId = gd.stack.getLast().getTargetableId();
+
+        harness.setHand(player1, List.of(new OverchargedAmalgam()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Overcharged Amalgam"));
+        harness.handlePermanentChosen(player1, exploitId);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player2, "Overcharged Amalgam");
+        harness.assertNotInGraveyard(player2, "Overcharged Amalgam");
+        harness.assertInGraveyard(player1, "Overcharged Amalgam");
+    }
+
+    @Test
+    @DisplayName("Removing Amalgam before exploit resolves prevents its counter trigger")
+    void removedSourceCanSacrificeWithoutCountering() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        LightningBolt originalSpell = new LightningBolt();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(originalSpell, new OverchargedAmalgam(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Overcharged Amalgam"));
+        harness.assertNotOnBattlefield(player1, "Overcharged Amalgam");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Grizzly Bears"));
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(originalSpell);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 17);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 }
