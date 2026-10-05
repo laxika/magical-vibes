@@ -90,6 +90,76 @@ class PrematureBurialTest extends BaseCardTest {
                 .hasMessageContaining("entered since your last turn ended");
     }
 
+    @Test
+    @DisplayName("Cannot target a creature from your previous turn during an extra turn")
+    void cannotTargetCreatureFromOwnPreviousTurnDuringExtraTurn() {
+        prepareTurnProgression();
+        harness.castFromHand(player2, new AshcoatBear(), "{1}{G}");
+        harness.passBothPriorities();
+        UUID creatureId = harness.getPermanentId(player2, "Ashcoat Bear");
+
+        gd.queueExtraTurnFirst(player1.getId(), false);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new PrematureBurial()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, creatureId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("entered since your last turn ended");
+        harness.assertOnBattlefield(player2, "Ashcoat Bear");
+    }
+
+    @Test
+    @DisplayName("Can target a creature from the opponent's first of two consecutive turns")
+    void destroysCreatureFromOpponentTurnBeforeTheirExtraTurn() {
+        prepareTurnProgression();
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player2, new AshcoatBear(), "{1}{G}");
+        harness.passBothPriorities();
+        UUID creatureId = harness.getPermanentId(player2, "Ashcoat Bear");
+
+        gd.queueExtraTurnFirst(player2.getId(), false);
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new PrematureBurial()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveSorcery(player1, 0, creatureId);
+
+        harness.assertNotOnBattlefield(player2, "Ashcoat Bear");
+        harness.assertInGraveyard(player2, "Ashcoat Bear");
+    }
+
+    @Test
+    @DisplayName("Can destroy your own creature that entered this turn")
+    void destroysOwnCreatureThatEnteredThisTurn() {
+        gd.turnsTakenByPlayer.put(player1.getId(), 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new AshcoatBear(), "{1}{G}");
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new PrematureBurial()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player1, "Ashcoat Bear"));
+
+        harness.assertNotOnBattlefield(player1, "Ashcoat Bear");
+        harness.assertInGraveyard(player1, "Ashcoat Bear");
+    }
+
+    private void prepareTurnProgression() {
+        gd.turnsTakenByPlayer.put(player1.getId(), 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island(), new Island()));
+        harness.setLibrary(player2, List.of(new Island(), new Island(), new Island(), new Island()));
+    }
+
     private void addEligibleCreature(Card creature,
                                      Map<UUID, List<Card>> entriesByController) {
         harness.addToBattlefield(player2, creature);
