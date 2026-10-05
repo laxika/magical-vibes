@@ -164,4 +164,61 @@ class ParallaxTideTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(card -> card.getName().equals("Kor Haven"));
     }
+
+    @Test
+    @DisplayName("Exiled lands wait for the leaves-the-battlefield trigger to resolve")
+    void landsRemainExiledUntilReturnTriggerResolves() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new KorHaven());
+        Permanent tide = harness.addToBattlefieldAndReturn(player1, new ParallaxTide());
+        tide.setCounterCount(CounterType.FADE, 1);
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+
+        harness.addToBattlefield(player2, new SealOfCleansing());
+        harness.activateAbility(player2, 0, null, tide.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Parallax Tide");
+        harness.assertNotOnBattlefield(player2, "Kor Haven");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Kor Haven"));
+
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Kor Haven");
+    }
+
+    @Test
+    @DisplayName("Fading does not remove counters during an opponent's upkeep")
+    void opponentUpkeepDoesNotRemoveFadeCounter() {
+        Permanent tide = harness.addToBattlefieldAndReturn(player1, new ParallaxTide());
+        tide.setCounterCount(CounterType.FADE, 2);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(tide.getCounterCount(CounterType.FADE)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Parallax Tide");
+    }
+
+    @Test
+    @DisplayName("Spending the last fade counter in response to fading causes sacrifice")
+    void spendingLastCounterInResponseToUpkeepCausesSacrifice() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new KorHaven());
+        Permanent tide = harness.addToBattlefieldAndReturn(player1, new ParallaxTide());
+        tide.setCounterCount(CounterType.FADE, 1);
+
+        advanceToUpkeep(player1);
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Kor Haven");
+        assertThat(tide.getCounterCount(CounterType.FADE)).isZero();
+
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Parallax Tide");
+        harness.assertOnBattlefield(player2, "Kor Haven");
+    }
 }
