@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.h.HandOfHonor;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -11,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MeishinTheMindCage.class, HandOfHonor.class})
+@CardUsed({MeishinTheMindCage.class, HandOfHonor.class, Opalescence.class})
 class MeishinTheMindCageTest extends BaseCardTest {
 
     @Test
@@ -57,5 +58,43 @@ class MeishinTheMindCageTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An empty hand leaves creatures' power unchanged")
+    void emptyHandDoesNotReducePower() {
+        harness.setHand(player1, List.of());
+        harness.addToBattlefield(player1, new MeishinTheMindCage());
+        Permanent creature = addCreatureReady(player2, new HandOfHonor());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Power can become negative and recovers when the hand shrinks")
+    void negativePowerRecoversWhenHandShrinks() {
+        harness.setHand(player1, List.of(new HandOfHonor(), new HandOfHonor(), new HandOfHonor()));
+        harness.addToBattlefield(player1, new MeishinTheMindCage());
+        Permanent creature = addCreatureReady(player2, new HandOfHonor());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+
+        harness.setHand(player1, List.of());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Meishin reduces its own power when it becomes a creature")
+    void reducesItsOwnPowerWhenAnimated() {
+        harness.setHand(player1, List.of(new HandOfHonor(), new HandOfHonor()));
+        Permanent meishin = harness.addToBattlefieldAndReturn(player1, new MeishinTheMindCage());
+        harness.addToBattlefield(player2, new Opalescence());
+
+        assertThat(gqs.getEffectivePower(gd, meishin)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, meishin)).isEqualTo(7);
     }
 }
