@@ -2,19 +2,23 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Hubris;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LaunchTheFleet.class, GrizzlyBears.class, Forest.class, Hubris.class})
 class LaunchTheFleetTest extends BaseCardTest {
 
     @Test
@@ -25,17 +29,19 @@ class LaunchTheFleetTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LaunchTheFleet()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castSorcery(player1, 0, List.of(first.getId(), second.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(first.getId(), second.getId()));
 
-        declareAttackers(player1, List.of(0, 1));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0, 1));
+            resolveAllTriggers();
+        });
 
         List<Permanent> soldiers = findPermanents(player1, "Soldier");
         assertThat(soldiers).hasSize(2);
         assertThat(soldiers).allSatisfy(soldier -> {
             assertThat(soldier.isTapped()).isTrue();
-            assertThat(soldier.isAttackedThisTurn()).isTrue();
+            assertThat(soldier.isAttacking()).isTrue();
+            assertThat(soldier.isAttackedThisTurn()).isFalse();
         });
     }
 
@@ -59,8 +65,7 @@ class LaunchTheFleetTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LaunchTheFleet()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castSorcery(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, bear.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -84,4 +89,99 @@ class LaunchTheFleetTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void canCastWithZeroTargets() {
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new LaunchTheFleet()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, List.<UUID>of());
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof LaunchTheFleet);
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Soldier")).isEmpty();
+    }
+
+    @Test
+    void repeatedCastsGrantIndependentAttackTriggers() {
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new LaunchTheFleet(), new LaunchTheFleet()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveSorcery(player1, 0, bear.getId());
+        harness.castAndResolveSorcery(player1, 0, bear.getId());
+        declareAttackers(player1, List.of(0));
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Soldier")).hasSize(2);
+    }
+
+    @Test
+    void untargetedAttackerDoesNotCreateSoldier() {
+        Permanent targeted = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new LaunchTheFleet()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, targeted.getId());
+        declareAttackers(player1, List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Soldier")).hasSize(1);
+    }
+
+    @Test
+    void remainingTargetStillGainsAbilityWhenAnotherTargetLeaves() {
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new LaunchTheFleet()));
+        harness.setHand(player2, List.of(new Hubris()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castSorcery(player1, 0, List.of(first.getId(), second.getId()));
+        harness.castAndResolveInstant(player2, 0, first.getId());
+        resolveAllTriggers();
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Soldier")).hasSize(1);
+    }
+
+    @Test
+    void attackTriggerCreatesTokenEvenAfterAttackerLeaves() {
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new LaunchTheFleet()));
+        harness.setHand(player2, List.of(new Hubris()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castAndResolveSorcery(player1, 0, bear.getId());
+        declareAttackers(player1, List.of(0));
+        harness.castAndResolveInstant(player2, 0, bear.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Grizzly Bears")).isEmpty();
+        assertThat(findPermanents(player1, "Soldier")).hasSize(1);
+    }
+
+    @Test
+    void canTargetMoreThanNinetyNineCreatures() {
+        List<UUID> targets = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            targets.add(addCreatureReady(player1, new GrizzlyBears()).getId());
+        }
+        harness.setHand(player1, List.of(new LaunchTheFleet()));
+        harness.addMana(player1, ManaColor.WHITE, 100);
+
+        harness.castAndResolveSorcery(player1, 0, targets);
+        declareAttackers(player1, List.of(99));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Soldier")).hasSize(1);
+    }
 }
