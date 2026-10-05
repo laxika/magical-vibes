@@ -124,6 +124,57 @@ class KabutoMothTest extends BaseCardTest {
         assertThat(target.getToughnessModifier()).isZero();
     }
 
+    @Test
+    @DisplayName("Can target itself with its tap ability")
+    void canBoostItself() {
+        addReadyKabutoMoth();
+        Permanent moth = findPermanent(player1, "Kabuto Moth");
+
+        harness.activateAbility(player1, 0, null, moth.getId());
+        harness.passBothPriorities();
+
+        assertThat(moth.isTapped()).isTrue();
+        assertThat(moth.getPowerModifier()).isEqualTo(1);
+        assertThat(moth.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Ability still boosts its target after Kabuto Moth leaves the battlefield")
+    void resolvesAfterSourceLeaves() {
+        Permanent target = addKabutoMothAndTarget();
+        Permanent moth = findPermanent(player1, "Kabuto Moth");
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(moth);
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Boosts from two Kabuto Moths accumulate and expire together")
+    void multipleBoostsAccumulate() {
+        addReadyKabutoMoth();
+        addCreatureReady(player1, new KabutoMoth());
+        Permanent target = addCreatureReady(player1, new IsamaruHoundOfKonda());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(4);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+    }
+
     private Permanent addKabutoMothAndTarget() {
         addReadyKabutoMoth();
         return addCreatureReady(player1, new IsamaruHoundOfKonda());
