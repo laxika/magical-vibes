@@ -44,8 +44,7 @@ class MaliciousEclipseTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, angel.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, angel.getId());
 
         harness.assertNotInGraveyard(player2, "Serra Angel");
         assertThat(harness.getGameData().getPlayerExiledCards(player2.getId()))
@@ -69,11 +68,62 @@ class MaliciousEclipseTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(4);
     }
 
+    @Test
+    @DisplayName("Creatures entering later are not shrunk but are still exiled if they die")
+    void replacementAppliesToCreaturesEnteringLater() {
+        castEclipse();
+
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+    }
+
+    @Test
+    @DisplayName("Your own creatures dying later in the turn go to the graveyard")
+    void ownLaterDeathIsNotExiled() {
+        Permanent angel = harness.addToBattlefieldAndReturn(player1, new SerraAngel());
+
+        castEclipse();
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, angel.getId());
+
+        harness.assertInGraveyard(player1, "Serra Angel");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The exile replacement expires at end of turn")
+    void replacementExpiresAtEndOfTurn() {
+        castEclipse();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
     private void castEclipse() {
         harness.setHand(player1, List.of(new MaliciousEclipse()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 }
