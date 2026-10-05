@@ -66,4 +66,63 @@ class MagnificentEndTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
     }
+
+    @Test
+    @DisplayName("The reduced cost still requires white mana")
+    void reducedCostStillRequiresWhiteMana() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ColossalDreadmaw());
+        target.tap();
+        harness.setHand(player1, List.of(new MagnificentEnd()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can target a tapped creature controlled by the caster at the reduced cost")
+    void reducedCostForOwnTappedCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ColossalDreadmaw());
+        target.tap();
+        harness.setHand(player1, List.of(new MagnificentEnd()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(target.getMarkedDamage()).isEqualTo(5);
+        harness.assertOnBattlefield(player1, "Colossal Dreadmaw");
+    }
+
+    @Test
+    @DisplayName("Still deals damage if the tapped target untaps before resolution")
+    void targetUntappingDoesNotInvalidateSpell() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ColossalDreadmaw());
+        target.tap();
+        harness.setHand(player1, List.of(new MagnificentEnd()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castInstant(player1, 0, target.getId());
+        target.untap();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(target.getMarkedDamage()).isEqualTo(5);
+        harness.assertInGraveyard(player1, "Magnificent End");
+    }
+
+    @Test
+    @DisplayName("Five damage combines with existing damage to kill a creature")
+    void damageCombinesWithExistingDamage() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ColossalDreadmaw());
+        target.setMarkedDamage(1);
+        harness.setHand(player1, List.of(new MagnificentEnd()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertInGraveyard(player2, "Colossal Dreadmaw");
+        harness.assertInGraveyard(player1, "Magnificent End");
+    }
 }
