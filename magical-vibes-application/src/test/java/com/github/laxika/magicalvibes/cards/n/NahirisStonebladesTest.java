@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -31,8 +32,7 @@ class NahirisStonebladesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NahirisStoneblades()));
         giveMana();
 
-        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(first.getId(), second.getId()));
 
         assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
         assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
@@ -47,8 +47,7 @@ class NahirisStonebladesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NahirisStoneblades()));
         giveMana();
 
-        harness.castInstant(player1, 0, List.of(bears.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(bears.getId()));
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -60,8 +59,7 @@ class NahirisStonebladesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NahirisStoneblades()));
         giveMana();
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Nahiri's Stoneblades");
@@ -74,12 +72,10 @@ class NahirisStonebladesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NahirisStoneblades()));
         giveMana();
 
-        harness.castInstant(player1, 0, List.of(bears.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(bears.getId()));
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
 
-        bears.resetModifiers();
-        gd.expireEndOfTurnFloatingEffects();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
     }
@@ -94,5 +90,63 @@ class NahirisStonebladesTest extends BaseCardTest {
         UUID mountainId = mountain.getId();
         assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(mountainId)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("May target creatures controlled by different players")
+    void mayTargetOpponentsCreature() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new NahirisStoneblades()));
+        giveMana();
+
+        harness.castAndResolveInstant(player1, 0, List.of(first.getId(), second.getId()));
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Cannot choose more than two creatures")
+    void cannotTargetThreeCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new NahirisStoneblades()));
+        giveMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot choose the same creature twice")
+    void cannotDuplicateTarget() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new NahirisStoneblades()));
+        giveMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(bears.getId(), bears.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Remaining legal target is boosted when the other target leaves")
+    void resolvesForRemainingTarget() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new NahirisStoneblades()));
+        giveMana();
+
+        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(second);
+        harness.setGraveyard(player2, List.of(second.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Nahiri's Stoneblades");
     }
 }
