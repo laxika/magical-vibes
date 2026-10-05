@@ -66,4 +66,65 @@ class KjeldoranWarCryTest extends BaseCardTest {
         assertThat(bear.getPowerModifier()).isZero();
         assertThat(bear.getToughnessModifier()).isZero();
     }
+
+    @Test
+    @DisplayName("A responding War Cry enters the graveyard before the original counts it")
+    void countsCardsAtResolutionRatherThanCasting() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new KjeldoranOutrider());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new KjeldoranOutrider());
+
+        harness.castFromHand(player1, new KjeldoranWarCry(), "{1}{W}");
+        harness.castFromHand(player2, new KjeldoranWarCry(), "{1}{W}");
+        harness.passBothPriorities();
+
+        assertThat(opposingCreature.getPowerModifier()).isEqualTo(1);
+        assertThat(opposingCreature.getToughnessModifier()).isEqualTo(1);
+        assertThat(ownCreature.getPowerModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(ownCreature.getPowerModifier()).isEqualTo(2);
+        assertThat(ownCreature.getToughnessModifier()).isEqualTo(2);
+        assertThat(opposingCreature.getPowerModifier()).isEqualTo(1);
+        assertThat(opposingCreature.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Successive War Cries stack their fixed boosts without counting themselves")
+    void successiveCastsUseSeparateFixedAmounts() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new KjeldoranOutrider());
+
+        harness.castFromHand(player1, new KjeldoranWarCry(), "{1}{W}");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Kjeldoran War Cry");
+
+        assertThat(creature.getPowerModifier()).isEqualTo(1);
+        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+
+        harness.castFromHand(player1, new KjeldoranWarCry(), "{1}{W}");
+        harness.passBothPriorities();
+
+        assertThat(creature.getPowerModifier()).isEqualTo(3);
+        assertThat(creature.getToughnessModifier()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution do not receive the boost")
+    void doesNotBoostCreaturesEnteringLater() {
+        Permanent existingCreature = harness.addToBattlefieldAndReturn(player1, new KjeldoranOutrider());
+
+        harness.castFromHand(player1, new KjeldoranWarCry(), "{1}{W}");
+        harness.passBothPriorities();
+        KjeldoranOutrider laterCreature = new KjeldoranOutrider();
+        harness.castFromHand(player1, laterCreature, "{1}{W}");
+        harness.passBothPriorities();
+
+        Permanent enteredCreature = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(laterCreature.getId()))
+                .findFirst().orElseThrow();
+        assertThat(existingCreature.getPowerModifier()).isEqualTo(1);
+        assertThat(existingCreature.getToughnessModifier()).isEqualTo(1);
+        assertThat(enteredCreature.getPowerModifier()).isZero();
+        assertThat(enteredCreature.getToughnessModifier()).isZero();
+    }
 }
