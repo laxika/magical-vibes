@@ -112,19 +112,14 @@ class PersuasionTest extends BaseCardTest {
                 .anyMatch(p -> p.getId().equals(creature.getId()));
 
         // Find the Persuasion aura permanent
-        Permanent persuasionPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard() == persuasion)
-                .findFirst()
-                .orElseThrow();
+        Permanent persuasionPerm = findPermanent(player1, "Persuasion");
 
-        // Set up for Demystify: force step to a main phase, give player2 priority
+        // Set up for Demystify in a main phase
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Demystify()));
         harness.addMana(player2, ManaColor.WHITE, 1);
 
-        // Player1 passes, player2 casts Demystify targeting Persuasion
-        harness.passPriority(player1);
+        // Player2 casts Demystify targeting Persuasion
         harness.castAndResolveInstant(player2, 0, persuasionPerm.getId());
 
         // Creature should return to player2's battlefield
@@ -138,7 +133,7 @@ class PersuasionTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Persuasion is put into its controller's graveyard when the enchanted creature leaves")
+    @DisplayName("Persuasion is put into its owner's graveyard when the enchanted creature leaves")
     void auraIsPutIntoGraveyardWhenEnchantedCreatureLeaves() {
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         Persuasion persuasion = new Persuasion();
@@ -150,11 +145,9 @@ class PersuasionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Terror()));
         harness.addMana(player2, ManaColor.BLACK, 2);
 
-        harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, creature.getId());
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(persuasion);
@@ -174,17 +167,12 @@ class PersuasionTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        Permanent persuasionPermanent = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard() == persuasion)
-                .findFirst()
-                .orElseThrow();
+        Permanent persuasionPermanent = findPermanent(player1, "Persuasion");
 
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new AuraGraft()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, persuasionPermanent.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
@@ -220,5 +208,100 @@ class PersuasionTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-}
+    @Test
+    @DisplayName("Enchanting your own creature does not untap it or make it summoning sick")
+    void enchantingOwnCreaturePreservesReadinessAndTapState() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        creature.tap();
+        harness.setHand(player1, List.of(new Persuasion()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
 
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.isSummoningSick()).isFalse();
+        assertThat(findPermanent(player1, "Persuasion").getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Stealing a tapped creature does not untap it")
+    void stealingTappedCreaturePreservesTapState() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        creature.tap();
+        harness.setHand(player1, List.of(new Persuasion()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Removing the newer Persuasion restores control from the older Persuasion")
+    void removingNewerPersuasionRestoresOlderControlEffect() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Persuasion()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        Permanent olderAura = findPermanent(player1, "Persuasion");
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new Persuasion()));
+        harness.addMana(player2, ManaColor.BLUE, 5);
+        harness.castEnchantment(player2, 0, creature.getId());
+        harness.passBothPriorities();
+        Permanent newerAura = findPermanent(player2, "Persuasion");
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(olderAura);
+        assertThat(olderAura.getAttachedTo()).isEqualTo(creature.getId());
+
+        harness.setHand(player2, List.of(new Demystify()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player2, 0, newerAura.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature, olderAura);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature, newerAura);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(newerAura.getCard());
+    }
+
+    @Test
+    @DisplayName("Moving Persuasion releases the old creature and controls the new creature")
+    void movingPersuasionUpdatesBothCreaturesControl() {
+        Permanent originalCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent newCreature = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Persuasion()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castEnchantment(player1, 0, originalCreature.getId());
+        harness.passBothPriorities();
+        Permanent aura = findPermanent(player1, "Persuasion");
+
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new AuraGraft()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player2, 0, aura.getId());
+        harness.handlePermanentChosen(player2, newCreature.getId());
+
+        assertThat(aura.getAttachedTo()).isEqualTo(newCreature.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(aura, originalCreature, newCreature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(originalCreature, newCreature);
+        assertThat(newCreature.isSummoningSick()).isTrue();
+
+        harness.setHand(player2, List.of(new Demystify()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player2, 0, aura.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(newCreature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(originalCreature).doesNotContain(newCreature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(aura.getCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(aura.getCard());
+    }
+
+}
