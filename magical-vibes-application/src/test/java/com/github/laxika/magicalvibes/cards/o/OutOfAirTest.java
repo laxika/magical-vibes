@@ -119,8 +119,7 @@ class OutOfAirTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -138,12 +137,66 @@ class OutOfAirTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, target.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, shock.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, shock.getId());
 
         GameData gameData = harness.getGameData();
         harness.assertInGraveyard(player1, "Shock");
         assertThat(gameData.stack).noneMatch(stackEntry -> stackEntry.getCard().getName().equals("Shock"));
         harness.assertInGraveyard(player2, "Out of Air");
+    }
+
+    @Test
+    void creatureReductionDoesNotRemoveBlueManaRequirements() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new OutOfAir()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player2, "Out of Air");
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void canCounterOwnCreatureSpellAtReducedCost() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears, new OutOfAir()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Out of Air");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void countersSorceryAtFullCostWithoutDrawingCards() {
+        Divination divination = new Divination();
+        harness.setHand(player1, List.of(divination));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.setHand(player2, List.of(new OutOfAir()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, divination.getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Divination");
+        harness.assertInGraveyard(player2, "Out of Air");
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
 }
