@@ -36,8 +36,7 @@ class LeeringGargoyleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, gargoyle)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, gargoyle)).isEqualTo(2);
@@ -65,5 +64,45 @@ class LeeringGargoyleTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The stats and flying change only when the ability resolves")
+    void effectsWaitForResolution() {
+        Permanent gargoyle = addCreatureReady(player1, new LeeringGargoyle());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gargoyle.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, gargoyle)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, gargoyle)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, gargoyle, Keyword.FLYING)).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, gargoyle)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, gargoyle)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, gargoyle, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability affects only its source, not other Gargoyles")
+    void affectsOnlySource() {
+        Permanent source = addCreatureReady(player1, new LeeringGargoyle());
+        Permanent friendly = addCreatureReady(player1, new LeeringGargoyle());
+        Permanent opposing = addCreatureReady(player2, new LeeringGargoyle());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, source, Keyword.FLYING)).isFalse();
+        for (Permanent unaffected : new Permanent[]{friendly, opposing}) {
+            assertThat(gqs.getEffectivePower(gd, unaffected)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, unaffected)).isEqualTo(2);
+            assertThat(gqs.hasKeyword(gd, unaffected, Keyword.FLYING)).isTrue();
+            assertThat(unaffected.isTapped()).isFalse();
+        }
     }
 }
