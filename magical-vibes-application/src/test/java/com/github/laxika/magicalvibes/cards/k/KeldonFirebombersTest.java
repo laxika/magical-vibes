@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({KeldonFirebombers.class, KeldonBerserker.class, RhysticCave.class,
-        WintermoonMesa.class})
+        WintermoonMesa.class, TajuruPreserver.class})
 class KeldonFirebombersTest extends BaseCardTest {
 
     @Test
@@ -27,8 +27,7 @@ class KeldonFirebombersTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
 
         castKeldonFirebombers();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.MultiPermanentChoice player1Choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -60,8 +59,7 @@ class KeldonFirebombersTest extends BaseCardTest {
         harness.addToBattlefield(player2, new KeldonBerserker());
 
         castKeldonFirebombers();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(landCount(player1)).isEqualTo(3);
@@ -69,7 +67,6 @@ class KeldonFirebombersTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Keldon Berserker");
     }
 
-    @CardUsed({TajuruPreserver.class})
     @Test
     void opponentCannotCauseProtectedPlayerToSacrificeLands() {
         addLands(player1, 3);
@@ -78,8 +75,7 @@ class KeldonFirebombersTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
 
         castKeldonFirebombers();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(landCount(player1)).isEqualTo(3);
@@ -87,7 +83,6 @@ class KeldonFirebombersTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Tajuru Preserver");
     }
 
-    @CardUsed(TajuruPreserver.class)
     @Test
     void sacrificeProtectionDoesNotPreventYourOwnAbility() {
         addLands(player1, 4);
@@ -106,6 +101,46 @@ class KeldonFirebombersTest extends BaseCardTest {
 
         assertThat(landCount(player1)).isEqualTo(3);
         assertThat(landCount(player2)).isEqualTo(3);
+    }
+
+    @Test
+    void onlyOpponentWithExcessLandsChoosesAndSacrificesSelectedLand() {
+        addLands(player2, 4);
+        harness.forceActivePlayer(player1);
+        java.util.UUID selectedLand = gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof WintermoonMesa)
+                .map(Permanent::getId)
+                .findFirst().orElseThrow();
+
+        castKeldonFirebombers();
+        resolveAllTriggers();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.maxCount()).isEqualTo(1);
+        assertThat(landCount(player2)).isEqualTo(4);
+
+        harness.handleMultiplePermanentsChosen(player2, List.of(selectedLand));
+
+        assertThat(landCount(player1)).isZero();
+        assertThat(landCount(player2)).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(selectedLand));
+        harness.assertInGraveyard(player2, "Wintermoon Mesa");
+        harness.assertOnBattlefield(player1, "Keldon Firebombers");
+    }
+
+    @Test
+    void noLandsOnEitherSideLeavesFirebombersOnBattlefieldWithoutChoice() {
+        castKeldonFirebombers();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(landCount(player1)).isZero();
+        assertThat(landCount(player2)).isZero();
+        harness.assertOnBattlefield(player1, "Keldon Firebombers");
     }
 
     private void castKeldonFirebombers() {
