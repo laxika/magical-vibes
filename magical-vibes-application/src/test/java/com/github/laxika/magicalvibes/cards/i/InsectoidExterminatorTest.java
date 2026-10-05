@@ -57,10 +57,87 @@ class InsectoidExterminatorTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("A land leaving satisfies Disappear")
+    void scriesAfterLandLeaves() {
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addToBattlefield(player1, new InsectoidExterminator());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, land));
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Multiple departures create only one end-step trigger per Exterminator")
+    void multipleDeparturesTriggerOnlyOnce() {
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addToBattlefield(player1, new InsectoidExterminator());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().removePermanentToHand(gd, first);
+            harness.getPermanentRemovalService().removePermanentToHand(gd, second);
+        });
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not trigger on the opponent's end step even after your permanent leaves")
+    void doesNotTriggerOnOpponentsEndStep() {
+        harness.addToBattlefield(player1, new InsectoidExterminator());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.forceActivePlayer(player2);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, land));
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("A departure before Exterminator enters still satisfies Disappear")
+    void scriesForDepartureBeforeEntering() {
+        harness.setLibrary(player1, List.of(new Forest()));
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, land));
+        harness.addToBattlefield(player1, new InsectoidExterminator());
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A departure after the end step begins does not retroactively trigger Disappear")
+    void departureDuringEndStepDoesNotTrigger() {
+        harness.addToBattlefield(player1, new InsectoidExterminator());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        advanceToEndStep(player1);
+        assertThat(gd.stack).isEmpty();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, land));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+    }
     private void advanceToEndStep(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player, TurnStep.END_STEP);
     }
 }
