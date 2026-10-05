@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.c.Conviction;
 import com.github.laxika.magicalvibes.cards.f.FoulImp;
 import com.github.laxika.magicalvibes.cards.f.FurnaceSpirit;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Mindwarper.class, FoulImp.class, FurnaceSpirit.class})
+@CardUsed({Mindwarper.class, FoulImp.class, FurnaceSpirit.class, Conviction.class})
 class MindwarperTest extends BaseCardTest {
 
     @Test
@@ -29,8 +30,7 @@ class MindwarperTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent mindwarper = findPermanent(player1, "Mindwarper");
         assertThat(mindwarper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
@@ -96,7 +96,10 @@ class MindwarperTest extends BaseCardTest {
     @DisplayName("Cannot activate without a +1/+1 counter")
     void cannotActivateWithoutCounters() {
         Permanent mindwarper = addReadyMindwarper(player1, 0);
-        harness.addToBattlefield(player2, new FurnaceSpirit());
+        Permanent conviction = harness.addToBattlefieldAndReturn(player1, new Conviction());
+        conviction.setAttachedTo(mindwarper.getId());
+        harness.runStateBasedActions();
+        harness.assertOnBattlefield(player1, "Mindwarper");
         prepareSorcerySpeedActivation();
         harness.addMana(player1, ManaColor.BLACK, 3);
 
@@ -129,6 +132,89 @@ class MindwarperTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Empty-handed players are legal targets and the activation still costs a counter")
+    void targetsPlayerWithEmptyHand() {
+        harness.setHand(player2, List.of());
+        Permanent mindwarper = addReadyMindwarper(player1, 3);
+        prepareSorcerySpeedActivation();
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(mindwarper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can activate while summoning sick and tapped")
+    void canActivateWhileSummoningSickAndTapped() {
+        harness.setHand(player2, List.of(new FoulImp()));
+        Permanent mindwarper = addReadyMindwarper(player1, 3);
+        mindwarper.setSummoningSick(true);
+        mindwarper.setTapped(true);
+        prepareSorcerySpeedActivation();
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(mindwarper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertInGraveyard(player2, "Foul Imp");
+    }
+
+    @Test
+    @DisplayName("Cannot activate during the opponent's main phase")
+    void cannotActivateDuringOpponentsMainPhase() {
+        Permanent mindwarper = addReadyMindwarper(player1, 3);
+        prepareSorcerySpeedActivation();
+        harness.forceActivePlayer(player2);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+        assertThat(mindwarper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Cannot activate with another ability on the stack")
+    void cannotActivateWithNonemptyStack() {
+        harness.setHand(player2, List.of());
+        Permanent mindwarper = addReadyMindwarper(player1, 3);
+        prepareSorcerySpeedActivation();
+        harness.addMana(player1, ManaColor.BLACK, 6);
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        assertThat(mindwarper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("The targeted player chooses which card to discard")
+    void targetedPlayerChoosesDiscard() {
+        harness.setHand(player2, List.of(new FoulImp(), new FurnaceSpirit()));
+        addReadyMindwarper(player1, 3);
+        prepareSorcerySpeedActivation();
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 1);
+
+        harness.assertInHand(player2, "Foul Imp");
+        harness.assertNotInHand(player2, "Furnace Spirit");
+        harness.assertInGraveyard(player2, "Furnace Spirit");
+        harness.assertNotInGraveyard(player2, "Foul Imp");
     }
 
     private Permanent addReadyMindwarper(Player player, int counters) {
