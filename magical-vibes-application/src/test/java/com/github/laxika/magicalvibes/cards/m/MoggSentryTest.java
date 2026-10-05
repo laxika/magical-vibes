@@ -72,8 +72,7 @@ class MoggSentryTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MoggSentry());
 
         opponentCastsSpell();
-        harness.passBothPriorities(); // Resolve the first Mogg Sentry trigger
-        harness.passBothPriorities(); // Resolve the first spell
+        resolveAllTriggers();
         opponentCastsSpell();
         harness.passBothPriorities(); // Resolve the second Mogg Sentry trigger
 
@@ -114,6 +113,7 @@ class MoggSentryTest extends BaseCardTest {
 
         assertThat(sentry().getPowerModifier()).isEqualTo(2);
 
+        resolveAllTriggers();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -121,6 +121,37 @@ class MoggSentryTest extends BaseCardTest {
         Permanent sentry = sentry();
         assertThat(sentry.getPowerModifier()).isEqualTo(0);
         assertThat(sentry.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Opponent spells trigger during the controller's turn")
+    void triggersDuringControllersTurn() {
+        harness.addToBattlefield(player1, new MoggSentry());
+
+        harness.castFromHand(player2, new HolyDay(), "{W}");
+        harness.passBothPriorities();
+
+        assertThat(sentry().getPowerModifier()).isEqualTo(2);
+        assertThat(sentry().getToughnessModifier()).isEqualTo(2);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Each Sentry boosts only itself when an opponent casts a spell")
+    void eachSentryBoostsItself() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new MoggSentry());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new MoggSentry());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new MoggSentry());
+
+        opponentCastsInstantSpell();
+        resolveAllTriggers();
+
+        assertThat(first.getPowerModifier()).isEqualTo(2);
+        assertThat(first.getToughnessModifier()).isEqualTo(2);
+        assertThat(second.getPowerModifier()).isEqualTo(2);
+        assertThat(second.getToughnessModifier()).isEqualTo(2);
+        assertThat(opposing.getPowerModifier()).isZero();
+        assertThat(opposing.getToughnessModifier()).isZero();
     }
 
     private Permanent sentry() {
