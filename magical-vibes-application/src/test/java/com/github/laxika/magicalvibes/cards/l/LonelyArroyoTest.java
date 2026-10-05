@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(LonelyArroyo.class)
 class LonelyArroyoTest extends BaseCardTest {
@@ -52,10 +53,41 @@ class LonelyArroyoTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
     }
 
+    @Test
+    void entryTriggerResolvesAfterLandLeavesBattlefield() {
+        harness.setHand(player1, List.of(new LonelyArroyo()));
+        harness.setLife(player2, 20);
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        Permanent land = gd.playerBattlefields.get(player1.getId()).removeFirst();
+        gd.playerGraveyards.get(player1.getId()).add(land.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void tappedLandCannotProduceEitherColor() {
+        Permanent land = addReadyLand();
+        land.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
     private Permanent addReadyLand() {
-        Permanent land = new Permanent(new LonelyArroyo());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new LonelyArroyo());
         land.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(land);
         return land;
     }
 }
