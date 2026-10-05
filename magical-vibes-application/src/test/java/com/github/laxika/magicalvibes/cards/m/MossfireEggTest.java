@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(MossfireEgg.class)
+@CardUsed({MossfireEgg.class})
 class MossfireEggTest extends BaseCardTest {
 
     @Test
@@ -78,6 +78,35 @@ class MossfireEggTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void activationDuringOpponentsTurnBenefitsOnlyController() {
+        harness.forceActivePlayer(player2);
+        harness.addToBattlefield(player1, new MossfireEgg());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        MossfireEgg drawnCard = new MossfireEgg();
+        harness.setLibrary(player1, java.util.List.of(drawnCard));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        int opponentHandSizeBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Mossfire Egg");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1).contains(drawnCard);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSizeBefore);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
         assertThat(gd.stack).isEmpty();
     }
 }
