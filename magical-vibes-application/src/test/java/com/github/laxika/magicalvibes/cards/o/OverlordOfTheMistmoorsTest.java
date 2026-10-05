@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.e.EncroachingMycosynth;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OverlordOfTheMistmoors.class})
+@CardUsed({OverlordOfTheMistmoors.class, EncroachingMycosynth.class})
 class OverlordOfTheMistmoorsTest extends BaseCardTest {
 
     @Test
@@ -26,8 +28,7 @@ class OverlordOfTheMistmoorsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         List<Permanent> insects = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()
@@ -38,6 +39,7 @@ class OverlordOfTheMistmoorsTest extends BaseCardTest {
             assertThat(insect.getCard().getPower()).isEqualTo(2);
             assertThat(insect.getCard().getToughness()).isEqualTo(1);
             assertThat(insect.getCard().getColor()).isEqualTo(CardColor.WHITE);
+            assertThat(gqs.hasKeyword(gd, insect, Keyword.FLYING)).isTrue();
         });
     }
 
@@ -77,14 +79,78 @@ class OverlordOfTheMistmoorsTest extends BaseCardTest {
         assertThat(overlord.isAttackedThisTurn()).isTrue();
     }
 
+    @Test
+    void impendingStillCreatesTwoFlyingInsects() {
+        castWithImpending();
+
+        List<Permanent> insects = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .toList();
+        assertThat(insects).hasSize(2);
+        assertThat(insects).allSatisfy(insect ->
+                assertThat(gqs.hasKeyword(gd, insect, Keyword.FLYING)).isTrue());
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void impendingRemovesOnlyOneCounterPerOwnEndStep() {
+        Permanent overlord = castWithImpending();
+
+        for (int remaining = 3; remaining >= 0; remaining--) {
+            advanceToOwnEndStep();
+            assertThat(overlord.getCounterCount(CounterType.TIME)).isEqualTo(remaining);
+            assertThat(gqs.isCreature(gd, overlord)).isEqualTo(remaining == 0);
+        }
+        advanceToOwnEndStep();
+        assertThat(overlord.getCounterCount(CounterType.TIME)).isZero();
+    }
+
+    @Test
+    void opponentsEndStepDoesNotRemoveTimeCounter() {
+        Permanent overlord = castWithImpending();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(overlord.getCounterCount(CounterType.TIME)).isEqualTo(4);
+        assertThat(gqs.isCreature(gd, overlord)).isFalse();
+    }
+
+    @Test
+    void normallyCastOverlordIgnoresTimeCounters() {
+        harness.setHand(player1, List.of(new OverlordOfTheMistmoors()));
+        harness.addMana(player1, ManaColor.WHITE, 7);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        Permanent overlord = findPermanent(player1, "Overlord of the Mistmoors");
+        assertThat(overlord.getCounterCount(CounterType.TIME)).isZero();
+        overlord.setCounterCount(CounterType.TIME, 2);
+
+        advanceToOwnEndStep();
+
+        assertThat(overlord.getCounterCount(CounterType.TIME)).isEqualTo(2);
+        assertThat(gqs.isCreature(gd, overlord)).isTrue();
+    }
+
+    @Test
+    @CardUsed({EncroachingMycosynth.class})
+    void impendingPreservesArtifactTypeGrantedByOlderMycosynth() {
+        harness.addToBattlefield(player1, new EncroachingMycosynth());
+        Permanent overlord = castWithImpending();
+
+        assertThat(gqs.isArtifact(gd, overlord)).isTrue();
+        assertThat(gqs.isCreature(gd, overlord)).isFalse();
+    }
+
     private Permanent castWithImpending() {
         harness.setHand(player1, List.of(new OverlordOfTheMistmoors()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         return findPermanent(player1, "Overlord of the Mistmoors");
     }
@@ -94,6 +160,6 @@ class OverlordOfTheMistmoorsTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
