@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.model.Card;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PeerlessRecycling.class, GrizzlyBears.class, HolyDay.class})
+@CardUsed({PeerlessRecycling.class, GrizzlyBears.class, HolyDay.class, Forest.class})
 class PeerlessRecyclingTest extends BaseCardTest {
 
     @Test
@@ -89,6 +90,90 @@ class PeerlessRecyclingTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorceryWithGift(
                 player1, 0, instant.getId(), false))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void withoutGiftCannotTargetTwoCards() {
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new PeerlessRecycling()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castSorceryWithGift(
+                player1, 0, List.of(first.getId(), second.getId()), false))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotTargetOpponentsGraveyard() {
+        Card permanent = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(permanent));
+        harness.setHand(player1, List.of(new PeerlessRecycling()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castSorceryWithGift(
+                player1, 0, permanent.getId(), false))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void giftedSpellReturnsRemainingLegalTargetAndStillGivesGift() {
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(first, second));
+        int opponentHandSize = gd.playerHands.get(player2.getId()).size();
+        harness.setHand(player1, List.of(new PeerlessRecycling()));
+        addMana();
+        harness.castSorceryWithGift(player1, 0, List.of(first.getId(), second.getId()), true);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+
+        harness.setGraveyard(player1, List.of(second));
+        gd.playerHands.get(player1.getId()).add(first);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId)
+                .containsOnly(first.getId(), second.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
+                .doesNotContain(second.getId());
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize + 1);
+    }
+
+    @Test
+    void giftedSpellDoesNotGiveGiftWhenAllTargetsBecomeIllegal() {
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(first, second));
+        int opponentHandSize = gd.playerHands.get(player2.getId()).size();
+        harness.setHand(player1, List.of(new PeerlessRecycling()));
+        addMana();
+        harness.castSorceryWithGift(player1, 0, List.of(first.getId(), second.getId()), true);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+
+        harness.setGraveyard(player1, List.of());
+        gd.playerHands.get(player1.getId()).addAll(List.of(first, second));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize);
+        harness.assertInGraveyard(player1, "Peerless Recycling");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canReturnLandCardWithoutGift() {
+        Card land = new Forest();
+        harness.setGraveyard(player1, List.of(land));
+        harness.setHand(player1, List.of(new PeerlessRecycling()));
+        addMana();
+        harness.castSorceryWithGift(player1, 0, List.of(land.getId()), false);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(land.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertNotInGraveyard(player1, "Forest");
     }
 
     private void addMana() {
