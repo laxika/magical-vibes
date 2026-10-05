@@ -46,6 +46,52 @@ class PietyTest extends BaseCardTest {
         assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("All blockers are boosted, including when the defender casts Piety")
+    void defenderCanBoostMultipleBlockers() {
+        Permanent first = addBlockingCreature(player2);
+        Permanent second = addBlockingCreature(player2);
+        Permanent bystander = addCreatureReady(player2, new GrizzlyBears());
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player2, new Piety(), "{2}{W}");
+        harness.passBothPriorities();
+
+        assertThat(first.getEffectivePower()).isEqualTo(2);
+        assertThat(first.getEffectiveToughness()).isEqualTo(5);
+        assertThat(second.getEffectivePower()).isEqualTo(2);
+        assertThat(second.getEffectiveToughness()).isEqualTo(5);
+        assertThat(bystander.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Piety resolves without any blocking creatures")
+    void resolvesWithoutBlockers() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+
+        castPiety();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Piety");
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The boost remains after combat ends and does not affect later creatures")
+    void boostIsLockedInOnResolution() {
+        Permanent blocker = addBlockingCreature(player2);
+
+        castPiety();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        blocker.setBlocking(false);
+        Permanent laterCreature = addCreatureReady(player2, new GrizzlyBears());
+
+        assertThat(blocker.getEffectivePower()).isEqualTo(2);
+        assertThat(blocker.getEffectiveToughness()).isEqualTo(5);
+        assertThat(laterCreature.getEffectiveToughness()).isEqualTo(2);
+    }
+
     private void castPiety() {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
