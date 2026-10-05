@@ -100,4 +100,38 @@ class RackAndRuinTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("artifact");
     }
+
+    @Test
+    @DisplayName("Regeneration saves one target without preventing the other artifact's destruction")
+    void regenerationSavesOneArtifact() {
+        Permanent toolbox = harness.addToBattlefieldAndReturn(player1, new JhoirasToolbox());
+        Permanent lens = harness.addToBattlefieldAndReturn(player2, new ThranLens());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, toolbox.getId());
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new RackAndRuin()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player1, 0, List.of(toolbox.getId(), lens.getId()));
+
+        harness.assertOnBattlefield(player1, "Jhoira's Toolbox");
+        harness.assertNotInGraveyard(player1, "Jhoira's Toolbox");
+        harness.assertNotOnBattlefield(player2, "Thran Lens");
+        harness.assertInGraveyard(player2, "Thran Lens");
+        harness.assertInGraveyard(player1, "Rack and Ruin");
+    }
+
+    @Test
+    @DisplayName("Cannot choose more than two artifact targets")
+    void cannotChooseThreeTargets() {
+        Permanent monolith = harness.addToBattlefieldAndReturn(player2, new GrimMonolith());
+        Permanent toolbox = harness.addToBattlefieldAndReturn(player2, new JhoirasToolbox());
+        Permanent lens = harness.addToBattlefieldAndReturn(player2, new ThranLens());
+        harness.setHand(player1, List.of(new RackAndRuin()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                List.of(monolith.getId(), toolbox.getId(), lens.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }
