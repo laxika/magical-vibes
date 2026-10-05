@@ -79,6 +79,65 @@ class LatchkeyFaerieTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Choosing the normal cost with prowl available does not draw")
+    void normalCostWithProwlAvailableDoesNotDraw() {
+        setupProwl(CardSubtype.FAERIE);
+        harness.setHand(player1, List.of(new LatchkeyFaerie()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Latchkey Faerie");
+        harness.assertNotInHand(player1, "Latchkey Faerie");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Combat damage from an unrelated creature type does not enable prowl")
+    void unrelatedSubtypeDoesNotEnableProwl() {
+        setupProwl(CardSubtype.WARRIOR);
+        harness.setHand(player1, List.of(new LatchkeyFaerie()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.castWithProwl(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Latchkey Faerie");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's qualifying combat damage does not enable your prowl")
+    void opponentsDamageDoesNotEnableProwl() {
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.combatDamageToPlayerControllerSubtypesThisTurn
+                .computeIfAbsent(player2.getId(), k -> ConcurrentHashMap.newKeySet())
+                .add(CardSubtype.ROGUE);
+        harness.setHand(player1, List.of(new LatchkeyFaerie()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.castWithProwl(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Latchkey Faerie");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Prowl still requires paying its full mana cost")
+    void prowlRequiresEnoughMana() {
+        setupProwl(CardSubtype.ROGUE);
+        harness.setHand(player1, List.of(new LatchkeyFaerie()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castWithProwl(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Latchkey Faerie");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void setupProwl(CardSubtype subtype) {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.forceActivePlayer(player1);
