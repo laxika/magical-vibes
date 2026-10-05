@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KessigWolf.class})
 class KessigWolfTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -122,8 +124,7 @@ class KessigWolfTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate ability with summoning sickness")
     void canActivateWithSummoningSickness() {
-        Permanent wolf = new Permanent(new KessigWolf());
-        gd.playerBattlefields.get(player1.getId()).add(wolf);
+        harness.addToBattlefield(player1, new KessigWolf());
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -156,29 +157,68 @@ class KessigWolfTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, wolf, Keyword.FIRST_STRIKE)).isTrue();
     }
 
-    // ===== Fizzle =====
-
     @Test
-    @DisplayName("Ability fizzles if Kessig Wolf is removed before resolution")
-    void abilityFizzlesIfSourceRemoved() {
+    @DisplayName("Ability resolves without affecting a replacement Wolf after its source leaves")
+    void abilityDoesNotAffectReplacementWolf() {
         addWolfReady(player1);
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, 0, null, null);
 
         gd.playerBattlefields.get(player1.getId()).clear();
+        Permanent replacement = harness.addToBattlefieldAndReturn(player1, new KessigWolf());
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, replacement, Keyword.FIRST_STRIKE)).isFalse();
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Generic mana may be paid with another color, but red is required")
+    void acceptsMixedManaPayment() {
+        Permanent wolf = addWolfReady(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gqs.hasKeyword(gd, wolf, Keyword.FIRST_STRIKE)).isFalse();
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, wolf, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Two nonred mana cannot pay the activation cost")
+    void rejectsPaymentWithoutRedMana() {
+        addWolfReady(player1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("First strike is granted only to the source Wolf")
+    void grantsFirstStrikeOnlyToSource() {
+        Permanent source = addWolfReady(player1);
+        Permanent ally = addWolfReady(player1);
+        Permanent opponent = addWolfReady(player2);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, source, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.FIRST_STRIKE)).isFalse();
+    }
 
     private Permanent addWolfReady(Player player) {
-        Permanent perm = new Permanent(new KessigWolf());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new KessigWolf());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
