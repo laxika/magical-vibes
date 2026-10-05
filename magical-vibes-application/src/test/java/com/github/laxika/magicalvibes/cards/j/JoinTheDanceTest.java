@@ -5,13 +5,16 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({JoinTheDance.class})
 class JoinTheDanceTest extends BaseCardTest {
 
     @Test
@@ -21,7 +24,7 @@ class JoinTheDanceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0);
         harness.passBothPriorities();
 
         List<Permanent> humans = findPermanents(player1, "Human");
@@ -52,5 +55,45 @@ class JoinTheDanceTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Join the Dance");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Join the Dance"));
+    }
+
+    @Test
+    @DisplayName("Casting from hand then flashing back creates four Humans total")
+    void normalCastThenFlashback() {
+        harness.setHand(player1, List.of(new JoinTheDance()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Join the Dance");
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castFlashback(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Human")).hasSize(4);
+        assertThat(findPermanents(player2, "Human")).isEmpty();
+        harness.assertNotInGraveyard(player1, "Join the Dance");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Join the Dance"));
+    }
+
+    @Test
+    @DisplayName("The normal mana cost is insufficient to flash back Join the Dance")
+    void flashbackRequiresThreeAdditionalMana() {
+        harness.setGraveyard(player1, List.of(new JoinTheDance()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Join the Dance");
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Human")).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 }
