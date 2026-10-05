@@ -29,7 +29,6 @@ class PanickedBystanderTest extends BaseCardTest {
 
         destroyCreature(player1, bear);
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(21);
     }
@@ -41,7 +40,6 @@ class PanickedBystanderTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         destroyCreature(player1, bystander);
-        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(21);
@@ -87,6 +85,127 @@ class PanickedBystanderTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, culprit, Keyword.DEATHTOUCH)).isTrue();
     }
 
+    @Test
+    void seesItsOwnAndAllyDeathWhenTheyDieSimultaneously() {
+        Permanent bystander = harness.addToBattlefieldAndReturn(player1, new PanickedBystander());
+        Permanent ally = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLife(player1, 20);
+        bystander.setMarkedDamage(2);
+        ally.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void transformsAfterThreeActualLifeGainsEvenWithLowerLifeTotal() {
+        Permanent bystander = harness.addToBattlefieldAndReturn(player1, new PanickedBystander());
+        harness.setLife(player1, 20);
+        for (int i = 0; i < 3; i++) {
+            Permanent ally = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            destroyCreature(player1, ally);
+            harness.passBothPriorities();
+        }
+        harness.assertLife(player1, 23);
+        harness.setLife(player1, 10);
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(bystander.isTransformed()).isTrue();
+        harness.assertLife(player1, 10);
+    }
+
+    @Test
+    void backFaceGainsLifeWhenAllyDies() {
+        Permanent culprit = harness.addToBattlefieldAndReturn(player1, new PanickedBystander());
+        transformToBack(culprit);
+        Permanent ally = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLife(player1, 20);
+
+        destroyCreature(player1, ally);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    void backFaceGainsLifeWhenItDies() {
+        Permanent culprit = harness.addToBattlefieldAndReturn(player1, new PanickedBystander());
+        transformToBack(culprit);
+        harness.setLife(player1, 20);
+
+        destroyCreature(player1, culprit);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    void neitherFaceGainsLifeWhenOpponentCreatureDies() {
+        Permanent culprit = harness.addToBattlefieldAndReturn(player1, new PanickedBystander());
+        transformToBack(culprit);
+        harness.addToBattlefield(player1, new PanickedBystander());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+
+        destroyCreature(player1, opponentCreature);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotTransformAtOpponentsEndStep() {
+        Permanent bystander = harness.addToBattlefieldAndReturn(player1, new PanickedBystander());
+        gd.lifeGainedThisTurn.put(player1.getId(), 3);
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(bystander.isTransformed()).isFalse();
+    }
+
+    @Test
+    void gainingThirdLifeDuringEndStepDoesNotCreateTransformTrigger() {
+        Permanent bystander = harness.addToBattlefieldAndReturn(player1, new PanickedBystander());
+        Permanent ally = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        gd.lifeGainedThisTurn.put(player1.getId(), 2);
+        advanceToEndStep(player1);
+        assertThat(gd.stack).isEmpty();
+        harness.setHand(player1, List.of(new Terminate()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, ally.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.lifeGainedThisTurn.get(player1.getId())).isEqualTo(3);
+        assertThat(bystander.isTransformed()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void backFaceDeathtouchExpiresAtCleanup() {
+        Permanent culprit = harness.addToBattlefieldAndReturn(player1, new PanickedBystander());
+        transformToBack(culprit);
+        forceMainPhase(player1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, indexOf(player1, culprit), null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, culprit, Keyword.DEATHTOUCH)).isTrue();
+
+        harness.passUntil(player1, TurnStep.CLEANUP);
+
+        assertThat(gqs.hasKeyword(gd, culprit, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(culprit.isTransformed()).isTrue();
+    }
+
     private void destroyCreature(Player caster, Permanent target) {
         harness.forceActivePlayer(caster);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -94,7 +213,7 @@ class PanickedBystanderTest extends BaseCardTest {
         harness.setHand(caster, List.of(new Terminate()));
         harness.addMana(caster, ManaColor.BLACK, 1);
         harness.addMana(caster, ManaColor.RED, 1);
-        harness.castInstant(caster, 0, target.getId());
+        harness.castAndResolveInstant(caster, 0, target.getId());
     }
 
     private void transformToBack(Permanent permanent) {
