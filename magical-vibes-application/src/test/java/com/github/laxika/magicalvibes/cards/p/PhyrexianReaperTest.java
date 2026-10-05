@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.w.WallOfAir;
 import com.github.laxika.magicalvibes.cards.z.ZanamDjinn;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.cards.l.LlanowarKnight;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,15 +15,15 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PhyrexianReaper.class, GiantSpider.class, WallOfAir.class, PincerSpider.class, ZanamDjinn.class})
+@CardUsed({PhyrexianReaper.class, GiantSpider.class, WallOfAir.class, PincerSpider.class, ZanamDjinn.class, LlanowarKnight.class})
 class PhyrexianReaperTest extends BaseCardTest {
 
     @Test
     @DisplayName("When Phyrexian Reaper becomes blocked by a green creature, it destroys that creature without regeneration")
     void becomesBlockedByGreenCreatureDestroysItWithoutRegeneration() {
-        Permanent reaper = addReadyReaper(player1);
+        Permanent reaper = addCreatureReady(player1, new PhyrexianReaper());
         reaper.setAttacking(true);
-        Permanent spider = addReadySpider(player2);
+        Permanent spider = addCreatureReady(player2, new GiantSpider());
         spider.setRegenerationShield(1);
 
         prepareDeclareBlockers();
@@ -44,9 +44,9 @@ class PhyrexianReaperTest extends BaseCardTest {
     @Test
     @DisplayName("When Phyrexian Reaper becomes blocked by a non-green creature, it does not destroy that creature")
     void becomesBlockedByNonGreenCreatureDoesNotDestroyIt() {
-        Permanent reaper = addReadyReaper(player1);
+        Permanent reaper = addCreatureReady(player1, new PhyrexianReaper());
         reaper.setAttacking(true);
-        addReadyWall(player2);
+        addCreatureReady(player2, new WallOfAir());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -58,27 +58,6 @@ class PhyrexianReaperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Wall of Air");
-    }
-
-    private Permanent addReadyReaper(Player player) {
-        Permanent perm = new Permanent(new PhyrexianReaper());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadySpider(Player player) {
-        Permanent perm = new Permanent(new GiantSpider());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyWall(Player player) {
-        Permanent perm = new Permanent(new WallOfAir());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 
     @Test
@@ -113,5 +92,41 @@ class PhyrexianReaperTest extends BaseCardTest {
                 .hasSize(2);
         assertThat(firstGreenBlocker.getRegenerationShield()).isEqualTo(1);
         assertThat(secondGreenBlocker.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A multicolored green blocker is destroyed despite protection from black")
+    void destroysGreenBlockerWithProtectionFromBlack() {
+        Permanent reaper = addCreatureReady(player1, new PhyrexianReaper());
+        reaper.setAttacking(true);
+        addCreatureReady(player2, new LlanowarKnight());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Llanowar Knight");
+        harness.assertInGraveyard(player2, "Llanowar Knight");
+    }
+
+    @Test
+    @DisplayName("The destruction trigger resolves after Phyrexian Reaper leaves the battlefield")
+    void triggerResolvesAfterReaperLeavesBattlefield() {
+        Permanent reaper = addCreatureReady(player1, new PhyrexianReaper());
+        reaper.setAttacking(true);
+        addCreatureReady(player2, new PincerSpider());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(reaper);
+        gd.playerGraveyards.get(player1.getId()).add(reaper.getCard());
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Pincer Spider");
+        harness.assertInGraveyard(player2, "Pincer Spider");
     }
 }
