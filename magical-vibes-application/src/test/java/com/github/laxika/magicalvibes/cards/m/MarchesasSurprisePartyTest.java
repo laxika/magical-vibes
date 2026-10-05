@@ -8,8 +8,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -17,34 +16,59 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MarchesasSurprisePartyTest extends BaseCardTest {
 
     @Test
-    void rewardsAfterControllerCastsThreeSpellsAndCompletesMission() {
+    void castingThreeSpellsDoesNotAutomaticallyTriggerAtBeginningOfEndStep() {
         Card mission = new MarchesasSurpriseParty();
         gd.playerCommandZones.get(player1.getId()).add(mission);
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        gd.recordSpellCast(player1.getId(), new GrizzlyBears());
-        gd.recordSpellCast(player1.getId(), new GrizzlyBears());
-        gd.recordSpellCast(player1.getId(), new GrizzlyBears());
+        for (int i = 0; i < 3; i++) {
+            harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+            harness.passBothPriorities();
+        }
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         harness.passUntil(TurnStep.END_STEP);
-        assertThat(gd.stack).hasSize(1);
 
-        harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
-
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
-        assertThat(gd.faceDownCommandZoneCards).contains(mission.getId());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.faceDownCommandZoneCards).doesNotContain(mission.getId());
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
     }
 
     @Test
     void doesNotTriggerWhenNoMissionConditionIsMet() {
         Card mission = new MarchesasSurpriseParty();
-        gd.playerCommandZones.put(player1.getId(), new ArrayList<>(List.of(mission)));
+        gd.playerCommandZones.get(player1.getId()).add(mission);
 
         harness.passUntil(TurnStep.END_STEP);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    void nineGraveyardCardsDoNotAutomaticallyTriggerAtBeginningOfEndStep() {
+        Card mission = new MarchesasSurpriseParty();
+        gd.playerCommandZones.get(player1.getId()).add(mission);
+        harness.setGraveyard(player1, IntStream.range(0, 9)
+                .mapToObj(i -> (Card) new GrizzlyBears()).toList());
+
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.faceDownCommandZoneCards).doesNotContain(mission.getId());
+    }
+
+    @Test
+    void completedMissionDoesNotTriggerAgain() {
+        Card mission = new MarchesasSurpriseParty();
+        gd.playerCommandZones.get(player1.getId()).add(mission);
+        gd.faceDownCommandZoneCards.add(mission.getId());
+        harness.setGraveyard(player1, IntStream.range(0, 9)
+                .mapToObj(i -> (Card) new GrizzlyBears()).toList());
+
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.faceDownCommandZoneCards).contains(mission.getId());
     }
 }
