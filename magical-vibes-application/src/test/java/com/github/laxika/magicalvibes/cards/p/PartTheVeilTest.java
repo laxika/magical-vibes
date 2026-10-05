@@ -32,9 +32,7 @@ class PartTheVeilTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(c -> c.getName())
                 .containsExactlyInAnyOrder("Humble Budoka", "Kami of Old Stone");
-        assertThat(gd.playerHands.get(player2.getId()))
-                .extracting(c -> c.getName())
-                .doesNotContain("Humble Budoka");
+        harness.assertNotInHand(player2, "Humble Budoka");
     }
 
     @Test
@@ -70,6 +68,37 @@ class PartTheVeilTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId()))
                 .extracting(c -> c.getName())
                 .containsExactly("Humble Budoka");
+    }
+
+    @Test
+    @DisplayName("Does not return a creature owned by the caster but controlled by the opponent")
+    void doesNotReturnOwnedCreatureControlledByOpponent() {
+        HumbleBudoka ownedByCaster = new HumbleBudoka();
+        ownedByCaster.setOwnerId(player1.getId());
+        harness.addToBattlefield(player2, ownedByCaster);
+
+        harness.castFromHand(player1, new PartTheVeil(), "{3}{U}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Humble Budoka");
+        harness.assertNotInHand(player1, "Humble Budoka");
+        harness.assertNotInHand(player2, "Humble Budoka");
+        harness.assertInGraveyard(player1, "Part the Veil");
+    }
+
+    @Test
+    @DisplayName("Returns creatures that entered after casting but before resolution")
+    void checksCreaturesAtResolution() {
+        harness.castFromHand(player1, new PartTheVeil(), "{3}{U}");
+        harness.addToBattlefield(player1, new HumbleBudoka());
+        harness.addToBattlefield(player2, new KamiOfOldStone());
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Humble Budoka");
+        harness.assertInHand(player1, "Humble Budoka");
+        harness.assertOnBattlefield(player2, "Kami of Old Stone");
+        harness.assertNotInHand(player2, "Kami of Old Stone");
     }
 
     @Test
