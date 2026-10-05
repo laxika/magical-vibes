@@ -139,10 +139,75 @@ class KrarkClanEngineersTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, secondTarget.getId());
 
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    void canActivateWhileSummoningSickAndTapped() {
+        Permanent engineers = harness.addToBattlefieldAndReturn(player1, new KrarkClanEngineers());
+        engineers.setSummoningSick(true);
+        engineers.setTapped(true);
+        addArtifact(player1);
+        addArtifact(player1);
+        Permanent target = addArtifact(player2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Avarice Totem");
+        assertThat(engineers.isTapped()).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void canSacrificeTappedArtifacts() {
+        addReadyEngineers(player1);
+        addArtifact(player1).setTapped(true);
+        addArtifact(player1).setTapped(true);
+        Permanent target = addArtifact(player2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        harness.assertInGraveyard(player2, "Avarice Totem");
+    }
+
+    @Test
+    void canSacrificeTheTargetToPayTheCost() {
+        addReadyEngineers(player1);
+        Permanent target = addArtifact(player1);
+        addArtifact(player1);
+        Permanent untouched = addArtifact(player2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(untouched);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void cannotTargetANonartifactWithoutProtection() {
+        addReadyEngineers(player1);
+        addArtifact(player1);
+        addArtifact(player1);
+        Permanent target = addReadyEngineers(player2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addReadyEngineers(Player player) {
