@@ -89,6 +89,80 @@ class NullmageShepherdTest extends BaseCardTest {
         assertThat(tappedCreature.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Summoning-sick Shepherd and creatures can pay the tap cost")
+    void canTapSummoningSickCreatures() {
+        Permanent shepherd = harness.addToBattlefieldAndReturn(player1, new NullmageShepherd());
+        List<Permanent> creatures = List.of(
+                harness.addToBattlefieldAndReturn(player1, new ElvishSkysweeper()),
+                harness.addToBattlefieldAndReturn(player1, new ElvishSkysweeper()),
+                harness.addToBattlefieldAndReturn(player1, new ElvishSkysweeper())
+        );
+        shepherd.setSummoningSick(true);
+        creatures.forEach(creature -> creature.setSummoningSick(true));
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new BorosSignet());
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Boros Signet");
+        assertThat(shepherd.isTapped()).isTrue();
+        assertThat(creatures).allMatch(Permanent::isTapped);
+    }
+
+    @Test
+    @DisplayName("A tapped Shepherd can activate by tapping four other creatures")
+    void canActivateWhileShepherdIsTapped() {
+        Permanent shepherd = addReadyShepherd();
+        shepherd.tap();
+        List<Permanent> creatures = addThreeReadyCreatures();
+        Permanent fourthCreature = addCreatureReady(player1, new ElvishSkysweeper());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new BorosSignet());
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Boros Signet");
+        assertThat(creatures).allMatch(Permanent::isTapped);
+        assertThat(fourthCreature.isTapped()).isTrue();
+        assertThat(shepherd.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can destroy an artifact controlled by the activating player")
+    void canDestroyOwnArtifact() {
+        addReadyShepherd();
+        addThreeReadyCreatures();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new BorosSignet());
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Boros Signet");
+        harness.assertNotOnBattlefield(player1, "Boros Signet");
+    }
+
+    @Test
+    @DisplayName("Can choose four other creatures and leave Shepherd untapped")
+    void canChooseCreaturesWithoutTappingShepherd() {
+        Permanent shepherd = addReadyShepherd();
+        List<Permanent> creatures = addThreeReadyCreatures();
+        Permanent fourthCreature = addCreatureReady(player1, new ElvishSkysweeper());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new BorosSignet());
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+        for (Permanent creature : creatures) {
+            harness.handlePermanentChosen(player1, creature.getId());
+        }
+        harness.handlePermanentChosen(player1, fourthCreature.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Boros Signet");
+        assertThat(creatures).allMatch(Permanent::isTapped);
+        assertThat(fourthCreature.isTapped()).isTrue();
+        assertThat(shepherd.isTapped()).isFalse();
+    }
+
     private Permanent addReadyShepherd() {
         return addCreatureReady(player1, new NullmageShepherd());
     }
