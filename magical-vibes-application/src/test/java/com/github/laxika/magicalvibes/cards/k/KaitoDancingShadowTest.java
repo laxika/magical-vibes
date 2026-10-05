@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -12,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,6 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KaitoDancingShadow.class, GrizzlyBears.class, Shock.class, Unsummon.class})
 class KaitoDancingShadowTest extends BaseCardTest {
 
     @Test
@@ -47,13 +50,75 @@ class KaitoDancingShadowTest extends BaseCardTest {
                 .contains(attacker);
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(kaito.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void repeatedCombatDamageTriggersDoNotAllowAThirdLoyaltyActivation() {
+        Permanent kaito = addReadyKaito(3);
+
+        for (int combat = 0; combat < 2; combat++) {
+            Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+            attacker.setAttacking(true);
+            harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+            harness.clearPriorityPassed();
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handlePermanentChosen(player1, attacker.getId());
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+            harness.passBothPriorities();
+        }
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(kaito.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void decliningToReturnCreatureDoesNotAllowAnotherLoyaltyActivation() {
+        addReadyKaito(3);
+        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void plusOneCanBeActivatedWithoutATarget() {
+        Permanent kaito = addReadyKaito(3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(kaito.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -124,20 +189,38 @@ class KaitoDancingShadowTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
+    @Test
+    void droneDrainsWhenReturnedToHandWithoutDying() {
+        addReadyKaito(3);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        Permanent drone = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .findFirst().orElseThrow();
+
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castInstant(player2, 0, drone.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(drone);
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
+
     private Permanent addReadyKaito(int loyalty) {
-        Permanent kaito = new Permanent(new KaitoDancingShadow());
+        Permanent kaito = harness.addToBattlefieldAndReturn(player1, new KaitoDancingShadow());
         kaito.setCounterCount(CounterType.LOYALTY, loyalty);
         kaito.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(kaito);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return kaito;
     }
 
     private Permanent addReadyCreature(Player player, Card card) {
-        Permanent creature = new Permanent(card);
+        Permanent creature = harness.addToBattlefieldAndReturn(player, card);
         creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
         return creature;
     }
 }
