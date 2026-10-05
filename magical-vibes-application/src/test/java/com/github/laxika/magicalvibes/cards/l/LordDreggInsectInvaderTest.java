@@ -88,6 +88,74 @@ class LordDreggInsectInvaderTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void multipleDeparturesCreateOnlyOneToken() {
+        harness.addToBattlefield(player1, new LordDreggInsectInvader());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().removePermanentToHand(gd, first);
+            harness.getPermanentRemovalService().removePermanentToHand(gd, second);
+        });
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
+    }
+
+    @Test
+    void departureBeforeDreggEntersStillQualifies() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, bears));
+        harness.addToBattlefield(player1, new LordDreggInsectInvader());
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsEndStep() {
+        harness.addToBattlefield(player1, new LordDreggInsectInvader());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, bears));
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    void departureAfterEndStepBeginsDoesNotTriggerRetroactively() {
+        harness.addToBattlefield(player1, new LordDreggInsectInvader());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        advanceToEndStep(player1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, bears));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    void opponentsTokenCannotPaySacrificeCost() {
+        harness.addToBattlefield(player1, new LordDreggInsectInvader());
+        Permanent token = harness.addToBattlefieldAndReturn(player2, createToken());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(token);
+    }
+
     private Card createToken() {
         Card token = new Card() {
         };
@@ -102,7 +170,6 @@ class LordDreggInsectInvaderTest extends BaseCardTest {
     private void advanceToEndStep(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player, TurnStep.END_STEP);
     }
 }
