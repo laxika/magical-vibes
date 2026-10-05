@@ -141,4 +141,66 @@ class KrosanRestorerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Threshold is checked at activation, not resolution")
+    void thresholdMayBeLostBeforeResolution() {
+        Permanent restorer = addCreatureReady(player1, new KrosanRestorer());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        land.tap();
+        harness.setGraveyard(player1, List.of(
+                new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of(land.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(land.isTapped()).isFalse();
+        assertThat(restorer.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Threshold untaps remaining targets when one land leaves the battlefield")
+    void thresholdResolvesWithOneMissingTarget() {
+        addCreatureReady(player1, new KrosanRestorer());
+        Permanent removedLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent remainingLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+        removedLand.tap();
+        remainingLand.tap();
+        harness.setGraveyard(player1, List.of(
+                new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 1,
+                List.of(removedLand.getId(), remainingLand.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(removedLand);
+        harness.setGraveyard(player2, List.of(removedLand.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(remainingLand.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Six graveyard cards do not enable threshold but still allow the basic ability")
+    void sixCardsAllowOnlyBasicAbility() {
+        Permanent restorer = addCreatureReady(player1, new KrosanRestorer());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        land.tap();
+        harness.setGraveyard(player1, List.of(
+                new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 1, List.of(land.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("seven or more cards");
+        assertThat(restorer.isTapped()).isFalse();
+
+        harness.activateAbility(player1, 0, 0, null, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(land.isTapped()).isFalse();
+        assertThat(restorer.isTapped()).isTrue();
+    }
 }
