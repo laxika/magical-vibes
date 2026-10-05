@@ -50,9 +50,8 @@ class MonsterManualZoologicalStudyTest extends BaseCardTest {
 
     @Test
     void monsterManualMayPutCreatureFromHandOntoBattlefield() {
-        Permanent manual = new Permanent(new MonsterManualZoologicalStudy());
+        Permanent manual = harness.addToBattlefieldAndReturn(player1, new MonsterManualZoologicalStudy());
         manual.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(manual);
         Card land = new Forest();
         Card creature = new GrizzlyBears();
         harness.setHand(player1, List.of(land, creature));
@@ -85,6 +84,72 @@ class MonsterManualZoologicalStudyTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrderElementsOf(milled);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
+    }
+
+    @Test
+    void monsterManualCanDeclinePuttingCreatureOntoBattlefield() {
+        Permanent manual = harness.addToBattlefieldAndReturn(player1, new MonsterManualZoologicalStudy());
+        Card creature = new GrizzlyBears();
+        harness.setHand(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(manual);
+        assertThat(manual.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void zoologicalStudyReturnsOnlyNewlyMilledCreatureFromShortLibrary() {
+        Card oldCreature = new GrizzlyBears();
+        Card milledCreature = new GrizzlyBears();
+        Card land = new Forest();
+        harness.setGraveyard(player1, List.of(oldCreature));
+        harness.setLibrary(player1, List.of(milledCreature, land));
+        MonsterManualZoologicalStudy card = new MonsterManualZoologicalStudy();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAdventure(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        List<Card> graveyard = gd.playerGraveyards.get(player1.getId());
+        PendingInteraction.GraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        assertThat(choice.validIndices()).containsExactly(indexOf(graveyard, milledCreature));
+        assertThat(choice.mandatory()).isTrue();
+        harness.handleGraveyardCardChosen(player1, indexOf(graveyard, milledCreature));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(milledCreature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(oldCreature, land);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+    }
+
+    @Test
+    void monsterManualCanBeCastFromAdventureExile() {
+        MonsterManualZoologicalStudy card = new MonsterManualZoologicalStudy();
+        harness.setHand(player1, List.of(card));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAdventure(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castFromExile(player1, card.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Monster Manual");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
     }
 
     private int indexOf(List<Card> cards, Card card) {
