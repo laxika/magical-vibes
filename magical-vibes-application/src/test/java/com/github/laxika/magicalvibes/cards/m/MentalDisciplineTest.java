@@ -82,4 +82,56 @@ class MentalDisciplineTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).extracting(card -> card.getName())
                 .containsExactly("Yavimaya Enchantress", "Yavimaya Enchantress");
     }
+
+    @Test
+    @DisplayName("A noncreature card is discarded as a cost before exactly one card is drawn")
+    void discardsNoncreatureBeforeResolution() {
+        harness.addToBattlefield(player1, new MentalDiscipline());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        Quash discarded = new Quash();
+        YavimayaEnchantress drawn = new YavimayaEnchantress();
+        Quash remaining = new Quash();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(drawn, remaining));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn, remaining);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
+    }
+
+    @Test
+    @DisplayName("The ability still draws for its controller after Mental Discipline leaves the battlefield")
+    void drawsAfterSourceLeavesBattlefield() {
+        MentalDiscipline source = new MentalDiscipline();
+        Quash drawn = new Quash();
+        harness.addToBattlefield(player2, source);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new YavimayaEnchantress()));
+        harness.setLibrary(player2, List.of(drawn));
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.handleCardChosen(player2, 0);
+        gd.playerBattlefields.get(player2.getId()).clear();
+        gd.playerGraveyards.get(player2.getId()).add(source);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawn);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Yavimaya Enchantress");
+        harness.assertInGraveyard(player2, "Mental Discipline");
+    }
 }
