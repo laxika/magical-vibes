@@ -3,12 +3,16 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.l.LetterOfAcceptance;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +21,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MercurialTransformation.class, GrizzlyBears.class, IcyManipulator.class, Island.class,
+        LetterOfAcceptance.class})
 class MercurialTransformationTest extends BaseCardTest {
 
     private static final String FROG_MODE = "Become a blue Frog creature with base power and toughness 1/1";
@@ -78,12 +84,52 @@ class MercurialTransformationTest extends BaseCardTest {
         assertThat(gqs.computeStaticBonus(gd, artifact).losesAllAbilities()).isFalse();
     }
 
+    @Test
+    @DisplayName("Frog transformation replaces the target's artifact type")
+    void frogReplacesArtifactType() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new LetterOfAcceptance());
+
+        castAndChoose(artifact, FROG_MODE);
+
+        assertThat(gqs.getEffectiveCardTypes(gd, artifact)).containsExactly(CardType.CREATURE);
+        assertThat(gqs.getEffectivePower(gd, artifact)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, artifact)).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Letter of Acceptance");
+    }
+
+    @Test
+    @DisplayName("Octopus transformation replaces the target's artifact type")
+    void octopusReplacesArtifactType() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new LetterOfAcceptance());
+
+        castAndChoose(artifact, OCTOPUS_MODE);
+
+        assertThat(gqs.getEffectiveCardTypes(gd, artifact)).containsExactly(CardType.CREATURE);
+        assertThat(gqs.getEffectivePower(gd, artifact)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, artifact)).isEqualTo(4);
+        assertThat(gqs.getEffectiveColors(gd, artifact)).containsExactly(CardColor.BLUE);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, artifact)).containsExactly(CardSubtype.OCTOPUS);
+        harness.assertOnBattlefield(player2, "Letter of Acceptance");
+    }
+
+    @Test
+    @DisplayName("Transformation sets base power and toughness without removing counters")
+    void countersStillModifyTransformedCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        castAndChoose(bears, FROG_MODE);
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(2);
+    }
+
     private void castAndChoose(Permanent target, String mode) {
         harness.setHand(player1, List.of(new MercurialTransformation()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
         harness.handleListChoice(player1, mode);
     }
 }
