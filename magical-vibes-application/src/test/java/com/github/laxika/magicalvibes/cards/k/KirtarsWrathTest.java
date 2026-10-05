@@ -35,8 +35,7 @@ class KirtarsWrathTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KirtarsWrath()));
         harness.addMana(player1, ManaColor.WHITE, 6);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertNotOnBattlefield(player1, "Dusk Imp");
         harness.assertNotOnBattlefield(player2, "Dusk Imp");
@@ -57,8 +56,7 @@ class KirtarsWrathTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KirtarsWrath()));
         harness.addMana(player1, ManaColor.WHITE, 6);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertInGraveyard(player1, "Dusk Imp");
         harness.assertInGraveyard(player2, "Dusk Imp");
@@ -83,8 +81,7 @@ class KirtarsWrathTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KirtarsWrath()));
         harness.addMana(player1, ManaColor.WHITE, 6);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
         harness.assertInGraveyard(player2, "Dusk Imp");
@@ -98,10 +95,79 @@ class KirtarsWrathTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KirtarsWrath()));
         harness.addMana(player1, ManaColor.WHITE, 6);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertOnBattlefield(player2, "Dusk Imp");
         harness.assertNotInGraveyard(player2, "Dusk Imp");
+    }
+
+    @Test
+    @DisplayName("Threshold destruction bypasses regeneration before creating Spirits")
+    void thresholdDestructionCannotBeRegenerated() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DuskImp());
+        creature.setRegenerationShield(1);
+        harness.setGraveyard(player1, List.of(
+                new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new KirtarsWrath()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertNotOnBattlefield(player1, "Dusk Imp");
+        harness.assertInGraveyard(player1, "Dusk Imp");
+        assertThat(findPermanents(player1, "Spirit")).hasSize(2);
+        assertThat(findPermanents(player2, "Spirit")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Threshold creates Spirits even when there are no creatures to destroy")
+    void thresholdOnEmptyBattlefieldCreatesSpirits() {
+        harness.setGraveyard(player1, List.of(
+                new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new KirtarsWrath()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(findPermanents(player1, "Spirit")).hasSize(2);
+        assertThat(findPermanents(player2, "Spirit")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Threshold gained after casting is checked at resolution")
+    void thresholdGainedBeforeResolutionCreatesSpirits() {
+        harness.setHand(player1, List.of(new KirtarsWrath()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+        harness.castSorcery(player1, 0, 0);
+        harness.setGraveyard(player1, List.of(
+                new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Spirit")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Threshold lost after casting prevents Spirit creation")
+    void thresholdLostBeforeResolutionCreatesNoSpirits() {
+        harness.setGraveyard(player1, List.of(
+                new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+        harness.addToBattlefield(player2, new DuskImp());
+        harness.setHand(player1, List.of(new KirtarsWrath()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+        harness.castSorcery(player1, 0, 0);
+        harness.setGraveyard(player1, List.of(
+                new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Dusk Imp");
+        harness.assertInGraveyard(player2, "Dusk Imp");
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
     }
 }
