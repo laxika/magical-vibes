@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -45,6 +44,9 @@ class MorphicPoolTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(1);
+        assertThat(findPermanent(player1, "Morphic Pool").isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -55,20 +57,33 @@ class MorphicPoolTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(1);
+        assertThat(findPermanent(player1, "Morphic Pool").isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can produce mana immediately after entering untapped")
+    void canProduceManaImmediatelyAfterEntering() {
+        addThirdPlayer();
+        playMorphicPool();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(findPermanent(player1, "Morphic Pool").isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void playMorphicPool() {
         harness.setHand(player1, List.of(new MorphicPool()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
     }
 
-    private Permanent addReadyMorphicPool() {
-        Permanent permanent = new Permanent(new MorphicPool());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
-        return permanent;
+    private void addReadyMorphicPool() {
+        harness.addToBattlefield(player1, new MorphicPool());
     }
 
     private void addThirdPlayer() {
