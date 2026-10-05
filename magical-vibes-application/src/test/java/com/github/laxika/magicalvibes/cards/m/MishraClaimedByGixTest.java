@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.a.ArgothianSprite;
+import com.github.laxika.magicalvibes.cards.h.HulkingMetamorph;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianDragonEngine;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({MishraClaimedByGix.class, MishraLostToPhyrexia.class, PhyrexianDragonEngine.class,
-        ArgothianSprite.class, MachineOverMatter.class})
+        ArgothianSprite.class, MachineOverMatter.class, HulkingMetamorph.class})
 class MishraClaimedByGixTest extends BaseCardTest {
 
     @Test
@@ -234,6 +235,57 @@ class MishraClaimedByGixTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Phyrexian Dragon Engine");
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .filteredOn(card -> card.getName().equals("Argothian Sprite")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Attacking without Mishra does not meld but still drains life")
+    void attackingOnlyWithDragonEngineDoesNotMeld() {
+        Permanent mishra = addCreatureReady(player1, new MishraClaimedByGix());
+        Permanent engine = addCreatureReady(player1, new PhyrexianDragonEngine());
+        addCreatureReady(player2, new ArgothianSprite());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(engine)));
+        resolveAllTriggers();
+
+        assertThat(gqs.findPermanentById(gd, mishra.getId())).isSameAs(mishra);
+        assertThat(gqs.findPermanentById(gd, engine.getId())).isSameAs(engine);
+        assertThat(findPermanents(player1, "Mishra, Lost to Phyrexia")).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("A copied Dragon Engine is exiled but cannot meld")
+    void copiedDragonEngineCannotMeld() {
+        Permanent mishra = addCreatureReady(player1, new MishraClaimedByGix());
+        Permanent realEngine = addCreatureReady(player1, new PhyrexianDragonEngine());
+        addCreatureReady(player2, new ArgothianSprite());
+        HulkingMetamorph metamorph = new HulkingMetamorph();
+        harness.castFromHand(player1, metamorph, "{9}");
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, realEngine.getId());
+        resolveAllTriggers();
+        Permanent copy = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getOriginalCard().getId().equals(metamorph.getId()))
+                .findFirst().orElseThrow();
+        copy.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).remove(realEngine);
+        gd.playerBattlefields.get(player1.getId()).add(realEngine);
+
+        declareAttackers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(mishra),
+                gd.playerBattlefields.get(player1.getId()).indexOf(copy)));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Mishra, Lost to Phyrexia")).isEmpty();
+        assertThat(gqs.findPermanentById(gd, mishra.getId())).isNull();
+        assertThat(gqs.findPermanentById(gd, copy.getId())).isNull();
+        assertThat(gqs.findPermanentById(gd, realEngine.getId())).isSameAs(realEngine);
+        assertThat(gd.exiledCards).anyMatch(e -> e.card().getId().equals(mishra.getOriginalCard().getId()));
+        assertThat(gd.exiledCards).anyMatch(e -> e.card().getId().equals(metamorph.getId()));
     }
 
     private void chooseNonTargetingBackModes() {
