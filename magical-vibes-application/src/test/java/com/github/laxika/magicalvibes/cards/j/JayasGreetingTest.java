@@ -49,11 +49,78 @@ class JayasGreetingTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void castGreeting(Permanent target) {
+    @Test
+    void canTargetOwnCreatureAndKeepScryedCardOnTop() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        List<Card> deck = gd.playerDecks.get(player1.getId());
+        List<Card> originalDeck = List.copyOf(deck);
+        List<Card> opponentDeck = List.copyOf(gd.playerDecks.get(player2.getId()));
+
+        castGreeting(target);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(deck).containsExactlyElementsOf(originalDeck);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(opponentDeck);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Jaya's Greeting");
+    }
+
+    @Test
+    void doesNotScryWhenTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        List<Card> originalDeck = List.copyOf(gd.playerDecks.get(player1.getId()));
         harness.setHand(player1, List.of(new JayasGreeting()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.setGraveyard(player2, List.of(target.getCard()));
+
         harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(originalDeck);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Jaya's Greeting");
+    }
+
+    @Test
+    void stillScriesWhenDamageIsLethal() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        target.setMarkedDamage(1);
+
+        castGreeting(target);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        harness.assertNotOnBattlefield(player2, "Air Elemental");
+        harness.assertInGraveyard(player2, "Air Elemental");
+        harness.assertInGraveyard(player1, "Jaya's Greeting");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void dealsDamageWithAnEmptyLibrary() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        gd.playerDecks.get(player1.getId()).clear();
+
+        castGreeting(target);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Jaya's Greeting");
+    }
+
+    private void castGreeting(Permanent target) {
+        harness.setHand(player1, List.of(new JayasGreeting()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }
