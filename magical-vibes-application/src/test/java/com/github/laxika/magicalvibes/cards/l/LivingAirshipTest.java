@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.p.PhyrexianGargantua;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -14,17 +15,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LivingAirship.class, LlanowarDead.class})
+@CardUsed({LivingAirship.class, LlanowarDead.class, PhyrexianGargantua.class})
 class LivingAirshipTest extends BaseCardTest {
 
     @Test
     @DisplayName("Flying prevents a non-flying creature from blocking Living Airship")
     void flyingPreventsNonFlyingCreatureFromBlocking() {
         Permanent airship = addAirshipReady(player1);
-        Permanent blocker = addCreatureReady(player2, 2, 2);
+        Permanent blocker = addCreatureReady(player2, new LlanowarDead());
 
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(airship)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(airship)));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(gd.playerBattlefields.get(player2.getId()).indexOf(blocker), 0))))
@@ -74,7 +74,7 @@ class LivingAirshipTest extends BaseCardTest {
         airship.setBlocking(true);
         airship.addBlockingTarget(0);
 
-        Permanent attacker = addCreatureReady(player2, 5, 5);
+        Permanent attacker = addCreatureReady(player2, new PhyrexianGargantua());
         attacker.setAttacking(true);
 
         resolveCombat(player2);
@@ -86,19 +86,50 @@ class LivingAirshipTest extends BaseCardTest {
     }
 
     private Permanent addAirshipReady(Player player) {
-        Permanent perm = new Permanent(new LivingAirship());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new LivingAirship());
     }
 
-    private Permanent addCreatureReady(Player player, int power, int toughness) {
-        LlanowarDead card = new LlanowarDead();
-        card.setPower(power);
-        card.setToughness(toughness);
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Regeneration can be activated while tapped and summoning sick")
+    void regenerationCanBeActivatedWhileTappedAndSummoningSick() {
+        Permanent airship = harness.addToBattlefieldAndReturn(player1, new LivingAirship());
+        airship.setSummoningSick(true);
+        airship.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(airship.getRegenerationShield()).isEqualTo(1);
+        assertThat(airship.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated activations protect against two destructions but not a third")
+    void repeatedActivationsProtectAgainstTwoDestructions() {
+        Permanent airship = addAirshipReady(player1);
+        for (int i = 0; i < 2; i++) {
+            harness.addMana(player1, ManaColor.COLORLESS, 2);
+            harness.addMana(player1, ManaColor.GREEN, 1);
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+        }
+
+        assertThat(airship.isTapped()).isFalse();
+        assertThat(airship.getRegenerationShield()).isEqualTo(2);
+
+        for (int shieldsRemaining = 1; shieldsRemaining >= 0; shieldsRemaining--) {
+            airship.setMarkedDamage(1);
+            assertThat(harness.getPermanentRemovalService().tryDestroyPermanent(gd, airship)).isFalse();
+            harness.assertOnBattlefield(player1, "Living Airship");
+            assertThat(airship.isTapped()).isTrue();
+            assertThat(airship.getMarkedDamage()).isZero();
+            assertThat(airship.getRegenerationShield()).isEqualTo(shieldsRemaining);
+        }
+
+        assertThat(harness.getPermanentRemovalService().tryDestroyPermanent(gd, airship)).isTrue();
+        harness.assertNotOnBattlefield(player1, "Living Airship");
+        harness.assertInGraveyard(player1, "Living Airship");
     }
 }
