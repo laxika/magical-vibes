@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.cards.a.AltarsReap;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({JacesMindseeker.class, CounselOfTheSoratami.class, GrizzlyBears.class, Shock.class})
 class JacesMindseekerTest extends BaseCardTest {
 
     private void castMindseekerTargetingOpponent() {
@@ -76,8 +80,7 @@ class JacesMindseekerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities(); // resolve Shock
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -88,8 +91,7 @@ class JacesMindseekerTest extends BaseCardTest {
         castMindseekerTargetingOpponent();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Counsel of the Soratami"));
+        harness.assertInGraveyard(player2, "Counsel of the Soratami");
     }
 
     @Test
@@ -115,5 +117,93 @@ class JacesMindseekerTest extends BaseCardTest {
         castMindseekerTargetingOpponent();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void doesNotOfferSpellAlreadyInOpponentsGraveyard() {
+        CounselOfTheSoratami oldSpell = new CounselOfTheSoratami();
+        harness.setGraveyard(player2, List.of(oldSpell));
+        harness.setLibrary(player2, topFive());
+
+        castMindseekerTargetingOpponent();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(6).contains(oldSpell);
+    }
+
+    @Test
+    void emptyOpponentLibraryDoesNotOfferSpell() {
+        harness.setLibrary(player2, List.of());
+
+        castMindseekerTargetingOpponent();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void millsAllCardsWhenOpponentHasFewerThanFive() {
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        harness.setLibrary(player2, List.of(counsel, new GrizzlyBears()));
+
+        castMindseekerTargetingOpponent();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(counsel);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(counsel);
+    }
+
+    @Test
+    void decliningFirstSpellAllowsCastingSecondSpell() {
+        CounselOfTheSoratami first = new CounselOfTheSoratami();
+        CounselOfTheSoratami second = new CounselOfTheSoratami();
+        harness.setLibrary(player2, topFive(first, second));
+
+        castMindseekerTargetingOpponent();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(first).doesNotContain(second);
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getId().equals(second.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed(RestInPeace.class)
+    void canCastMilledSpellExiledByRestInPeace() {
+        harness.addToBattlefield(player1, new RestInPeace());
+        harness.setLibrary(player2, topFive(new CounselOfTheSoratami()));
+
+        castMindseekerTargetingOpponent();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
+    }
+
+    @Test
+    @CardUsed(AltarsReap.class)
+    void mandatorySacrificeIsPaidBeforeMilledSpellResolves() {
+        harness.setLibrary(player2, topFive(new AltarsReap()));
+
+        castMindseekerTargetingOpponent();
+        UUID mindseekerId = harness.getPermanentId(player1, "Jace's Mindseeker");
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player1, mindseekerId);
+        harness.assertNotOnBattlefield(player1, "Jace's Mindseeker");
+        harness.assertInGraveyard(player1, "Jace's Mindseeker");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
     }
 }
