@@ -45,7 +45,6 @@ class QuickDrawTest extends BaseCardTest {
 
         castQuickDraw(ownCreature, player2.getId());
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
@@ -71,6 +70,60 @@ class QuickDrawTest extends BaseCardTest {
                 List.of(ownCreature.getId(), player1.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("opponent");
+    }
+
+    @Test
+    @DisplayName("Still removes strike abilities when the creature target leaves before resolution")
+    void resolvesForOpponentWhenCreatureTargetLeaves() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent firstStrikeCreature = harness.addToBattlefieldAndReturn(player2, new BenalishKnight());
+        Permanent doubleStrikeCreature = harness.addToBattlefieldAndReturn(player2, new FencingAce());
+        harness.setHand(player1, List.of(new QuickDraw()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, List.of(ownCreature.getId(), player2.getId()));
+
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, ownCreature);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, firstStrikeCreature, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, doubleStrikeCreature, Keyword.DOUBLE_STRIKE)).isFalse();
+        harness.assertInGraveyard(player1, "Quick Draw");
+    }
+
+    @Test
+    @DisplayName("Only creatures controlled by the targeted opponent at resolution lose strike abilities")
+    void doesNotAffectOwnOrLaterEnteringCreatures() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent ownFirstStrikeCreature = harness.addToBattlefieldAndReturn(player1, new BenalishKnight());
+        Permanent ownDoubleStrikeCreature = harness.addToBattlefieldAndReturn(player1, new FencingAce());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new FencingAce());
+
+        castQuickDraw(ownCreature, player2.getId());
+        Permanent laterFirstStrikeCreature = harness.addToBattlefieldAndReturn(player2, new BenalishKnight());
+        Permanent laterDoubleStrikeCreature = harness.addToBattlefieldAndReturn(player2, new FencingAce());
+
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownFirstStrikeCreature, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownDoubleStrikeCreature, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, laterFirstStrikeCreature, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, laterDoubleStrikeCreature, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A later first strike grant works after Quick Draw removes strike abilities")
+    void laterGrantRestoresFirstStrike() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new FencingAce());
+        castQuickDraw(ownCreature, player2.getId());
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.DOUBLE_STRIKE)).isFalse();
+
+        harness.setHand(player2, List.of(new QuickDraw()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, List.of(opponentCreature.getId(), player1.getId()));
+
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     private void castQuickDraw(Permanent ownCreature, java.util.UUID opponentId) {
