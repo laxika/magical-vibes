@@ -69,6 +69,76 @@ class KyoshiWarriorExemplarsTest extends BaseCardTest {
         assertThat(kyoshi.getToughnessModifier()).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("Losing the eighth land before resolution prevents the boost")
+    void losingEighthLandBeforeResolutionPreventsBoost() {
+        Permanent kyoshi = addCreatureReady(player1, new KyoshiWarriorExemplars());
+        addForests(player1, 7);
+        Permanent eighthLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(eighthLand);
+        gd.playerGraveyards.get(player1.getId()).add(eighthLand.getCard());
+        resolveAllTriggers();
+
+        assertThat(kyoshi.getPowerModifier()).isZero();
+        assertThat(kyoshi.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Gaining the eighth land after attacking does not create a trigger")
+    void gainingEighthLandAfterAttackingDoesNotTrigger() {
+        Permanent kyoshi = addCreatureReady(player1, new KyoshiWarriorExemplars());
+        addForests(player1, 7);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
+        assertThat(gd.stack).isEmpty();
+        harness.addToBattlefield(player1, new Forest());
+        resolveAllTriggers();
+
+        assertThat(kyoshi.getPowerModifier()).isZero();
+        assertThat(kyoshi.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Opponent lands do not count toward the eight-land threshold")
+    void opponentLandsDoNotCount() {
+        Permanent kyoshi = addCreatureReady(player1, new KyoshiWarriorExemplars());
+        addForests(player1, 7);
+        addForests(player2, 8);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(kyoshi.getPowerModifier()).isZero();
+        assertThat(kyoshi.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Only creatures present when the trigger resolves receive the boost")
+    void boostUsesCreaturesPresentAtResolution() {
+        Permanent kyoshi = addCreatureReady(player1, new KyoshiWarriorExemplars());
+        addForests(player1, 9);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
+        assertThat(gd.stack).hasSize(1);
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new KyoshiWarriorExemplars());
+        resolveAllTriggers();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new KyoshiWarriorExemplars());
+
+        assertThat(kyoshi.getPowerModifier()).isEqualTo(2);
+        assertThat(kyoshi.getToughnessModifier()).isEqualTo(2);
+        assertThat(beforeResolution.getPowerModifier()).isEqualTo(2);
+        assertThat(beforeResolution.getToughnessModifier()).isEqualTo(2);
+        assertThat(afterResolution.getPowerModifier()).isZero();
+        assertThat(afterResolution.getToughnessModifier()).isZero();
+    }
+
     private void addForests(com.github.laxika.magicalvibes.model.Player player, int count) {
         for (int i = 0; i < count; i++) {
             harness.addToBattlefield(player, new Forest());
