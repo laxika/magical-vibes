@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.q.QueensCommission;
+import com.github.laxika.magicalvibes.cards.s.ShootTheSheriff;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KambalProfiteeringMayor.class, QueensCommission.class})
+@CardUsed({KambalProfiteeringMayor.class, QueensCommission.class, ShootTheSheriff.class})
 class KambalProfiteeringMayorTest extends BaseCardTest {
 
     @Test
@@ -52,6 +53,67 @@ class KambalProfiteeringMayorTest extends BaseCardTest {
         assertThat(vampires(player1)).hasSize(2);
     }
 
+    @Test
+    void ownTokenTriggerIsNotLimitedToOnceEachTurn() {
+        addCreatureReady(player1, new KambalProfiteeringMayor());
+
+        castQueensCommission(player1);
+        castQueensCommission(player1);
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+        assertThat(vampires(player1)).hasSize(4);
+        assertThat(vampires(player2)).isEmpty();
+    }
+
+    @Test
+    void copiesTokenThatLeavesBeforeCopyTriggerResolves() {
+        addCreatureReady(player1, new KambalProfiteeringMayor());
+        harness.setHand(player2, List.of(new QueensCommission()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castAndResolveSorcery(player2, 0, 0);
+        assertThat(vampires(player2)).hasSize(2);
+        assertThat(vampires(player1)).isEmpty();
+
+        harness.setHand(player1, List.of(new ShootTheSheriff()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, vampires(player2).getFirst().getId());
+        resolveAllTriggers();
+
+        assertThat(vampires(player2)).hasSize(1);
+        assertThat(vampires(player1)).hasSize(2)
+                .allSatisfy(token -> assertThat(token.isTapped()).isTrue());
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void copyTriggerStillResolvesAfterKambalLeaves() {
+        Permanent kambal = addCreatureReady(player1, new KambalProfiteeringMayor());
+        harness.setHand(player2, List.of(new QueensCommission(), new ShootTheSheriff()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castAndResolveSorcery(player2, 0, 0);
+        assertThat(vampires(player2)).hasSize(2);
+        assertThat(vampires(player1)).isEmpty();
+
+        harness.castInstant(player2, 0, kambal.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Kambal, Profiteering Mayor");
+        assertThat(vampires(player1)).hasSize(2)
+                .allSatisfy(token -> assertThat(token.isTapped()).isTrue());
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
     private void castQueensCommission(Player player) {
         harness.setHand(player, List.of(new QueensCommission()));
         harness.addMana(player, ManaColor.WHITE, 1);
@@ -68,8 +130,6 @@ class KambalProfiteeringMayorTest extends BaseCardTest {
     }
 
     private List<Permanent> vampires(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> "Vampire".equals(permanent.getCard().getName()))
-                .toList();
+        return findPermanents(player, "Vampire");
     }
 }
