@@ -113,10 +113,83 @@ class ManaVortexTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CityOfShadows());
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Mana Vortex");
+    }
+
+    @Test
+    @DisplayName("An active player without lands does not sacrifice other permanents")
+    void upkeepWithoutActivePlayerLandsDoesNothing() {
+        harness.addToBattlefield(player1, new ManaVortex());
+        harness.addToBattlefield(player1, new CityOfShadows());
+        harness.addToBattlefield(player2, new ScavengerFolk());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Mana Vortex");
+        harness.assertOnBattlefield(player1, "City of Shadows");
+        harness.assertOnBattlefield(player2, "Scavenger Folk");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The upkeep sacrifice includes a creature turned into a land")
+    void upkeepSacrificesEffectiveLand() {
+        harness.addToBattlefield(player1, new ManaVortex());
+        harness.addToBattlefield(player1, new CityOfShadows());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ScavengerFolk());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ImprisonedInTheMoon());
+        aura.setAttachedTo(creature.getId());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Scavenger Folk");
+        harness.assertInGraveyard(player1, "Imprisoned in the Moon");
+        harness.assertOnBattlefield(player1, "Mana Vortex");
+        harness.assertOnBattlefield(player1, "City of Shadows");
+    }
+
+    @Test
+    @DisplayName("A land entering after the no-lands trigger does not prevent the sacrifice")
+    void stateTriggerStillSacrificesAfterLandReturns() {
+        harness.addToBattlefield(player1, new ManaVortex());
+        harness.addToBattlefield(player1, new CityOfShadows());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "City of Shadows");
+        harness.assertOnBattlefield(player1, "Mana Vortex");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.addToBattlefield(player2, new CityOfShadows());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Mana Vortex");
+        harness.assertNotOnBattlefield(player1, "Mana Vortex");
+        harness.assertOnBattlefield(player2, "City of Shadows");
+    }
+
+    @Test
+    @DisplayName("A land created by a type-changing effect can pay the cast trigger")
+    void castTriggerAcceptsEffectiveLand() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ScavengerFolk());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new ImprisonedInTheMoon());
+        aura.setAttachedTo(creature.getId());
+        harness.addToBattlefield(player2, new CityOfShadows());
+        castManaVortex(player1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, creature.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Scavenger Folk");
+        harness.assertInGraveyard(player2, "Imprisoned in the Moon");
+        harness.assertOnBattlefield(player1, "Mana Vortex");
+        harness.assertOnBattlefield(player2, "City of Shadows");
     }
 
     private void castManaVortex(Player player) {
