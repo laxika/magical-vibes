@@ -101,4 +101,80 @@ class LightningStormTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 15);
     }
+
+    @Test
+    void multipleActivationsAddCountersOnlyAsTheyResolve() {
+        LightningStorm storm = new LightningStorm();
+        harness.setHand(player1, List.of(storm, new SnowCoveredForest(), new SnowCoveredForest()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.activateStackAbility(player1, storm.getId(), 0, 0);
+        harness.activateStackAbility(player1, storm.getId(), 0, 0);
+
+        assertThat(gd.stack.getFirst().getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+
+        harness.passBothPriorities();
+        assertThat(gd.stack.getFirst().getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        assertThat(gd.stack.getFirst().getCounterCount(CounterType.CHARGE)).isEqualTo(4);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 13);
+    }
+
+    @Test
+    void mayRetargetWhileAnotherActivationIsStillOnTheStack() {
+        LightningStorm storm = new LightningStorm();
+        harness.setHand(player1, List.of(storm, new SnowCoveredForest(), new SnowCoveredForest()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castInstant(player1, 0, player1.getId());
+        harness.activateStackAbility(player1, storm.getId(), 0, 0);
+        harness.activateStackAbility(player1, storm.getId(), 0, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 13);
+    }
+
+    @Test
+    void mayRetargetToACreatureAndDealIncreasedDamage() {
+        Permanent target = addCreatureReady(player2, new DeepfireElemental());
+        LightningStorm storm = new LightningStorm();
+        harness.setHand(player1, List.of(storm, new SnowCoveredForest()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.activateStackAbility(player1, storm.getId(), 0, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player2, "Deepfire Elemental");
+    }
+
+    @Test
+    void cannotActivateAfterTheSpellHasResolved() {
+        LightningStorm storm = new LightningStorm();
+        harness.setHand(player1, List.of(storm, new SnowCoveredForest()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThatThrownBy(() -> harness.activateStackAbility(player1, storm.getId(), 0, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Snow-Covered Forest");
+        harness.assertInGraveyard(player1, "Lightning Storm");
+        harness.assertLife(player2, 17);
+    }
 }
