@@ -6,6 +6,11 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.b.Batterskull;
+import com.github.laxika.magicalvibes.cards.m.MutagenicGrowth;
+import com.github.laxika.magicalvibes.cards.n.NumbingDose;
+import com.github.laxika.magicalvibes.cards.p.PorcelainLegionnaire;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,9 +30,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({KarnLiberated.class, GrizzlyBears.class, Forest.class})
 class KarnLiberatedTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting puts planeswalker spell on the stack")
@@ -52,17 +56,14 @@ class KarnLiberatedTest extends BaseCardTest {
         harness.castPlaneswalker(player1, 0);
         harness.passBothPriorities();
 
-        List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
-        assertThat(bf).anyMatch(p -> p.getCard().getName().equals("Karn Liberated"));
-        Permanent karn = bf.stream().filter(p -> p.getCard().getName().equals("Karn Liberated")).findFirst().orElseThrow();
+        Permanent karn = findPermanent(player1, "Karn Liberated");
         assertThat(karn.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
         assertThat(karn.isSummoningSick()).isFalse();
     }
 
-    // ===== +4 ability: Target player exiles a card from their hand =====
-
     @Nested
     @DisplayName("+4 ability")
+    @CardUsed({KarnLiberated.class, GrizzlyBears.class, Forest.class})
     class PlusFourAbility {
 
         @Test
@@ -82,7 +83,7 @@ class KarnLiberatedTest extends BaseCardTest {
         @Test
         @DisplayName("Target player exiles a card of their choice")
         void targetExilesCardOfChoice() {
-            Permanent karn = addReadyKarn(player1);
+            addReadyKarn(player1);
             harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Forest())));
 
             harness.activateAbility(player1, 0, 0, null, player2.getId());
@@ -120,7 +121,7 @@ class KarnLiberatedTest extends BaseCardTest {
         @Test
         @DisplayName("Can target self to exile from own hand")
         void canTargetSelf() {
-            Permanent karn = addReadyKarn(player1);
+            addReadyKarn(player1);
             harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears(), new Forest())));
 
             harness.activateAbility(player1, 0, 0, null, player1.getId());
@@ -165,10 +166,9 @@ class KarnLiberatedTest extends BaseCardTest {
         }
     }
 
-    // ===== −3 ability: Exile target permanent =====
-
     @Nested
     @DisplayName("−3 ability")
+    @CardUsed({KarnLiberated.class, GrizzlyBears.class})
     class MinusThreeAbility {
 
         @Test
@@ -205,7 +205,7 @@ class KarnLiberatedTest extends BaseCardTest {
         @Test
         @DisplayName("Can exile own permanent")
         void canExileOwnPermanent() {
-            Permanent karn = addReadyKarn(player1);
+            addReadyKarn(player1);
             harness.addToBattlefield(player1, new GrizzlyBears());
             Permanent bears = findPermanent(player1, "Grizzly Bears");
 
@@ -230,10 +230,9 @@ class KarnLiberatedTest extends BaseCardTest {
         }
     }
 
-    // ===== −14 ability: Restart the game =====
-
     @Nested
     @DisplayName("−14 ability")
+    @CardUsed({KarnLiberated.class, GrizzlyBears.class, Forest.class})
     class MinusFourteenAbility {
 
         @Test
@@ -260,7 +259,7 @@ class KarnLiberatedTest extends BaseCardTest {
             harness.activateAbility(player1, 0, 2, null, null);
             harness.passBothPriorities();
 
-            // Game enters mulligan phase after restart (CR 726)
+            // Game enters mulligan phase after restart.
             assertThat(gd.status).isEqualTo(GameStatus.MULLIGAN);
             assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
             assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -315,9 +314,135 @@ class KarnLiberatedTest extends BaseCardTest {
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Not enough loyalty");
         }
-    }
 
-    // ===== Loyalty ability restrictions =====
+        @Test
+        @CardUsed({Batterskull.class})
+        @DisplayName("Equipment returned by the restart triggers living weapon")
+        void restartTriggersLivingWeapon() {
+            Permanent karn = addReadyKarn(player1);
+            Permanent equipment = harness.addToBattlefieldAndReturn(player2, new Batterskull());
+            harness.activateAbility(player1, 0, 1, null, equipment.getId());
+            harness.passBothPriorities();
+
+            karn.setLoyaltyActivationsThisTurn(0);
+            karn.setCounterCount(CounterType.LOYALTY, 14);
+            harness.activateAbility(player1, 0, 2, null, null);
+            harness.passBothPriorities();
+            harness.skipMulligan();
+
+            assertThat(gd.stack).anyMatch(entry -> entry.getCard() instanceof Batterskull);
+            harness.passBothPriorities();
+            Permanent germ = findPermanent(player1, "Phyrexian Germ");
+            assertThat(findPermanent(player1, "Batterskull").getAttachedTo()).isEqualTo(germ.getId());
+        }
+
+        @Test
+        @DisplayName("A player unable to draw seven opening cards loses after the restart")
+        void restartWithTooFewOpeningCardsLoses() {
+            Permanent karn = addReadyKarn(player1);
+            karn.setCounterCount(CounterType.LOYALTY, 14);
+            harness.setHand(player2, List.of());
+            harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest(),
+                    new Forest(), new Forest(), new Forest()));
+            gd.playerGraveyards.get(player2.getId()).clear();
+
+            harness.activateAbility(player1, 0, 2, null, null);
+            harness.passBothPriorities();
+            harness.skipMulligan();
+
+            if (gd.status != GameStatus.FINISHED) {
+                harness.forceStep(TurnStep.UPKEEP);
+                harness.runStateBasedActions();
+            }
+            assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+            assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+        }
+
+        @Test
+        @CardUsed({PorcelainLegionnaire.class})
+        @DisplayName("A second restart returns an opponent's previously acquired card to its owner")
+        void secondRestartPreservesOwnership() {
+            Permanent karn = addReadyKarn(player1);
+            PorcelainLegionnaire card = new PorcelainLegionnaire();
+            card.setOwnerId(player2.getId());
+            Permanent creature = harness.addToBattlefieldAndReturn(player2, card);
+            harness.activateAbility(player1, 0, 1, null, creature.getId());
+            harness.passBothPriorities();
+
+            karn.setLoyaltyActivationsThisTurn(0);
+            karn.setCounterCount(CounterType.LOYALTY, 14);
+            harness.activateAbility(player1, 0, 2, null, null);
+            harness.passBothPriorities();
+            harness.skipMulligan();
+            harness.assertOnBattlefield(player1, "Porcelain Legionnaire");
+
+            Permanent secondKarn = addReadyKarn(player1);
+            secondKarn.setCounterCount(CounterType.LOYALTY, 14);
+            int index = gd.playerBattlefields.get(player1.getId()).indexOf(secondKarn);
+            harness.activateAbility(player1, index, 2, null, null);
+            harness.passBothPriorities();
+
+            List<com.github.laxika.magicalvibes.model.Card> ownerCards = new ArrayList<>(gd.playerDecks.get(player2.getId()));
+            ownerCards.addAll(gd.playerHands.get(player2.getId()));
+            assertThat(ownerCards).contains(card);
+            assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(card);
+            assertThat(gd.playerHands.get(player1.getId())).doesNotContain(card);
+        }
+
+        @Test
+        @CardUsed({NumbingDose.class, MutagenicGrowth.class})
+        @DisplayName("Auras and instants exiled from hand return to the library on restart")
+        void restartDoesNotKeepAurasOrInstants() {
+            Permanent karn = addReadyKarn(player1);
+            NumbingDose aura = new NumbingDose();
+            MutagenicGrowth instant = new MutagenicGrowth();
+            harness.setHand(player2, List.of(aura, instant));
+            harness.activateAbility(player1, 0, 0, null, player2.getId());
+            harness.passBothPriorities();
+            harness.handleCardChosen(player2, 0);
+            karn.setLoyaltyActivationsThisTurn(0);
+            harness.activateAbility(player1, 0, 0, null, player2.getId());
+            harness.passBothPriorities();
+            harness.handleCardChosen(player2, 0);
+
+            karn.setLoyaltyActivationsThisTurn(0);
+            karn.setCounterCount(CounterType.LOYALTY, 14);
+            harness.activateAbility(player1, 0, 2, null, null);
+            harness.passBothPriorities();
+
+            List<com.github.laxika.magicalvibes.model.Card> ownerCards = new ArrayList<>(gd.playerDecks.get(player2.getId()));
+            ownerCards.addAll(gd.playerHands.get(player2.getId()));
+            assertThat(ownerCards).contains(aura, instant);
+            assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(aura, instant);
+            harness.skipMulligan();
+            harness.assertNotOnBattlefield(player1, "Numbing Dose");
+        }
+
+        @Test
+        @DisplayName("A land exiled from hand enters before the restarted game's first turn")
+        void restartKeepsLandExiledFromHand() {
+            Permanent karn = addReadyKarn(player1);
+            Forest forest = new Forest();
+            harness.setHand(player2, List.of(forest));
+            harness.activateAbility(player1, 0, 0, null, player2.getId());
+            harness.passBothPriorities();
+            harness.handleCardChosen(player2, 0);
+
+            karn.setLoyaltyActivationsThisTurn(0);
+            karn.setCounterCount(CounterType.LOYALTY, 14);
+            harness.activateAbility(player1, 0, 2, null, null);
+            harness.passBothPriorities();
+            assertThat(gd.getPlayerExiledCards(player2.getId())).contains(forest);
+            assertThat(gd.playerHands.get(player2.getId())).doesNotContain(forest);
+            assertThat(gd.playerDecks.get(player2.getId())).doesNotContain(forest);
+            harness.skipMulligan();
+
+            assertThat(gd.playerBattlefields.get(player1.getId()))
+                    .anyMatch(permanent -> permanent.getCard() == forest);
+            assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(forest);
+            assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isZero();
+        }
+    }
 
     @Test
     @DisplayName("Cannot activate loyalty ability during opponent's turn")
@@ -344,8 +469,6 @@ class KarnLiberatedTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("one loyalty ability");
     }
-
-    // ===== Planeswalker dies at 0 loyalty =====
 
     @Test
     @DisplayName("Karn dies when loyalty reaches 0")
@@ -383,14 +506,10 @@ class KarnLiberatedTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
 
-    // ===== Helpers =====
-
     private Permanent addReadyKarn(Player player) {
-        KarnLiberated card = new KarnLiberated();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new KarnLiberated());
         perm.setCounterCount(CounterType.LOYALTY, 6);
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
