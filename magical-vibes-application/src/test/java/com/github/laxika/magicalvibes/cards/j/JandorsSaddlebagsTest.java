@@ -155,9 +155,38 @@ class JandorsSaddlebagsTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    void untapsOnlyTheChosenCreature() {
+        Permanent saddlebags = addReadySaddlebags(player1);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent other = addCreatureReady(player2, new GrizzlyBears());
+        target.tap();
+        other.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(other.isTapped()).isTrue();
+        assertThat(saddlebags.isTapped()).isTrue();
+    }
+
+    @Test
+    void cannotActivateWithoutTarget() {
+        Permanent saddlebags = addReadySaddlebags(player1);
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(saddlebags.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadySaddlebags(Player player) {
-        Permanent perm = harness.addToBattlefieldAndReturn(player, new JandorsSaddlebags());
-        perm.setSummoningSick(false);
-        return perm;
+        return addCreatureReady(player, new JandorsSaddlebags());
     }
 }
