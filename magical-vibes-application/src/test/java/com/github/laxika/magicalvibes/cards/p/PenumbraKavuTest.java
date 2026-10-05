@@ -53,4 +53,52 @@ class PenumbraKavuTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Kavu")).hasSize(2);
     }
+
+    @Test
+    @DisplayName("Penumbra Kavu creates its token even when it dies with zero toughness")
+    void zeroToughnessDeathCreatesToken() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player1, new PenumbraKavu());
+        kavu.setToughnessModifier(-3);
+
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Penumbra Kavu");
+        assertThat(findPermanents(player1, "Kavu")).hasSize(1);
+        Permanent token = findPermanent(player1, "Kavu");
+        assertThat(token.getEffectivePower()).isEqualTo(3);
+        assertThat(token.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The death trigger creates the token for the dying Kavu's controller")
+    void deathCreatesTokenForItsController() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player2, new PenumbraKavu());
+        kavu.setMarkedDamage(3);
+
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Penumbra Kavu");
+        assertThat(findPermanents(player2, "Kavu")).hasSize(1);
+        assertThat(findPermanents(player1, "Kavu")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The black Kavu token does not create another token when it dies")
+    void tokenDoesNotInheritDeathTrigger() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player1, new PenumbraKavu());
+        kavu.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Kavu")).hasSize(1);
+
+        Permanent token = findPermanent(player1, "Kavu");
+        token.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Kavu")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
 }
