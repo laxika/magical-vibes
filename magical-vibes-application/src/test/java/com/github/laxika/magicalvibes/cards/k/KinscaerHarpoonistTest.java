@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.d.DevotedDruid;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KinscaerHarpoonist.class, Island.class})
+@CardUsed({KinscaerHarpoonist.class, Island.class, DevotedDruid.class})
 class KinscaerHarpoonistTest extends BaseCardTest {
 
     @Test
@@ -73,6 +74,72 @@ class KinscaerHarpoonistTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gqs.hasKeyword(gd, hawk, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The attacking Harpoonist can target itself")
+    void canRemoveItsOwnFlying() {
+        Permanent attacker = addCreatureReady(player1, new KinscaerHarpoonist());
+
+        declareAttackers(player1, List.of(0));
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).contains(attacker.getId());
+        harness.handlePermanentChosen(player1, attacker.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature without flying is still a legal target")
+    void canTargetCreatureWithoutFlying() {
+        Permanent attacker = addCreatureReady(player1, new KinscaerHarpoonist());
+        Permanent druid = addCreatureReady(player2, new DevotedDruid());
+
+        declareAttackers(player1, List.of(0));
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).contains(druid.getId());
+        harness.handlePermanentChosen(player1, druid.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.hasKeyword(gd, druid, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The attack trigger resolves after its source leaves the battlefield")
+    void triggerSurvivesSourceLeaving() {
+        Permanent attacker = addCreatureReady(player1, new KinscaerHarpoonist());
+        Permanent target = addCreatureReady(player2, new KinscaerHarpoonist());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, attacker);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+    }
+
+    @Test
+    @DisplayName("The trigger does not resolve when its only target leaves the battlefield")
+    void triggerDoesNotResolveForMissingTarget() {
+        Permanent attacker = addCreatureReady(player1, new KinscaerHarpoonist());
+        Permanent target = addCreatureReady(player2, new KinscaerHarpoonist());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FLYING)).isTrue();
     }
 
     @Test
