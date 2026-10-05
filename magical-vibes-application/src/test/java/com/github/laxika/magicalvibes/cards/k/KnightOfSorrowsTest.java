@@ -1,18 +1,17 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FinalPayment;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,15 +20,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KnightOfSorrows.class, GrizzlyBears.class, WrathOfGod.class, FinalPayment.class})
 class KnightOfSorrowsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Knight of Sorrows can block two attackers")
     void canBlockTwoAttackers() {
-        Permanent knight = addReadyCreature(player2, new KnightOfSorrows());
+        Permanent knight = addCreatureReady(player2, new KnightOfSorrows());
         addAttackers(2);
 
-        beginBlockers();
+        prepareDeclareBlockers();
         int knightIndex = gd.playerBattlefields.get(player2.getId()).indexOf(knight);
 
         gs.declareBlockers(gd, player2, List.of(
@@ -44,10 +44,10 @@ class KnightOfSorrowsTest extends BaseCardTest {
     @Test
     @DisplayName("Knight of Sorrows cannot block three attackers")
     void cannotBlockThreeAttackers() {
-        Permanent knight = addReadyCreature(player2, new KnightOfSorrows());
+        Permanent knight = addCreatureReady(player2, new KnightOfSorrows());
         addAttackers(3);
 
-        beginBlockers();
+        prepareDeclareBlockers();
         int knightIndex = gd.playerBattlefields.get(player2.getId()).indexOf(knight);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
@@ -63,19 +63,13 @@ class KnightOfSorrowsTest extends BaseCardTest {
     void afterlifeCreatesSpiritToken() {
         harness.addToBattlefield(player1, new KnightOfSorrows());
 
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        GameData gameData = harness.getGameData();
         harness.assertInGraveyard(player1, "Knight of Sorrows");
 
-        Permanent token = gameData.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Spirit"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Spirit");
         assertThat(token.getCard().isToken()).isTrue();
         assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(token.getCard().getPower()).isEqualTo(1);
@@ -86,24 +80,63 @@ class KnightOfSorrowsTest extends BaseCardTest {
         assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING);
     }
 
-    private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
-
     private void addAttackers(int count) {
         for (int i = 0; i < count; i++) {
-            Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+            Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
             attacker.setAttacking(true);
         }
     }
 
-    private void beginBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+    @Test
+    void additionalBlockingAbilityDoesNotApplyToOtherCreatures() {
+        addCreatureReady(player2, new KnightOfSorrows());
+        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
+        addAttackers(2);
+        prepareDeclareBlockers();
+        int bearIndex = gd.playerBattlefields.get(player2.getId()).indexOf(bear);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(bearIndex, 0),
+                new BlockerAssignment(bearIndex, 1)
+        ))).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("too many times");
+    }
+
+    @Test
+    void simultaneousDeathsCreateOneTokenForEachKnightsController() {
+        harness.addToBattlefield(player1, new KnightOfSorrows());
+        harness.addToBattlefield(player1, new KnightOfSorrows());
+        harness.addToBattlefield(player2, new KnightOfSorrows());
+
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Spirit")).isEqualTo(2);
+        assertThat(countPermanents(player2, "Spirit")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Knight of Sorrows")).isZero();
+        assertThat(countPermanents(player2, "Knight of Sorrows")).isZero();
+    }
+
+    @Test
+    void sacrificeCostTriggersAfterlifeBeforeTheSpellResolves() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new KnightOfSorrows());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new KnightOfSorrows());
+        harness.setHand(player1, List.of(new FinalPayment()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstantWithSacrifice(player1, 0, target.getId(), sacrifice.getId());
+
+        harness.assertInGraveyard(player1, "Knight of Sorrows");
+        assertThat(countPermanents(player1, "Spirit")).isZero();
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Spirit")).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Knight of Sorrows");
+
+        harness.passBothPriorities();
+        resolveAllTriggers();
+        harness.assertInGraveyard(player2, "Knight of Sorrows");
+        assertThat(countPermanents(player2, "Spirit")).isEqualTo(1);
     }
 }
