@@ -6,10 +6,12 @@ import com.github.laxika.magicalvibes.cards.i.ImmortalCoil;
 import com.github.laxika.magicalvibes.cards.m.MortalCombat;
 import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.u.UnderworldDreams;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +21,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LichsMirror.class, Shock.class, GrizzlyBears.class, ImmortalCoil.class,
+        MortalCombat.class, PlatinumAngel.class, LeylineOfPunishment.class,
+        AshesOfTheAbhorrent.class, UnderworldDreams.class})
 class LichsMirrorTest extends BaseCardTest {
 
     private static List<Card> shocks(int count) {
@@ -36,8 +41,6 @@ class LichsMirrorTest extends BaseCardTest {
         }
         return cards;
     }
-
-    // ===== The replacement fires for each replaceable loss =====
 
     @Test
     @DisplayName("Would-lose from lethal damage is replaced by the reset instead of ending the game")
@@ -112,16 +115,12 @@ class LichsMirrorTest extends BaseCardTest {
 
         harness.runStateBasedActions();
 
-        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
         // The ruling is explicit that Lich's Mirror does not remove poison counters.
         assertThat(gd.playerPoisonCounters.get(p1)).isEqualTo(10);
-
-        // The Mirror shuffled itself away, so the still-lethal poison finishes the game.
-        harness.runStateBasedActions();
+        assertThat(gd.playerHands.get(p1)).hasSize(7);
+        // State-based actions repeat before any player receives priority.
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
-
-    // ===== What the replacement must NOT do =====
 
     @Test
     @DisplayName("Without Lich's Mirror the player loses normally at 0 life")
@@ -191,8 +190,6 @@ class LichsMirrorTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(p1)).hasSize(1);
     }
 
-    // ===== Details of the reset itself =====
-
     @Test
     @DisplayName("A draw that can't be completed re-arms the empty-library loss")
     void shortLibraryStillLosesAtTheNextCheck() {
@@ -227,8 +224,7 @@ class LichsMirrorTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(p1)).isZero();
         assertThat(gd.playerHands.get(p1)).hasSize(7);
 
-        // The reset still happened, but the player is still at 0 and the Mirror is gone.
-        harness.runStateBasedActions();
+        // State-based actions repeat immediately because the player is still at 0.
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
         assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
     }
@@ -236,7 +232,6 @@ class LichsMirrorTest extends BaseCardTest {
     @Test
     @DisplayName("Owned tokens leave the battlefield without dying")
     void ownedTokensLeaveWithoutDying() {
-        UUID p1 = player1.getId();
         Card token = new GrizzlyBears();
         token.setToken(true);
         harness.addToBattlefield(player1, token);
@@ -271,5 +266,72 @@ class LichsMirrorTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(p1)).isEmpty();
         // "If one or more cards left your graveyard this turn" must see the reset.
         assertThat(gd.playersWhoseCardsLeftGraveyardThisTurn).contains(p1);
+    }
+
+    @Test
+    @DisplayName("The seven reset draws trigger an opponent's Underworld Dreams")
+    void resetDrawsTriggerOpponentAbilities() {
+        harness.addToBattlefield(player1, new LichsMirror());
+        harness.addToBattlefield(player2, new UnderworldDreams());
+        harness.setLibrary(player1, shocks(10));
+        harness.setLife(player1, 0);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard() instanceof UnderworldDreams).hasSize(7);
+        assertThat(gd.cardsDrawnThisTurn.get(player1.getId())).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("The reset shuffles owned stolen permanents but leaves borrowed permanents alone")
+    void resetUsesOwnershipRatherThanControl() {
+        var ownedBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        gd.stolenCreatures.put(ownedBear.getId(), player1.getId());
+        var borrowedMirror = harness.addToBattlefieldAndReturn(player1, new LichsMirror());
+        gd.stolenCreatures.put(borrowedMirror.getId(), player2.getId());
+        harness.setLibrary(player1, shocks(10));
+        harness.setLife(player1, -4);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(borrowedMirror);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(ownedBear);
+        List<Card> resetCards = new ArrayList<>(gd.playerHands.get(player1.getId()));
+        resetCards.addAll(gd.playerDecks.get(player1.getId()));
+        assertThat(resetCards).contains(ownedBear.getCard()).doesNotContain(borrowedMirror.getCard());
+    }
+
+    @Test
+    @DisplayName("An insufficient reset library loses immediately even when the original loss was a failed draw")
+    void insufficientLibraryAfterReplacingFailedDrawStillLoses() {
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of());
+        harness.setLibrary(player1, List.of());
+        harness.addToBattlefield(player1, new LichsMirror());
+        gd.playersAttemptedDrawFromEmptyLibrary.add(player1.getId());
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("A Mirror that has lost its abilities cannot replace a game loss")
+    void mirrorWithoutAbilitiesDoesNotReplaceLoss() {
+        var mirror = harness.addToBattlefieldAndReturn(player1, new LichsMirror());
+        mirror.setLosesAllAbilitiesUntilEndOfTurn(true);
+        harness.setLibrary(player1, shocks(10));
+        harness.setLife(player1, 0);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+        harness.assertLife(player1, 0);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(mirror);
     }
 }
