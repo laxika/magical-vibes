@@ -55,9 +55,7 @@ class IngeniousLeoninTest extends BaseCardTest {
         activate(cat);
         assertThat(gqs.hasKeyword(gd, cat, Keyword.FIRST_STRIKE)).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.hasKeyword(gd, cat, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(cat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -75,6 +73,55 @@ class IngeniousLeoninTest extends BaseCardTest {
         assertThatThrownBy(() -> activate(source)).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> activate(nonattacking)).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> activate(opponent)).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Ability does nothing if its target stops attacking before resolution")
+    void targetMustStillBeAttackingOnResolution() {
+        addSource();
+        Permanent cat = addAttackingCreature(player1, new IngeniousLeonin());
+        addMana();
+
+        harness.activateAbility(player1, 0, 0, null, cat.getId());
+        cat.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(cat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, cat, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped source with summoning sickness can activate the ability")
+    void tappedSummoningSickSourceCanActivate() {
+        Permanent source = addSource();
+        source.setTapped(true);
+        source.setSummoningSick(true);
+        Permanent cat = addAttackingCreature(player1, new IngeniousLeonin());
+        addMana();
+
+        activate(cat);
+
+        assertThat(cat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, cat, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(source.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated activations each add a counter to the same attacker")
+    void canActivateRepeatedly() {
+        addSource();
+        Permanent cat = addAttackingCreature(player1, new IngeniousLeonin());
+        harness.addMana(player1, ManaColor.WHITE, 8);
+
+        harness.activateAbility(player1, 0, 0, null, cat.getId());
+        harness.activateAbility(player1, 0, 0, null, cat.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(cat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, cat, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addSource() {
