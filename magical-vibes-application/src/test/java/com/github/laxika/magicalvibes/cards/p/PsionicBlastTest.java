@@ -47,4 +47,36 @@ class PsionicBlastTest extends BaseCardTest {
 
         harness.assertLife(player1, 14);
     }
+
+    @Test
+    void dealsDamageToItsControllersCreatureAndStillDamagesController() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new PsionicBlast()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void doesNotDamageControllerWhenOnlyTargetLeavesBattlefield() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PsionicBlast()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Psionic Blast");
+    }
 }
