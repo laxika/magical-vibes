@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -8,9 +10,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Onulet.class, GrizzlyBears.class, WrathOfGod.class})
+@CardUsed({Onulet.class, GrizzlyBears.class, WrathOfGod.class, Unsummon.class})
 class OnuletTest extends BaseCardTest {
 
     @Test
@@ -95,5 +99,38 @@ class OnuletTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Onulet");
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+    }
+    @Test
+    @DisplayName("Returning Onulet to hand does not trigger life gain")
+    void returningToHandDoesNotGainLife() {
+        Permanent onulet = harness.addToBattlefieldAndReturn(player1, new Onulet());
+        int lifeBefore = gd.getLife(player1.getId());
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, onulet.getId());
+
+        harness.assertInHand(player1, "Onulet");
+        harness.assertLife(player1, lifeBefore);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each Onulet dying simultaneously creates its own life gain trigger")
+    void simultaneousDeathsEachGainLife() {
+        harness.addToBattlefield(player1, new Onulet());
+        harness.addToBattlefield(player1, new Onulet());
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.assertLife(player1, lifeBefore + 2);
+        harness.passBothPriorities();
+        harness.assertLife(player1, lifeBefore + 4);
+        assertThat(gd.stack).isEmpty();
     }
 }
