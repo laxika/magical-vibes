@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({MorbiusTheLivingVampire.class, GrizzlyBears.class, LlanowarElves.class, Shock.class})
 class MorbiusTheLivingVampireTest extends BaseCardTest {
@@ -50,6 +51,116 @@ class MorbiusTheLivingVampireTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(shock, bears);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void putsOnlyCardIntoHandWithoutAnOrderingChoice() {
+        Card card = new MorbiusTheLivingVampire();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(new MorbiusTheLivingVampire()));
+        harness.setLibrary(player1, List.of(card));
+        prepareAbility();
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void emptyLibraryDoesNotDrawOrLoseTheGame() {
+        Card source = new MorbiusTheLivingVampire();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(source));
+        harness.setLibrary(player1, List.of());
+        prepareAbility();
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(source);
+        assertThat(gd.status).isEqualTo(com.github.laxika.magicalvibes.model.GameStatus.RUNNING);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void twoCardLibraryRequiresOneSelectionAndBottomsTheOther() {
+        Card first = new MorbiusTheLivingVampire();
+        Card second = new MorbiusTheLivingVampire();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(new MorbiusTheLivingVampire()));
+        harness.setLibrary(player1, List.of(first, second));
+        prepareAbility();
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void onlyTopThreeAreLookedAtAndRemainderGoesBelowUntouchedCards() {
+        Card first = new MorbiusTheLivingVampire();
+        Card second = new MorbiusTheLivingVampire();
+        Card third = new MorbiusTheLivingVampire();
+        Card fourth = new MorbiusTheLivingVampire();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(new MorbiusTheLivingVampire()));
+        harness.setLibrary(player1, List.of(first, second, third, fourth));
+        prepareAbility();
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(fourth.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth, third, first);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void canActivateDuringOpponentsUpkeep() {
+        Card chosen = new MorbiusTheLivingVampire();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(new MorbiusTheLivingVampire()));
+        harness.setLibrary(player1, List.of(chosen));
+        prepareAbility();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void cannotPayColoredCostWithOnlyBlueMana() {
+        Card source = new MorbiusTheLivingVampire();
+        harness.setGraveyard(player1, List.of(source));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(source);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(source);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void prepareAbility() {
