@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.Gravedigger;
+import com.github.laxika.magicalvibes.cards.h.Humility;
+import com.github.laxika.magicalvibes.cards.n.Nekrataal;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.z.ZelyonSword;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
@@ -17,7 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LokiGodOfMischief.class, ProdigalPyromancer.class, ZelyonSword.class, GrizzlyBears.class, Shock.class})
+@CardUsed({LokiGodOfMischief.class, ProdigalPyromancer.class, ZelyonSword.class, GrizzlyBears.class, Shock.class,
+        Nekrataal.class, Humility.class, Gravedigger.class})
 class LokiGodOfMischiefTest extends BaseCardTest {
 
     @Test
@@ -85,9 +89,103 @@ class LokiGodOfMischiefTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
     }
 
+    @Test
+    @DisplayName("Draws when a controlled triggered ability targets a creature")
+    void drawsForControlledTriggeredAbility() {
+        harness.addToBattlefield(player1, new LokiGodOfMischief());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Nekrataal()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Activated and triggered abilities share the once-per-turn limit")
+    void activatedAndTriggeredAbilitiesShareLimit() {
+        addReadyProdigalPyromancer(player1);
+        harness.addToBattlefield(player1, new LokiGodOfMischief());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Nekrataal()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        resolveAllTriggers();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The draw trigger can fire again on the opponent's turn")
+    void drawsAgainOnOpponentsTurn() {
+        addReadyProdigalPyromancer(player1);
+        addReadyProdigalPyromancer(player1);
+        harness.addToBattlefield(player1, new LokiGodOfMischief());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        resolveAllTriggers();
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 1, null, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Does not draw while Humility removes Loki's ability")
+    void doesNotDrawWhenContinuousEffectRemovesAbility() {
+        addReadySword(player1);
+        harness.addToBattlefield(player1, new LokiGodOfMischief());
+        harness.addToBattlefield(player2, new Humility());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Targeting a creature card in a graveyard does not trigger Loki")
+    void doesNotDrawForGraveyardCardTarget() {
+        harness.addToBattlefield(player1, new LokiGodOfMischief());
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(new Gravedigger()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(target);
+    }
+
     private Permanent addReadyProdigalPyromancer(Player player) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, new ProdigalPyromancer());
-        permanent.setSummoningSick(false);
+        Permanent permanent = addCreatureReady(player, new ProdigalPyromancer());
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return permanent;
