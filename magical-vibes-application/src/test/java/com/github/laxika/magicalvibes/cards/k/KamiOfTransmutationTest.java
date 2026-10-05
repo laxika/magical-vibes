@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -65,13 +64,68 @@ class KamiOfTransmutationTest extends BaseCardTest {
         assertThat(gqs.cardHasType(forest, CardType.ENCHANTMENT, gd, player1.getId())).isTrue();
     }
 
+    @Test
+    void enchantmentModeOnlyChangesControllersPermanentCards() {
+        Card bears = new GrizzlyBears();
+        Card forest = new Forest();
+        Card bolt = new LightningBolt();
+        Card opposingBears = new GrizzlyBears();
+        harness.setHand(player2, List.of(opposingBears));
+        castKami(List.of(bears, forest, bolt));
+
+        harness.handleListChoice(player1, ENCHANTMENT_MODE);
+        harness.passBothPriorities();
+
+        assertThat(gqs.cardHasType(bears, CardType.ENCHANTMENT, gd, player1.getId())).isTrue();
+        assertThat(gqs.cardHasType(forest, CardType.ENCHANTMENT, gd, player1.getId())).isTrue();
+        assertThat(gqs.cardHasType(bolt, CardType.ENCHANTMENT, gd, player1.getId())).isFalse();
+        assertThat(gqs.cardHasType(opposingBears, CardType.ENCHANTMENT, gd, player2.getId())).isFalse();
+    }
+
+    @Test
+    void affectsTheHandAtResolutionRatherThanWhenTheModeIsChosen() {
+        Card original = new GrizzlyBears();
+        Card arriving = new Forest();
+        castKami(List.of(original));
+        harness.handleListChoice(player1, ARTIFACT_MODE);
+        harness.setHand(player1, List.of(arriving));
+        harness.setGraveyard(player1, List.of(original));
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.cardHasType(arriving, CardType.ARTIFACT, gd, player1.getId())).isTrue();
+        assertThat(gqs.cardHasType(original, CardType.ARTIFACT, gd, player1.getId())).isFalse();
+    }
+
+    @Test
+    void grantedTypesSurvivePlayingPermanentsAndCreatureDeath() {
+        Card bears = new GrizzlyBears();
+        Card forest = new Forest();
+        castKami(List.of(bears, forest));
+        harness.handleListChoice(player1, ENCHANTMENT_MODE);
+        harness.passBothPriorities();
+
+        harness.playLand(player1, 1);
+        assertThat(gqs.isEnchantment(gd, findPermanents(player1, "Forest").getFirst())).isTrue();
+
+        harness.castFromHand(player1, bears, "{1}{G}");
+        harness.passBothPriorities();
+        Permanent creature = findPermanents(player1, "Grizzly Bears").getFirst();
+        assertThat(gqs.isEnchantment(gd, creature)).isTrue();
+
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        Card graveyardBears = gd.playerGraveyards.get(player1.getId()).stream()
+                .filter(card -> card.getName().equals("Grizzly Bears")).findFirst().orElseThrow();
+        assertThat(gqs.cardHasType(graveyardBears, CardType.ENCHANTMENT, gd, player1.getId())).isTrue();
+    }
+
     private void castKami(List<Card> handCards) {
-        List<Card> hand = new ArrayList<>(handCards);
-        hand.addFirst(new KamiOfTransmutation());
-        harness.setHand(player1, hand);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new KamiOfTransmutation(), "{1}{W}");
+        harness.setHand(player1, handCards);
         harness.passBothPriorities();
     }
 }
