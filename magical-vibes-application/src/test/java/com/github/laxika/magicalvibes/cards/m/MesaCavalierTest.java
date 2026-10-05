@@ -27,4 +27,26 @@ class MesaCavalierTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(12);
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
     }
+
+    @Test
+    void gainsLifeOnlyWhenTheEnterTriggerResolves() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new MesaCavalier()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Mesa Cavalier");
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
 }
