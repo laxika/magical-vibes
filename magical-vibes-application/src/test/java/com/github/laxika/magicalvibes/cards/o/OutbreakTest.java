@@ -94,4 +94,68 @@ class OutbreakTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorceryWithDiscard(player1, 0, 1))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("A creature type absent from the battlefield can be chosen")
+    void canChooseAbsentCreatureType() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castOutbreak(player1);
+        harness.handleListChoice(player1, "INSECT");
+
+        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(bear.getToughnessModifier()).isZero();
+        harness.assertInGraveyard(player1, "Outbreak");
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution are not weakened")
+    void doesNotWeakenCreaturesEnteringLater() {
+        Permanent originalBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castOutbreak(player1);
+        harness.handleListChoice(player1, "BEAR");
+        Permanent laterBear = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(originalBear.getPowerModifier()).isEqualTo(-1);
+        assertThat(originalBear.getToughnessModifier()).isEqualTo(-1);
+        assertThat(laterBear.getPowerModifier()).isZero();
+        assertThat(laterBear.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Two Outbreaks apply cumulative penalties")
+    void penaltiesAccumulate() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        castOutbreak(player1);
+        harness.handleListChoice(player1, "BEAR");
+        castOutbreak(player1);
+        harness.handleListChoice(player1, "BEAR");
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The Swamp is discarded as a cost before Outbreak resolves")
+    void swampIsDiscardedBeforeResolution() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Swamp(), new Outbreak()));
+
+        harness.castSorceryWithDiscard(player1, 1, 0);
+
+        harness.assertInGraveyard(player1, "Swamp");
+        harness.assertNotInHand(player1, "Swamp");
+        harness.assertNotInGraveyard(player1, "Outbreak");
+        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(bear.getToughnessModifier()).isZero();
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BEAR");
+
+        assertThat(bear.getPowerModifier()).isEqualTo(-1);
+        assertThat(bear.getToughnessModifier()).isEqualTo(-1);
+        harness.assertInGraveyard(player1, "Outbreak");
+    }
 }
