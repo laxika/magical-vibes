@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GrizzlyBears.class, LeoninScimitar.class, OrcishMechanics.class, Spellbook.class})
+@CardUsed({GrizzlyBears.class, LeoninScimitar.class, OrcishMechanics.class, Ornithopter.class, Spellbook.class})
 class OrcishMechanicsTest extends BaseCardTest {
 
     @Test
@@ -89,5 +89,69 @@ class OrcishMechanicsTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Spellbook");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new OrcishMechanics());
+        harness.addToBattlefield(player1, new Ornithopter());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Ornithopter");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent mechanics = addReadyMechanics(player1);
+        mechanics.setTapped(true);
+        harness.addToBattlefield(player1, new Ornithopter());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Ornithopter");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void cannotSacrificeOpponentsArtifact() {
+        Permanent mechanics = addReadyMechanics(player1);
+        harness.addToBattlefield(player2, new Ornithopter());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(mechanics.isTapped()).isFalse();
+        harness.assertOnBattlefield(player2, "Ornithopter");
+    }
+
+    @Test
+    void canSacrificeTappedSummoningSickArtifactCreatureAndTargetController() {
+        addReadyMechanics(player1);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        artifact.setTapped(true);
+        artifact.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+
+        harness.assertInGraveyard(player1, "Ornithopter");
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    void canTargetArtifactCreatureSacrificedToPayCost() {
+        Permanent mechanics = addReadyMechanics(player1);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+
+        assertThat(mechanics.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Ornithopter");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Orcish Mechanics");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
     }
 }
