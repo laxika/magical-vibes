@@ -69,9 +69,82 @@ class PoolsOfBecomingTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 1, 0)));
         assertThat(gd.planechase.deck).containsExactly(revealed.get(2), revealed.get(1), revealed.get(0));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize + 3);
+    }
+
+    @Test
+    void emptyHandDoesNotDrawOrRequireOrdering() {
+        Card libraryCard = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(libraryCard));
+
+        harness.inMutationScope(() -> planar.step(gd, EffectSlot.CONTROLLER_END_STEP_TRIGGERED));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void singleCardHandIsDrawnAgainWhenLibraryIsEmpty() {
+        Card handCard = new Forest();
+        harness.setHand(player1, List.of(handCard));
+        harness.setLibrary(player1, List.of());
+
+        harness.inMutationScope(() -> planar.step(gd, EffectSlot.CONTROLLER_END_STEP_TRIGGERED));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(handCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void orderedHandIsDrawnAgainWhenLibraryIsEmpty() {
+        List<Card> hand = List.of(new Forest(), new Forest());
+        harness.setHand(player1, hand);
+        harness.setLibrary(player1, List.of());
+
+        harness.inMutationScope(() -> planar.step(gd, EffectSlot.CONTROLLER_END_STEP_TRIGGERED));
+        resolveAllTriggers();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(hand.get(1), hand.get(0));
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void chaosWithOnePlanarCardTriggersItWithoutPlaneswalking() {
+        Card revealed = new Panopticon();
+        gd.planechase.deck.add(revealed);
+        int handSize = gd.playerHands.get(player1.getId()).size();
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        resolveAllTriggers();
+
+        assertThat(gd.planechase.deck).containsExactly(revealed);
+        assertThat(gd.planechase.faceUp).hasSize(1);
+        assertThat(gd.planechase.faceUp.getFirst().getCard()).isInstanceOf(PoolsOfBecoming.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize + 1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void chaosLetsControllerOrderDifferentRevealedChaosAbilities() {
+        List<Card> revealed = List.of(new Panopticon(), new PoolsOfBecoming(), new Panopticon());
+        gd.planechase.deck.addAll(revealed);
+        int handSize = gd.playerHands.get(player1.getId()).size();
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
+        assertThat(gd.interaction.isAwaitingInput())
+                .as("The controller must be able to order the simultaneous chaos abilities before they resolve")
+                .isTrue();
     }
 }
