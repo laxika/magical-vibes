@@ -20,4 +20,25 @@ class ManedServalTest extends BaseCardTest {
 
         assertThat(serval.isTapped()).isFalse();
     }
+
+    @Test
+    void vigilanceDoesNotAllowAttackingWhileTapped() {
+        Permanent serval = addCreatureReady(player1, new ManedServal());
+        assertThat(als.canAttack(gd, serval, player1.getId())).isTrue();
+
+        serval.tap();
+
+        assertThat(als.canAttack(gd, serval, player1.getId())).isFalse();
+    }
+
+    @Test
+    void vigilanceDoesNotAllowAttackingWithSummoningSickness() {
+        Permanent serval = harness.addToBattlefieldAndReturn(player1, new ManedServal());
+
+        assertThat(als.canAttack(gd, serval, player1.getId())).isFalse();
+
+        serval.setSummoningSick(false);
+
+        assertThat(als.canAttack(gd, serval, player1.getId())).isTrue();
+    }
 }
