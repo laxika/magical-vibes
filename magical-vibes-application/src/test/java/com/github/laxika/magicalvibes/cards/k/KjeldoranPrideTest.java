@@ -96,6 +96,56 @@ class KjeldoranPrideTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("A pending move still resolves after another activation moves the Aura")
+    void pendingMoveUsesCurrentAttachment() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new KjeldoranEscort());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new KjeldoranEscort());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new KjeldoranEscort());
+        Permanent aura = attachAura(player1, first);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        prepareAbilityActivation();
+
+        harness.activateAbility(player1, indexOf(player1, aura), null, second.getId());
+        harness.activateAbility(player1, indexOf(player1, aura), null, third.getId());
+        harness.passBothPriorities();
+
+        assertThat(aura.getAttachedTo()).isEqualTo(third.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, third)).isEqualTo(5);
+
+        harness.passBothPriorities();
+
+        assertThat(aura.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.getEffectivePower(gd, third)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, third)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("The Aura can move back to its previous host after reattachment")
+    void canMoveBackToPreviousHost() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new KjeldoranEscort());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new KjeldoranEscort());
+        Permanent aura = attachAura(player1, first);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        prepareAbilityActivation();
+
+        harness.activateAbility(player1, indexOf(player1, aura), null, second.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(player1, aura), null, first.getId());
+        harness.passBothPriorities();
+
+        assertThat(aura.getAttachedTo()).isEqualTo(first.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+    }
+
     private Permanent attachAura(Player controller, Permanent host) {
         Permanent aura = harness.addToBattlefieldAndReturn(controller, new KjeldoranPride());
         aura.setAttachedTo(host.getId());
