@@ -115,6 +115,66 @@ class LlanowarAugurTest extends BaseCardTest {
                 .hasMessageContaining("creature");
     }
 
+    @Test
+    @DisplayName("Cannot activate during an opponent's upkeep")
+    void cannotActivateDuringOpponentsUpkeep() {
+        addAugur();
+        Permanent target = addTargetCreature(player1);
+        advanceToUpkeep(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("upkeep");
+
+        harness.assertOnBattlefield(player1, "Llanowar Augur");
+        harness.assertNotInGraveyard(player1, "Llanowar Augur");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid immediately while the boost waits for resolution")
+    void sacrificeIsPaidBeforeResolution() {
+        addAugur();
+        Permanent target = addTargetCreature(player1);
+        advanceToUpkeep(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Llanowar Augur");
+        harness.assertInGraveyard(player1, "Llanowar Augur");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(3);
+        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(target.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+    }
+
+    @Test
+    @DisplayName("Can target itself, but the ability has no legal target after sacrifice")
+    void canTargetItselfAndSacrificeWithoutBoostingOtherCreatures() {
+        Permanent augur = addAugur();
+        Permanent otherCreature = addTargetCreature(player1);
+        advanceToUpkeep(player1);
+
+        harness.activateAbility(player1, 0, null, augur.getId());
+
+        harness.assertInGraveyard(player1, "Llanowar Augur");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Llanowar Augur");
+        assertThat(otherCreature.getPowerModifier()).isZero();
+        assertThat(otherCreature.getToughnessModifier()).isZero();
+        assertThat(otherCreature.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+    }
+
     private Permanent addAugur() {
         return harness.addToBattlefieldAndReturn(player1, new LlanowarAugur());
     }
