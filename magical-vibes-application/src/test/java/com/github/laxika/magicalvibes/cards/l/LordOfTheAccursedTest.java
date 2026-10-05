@@ -7,14 +7,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LordOfTheAccursed.class, Gravecrawler.class, GrizzlyBears.class})
 class LordOfTheAccursedTest extends BaseCardTest {
-
-    // ===== Static effect: other Zombies you control get +1/+1 =====
 
     @Test
     @DisplayName("Other Zombies you control get +1/+1")
@@ -63,8 +63,6 @@ class LordOfTheAccursedTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, opponentZombie)).isEqualTo(1);
     }
 
-    // ===== Activated ability: all Zombies gain menace until end of turn =====
-
     @Test
     @DisplayName("Activated ability grants menace to all Zombies (both controllers)")
     void grantsMenaceToAllZombies() {
@@ -101,5 +99,56 @@ class LordOfTheAccursedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, zombie, Keyword.MENACE)).isFalse();
+    }
+    @Test
+    @DisplayName("Multiple Lords buff each other and the boost ends when one dies")
+    void multipleLordsBuffEachOtherUntilOneLeaves() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new LordOfTheAccursed());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new LordOfTheAccursed());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
+
+        first.setMarkedDamage(4);
+        harness.runStateBasedActions();
+
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Menace applies to Zombies present at resolution, excluding later arrivals")
+    void menaceUsesZombiesPresentAtResolution() {
+        Permanent source = addCreatureReady(player1, new LordOfTheAccursed());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(source.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, source, Keyword.MENACE)).isFalse();
+        Permanent beforeResolution = harness.enterBattlefieldAndReturn(player2, new LordOfTheAccursed());
+        harness.passBothPriorities();
+        Permanent afterResolution = harness.enterBattlefieldAndReturn(player2, new LordOfTheAccursed());
+
+        assertThat(gqs.hasKeyword(gd, source, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.MENACE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability resolves after its source dies and menace persists")
+    void abilityResolvesAfterSourceDies() {
+        Permanent source = addCreatureReady(player1, new LordOfTheAccursed());
+        Permanent opponentZombie = harness.addToBattlefieldAndReturn(player2, new LordOfTheAccursed());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        source.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player1, "Lord of the Accursed");
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, opponentZombie, Keyword.MENACE)).isTrue();
     }
 }
