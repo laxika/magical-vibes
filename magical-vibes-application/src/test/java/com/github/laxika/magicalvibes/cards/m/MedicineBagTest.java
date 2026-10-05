@@ -99,11 +99,75 @@ class MedicineBagTest extends BaseCardTest {
         assertThat(target.getRegenerationShield()).isZero();
     }
 
+    @Test
+    @DisplayName("Medicine Bag can regenerate its controller's creature and discard a noncreature")
+    void canRegenerateOwnCreatureAndDiscardNoncreature() {
+        addReadyMedicineBag();
+        Permanent target = addCreature(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new Spellbook()));
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(target.isTapped()).isFalse();
+        harness.assertInGraveyard(player1, "Spellbook");
+    }
+
+    @Test
+    @DisplayName("A tapped Medicine Bag cannot activate its ability")
+    void cannotActivateWhileTapped() {
+        Permanent bag = addReadyMedicineBag();
+        bag.setTapped(true);
+        Permanent target = addCreature(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new Spellbook()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Medicine Bag cannot activate without mana")
+    void cannotActivateWithoutMana() {
+        addReadyMedicineBag();
+        Permanent target = addCreature(player2);
+        harness.setHand(player1, List.of(new Spellbook()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A departed target receives no shield and activation costs remain paid")
+    void targetLeavingBeforeResolutionDoesNotRefundCosts() {
+        Permanent bag = addReadyMedicineBag();
+        Permanent target = addCreature(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new Spellbook()));
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handleCardChosen(player1, 0);
+        target.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Raging Goblin");
+        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(bag.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        harness.assertInGraveyard(player1, "Spellbook");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyMedicineBag() {
-        Permanent bag = new Permanent(new MedicineBag());
-        bag.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bag);
-        return bag;
+        return addCreatureReady(player1, new MedicineBag());
     }
 
     private Permanent addCreature(com.github.laxika.magicalvibes.model.Player player) {
