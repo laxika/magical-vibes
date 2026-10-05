@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.a.AjaniOutlandChaperone;
+import com.github.laxika.magicalvibes.cards.c.CanyonMinotaur;
+import com.github.laxika.magicalvibes.cards.e.ExtractorDemon;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -9,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +22,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({NicolBolasPlaneswalker.class, AjaniOutlandChaperone.class, Forest.class,
+        GrizzlyBears.class, CanyonMinotaur.class, ExtractorDemon.class})
 class NicolBolasPlaneswalkerTest extends BaseCardTest {
 
     // ===== +3: Destroy target noncreature permanent =====
@@ -128,10 +133,8 @@ class NicolBolasPlaneswalkerTest extends BaseCardTest {
 
         // High-loyalty planeswalker survives the 7 damage so its controller is resolvable when the
         // sacrifice rider runs; it is also a permanent its controller may then be forced to sacrifice.
-        AjaniOutlandChaperone ajaniCard = new AjaniOutlandChaperone();
-        Permanent ajani = new Permanent(ajaniCard);
+        Permanent ajani = harness.addToBattlefieldAndReturn(player2, new AjaniOutlandChaperone());
         ajani.setCounterCount(CounterType.LOYALTY, 10);
-        gd.playerBattlefields.get(player2.getId()).add(ajani);
 
         harness.setHand(player2, new ArrayList<>());
         harness.addToBattlefield(player2, new Forest());
@@ -157,14 +160,118 @@ class NicolBolasPlaneswalkerTest extends BaseCardTest {
                 .hasMessageContaining("Not enough loyalty");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("-2 still steals the creature when paying the cost removes Nicol Bolas")
+    void minusTwoResolvesAfterSourceDiesFromLoyaltyCost() {
+        addReadyBolas(player1, 2);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CanyonMinotaur());
+
+        harness.activateAbility(player1, 0, 1, null, creature.getId());
+        harness.assertNotOnBattlefield(player1, "Nicol Bolas, Planeswalker");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Canyon Minotaur");
+        harness.assertNotOnBattlefield(player2, "Canyon Minotaur");
+        harness.assertInGraveyard(player1, "Nicol Bolas, Planeswalker");
+    }
+
+    @Test
+    @DisplayName("-9 cannot target a creature")
+    void minusNineCannotTargetCreature() {
+        addReadyBolas(player1, 9);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CanyonMinotaur());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("-9 finishes discarding before the target chooses seven permanents to sacrifice")
+    void minusNineDiscardsThenSacrificesChosenSeven() {
+        addReadyBolas(player1, 9);
+        List<com.github.laxika.magicalvibes.model.Card> hand = new ArrayList<>();
+        List<UUID> forestIds = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            hand.add(new CanyonMinotaur());
+            forestIds.add(harness.addToBattlefieldAndReturn(player2, new Forest()).getId());
+        }
+        harness.setHand(player2, hand);
+
+        harness.activateAbility(player1, 0, 2, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 13);
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(8);
+        for (int i = 0; i < 7; i++) {
+            harness.handleCardChosen(player2, 0);
+            assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(8);
+        }
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.handleMultiplePermanentsChosen(player2, forestIds.subList(0, 7));
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(Permanent::getId).containsExactly(forestIds.get(7));
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .filteredOn(c -> c.getName().equals("Canyon Minotaur")).hasSize(7);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .filteredOn(c -> c.getName().equals("Forest")).hasSize(7);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("-9 still makes a zero-loyalty planeswalker's controller discard and sacrifice")
+    void minusNineRoutesRidersAfterPlaneswalkerLosesAllLoyalty() {
+        addReadyBolas(player1, 9);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new NicolBolasPlaneswalker());
+        target.setCounterCount(CounterType.LOYALTY, 7);
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player2, List.of(new CanyonMinotaur()));
+        harness.setHand(player1, List.of(new CanyonMinotaur()));
+
+        harness.activateAbility(player1, 0, 2, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Canyon Minotaur");
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertInGraveyard(player2, "Nicol Bolas, Planeswalker");
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInHand(player1, "Canyon Minotaur");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("-9 sacrifices seven permanents simultaneously so Extractor Demon sees another creature leave")
+    void minusNineSacrificePreservesSimultaneousLeavesTriggers() {
+        addReadyBolas(player1, 9);
+        harness.setHand(player2, List.of());
+        harness.addToBattlefield(player2, new ExtractorDemon());
+        harness.addToBattlefield(player2, new CanyonMinotaur());
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player2, new Forest());
+        }
+        harness.setLibrary(player1, List.of(new CanyonMinotaur(), new CanyonMinotaur(),
+                new CanyonMinotaur()));
+
+        harness.activateAbility(player1, 0, 2, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(c -> c.getName().equals("Canyon Minotaur")).hasSize(2);
+    }
 
     private Permanent addReadyBolas(Player player, int loyalty) {
-        NicolBolasPlaneswalker card = new NicolBolasPlaneswalker();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new NicolBolasPlaneswalker());
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
