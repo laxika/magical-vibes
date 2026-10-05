@@ -59,10 +59,48 @@ class LushPorticoTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Surveil may leave the top card in the library")
+    void surveilMayKeepTopCard() {
+        Card topCard = new LushPortico();
+        Card nextCard = new LushPortico();
+        Card opponentCard = new LushPortico();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        harness.setLibrary(player2, List.of(opponentCard));
+        harness.setHand(player1, List.of(new LushPortico()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, nextCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Surveil with an empty library finishes without a choice")
+    void surveilWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new LushPortico()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        harness.assertLife(player1, 20);
+    }
+
     private Permanent addReadyPortico() {
-        Permanent portico = new Permanent(new LushPortico());
+        Permanent portico = harness.addToBattlefieldAndReturn(player1, new LushPortico());
         portico.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(portico);
         return portico;
     }
 }
