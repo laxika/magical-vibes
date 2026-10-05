@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GiantDustwasp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -90,8 +91,7 @@ class OrosTheAvengerTest extends BaseCardTest {
         Permanent oros = addCreatureReady(player1, new OrosTheAvenger());
         Permanent blocker = addCreatureReady(player2, new GiantDustwasp());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -100,5 +100,34 @@ class OrosTheAvengerTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(oros);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
         assertThat(oros.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The combat damage trigger still deals damage after Oros leaves the battlefield")
+    void triggerResolvesAfterOrosLeavesBattlefield() {
+        harness.setLife(player2, 20);
+        Permanent oros = addCreatureReady(player1, new OrosTheAvenger());
+        oros.setAttacking(true);
+        Permanent nonwhiteCreature = addCreatureReady(player2, new CitanulWoodreaders());
+        Permanent whiteCreature = addCreatureReady(player2, new Calciderm());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        assertThat(gd.stack).hasSize(1);
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, oros));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(oros);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(nonwhiteCreature, whiteCreature);
+        assertThat(nonwhiteCreature.getMarkedDamage()).isEqualTo(3);
+        assertThat(whiteCreature.getMarkedDamage()).isZero();
+        harness.assertLife(player2, 14);
     }
 }
