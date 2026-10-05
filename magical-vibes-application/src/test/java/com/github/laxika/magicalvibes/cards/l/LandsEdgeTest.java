@@ -93,8 +93,7 @@ class LandsEdgeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.handleCardChosen(player1, 0);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
@@ -121,6 +120,56 @@ class LandsEdgeTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A player may target themselves with the damage")
+    void mayTargetSelf() {
+        addLandsEdge();
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Mountain()));
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertInGraveyard(player1, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Even a nonland discard requires a legal target")
+    void nonlandDiscardStillRequiresTarget() {
+        addLandsEdge();
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An activated ability still deals damage after a newer world removes its source")
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        harness.enterBattlefieldAndReturn(player1, new LandsEdge());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Mountain()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.enterBattlefieldAndReturn(player2, new LandsEdge());
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Land's Edge");
+        harness.assertInGraveyard(player1, "Land's Edge");
+        harness.assertOnBattlefield(player2, "Land's Edge");
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player1, "Mountain");
     }
 
     private void addLandsEdge() {
