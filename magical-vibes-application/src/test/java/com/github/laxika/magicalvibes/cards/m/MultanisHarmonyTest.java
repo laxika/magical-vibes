@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
@@ -89,5 +91,60 @@ class MultanisHarmonyTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, nonCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    void producesExactlyOneManaOfTheChosenColorWithoutUsingTheStack(ManaColor color) {
+        Permanent creature = addCreatureReady(player1, new ArcticMerfolk());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new MultanisHarmony());
+        aura.setAttachedTo(creature.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, color.name());
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        for (ManaColor manaColor : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor))
+                    .isEqualTo(manaColor == color ? 1 : 0);
+        }
+    }
+
+    @Test
+    void summoningSickCreatureCannotActivateGrantedTapAbility() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ArcticMerfolk());
+        creature.setSummoningSick(true);
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new MultanisHarmony());
+        aura.setAttachedTo(creature.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    void tappedCreatureCannotActivateGrantedTapAbility() {
+        Permanent creature = addCreatureReady(player1, new ArcticMerfolk());
+        creature.tap();
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new MultanisHarmony());
+        aura.setAttachedTo(creature.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    void unenchantedCreatureDoesNotGainManaAbility() {
+        Permanent enchantedCreature = addCreatureReady(player1, new ArcticMerfolk());
+        addCreatureReady(player1, new ArcticMerfolk());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new MultanisHarmony());
+        aura.setAttachedTo(enchantedCreature.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no activated ability");
     }
 }
