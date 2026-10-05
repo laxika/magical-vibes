@@ -23,7 +23,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Necromancy.class, Python.class, CreepingMold.class, GrafdiggersCage.class})
+@CardUsed({Necromancy.class, Python.class, CreepingMold.class, GrafdiggersCage.class,
+        EbonyCharm.class, EmeraldCharm.class, EnchantmentAlteration.class, WhiteKnight.class})
 class NecromancyTest extends BaseCardTest {
 
     private void castAndChooseReanimate(Card creature) {
@@ -77,20 +78,12 @@ class NecromancyTest extends BaseCardTest {
     void sacrificesCreatureWhenLeaves() {
         Python python = new Python();
         harness.setGraveyard(player1, List.of(python));
-        harness.setHand(player1, List.of(new Necromancy(), new CreepingMold()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castEnchantment(player1, 0);
-        harness.passBothPriorities();
-        harness.handleMultipleCardsChosen(player1, List.of(python.getId()));
-        harness.passBothPriorities();
+        castAndChooseReanimate(python);
 
         Permanent aura = findPermanent(player1, "Necromancy");
         assertThat(aura).isNotNull();
 
+        harness.setHand(player1, List.of(new CreepingMold()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castSorcery(player1, 0, aura.getId());
@@ -124,22 +117,26 @@ class NecromancyTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(python));
         castAndChooseReanimate(python);
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.inMutationScope(() ->
+                GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
 
         harness.assertOnBattlefield(player1, "Necromancy");
         harness.assertOnBattlefield(player1, "Python");
     }
 
     @Test
-    @DisplayName("Cast at instant speed stamps sacrifice-at-next-cleanup")
-    void castAtInstantSpeedStampsCleanupSacrifice() {
+    @DisplayName("Cast at instant speed, it remains on the battlefield during the end step")
+    void castAtInstantSpeedSurvivesUntilCleanup() {
         Python python = new Python();
         harness.setGraveyard(player1, List.of(python));
         castAndChooseReanimate(python, TurnStep.BEGINNING_OF_COMBAT);
 
-        Permanent necromancy = findPermanent(player1, "Necromancy");
-        assertThat(necromancy).isNotNull();
-        assertThat(necromancy.isSacrificeAtNextCleanup()).isTrue();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Necromancy");
+        harness.assertOnBattlefield(player1, "Python");
     }
 
     @Test
@@ -270,10 +267,74 @@ class NecromancyTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(whiteKnight));
 
         castAndChooseReanimate(whiteKnight);
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "White Knight");
         harness.assertInGraveyard(player1, "White Knight");
         harness.assertInGraveyard(player1, "Necromancy");
+    }
+
+    @Test
+    @DisplayName("Failed attachment leaves the creature alive until the sacrifice trigger resolves")
+    void failedAttachmentUsesSacrificeTrigger() {
+        WhiteKnight whiteKnight = new WhiteKnight();
+        harness.setGraveyard(player1, List.of(whiteKnight));
+
+        castAndChooseReanimate(whiteKnight);
+
+        harness.assertInGraveyard(player1, "Necromancy");
+        harness.assertOnBattlefield(player1, "White Knight");
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+        harness.assertInGraveyard(player1, "White Knight");
+    }
+
+    @Test
+    @DisplayName("The cleanup sacrifice goes on the stack before Necromancy is sacrificed")
+    void cleanupSacrificeUsesTheStack() {
+        Python python = new Python();
+        harness.setGraveyard(player1, List.of(python));
+        castAndChooseReanimate(python, TurnStep.BEGINNING_OF_COMBAT);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.CLEANUP);
+        harness.assertOnBattlefield(player1, "Necromancy");
+        harness.assertOnBattlefield(player1, "Python");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Necromancy");
+        harness.assertOnBattlefield(player1, "Python");
+
+        resolveAllTriggers();
+        harness.assertInGraveyard(player1, "Python");
+    }
+
+    @Test
+    @DisplayName("Necromancy can be cast during an opponent's main phase")
+    void canCastDuringOpponentsMainPhase() {
+        Python python = new Python();
+        harness.setGraveyard(player2, List.of(python));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new Necromancy(), "{2}{B}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(python.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Necromancy");
+        harness.assertOnBattlefield(player1, "Python");
+
+        harness.inMutationScope(() ->
+                GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
+        resolveAllTriggers();
+        harness.assertInGraveyard(player1, "Necromancy");
+        harness.assertInGraveyard(player2, "Python");
     }
 
     private void castAndChooseReanimateTargetOnly(Card creature) {
