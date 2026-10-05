@@ -3,11 +3,13 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.a.Arachnoid;
 import com.github.laxika.magicalvibes.cards.c.ConjurersBauble;
 import com.github.laxika.magicalvibes.cards.c.CultivatorsCaravan;
+import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({KatsumasaTheAnimator.class, Arachnoid.class, ConjurersBauble.class,
-        CultivatorsCaravan.class})
+        CultivatorsCaravan.class, SolRing.class})
 class KatsumasaTheAnimatorTest extends BaseCardTest {
 
     @Test
@@ -92,6 +94,111 @@ class KatsumasaTheAnimatorTest extends BaseCardTest {
         advanceToUpkeep(player1);
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, artifactCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void animationRejectsArtifactCreaturesAndNonArtifacts() {
+        Permanent katsumasa = addKatsumasa();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Arachnoid());
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, katsumasa.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void upkeepCountersIncreaseAnimatedNonVehiclePowerAndToughness() {
+        addKatsumasa();
+        Permanent ring = harness.addToBattlefieldAndReturn(player1, new SolRing());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, ring.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+        activateAnimation(ring);
+
+        harness.assertOnBattlefield(player1, "Sol Ring");
+        assertThat(gqs.isCreature(gd, ring)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, ring)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ring)).isEqualTo(2);
+    }
+
+    @Test
+    void upkeepMayChooseNoTargets() {
+        addKatsumasa();
+        Permanent ring = harness.addToBattlefieldAndReturn(player1, new SolRing());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(ring.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void upkeepCanChooseThreeArtifacts() {
+        addKatsumasa();
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SolRing());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new SolRing());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new CultivatorsCaravan());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.handlePermanentChosen(player1, third.getId());
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(third.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void doesNotTriggerOnOpponentsUpkeep() {
+        addKatsumasa();
+        Permanent ring = harness.addToBattlefieldAndReturn(player1, new SolRing());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(ring.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void upkeepSkipsTargetThatBecomesCreatureBeforeResolution() {
+        addKatsumasa();
+        Permanent caravan = harness.addToBattlefieldAndReturn(player1, new CultivatorsCaravan());
+        Permanent ring = harness.addToBattlefieldAndReturn(player1, new SolRing());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, caravan.getId());
+        harness.handlePermanentChosen(player1, ring.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        activateAnimation(caravan);
+        resolveAllTriggers();
+
+        assertThat(gqs.isCreature(gd, caravan)).isTrue();
+        assertThat(caravan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(ring.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void vehicleAnimationAndFlyingExpireAtEndOfTurn() {
+        addKatsumasa();
+        Permanent caravan = harness.addToBattlefieldAndReturn(player1, new CultivatorsCaravan());
+        activateAnimation(caravan);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.isArtifact(gd, caravan)).isTrue();
+        assertThat(gqs.isCreature(gd, caravan)).isFalse();
+        assertThat(gqs.hasKeyword(gd, caravan, Keyword.FLYING)).isFalse();
     }
 
     private Permanent addKatsumasa() {
