@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(KolaghanSkirmisher.class)
+@CardUsed({KolaghanSkirmisher.class})
 class KolaghanSkirmisherTest extends BaseCardTest {
 
     @Test
@@ -30,7 +30,6 @@ class KolaghanSkirmisherTest extends BaseCardTest {
         assertThat(skirmisher.hasKeyword(Keyword.HASTE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Kolaghan Skirmisher")).isSameAs(skirmisher);
@@ -51,7 +50,41 @@ class KolaghanSkirmisherTest extends BaseCardTest {
         assertThat(skirmisher.hasKeyword(Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Kolaghan Skirmisher");
+        harness.assertNotOnBattlefield(player1, "Kolaghan Skirmisher");
+    }
+
+    @Test
+    @DisplayName("Resolving a dashed creature does not create an enters-the-battlefield trigger")
+    void dashDoesNotCreateAnEntryTrigger() {
+        harness.setHand(player1, List.of(new KolaghanSkirmisher()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Kolaghan Skirmisher");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Dash creates exactly one return trigger at the next end step")
+    void dashCreatesOnlyOneDelayedReturnTrigger() {
+        harness.setHand(player1, List.of(new KolaghanSkirmisher()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Kolaghan Skirmisher");
+        assertThat(gd.stack).hasSize(1);
+
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Kolaghan Skirmisher");
