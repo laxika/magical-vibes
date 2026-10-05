@@ -51,6 +51,25 @@ class MonstrousGrowthTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Two copies stack their boosts on the same creature")
+    void multipleBoostsAreCumulative() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new BearCub());
+        Permanent otherBear = harness.addToBattlefieldAndReturn(player1, new BearCub());
+        harness.setHand(player1, List.of(new MonstrousGrowth(), new MonstrousGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, bear.getId());
+        harness.castAndResolveSorcery(player1, 0, bear.getId());
+
+        assertThat(bear.getPowerModifier()).isEqualTo(8);
+        assertThat(bear.getToughnessModifier()).isEqualTo(8);
+        assertThat(otherBear.getPowerModifier()).isZero();
+        assertThat(otherBear.getToughnessModifier()).isZero();
+        harness.assertInGraveyard(player1, "Monstrous Growth");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Can target a creature an opponent controls")
     void canTargetOpponentCreature() {
         Permanent opponentBear = harness.addToBattlefieldAndReturn(player2, new BearCub());
