@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.cards.l;
+﻿package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.r.RiderInNeed;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({LonesomeUnicorn.class, RiderInNeed.class})
 class LonesomeUnicornTest extends BaseCardTest {
@@ -56,5 +57,55 @@ class LonesomeUnicornTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Lonesome Unicorn");
         assertThat(harness.getGameData().findExiledCard(card.getId())).isNull();
+    }
+
+    @Test
+    void creatureCanBeCastDirectlyWithoutCreatingAKnight() {
+        harness.setHand(player1, List.of(new LonesomeUnicorn()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Lonesome Unicorn");
+        harness.assertNotOnBattlefield(player1, "Knight");
+        assertThat(gd.exiledCards).isEmpty();
+        Permanent unicorn = findPermanent(player1, "Lonesome Unicorn");
+        unicorn.setSummoningSick(false);
+        declareAttackersAndPrepareBlockers(List.of(0));
+        assertThat(unicorn.isTapped()).isFalse();
+        assertThat(unicorn.isAttacking()).isTrue();
+    }
+
+    @Test
+    void knightCreatedByAdventureAttacksWithoutTapping() {
+        harness.setHand(player1, List.of(new LonesomeUnicorn()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAdventure(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Knight")).isEqualTo(1);
+        harness.assertNotOnBattlefield(player2, "Knight");
+        Permanent knight = findPermanent(player1, "Knight");
+        knight.setSummoningSick(false);
+        declareAttackersAndPrepareBlockers(List.of(0));
+        assertThat(knight.isTapped()).isFalse();
+        assertThat(knight.isAttacking()).isTrue();
+    }
+
+    @Test
+    void exilingWithoutResolvingAdventureDoesNotGrantCastingPermission() {
+        LonesomeUnicorn card = new LonesomeUnicorn();
+        harness.setExile(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, card.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        harness.assertNotOnBattlefield(player1, "Lonesome Unicorn");
     }
 }
