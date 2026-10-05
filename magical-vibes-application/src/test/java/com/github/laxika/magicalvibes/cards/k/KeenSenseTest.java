@@ -76,7 +76,7 @@ class KeenSenseTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("No trigger occurs when combat damage is prevented by a blocker")
+    @DisplayName("No trigger occurs when all combat damage is dealt to a blocker")
     void noTriggerWhenBlocked() {
         Permanent creature = addCreatureReady(player1, new KavuPredator());
         attachKeenSense(player1, creature);
@@ -91,7 +91,7 @@ class KeenSenseTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Damage to the enchanted creature's controller does not trigger a may-draw")
+    @DisplayName("Damage to Keen Sense's controller does not trigger a may-draw")
     void damageToControllerDoesNotTriggerMayDraw() {
         harness.setLife(player1, 20);
         Permanent creature = addCreatureReady(player1, new ProdigalPyromancer());
@@ -133,6 +133,57 @@ class KeenSenseTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Keen Sense");
         harness.assertNotOnBattlefield(player1, "Keen Sense");
+    }
+
+    @Test
+    @DisplayName("An opponent's creature damaging its own controller lets the Aura controller draw")
+    void opposingCreatureDamagesItsController() {
+        harness.setLibrary(player1, List.of(new KavuPredator()));
+        harness.setLife(player2, 20);
+        Permanent creature = addCreatureReady(player2, new ProdigalPyromancer());
+        attachKeenSense(player1, creature);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        int opponentHandSizeBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.activateAbility(player2, 0, null, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSizeBefore);
+    }
+
+    @Test
+    @DisplayName("An opponent's enchanted attacker damaging the Aura controller does not trigger")
+    void opposingAttackerDamagesAuraController() {
+        harness.setLife(player1, 20);
+        Permanent creature = addCreatureReady(player2, new KavuPredator());
+        attachKeenSense(player1, creature);
+
+        declareAttackers(player2, List.of(0));
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Noncombat damage to an opposing creature does not trigger")
+    void noncombatDamageToCreatureDoesNotTrigger() {
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+        attachKeenSense(player1, pyromancer);
+        Permanent target = addCreatureReady(player2, new ProdigalPyromancer());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Prodigal Pyromancer");
+        harness.assertNotOnBattlefield(player2, "Prodigal Pyromancer");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     private void attachKeenSense(Player controller, Permanent creature) {
