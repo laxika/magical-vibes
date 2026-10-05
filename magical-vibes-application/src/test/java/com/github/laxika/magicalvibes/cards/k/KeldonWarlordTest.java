@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({KeldonWarlord.class, GrizzlyBears.class, WallOfWood.class, Forest.class})
@@ -64,5 +66,38 @@ class KeldonWarlordTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, warlord)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, warlord)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Keldon Warlord survives resolving onto an otherwise empty battlefield")
+    void countsItselfWhenResolving() {
+        harness.castFromHand(player1, new KeldonWarlord(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Keldon Warlord");
+        Permanent warlord = findPermanent(player1, "Keldon Warlord");
+        assertThat(gqs.getEffectivePower(gd, warlord)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, warlord)).isEqualTo(1);
+
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        assertThat(gqs.getEffectivePower(gd, warlord)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, warlord)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Keldon Warlord in the graveyard counts its owner's non-Wall creatures")
+    void characteristicAbilityWorksInGraveyard() {
+        KeldonWarlord warlord = new KeldonWarlord();
+        harness.setGraveyard(player1, List.of(warlord));
+
+        assertThat(gqs.getEffectiveCardPower(gd, warlord)).isZero();
+        assertThat(gqs.getEffectiveCardToughness(gd, warlord)).isZero();
+
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new WallOfWood());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        assertThat(gqs.getEffectiveCardPower(gd, warlord)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardToughness(gd, warlord)).isEqualTo(1);
     }
 }
