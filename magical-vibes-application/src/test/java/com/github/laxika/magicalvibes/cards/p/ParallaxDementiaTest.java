@@ -126,9 +126,38 @@ class ParallaxDementiaTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Parallax Dementia");
         harness.assertInGraveyard(player1, "Parallax Dementia");
+        harness.assertOnBattlefield(player2, "Spineless Thug");
+        assertThat(gqs.getEffectivePower(gd, thug)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, thug)).isEqualTo(2);
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Spineless Thug");
         harness.assertInGraveyard(player2, "Spineless Thug");
+    }
+
+    @Test
+    @DisplayName("Removing the last fade counter does not sacrifice the Aura until the next upkeep")
+    void survivesLastCounterRemovalUntilNextUpkeep() {
+        Permanent thug = addCreatureReady(player1, new SpinelessThug());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ParallaxDementia());
+        aura.setAttachedTo(thug.getId());
+        aura.setCounterCount(CounterType.FADE, 1);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(aura.getCounterCount(CounterType.FADE)).isZero();
+        harness.assertOnBattlefield(player1, "Parallax Dementia");
+        harness.assertOnBattlefield(player1, "Spineless Thug");
+        assertThat(gqs.getEffectivePower(gd, thug)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, thug)).isEqualTo(4);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Parallax Dementia");
+        harness.assertInGraveyard(player1, "Spineless Thug");
+        harness.assertNotOnBattlefield(player1, "Parallax Dementia");
+        harness.assertNotOnBattlefield(player1, "Spineless Thug");
     }
 }
