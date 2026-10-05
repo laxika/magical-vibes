@@ -2,13 +2,14 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,9 +18,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({NathsElite.class, Forest.class, GrizzlyBears.class})
 class NathsEliteTest extends BaseCardTest {
 
     private Permanent castNathsElite() {
+        return castNathsElite(false);
+    }
+
+    private Permanent castNathsElite(boolean putOnBottom) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new NathsElite()));
@@ -30,15 +36,16 @@ class NathsEliteTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell (ETB clash trigger placed)
         harness.passBothPriorities(); // resolve ETB clash effect
 
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(putOnBottom ? List.of() : List.of(0), putOnBottom ? List.of(0) : List.of()));
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.ScryOrder(putOnBottom ? List.of() : List.of(0), putOnBottom ? List.of(0) : List.of()));
+
         return findPermanent(player1, "Nath's Elite");
     }
-
-    // ===== ETB clash — win puts a +1/+1 counter on it =====
 
     @Test
     @DisplayName("Winning the clash puts a +1/+1 counter on Nath's Elite")
     void wonClashAddsCounter() {
-        // Higher mana value on top for player1 (Grizzly Bears MV 2 > Forest MV 0) → player1 wins.
+        // Grizzly Bears has greater mana value than Forest.
         gd.playerDecks.get(player1.getId()).addFirst(new GrizzlyBears());
         gd.playerDecks.get(player2.getId()).addFirst(new Forest());
 
@@ -52,7 +59,7 @@ class NathsEliteTest extends BaseCardTest {
     @Test
     @DisplayName("Losing the clash leaves Nath's Elite without a counter")
     void lostClashAddsNoCounter() {
-        // Lower mana value on top for player1 (Forest MV 0 < Grizzly Bears MV 2) → player1 loses.
+        // Forest has lower mana value than Grizzly Bears.
         gd.playerDecks.get(player1.getId()).addFirst(new Forest());
         gd.playerDecks.get(player2.getId()).addFirst(new GrizzlyBears());
 
@@ -63,25 +70,23 @@ class NathsEliteTest extends BaseCardTest {
         assertThat(elite.getEffectiveToughness()).isEqualTo(2);
     }
 
-    // ===== Static — all creatures able to block must do so =====
-
     @Test
     @DisplayName("All able creatures must block Nath's Elite")
     void allAbleCreaturesMustBlock() {
-        Permanent elite = attackingCreature(new NathsElite());
-        gd.playerBattlefields.get(player1.getId()).add(elite);
+        Permanent elite = addCreatureReady(player1, new NathsElite());
+        elite.setAttacking(true);
 
-        gd.playerBattlefields.get(player2.getId()).add(readyCreature(new GrizzlyBears()));
-        gd.playerBattlefields.get(player2.getId()).add(readyCreature(new GrizzlyBears()));
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
 
-        // Only one blocker assigned — should fail because both must block
+        // Both creatures are required to block.
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must block");
 
-        // Both blockers assigned — should succeed
+        // Assigning both blockers satisfies the requirement.
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)
@@ -91,16 +96,47 @@ class NathsEliteTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()).get(1).isBlocking()).isTrue();
     }
 
-    private Permanent attackingCreature(Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        permanent.setAttacking(true);
-        return permanent;
+    @Test
+    @DisplayName("A tied clash does not put a counter on Nath's Elite")
+    void tiedClashAddsNoCounter() {
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        Permanent elite = castNathsElite();
+
+        assertThat(elite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
-    private Permanent readyCreature(Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        return permanent;
+    @Test
+    @DisplayName("Tapped creatures are not required to block Nath's Elite")
+    void tappedCreaturesNeedNotBlock() {
+        Permanent elite = addCreatureReady(player1, new NathsElite());
+        elite.setAttacking(true);
+        Permanent tapped = addCreatureReady(player2, new GrizzlyBears());
+        tapped.setTapped(true);
+        addCreatureReady(player2, new GrizzlyBears());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
+
+        assertThat(tapped.isBlocking()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId()).get(1).isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Putting the revealed cards on the bottom does not change the clash winner")
+    void bottomChoicesPreserveClashOutcome() {
+        NathsElite revealed = new NathsElite();
+        Forest next = new Forest();
+        Forest opponentRevealed = new Forest();
+        NathsElite opponentNext = new NathsElite();
+        harness.setLibrary(player1, List.of(revealed, next));
+        harness.setLibrary(player2, List.of(opponentRevealed, opponentNext));
+
+        Permanent elite = castNathsElite(true);
+
+        assertThat(elite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(next, revealed);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentNext, opponentRevealed);
     }
 }
