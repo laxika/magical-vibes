@@ -51,9 +51,7 @@ class IntoThinAirTest extends BaseCardTest {
                 harness.getPermanentId(player2, "Conjurer's Bauble"));
 
         harness.assertNotOnBattlefield(player2, "Conjurer's Bauble");
-        assertThat(gd.playerHands.get(player2.getId()))
-                .extracting(card -> card.getName())
-                .contains("Conjurer's Bauble");
+        harness.assertInHand(player2, "Conjurer's Bauble");
     }
 
     @Test
@@ -86,6 +84,80 @@ class IntoThinAirTest extends BaseCardTest {
                 harness.getPermanentId(player2, "Conjurer's Bauble"));
 
         assertThat(harness.getGameData().stack).hasSize(1);
+    }
+
+    @Test
+    void noControlledArtifactsRequiresFullManaCost() {
+        harness.addToBattlefield(player2, new ConjurersBauble());
+        harness.setHand(player1, List.of(new IntoThinAir()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player2, "Conjurer's Bauble"));
+
+        harness.assertInHand(player2, "Conjurer's Bauble");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void partialAffinityStillRequiresRemainingGenericMana() {
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player1, new ConjurersBauble());
+        }
+        harness.addToBattlefield(player2, new ConjurersBauble());
+        harness.setHand(player1, List.of(new IntoThinAir()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                harness.getPermanentId(player2, "Conjurer's Bauble")))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player2, "Conjurer's Bauble"));
+
+        harness.assertInHand(player2, "Conjurer's Bauble");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void excessAffinityDoesNotReduceBlueManaRequirement() {
+        for (int i = 0; i < 7; i++) {
+            harness.addToBattlefield(player1, new ConjurersBauble());
+        }
+        harness.addToBattlefield(player2, new ConjurersBauble());
+        harness.setHand(player1, List.of(new IntoThinAir()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                harness.getPermanentId(player2, "Conjurer's Bauble")))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player2, "Conjurer's Bauble"));
+
+        harness.assertInHand(player2, "Conjurer's Bauble");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    void canReturnOwnArtifactCreatureWithNoOtherArtifacts() {
+        harness.addToBattlefield(player1, new MyrServitor());
+        harness.setHand(player1, List.of(new IntoThinAir()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player1, "Myr Servitor"));
+
+        harness.assertNotOnBattlefield(player1, "Myr Servitor");
+        harness.assertInHand(player1, "Myr Servitor");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test
