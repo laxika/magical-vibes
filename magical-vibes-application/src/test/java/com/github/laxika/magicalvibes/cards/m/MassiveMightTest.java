@@ -26,8 +26,7 @@ class MassiveMightTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MassiveMight()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
@@ -41,8 +40,48 @@ class MassiveMightTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MassiveMight()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0, bears.getId());
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can boost an opponent's creature without affecting other creatures")
+    void canTargetOpponentsCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MassiveMight()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Two copies stack their boosts and both expire at cleanup")
+    void multipleCopiesStackUntilCleanup() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MassiveMight(), new MassiveMight()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
