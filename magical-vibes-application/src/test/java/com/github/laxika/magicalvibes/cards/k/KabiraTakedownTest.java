@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
+import com.github.laxika.magicalvibes.cards.n.NissaOfShadowedBoughs;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({KabiraTakedown.class, KabiraPlateau.class, GrizzlyBears.class,
-        ColossalDreadmaw.class, Millstone.class})
+        ColossalDreadmaw.class, Millstone.class, NissaOfShadowedBoughs.class})
 class KabiraTakedownTest extends BaseCardTest {
 
     @Test
@@ -71,11 +73,56 @@ class KabiraTakedownTest extends BaseCardTest {
         assertThat(mana.get(ManaColor.WHITE)).isEqualTo(1);
     }
 
+    @Test
+    void damagesPlaneswalkerLoyalty() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new NissaOfShadowedBoughs());
+        target.setCounterCount(CounterType.LOYALTY, 4);
+
+        castTakedown(target);
+
+        assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Nissa of Shadowed Boughs");
+    }
+
+    @Test
+    void dealsNoDamageWithoutControlledCreatures() {
+        harness.addToBattlefield(player1, new Millstone());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castTakedown(target);
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Kabira Takedown");
+    }
+
+    @Test
+    void canTargetOwnCreatureAndCountsIt() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ColossalDreadmaw());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        castTakedown(target);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Colossal Dreadmaw");
+    }
+
+    @Test
+    void cannotTargetPlayer() {
+        harness.setHand(player1, List.of(new KabiraTakedown()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void castTakedown(Permanent target) {
         harness.setHand(player1, List.of(new KabiraTakedown()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }
