@@ -71,4 +71,82 @@ class PetrifiedFieldTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         harness.assertOnBattlefield(player1, "Petrified Field");
     }
+
+    @Test
+    void sacrificeIsPaidBeforeTheAbilityResolves() {
+        harness.addToBattlefield(player1, new PetrifiedField());
+        Card land = new RavagedHighlands();
+        harness.setGraveyard(player1, List.of(land));
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 1, List.of(land.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Petrified Field");
+        harness.assertInGraveyard(player1, "Petrified Field");
+        harness.assertInGraveyard(player1, "Ravaged Highlands");
+        harness.assertNotInHand(player1, "Ravaged Highlands");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Ravaged Highlands");
+    }
+
+    @Test
+    void cannotTargetItselfBeforePayingTheSacrificeCost() {
+        Card field = new PetrifiedField();
+        harness.addToBattlefield(player1, field);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 1, List.of(field.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Petrified Field");
+        harness.assertNotInGraveyard(player1, "Petrified Field");
+    }
+
+    @Test
+    void cannotActivateWithoutATarget() {
+        harness.addToBattlefield(player1, new PetrifiedField());
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Petrified Field");
+        harness.assertNotInGraveyard(player1, "Petrified Field");
+    }
+
+    @Test
+    void cannotActivateReturnAbilityAfterTappingForMana() {
+        harness.addToBattlefield(player1, new PetrifiedField());
+        Card land = new RavagedHighlands();
+        harness.setGraveyard(player1, List.of(land));
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 1, List.of(land.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Petrified Field");
+        harness.assertInGraveyard(player1, "Ravaged Highlands");
+    }
+
+    @Test
+    void targetLeavingGraveyardDoesNotReturnAnotherLandOrRefundTheCost() {
+        Card field = new PetrifiedField();
+        harness.addToBattlefield(player1, field);
+        Card land = new RavagedHighlands();
+        harness.setGraveyard(player1, List.of(land));
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 1, List.of(land.getId()));
+
+        harness.setGraveyard(player1, List.of(field));
+        harness.setExile(player1, List.of(land));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Ravaged Highlands");
+        harness.assertNotInHand(player1, "Petrified Field");
+        harness.assertInGraveyard(player1, "Petrified Field");
+        harness.assertNotOnBattlefield(player1, "Petrified Field");
+        assertThat(gd.stack).isEmpty();
+    }
 }
