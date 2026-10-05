@@ -1,14 +1,15 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PackGuardian.class, Forest.class})
 class PackGuardianTest extends BaseCardTest {
 
     @Test
@@ -49,12 +51,13 @@ class PackGuardianTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Forest");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
 
-        // Reflexive trigger: create Wolf token — resolve it
-        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
 
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         assertThat(battlefield).anyMatch(p ->
-                p.getCard().getName().equals("Wolf")
+                p.getCard().isToken() && p.getCard().getName().equals("Wolf")
+                        && p.getCard().hasType(CardType.CREATURE)
+                        && p.getCard().getColor() == CardColor.GREEN
                         && p.getCard().getSubtypes().contains(CardSubtype.WOLF)
                         && p.getCard().getPower() == 2
                         && p.getCard().getToughness() == 2);
@@ -89,8 +92,8 @@ class PackGuardianTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        Card bearInHand = new GrizzlyBears();
-        harness.setHand(player1, new ArrayList<>(List.of(new PackGuardian(), bearInHand)));
+        PackGuardian nonlandInHand = new PackGuardian();
+        harness.setHand(player1, new ArrayList<>(List.of(new PackGuardian(), nonlandInHand)));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.castCreature(player1, 0);
@@ -102,7 +105,7 @@ class PackGuardianTest extends BaseCardTest {
         // No land to discard — no discard prompt, no token
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(nonlandInHand);
         harness.assertNotOnBattlefield(player1, "Wolf");
     }
 
@@ -114,8 +117,8 @@ class PackGuardianTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         Forest land = new Forest();
-        GrizzlyBears bear = new GrizzlyBears();
-        harness.setHand(player1, new ArrayList<>(List.of(new PackGuardian(), land, bear)));
+        PackGuardian nonland = new PackGuardian();
+        harness.setHand(player1, new ArrayList<>(List.of(new PackGuardian(), land, nonland)));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.castCreature(player1, 0);
@@ -126,7 +129,36 @@ class PackGuardianTest extends BaseCardTest {
         PendingInteraction.DiscardChoice discard =
                 gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class);
         assertThat(discard).isNotNull();
-        // Hand after casting: [Forest, Grizzly Bears] — only Forest (index 0) is valid
+        // Hand after casting: [Forest, Pack Guardian] — only Forest (index 0) is valid
         assertThat(discard.validIndices()).containsExactly(0);
+    }
+
+    @Test
+    @DisplayName("Flash allows casting during the opponent's end step")
+    void canCastDuringOpponentsEndStep() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new PackGuardian(), "{2}{G}{G}");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Pack Guardian");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertNotOnBattlefield(player1, "Wolf");
+    }
+
+    @Test
+    @DisplayName("An empty hand cannot pay for a Wolf token")
+    void emptyHandCreatesNoWolf() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new PackGuardian(), "{2}{G}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Wolf");
     }
 }
