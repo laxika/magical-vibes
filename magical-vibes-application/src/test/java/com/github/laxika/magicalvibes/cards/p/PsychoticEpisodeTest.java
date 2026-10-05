@@ -184,6 +184,50 @@ class PsychoticEpisodeTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(episode);
     }
 
+    @Test
+    @DisplayName("Can target its controller and bottom a card from their own hand")
+    void targetsController() {
+        PsychoticEpisode episode = new PsychoticEpisode();
+        Card handCard = new AshcoatBear();
+        Card topCard = new AshcoatBear();
+        Card libraryCard = new AshcoatBear();
+        harness.setHand(player1, List.of(episode, handCard));
+        harness.setLibrary(player1, List.of(topCard, libraryCard));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(handCard.getId(), topCard.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(handCard.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(topCard, libraryCard, handCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(episode);
+    }
+
+    @Test
+    @DisplayName("Bottoming a madness card from hand does not discard it or trigger madness")
+    void bottomingDoesNotTriggerMadness() {
+        PsychoticEpisode handCard = new PsychoticEpisode();
+        Card topCard = new AshcoatBear();
+        harness.setHand(player2, List.of(handCard));
+        harness.setLibrary(player2, List.of(topCard));
+
+        cast();
+        harness.handleMultipleCardsChosen(player1, List.of(handCard.getId()));
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard, handCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(handCard);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void cast() {
         harness.setHand(player1, List.of(new PsychoticEpisode()));
         harness.addMana(player1, ManaColor.BLACK, 3);
