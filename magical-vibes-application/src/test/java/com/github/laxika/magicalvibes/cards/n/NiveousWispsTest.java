@@ -67,7 +67,6 @@ class NiveousWispsTest extends BaseCardTest {
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.WHITE);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.RED);
@@ -85,5 +84,41 @@ class NiveousWispsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, nonCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("An already-tapped creature you control still becomes white and allows the draw")
+    void resolvesOnAlreadyTappedOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new InescapableBrute());
+        target.setTapped(true);
+        BlightSickle drawnCard = new BlightSickle();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of(new NiveousWisps()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.WHITE);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    @DisplayName("No card is drawn when the sole target leaves the battlefield before resolution")
+    void doesNotDrawWhenTargetLeavesBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new InescapableBrute());
+        BlightSickle drawnCard = new BlightSickle();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of(new NiveousWisps()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Niveous Wisps");
     }
 }
