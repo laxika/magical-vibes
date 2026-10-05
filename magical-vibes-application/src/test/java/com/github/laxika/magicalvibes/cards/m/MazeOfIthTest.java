@@ -126,6 +126,81 @@ class MazeOfIthTest extends BaseCardTest {
         assertThat(attacker.isTapped()).isFalse();
     }
 
+    @Test
+    void untappedAttackerRemainsInCombatAndDealsNoCombatDamage() {
+        harness.setLife(player2, 20);
+        Permanent maze = addMaze();
+        Permanent attacker = addCreatureReady(player1, new BrothersOfFire());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+
+        activateMaze(maze, attacker);
+
+        assertThat(attacker.isTapped()).isFalse();
+        assertThat(attacker.isAttacking()).isTrue();
+        resolveCombat();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void doesNotUntapTargetThatStopsAttackingBeforeResolution() {
+        Permanent maze = addMaze();
+        Permanent attacker = addCreatureReady(player1, new BrothersOfFire());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        attacker.tap();
+        prepareActivation();
+        harness.activateAbility(player1, 0, null, attacker.getId());
+
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(attacker.isTapped()).isTrue();
+        assertThat(maze.isTapped()).isTrue();
+    }
+
+    @Test
+    void doesNotPreventNoncombatDamageDealtByTarget() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent maze = addMaze();
+        Permanent attacker = addCreatureReady(player1, new BrothersOfFire());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        activateMaze(maze, attacker);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateAbility(player1, 1, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void canUntapAttackerAfterDamageWithoutUndoingDamage() {
+        harness.setLife(player2, 20);
+        Permanent maze = addMaze();
+        Permanent attacker = addCreatureReady(player1, new BrothersOfFire());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        attacker.tap();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.assertLife(player2, 18);
+
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(attacker.isTapped()).isFalse();
+        harness.assertLife(player2, 18);
+        assertThat(maze.isTapped()).isTrue();
+    }
+
     private Permanent addMaze() {
         return harness.addToBattlefieldAndReturn(player1, new MazeOfIth());
     }
