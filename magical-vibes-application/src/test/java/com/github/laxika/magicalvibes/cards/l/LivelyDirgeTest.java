@@ -81,6 +81,103 @@ class LivelyDirgeTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Lively Dirge");
     }
 
+    @Test
+    void bothModesReturnSearchedCreatureAndCreatureAlreadyInGraveyard() {
+        Card searchedBear = new GrizzlyBears();
+        Card buriedBear = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(searchedBear, new Plains()));
+        harness.setGraveyard(player1, List.of(buriedBear));
+
+        cast(new int[]{1, 0}, 5);
+        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(searchedBear.getId(), buriedBear.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactlyInAnyOrder(searchedBear.getId(), buriedBear.getId());
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Lively Dirge");
+    }
+
+    @Test
+    void mayReturnOnlyOneCreatureWithManaValueFour() {
+        Card giant = new HillGiant();
+        Card bear = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(giant, bear));
+
+        cast(new int[]{1}, 4);
+        harness.handleMultipleCardsChosen(player1, List.of(giant.getId()));
+
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        harness.assertNotInGraveyard(player1, "Hill Giant");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Lively Dirge");
+    }
+
+    @Test
+    void secondModeResolvesWithoutEligibleCreaturesAndDoesNotUseOpponentsGraveyard() {
+        harness.setGraveyard(player1, List.of(new Plains(), new SerraAngel()));
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+
+        cast(new int[]{1}, 4);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Plains");
+        harness.assertInGraveyard(player1, "Serra Angel");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Lively Dirge");
+    }
+
+    @Test
+    void emptyLibraryDoesNotPreventSecondModeFromReturningCreature() {
+        Card bear = new GrizzlyBears();
+        harness.setLibrary(player1, List.of());
+        harness.setGraveyard(player1, List.of(bear));
+
+        cast(new int[]{0, 1}, 5);
+        harness.handleMultipleCardsChosen(player1, List.of(bear.getId()));
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Lively Dirge");
+    }
+
+    @Test
+    void bothModesRequireBothAdditionalManaCosts() {
+        harness.setHand(player1, List.of(new LivelyDirge()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castModalSorceryWithModes(
+                player1, 0, 1, 2, new int[]{0, 1}, List.of(), null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Lively Dirge");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotReturnMoreThanTwoCreatures() {
+        Card firstBear = new GrizzlyBears();
+        Card secondBear = new GrizzlyBears();
+        Card thirdBear = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(firstBear, secondBear, thirdBear));
+
+        cast(new int[]{1}, 4);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(
+                player1, List.of(firstBear.getId(), secondBear.getId(), thirdBear.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Too many cards selected");
+
+        harness.handleMultipleCardsChosen(player1, List.of(firstBear.getId(), secondBear.getId()));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactlyInAnyOrder(firstBear.getId(), secondBear.getId());
+    }
+
     private void cast(int[] modes, int totalMana) {
         harness.setHand(player1, List.of(new LivelyDirge()));
         harness.addMana(player1, ManaColor.BLACK, 1);
