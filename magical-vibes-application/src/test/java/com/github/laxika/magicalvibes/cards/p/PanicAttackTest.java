@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.FellwarStone;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -81,6 +80,48 @@ class PanicAttackTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can be cast with no creatures on the battlefield")
+    void canResolveOnEmptyBattlefield() {
+        harness.setHand(player1, List.of(new PanicAttack()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, List.of());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Panic Attack");
+    }
+
+    @Test
+    @DisplayName("Cannot choose the same creature twice")
+    void cannotRepeatTarget() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PanicAttack()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
+                List.of(creature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("All targets must be different");
+    }
+
+    @Test
+    @DisplayName("Does not affect other creatures when all targets leave before resolution")
+    void allTargetsLeaveBeforeResolution() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent untargeted = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PanicAttack()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castSorcery(player1, 0, List.of(target.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(untargeted.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Panic Attack");
+    }
+
+    @Test
     @DisplayName("Can target your own creature without affecting untargeted creatures")
     void canTargetOwnCreatureWithoutAffectingUntargetedCreature() {
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
@@ -130,7 +171,7 @@ class PanicAttackTest extends BaseCardTest {
     @Test
     @DisplayName("Targeted creature actually cannot block")
     void targetedCreatureCannotBlock() {
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new PanicAttack()));
@@ -140,8 +181,7 @@ class PanicAttackTest extends BaseCardTest {
 
         assertThat(blocker.isCantBlockThisTurn()).isTrue();
 
-        attacker.setAttacking(true);
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
