@@ -71,6 +71,43 @@ class MintharaOfTheAbsoluteTest extends BaseCardTest {
         assertThat(gd.getCardIntensity(cardId)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Intensifies owned copies in other zones but not opponent-owned copies")
+    void intensifiesOwnedCopiesAcrossZones() {
+        harness.addToBattlefield(player1, new MintharaOfTheAbsolute());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        MintharaOfTheAbsolute handCopy = new MintharaOfTheAbsolute();
+        MintharaOfTheAbsolute graveyardCopy = new MintharaOfTheAbsolute();
+        MintharaOfTheAbsolute exiledCopy = new MintharaOfTheAbsolute();
+        MintharaOfTheAbsolute opponentCopy = new MintharaOfTheAbsolute();
+        harness.setHand(player1, java.util.List.of(handCopy));
+        harness.setGraveyard(player1, java.util.List.of(graveyardCopy));
+        harness.setExile(player1, java.util.List.of(exiledCopy));
+        harness.setHand(player2, java.util.List.of(opponentCopy));
+
+        leaveBattlefield(bears);
+        harness.passBothPriorities();
+
+        assertThat(gd.getCardIntensity(handCopy.getId())).isEqualTo(1);
+        assertThat(gd.getCardIntensity(graveyardCopy.getId())).isEqualTo(1);
+        assertThat(gd.getCardIntensity(exiledCopy.getId())).isEqualTo(1);
+        assertThat(gd.getCardIntensity(opponentCopy.getId())).isZero();
+    }
+
+    @Test
+    @DisplayName("Leaving after an earlier trigger does not intensify again that turn")
+    void selfLeavingSharesOncePerTurnLimit() {
+        Permanent minthara = harness.addToBattlefieldAndReturn(player1, new MintharaOfTheAbsolute());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        leaveBattlefield(bears);
+        harness.passBothPriorities();
+        leaveBattlefield(minthara);
+        harness.passBothPriorities();
+
+        assertThat(gd.getCardIntensity(minthara.getCard().getId())).isEqualTo(1);
+    }
+
     private void leaveBattlefield(Permanent permanent) {
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, permanent));
