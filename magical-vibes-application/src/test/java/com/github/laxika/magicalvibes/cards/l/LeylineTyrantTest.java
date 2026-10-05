@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KasminasTransmutation;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LeylineTyrant.class, GrizzlyBears.class})
+@CardUsed({LeylineTyrant.class, KasminasTransmutation.class})
 class LeylineTyrantTest extends BaseCardTest {
 
     private void killTyrant() {
@@ -67,5 +67,56 @@ class LeylineTyrantTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(3);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    void doesNotPreserveOpponentsRedMana() {
+        harness.addToBattlefield(player1, new LeylineTyrant());
+        harness.addMana(player2, ManaColor.RED, 3);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    void remainingManaDrainsAfterTyrantDies() {
+        harness.addMana(player1, ManaColor.RED, 3);
+        killTyrant();
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+        advanceToUpkeep(player1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    void canDealDamageToCreatureWithSeparateResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LeylineTyrant());
+        harness.addMana(player1, ManaColor.RED, 3);
+        killTyrant();
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 2);
+        harness.handlePermanentChosen(player1, target.getId());
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.passBothPriorities();
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    void losingAbilitiesStopsPreservingRedMana() {
+        Permanent tyrant = harness.addToBattlefieldAndReturn(player1, new LeylineTyrant());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new KasminasTransmutation());
+        aura.setAttachedTo(tyrant.getId());
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
     }
 }
