@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.a.AzoriusChancery;
 import com.github.laxika.magicalvibes.cards.m.MistralCharger;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -68,6 +70,48 @@ class OmnibianTest extends BaseCardTest {
                 .hasMessageContaining("creature");
     }
 
+    @Test
+    @DisplayName("Activates with only a tap and no mana")
+    void activatesWithoutMana() {
+        Permanent omnibian = addReadyOmnibian();
+        Permanent target = addCreatureReady(player2, new MistralCharger());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(omnibian.isTapped()).isTrue();
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.FROG);
+    }
+
+    @Test
+    @DisplayName("Changing base stats and creature type preserves flying and counters")
+    void preservesAbilitiesAndCounters() {
+        addReadyOmnibian();
+        Permanent target = addCreatureReady(player2, new MistralCharger());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        activateOmnibian(target);
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.FROG);
+    }
+
+    @Test
+    @DisplayName("Can target itself")
+    void canTargetItself() {
+        Permanent omnibian = addReadyOmnibian();
+
+        activateOmnibian(omnibian);
+
+        assertThat(omnibian.isTapped()).isTrue();
+        assertThat(omnibian.getEffectivePower()).isEqualTo(3);
+        assertThat(omnibian.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, omnibian)).containsExactly(CardSubtype.FROG);
+    }
     private void activateOmnibian(Permanent target) {
         addManaForAbility();
         harness.activateAbility(player1, 0, null, target.getId());
