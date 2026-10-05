@@ -15,6 +15,19 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class LlanowarTribeTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Mana ability resolves immediately into its controller's pool")
+    void manaAbilityResolvesImmediatelyForController() {
+        Permanent perm = addCreatureReady(player2, new LlanowarTribe());
+
+        harness.tapPermanent(player2, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(perm.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Tapping Llanowar Tribe produces three green mana")
     void tappingProducesThreeGreenMana() {
         Permanent perm = addCreatureReady(player1, new LlanowarTribe());
