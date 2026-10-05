@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KothsCourier.class, Forest.class, GrizzlyBears.class})
 class KothsCourierTest extends BaseCardTest {
 
     @Test
@@ -30,7 +31,7 @@ class KothsCourierTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Koth's Courier");
+        assertThat(entry.getCard()).isInstanceOf(KothsCourier.class);
     }
 
     @Test
@@ -38,19 +39,12 @@ class KothsCourierTest extends BaseCardTest {
     void cannotBeBlockedWhenDefenderControlsForest() {
         harness.addToBattlefield(player2, new Forest());
 
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
 
-        Permanent atkPerm = new Permanent(new KothsCourier());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new KothsCourier());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
@@ -63,19 +57,12 @@ class KothsCourierTest extends BaseCardTest {
     @Test
     @DisplayName("Koth's Courier can be blocked when defending player does not control a Forest")
     void canBeBlockedWhenDefenderDoesNotControlForest() {
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
 
-        Permanent atkPerm = new Permanent(new KothsCourier());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new KothsCourier());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
@@ -90,16 +77,41 @@ class KothsCourierTest extends BaseCardTest {
     void dealsTwoDamageWhenUnblocked() {
         harness.setLife(player2, 20);
 
-        Permanent atkPerm = new Permanent(new KothsCourier());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new KothsCourier());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("A Forest controlled by the attacker does not prevent blocking")
+    void attackersForestDoesNotPreventBlocking() {
+        harness.addToBattlefield(player1, new Forest());
+        Permanent attacker = addCreatureReady(player1, new KothsCourier());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new KothsCourier());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped Forest still prevents blocking Koth's Courier")
+    void tappedForestPreventsBlocking() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        forest.setTapped(true);
+        addCreatureReady(player2, new KothsCourier());
+        Permanent attacker = addCreatureReady(player1, new KothsCourier());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
     }
 }
