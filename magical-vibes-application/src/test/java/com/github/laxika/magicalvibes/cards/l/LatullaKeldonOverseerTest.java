@@ -94,4 +94,125 @@ class LatullaKeldonOverseerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent latulla = harness.addToBattlefieldAndReturn(player1, new LatullaKeldonOverseer());
+        latulla.setSummoningSick(true);
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(latulla.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent latulla = addCreatureReady(player1, new LatullaKeldonOverseer());
+        latulla.setTapped(true);
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate without enough mana for X plus red")
+    void cannotActivateWithoutEnoughMana() {
+        Permanent latulla = addCreatureReady(player1, new LatullaKeldonOverseer());
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 3, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(latulla.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can target its controller and discard nonland cards")
+    void canTargetControllerAndDiscardNonlandCards() {
+        addCreatureReady(player1, new LatullaKeldonOverseer());
+        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateAbility(player1, 0, 3, player1.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Can deal lethal damage to itself")
+    void canDealLethalDamageToItself() {
+        Permanent latulla = addCreatureReady(player1, new LatullaKeldonOverseer());
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateAbility(player1, 0, 3, latulla.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Latulla, Keldon Overseer");
+        harness.assertInGraveyard(player1, "Latulla, Keldon Overseer");
+    }
+
+    @Test
+    @DisplayName("Ability resolves after Latulla leaves the battlefield")
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent latulla = addCreatureReady(player1, new LatullaKeldonOverseer());
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateAbility(player1, 0, 3, player2.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        latulla.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Latulla, Keldon Overseer");
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("An illegal target does not refund activation costs")
+    void targetLeavingBattlefieldDoesNotRefundCosts() {
+        Permanent latulla = addCreatureReady(player1, new LatullaKeldonOverseer());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, 2, target.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        target.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(latulla.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+    }
 }
