@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.a.AvenWindreader;
 import com.github.laxika.magicalvibes.cards.d.DarksteelMyr;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Pyroclasm.class, GrizzlyBears.class, GiantSpider.class, PaladinEnVec.class,
-        Forest.class, DarksteelMyr.class})
+        Forest.class, DarksteelMyr.class, AvenWindreader.class})
 class PyroclasmTest extends BaseCardTest {
 
     @Test
@@ -101,6 +102,35 @@ class PyroclasmTest extends BaseCardTest {
 
         assertThat(darksteelMyr.getMarkedDamage()).isEqualTo(2);
         harness.assertOnBattlefield(player2, "Darksteel Myr");
+    }
+
+    @Test
+    @CardUsed(AvenWindreader.class)
+    @DisplayName("Pyroclasm deals damage to flying creatures")
+    void damagesFlyingCreatures() {
+        Permanent windreader = harness.addToBattlefieldAndReturn(player2, new AvenWindreader());
+        harness.castFromHand(player1, new Pyroclasm(), "{1}{R}");
+        harness.passBothPriorities();
+
+        assertThat(windreader.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Aven Windreader");
+    }
+
+    @Test
+    @DisplayName("Damage from two Pyroclasms accumulates to kill a larger creature")
+    void damageAccumulatesAcrossResolutions() {
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        harness.castFromHand(player1, new Pyroclasm(), "{1}{R}");
+        harness.passBothPriorities();
+
+        assertThat(spider.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Giant Spider");
+
+        harness.castFromHand(player1, new Pyroclasm(), "{1}{R}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Giant Spider");
+        harness.assertInGraveyard(player2, "Giant Spider");
     }
 
     @Test
