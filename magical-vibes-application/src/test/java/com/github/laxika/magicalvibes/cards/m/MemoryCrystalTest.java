@@ -20,12 +20,11 @@ class MemoryCrystalTest extends BaseCardTest {
     @Test
     void reducesManaBuybackCost() {
         harness.addToBattlefield(player1, new MemoryCrystal());
-        harness.addToBattlefield(player1, new Spellbook());
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new Spellbook()).getId();
         harness.setHand(player1, List.of(new ShatteringPulse()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        UUID targetId = harness.getPermanentId(player1, "Spellbook");
         harness.castInstantWithBuyback(player1, 0, targetId);
 
         assertThat(harness.getGameData().stack.getFirst().isBuyback()).isTrue();
@@ -37,12 +36,11 @@ class MemoryCrystalTest extends BaseCardTest {
     @Test
     void affectsBuybackCostsOfOpponentsSpells() {
         harness.addToBattlefield(player1, new MemoryCrystal());
-        harness.addToBattlefield(player1, new Spellbook());
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new Spellbook()).getId();
         harness.setHand(player2, List.of(new ShatteringPulse()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
-        UUID targetId = harness.getPermanentId(player1, "Spellbook");
         harness.castInstantWithBuyback(player2, 0, targetId);
         harness.passBothPriorities();
 
@@ -52,11 +50,10 @@ class MemoryCrystalTest extends BaseCardTest {
     @Test
     void doesNotReduceNormalManaCost() {
         harness.addToBattlefield(player1, new MemoryCrystal());
-        harness.addToBattlefield(player1, new Spellbook());
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new Spellbook()).getId();
         harness.setHand(player1, List.of(new ShatteringPulse()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        UUID targetId = harness.getPermanentId(player1, "Spellbook");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -64,12 +61,11 @@ class MemoryCrystalTest extends BaseCardTest {
     @Test
     void doesNotReduceDiscardBuybackCost() {
         harness.addToBattlefield(player1, new MemoryCrystal());
-        harness.addToBattlefield(player1, new Spellbook());
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new Spellbook()).getId();
         harness.setHand(player1, List.of(new ShatteringPulse()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        UUID targetId = harness.getPermanentId(player1, "Spellbook");
         harness.castInstant(player1, 0, targetId);
         UUID spellId = harness.getGameData().stack.getFirst().getCard().getId();
 
@@ -80,5 +76,56 @@ class MemoryCrystalTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstantWithDiscardBuyback(player2, 0, spellId, List.of(1)))
                 .isInstanceOf(IllegalStateException.class);
         harness.assertInHand(player2, "Forbid");
+    }
+
+    @Test
+    void multipleCrystalsReduceBuybackToZeroAcrossControllers() {
+        harness.addToBattlefield(player1, new MemoryCrystal());
+        harness.addToBattlefield(player2, new MemoryCrystal());
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new Spellbook()).getId();
+        harness.setHand(player1, List.of(new ShatteringPulse()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstantWithBuyback(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Shattering Pulse");
+        harness.assertInGraveyard(player1, "Spellbook");
+    }
+
+    @Test
+    void excessBuybackReductionDoesNotPayTheNormalManaCost() {
+        harness.addToBattlefield(player1, new MemoryCrystal());
+        harness.addToBattlefield(player1, new MemoryCrystal());
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new Spellbook()).getId();
+        harness.setHand(player1, List.of(new ShatteringPulse()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithBuyback(player1, 0, targetId))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Shattering Pulse");
+    }
+
+    @Test
+    void reductionEndsWhenCrystalLeavesTheBattlefield() {
+        UUID crystalId = harness.addToBattlefieldAndReturn(player1, new MemoryCrystal()).getId();
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new Spellbook()).getId();
+        harness.setHand(player1, List.of(new ShatteringPulse()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstantWithBuyback(player1, 0, crystalId);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Memory Crystal");
+        harness.assertInHand(player1, "Shattering Pulse");
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castInstantWithBuyback(player1, 0, targetId))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Spellbook");
+        harness.assertInHand(player1, "Shattering Pulse");
     }
 }
