@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PrototypeX8.class, GrizzlyBears.class})
+@CardUsed({PrototypeX8.class, GrizzlyBears.class, Unsummon.class})
 class PrototypeX8Test extends BaseCardTest {
 
     @Test
@@ -69,5 +70,102 @@ class PrototypeX8Test extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().getName().equals("Grizzly Bears"))
                 .hasSize(1);
+    }
+
+    @Test
+    void reductionDoesNotPayColoredManaEvenWithMoreThanFourCreatureCards() {
+        harness.setHand(player1, List.of(new PrototypeX8()));
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castCreature(player1, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Prototype X-8");
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotInGraveyard(player1, "Prototype X-8");
+    }
+
+    @Test
+    void reductionIgnoresNoncreatureCardsAndTheOpponentsGraveyard() {
+        harness.setHand(player1, List.of(new PrototypeX8()));
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Unsummon()));
+        harness.setGraveyard(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Prototype X-8");
+    }
+
+    @Test
+    void duplicateRetainsItsRobotArtifactTypesAfterReturningToHand() {
+        harness.addToBattlefield(player1, new PrototypeX8());
+        harness.setHand(player1, List.of(new GrizzlyBears(), new Unsummon()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+
+        assertThat(gd.playerHands.get(player1.getId())).singleElement().satisfies(duplicate -> {
+            assertThat(duplicate.isToken()).isFalse();
+            assertThat(duplicate.hasType(CardType.ARTIFACT)).isTrue();
+            assertThat(duplicate.getSubtypes()).contains(CardSubtype.BEAR, CardSubtype.ROBOT);
+        });
+    }
+
+    @Test
+    void doesNotTriggerForANoncastReentryOfACardCastEarlierThisTurn() {
+        GrizzlyBears bearCard = new GrizzlyBears();
+        harness.setHand(player1, List.of(bearCard, new Unsummon()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.addToBattlefield(player1, new PrototypeX8());
+        harness.setHand(player1, List.of());
+
+        Permanent returnedBear = harness.enterBattlefieldAndReturn(player1, bearCard);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(returnedBear);
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void stillConjuresWhenTheCastCreatureLeavesBeforeTheTriggerResolves() {
+        harness.addToBattlefield(player1, new PrototypeX8());
+        harness.setHand(player1, List.of(new GrizzlyBears(), new Unsummon()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Grizzly Bears"))
+                .singleElement().satisfies(duplicate -> {
+                    assertThat(duplicate.getCard().isToken()).isFalse();
+                    assertThat(duplicate.getCard().hasType(CardType.ARTIFACT)).isTrue();
+                    assertThat(duplicate.getCard().getSubtypes()).contains(CardSubtype.ROBOT);
+                });
     }
 }
