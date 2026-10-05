@@ -97,13 +97,65 @@ class ProteanHulkTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(nonCreature, tooExpensiveCreature);
     }
 
+    @Test
+    @DisplayName("Stopping below six mana value still puts the selected creatures onto the battlefield")
+    void mayStopAfterSelectingOneCreature() {
+        Card selected = new MistralCharger();
+        Card unselected = new AssaultZeppelid();
+        harness.setLibrary(player1, List.of(selected, unselected));
+
+        killProteanHulk();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard).doesNotContain(selected);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard).contains(selected).doesNotContain(unselected);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unselected);
+    }
+
+    @Test
+    @DisplayName("Can find multiple copies of the same creature without requiring different names")
+    void mayChooseMultipleCopies() {
+        Card first = new MistralCharger();
+        Card second = new MistralCharger();
+        Card third = new MistralCharger();
+        Card fourth = new MistralCharger();
+        harness.setLibrary(player1, List.of(first, second, third, fourth));
+
+        killProteanHulk();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard).contains(first, second, third).doesNotContain(fourth);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth);
+    }
+
+    @Test
+    @DisplayName("Death trigger completes with an empty library")
+    void emptyLibraryCompletesSearch() {
+        harness.setLibrary(player1, List.of());
+
+        killProteanHulk();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Protean Hulk");
+    }
+
     private void killProteanHulk() {
         Permanent hulk = harness.addToBattlefieldAndReturn(player1, new ProteanHulk());
         harness.setHand(player1, List.of(new WreckingBall()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.castInstant(player1, 0, hulk.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, hulk.getId());
         harness.passBothPriorities();
     }
 }
