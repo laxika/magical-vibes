@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.s.SoldeviSentry;
+import com.github.laxika.magicalvibes.cards.l.LeylineOfPunishment;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -13,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KeeperOfTresserhorn.class, SoldeviSentry.class})
+@CardUsed({KeeperOfTresserhorn.class, SoldeviSentry.class, LeylineOfPunishment.class, Unsummon.class})
 class KeeperOfTresserhornTest extends BaseCardTest {
 
     private Permanent addAttacker() {
@@ -62,5 +65,51 @@ class KeeperOfTresserhornTest extends BaseCardTest {
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+    }
+
+    @Test
+    @DisplayName("Assigning no combat damage still applies when damage cannot be prevented")
+    void assignsNoCombatDamageWithLeylineOfPunishment() {
+        addAttacker();
+        harness.addToBattlefield(player2, new LeylineOfPunishment());
+        int startingLife = gd.getLife(player2.getId());
+
+        declareBlockers(List.of());
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertLife(player2, startingLife - 2);
+    }
+
+    @Test
+    @DisplayName("Life loss resolves even if Keeper leaves the battlefield in response")
+    void lifeLossResolvesAfterSourceIsReturnedToHand() {
+        Permanent attacker = addAttacker();
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        int startingLife = gd.getLife(player2.getId());
+
+        prepareDeclareBlockers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of()));
+        assertThat(gd.stack).hasSize(1);
+        harness.castInstant(player2, 0, attacker.getId());
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertInHand(player1, "Keeper of Tresserhorn");
+        harness.assertNotOnBattlefield(player1, "Keeper of Tresserhorn");
+        harness.assertLife(player2, startingLife - 2);
+    }
+
+    @Test
+    @DisplayName("Each unblocked Keeper causes its own life loss")
+    void multipleUnblockedKeepersEachCauseLifeLoss() {
+        addAttacker();
+        addAttacker();
+        int startingLife = gd.getLife(player2.getId());
+
+        declareBlockers(List.of());
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertLife(player2, startingLife - 4);
     }
 }
