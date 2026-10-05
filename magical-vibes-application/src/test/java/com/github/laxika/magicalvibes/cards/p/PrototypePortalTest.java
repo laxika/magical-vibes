@@ -3,12 +3,15 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AccordersShield;
 import com.github.laxika.magicalvibes.cards.g.GolemsHeart;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CarapaceForger;
+import com.github.laxika.magicalvibes.cards.r.Riftsweeper;
+import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,9 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PrototypePortal.class, GolemsHeart.class, AccordersShield.class, CarapaceForger.class, Shatter.class, Riftsweeper.class})
 class PrototypePortalTest extends BaseCardTest {
-
-    // ===== ETB imprint =====
 
     @Test
     @DisplayName("ETB triggers may ability to exile artifact from hand")
@@ -92,7 +94,7 @@ class PrototypePortalTest extends BaseCardTest {
     @Test
     @DisplayName("No artifacts in hand skips imprint gracefully")
     void noArtifactsInHandSkips() {
-        harness.setHand(player1, List.of(new PrototypePortal(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new PrototypePortal(), new CarapaceForger()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castArtifact(player1, 0);
         harness.passBothPriorities(); // Resolve Portal → MayEffect on stack
@@ -103,15 +105,12 @@ class PrototypePortalTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
 
-        // GrizzlyBears should still be in hand
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Carapace Forger");
 
         // Portal should have nothing imprinted
         Permanent portal = findPermanent(player1, "Prototype Portal");
         assertThat(gd.getImprintedCard(portal.getCard())).isNull();
     }
-
-    // ===== Token creation =====
 
     @Test
     @DisplayName("Activated ability creates a token copy of the imprinted artifact")
@@ -120,6 +119,7 @@ class PrototypePortalTest extends BaseCardTest {
         PrototypePortal portalCard = new PrototypePortal();
         GolemsHeart heartCard = new GolemsHeart();
         gd.setImprintedCard(portalCard, heartCard);
+        harness.setExile(player1, List.of(heartCard));
         harness.addToBattlefield(player1, portalCard);
 
         // Golem's Heart has mana value 2, so X=2
@@ -142,6 +142,7 @@ class PrototypePortalTest extends BaseCardTest {
         PrototypePortal portalCard = new PrototypePortal();
         AccordersShield shieldCard = new AccordersShield();
         gd.setImprintedCard(portalCard, shieldCard);
+        harness.setExile(player1, List.of(shieldCard));
         harness.addToBattlefield(player1, portalCard);
 
         // Accorder's Shield has mana value 0, so X=0
@@ -157,8 +158,7 @@ class PrototypePortalTest extends BaseCardTest {
         // Advance to end step
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
 
         // Token should still be on the battlefield (not exiled)
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -182,6 +182,7 @@ class PrototypePortalTest extends BaseCardTest {
         PrototypePortal portalCard = new PrototypePortal();
         GolemsHeart heartCard = new GolemsHeart();
         gd.setImprintedCard(portalCard, heartCard);
+        harness.setExile(player1, List.of(heartCard));
         harness.addToBattlefield(player1, portalCard);
 
         // Golem's Heart has mana value 2, so X=3 should fail
@@ -189,5 +190,74 @@ class PrototypePortalTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 3, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("X must equal the mana value of the imprinted card");
+    }
+
+    @Test
+    @DisplayName("Imprint can exile a card even after Portal is destroyed in response to its trigger")
+    void imprintResolvesAfterPortalLeaves() {
+        harness.setHand(player1, List.of(new PrototypePortal(), new AccordersShield()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, findPermanent(player1, "Prototype Portal").getId());
+        harness.assertInGraveyard(player1, "Prototype Portal");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ImprintFromHandChoice.class);
+        harness.handleCardChosen(player1, 0);
+        harness.assertNotInHand(player1, "Accorder's Shield");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Accorder's Shield"));
+    }
+
+    @Test
+    @DisplayName("An activated token ability still resolves after Portal is destroyed")
+    void tokenAbilityResolvesAfterPortalLeaves() {
+        castPortalAndImprintShield();
+        harness.activateAbility(player1, 0, 0, null);
+
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, findPermanent(player1, "Prototype Portal").getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Prototype Portal");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().isToken() && p.getCard().getName().equals("Accorder's Shield"));
+    }
+
+    @Test
+    @DisplayName("Cannot activate after Riftsweeper moves the imprinted card out of exile")
+    void cannotActivateWhenImprintedCardLeavesExile() {
+        castPortalAndImprintShield();
+        var shield = gd.getPlayerExiledCards(player1.getId()).getFirst();
+        harness.setHand(player2, List.of(new Riftsweeper()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player2, List.of(shield.getId()));
+
+        harness.passBothPriorities();
+        assertThat(gd.findExiledCard(shield.getId())).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).contains(shield);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    private void castPortalAndImprintShield() {
+        harness.setHand(player1, List.of(new PrototypePortal(), new AccordersShield()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
     }
 }
