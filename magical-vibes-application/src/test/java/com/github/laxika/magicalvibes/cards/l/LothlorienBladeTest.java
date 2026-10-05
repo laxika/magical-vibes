@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -73,19 +72,108 @@ class LothlorienBladeTest extends BaseCardTest {
         assertThat(blade.getAttachedTo()).isEqualTo(bears.getId());
     }
 
+    @Test
+    void attackDamageStillResolvesAfterBladeLeavesBattlefield() {
+        Permanent elf = addCreatureReady(player1, new LlanowarElves());
+        elf.setPowerModifier(2);
+        Permanent blade = addBladeReady(player1);
+        blade.setAttachedTo(elf.getId());
+        Permanent target = addCreatureReady(player2, new EnormousBaloth());
+
+        declareAttack(player1, elf);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, blade));
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    void attackDamageUsesAttackersLastKnownPowerAfterItLeaves() {
+        Permanent elf = addCreatureReady(player1, new LlanowarElves());
+        Permanent blade = addBladeReady(player1);
+        blade.setAttachedTo(elf.getId());
+        Permanent target = addCreatureReady(player2, new EnormousBaloth());
+
+        declareAttack(player1, elf);
+        harness.handlePermanentChosen(player1, target.getId());
+        elf.setPowerModifier(3);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, elf));
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
+    void movingBladeDoesNotChangeWhichCreatureDealsAttackDamage() {
+        Permanent elf = addCreatureReady(player1, new LlanowarElves());
+        elf.setPowerModifier(2);
+        Permanent blade = addBladeReady(player1);
+        blade.setAttachedTo(elf.getId());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new EnormousBaloth());
+
+        declareAttack(player1, elf);
+        harness.handlePermanentChosen(player1, target.getId());
+        blade.setAttachedTo(bears.getId());
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    void attackDamageUsesPowerAtResolution() {
+        Permanent elf = addCreatureReady(player1, new LlanowarElves());
+        Permanent blade = addBladeReady(player1);
+        blade.setAttachedTo(elf.getId());
+        Permanent target = addCreatureReady(player2, new EnormousBaloth());
+
+        declareAttack(player1, elf);
+        harness.handlePermanentChosen(player1, target.getId());
+        elf.setPowerModifier(3);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
+    void attackTriggerCannotTargetControllersCreature() {
+        Permanent elf = addCreatureReady(player1, new LlanowarElves());
+        Permanent blade = addBladeReady(player1);
+        blade.setAttachedTo(elf.getId());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new EnormousBaloth());
+
+        declareAttack(player1, elf);
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+
+        assertThat(bears.getMarkedDamage()).isZero();
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    void bothEquipAbilitiesRejectOpponentsElf() {
+        addBladeReady(player1);
+        Permanent elf = addCreatureReady(player2, new LlanowarElves());
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, elf.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, elf.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private Permanent addBladeReady(Player player) {
-        Permanent blade = new Permanent(new LothlorienBlade());
-        blade.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(blade);
-        return blade;
+        return harness.addToBattlefieldAndReturn(player, new LothlorienBlade());
     }
 
     private void declareAttack(Player player, Permanent attacker) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
         int index = gd.playerBattlefields.get(player.getId()).indexOf(attacker);
-        gs.declareAttackers(gd, player, List.of(index), null);
+        declareAttackers(player, List.of(index));
     }
 }
