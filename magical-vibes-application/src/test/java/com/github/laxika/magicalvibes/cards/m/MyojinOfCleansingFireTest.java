@@ -75,6 +75,80 @@ class MyojinOfCleansingFireTest extends BaseCardTest {
                 .hasMessageContaining("Not enough counters");
     }
 
+    @Test
+    @DisplayName("The divinity counter is paid immediately, before creatures are destroyed")
+    void counterIsRemovedAsActivationCost() {
+        Permanent myojin = addMyojinWithDivinityCounter(player1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new LanternKami());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(myojin.getCounterCount(CounterType.DIVINITY)).isZero();
+        assertThat(gqs.hasKeyword(gd, myojin, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough counters");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(myojin);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+    }
+
+    @Test
+    @DisplayName("Another Myojin without a divinity counter is destroyed")
+    void otherMyojinIsNotExcludedByName() {
+        Permanent source = addMyojinWithDivinityCounter(player1);
+        Permanent other = harness.enterBattlefieldAndReturn(player2, new MyojinOfCleansingFire());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(source);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(other);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(other.getCard());
+    }
+
+    @Test
+    @DisplayName("An opposing Myojin with a divinity counter survives the destruction")
+    void otherIndestructibleCreatureSurvives() {
+        Permanent source = addMyojinWithDivinityCounter(player1);
+        Permanent other = addMyojinWithDivinityCounter(player2);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new LanternKami());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(source);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(other).doesNotContain(creature);
+        assertThat(other.getCounterCount(CounterType.DIVINITY)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A tapped Myojin can activate on the opponent's turn")
+    void canActivateTappedOnOpponentsTurn() {
+        Permanent myojin = addMyojinWithDivinityCounter(player1);
+        myojin.setTapped(true);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new LanternKami());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(myojin);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+        assertThat(myojin.isTapped()).isTrue();
+        assertThat(myojin.getCounterCount(CounterType.DIVINITY)).isZero();
+    }
+
     private Permanent addMyojinWithDivinityCounter(Player player) {
         Permanent myojin = harness.addToBattlefieldAndReturn(player, new MyojinOfCleansingFire());
         myojin.setCounterCount(CounterType.DIVINITY, 1);
