@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -27,7 +28,6 @@ class KishlaSkimmerTest extends BaseCardTest {
 
         castReminisce(player1, player1.getId());
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
@@ -41,10 +41,8 @@ class KishlaSkimmerTest extends BaseCardTest {
 
         castReminisce(player1, player1.getId());
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
         castReminisce(player1, player1.getId());
-        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
@@ -59,8 +57,7 @@ class KishlaSkimmerTest extends BaseCardTest {
         forceMainPhase(player2);
         harness.setHand(player2, List.of(new Reminisce()));
         addReminisceMana(player2);
-        harness.castSorcery(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
 
@@ -69,9 +66,65 @@ class KishlaSkimmerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Reminisce()));
         castReminisce(player1, player1.getId());
         harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void drawsOnlyOneCardWhenSeveralCardsLeaveTogether() {
+        addKishlaSkimmer();
+        seedLibrary(2);
+        harness.setGraveyard(player1, List.of(new Shock(), new Forest(), new KishlaSkimmer()));
+        harness.setHand(player1, List.of(new Reminisce()));
+
+        castReminisce(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void doesNotDrawForAnOpponentsGraveyard() {
+        addKishlaSkimmer();
+        seedLibrary(2);
+        harness.setGraveyard(player2, List.of(new Shock()));
+        harness.setHand(player1, List.of(new Reminisce()));
+
+        castReminisce(player1, player2.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void doesNotDrawWhenAnEmptyGraveyardIsShuffled() {
+        addKishlaSkimmer();
+        seedLibrary(2);
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new Reminisce()));
+
+        castReminisce(player1, player1.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void eachSkimmerDrawsIndependently() {
+        addKishlaSkimmer();
+        harness.addToBattlefield(player1, new KishlaSkimmer());
+        seedLibrary(3);
+        harness.setGraveyard(player1, List.of(new Shock()));
+        harness.setHand(player1, List.of(new Reminisce()));
+
+        castReminisce(player1, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addKishlaSkimmer() {
@@ -86,15 +139,12 @@ class KishlaSkimmerTest extends BaseCardTest {
     }
 
     private void seedLibrary(int count) {
-        gd.playerDecks.get(player1.getId()).clear();
-        for (int i = 0; i < count; i++) {
-            gd.playerDecks.get(player1.getId()).add(new Forest());
-        }
+        harness.setLibrary(player1, IntStream.range(0, count).mapToObj(i -> new Forest()).toList());
     }
 
     private void castReminisce(Player caster, UUID targetPlayerId) {
         addReminisceMana(caster);
-        harness.castSorcery(caster, 0, targetPlayerId);
+        harness.castAndResolveSorcery(caster, 0, targetPlayerId);
     }
 
     private void addReminisceMana(Player player) {
