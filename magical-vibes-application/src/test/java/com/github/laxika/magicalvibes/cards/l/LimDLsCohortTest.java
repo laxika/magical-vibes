@@ -19,6 +19,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 class LimDLsCohortTest extends BaseCardTest {
 
     @Test
+    @DisplayName("The block trigger survives the Cohort leaving and only marks the blocked creature")
+    void blockTriggerResolvesAfterCohortLeaves() {
+        Permanent attacker = addCreatureReady(player1, new BalduvianBears());
+        attacker.setAttacking(true);
+        Permanent unrelatedCreature = addCreatureReady(player1, new BalduvianBears());
+        Permanent cohort = addCreatureReady(player2, new LimDLsCohort());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(attacker.isCantRegenerateThisTurn()).isFalse();
+
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, cohort);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Lim-Dûl's Cohort");
+        assertThat(attacker.isCantRegenerateThisTurn()).isTrue();
+        assertThat(unrelatedCreature.isCantRegenerateThisTurn()).isFalse();
+    }
+
+    @Test
     @DisplayName("When the Cohort blocks a creature, that attacker can't be regenerated this turn")
     void blocksCreatureMarksCantRegenerate() {
         Permanent attacker = addCreatureReady(player1, new BalduvianBears());
