@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.p.Phyresis;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +22,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MitoticManipulation.class, GrizzlyBears.class, LlanowarElves.class, Shock.class, Plains.class, Swamp.class, Phyresis.class})
 class MitoticManipulationTest extends BaseCardTest {
 
     
@@ -31,7 +34,7 @@ class MitoticManipulationTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
 
         // Set top 7 of library: only the second Grizzly Bears matches a permanent name
-        setupTopSeven(List.of(
+        harness.setLibrary(player1, List.of(
                 new LlanowarElves(),
                 new GrizzlyBears(),
                 new Shock(),
@@ -43,8 +46,7 @@ class MitoticManipulationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MitoticManipulation()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
@@ -67,16 +69,15 @@ class MitoticManipulationTest extends BaseCardTest {
         Swamp swamp = new Swamp();
         Shock shock2 = new Shock();
         Plains plains2 = new Plains();
-        setupTopSeven(List.of(bears, elves, shock, plains, swamp, shock2, plains2));
+        harness.setLibrary(player1, List.of(bears, elves, shock, plains, swamp, shock2, plains2));
         harness.setHand(player1, List.of(new MitoticManipulation()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         // Choose the Grizzly Bears
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         // Grizzly Bears should be on the battlefield
         long bearsCount = countPermanents(player1, "Grizzly Bears");
@@ -92,7 +93,7 @@ class MitoticManipulationTest extends BaseCardTest {
     void mayDeclineToChoose() {
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        setupTopSeven(List.of(
+        harness.setLibrary(player1, List.of(
                 new GrizzlyBears(),
                 new LlanowarElves(),
                 new Shock(),
@@ -104,12 +105,11 @@ class MitoticManipulationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MitoticManipulation()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         // No new permanent should be on the battlefield
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore);
@@ -124,7 +124,7 @@ class MitoticManipulationTest extends BaseCardTest {
         // Battlefield has only a Grizzly Bears, but top 7 has no Grizzly Bears
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        setupTopSeven(List.of(
+        harness.setLibrary(player1, List.of(
                 new LlanowarElves(),
                 new Shock(),
                 new Plains(),
@@ -136,11 +136,10 @@ class MitoticManipulationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MitoticManipulation()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
-        // No matching cards — go directly to reorder
+        // No matching cards â€” go directly to reorder
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(7);
     }
@@ -151,7 +150,7 @@ class MitoticManipulationTest extends BaseCardTest {
         // Opponent has Llanowar Elves on battlefield, player1 has no permanents
         harness.addToBattlefield(player2, new LlanowarElves());
 
-        setupTopSeven(List.of(
+        harness.setLibrary(player1, List.of(
                 new LlanowarElves(),
                 new GrizzlyBears(),
                 new Shock(),
@@ -163,8 +162,7 @@ class MitoticManipulationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MitoticManipulation()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
@@ -179,7 +177,7 @@ class MitoticManipulationTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new LlanowarElves());
 
-        setupTopSeven(List.of(
+        harness.setLibrary(player1, List.of(
                 new GrizzlyBears(),
                 new LlanowarElves(),
                 new Shock(),
@@ -191,8 +189,7 @@ class MitoticManipulationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MitoticManipulation()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
@@ -206,13 +203,12 @@ class MitoticManipulationTest extends BaseCardTest {
     @DisplayName("With empty library, Mitotic Manipulation does nothing")
     void emptyLibraryDoesNothing() {
         GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         harness.setHand(player1, List.of(new MitoticManipulation()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("library is empty"));
@@ -223,7 +219,7 @@ class MitoticManipulationTest extends BaseCardTest {
     void goesToGraveyardAfterResolving() {
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        setupTopSeven(List.of(
+        harness.setLibrary(player1, List.of(
                 new GrizzlyBears(),
                 new LlanowarElves(),
                 new Shock(),
@@ -235,12 +231,11 @@ class MitoticManipulationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MitoticManipulation()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         // The spell only reaches the graveyard once its resolution finishes
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2, 3, 4, 5)));
 
         harness.assertInGraveyard(player1, "Mitotic Manipulation");
@@ -255,16 +250,15 @@ class MitoticManipulationTest extends BaseCardTest {
         GrizzlyBears bears = new GrizzlyBears();
         LlanowarElves elves = new LlanowarElves();
         Shock shock = new Shock();
-        setupTopSeven(List.of(bears, elves, shock, new Plains(), new Swamp(), new Shock(), new Plains()));
+        harness.setLibrary(player1, List.of(bears, elves, shock, new Plains(), new Swamp(), new Shock(), new Plains()));
         harness.setHand(player1, List.of(new MitoticManipulation()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         // Choose the Grizzly Bears
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         // Now reorder the remaining 6 cards
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -280,9 +274,83 @@ class MitoticManipulationTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
-    private void setupTopSeven(List<Card> cards) {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(cards);
+    @Test
+    @DisplayName("A matching land enters under the caster's control and the rest retain the chosen bottom order")
+    void matchingLandAndBottomOrder() {
+        harness.addToBattlefield(player2, new Plains());
+        Plains chosen = new Plains();
+        Card first = new Shock();
+        Card second = new Swamp();
+        Card third = new LlanowarElves();
+        Card fourth = new Shock();
+        Card fifth = new Swamp();
+        Card sixth = new GrizzlyBears();
+        Card untouched = new Plains();
+        harness.setLibrary(player1, List.of(chosen, first, second, third, fourth, fifth, sixth, untouched));
+        harness.setHand(player1, List.of(new MitoticManipulation()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        assertThat(harness.getGameData().interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().cards()).containsExactly(chosen);
+        harness.handleCardChosen(player1, 0);
+        harness.getGameService().handleInteractionAnswer(harness.getGameData(), player1,
+                new InteractionAnswer.CardOrder(List.of(5, 4, 3, 2, 1, 0)));
+
+        assertThat(harness.getGameData().playerBattlefields.get(player1.getId()))
+                .anySatisfy(permanent -> {
+                    assertThat(permanent.getCard()).isSameAs(chosen);
+                    assertThat(permanent.isTapped()).isFalse();
+                });
+        assertThat(harness.getGameData().playerDecks.get(player1.getId()))
+                .containsExactly(untouched, sixth, fifth, fourth, third, second, first);
+        assertThat(harness.getGameData().interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A library shorter than seven permits declining and ordering every card")
+    void shortLibraryMayDeclineAndReorder() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Card bears = new GrizzlyBears();
+        Card shock = new Shock();
+        Card plains = new Plains();
+        harness.setLibrary(player1, List.of(bears, shock, plains));
+        harness.setHand(player1, List.of(new MitoticManipulation()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleCardChosen(player1, -1);
+        harness.getGameService().handleInteractionAnswer(harness.getGameData(), player1,
+                new InteractionAnswer.CardOrder(List.of(2, 0, 1)));
+
+        assertThat(harness.getGameData().playerDecks.get(player1.getId())).containsExactly(plains, bears, shock);
+        assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Mitotic Manipulation");
+        assertThat(harness.getGameData().interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A matching Aura enters attached to a legally chosen creature")
+    void matchingAuraChoosesAttachment() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        var host = findPermanent(player1, "Grizzly Bears");
+        harness.addToBattlefield(player2, new LlanowarElves());
+        harness.addToBattlefield(player2, new Phyresis());
+        findPermanent(player2, "Phyresis").setAttachedTo(findPermanent(player2, "Llanowar Elves").getId());
+        Phyresis chosen = new Phyresis();
+        harness.setLibrary(player1, List.of(chosen, new Shock()));
+        harness.setHand(player1, List.of(new MitoticManipulation()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(harness.getGameData().interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, host.getId());
+        assertThat(findPermanent(player1, "Phyresis").getAttachedTo()).isEqualTo(host.getId());
+        assertThat(harness.getGameData().playerDecks.get(player1.getId()))
+                .extracting(Card::getName).containsExactly("Shock");
+        harness.assertInGraveyard(player1, "Mitotic Manipulation");
     }
 }
