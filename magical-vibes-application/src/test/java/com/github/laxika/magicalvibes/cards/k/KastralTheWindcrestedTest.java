@@ -1,20 +1,26 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.f.Fell;
+import com.github.laxika.magicalvibes.cards.p.PlumecreedEscort;
+import com.github.laxika.magicalvibes.cards.s.ShorelineLooter;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KastralTheWindcrested.class, SuntailHawk.class})
+@CardUsed({KastralTheWindcrested.class, SuntailHawk.class, PlumecreedEscort.class,
+        ShorelineLooter.class, Fell.class})
 class KastralTheWindcrestedTest extends BaseCardTest {
 
     private static final String REANIMATE =
@@ -34,7 +40,7 @@ class KastralTheWindcrestedTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(bird.getId()));
 
-        Permanent entered = findPermanentByCardId(bird.getId());
+        Permanent entered = findPermanent(player1, bird.getName());
         assertThat(entered.getCounterCount(CounterType.FINALITY)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(bird);
     }
@@ -52,7 +58,7 @@ class KastralTheWindcrestedTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(bird.getId()));
 
-        Permanent entered = findPermanentByCardId(bird.getId());
+        Permanent entered = findPermanent(player1, bird.getName());
         assertThat(entered.getCounterCount(CounterType.FINALITY)).isEqualTo(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(bird);
     }
@@ -100,6 +106,153 @@ class KastralTheWindcrestedTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(draw);
     }
 
+    @Test
+    void choosesModeBeforePlayersCanRespondToTheTrigger() {
+        addAttackingKastral();
+
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, COUNTER);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Kastral, the Windcrested")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void multipleBirdsDealingDamageDrawOnlyOneCard() {
+        Card first = new SuntailHawk();
+        Card second = new SuntailHawk();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(first, second));
+        addAttackingKastral();
+        addAttacking(new SuntailHawk());
+        addAttacking(new SuntailHawk());
+
+        resolveKastralTrigger();
+        harness.handleListChoice(player1, DRAW);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void anotherBirdCanTriggerKastralWithoutKastralAttacking() {
+        Permanent kastral = addCreatureReady(player1, new KastralTheWindcrested());
+        Permanent bird = addAttacking(new SuntailHawk());
+
+        resolveKastralTrigger();
+        harness.handleListChoice(player1, COUNTER);
+        harness.passBothPriorities();
+
+        assertThat(kastral.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(bird.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void counterModeIncludesNonattackingBirdsAndExcludesOpposingBirdsAndNonbirds() {
+        Permanent kastral = addAttackingKastral();
+        Permanent bird = addCreatureReady(player1, new SuntailHawk());
+        Permanent nonbird = addCreatureReady(player1, new ShorelineLooter());
+        Permanent opposingBird = addCreatureReady(player2, new SuntailHawk());
+
+        resolveKastralTrigger();
+        harness.handleListChoice(player1, COUNTER);
+        harness.passBothPriorities();
+
+        assertThat(kastral.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(bird.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(nonbird.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opposingBird.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void firstModeCanResolveWithoutAnyEligibleBirdCards() {
+        harness.setHand(player1, List.of(new ShorelineLooter()));
+        harness.setGraveyard(player1, List.of(new Fell()));
+        addAttackingKastral();
+
+        resolveKastralTrigger();
+        harness.handleListChoice(player1, REANIMATE);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void birdPutFromHandTriggersItsEntersAbility() {
+        Card bird = new PlumecreedEscort();
+        harness.setHand(player1, List.of(bird));
+        Permanent kastral = addAttackingKastral();
+
+        resolveKastralTrigger();
+        harness.handleListChoice(player1, REANIMATE);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(bird.getId()));
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player1, kastral.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, kastral, Keyword.HEXPROOF)).isTrue();
+        assertThat(findPermanent(player1, bird.getName()).getCounterCount(CounterType.FINALITY)).isEqualTo(1);
+    }
+
+    @Test
+    void birdPutFromGraveyardTriggersItsEntersAbility() {
+        Card bird = new PlumecreedEscort();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(bird));
+        Permanent kastral = addAttackingKastral();
+
+        resolveKastralTrigger();
+        harness.handleListChoice(player1, REANIMATE);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(bird.getId()));
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player1, kastral.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, kastral, Keyword.HEXPROOF)).isTrue();
+        assertThat(findPermanent(player1, bird.getName()).getCounterCount(CounterType.FINALITY)).isEqualTo(1);
+    }
+
+    @Test
+    void finalityCounterExilesReturnedBirdWhenDestroyed() {
+        Card bird = new SuntailHawk();
+        harness.setHand(player1, List.of(bird));
+        addAttackingKastral();
+
+        resolveKastralTrigger();
+        harness.handleListChoice(player1, REANIMATE);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(bird.getId()));
+        Permanent returned = findPermanent(player1, bird.getName());
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Fell()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castSorcery(player1, 0, returned.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, bird.getName());
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(bird);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(bird);
+    }
+
     private Permanent addAttackingKastral() {
         return addAttacking(new KastralTheWindcrested());
     }
@@ -116,10 +269,4 @@ class KastralTheWindcrestedTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
     }
 
-    private Permanent findPermanentByCardId(UUID cardId) {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(cardId))
-                .findFirst()
-                .orElseThrow();
-    }
 }
