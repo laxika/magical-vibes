@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PredationSteward.class})
 class PredationStewardTest extends BaseCardTest {
 
     @Test
@@ -33,7 +34,7 @@ class PredationStewardTest extends BaseCardTest {
     @DisplayName("Removes an oil counter to give a creature +2/+2")
     void removesOilCounterToBoostCreature() {
         Permanent steward = addReadySteward(player1, 1);
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new PredationSteward());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -52,7 +53,7 @@ class PredationStewardTest extends BaseCardTest {
     @DisplayName("The creature boost wears off at end of turn")
     void creatureBoostWearsOffAtEndOfTurn() {
         addReadySteward(player1, 1);
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new PredationSteward());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -79,7 +80,7 @@ class PredationStewardTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new PredationSteward());
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sorcery");
@@ -89,7 +90,7 @@ class PredationStewardTest extends BaseCardTest {
     @DisplayName("Cannot be activated without an oil counter")
     void cannotActivateWithoutOilCounter() {
         addReadySteward(player1, 0);
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new PredationSteward());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -99,6 +100,66 @@ class PredationStewardTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("counter");
+    }
+
+    @Test
+    @DisplayName("Can target itself and pays costs before the boost resolves")
+    void canTargetItselfAndPaysCostsImmediately() {
+        Permanent steward = addReadySteward(player1, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.activateAbility(player1, 0, null, steward.getId());
+
+        assertThat(steward.getCounterCount(CounterType.OIL)).isEqualTo(1);
+        assertThat(steward.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, steward)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, steward)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, steward)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, steward)).isEqualTo(4);
+        assertThat(steward.getCounterCount(CounterType.OIL)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cannot activate during combat on its controller's turn")
+    void cannotActivateDuringCombat() {
+        Permanent steward = addReadySteward(player1, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, steward.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery");
+
+        assertThat(steward.isTapped()).isFalse();
+        assertThat(steward.getCounterCount(CounterType.OIL)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate with another ability on the stack")
+    void cannotActivateWithNonemptyStack() {
+        Permanent first = addReadySteward(player1, 2);
+        Permanent second = addReadySteward(player1, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 6);
+        harness.activateAbility(player1, 0, null, first.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, second.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+
+        assertThat(second.isTapped()).isFalse();
+        assertThat(second.getCounterCount(CounterType.OIL)).isEqualTo(2);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
     }
 
     private Permanent addReadySteward(com.github.laxika.magicalvibes.model.Player player, int counters) {
