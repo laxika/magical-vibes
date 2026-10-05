@@ -39,11 +39,14 @@ class PossessedNomadTest extends BaseCardTest {
     void noThresholdBonus() {
         fillGraveyard(player1, 6);
         Permanent nomad = addReadyNomad();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AvenTrooper());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThat(gqs.getEffectivePower(gd, nomad)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, nomad)).isEqualTo(3);
         assertThat(gqs.hasColor(gd, nomad, CardColor.BLACK)).isFalse();
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -53,11 +56,14 @@ class PossessedNomadTest extends BaseCardTest {
         fillGraveyard(player1, 6);
         fillGraveyard(player2, 7);
         Permanent nomad = addReadyNomad();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AvenTrooper());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThat(gqs.getEffectivePower(gd, nomad)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, nomad)).isEqualTo(3);
         assertThat(gqs.hasColor(gd, nomad, CardColor.BLACK)).isFalse();
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -83,6 +89,8 @@ class PossessedNomadTest extends BaseCardTest {
         fillGraveyard(player1, 7);
         addReadyNomad();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new NantukoShade());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -94,9 +102,150 @@ class PossessedNomadTest extends BaseCardTest {
         fillGraveyard(player1, 7);
         addReadyNomad();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Hypochondria());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void gainsThresholdWhileAlreadyOnBattlefield() {
+        fillGraveyard(player1, 6);
+        Permanent nomad = addReadyNomad();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AvenTrooper());
+        assertThat(gqs.getEffectiveColors(gd, nomad)).containsExactly(CardColor.WHITE);
+
+        fillGraveyard(player1, 7);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThat(gqs.getEffectivePower(gd, nomad)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, nomad)).isEqualTo(4);
+        assertThat(gqs.getEffectiveColors(gd, nomad)).containsExactly(CardColor.BLACK);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Aven Trooper");
+    }
+
+    @Test
+    void cannotActivateWithoutBlackMana() {
+        fillGraveyard(player1, 7);
+        Permanent nomad = addReadyNomad();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AvenTrooper());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(nomad.isTapped()).isFalse();
+        harness.assertOnBattlefield(player2, "Aven Trooper");
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        fillGraveyard(player1, 7);
+        Permanent nomad = addReadyNomad();
+        nomad.setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AvenTrooper());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Aven Trooper");
+    }
+
+    @Test
+    void losesThresholdBenefitsWhenGraveyardDropsBelowSeven() {
+        fillGraveyard(player1, 7);
+        Permanent nomad = addReadyNomad();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AvenTrooper());
+        assertThat(gqs.getEffectiveColors(gd, nomad)).containsExactly(CardColor.BLACK);
+
+        fillGraveyard(player1, 6);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThat(gqs.getEffectivePower(gd, nomad)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, nomad)).isEqualTo(3);
+        assertThat(gqs.getEffectiveColors(gd, nomad)).containsExactly(CardColor.WHITE);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void activatedAbilityResolvesAfterLosingThreshold() {
+        fillGraveyard(player1, 7);
+        Permanent nomad = addReadyNomad();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AvenTrooper());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+        assertThat(nomad.isTapped()).isTrue();
+
+        fillGraveyard(player1, 6);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Aven Trooper");
+        harness.assertNotOnBattlefield(player2, "Aven Trooper");
+    }
+
+    @Test
+    void targetBecomingBlackBeforeResolutionIsNotDestroyed() {
+        fillGraveyard(player1, 7);
+        addReadyNomad();
+        fillGraveyard(player2, 6);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PossessedNomad());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        fillGraveyard(player2, 7);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Possessed Nomad");
+        harness.assertNotInGraveyard(player2, "Possessed Nomad");
+    }
+
+    @Test
+    void canDestroyControllersWhiteCreature() {
+        fillGraveyard(player1, 7);
+        addReadyNomad();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AvenTrooper());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Aven Trooper");
+        harness.assertNotOnBattlefield(player1, "Aven Trooper");
+    }
+
+    @Test
+    void summoningSicknessPreventsTapAbility() {
+        fillGraveyard(player1, 7);
+        Permanent nomad = addReadyNomad();
+        nomad.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AvenTrooper());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Aven Trooper");
+    }
+
+    @Test
+    void vigilanceAllowsAttackingWithoutTapping() {
+        Permanent nomad = addReadyNomad();
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.beginAttackerDeclarationInput();
+
+        gs.declareAttackers(gd, player1, List.of(0));
+
+        assertThat(nomad.isAttacking()).isTrue();
+        assertThat(nomad.isTapped()).isFalse();
     }
 
     private Permanent addReadyNomad() {
