@@ -69,4 +69,19 @@ class OxiddaGolemTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
+
+    @Test
+    @DisplayName("Affinity can reduce the cost to zero even with more Mountains than the mana cost")
+    void affinityAllowsCastingForFreeWithExcessMountains() {
+        for (int i = 0; i < 7; i++) {
+            harness.addToBattlefieldAndReturn(player1, new Mountain()).tap();
+        }
+        harness.setHand(player1, List.of(new OxiddaGolem()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Oxidda Golem")).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
 }
