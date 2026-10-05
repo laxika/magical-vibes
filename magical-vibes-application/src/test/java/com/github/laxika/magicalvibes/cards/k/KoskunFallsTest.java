@@ -84,6 +84,76 @@ class KoskunFallsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A creature that entered during upkeep can pay despite summoning sickness")
+    void summoningSickCreatureCanPayUpkeep() {
+        harness.addToBattlefield(player1, new KoskunFalls());
+        advanceToUpkeep(player1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AnabaBodyguard());
+        creature.setSummoningSick(true);
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(creature.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Koskun Falls");
+    }
+
+    @Test
+    @DisplayName("The controller chooses exactly one creature to tap")
+    void choosesOneOfMultipleCreatures() {
+        harness.addToBattlefield(player1, new KoskunFalls());
+        Permanent first = addCreatureReady(player1, new AnabaBodyguard());
+        Permanent second = addCreatureReady(player1, new AnabaBodyguard());
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, second.getId());
+
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Koskun Falls");
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot pay the upkeep cost")
+    void opponentCreatureCannotPayUpkeep() {
+        harness.addToBattlefield(player1, new KoskunFalls());
+        Permanent opponentCreature = addCreatureReady(player2, new AnabaBodyguard());
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(opponentCreature.isTapped()).isFalse();
+        harness.assertInGraveyard(player1, "Koskun Falls");
+        harness.assertNotOnBattlefield(player1, "Koskun Falls");
+    }
+
+    @Test
+    @DisplayName("Koskun Falls does not trigger during the opponent's upkeep")
+    void opponentUpkeepDoesNotRequirePayment() {
+        harness.addToBattlefield(player1, new KoskunFalls());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Koskun Falls");
+    }
+
+    @Test
+    @DisplayName("Koskun Falls does not tax its controller's attackers")
+    void controllerCanAttackWithoutPayment() {
+        harness.addToBattlefield(player1, new KoskunFalls());
+        addCreatureReady(player1, new AnabaBodyguard());
+
+        declareAttackers(player1, List.of(1));
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
     @DisplayName("Opponent must pay {2} per attacking creature")
     void opponentPaysTwoPerAttacker() {
         harness.addToBattlefield(player1, new KoskunFalls());
