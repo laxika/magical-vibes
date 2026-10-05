@@ -47,11 +47,65 @@ class KhabLGhoulTest extends BaseCardTest {
         assertThat(ghoul.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("Counts creatures controlled by its controller as well as opponents")
+    void countsDeathsOnBothBattlefields() {
+        Permanent ghoul = addCreatureReady(player1, new KhabLGhoul());
+        Permanent ownVictim = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingVictim = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Terror(), new Terror()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, ownVictim.getId());
+        harness.castAndResolveInstant(player1, 0, opposingVictim.getId());
+        advanceToEndStepAndResolve(player1);
+
+        assertThat(ghoul.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Counts creatures that died before it entered the battlefield")
+    void countsDeathsBeforeEntering() {
+        Permanent victim = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Terror()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, victim.getId());
+        Permanent ghoul = addCreatureReady(player1, new KhabLGhoul());
+
+        advanceToEndStepAndResolve(player1);
+
+        assertThat(ghoul.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Counts a death in response even when no creature died before the end step")
+    void countsDeathsWhileTriggerIsOnStack() {
+        Permanent ghoul = addCreatureReady(player1, new KhabLGhoul());
+        Permanent victim = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Terror()));
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(ghoul.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, victim.getId());
+        resolveAllTriggers();
+
+        assertThat(ghoul.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private void advanceToEndStepAndResolve(Player activePlayer) {
+        advanceToEndStep(activePlayer);
+        resolveAllTriggers();
+    }
+
+    private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(activePlayer, TurnStep.END_STEP);
-        resolveAllTriggers();
     }
 }
