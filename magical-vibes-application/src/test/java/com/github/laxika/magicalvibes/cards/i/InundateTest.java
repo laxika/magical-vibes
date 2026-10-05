@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.a.AntlerSkulkin;
 import com.github.laxika.magicalvibes.cards.c.CascadeBluffs;
 import com.github.laxika.magicalvibes.cards.n.NettleSentinel;
 import com.github.laxika.magicalvibes.cards.s.ShorecrasherMimic;
@@ -12,7 +13,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Inundate.class, NettleSentinel.class, ShorecrasherMimic.class, CascadeBluffs.class})
+@CardUsed({Inundate.class, NettleSentinel.class, ShorecrasherMimic.class, CascadeBluffs.class,
+        AntlerSkulkin.class})
 class InundateTest extends BaseCardTest {
 
     @Test
@@ -79,5 +81,35 @@ class InundateTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Nettle Sentinel");
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(ownedByPlayer2);
         assertThat(gd.playerHands.get(player2.getId())).contains(ownedByPlayer2);
+    }
+
+    @Test
+    @DisplayName("Returns colorless artifact creatures while preserving blue multicolored creatures")
+    void returnsColorlessCreatures() {
+        harness.addToBattlefield(player1, new AntlerSkulkin());
+        harness.addToBattlefield(player2, new ShorecrasherMimic());
+        harness.castFromHand(player1, new Inundate(), "{3}{U}{U}{U}");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Antler Skulkin");
+        harness.assertInHand(player1, "Antler Skulkin");
+        harness.assertOnBattlefield(player2, "Shorecrasher Mimic");
+        harness.assertInGraveyard(player1, "Inundate");
+    }
+
+    @Test
+    @DisplayName("Resolves when no creatures match")
+    void resolvesWithoutNonblueCreatures() {
+        harness.addToBattlefield(player1, new ShorecrasherMimic());
+        harness.addToBattlefield(player2, new CascadeBluffs());
+        harness.castFromHand(player1, new Inundate(), "{3}{U}{U}{U}");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Shorecrasher Mimic");
+        harness.assertOnBattlefield(player2, "Cascade Bluffs");
+        harness.assertInGraveyard(player1, "Inundate");
+        assertThat(gd.stack).isEmpty();
     }
 }
