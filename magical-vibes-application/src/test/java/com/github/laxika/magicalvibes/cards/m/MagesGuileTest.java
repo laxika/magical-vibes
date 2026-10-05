@@ -26,8 +26,7 @@ class MagesGuileTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.SHROUD)).isTrue();
 
@@ -58,8 +57,7 @@ class MagesGuileTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -77,5 +75,73 @@ class MagesGuileTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Mage's Guile");
         harness.assertInHand(player1, "Elvish Warrior");
+    }
+
+    @Test
+    void canTargetOpponentsCreatureWithoutGrantingShroudToOtherCreatures() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
+        harness.setHand(player1, List.of(new MagesGuile()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.SHROUD)).isFalse();
+    }
+
+    @Test
+    void shroudMakesAnAlreadyCastOpponentsSpellFailToResolve() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
+        harness.setHand(player1, List.of(new MagesGuile()));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, creature.getId());
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Elvish Warrior");
+        harness.assertInGraveyard(player2, "Shock");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cyclingDiscardsImmediatelyButDrawsOnlyOnResolution() {
+        harness.setHand(player1, List.of(new MagesGuile()));
+        harness.setLibrary(player1, List.of(new ElvishWarrior()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Mage's Guile");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Elvish Warrior");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cyclingCannotBePaidWithOnlyColorlessMana() {
+        harness.setHand(player1, List.of(new MagesGuile()));
+        harness.setLibrary(player1, List.of(new ElvishWarrior()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Mage's Guile");
+        harness.assertNotInGraveyard(player1, "Mage's Guile");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
     }
 }
