@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KuldothaFlamefiend.class, Ornithopter.class, GrizzlyBears.class})
 class KuldothaFlamefiendTest extends BaseCardTest {
 
     @Test
@@ -39,10 +41,7 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         // Cast creature
         harness.castCreature(player1, 0);
 
-        // Resolve creature spell
-        harness.passBothPriorities();
-        // Resolve MayEffect from stack
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
@@ -76,8 +75,7 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve MayEffect from stack
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
@@ -104,8 +102,7 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve MayEffect from stack
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
@@ -138,8 +135,7 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve MayEffect from stack
+        resolveAllTriggers();
 
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, ornithopterId);
@@ -164,8 +160,7 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve MayEffect from stack
+        resolveAllTriggers();
 
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, ornithopterId);
@@ -191,8 +186,7 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve MayEffect from stack
+        resolveAllTriggers();
 
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, ornithopterId);
@@ -213,21 +207,21 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
-        // One target exists, one doesn't
-        UUID nonexistentTarget = UUID.randomUUID();
-        gd.pendingETBDamageAssignments = Map.of(bearsId, 2, nonexistentTarget, 2);
+        Permanent removedTarget = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        gd.pendingETBDamageAssignments = Map.of(bearsId, 2, removedTarget.getId(), 2);
 
         harness.setHand(player1, List.of(new KuldothaFlamefiend()));
         harness.addMana(player1, ManaColor.RED, 6);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, removedTarget);
         harness.passBothPriorities(); // resolve MayEffect from stack
 
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, ornithopterId);
 
-        // Bears killed by its 2 damage, nonexistent target damage simply skipped
+        // The surviving target receives only its originally assigned damage.
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertLife(player2, 20); // no damage to player
@@ -248,8 +242,7 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve MayEffect from stack
+        resolveAllTriggers();
 
         // May prompt should still appear (controller has artifacts)
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -264,16 +257,81 @@ class KuldothaFlamefiendTest extends BaseCardTest {
     }
 
     @Test
+    void multiplePendingTriggers_keepSeparateDamageAssignments() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent firstArtifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        Permanent secondArtifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+
+        gd.pendingETBDamageAssignments = Map.of(player2.getId(), 4);
+        harness.enterBattlefieldAndReturn(player1, new KuldothaFlamefiend());
+        gd.pendingETBDamageAssignments = Map.of(player1.getId(), 4);
+        harness.enterBattlefieldAndReturn(player1, new KuldothaFlamefiend());
+
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, secondArtifact.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, firstArtifact.getId());
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void allTargetsRemoved_abilityDoesNotOfferSacrifice() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new Ornithopter());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        gd.pendingETBDamageAssignments = Map.of(target.getId(), 4);
+        harness.setHand(player1, List.of(new KuldothaFlamefiend()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Ornithopter");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void sourceLeavesBattlefield_triggerStillDealsDamage() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        gd.pendingETBDamageAssignments = Map.of(player2.getId(), 4);
+        harness.setHand(player1, List.of(new KuldothaFlamefiend()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent source = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Kuldotha Flamefiend"))
+                .findFirst().orElseThrow();
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, source);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, artifact.getId());
+
+        harness.assertInGraveyard(player1, "Kuldotha Flamefiend");
+        harness.assertInGraveyard(player1, "Ornithopter");
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
     void multipleArtifacts_playerChoosesWhichToSacrifice() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         // Add two different artifacts
-        harness.addToBattlefield(player1, new Ornithopter());
-        UUID ornithopter1Id = gd.playerBattlefields.get(player1.getId()).getLast().getId();
+        UUID ornithopter1Id = harness.addToBattlefieldAndReturn(player1, new Ornithopter()).getId();
 
-        harness.addToBattlefield(player1, new Ornithopter());
-        UUID ornithopter2Id = gd.playerBattlefields.get(player1.getId()).getLast().getId();
+        UUID ornithopter2Id = harness.addToBattlefieldAndReturn(player1, new Ornithopter()).getId();
 
         harness.addToBattlefield(player2, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
@@ -284,8 +342,7 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve MayEffect from stack
+        resolveAllTriggers();
 
         harness.handleMayAbilityChosen(player1, true);
 
