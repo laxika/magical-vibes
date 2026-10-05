@@ -138,10 +138,46 @@ class MesaFalconTest extends BaseCardTest {
         addCreatureReady(player1, new MesaFalcon());
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void boostAppliesOnlyWhenAbilityResolves() {
+        Permanent falcon = addCreatureReady(player1, new MesaFalcon());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.getEffectiveToughness(gd, falcon)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, falcon)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void boostedFalconCanBlockFlyingAttackerAndSurviveCombat() {
+        addCreatureReady(player1, new MesaFalcon());
+        Permanent blocker = addCreatureReady(player2, new MesaFalcon());
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(card -> card.getName()).contains("Mesa Falcon");
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 }
