@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -90,6 +91,41 @@ class MindSpringTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 2);
 
+        assertThat(gd.stack).isEmpty();
+    }
+    @Test
+    @DisplayName("Drawing exactly the remaining library only draws for the controller without losing")
+    void drawsExactlyRemainingLibraryOnlyForController() {
+        MindSpring first = new MindSpring();
+        MindSpring second = new MindSpring();
+        MindSpring opponentCard = new MindSpring();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setLibrary(player2, List.of(opponentCard));
+        harness.setHand(player1, List.of(new MindSpring()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 2);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("X=0 with an empty library resolves without losing the game")
+    void zeroWithEmptyLibraryDoesNotLose() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new MindSpring()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+        harness.assertInGraveyard(player1, "Mind Spring");
         assertThat(gd.stack).isEmpty();
     }
 }
