@@ -100,4 +100,102 @@ class MurasaRootgrazerTest extends BaseCardTest {
     private Permanent addReadyRootgrazer(Player player) {
         return addCreatureReady(player, new MurasaRootgrazer());
     }
+
+    @Test
+    @DisplayName("Declining the optional ability leaves the land in hand but pays the tap cost")
+    void canDeclinePuttingLandOntoBattlefield() {
+        Permanent rootgrazer = addReadyRootgrazer(player1);
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(rootgrazer.isTapped()).isTrue();
+        harness.assertInHand(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The first ability resolves without a land when the hand is empty")
+    void resolvesWithNoLandInHand() {
+        Permanent rootgrazer = addReadyRootgrazer(player1);
+        harness.setHand(player1, List.of());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(rootgrazer.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(rootgrazer);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents both tap abilities")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new MurasaRootgrazer());
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        harness.setHand(player1, List.of(new Forest()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, plains.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped Rootgrazer cannot activate either tap ability")
+    void cannotActivateWhileTapped() {
+        Permanent rootgrazer = addReadyRootgrazer(player1);
+        rootgrazer.setTapped(true);
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        harness.setHand(player1, List.of(new Forest()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, plains.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A basic land controlled by the ability's controller returns to its actual owner")
+    void returnsBorrowedLandToOwner() {
+        addReadyRootgrazer(player1);
+        Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
+        gd.playerBattlefields.get(player2.getId()).remove(plains);
+        gd.playerBattlefields.get(player1.getId()).add(plains);
+        gd.stolenCreatures.put(plains.getId(), player2.getId());
+
+        harness.activateAbility(player1, 0, 1, null, plains.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Plains");
+        harness.assertInHand(player2, "Plains");
+        harness.assertNotInHand(player1, "Plains");
+    }
+
+    @Test
+    @DisplayName("The return ability does not return a land that changes controller before resolution")
+    void cannotReturnLandNoLongerControlled() {
+        addReadyRootgrazer(player1);
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+
+        harness.activateAbility(player1, 0, 1, null, plains.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(plains);
+        gd.playerBattlefields.get(player2.getId()).add(plains);
+        gd.stolenCreatures.put(plains.getId(), player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Plains");
+        harness.assertNotInHand(player1, "Plains");
+        harness.assertNotInHand(player2, "Plains");
+        assertThat(gd.stack).isEmpty();
+    }
 }
