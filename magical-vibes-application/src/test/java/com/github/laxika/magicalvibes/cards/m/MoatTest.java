@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.d.DurkwoodBoars;
+import com.github.laxika.magicalvibes.cards.g.GravitySphere;
 import com.github.laxika.magicalvibes.cards.z.ZephyrFalcon;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Moat.class, DurkwoodBoars.class, ZephyrFalcon.class})
+@CardUsed({Moat.class, DurkwoodBoars.class, ZephyrFalcon.class, GravitySphere.class})
 class MoatTest extends BaseCardTest {
 
     @Test
@@ -58,5 +59,17 @@ class MoatTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
 
         harness.assertLife(player1, 16);
+    }
+
+    @Test
+    @DisplayName("A creature that loses flying cannot attack through Moat")
+    void losingFlyingRemovesAttackExemption() {
+        harness.addToBattlefield(player1, new Moat());
+        addCreatureReady(player2, new ZephyrFalcon());
+        harness.castFromHand(player1, new GravitySphere(), "{2}{R}");
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
