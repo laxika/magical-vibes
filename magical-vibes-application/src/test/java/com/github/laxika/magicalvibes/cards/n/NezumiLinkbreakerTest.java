@@ -91,14 +91,78 @@ class NezumiLinkbreakerTest extends BaseCardTest {
                 .hasMessageContaining("sorcery speed");
     }
 
+    @Test
+    @DisplayName("A newly created Mercenary cannot pay its tap cost")
+    void mercenaryCannotActivateWhileSummoningSick() {
+        Permanent linkbreaker = harness.addToBattlefieldAndReturn(player1, new NezumiLinkbreaker());
+        destroyWithShock(linkbreaker);
+        Permanent mercenary = findPermanent(player1, "Mercenary");
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(mercenary);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, index, 0, null, mercenary.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(mercenary.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Mercenary can boost itself and the boost expires at cleanup")
+    void mercenaryCanBoostItselfUntilEndOfTurn() {
+        Permanent linkbreaker = harness.addToBattlefieldAndReturn(player1, new NezumiLinkbreaker());
+        destroyWithShock(linkbreaker);
+        Permanent mercenary = findPermanent(player1, "Mercenary");
+        mercenary.setSummoningSick(false);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(mercenary);
+
+        harness.activateAbility(player1, index, 0, null, mercenary.getId());
+        harness.passBothPriorities();
+
+        assertThat(mercenary.getPowerModifier()).isEqualTo(1);
+        assertThat(mercenary.getToughnessModifier()).isZero();
+        assertThat(mercenary.isTapped()).isTrue();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(mercenary.getPowerModifier()).isZero();
+        assertThat(mercenary.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A Mercenary cannot activate in response to a spell during its controller's main phase")
+    void mercenaryRequiresEmptyStack() {
+        Permanent linkbreaker = harness.addToBattlefieldAndReturn(player1, new NezumiLinkbreaker());
+        destroyWithShock(linkbreaker);
+        Permanent mercenary = findPermanent(player1, "Mercenary");
+        mercenary.setSummoningSick(false);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(mercenary);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, index, 0, null, mercenary.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        assertThat(mercenary.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+    }
+
     private void destroyWithShock(Permanent linkbreaker) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, linkbreaker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, linkbreaker.getId());
         harness.passBothPriorities();
     }
 }
