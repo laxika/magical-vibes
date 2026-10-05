@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.q.Quickchange;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LivingTerrain.class, Forest.class, GrizzlyBears.class})
+@CardUsed({LivingTerrain.class, Forest.class, GrizzlyBears.class, Quickchange.class})
 class LivingTerrainTest extends BaseCardTest {
 
     private Permanent enchant(Permanent land) {
@@ -135,5 +137,53 @@ class LivingTerrainTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
+    }
+    @Test
+    @DisplayName("Living Terrain does not resolve when its targeted land leaves the battlefield")
+    void targetLeavesBeforeResolution() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new LivingTerrain()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, forest));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertInGraveyard(player1, "Living Terrain");
+        harness.assertNotOnBattlefield(player1, "Living Terrain");
+    }
+
+    @Test
+    @DisplayName("Counters modify the enchanted land's base 5/6 power and toughness")
+    void countersApplyAfterAnimation() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        enchant(forest);
+
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("A later color-setting spell replaces Living Terrain's green color")
+    void laterColorSettingEffectReplacesGreen() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        enchant(forest);
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new Quickchange()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, forest.getId());
+        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "DONE");
+
+        assertThat(gqs.getEffectiveColors(gd, forest)).containsExactly(CardColor.RED);
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(6);
+
+        gd.expireEndOfTurnFloatingEffects();
+
+        assertThat(gqs.getEffectiveColors(gd, forest)).containsExactly(CardColor.GREEN);
     }
 }
