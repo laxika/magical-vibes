@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -54,11 +55,7 @@ class MutantChainReactionTest extends BaseCardTest {
     @Test
     @DisplayName("Can be cast without choosing a target")
     void canBeCastWithoutTarget() {
-        harness.setHand(player1, List.of(new MutantChainReaction()));
-        addManaForSpell();
-
-        harness.castSorcery(player1, 0, List.of());
-        harness.passBothPriorities();
+        castWithoutTarget();
 
         harness.assertOnBattlefield(player1, "Mutagen");
     }
@@ -89,6 +86,77 @@ class MutantChainReactionTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Mutagen");
     }
 
+    @Test
+    void noTargetCreatesMutagenEvenWhenLegalTargetsExist() {
+        harness.addToBattlefield(player2, new MindStone());
+
+        castWithoutTarget();
+
+        harness.assertOnBattlefield(player2, "Mind Stone");
+        assertThat(countPermanents(player1, "Mutagen")).isEqualTo(1);
+    }
+
+    @Test
+    void illegalSoleTargetPreventsMutagenCreation() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MindStone());
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new MutantChainReaction()));
+        addManaForSpell();
+        harness.castSorcery(player1, 0, target.getId());
+
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, 0, 1, null, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Mind Stone");
+        harness.assertInGraveyard(player1, "Mutant Chain Reaction");
+        harness.assertNotOnBattlefield(player1, "Mutagen");
+    }
+
+    @Test
+    void mutagenCannotBeActivatedOutsideMainPhase() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castWithoutTarget();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Mutagen");
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void mutagenCannotTargetNoncreatureArtifact() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MindStone());
+        castWithoutTarget();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Mutagen");
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void mutagenSacrificeIsPaidBeforeCounterAbilityResolves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castWithoutTarget();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Mutagen");
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private void castWithTarget(Permanent target) {
         harness.setHand(player1, List.of(new MutantChainReaction()));
         addManaForSpell();
@@ -97,9 +165,7 @@ class MutantChainReactionTest extends BaseCardTest {
     }
 
     private void castWithoutTarget() {
-        harness.setHand(player1, List.of(new MutantChainReaction()));
-        addManaForSpell();
-        harness.castSorcery(player1, 0, List.of());
+        harness.castFromHand(player1, new MutantChainReaction(), "{2}{G}");
         harness.passBothPriorities();
     }
 
