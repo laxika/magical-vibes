@@ -34,8 +34,7 @@ class KavuChameleonTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
 
-        harness.castInstant(player2, 0, kavu.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, kavu.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Kavu Chameleon");
@@ -83,5 +82,52 @@ class KavuChameleonTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Each color can be chosen and replaces the previous color")
+    void repeatedActivationsReplaceThePreviousColor() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player1, new KavuChameleon());
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        for (CardColor color : List.of(CardColor.WHITE, CardColor.BLUE, CardColor.BLACK,
+                CardColor.RED, CardColor.GREEN)) {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+            harness.handleListChoice(player1, color.name());
+
+            assertThat(gqs.getEffectiveColors(gd, kavu)).containsExactly(color);
+        }
+    }
+
+    @Test
+    @DisplayName("Color is chosen on resolution and a tapped creature can activate")
+    void tappedCreatureChoosesColorOnResolution() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player1, new KavuChameleon());
+        kavu.setTapped(true);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectiveColors(gd, kavu)).containsExactly(CardColor.GREEN);
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.ColorChoice.class);
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(gqs.getEffectiveColors(gd, kavu)).containsExactly(CardColor.RED);
+        assertThat(kavu.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Mana of another color cannot pay the activation cost")
+    void cannotActivateWithOnlyBlueMana() {
+        harness.addToBattlefield(player1, new KavuChameleon());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
     }
 }
