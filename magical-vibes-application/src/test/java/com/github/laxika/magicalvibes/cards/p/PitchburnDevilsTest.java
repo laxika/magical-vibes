@@ -1,17 +1,17 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LilianaOfTheVeil;
+import com.github.laxika.magicalvibes.cards.s.SilentDeparture;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +20,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PitchburnDevils.class, GrizzlyBears.class, WrathOfGod.class,
+        LilianaOfTheVeil.class, SilentDeparture.class})
 class PitchburnDevilsTest extends BaseCardTest {
 
     /**
@@ -34,15 +36,9 @@ class PitchburnDevilsTest extends BaseCardTest {
         GrizzlyBears bigCreature = new GrizzlyBears();
         bigCreature.setPower(4);
         bigCreature.setToughness(4);
-        Permanent blockerPerm = new Permanent(bigCreature);
-        blockerPerm.setSummoningSick(false);
+        Permanent blockerPerm = addCreatureReady(player2, bigCreature);
         blockerPerm.setBlocking(true);
         blockerPerm.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blockerPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
     }
 
     // ===== Casting =====
@@ -71,7 +67,7 @@ class PitchburnDevilsTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         setupCombatWhereDevilsDie();
 
-        harness.passBothPriorities();
+        resolveCombat();
 
         GameData gd = harness.getGameData();
 
@@ -94,7 +90,7 @@ class PitchburnDevilsTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
         setupCombatWhereDevilsDie();
-        harness.passBothPriorities();
+        resolveCombat();
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -122,7 +118,7 @@ class PitchburnDevilsTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         setupCombatWhereDevilsDie();
-        harness.passBothPriorities();
+        resolveCombat();
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -131,7 +127,7 @@ class PitchburnDevilsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player2, 17);
     }
 
     @Test
@@ -141,7 +137,7 @@ class PitchburnDevilsTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         setupCombatWhereDevilsDie();
-        harness.passBothPriorities();
+        resolveCombat();
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -150,7 +146,7 @@ class PitchburnDevilsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+        harness.assertLife(player1, 17);
     }
 
     // ===== Death trigger — board wipe =====
@@ -165,7 +161,7 @@ class PitchburnDevilsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WrathOfGod()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
+        harness.castSorcery(player1, 0);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -177,7 +173,7 @@ class PitchburnDevilsTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player2, 17);
     }
 
     // ===== Fizzle =====
@@ -195,7 +191,7 @@ class PitchburnDevilsTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
         setupCombatWhereDevilsDie();
-        harness.passBothPriorities();
+        resolveCombat();
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -208,6 +204,74 @@ class PitchburnDevilsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Death trigger can deal lethal damage to a planeswalker")
+    void deathTriggerCanTargetPlaneswalker() {
+        harness.addToBattlefield(player1, new PitchburnDevils());
+        Permanent liliana = harness.enterBattlefieldAndReturn(player2, new LilianaOfTheVeil());
+        setupCombatWhereDevilsDie();
+        resolveCombat();
+
+        harness.handlePermanentChosen(player1, liliana.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Liliana of the Veil");
+        harness.assertNotOnBattlefield(player2, "Liliana of the Veil");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Death trigger can target a creature its controller controls")
+    void deathTriggerCanTargetOwnCreature() {
+        harness.addToBattlefield(player1, new PitchburnDevils());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        setupCombatWhereDevilsDie();
+        resolveCombat();
+
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Returning Pitchburn Devils to hand does not trigger its death ability")
+    void returningToHandDoesNotTriggerDeathAbility() {
+        Permanent devils = harness.addToBattlefieldAndReturn(player1, new PitchburnDevils());
+        harness.setHand(player1, List.of(new SilentDeparture()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0, devils.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Pitchburn Devils");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The dying Devils' controller chooses the target, even on an opponent's turn")
+    void opponentControlledDevilsChooseTheirTarget() {
+        harness.addToBattlefield(player2, new PitchburnDevils());
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Pitchburn Devils");
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
     }
 }
