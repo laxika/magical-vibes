@@ -75,6 +75,57 @@ class LeoninSunStandardTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("Creatures entering before resolution receive the boost")
+    void includesCreaturesEnteringBeforeResolution() {
+        addStandard(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AlphaMyr());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution do not receive the boost")
+    void excludesCreaturesEnteringAfterResolution() {
+        addStandard(player1);
+        Permanent original = addCreatureReady(player1, new AlphaMyr());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        activateAndResolve();
+        Permanent later = harness.addToBattlefieldAndReturn(player1, new AlphaMyr());
+
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A tapped Standard can activate during an opponent's turn")
+    void activatesWhileTappedOnOpponentsTurn() {
+        Permanent standard = addStandard(player1);
+        standard.setTapped(true);
+        Permanent creature = addCreatureReady(player1, new AlphaMyr());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.ensurePriority(player1);
+
+        activateAndResolve();
+
+        assertThat(standard.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
     private void activateAndResolve() {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
