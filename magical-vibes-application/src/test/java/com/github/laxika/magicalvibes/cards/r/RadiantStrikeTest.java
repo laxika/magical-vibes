@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class RadiantStrikeTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Destroys an artifact and its controller gains 3 life")
+    @DisplayName("Destroys an artifact and the spell's controller gains 3 life")
     void destroysArtifactAndGainsLife() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
         harness.setLife(player1, 10);
@@ -30,7 +30,7 @@ class RadiantStrikeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Destroys a tapped creature and its controller gains 3 life")
+    @DisplayName("Destroys a tapped creature and the spell's controller gains 3 life")
     void destroysTappedCreatureAndGainsLife() {
         Permanent creature = addCreatureReady(player2);
         creature.tap();
@@ -53,14 +53,61 @@ class RadiantStrikeTest extends BaseCardTest {
                 .hasMessage("Target must be an artifact or a tapped creature");
     }
 
+    @Test
+    @DisplayName("An untapped creature target becomes illegal and no life is gained")
+    void untappingCreaturePreventsResolutionAndLifeGain() {
+        Permanent creature = addCreatureReady(player2);
+        creature.tap();
+        harness.setLife(player1, 10);
+        prepareToCast();
+        harness.castInstant(player1, 0, creature.getId());
+
+        creature.untap();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player1, 10);
+        harness.assertInGraveyard(player1, "Radiant Strike");
+    }
+
+    @Test
+    @DisplayName("An artifact remains a legal target when it becomes untapped")
+    void untappingArtifactDoesNotPreventResolution() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        artifact.tap();
+        harness.setLife(player1, 10);
+        prepareToCast();
+        harness.castInstant(player1, 0, artifact.getId());
+
+        artifact.untap();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Fountain of Youth");
+        harness.assertLife(player1, 13);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Can destroy its controller's own artifact")
+    void canTargetOwnArtifact() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        harness.setLife(player1, 10);
+
+        cast(artifact);
+
+        harness.assertInGraveyard(player1, "Fountain of Youth");
+        harness.assertLife(player1, 13);
+        harness.assertLife(player2, 20);
+    }
+
     private Permanent addCreatureReady(com.github.laxika.magicalvibes.model.Player player) {
         return addCreatureReady(player, new GrizzlyBears());
     }
 
     private void cast(Permanent target) {
         prepareToCast();
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void prepareToCast() {
