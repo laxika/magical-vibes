@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GlitteringWish;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LibraryOfLeng;
 import com.github.laxika.magicalvibes.cards.w.Watchwolf;
@@ -172,6 +171,10 @@ class PersecuteTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleListChoice(player1, "GREEN");
 
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        assertThat(gd.interaction.activeInteraction().decidingPlayerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player2.getId()))
                 .first()
@@ -263,5 +266,53 @@ class PersecuteTest extends BaseCardTest {
                     assertThat(event.audience().playerIds())
                             .containsExactlyInAnyOrder(player1.getId(), player2.getId());
                 });
+    }
+
+    @Test
+    @DisplayName("The target may decline Library of Leng's replacement when Persecute makes them discard")
+    void mayDeclineDiscardToLibraryReplacement() {
+        harness.addToBattlefield(player2, new LibraryOfLeng());
+        harness.setLibrary(player2, List.of(new AirElemental()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Persecute()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        assertThat(gd.interaction.activeInteraction().decidingPlayerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .singleElement()
+                .matches(c -> c.getName().equals("Air Elemental"));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The target's hand stays hidden until the caster has chosen a color")
+    void revealsHandOnlyAfterColorChoice() throws Exception {
+        List<GameEventEnvelope> emittedEvents = new ArrayList<>();
+        harness.setHand(player2, List.of(new GrizzlyBears(), new AirElemental()));
+        harness.setHand(player1, List.of(new Persecute()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        try (AutoCloseable ignored = harness.subscribeToGameEvents(batch ->
+                batch.events().forEach(emittedEvents::add))) {
+            harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+            assertThat(emittedEvents).noneMatch(event -> event.fact() instanceof GameEventFact.PrivateReveal);
+            assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+
+            harness.handleListChoice(player1, "BLUE");
+        }
+
+        assertThat(emittedEvents).anyMatch(event -> event.fact() instanceof GameEventFact.PrivateReveal);
+        harness.assertInGraveyard(player2, "Air Elemental");
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 }
