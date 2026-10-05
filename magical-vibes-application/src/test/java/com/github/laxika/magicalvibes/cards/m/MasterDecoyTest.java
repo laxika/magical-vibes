@@ -156,7 +156,73 @@ class MasterDecoyTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Master Decoy can target itself")
+    void canTargetItself() {
+        Permanent decoy = addReadyDecoy(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, decoy.getId());
+
+        assertThat(decoy.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(decoy.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .noneMatch(log -> log.contains("fizzles"));
+    }
+
+    @Test
+    @DisplayName("Ability still resolves after Master Decoy leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent decoy = addReadyDecoy(player1);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(decoy);
+        gd.playerGraveyards.get(player1.getId()).add(decoy.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Activation spends exactly one white mana before resolution")
+    void paysWhiteManaOnActivation() {
+        addReadyDecoy(player1);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Colorless mana cannot pay the white activation cost")
+    void cannotPayWithColorlessMana() {
+        Permanent decoy = addReadyDecoy(player1);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(decoy.isTapped()).isFalse();
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
 
     private Permanent addReadyDecoy(Player player) {
         return addCreatureReady(player, new MasterDecoy());
