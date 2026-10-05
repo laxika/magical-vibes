@@ -22,6 +22,10 @@ class KitsuneDivinerTest extends BaseCardTest {
         Permanent spirit = addCreatureReady(player2, new WanderingOnes());
 
         harness.activateAbility(player1, 0, null, spirit.getId());
+
+        assertThat(diviner.isTapped()).isTrue();
+        assertThat(spirit.isTapped()).isFalse();
+
         harness.passBothPriorities();
 
         assertThat(diviner.isTapped()).isTrue();
@@ -60,6 +64,45 @@ class KitsuneDivinerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, spirit.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can tap a Spirit controlled by its controller")
+    void canTargetOwnSpirit() {
+        addReadyDiviner(player1);
+        Permanent spirit = addCreatureReady(player1, new WanderingOnes());
+
+        harness.activateAbility(player1, 0, null, spirit.getId());
+        harness.passBothPriorities();
+
+        assertThat(spirit.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while the source is already tapped")
+    void cannotActivateWhileTapped() {
+        Permanent diviner = addReadyDiviner(player1);
+        Permanent spirit = addCreatureReady(player2, new WanderingOnes());
+        diviner.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, spirit.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(spirit.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability resolves after its source leaves the battlefield")
+    void resolvesWithoutSource() {
+        Permanent diviner = addReadyDiviner(player1);
+        Permanent spirit = addCreatureReady(player2, new WanderingOnes());
+
+        harness.activateAbility(player1, 0, null, spirit.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(diviner);
+        gd.playerGraveyards.get(player1.getId()).add(diviner.getCard());
+        harness.passBothPriorities();
+
+        assertThat(spirit.isTapped()).isTrue();
     }
 
     private Permanent addReadyDiviner(Player player) {
