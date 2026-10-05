@@ -53,6 +53,11 @@ class JennikasTechniqueTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.castWithAlternateCost(player1, 0, List.of(attacker.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(gd.playerHands.get(player1.getId())).contains(attacker.getCard());
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
@@ -75,5 +80,64 @@ class JennikasTechniqueTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of(attacker.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Damage from two Techniques accumulates on surviving creatures")
+    void damageAccumulatesOnSurvivors() {
+        harness.addToBattlefield(player2, new GiantSpider());
+        harness.setHand(player1, List.of(new JennikasTechnique(), new JennikasTechnique()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Giant Spider");
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Giant Spider");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Sneak cannot return a blocked attacker")
+    void sneakRejectsBlockedAttacker() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        blocker.setBlocking(true);
+        blocker.getBlockingTargetIds().add(attacker.getId());
+        harness.setHand(player1, List.of(new JennikasTechnique()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of(attacker.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Giant Spider");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sneak cannot be paid without an unblocked attacker")
+    void sneakRequiresAnAttacker() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new JennikasTechnique()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
     }
 }
