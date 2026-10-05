@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,14 +15,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MonasterySwiftspear.class, Shock.class, GrizzlyBears.class})
 class MonasterySwiftspearTest extends BaseCardTest {
 
     private Permanent addSwiftspear() {
-        harness.addToBattlefield(player1, new MonasterySwiftspear());
+        Permanent swiftspear = harness.addToBattlefieldAndReturn(player1, new MonasterySwiftspear());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        return gd.playerBattlefields.get(player1.getId()).getFirst();
+        return swiftspear;
     }
 
     private void endTurn() {
@@ -96,8 +98,7 @@ class MonasterySwiftspearTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, swiftspear)).isEqualTo(2);
@@ -106,5 +107,64 @@ class MonasterySwiftspearTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, swiftspear)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, swiftspear)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Prowess resolves before the triggering spell and can prevent lethal damage")
+    void prowessResolvesBeforeTriggeringSpell() {
+        Permanent swiftspear = addSwiftspear();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, swiftspear.getId());
+        assertThat(gqs.getEffectiveToughness(gd, swiftspear)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, swiftspear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, swiftspear)).isEqualTo(3);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(swiftspear);
+        assertThat(swiftspear.getMarkedDamage()).isEqualTo(2);
+
+        endTurn();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(swiftspear);
+        assertThat(swiftspear.getMarkedDamage()).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, swiftspear)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each noncreature spell independently boosts every Swiftspear you control")
+    void repeatedCastsBoostEachSwiftspear() {
+        Permanent first = addSwiftspear();
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new MonasterySwiftspear());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        for (int cast = 0; cast < 2; cast++) {
+            harness.castInstant(player1, 0, player2.getId());
+            assertThat(gd.stack.stream()
+                    .filter(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
+                    .count()).isEqualTo(2);
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+        }
+
+        for (Permanent swiftspear : List.of(first, second)) {
+            assertThat(gqs.getEffectivePower(gd, swiftspear)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, swiftspear)).isEqualTo(4);
+        }
+
+        endTurn();
+
+        for (Permanent swiftspear : List.of(first, second)) {
+            assertThat(gqs.getEffectivePower(gd, swiftspear)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, swiftspear)).isEqualTo(2);
+        }
     }
 }
