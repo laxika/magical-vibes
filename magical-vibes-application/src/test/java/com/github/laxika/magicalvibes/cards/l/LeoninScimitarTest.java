@@ -23,8 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({LeoninScimitar.class, Deathmark.class, GrizzlyBears.class})
 class LeoninScimitarTest extends BaseCardTest {
 
-    // ===== Casting =====
-
     @Test
     @DisplayName("Casting Leonin Scimitar puts it on the stack")
     void castingPutsOnStack() {
@@ -51,8 +49,6 @@ class LeoninScimitarTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Leonin Scimitar")
                         && !p.isAttached());
     }
-
-    // ===== Equip ability: activating =====
 
     @Test
     @DisplayName("Activating equip ability puts it on the stack")
@@ -93,8 +89,6 @@ class LeoninScimitarTest extends BaseCardTest {
 
         assertThat(scimitar.isTapped()).isFalse();
     }
-
-    // ===== Equip ability: resolving =====
 
     @Test
     @DisplayName("Resolving equip ability attaches equipment to target creature")
@@ -152,8 +146,6 @@ class LeoninScimitarTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(2);
     }
 
-    // ===== Re-equip: moving equipment to another creature =====
-
     @Test
     @DisplayName("Equipment can be moved to another creature by equipping again")
     void canReEquipToAnotherCreature() {
@@ -175,8 +167,6 @@ class LeoninScimitarTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, creature2)).isEqualTo(3);
     }
 
-    // ===== Equipment stays when creature dies =====
-
     @Test
     @DisplayName("Equipment stays on battlefield unattached when equipped creature is destroyed")
     void equipmentStaysWhenCreatureDies() {
@@ -190,8 +180,7 @@ class LeoninScimitarTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Deathmark()));
         harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.castSorcery(player2, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, creature.getId());
 
         // Creature should be in graveyard
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -199,8 +188,6 @@ class LeoninScimitarTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Leonin Scimitar");
         assertThat(scimitar.getAttachedTo()).isNull();
     }
-
-    // ===== Sorcery-speed timing restriction =====
 
     @Test
     @DisplayName("Cannot equip during opponent's turn")
@@ -270,14 +257,9 @@ class LeoninScimitarTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        // Put something on the stack
-        gd.stack.add(new StackEntry(
-                StackEntryType.ACTIVATED_ABILITY,
-                new GrizzlyBears(),
-                player2.getId(),
-                "dummy ability",
-                List.of()
-        ));
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -294,8 +276,6 @@ class LeoninScimitarTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
-
-    // ===== Equip fizzle =====
 
     @Test
     @DisplayName("Equip fizzles if target creature is removed before resolution")
@@ -319,7 +299,80 @@ class LeoninScimitarTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Equip grants the boost only after the ability resolves")
+    void equipBoostBeginsOnResolution() {
+        Permanent scimitar = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+
+        assertThat(scimitar.getAttachedTo()).isNull();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(scimitar.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Tapped equipment can equip and still grants its boost")
+    void tappedEquipmentCanEquip() {
+        Permanent scimitar = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        scimitar.setTapped(true);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(scimitar.isTapped()).isTrue();
+        assertThat(scimitar.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Failed re-equip leaves the equipment and boost on the original creature")
+    void failedReEquipPreservesOriginalAttachment() {
+        Permanent scimitar = addScimitarReady(player1);
+        Permanent original = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        scimitar.setAttachedTo(original.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(scimitar.getAttachedTo()).isEqualTo(original.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(scimitar.getAttachedTo()).isEqualTo(original.getId());
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Equipping the same creature again does not stack the boost")
+    void equippingSameCreatureDoesNotStackBoost() {
+        Permanent scimitar = addScimitarReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        scimitar.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(scimitar.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
 
     private Permanent addScimitarReady(Player player) {
         Permanent perm = harness.addToBattlefieldAndReturn(player, new LeoninScimitar());
