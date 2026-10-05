@@ -4,13 +4,10 @@ import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.c.CallToArms;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredForest;
 import com.github.laxika.magicalvibes.cards.z.ZuranOrb;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -92,15 +89,12 @@ class InfuseTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Infuse()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        gd.activePlayerId = player2.getId();
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
-        harness.passBothPriorities();
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
@@ -120,7 +114,7 @@ class InfuseTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).clear();
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
     }
@@ -136,5 +130,39 @@ class InfuseTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, enchantment.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an artifact, creature, or land");
+    }
+
+    @Test
+    @DisplayName("Waits for the next turn even when the same player takes that turn")
+    void waitsForNextTurnWithSameActivePlayer() {
+        advanceToUpkeep(player1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        harness.setLibrary(player1, List.of(new SnowCoveredForest(), new BalduvianBears()));
+        harness.setHand(player1, List.of(new Infuse()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+
+        gd.turnNumber++;
+        advanceToUpkeep(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+
+        gd.turnNumber++;
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 }
