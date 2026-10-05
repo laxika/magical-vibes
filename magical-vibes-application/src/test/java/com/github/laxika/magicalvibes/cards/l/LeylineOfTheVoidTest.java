@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.d.DaggerclawImp;
+import com.github.laxika.magicalvibes.cards.b.BackToNature;
+import com.github.laxika.magicalvibes.cards.m.MitoticSlime;
+import com.github.laxika.magicalvibes.cards.t.TomeScour;
 import com.github.laxika.magicalvibes.cards.m.Mortify;
 import com.github.laxika.magicalvibes.cards.s.ShriekingGrotesque;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -24,7 +27,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("scryfall")
 @ExtendWith(CardUsedExtension.class)
-@CardUsed({LeylineOfTheVoid.class, DaggerclawImp.class, Mortify.class, ShriekingGrotesque.class})
+@CardUsed({LeylineOfTheVoid.class, DaggerclawImp.class, Mortify.class, ShriekingGrotesque.class,
+        BackToNature.class, MitoticSlime.class, TomeScour.class})
 class LeylineOfTheVoidTest {
 
     protected GameTestHarness harness;
@@ -90,8 +94,7 @@ class LeylineOfTheVoidTest {
         addMortifyMana(player1);
 
         UUID targetId = harness.getPermanentId(player2, "Daggerclaw Imp");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         // Creature should not be on the battlefield
         harness.assertNotOnBattlefield(player2, "Daggerclaw Imp");
@@ -115,8 +118,7 @@ class LeylineOfTheVoidTest {
         addMortifyMana(player1);
 
         UUID targetId = harness.getPermanentId(player2, "Daggerclaw Imp");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertInGraveyard(player1, "Daggerclaw Imp");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -140,8 +142,7 @@ class LeylineOfTheVoidTest {
         harness.clearPriorityPassed();
 
         UUID targetId = harness.getPermanentId(player1, "Daggerclaw Imp");
-        harness.castInstant(player2, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, targetId);
 
         harness.assertNotInGraveyard(player2, "Daggerclaw Imp");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -162,8 +163,7 @@ class LeylineOfTheVoidTest {
         addMortifyMana(player1);
 
         UUID targetId = harness.getPermanentId(player2, "Daggerclaw Imp");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c == tokenCard);
@@ -186,8 +186,7 @@ class LeylineOfTheVoidTest {
         addMortifyMana(player1);
 
         UUID targetId = harness.getPermanentId(player2, "Daggerclaw Imp");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         // Creature should be exiled, not in graveyard
         harness.assertNotInGraveyard(player2, "Daggerclaw Imp");
@@ -212,8 +211,7 @@ class LeylineOfTheVoidTest {
         harness.clearPriorityPassed();
 
         UUID targetId = harness.getPermanentId(player1, "Daggerclaw Imp");
-        harness.castInstant(player2, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, targetId);
 
         harness.assertNotInGraveyard(player2, "Mortify");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -264,8 +262,7 @@ class LeylineOfTheVoidTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castInstant(player2, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, targetId);
 
         // Controller's creature should go to graveyard, NOT exile
         harness.assertInGraveyard(player1, "Daggerclaw Imp");
@@ -289,8 +286,7 @@ class LeylineOfTheVoidTest {
         addMortifyMana(player1);
 
         UUID targetId = harness.getPermanentId(player2, "Daggerclaw Imp");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         // Without Leyline, creature should go to graveyard normally
         harness.assertInGraveyard(player2, "Daggerclaw Imp");
@@ -319,5 +315,88 @@ class LeylineOfTheVoidTest {
         harness.addMana(player, ManaColor.WHITE, 1);
         harness.addMana(player, ManaColor.BLACK, 1);
         harness.addMana(player, ManaColor.COLORLESS, 1);
+    }
+
+    @Test
+    @DisplayName("Multiple opening-hand Leylines can each begin on the battlefield")
+    void multipleOpeningHandLeylines() {
+        harness.setHand(player1, List.of(new LeylineOfTheVoid(), new LeylineOfTheVoid()));
+        harness.skipMulligan();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().getName().equals("Leyline of the Void"))
+                .hasSize(2);
+        harness.assertNotInHand(player1, "Leyline of the Void");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Milling exiles opponent cards without exiling existing graveyard cards")
+    void millingOpponentCardsExilesThem() {
+        harness.skipMulligan();
+        harness.addToBattlefield(player1, new LeylineOfTheVoid());
+        LeylineOfTheVoid existingCard = new LeylineOfTheVoid();
+        harness.setGraveyard(player2, List.of(existingCard));
+        List<LeylineOfTheVoid> milledCards = List.of(new LeylineOfTheVoid(), new LeylineOfTheVoid(),
+                new LeylineOfTheVoid(), new LeylineOfTheVoid(), new LeylineOfTheVoid());
+        harness.setLibrary(player2, milledCards);
+        harness.setHand(player1, List.of(new TomeScour()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(existingCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsAll(milledCards);
+        harness.assertInGraveyard(player1, "Tome Scour");
+    }
+
+    @Test
+    @DisplayName("Both opposing Leylines apply when all enchantments are destroyed simultaneously")
+    void simultaneousDestructionPreservesBothReplacementEffects() {
+        harness.skipMulligan();
+        LeylineOfTheVoid firstLeyline = new LeylineOfTheVoid();
+        LeylineOfTheVoid secondLeyline = new LeylineOfTheVoid();
+        harness.addToBattlefield(player1, firstLeyline);
+        harness.addToBattlefield(player2, secondLeyline);
+        harness.setHand(player1, List.of(new BackToNature()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.assertNotOnBattlefield(player1, "Leyline of the Void");
+        harness.assertNotOnBattlefield(player2, "Leyline of the Void");
+        harness.assertNotInGraveyard(player1, "Leyline of the Void");
+        harness.assertNotInGraveyard(player2, "Leyline of the Void");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(firstLeyline);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(secondLeyline);
+        harness.assertInGraveyard(player1, "Back to Nature");
+    }
+
+    @Test
+    @DisplayName("An opponent's real Ooze token still dies and creates smaller Oozes")
+    void opponentTokenDeathAbilityStillTriggers() {
+        harness.skipMulligan();
+        harness.addToBattlefield(player2, new MitoticSlime());
+        harness.setHand(player1, List.of(new Mortify()));
+        addMortifyMana(player1);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Mitotic Slime"));
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(2);
+
+        UUID tokenId = harness.getPermanentId(player2, "Ooze");
+        harness.addToBattlefield(player1, new LeylineOfTheVoid());
+        harness.setHand(player1, List.of(new Mortify()));
+        addMortifyMana(player1);
+        harness.castAndResolveInstant(player1, 0, tokenId);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(3);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .allMatch(p -> p.getCard().getName().equals("Ooze"));
     }
 }
