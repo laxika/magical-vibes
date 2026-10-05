@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MonumentToEndurance.class, Censor.class, GrizzlyBears.class})
 class MonumentToEnduranceTest extends BaseCardTest {
 
     private static final String DRAW = "Draw a card";
@@ -69,9 +71,7 @@ class MonumentToEnduranceTest extends BaseCardTest {
         cycleAndChoose(DRAW);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
         harness.addMana(player1, ManaColor.BLUE, 1);
         cycleCard();
 
@@ -79,6 +79,71 @@ class MonumentToEnduranceTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.options()).contains(DRAW);
+    }
+
+    @Test
+    @DisplayName("An opponent's discard does not trigger Monument")
+    void opponentDiscardDoesNotTrigger() {
+        harness.addToBattlefield(player1, new MonumentToEndurance());
+        harness.setHand(player2, List.of(new Censor()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.activateHandAbility(player2, 0, null);
+        settleStack();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(countPermanents(player1, "Treasure")).isZero();
+    }
+
+    @Test
+    @DisplayName("A chosen mode is unavailable even before its ability resolves")
+    void modeIsConsumedBeforeResolution() {
+        harness.addToBattlefield(player1, new MonumentToEndurance());
+        harness.setHand(player1, List.of(new Censor(), new Censor()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        cycleCard();
+        harness.handleListChoice(player1, LIFE_LOSS);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+
+        cycleCard();
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options()).containsExactlyInAnyOrder(DRAW, TREASURE);
+        harness.handleListChoice(player1, TREASURE);
+        settleStack();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Separate Monuments can choose the same mode for one discard")
+    void separateMonumentsTrackModesIndependently() {
+        harness.addToBattlefield(player1, new MonumentToEndurance());
+        harness.addToBattlefield(player1, new MonumentToEndurance());
+        harness.setHand(player1, List.of(new Censor()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setLife(player2, 20);
+
+        cycleCard();
+        harness.handleListChoice(player1, LIFE_LOSS);
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options()).contains(LIFE_LOSS);
+        harness.handleListChoice(player1, LIFE_LOSS);
+        settleStack();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }
 
     private void cycleAndChoose(String mode) {
