@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.g.GiantAlbatross;
 import com.github.laxika.magicalvibes.cards.l.LeapingLizard;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -143,10 +144,78 @@ class MammothHarnessTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Mammoth Harness"));
     }
 
+    @Test
+    @DisplayName("Harness can be cast on an opponent's creature")
+    void castOnOpponentsCreature() {
+        Permanent flyer = addCreatureReady(player2, new GiantAlbatross());
+        harness.setHand(player1, List.of(new MammothHarness()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castEnchantment(player1, 0, flyer.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Mammoth Harness").getAttachedTo()).isEqualTo(flyer.getId());
+        assertThat(gqs.hasKeyword(gd, flyer, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Harness's controller controls its trigger when an opponent's enchanted attacker becomes blocked")
+    void auraControllerControlsBecomesBlockedTrigger() {
+        Permanent attacker = addCreatureReady(player1, new LeapingLizard());
+        Permanent aura = addHarnessAttachedTo(player2, attacker);
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new LeapingLizard());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
+
+        assertThat(gd.stack).filteredOn(entry -> aura.getId().equals(entry.getSourcePermanentId()))
+                .singleElement().satisfies(entry -> {
+                    assertThat(entry.getControllerId()).isEqualTo(player2.getId());
+                    assertThat(entry.getTargetId()).isEqualTo(blocker.getId());
+                    assertThat(entry.isNonTargeting()).isTrue();
+                });
+    }
+
+    @Test
+    @DisplayName("Removing Harness in response does not stop its first strike trigger")
+    void firstStrikeTriggerResolvesAfterHarnessLeaves() {
+        Permanent attacker = addCreatureReady(player1, new LeapingLizard());
+        Permanent aura = addHarnessAttachedTo(player1, attacker);
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new LeapingLizard());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A flying grant that resolves after Harness can give the enchanted creature flying")
+    void laterFlyingGrantSurvivesHarness() {
+        Permanent lizard = addCreatureReady(player1, new LeapingLizard());
+        addHarnessAttachedTo(player1, lizard);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, lizard, Keyword.FLYING)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, lizard, Keyword.FLYING)).isFalse();
+    }
+
     private Permanent addHarness(Player player) {
-        Permanent perm = new Permanent(new MammothHarness());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new MammothHarness());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
