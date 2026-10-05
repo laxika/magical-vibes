@@ -26,12 +26,10 @@ class LedgerShredderTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         Permanent shredder = harness.addToBattlefieldAndReturn(player1, new LedgerShredder());
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         discardByName(player1, "Grizzly Bears");
@@ -46,10 +44,8 @@ class LedgerShredderTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Mountain()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         discardByName(player1, "Mountain");
@@ -67,14 +63,104 @@ class LedgerShredderTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         discardByName(player1, "Grizzly Bears");
 
+        assertThat(shredder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void doesNotConniveOnFirstOrThirdSpell() {
+        Permanent shredder = harness.addToBattlefieldAndReturn(player1, new LedgerShredder());
+        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Mountain()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        discardByName(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(shredder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void eachPlayersFirstSpellDoesNotCountAsASecondSpell() {
+        harness.addToBattlefield(player1, new LedgerShredder());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void stillDrawsAndDiscardsWhenRemovedBeforeTriggerResolves() {
+        Permanent shredder = harness.addToBattlefieldAndReturn(player1, new LedgerShredder());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castInstant(player1, 0, player2.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(shredder);
+        harness.setGraveyard(player1, List.of(shredder.getCard()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        discardByName(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(shredder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void doesNotTriggerForItsOwnCastAsSecondSpell() {
+        harness.setHand(player1, List.of(new Shock(), new LedgerShredder()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Ledger Shredder");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void currentControllerConnivesAfterControlChangesWithTriggerOnStack() {
+        Permanent shredder = harness.addToBattlefieldAndReturn(player1, new LedgerShredder());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Mountain()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castInstant(player1, 0, player2.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(shredder);
+        gd.playerBattlefields.get(player2.getId()).add(shredder);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        discardByName(player2, "Grizzly Bears");
         assertThat(shredder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
