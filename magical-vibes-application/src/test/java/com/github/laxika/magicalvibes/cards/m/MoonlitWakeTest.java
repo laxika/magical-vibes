@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.cards.s.SnuffOut;
 import com.github.laxika.magicalvibes.cards.w.WaveOfReckoning;
@@ -13,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 
-@CardUsed({MoonlitWake.class, FreshVolunteers.class, SnuffOut.class, WaveOfReckoning.class})
+@CardUsed({MoonlitWake.class, FreshVolunteers.class, SnuffOut.class, WaveOfReckoning.class, Disenchant.class})
 class MoonlitWakeTest extends BaseCardTest {
 
     @Test
@@ -70,5 +71,43 @@ class MoonlitWakeTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Fresh Volunteers");
         harness.assertNotOnBattlefield(player2, "Fresh Volunteers");
         harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @DisplayName("Each Moonlit Wake independently gains life for its controller")
+    void eachCopyGainsLifeForItsController() {
+        harness.addToBattlefield(player1, new MoonlitWake());
+        harness.addToBattlefield(player1, new MoonlitWake());
+        harness.addToBattlefield(player2, new MoonlitWake());
+        harness.addToBattlefield(player2, new FreshVolunteers());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new SnuffOut()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Fresh Volunteers"));
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 21);
+    }
+
+    @Test
+    @DisplayName("A death trigger still gains life after Moonlit Wake is destroyed")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        harness.addToBattlefield(player1, new MoonlitWake());
+        harness.addToBattlefield(player2, new FreshVolunteers());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new SnuffOut(), new Disenchant()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Fresh Volunteers"));
+        harness.assertLife(player1, 20);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Moonlit Wake"));
+        harness.assertNotOnBattlefield(player1, "Moonlit Wake");
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 21);
     }
 }
