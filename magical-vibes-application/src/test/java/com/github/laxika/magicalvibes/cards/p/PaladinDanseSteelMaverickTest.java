@@ -17,6 +17,51 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PaladinDanseSteelMaverickTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Exile is paid immediately, while protection waits for resolution")
+    void exileCostIsPaidBeforeProtectionResolves() {
+        Permanent paladin = addCreatureReady(player1, new PaladinDanseSteelMaverick());
+        paladin.setSummoningSick(true);
+        paladin.setTapped(true);
+        Permanent human = addCreatureReady(player1, new EliteVanguard());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(paladin);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(paladin.getCard());
+        assertThat(gqs.hasKeyword(gd, human, Keyword.INDESTRUCTIBLE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, human, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Protection includes creatures entering before resolution but excludes later arrivals")
+    void protectionUsesCreaturesPresentAtResolution() {
+        addCreatureReady(player1, new PaladinDanseSteelMaverick());
+
+        harness.activateAbility(player1, 0, null, null);
+        Permanent beforeResolution = addCreatureReady(player1, new Ornithopter());
+        harness.passBothPriorities();
+        Permanent afterResolution = addCreatureReady(player1, new Ornithopter());
+
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Danse can be exiled when no other creatures are present")
+    void canActivateWithNoRecipients() {
+        Permanent paladin = addCreatureReady(player1, new PaladinDanseSteelMaverick());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(paladin.getCard());
+    }
+
+    @Test
     @DisplayName("Exiling Paladin Danse protects your artifact and Human creatures")
     void exilingProtectsArtifactAndHumanCreatures() {
         Permanent paladin = addCreatureReady(player1, new PaladinDanseSteelMaverick());
