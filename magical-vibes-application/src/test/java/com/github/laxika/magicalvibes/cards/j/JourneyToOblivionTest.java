@@ -75,8 +75,7 @@ class JourneyToOblivionTest extends BaseCardTest {
         UUID sourceId = harness.getPermanentId(player1, "Journey to Oblivion");
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, sourceId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, sourceId);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
@@ -96,6 +95,80 @@ class JourneyToOblivionTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Removing Journey before its enter trigger resolves does not exile the target")
+    void sourceLeavesBeforeTriggerResolves() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.setHand(player1, List.of(new JourneyToOblivion()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castEnchantment(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        UUID sourceId = harness.getPermanentId(player1, "Journey to Oblivion");
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, sourceId);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Journey to Oblivion");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Journey can exile an opponent's noncreature enchantment")
+    void exilesNoncreaturePermanent() {
+        harness.addToBattlefield(player2, new JourneyToOblivion());
+        castAndResolve(harness.getPermanentId(player2, "Journey to Oblivion"));
+
+        harness.assertNotOnBattlefield(player2, "Journey to Oblivion");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Journey to Oblivion"));
+    }
+
+    @Test
+    @DisplayName("Journey cannot target a permanent its controller controls")
+    void cannotTargetOwnPermanent() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new JourneyToOblivion());
+        UUID targetId = harness.getPermanentId(player1, "Journey to Oblivion");
+        harness.setHand(player1, List.of(new JourneyToOblivion()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, targetId))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Two creatures with the same party role reduce the cost by only one")
+    void duplicatePartyRolesCountOnce() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new FugitiveWizard());
+        harness.addToBattlefield(player1, new FugitiveWizard());
+        harness.addToBattlefield(player2, new JourneyToOblivion());
+        UUID targetId = harness.getPermanentId(player2, "Journey to Oblivion");
+        harness.setHand(player1, List.of(new JourneyToOblivion()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, targetId))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, targetId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Journey to Oblivion");
     }
 
     private void addFullParty() {
