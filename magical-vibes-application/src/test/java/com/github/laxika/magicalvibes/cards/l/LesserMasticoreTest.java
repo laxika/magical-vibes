@@ -87,6 +87,70 @@ class LesserMasticoreTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Lesser Masticore");
     }
 
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent masticore = harness.addToBattlefieldAndReturn(player1, new LesserMasticore());
+        masticore.setSummoningSick(true);
+        masticore.setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LesserMasticore());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(masticore.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can target itself and persist after lethal damage")
+    void canTargetItselfAndPersist() {
+        Permanent masticore = harness.addToBattlefieldAndReturn(player1, new LesserMasticore());
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateAbility(player1, 0, null, masticore.getId());
+        harness.passBothPriorities();
+        assertThat(masticore.getMarkedDamage()).isEqualTo(1);
+        harness.activateAbility(player1, 0, null, masticore.getId());
+        resolveUntilInputOrEmpty();
+
+        Permanent returned = findPermanent(player1, "Lesser Masticore");
+        assertThat(returned.getId()).isNotEqualTo(masticore.getId());
+        assertThat(returned.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(returned.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Damage ability resolves after its source dies")
+    void damageResolvesAfterSourceDies() {
+        Permanent masticore = harness.addToBattlefieldAndReturn(player1, new LesserMasticore());
+        masticore.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LesserMasticore());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.setHand(player2, List.of(new DoomBlade()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.castInstant(player2, 0, masticore.getId());
+        resolveUntilInputOrEmpty();
+
+        harness.assertInGraveyard(player1, "Lesser Masticore");
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cannot target a player with the damage ability")
+    void cannotTargetPlayer() {
+        harness.addToBattlefield(player1, new LesserMasticore());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void resolveUntilInputOrEmpty() {
         for (int i = 0; i < 12; i++) {
             GameData gameData = harness.getGameData();
