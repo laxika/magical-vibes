@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DiregrafScavenger;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,24 +10,20 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({InvestigatorsJournal.class, GrizzlyBears.class})
+@CardUsed({InvestigatorsJournal.class, DiregrafScavenger.class})
 class InvestigatorsJournalTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enters with suspect counters equal to the greatest creature count")
     void entersWithGreatestCreatureCountAmongPlayers() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new InvestigatorsJournal()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castArtifact(player1, 0);
+        harness.addToBattlefield(player1, new DiregrafScavenger());
+        harness.addToBattlefield(player2, new DiregrafScavenger());
+        harness.addToBattlefield(player2, new DiregrafScavenger());
+        harness.addToBattlefield(player2, new DiregrafScavenger());
+        harness.castFromHand(player1, new InvestigatorsJournal(), "{2}");
         harness.passBothPriorities();
 
         Permanent journal = findPermanent(player1, "Investigator's Journal");
@@ -55,7 +51,7 @@ class InvestigatorsJournalTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing the Journal draws a card")
     void sacrificesAndDrawsCard() {
-        Permanent journal = harness.addToBattlefieldAndReturn(player1, new InvestigatorsJournal());
+        harness.addToBattlefield(player1, new InvestigatorsJournal());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -64,8 +60,92 @@ class InvestigatorsJournalTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getId().equals(journal.getId()));
+        harness.assertNotOnBattlefield(player1, "Investigator's Journal");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Enters without suspect counters when no player controls creatures")
+    void entersWithZeroCountersWithoutCreatures() {
+        harness.addToBattlefield(player2, new InvestigatorsJournal());
+        harness.castFromHand(player1, new InvestigatorsJournal(), "{2}");
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Investigator's Journal")
+                .getCounterCount(CounterType.SUSPECT)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Counts creatures at entry rather than when cast")
+    void countsCreaturesWhenItEnters() {
+        harness.addToBattlefield(player1, new DiregrafScavenger());
+        harness.castFromHand(player1, new InvestigatorsJournal(), "{2}");
+        harness.addToBattlefield(player1, new DiregrafScavenger());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Investigator's Journal")
+                .getCounterCount(CounterType.SUSPECT)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Other counter types cannot pay the suspect counter cost")
+    void cannotActivateWithoutSuspectCounter() {
+        Permanent journal = harness.addToBattlefieldAndReturn(player1, new InvestigatorsJournal());
+        journal.setCounterCount(CounterType.CHARGE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(journal.isTapped()).isFalse();
+        assertThat(journal.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Journal cannot activate its counter-removal ability")
+    void cannotActivateCounterAbilityWhileTapped() {
+        Permanent journal = harness.addToBattlefieldAndReturn(player1, new InvestigatorsJournal());
+        journal.setCounterCount(CounterType.SUSPECT, 1);
+        journal.setTapped(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(journal.getCounterCount(CounterType.SUSPECT)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Both draws resolve after sacrificing the tapped Journal in response")
+    void canSacrificeInResponseToCounterAbility() {
+        Permanent journal = harness.addToBattlefieldAndReturn(player1, new InvestigatorsJournal());
+        journal.setCounterCount(CounterType.SUSPECT, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(journal.isTapped()).isTrue();
+        assertThat(journal.getCounterCount(CounterType.SUSPECT)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Investigator's Journal");
+        harness.assertInGraveyard(player1, "Investigator's Journal");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
     }
 }
