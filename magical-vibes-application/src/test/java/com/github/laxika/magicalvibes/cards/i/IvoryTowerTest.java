@@ -99,4 +99,35 @@ class IvoryTowerTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
+
+    @Test
+    @DisplayName("Triggers with an empty hand and counts cards gained before resolution")
+    void emptyHandCanGrowBeforeResolution() {
+        harness.addToBattlefield(player1, new IvoryTower());
+        harness.setHand(player1, List.of());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player1, bears(5));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Counts only its controller's hand and gives life only to that player")
+    void secondPlayerControllerUsesOwnHand() {
+        harness.addToBattlefield(player2, new IvoryTower());
+        harness.setHand(player1, bears(9));
+        harness.setHand(player2, bears(5));
+        int firstPlayerLife = gd.playerLifeTotals.get(player1.getId());
+        int controllerLife = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(controllerLife + 1);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(firstPlayerLife);
+    }
 }
