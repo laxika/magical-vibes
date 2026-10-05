@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.d.Demystify;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KrondTheDawnClad.class, HolyStrength.class, Forest.class, Demystify.class})
+@CardUsed({KrondTheDawnClad.class, HolyStrength.class, Forest.class, Demystify.class, Unsummon.class})
 class KrondTheDawnCladTest extends BaseCardTest {
 
     @Test
@@ -59,12 +60,51 @@ class KrondTheDawnCladTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Demystify()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, aura.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, aura.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Forest");
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Krond's trigger uses its last enchanted status after it leaves the battlefield")
+    void removingEnchantedKrondDoesNotPreventExile() {
+        Permanent krond = addCreatureReady(player1, new KrondTheDawnClad());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        enchantKrond(krond);
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, forest.getId());
+
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, krond.getId());
+        harness.assertNotOnBattlefield(player1, "Krond the Dawn-Clad");
+        harness.assertNotOnBattlefield(player1, "Holy Strength");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Forest");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Forest"));
+    }
+
+    @Test
+    @DisplayName("Krond can exile the Aura enchanting it")
+    void attackCanExileItsOwnAura() {
+        Permanent krond = addCreatureReady(player1, new KrondTheDawnClad());
+        enchantKrond(krond);
+        Permanent aura = findPermanent(player1, "Holy Strength");
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, aura.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Krond the Dawn-Clad");
+        harness.assertNotOnBattlefield(player1, "Holy Strength");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Holy Strength"));
     }
 
     private void enchantKrond(Permanent krond) {
