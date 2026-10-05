@@ -28,8 +28,7 @@ class MedusaInhumanQueenTest extends BaseCardTest {
 
         Permanent medusa = findMedusa();
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(medusa.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -62,8 +61,7 @@ class MedusaInhumanQueenTest extends BaseCardTest {
 
         Permanent medusa = findMedusa();
         harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(medusa.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -78,13 +76,59 @@ class MedusaInhumanQueenTest extends BaseCardTest {
         Permanent medusa = findMedusa();
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(medusa.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Medusa's counter resolves before the Shock targeting her")
+    void counterResolvesBeforeTriggeringSpell() {
+        Permanent medusa = harness.addToBattlefieldAndReturn(player1, new MedusaInhumanQueen());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, medusa.getId());
+
+        assertThat(medusa.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        assertThat(medusa.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(medusa);
+        assertThat(medusa.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each player's Medusa gets her own counter from one noncreature spell")
+    void bothPlayersMedusasTriggerIndependently() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new MedusaInhumanQueen());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new MedusaInhumanQueen());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Casting Medusa does not trigger her own ability")
+    void castingMedusaDoesNotGiveHerACounter() {
+        harness.setHand(player1, List.of(new MedusaInhumanQueen()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(findMedusa().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     private Permanent findMedusa() {
