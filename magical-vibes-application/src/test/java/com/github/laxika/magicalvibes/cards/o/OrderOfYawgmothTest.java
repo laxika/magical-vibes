@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.a.ArgothianSwine;
 import com.github.laxika.magicalvibes.cards.b.BogRaiders;
 import com.github.laxika.magicalvibes.cards.c.Cathodion;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.h.Humble;
 import com.github.laxika.magicalvibes.cards.s.SoulsFire;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -22,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({OrderOfYawgmoth.class, ArgothianSwine.class, BogRaiders.class, Cathodion.class,
-        Forest.class, SoulsFire.class})
+        Forest.class, Humble.class, SoulsFire.class})
 class OrderOfYawgmothTest extends BaseCardTest {
 
     @Test
@@ -48,7 +50,7 @@ class OrderOfYawgmothTest extends BaseCardTest {
     @DisplayName("No trigger when the Order is blocked and deals no combat damage to a player")
     void noTriggerWhenBlocked() {
         addAttackingOrder(player1);
-        Permanent blocker = addCreatureReady(player2, new ArgothianSwine());
+        Permanent blocker = addCreatureReady(player2, new Cathodion());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
         harness.setHand(player2, new ArrayList<>(List.of(new Forest())));
@@ -142,6 +144,72 @@ class OrderOfYawgmothTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("Damage to the Order's controller makes that controller discard")
+    void noncombatDamageToControllerMakesControllerDiscard() {
+        Permanent order = addCreatureReady(player1, new OrderOfYawgmoth());
+        harness.setHand(player1, List.of(new SoulsFire(), new Forest()));
+        harness.setHand(player2, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castInstant(player1, 0, List.of(order.getId(), player1.getId()));
+        resolveAllTriggers();
+
+        PendingInteraction.DiscardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof Forest);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Damage to a creature does not make its controller discard")
+    void noncombatDamageToCreatureDoesNotTriggerDiscard() {
+        Permanent order = addCreatureReady(player1, new OrderOfYawgmoth());
+        Permanent creature = addCreatureReady(player2, new Cathodion());
+        harness.setHand(player1, List.of(new SoulsFire()));
+        harness.setHand(player2, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castInstant(player1, 0, List.of(order.getId(), creature.getId()));
+        resolveAllTriggers();
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An Order that lost its abilities does not trigger from noncombat damage")
+    void noNoncombatDiscardTriggerAfterLosingAbilities() {
+        Permanent order = addCreatureReady(player1, new OrderOfYawgmoth());
+        order.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setHand(player1, List.of(new Humble(), new SoulsFire()));
+        harness.setHand(player2, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castInstant(player1, 0, order.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, order)).isEqualTo(1);
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castInstant(player1, 0, List.of(order.getId(), player2.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
     private Permanent addAttackingOrder(Player player) {
         Permanent order = addCreatureReady(player, new OrderOfYawgmoth());
         order.setAttacking(true);
@@ -150,6 +218,6 @@ class OrderOfYawgmothTest extends BaseCardTest {
 
     private void resolveCombatAndTrigger() {
         resolveCombat();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
