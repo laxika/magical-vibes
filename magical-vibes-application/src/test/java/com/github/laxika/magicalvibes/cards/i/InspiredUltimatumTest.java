@@ -67,6 +67,61 @@ class InspiredUltimatumTest extends BaseCardTest {
         ).isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void gainsLifeBeforeDealingDamageToTheSamePlayer() {
+        harness.setLife(player1, 1);
+        harness.setLibrary(player1, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new InspiredUltimatum()));
+        addMana();
+
+        harness.castSorcery(player1, 0, List.of(player1.getId(), player1.getId()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 1);
+        assertThat(gd.gameResult).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(5);
+    }
+
+    @Test
+    void differentPlayersCanReceiveLifeGainAndDamage() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+        harness.setLibrary(player1, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new InspiredUltimatum()));
+        addMana();
+
+        harness.castSorcery(player1, 0, List.of(player1.getId(), player2.getId()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 5);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(5);
+    }
+
+    @Test
+    void stillGainsLifeAndDrawsWhenDamageTargetLeavesTheBattlefield() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setLife(player2, 10);
+        harness.setLibrary(player1, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new InspiredUltimatum()));
+        addMana();
+
+        harness.castSorcery(player1, 0, List.of(player2.getId(), creature.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        harness.setGraveyard(player2, List.of(creature.getCard()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 15);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(5);
+        harness.assertInGraveyard(player1, "Inspired Ultimatum");
+    }
+
     private void addMana() {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.RED, 3);
