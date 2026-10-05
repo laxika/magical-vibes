@@ -36,8 +36,8 @@ class LargeBearTest extends BaseCardTest {
     @Test
     @DisplayName("Reach allows Large Bear to block a creature with flying")
     void reachCanBlockFlyer() {
-        Permanent flyer = addReadyPermanent(player1, new SuntailHawk());
-        Permanent bear = addReadyPermanent(player2, new LargeBear());
+        Permanent flyer = addCreatureReady(player1, new SuntailHawk());
+        Permanent bear = addCreatureReady(player2, new LargeBear());
 
         declareAttackers(player1, List.of(0));
         prepareDeclareBlockers(player1);
@@ -52,8 +52,8 @@ class LargeBearTest extends BaseCardTest {
     @Test
     @DisplayName("Trample deals excess combat damage to the defending player")
     void trampleDealsExcessCombatDamage() {
-        Permanent bear = addReadyPermanent(player1, new LargeBear());
-        Permanent blocker = addReadyPermanent(player2, new GrizzlyBears());
+        Permanent bear = addCreatureReady(player1, new LargeBear());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
         prepareDeclareBlockers(player1);
@@ -69,11 +69,25 @@ class LargeBearTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
 
-    private Permanent addReadyPermanent(com.github.laxika.magicalvibes.model.Player player,
-                                         com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Trample assigns lethal damage to every blocker before dealing excess damage")
+    void trampleAgainstMultipleBlockers() {
+        Permanent bear = addCreatureReady(player1, new LargeBear());
+        Permanent firstBlocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent secondBlocker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+        harness.passBothPriorities();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                firstBlocker.getId(), 2,
+                secondBlocker.getId(), 2,
+                player2.getId(), 1));
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bear);
     }
 }
