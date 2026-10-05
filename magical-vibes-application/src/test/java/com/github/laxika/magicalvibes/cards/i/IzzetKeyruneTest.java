@@ -1,14 +1,13 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,12 +15,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({IzzetKeyrune.class, Forest.class})
 class IzzetKeyruneTest extends BaseCardTest {
 
     @Test
     @DisplayName("Tapping Izzet Keyrune adds one blue or red mana")
     void tappingAddsChosenMana() {
-        Permanent keyrune = addReadyKeyrune(player1);
+        Permanent keyrune = addCreatureReady(player1, new IzzetKeyrune());
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handleListChoice(player1, "RED");
@@ -35,7 +35,7 @@ class IzzetKeyruneTest extends BaseCardTest {
     @Test
     @DisplayName("Paying blue and red mana animates Izzet Keyrune")
     void payingBlueAndRedAnimatesKeyrune() {
-        Permanent keyrune = addReadyKeyrune(player1);
+        Permanent keyrune = addCreatureReady(player1, new IzzetKeyrune());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -54,7 +54,7 @@ class IzzetKeyruneTest extends BaseCardTest {
     @Test
     @DisplayName("Izzet Keyrune stops being a creature at end of turn")
     void animationEndsAtEndOfTurn() {
-        Permanent keyrune = addReadyKeyrune(player1);
+        Permanent keyrune = addCreatureReady(player1, new IzzetKeyrune());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -71,10 +71,10 @@ class IzzetKeyruneTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage lets the controller accept loot")
     void combatDamageAcceptsLoot() {
-        Permanent keyrune = addReadyKeyrune(player1);
+        Permanent keyrune = addCreatureReady(player1, new IzzetKeyrune());
         animateKeyrune();
         keyrune.setAttacking(true);
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         resolveCombat();
@@ -92,7 +92,7 @@ class IzzetKeyruneTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage lets the controller decline loot")
     void combatDamageDeclinesLoot() {
-        Permanent keyrune = addReadyKeyrune(player1);
+        Permanent keyrune = addCreatureReady(player1, new IzzetKeyrune());
         animateKeyrune();
         keyrune.setAttacking(true);
 
@@ -105,11 +105,55 @@ class IzzetKeyruneTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
     }
 
-    private Permanent addReadyKeyrune(Player player) {
-        Permanent permanent = new Permanent(new IzzetKeyrune());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void tappingCanAddBlueMana() {
+        Permanent keyrune = addCreatureReady(player1, new IzzetKeyrune());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(keyrune.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tappedKeyruneCanAnimateWithoutUntapping() {
+        Permanent keyrune = addCreatureReady(player1, new IzzetKeyrune());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, keyrune)).isTrue();
+        assertThat(keyrune.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    void lootCanDiscardAnExistingCardAndKeepTheDrawnCard() {
+        Permanent keyrune = addCreatureReady(player1, new IzzetKeyrune());
+        IzzetKeyrune originalCard = new IzzetKeyrune();
+        Forest drawnCard = new Forest();
+        harness.setHand(player1, List.of(originalCard));
+        harness.setLibrary(player1, List.of(drawnCard));
+        animateKeyrune();
+        keyrune.setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(originalCard, drawnCard);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(originalCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     private void animateKeyrune() {
@@ -119,8 +163,4 @@ class IzzetKeyruneTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
-    }
 }
