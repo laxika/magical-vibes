@@ -175,4 +175,55 @@ class LaccolithWarriorTest extends BaseCardTest {
 
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).isEmpty();
     }
+
+    @Test
+    @DisplayName("The ability can target a friendly creature outside combat")
+    void canTargetFriendlyCreatureOutsideCombat() {
+        Permanent attacker = addAttacker();
+        Permanent blocker = addBlocker();
+        Permanent target = addCreatureReady(player1, new FlowstoneCrusher());
+
+        declareBlock(attacker, blocker);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+    }
+
+    @Test
+    @DisplayName("Accepting with zero power still prevents combat damage")
+    void zeroPowerStillPreventsCombatDamage() {
+        Permanent attacker = addAttacker();
+        Permanent blocker = addBlocker();
+        attacker.setPowerModifier(-3);
+
+        declareBlock(attacker, blocker);
+        harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+    }
+
+    @Test
+    @DisplayName("An illegal target makes the entire ability fail to resolve")
+    void removedTargetDoesNotPreventCombatDamage() {
+        Permanent attacker = addAttacker();
+        Permanent blocker = addBlocker();
+        Permanent target = addCreatureReady(player2, new FlowstoneCrusher());
+
+        declareBlock(attacker, blocker);
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(blocker.getMarkedDamage()).isZero();
+    }
 }
