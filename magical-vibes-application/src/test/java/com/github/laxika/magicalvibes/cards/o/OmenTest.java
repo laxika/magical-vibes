@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -115,5 +116,61 @@ class OmenTest extends BaseCardTest {
 
         assertThat(gameLogContains(player1.getUsername() + " shuffles their library.")).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Declining shuffle preserves the chosen order and cards below the top three")
+    void decliningShufflePreservesRemainingOrder() {
+        Card first = new Omen();
+        Card second = new Omen();
+        Card third = new Omen();
+        Card fourth = new Omen();
+        harness.setLibrary(player1, List.of(first, second, third, fourth));
+
+        harness.castFromHand(player1, new Omen(), "{1}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards())
+                .containsExactly(first, second, third);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 1, 0)));
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(third);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first, fourth);
+        assertThat(gameLogContains(player1.getUsername() + " shuffles their library.")).isFalse();
+    }
+
+    @Test
+    @DisplayName("A one-card library can be shuffled and its last card drawn without losing")
+    void oneCardLibraryCanBeShuffledAndDrawn() {
+        Card lastCard = new Omen();
+        harness.setLibrary(player1, List.of(lastCard));
+
+        harness.castFromHand(player1, new Omen(), "{1}{U}");
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0)));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(lastCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+        harness.assertInGraveyard(player1, "Omen");
+    }
+
+    @Test
+    @DisplayName("An empty library still offers the shuffle and the mandatory draw causes a loss")
+    void emptyLibraryStillOffersShuffleAndDraws() {
+        harness.setLibrary(player1, List.of());
+        harness.castFromHand(player1, new Omen(), "{1}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gameLogContains(player1.getUsername() + " shuffles their library.")).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 }
