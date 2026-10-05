@@ -6,10 +6,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -84,12 +82,61 @@ class KrovikanPlagueTest extends BaseCardTest {
         assertThat(scheduled.getFirst().count()).isEqualTo(1);
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        gd.activePlayerId = player2.getId();
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
-        harness.passBothPriorities();
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick enchanted creature can pay the tap cost")
+    void canTapSummoningSickHost() {
+        setupPlagueOnEscort();
+        host.setSummoningSick(true);
+
+        harness.activateAbility(player1, 1, null, player2.getId());
+
+        assertThat(host.isTapped()).isTrue();
+        assertThat(host.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isZero();
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(host.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An illegal damage target prevents the counter as well")
+    void illegalTargetPreventsCounter() {
+        setupPlagueOnEscort();
+        Permanent target = addCreatureReady(player2, new KjeldoranEscort());
+        harness.activateAbility(player1, 1, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(host.isTapped()).isTrue();
+        assertThat(host.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Repeated activations accumulate counters and can kill the host")
+    void repeatedActivationsKillHost() {
+        setupPlagueOnEscort();
+
+        for (int i = 0; i < 3; i++) {
+            host.untap();
+            harness.activateAbility(player1, 1, null, player2.getId());
+            harness.passBothPriorities();
+        }
+
+        harness.assertLife(player2, 17);
+        harness.assertInGraveyard(player1, "Kjeldoran Escort");
+        harness.assertInGraveyard(player1, "Krovikan Plague");
+        harness.assertNotOnBattlefield(player1, "Kjeldoran Escort");
+        harness.assertNotOnBattlefield(player1, "Krovikan Plague");
     }
 
     @Test
