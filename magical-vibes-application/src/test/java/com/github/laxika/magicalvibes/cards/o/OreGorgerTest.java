@@ -21,6 +21,58 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class OreGorgerTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Without a nonbasic land the trigger cannot be put on the stack")
+    void noLegalTargetDoesNotBlockCasting() {
+        harness.addToBattlefield(player1, new OreGorger());
+        harness.addToBattlefield(player2, new Forest());
+        harness.castFromHand(player1, new OreGorger(), "{3}{R}{R}");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Forest");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("An opponent's Arcane spell does not trigger even with a legal land target")
+    void opponentSpellWithLegalTargetDoesNotTrigger() {
+        harness.addToBattlefield(player1, new OreGorger());
+        harness.addToBattlefield(player1, new ForbiddenOrchard());
+        harness.setHand(player2, List.of(new DampenThought()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player1, "Forbidden Orchard");
+    }
+
+    @Test
+    @DisplayName("An unprotected creature is not a legal target")
+    void creatureWithoutShroudIsNotALegalTarget() {
+        harness.addToBattlefield(player1, new OreGorger());
+        harness.addToBattlefield(player2, new OreGorger());
+        harness.addToBattlefield(player2, new ForbiddenOrchard());
+        UUID creatureId = harness.getPermanentId(player2, "Ore Gorger");
+        UUID landId = harness.getPermanentId(player2, "Forbidden Orchard");
+        harness.setHand(player1, List.of(new DampenThought()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, creatureId))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, landId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertOnBattlefield(player2, "Ore Gorger");
+        harness.assertInGraveyard(player2, "Forbidden Orchard");
+    }
+
+    @Test
     @DisplayName("Casting an Arcane spell lets the controller destroy the targeted nonbasic land")
     void arcaneCastDestroysNonbasicLand() {
         harness.addToBattlefield(player1, new OreGorger());
