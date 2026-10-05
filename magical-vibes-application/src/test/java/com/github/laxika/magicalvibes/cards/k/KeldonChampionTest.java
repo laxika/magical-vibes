@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.r.Rescue;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(KeldonChampion.class)
+@CardUsed({KeldonChampion.class, ChandraNalaar.class, Rescue.class})
 class KeldonChampionTest extends BaseCardTest {
 
     @Test
@@ -37,12 +37,14 @@ class KeldonChampionTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(ChandraNalaar.class)
     @DisplayName("ETB damage can target a planeswalker")
     void etbDealsDamageToPlaneswalker() {
-        Permanent planeswalker = addPlaneswalker(player2, 5);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 6);
         castAndResolveChampion(planeswalker.getId());
 
-        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
     }
 
@@ -109,18 +111,40 @@ class KeldonChampionTest extends BaseCardTest {
     private void castAndResolveChampion(java.util.UUID targetId) {
         prepareChampion();
         harness.castCreature(player1, 0, 0, targetId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
-    private Permanent addPlaneswalker(com.github.laxika.magicalvibes.model.Player player, int loyalty) {
-        Card card = new Card();
-        card.setName("Test Planeswalker");
-        card.setType(CardType.PLANESWALKER);
-        card.setLoyalty(loyalty);
-        Permanent permanent = new Permanent(card);
-        permanent.setCounterCount(CounterType.LOYALTY, loyalty);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @CardUsed({ChandraNalaar.class, Rescue.class})
+    @DisplayName("Echo still triggers when the ETB damage target leaves before resolution")
+    void echoStillTriggersWhenDamageTargetBecomesIllegal() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 6);
+        prepareChampion();
+        harness.castCreature(player1, 0, 0, planeswalker.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Rescue()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, planeswalker.getId());
+        resolveAllTriggers();
+        harness.assertInHand(player2, "Chandra Nalaar");
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Keldon Champion");
+    }
+
+    @Test
+    @DisplayName("Haste allows attacking the turn Keldon Champion enters")
+    void canAttackOnTheTurnItEnters() {
+        castAndResolveChampion(player2.getId());
+
+        declareAttackers(player1, List.of(0));
+        resolveCombat(player1);
+
+        harness.assertLife(player2, 14);
     }
 }
