@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.c.Conspiracy;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KilnmouthDragon.class, FugitiveWizard.class})
+@CardUsed({KilnmouthDragon.class, FugitiveWizard.class, Conspiracy.class})
 class KilnmouthDragonTest extends BaseCardTest {
 
     @Test
@@ -122,6 +124,87 @@ class KilnmouthDragonTest extends BaseCardTest {
     private void addManaToCast() {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
+    }
+
+    @Test
+    @CardUsed({KilnmouthDragon.class, FugitiveWizard.class, Conspiracy.class})
+    @DisplayName("Amplify reveals cards sharing the entering creature's current creature types")
+    void amplifyUsesCurrentCreatureTypes() {
+        Permanent conspiracy = harness.addToBattlefieldAndReturn(player1, new Conspiracy());
+        conspiracy.setChosenSubtype(CardSubtype.GOBLIN);
+        FugitiveWizard wizard = new FugitiveWizard();
+        harness.setHand(player1, List.of(new KilnmouthDragon(), wizard));
+        addManaToCast();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.RevealAnyNumberOfCardsFromHandChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(wizard.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(wizard.getId()));
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Kilnmouth Dragon").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Enters without a reveal choice when no Dragon cards remain in hand")
+    void entersWithoutEligibleCards() {
+        harness.castFromHand(player1, new KilnmouthDragon(), "{5}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class))
+                .isNull();
+        assertThat(findPermanent(player1, "Kilnmouth Dragon").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isZero();
+    }
+
+    @Test
+    @DisplayName("Damage counts +1/+1 counters at resolution, ignoring other counters")
+    void usesCurrentPlusOneCounters() {
+        Permanent dragon = addCreatureReady(player1, new KilnmouthDragon());
+        dragon.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        dragon.setCounterCount(CounterType.CHARGE, 7);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        dragon.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 6);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
+    }
+
+    @Test
+    @DisplayName("Without +1/+1 counters the tap ability deals zero damage")
+    void dealsZeroDamageWithoutCounters() {
+        Permanent dragon = addCreatureReady(player1, new KilnmouthDragon());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(dragon.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Uses counters immediately before the source dies while its ability is on the stack")
+    void usesLastKnownCountersAfterSourceDies() {
+        Permanent dragon = addCreatureReady(player1, new KilnmouthDragon());
+        dragon.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        dragon.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 6);
+        dragon.setMarkedDamage(20);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Kilnmouth Dragon");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }
 
 }
