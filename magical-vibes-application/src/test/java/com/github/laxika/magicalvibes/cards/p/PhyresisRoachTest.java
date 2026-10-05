@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -48,21 +49,83 @@ class PhyresisRoachTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Zombify()));
         harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.castSorcery(player1, 0, graveyardInsect.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, graveyardInsect.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().getId().equals(handInsect.getId())
                         || permanent.getCard().getId().equals(libraryInsect.getId())
                         || permanent.getCard().getId().equals(graveyardInsect.getId()))
+                .hasSize(3)
                 .allSatisfy(permanent -> assertThat(gqs.hasKeyword(gd, permanent, Keyword.TOXIC)).isTrue());
     }
 
+    @Test
+    @DisplayName("Printed toxic 1 gives a poison counter on combat damage")
+    void printedToxicGivesPoisonCounter() {
+        Permanent roach = addCreatureReady(player1, new PhyresisRoach());
+
+        dealCombatDamage(roach);
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The Roach gains another toxic 1 from its own trigger")
+    void roachGainsToxicFromItsOwnTrigger() {
+        Permanent roach = addCreatureReady(player1, new PhyresisRoach());
+        dealCombatDamage(roach);
+        int poisonBefore = gd.playerPoisonCounters.getOrDefault(player2.getId(), 0);
+
+        dealCombatDamage(roach);
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0) - poisonBefore).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An Insect gains a cumulative toxic 1 from each trigger")
+    void repeatedGrantsAccumulatePoisonValue() {
+        Permanent roach = addCreatureReady(player1, new PhyresisRoach());
+        Permanent insect = addCreatureReady(player1, new GiantCaterpillar());
+        dealCombatDamage(roach);
+        dealCombatDamage(roach);
+        roach.setAttacking(false);
+        int poisonBefore = gd.playerPoisonCounters.getOrDefault(player2.getId(), 0);
+
+        dealCombatDamage(insect);
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0) - poisonBefore).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The trigger does not grant toxic to opposing Insects")
+    void opposingInsectsDoNotGainToxic() {
+        Permanent roach = addCreatureReady(player1, new PhyresisRoach());
+        Permanent opposingInsect = addCreatureReady(player2, new GiantCaterpillar());
+        GiantCaterpillar opposingHand = new GiantCaterpillar();
+        harness.setHand(player2, List.of(opposingHand));
+
+        dealCombatDamage(roach);
+
+        assertThat(gqs.hasKeyword(gd, opposingInsect, Keyword.TOXIC)).isFalse();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player2, opposingHand, "{3}{G}");
+        harness.passBothPriorities();
+        assertThat(findPermanents(player2, "Giant Caterpillar"))
+                .hasSize(2)
+                .allSatisfy(permanent -> assertThat(gqs.hasKeyword(gd, permanent, Keyword.TOXIC)).isFalse());
+    }
+
+    private void dealCombatDamage(Permanent attacker) {
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        attacker.setAttacking(true);
+        resolveCombat();
+        harness.passBothPriorities();
+        attacker.setAttacking(false);
+    }
+
     private void castCreatureAndResolve(Card card) {
-        harness.setHand(player1, List.of(card));
-        harness.addMana(player1, ManaColor.GREEN, 10);
-        harness.addMana(player1, ManaColor.COLORLESS, 10);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, card, "{3}{G}");
         harness.passBothPriorities();
     }
 }
