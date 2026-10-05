@@ -1,16 +1,14 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.a.AzureDrake;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.Jump;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -19,40 +17,51 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MagebaneArmor.class, AzureDrake.class, GrizzlyBears.class, LightningBolt.class})
+@CardUsed({MagebaneArmor.class, AzureDrake.class, RuneclawBear.class, LightningBolt.class, Jump.class})
 class MagebaneArmorTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    
-
-    
-
-    
-
     @Test
-    @DisplayName("Magebane Armor has equip {2} ability")
-    void hasEquipAbility() {
-        MagebaneArmor card = new MagebaneArmor();
+    void equipRequiresTwoMana() {
+        Permanent armor = addArmorReady(player1);
+        Permanent creature = addCreatureReady(player1, new RuneclawBear());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.getManaCost()).isEqualTo("{2}");
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getTargetFilter()).isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
-        assertThat(ability.getTimingRestriction()).isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(ability.getEffects()).singleElement().isInstanceOf(EquipEffect.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("Not enough mana");
+        assertThat(armor.getAttachedTo()).isNull();
     }
 
-    // ===== Equip =====
+    @Test
+    void cannotEquipOpponentsCreature() {
+        Permanent armor = addArmorReady(player1);
+        Permanent creature = addCreatureReady(player2, new RuneclawBear());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature you control");
+        assertThat(armor.getAttachedTo()).isNull();
+    }
+
+    @Test
+    void cannotEquipDuringCombat() {
+        Permanent armor = addArmorReady(player1);
+        Permanent creature = addCreatureReady(player1, new RuneclawBear());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("sorcery speed");
+        assertThat(armor.getAttachedTo()).isNull();
+    }
 
     @Test
     @DisplayName("Resolving equip attaches Magebane Armor to target creature")
     void resolvingEquipAttaches() {
         Permanent armor = addArmorReady(player1);
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new RuneclawBear());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -62,12 +71,10 @@ class MagebaneArmorTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Static effects: power/toughness boost =====
-
     @Test
     @DisplayName("Equipped creature gets +2/+4")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new RuneclawBear());
         Permanent armor = addArmorReady(player1);
         armor.setAttachedTo(creature.getId());
 
@@ -78,7 +85,7 @@ class MagebaneArmorTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses boost when Magebane Armor is removed")
     void creatureLosesBoostWhenArmorRemoved() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new RuneclawBear());
         Permanent armor = addArmorReady(player1);
         armor.setAttachedTo(creature.getId());
 
@@ -89,8 +96,6 @@ class MagebaneArmorTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
-
-    // ===== Static effects: loses flying =====
 
     @Test
     @DisplayName("Equipped creature with flying loses flying")
@@ -121,19 +126,17 @@ class MagebaneArmorTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature without flying is unaffected by loses flying")
     void equippedNonFlyingCreatureUnaffected() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new RuneclawBear());
         Permanent armor = addArmorReady(player1);
         armor.setAttachedTo(creature.getId());
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
     }
 
-    // ===== Noncombat damage prevention =====
-
     @Test
     @DisplayName("Noncombat damage to equipped creature is prevented")
     void noncombatDamageToEquippedCreatureIsPrevented() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new RuneclawBear());
         Permanent armor = addArmorReady(player1);
         armor.setAttachedTo(creature.getId());
 
@@ -157,23 +160,20 @@ class MagebaneArmorTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         // Player1 has a creature equipped with Magebane Armor
-        Permanent defender = addCreatureReady(player1, new GrizzlyBears());
+        Permanent defender = addCreatureReady(player1, new RuneclawBear());
         Permanent armor = addArmorReady(player1);
         armor.setAttachedTo(defender.getId());
         // 2/2 creature becomes 4/6 with armor
 
         // Player2 attacks with a creature
-        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player2, new RuneclawBear());
         attacker.setAttacking(true);
 
         // Defender blocks
         defender.setBlocking(true);
         defender.addBlockingTarget(0);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         // Attacker deals 2 combat damage to defender (4/6)
         // Combat damage is NOT prevented by Magebane Armor
@@ -183,7 +183,7 @@ class MagebaneArmorTest extends BaseCardTest {
     @Test
     @DisplayName("Noncombat damage prevention does not apply to unequipped creature")
     void noncombatDamageNotPreventedOnUnequippedCreature() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new RuneclawBear());
         addArmorReady(player1); // Armor on battlefield but not attached
 
         // Lightning Bolt targets the unequipped creature
@@ -196,17 +196,15 @@ class MagebaneArmorTest extends BaseCardTest {
         // 2/2 creature takes 3 damage and dies
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(creature.getId()));
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Runeclaw Bear");
     }
-
-    // ===== Re-equip =====
 
     @Test
     @DisplayName("Moving Magebane Armor transfers all effects to new creature")
     void reEquipTransfersEffects() {
         Permanent armor = addArmorReady(player1);
         Permanent creature1 = addReadyFlyingCreature(player1);
-        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new RuneclawBear());
         armor.setAttachedTo(creature1.getId());
 
         // creature1 (Azure Drake 2/4) gets boost, loses flying
@@ -223,24 +221,75 @@ class MagebaneArmorTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, creature1)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, creature1, Keyword.FLYING)).isTrue();
 
-        // creature2 (Grizzly Bears 2/2) gets boost (no flying to lose)
+        // creature2 (Runeclaw Bear 2/2) gets boost (no flying to lose)
         assertThat(gqs.getEffectivePower(gd, creature2)).isEqualTo(4);   // 2 + 2
         assertThat(gqs.getEffectiveToughness(gd, creature2)).isEqualTo(6); // 2 + 4
     }
 
-    // ===== Helpers =====
+    @Test
+    void movingArmorTransfersNoncombatDamagePrevention() {
+        Permanent armor = addArmorReady(player1);
+        Permanent first = addCreatureReady(player1, new AzureDrake());
+        Permanent second = addCreatureReady(player1, new RuneclawBear());
+        armor.setAttachedTo(first.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new LightningBolt(), new LightningBolt(), new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.castInstant(player2, 0, second.getId());
+        harness.passBothPriorities();
+        harness.castInstant(player2, 0, second.getId());
+        harness.passBothPriorities();
+        assertThat(second.getMarkedDamage()).isZero();
+
+        harness.castInstant(player2, 0, first.getId());
+        harness.passBothPriorities();
+        assertThat(first.getMarkedDamage()).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(first, second);
+    }
+
+    @Test
+    void creatureCanGainFlyingAfterArmorIsEquipped() {
+        Permanent armor = addArmorReady(player1);
+        Permanent creature = addCreatureReady(player1, new RuneclawBear());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Jump()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(armor.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void equippingArmorRemovesPreviouslyGrantedFlying() {
+        Permanent armor = addArmorReady(player1);
+        Permanent creature = addCreatureReady(player1, new RuneclawBear());
+        harness.setHand(player1, List.of(new Jump()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(armor.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+    }
 
     private Permanent addArmorReady(Player player) {
-        Permanent perm = new Permanent(new MagebaneArmor());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new MagebaneArmor());
     }
 
     private Permanent addReadyFlyingCreature(Player player) {
-        Permanent perm = new Permanent(new AzureDrake());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new AzureDrake());
     }
 }
