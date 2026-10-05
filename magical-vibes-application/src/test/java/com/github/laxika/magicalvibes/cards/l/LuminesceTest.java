@@ -235,10 +235,68 @@ class LuminesceTest extends BaseCardTest {
         harness.getGameData().preventDamageFromColors.add(CardColor.RED);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gd.preventDamageFromColors).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Prevents repeated opposing red spells against players and creatures")
+    void preventsRepeatedOpposingRedDamage() {
+        Permanent hawk = addCreatureReady(player1, new SuntailHawk());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Luminesce()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.setHand(player2, List.of(new Shock(), new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.castAndResolveInstant(player2, 0, hawk.getId());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 20);
+        harness.assertOnBattlefield(player1, "Suntail Hawk");
+        assertThat(hawk.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Prevents black blocker damage while green attacker damage is dealt")
+    void preventsBlackBlockerDamage() {
+        harness.setHand(player1, List.of(new Luminesce()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new MassOfGhouls());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Mass of Ghouls");
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(blocker.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Red spell damage resumes on the next turn")
+    void redDamageResumesNextTurn() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Luminesce()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.UPKEEP);
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
     }
 }
 
