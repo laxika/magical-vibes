@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.cards.r.Reconnaissance;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -21,7 +21,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NamorAtlanteanKing.class, Shock.class, GrizzlyBears.class})
+@CardUsed({NamorAtlanteanKing.class, Shock.class, GrizzlyBears.class, JaceBeleren.class, Reconnaissance.class})
 class NamorAtlanteanKingTest extends BaseCardTest {
 
     @Test
@@ -32,8 +32,7 @@ class NamorAtlanteanKingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent token = findPermanent(player1, "Merfolk");
         assertThat(token.getCard().getColors()).containsExactly(CardColor.BLUE);
@@ -87,13 +86,15 @@ class NamorAtlanteanKingTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(JaceBeleren.class)
     @DisplayName("Does not boost a creature attacking the player's planeswalker")
     void doesNotBoostCreatureAttackingPlaneswalker() {
         harness.setLife(player1, 10);
         harness.setLife(player2, 20);
         Permanent namor = addCreatureReady(player1, new NamorAtlanteanKing());
         Permanent planeswalkerAttacker = addCreatureReady(player1, new GrizzlyBears());
-        Permanent planeswalker = addPlaneswalker(player2);
+        harness.addToBattlefield(player2, new JaceBeleren());
+        Permanent planeswalker = findPermanent(player2, "Jace Beleren");
 
         declareAttackers(player1, List.of(0, 1), Map.of(
                 0, player2.getId(),
@@ -113,15 +114,99 @@ class NamorAtlanteanKingTest extends BaseCardTest {
         gs.declareAttackers(gd, player, attackerIndices, attackTargets);
     }
 
-    private Permanent addPlaneswalker(Player player) {
-        Card card = new Card();
-        card.setName("Test Planeswalker");
-        card.setType(CardType.PLANESWALKER);
-        card.setColor(CardColor.BLUE);
-        card.setLoyalty(3);
-        Permanent permanent = new Permanent(card);
-        permanent.setCounterCount(CounterType.LOYALTY, 3);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void lifeChangesAfterAttackDoNotPreventBoost() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new NamorAtlanteanKing());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1));
+        harness.setLife(player1, 30);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
+    }
+
+    @Test
+    void attackTriggerStillBoostsAfterNamorDies() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        Permanent namor = addCreatureReady(player1, new NamorAtlanteanKing());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        declareAttackers(List.of(0, 1));
+        harness.castInstant(player2, 0, namor.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Namor, Atlantean King");
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+    }
+
+    @Test
+    @CardUsed(JaceBeleren.class)
+    void attackingPlaneswalkerDoesNotTriggerBoostForPlayerAttackers() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new NamorAtlanteanKing());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new JaceBeleren());
+        Permanent planeswalker = findPermanent(player2, "Jace Beleren");
+
+        declareAttackers(player1, List.of(0, 1), Map.of(
+                0, planeswalker.getId(),
+                1, player2.getId()));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed(Reconnaissance.class)
+    void removingNamorFromCombatDoesNotPreventOtherAttackersBoost() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        Permanent namor = addCreatureReady(player1, new NamorAtlanteanKing());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Reconnaissance());
+
+        declareAttackers(List.of(0, 1));
+        harness.activateAbility(player1, 2, null, namor.getId());
+        resolveAllTriggers();
+
+        assertThat(namor.isAttacking()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+    }
+
+    @Test
+    void opponentNoncreatureSpellDoesNotCreateToken() {
+        harness.addToBattlefield(player1, new NamorAtlanteanKing());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Merfolk")).isZero();
+    }
+
+    @Test
+    void tokenTriggerResolvesBeforeSpellAndSurvivesNamorsDeath() {
+        harness.addToBattlefield(player1, new NamorAtlanteanKing());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, findPermanent(player1, "Namor, Atlantean King").getId());
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Merfolk")).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Namor, Atlantean King");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Namor, Atlantean King");
+        assertThat(countPermanents(player1, "Merfolk")).isEqualTo(1);
     }
 }
