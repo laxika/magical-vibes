@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -67,6 +66,58 @@ class LoyalWarhoundTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Plains");
     }
 
+    @Test
+    @DisplayName("A restricted search can fail to find even when a Plains is available")
+    void canFailToFindAnAvailablePlains() {
+        castWarhound();
+        harness.addToBattlefield(player2, new Forest());
+        Plains plains = new Plains();
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(plains, forest));
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+
+        harness.assertNotOnBattlefield(player1, "Plains");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(plains, forest);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A library without any basic Plains resolves without putting a card onto the battlefield")
+    void resolvesWithNoMatchingPlains() {
+        castWarhound();
+        harness.addToBattlefield(player2, new Forest());
+        Forest forest = new Forest();
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(forest, bears));
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Plains");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(forest, bears);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent gaining a land after entry cannot create a missed trigger")
+    void doesNotTriggerRetroactivelyWhenOpponentGainsLand() {
+        castWarhound();
+        setupLibrary();
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+
+        harness.addToBattlefield(player2, new Forest());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Plains");
+    }
+
     private void castWarhound() {
         harness.setHand(player1, List.of(new LoyalWarhound()));
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -74,8 +125,6 @@ class LoyalWarhoundTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Forest(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains(), new Forest(), new GrizzlyBears()));
     }
 }
