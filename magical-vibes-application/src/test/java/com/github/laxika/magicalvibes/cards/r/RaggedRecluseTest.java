@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.o.OdiousWitch;
 import com.github.laxika.magicalvibes.cards.t.ThirstForDiscovery;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -21,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({RaggedRecluse.class, OdiousWitch.class, ThirstForDiscovery.class,
-        Forest.class, Island.class, Mountain.class, GrizzlyBears.class})
+        Forest.class, Island.class, Mountain.class})
 class RaggedRecluseTest extends BaseCardTest {
 
     @Test
@@ -30,8 +28,7 @@ class RaggedRecluseTest extends BaseCardTest {
         Permanent recluse = harness.addToBattlefieldAndReturn(player1, new RaggedRecluse());
         setUpDiscardSpell();
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.handleCardChosen(player1, 1);
         harness.handleCardChosen(player1, -1);
 
@@ -52,10 +49,57 @@ class RaggedRecluseTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's discard does not cause the controller's end-step transformation")
+    void doesNotTransformAfterOnlyOpponentDiscards() {
+        Permanent recluse = harness.addToBattlefieldAndReturn(player1, new RaggedRecluse());
+        setUpDiscardSpell(player2);
+
+        harness.castAndResolveInstant(player2, 0);
+        harness.handleCardChosen(player2, 1);
+        harness.handleCardChosen(player2, -1);
+
+        advanceToEndStep();
+        harness.passBothPriorities();
+
+        assertThat(recluse.isTransformed()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Discarding after the end step begins does not retroactively trigger transformation")
+    void doesNotTransformAfterLateDiscard() {
+        Permanent recluse = harness.addToBattlefieldAndReturn(player1, new RaggedRecluse());
+        advanceToEndStep();
+        setUpDiscardSpell();
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(recluse.isTransformed()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A discard during the opponent's turn does not transform Ragged Recluse at their end step")
+    void doesNotTransformDuringOpponentsEndStep() {
+        Permanent recluse = harness.addToBattlefieldAndReturn(player1, new RaggedRecluse());
+        setUpDiscardSpell();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player1, -1);
+        harness.passBothPriorities();
+
+        assertThat(recluse.isTransformed()).isFalse();
+    }
+
+    @Test
     @DisplayName("Odious Witch drains the defending player when it attacks")
     void backFaceDrainsDefendingPlayerWhenAttacking() {
         RaggedRecluse card = new RaggedRecluse();
-        Permanent witch = addReadyCreature(player1, card);
+        Permanent witch = addCreatureReady(player1, card);
         witch.setCard(card.getBackFaceCard());
         witch.setTransformed(true);
 
@@ -67,10 +111,14 @@ class RaggedRecluseTest extends BaseCardTest {
     }
 
     private void setUpDiscardSpell() {
-        harness.setLibrary(player1, List.of(new Forest(), new Island(), new Mountain()));
-        harness.setHand(player1, List.of(new ThirstForDiscovery(), new GrizzlyBears(), new Forest()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        setUpDiscardSpell(player1);
+    }
+
+    private void setUpDiscardSpell(Player player) {
+        harness.setLibrary(player, List.of(new Forest(), new Island(), new Mountain()));
+        harness.setHand(player, List.of(new ThirstForDiscovery(), new RaggedRecluse(), new Forest()));
+        harness.addMana(player, ManaColor.BLUE, 1);
+        harness.addMana(player, ManaColor.COLORLESS, 2);
     }
 
     private void advanceToEndStep() {
@@ -80,18 +128,4 @@ class RaggedRecluseTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
-
-    protected void declareAttackers(List<Integer> attackerIndices) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, attackerIndices);
-    }
 }
