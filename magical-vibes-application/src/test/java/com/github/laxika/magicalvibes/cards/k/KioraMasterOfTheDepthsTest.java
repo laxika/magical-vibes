@@ -3,15 +3,15 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.l.LumberingFalls;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -21,7 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KioraMasterOfTheDepths.class, GrizzlyBears.class, Forest.class, Shock.class, HillGiant.class})
+@CardUsed({KioraMasterOfTheDepths.class, GrizzlyBears.class, Forest.class, Shock.class, HillGiant.class, LumberingFalls.class})
 class KioraMasterOfTheDepthsTest extends BaseCardTest {
 
     @Test
@@ -85,7 +85,7 @@ class KioraMasterOfTheDepthsTest extends BaseCardTest {
         declineEmblemTriggers(opponentGiant);
 
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
@@ -98,6 +98,95 @@ class KioraMasterOfTheDepthsTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(opponentGiant.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void plusOneCanTargetOnlyALand() {
+        Permanent kiora = addReadyKiora(player1, 3);
+        Permanent forest = addTapped(player1, new Forest());
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(forest.getId()));
+        harness.passBothPriorities();
+
+        assertThat(forest.isTapped()).isFalse();
+        assertThat(kiora.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+    }
+
+    @Test
+    void plusOneCanTargetOnlyACreature() {
+        addReadyKiora(player1, 3);
+        Permanent bear = addTapped(player2, new GrizzlyBears());
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(bear.getId()));
+        harness.passBothPriorities();
+
+        assertThat(bear.isTapped()).isFalse();
+    }
+
+    @Test
+    void plusOneCanHaveNoTargets() {
+        Permanent kiora = addReadyKiora(player1, 3);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(kiora.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void plusOneCanTargetTheSameAnimatedLandAsCreatureAndLand() {
+        Permanent kiora = addReadyKiora(player1, 3);
+        Permanent falls = harness.addToBattlefieldAndReturn(player1, new LumberingFalls());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.passBothPriorities();
+        falls.tap();
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(falls.getId(), falls.getId()));
+        harness.passBothPriorities();
+
+        assertThat(falls.isTapped()).isFalse();
+        assertThat(kiora.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+    }
+
+    @Test
+    void minusTwoCanDeclineBothCardsAndLeavesFifthCardInLibrary() {
+        addReadyKiora(player1, 3);
+        Card bear = new GrizzlyBears();
+        Card forest = new Forest();
+        Card shock = new Shock();
+        Card secondShock = new Shock();
+        Card fifth = new Forest();
+        harness.setLibrary(player1, List.of(bear, forest, shock, secondShock, fifth));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(bear, forest);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bear, forest, shock, secondShock);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fifth);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void minusTwoCanTakeOnlyALandFromAShortLibrary() {
+        addReadyKiora(player1, 3);
+        Card forest = new Forest();
+        Card shock = new Shock();
+        harness.setLibrary(player1, List.of(forest, shock));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        chooseLibraryCardNamed("Forest");
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(forest);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(shock);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void declineEmblemTriggers(Permanent target) {
@@ -114,31 +203,27 @@ class KioraMasterOfTheDepthsTest extends BaseCardTest {
     }
 
     private Permanent addReadyKiora(Player player, int loyalty) {
-        Permanent perm = new Permanent(new KioraMasterOfTheDepths());
-        perm.setCounterCount(CounterType.LOYALTY, loyalty);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new KioraMasterOfTheDepths());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
+        perm.setCounterCount(CounterType.LOYALTY, loyalty);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
     }
 
     private Permanent addTapped(Player player, Card card) {
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.tap();
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private void chooseLibraryCardNamed(String name) {
-        GameData gameData = harness.getGameData();
         PendingInteraction.LibrarySearch search =
-                gameData.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         int index = search.params().cards().stream()
                 .map(Card::getName)
                 .toList()
                 .indexOf(name);
-        harness.getGameService().handleInteractionAnswer(
-                gameData, player1, new InteractionAnswer.LibraryCardChosen(index));
+        harness.handleCardChosen(player1, index);
     }
 }
