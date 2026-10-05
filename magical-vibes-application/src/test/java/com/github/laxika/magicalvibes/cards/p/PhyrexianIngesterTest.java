@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.ActOfAggression;
+import com.github.laxika.magicalvibes.cards.d.Dismember;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,22 +16,19 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PhyrexianIngester.class, GrizzlyBears.class, PhyrexianDigester.class,
+        PsychosisCrawler.class, Dismember.class, ActOfAggression.class})
 class PhyrexianIngesterTest extends BaseCardTest {
 
     private void castIngesterAndAcceptMay(UUID targetId) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new PhyrexianIngester()));
-        harness.addMana(player1, ManaColor.BLUE, 7);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PhyrexianIngester(), "{6}{U}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
     }
-
-    // ===== ETB exile =====
 
     @Test
     @DisplayName("ETB exiles target nontoken creature and imprints it")
@@ -42,8 +42,6 @@ class PhyrexianIngesterTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
-
-    // ===== P/T boost from imprinted creature =====
 
     @Test
     @DisplayName("Gets +X/+Y equal to exiled creature's power and toughness")
@@ -75,8 +73,6 @@ class PhyrexianIngesterTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, ingester)).isEqualTo(4);
     }
 
-    // ===== No boost without imprint =====
-
     @Test
     @DisplayName("No P/T boost when may ability is declined")
     void noBoostWhenDeclined() {
@@ -85,10 +81,7 @@ class PhyrexianIngesterTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new PhyrexianIngester()));
-        harness.addMana(player1, ManaColor.BLUE, 7);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PhyrexianIngester(), "{6}{U}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
@@ -103,8 +96,6 @@ class PhyrexianIngesterTest extends BaseCardTest {
         // Grizzly Bears still on battlefield
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
-
-    // ===== Can exile own creature =====
 
     @Test
     @DisplayName("Can exile own creature")
@@ -123,8 +114,6 @@ class PhyrexianIngesterTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, ingester)).isEqualTo(5);
     }
 
-    // ===== Exile is permanent =====
-
     @Test
     @DisplayName("Exiled creature stays exiled when Phyrexian Ingester leaves the battlefield")
     void exiledCreatureStaysExiledWhenIngesterLeaves() {
@@ -133,7 +122,105 @@ class PhyrexianIngesterTest extends BaseCardTest {
 
         castIngesterAndAcceptMay(bearsId);
 
-        // No O-ring style tracking
-        assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
+        UUID ingesterId = harness.getPermanentId(player1, "Phyrexian Ingester");
+        harness.setHand(player1, List.of(new Dismember()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(player1, 0, ingesterId);
+
+        harness.assertInGraveyard(player1, "Phyrexian Ingester");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+    }
+
+    @Test
+    @DisplayName("Bonus tracks characteristic-defining power and toughness in exile")
+    void tracksExiledCreaturesChangingCharacteristics() {
+        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addToBattlefield(player2, new PsychosisCrawler());
+        UUID crawlerId = harness.getPermanentId(player2, "Psychosis Crawler");
+
+        castIngesterAndAcceptMay(crawlerId);
+
+        Permanent ingester = findPermanent(player1, "Phyrexian Ingester");
+        assertThat(gqs.getEffectivePower(gd, ingester)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ingester)).isEqualTo(5);
+
+        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        assertThat(gqs.getEffectivePower(gd, ingester)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, ingester)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Changing control before the trigger resolves preserves the linked bonus")
+    void imprintsWhenControlChangesBeforeResolution() {
+        harness.addToBattlefield(player2, new PhyrexianDigester());
+        UUID digesterId = harness.getPermanentId(player2, "Phyrexian Digester");
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new PhyrexianIngester(), "{6}{U}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, digesterId);
+
+        UUID ingesterId = harness.getPermanentId(player1, "Phyrexian Ingester");
+        harness.setHand(player2, List.of(new ActOfAggression()));
+        harness.addMana(player2, ManaColor.RED, 5);
+        harness.castAndResolveInstant(player2, 0, ingesterId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player2, "Phyrexian Digester");
+        Permanent ingester = findPermanent(player2, "Phyrexian Ingester");
+        assertThat(gqs.getEffectivePower(gd, ingester)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ingester)).isEqualTo(4);
+    }
+
+    @Test
+    @CardUsed({Panharmonicon.class})
+    @DisplayName("Multiple imprint triggers sum the characteristics of all exiled creature cards")
+    void sumsBonusesFromMultipleExiledCards() {
+        harness.addToBattlefield(player1, new Panharmonicon());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new PhyrexianDigester());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new PhyrexianDigester());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new PhyrexianIngester(), "{6}{U}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .filteredOn(c -> c.getName().equals("Phyrexian Digester"))
+                .hasSize(2);
+        Permanent ingester = findPermanent(player1, "Phyrexian Ingester");
+        assertThat(gqs.getEffectivePower(gd, ingester)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, ingester)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("An illegal target leaves Ingester without a bonus")
+    void targetRemovedBeforeTriggerResolves() {
+        harness.addToBattlefield(player2, new PhyrexianDigester());
+        UUID digesterId = harness.getPermanentId(player2, "Phyrexian Digester");
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new PhyrexianIngester(), "{6}{U}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, digesterId);
+
+        harness.setHand(player1, List.of(new Dismember()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(player1, 0, digesterId);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Phyrexian Digester");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        Permanent ingester = findPermanent(player1, "Phyrexian Ingester");
+        assertThat(gqs.getEffectivePower(gd, ingester)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ingester)).isEqualTo(3);
     }
 }
