@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MoggConscripts.class, TrainedArmodon.class, DarkRitual.class})
+@CardUsed({MoggConscripts.class, TrainedArmodon.class, DarkRitual.class, Counterspell.class})
 class MoggConscriptsTest extends BaseCardTest {
 
     @Test
@@ -75,6 +77,47 @@ class MoggConscriptsTest extends BaseCardTest {
         addCreatureReady(player1, new MoggConscripts());
         harness.castFromHand(player1, new DarkRitual(), "{B}");
         harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A countered creature spell still lifts the attack restriction")
+    void canAttackAfterCreatureSpellIsCountered() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new MoggConscripts());
+        TrainedArmodon armodon = new TrainedArmodon();
+        harness.castFromHand(player1, armodon, "{1}{G}{G}");
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player2, 0, armodon.getId());
+        harness.assertInGraveyard(player1, "Trained Armodon");
+        harness.assertNotOnBattlefield(player1, "Trained Armodon");
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isLessThan(20);
+    }
+
+    @Test
+    @DisplayName("A creature entering without being cast does not lift the attack restriction")
+    void creatureEnteringWithoutCastingDoesNotLiftRestriction() {
+        addCreatureReady(player1, new MoggConscripts());
+        harness.enterBattlefieldAndReturn(player1, new TrainedArmodon());
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A creature spell cast on a previous turn does not lift the attack restriction")
+    void creatureSpellFromPreviousTurnDoesNotLiftRestriction() {
+        addCreatureReady(player1, new MoggConscripts());
+        harness.castFromHand(player1, new TrainedArmodon(), "{1}{G}{G}");
+        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
