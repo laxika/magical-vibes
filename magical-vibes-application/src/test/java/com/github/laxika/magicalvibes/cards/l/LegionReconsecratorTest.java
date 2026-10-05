@@ -1,14 +1,16 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Mortivore;
+import com.github.laxika.magicalvibes.cards.n.NorwoodRanger;
 import com.github.laxika.magicalvibes.cards.s.SavannahLions;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -17,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LegionReconsecrator.class, GrizzlyBears.class, SavannahLions.class, WrathOfGod.class})
+@CardUsed({LegionReconsecrator.class, GrizzlyBears.class, SavannahLions.class, WrathOfGod.class,
+        Mortivore.class, NorwoodRanger.class})
 class LegionReconsecratorTest extends BaseCardTest {
 
     @Test
@@ -67,9 +70,7 @@ class LegionReconsecratorTest extends BaseCardTest {
         Card invalidTarget = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(validTarget, invalidTarget));
 
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities();
 
         PendingInteraction.MultiGraveyardChoice choice =
@@ -84,10 +85,112 @@ class LegionReconsecratorTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Savannah Lions");
     }
 
-    private Permanent addReadyLegion() {
-        Permanent legion = new Permanent(new LegionReconsecrator());
+    @Test
+    void deathCanReturnCreatureWithPowerOneAndToughnessGreaterThanOneOnlyFromYourGraveyard() {
+        addReadyLegion();
+        Card target = new NorwoodRanger();
+        Card opponentsCard = new SavannahLions();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setGraveyard(player2, List.of(opponentsCard));
+
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(target.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Norwood Ranger");
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentsCard);
+    }
+
+    @Test
+    void attackCanExileFromControllersGraveyardAndIgnoresNoncreatureCards() {
+        addReadyLegion();
+        Card target = new GrizzlyBears();
+        Card noncreature = new WrathOfGod();
+        harness.setGraveyard(player1, List.of(target, noncreature));
+
+        declareAttackers(List.of(0));
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).contains(target.getId()).doesNotContain(noncreature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2).contains(noncreature)
+                .doesNotContain(target);
+    }
+
+    @Test
+    void attackDoesNotConjureWhenTargetLeavesGraveyardBeforeResolution() {
+        addReadyLegion();
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(target));
+
+        declareAttackers(List.of(0));
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player2, List.of());
+        harness.setExile(player2, List.of(target));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(target);
+    }
+
+    @Test
+    void duplicateBasePowerAndToughnessOverrideCharacteristicDefiningAbilityInGraveyard() {
+        addReadyLegion();
+        Card target = new Mortivore();
+        harness.setGraveyard(player2, List.of(target, new GrizzlyBears()));
+
+        declareAttackers(List.of(0));
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        Card duplicate = gd.playerGraveyards.get(player1.getId()).getFirst();
+        assertThat(harness.getGameQueryService().getEffectiveCardPower(gd, duplicate)).isEqualTo(3);
+        assertThat(harness.getGameQueryService().getEffectiveCardToughness(gd, duplicate)).isEqualTo(1);
+    }
+
+    @Test
+    void deathCanReturnDuplicateWithCharacteristicDefiningAbilityAndPreservesItsBaseStats() {
+        addReadyLegion();
+        Card target = new Mortivore();
+        harness.setGraveyard(player2, List.of(target, new GrizzlyBears()));
+
+        declareAttackers(List.of(0));
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+        Card duplicate = gd.playerGraveyards.get(player1.getId()).getFirst();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).contains(duplicate.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(duplicate.getId()));
+        harness.passBothPriorities();
+
+        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(duplicate.getId()))
+                .findFirst().orElseThrow();
+        assertThat(harness.getGameQueryService().getEffectivePower(gd, returned)).isEqualTo(3);
+        assertThat(harness.getGameQueryService().getEffectiveToughness(gd, returned)).isEqualTo(1);
+        assertThat(returned.getCard().getSubtypes()).contains(CardSubtype.LHURGOYF, CardSubtype.SKELETON);
+    }
+
+    private void addReadyLegion() {
+        Permanent legion = harness.addToBattlefieldAndReturn(player1, new LegionReconsecrator());
         legion.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(legion);
-        return legion;
     }
 }
