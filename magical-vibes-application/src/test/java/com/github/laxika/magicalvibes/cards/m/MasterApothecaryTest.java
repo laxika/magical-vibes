@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.a.AvenFlock;
+import com.github.laxika.magicalvibes.cards.e.EngulfingFlames;
 import com.github.laxika.magicalvibes.cards.f.Firebolt;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MasterApothecary.class, AvenFlock.class, Forest.class, Firebolt.class})
+@CardUsed({MasterApothecary.class, AvenFlock.class, Forest.class, Firebolt.class, EngulfingFlames.class})
 class MasterApothecaryTest extends BaseCardTest {
 
     @Test
@@ -172,5 +173,117 @@ class MasterApothecaryTest extends BaseCardTest {
         int sourceIndex = gd.playerBattlefields.get(player1.getId()).indexOf(apothecary);
         assertThatThrownBy(() -> harness.activateAbility(player1, sourceIndex, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Apothecary may tap itself for its ability")
+    void summoningSickSourceMayTapItself() {
+        Permanent apothecary = harness.addToBattlefieldAndReturn(player1, new MasterApothecary());
+        apothecary.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(apothecary.isTapped()).isTrue();
+        harness.setHand(player1, List.of(new Firebolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("A tapped Apothecary may activate by tapping a summoning-sick Cleric")
+    void tappedSourceMayTapSummoningSickCleric() {
+        Permanent apothecary = addCreatureReady(player1, new MasterApothecary());
+        apothecary.tap();
+        Permanent cleric = harness.addToBattlefieldAndReturn(player1, new MasterApothecary());
+        cleric.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(cleric.isTapped()).isTrue();
+        harness.setHand(player1, List.of(new Firebolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Repeated activations accumulate shields that are consumed across damage events")
+    void repeatedActivationsAccumulateAndConsumeShields() {
+        addCreatureReady(player1, new MasterApothecary());
+        Permanent cleric = addCreatureReady(player1, new MasterApothecary());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handlePermanentChosen(player1, cleric.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Firebolt(), new Firebolt(), new Firebolt()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.assertLife(player2, 20);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.assertLife(player2, 20);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("A creature shield prevents noncombat damage only until its amount is exhausted")
+    void creatureShieldIsConsumedByNoncombatDamage() {
+        addCreatureReady(player1, new MasterApothecary());
+        Permanent target = addCreatureReady(player2, new AvenFlock());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Firebolt(), new Firebolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Aven Flock");
+    }
+
+    @Test
+    @DisplayName("Unused prevention remains for a later event and excess damage gets through")
+    void partiallyConsumedShieldPreventsOnlyRemainingAmount() {
+        addCreatureReady(player1, new MasterApothecary());
+        Permanent target = addCreatureReady(player2, new AvenFlock());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new EngulfingFlames(), new Firebolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(target.getDamagePreventionShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("An unused player shield expires at end of turn")
+    void playerShieldExpiresAtEndOfTurn() {
+        addCreatureReady(player1, new MasterApothecary());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
     }
 }
