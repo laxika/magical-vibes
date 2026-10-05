@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BlazingArchon;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.n.NicolBolasPlaneswalker;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PortalMage.class, GrizzlyBears.class, NicolBolasPlaneswalker.class})
+@CardUsed({PortalMage.class, GrizzlyBears.class, NicolBolasPlaneswalker.class,
+        BlazingArchon.class, InvasionOfZendikar.class})
 class PortalMageTest extends BaseCardTest {
 
     @Test
@@ -84,15 +87,74 @@ class PortalMageTest extends BaseCardTest {
     @Test
     @DisplayName("Does not trigger when it enters outside the declare attackers step")
     void doesNotTriggerOutsideDeclareAttackers() {
-        harness.setHand(player1, List.of(new PortalMage()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        preparePortalMage();
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Reselection ignores restrictions on attacking the new defender")
+    void ignoresAttackRestrictionsWhenReselecting() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        int lifeBefore = gd.getLife(player2.getId());
+        preparePortalMage();
+        declareAttackers(List.of(0));
+        harness.addToBattlefield(player2, new BlazingArchon());
+
+        castPortalMage(attacker.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, attacker.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.permanentChoiceContext())
+                .isInstanceOf(PermanentChoiceContext.ReselectAttackTarget.class);
+        harness.handlePermanentChosen(player1, player2.getId());
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("Can reselect its controller's battle protected by an opponent")
+    void canReselectOwnBattleProtectedByOpponent() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfZendikar());
+        battle.setProtectorPlayerId(player2.getId());
+        battle.setCounterCount(CounterType.DEFENSE, 3);
+        int lifeBefore = gd.getLife(player2.getId());
+        preparePortalMage();
+        declareAttackers(List.of(0));
+
+        castPortalMage(attacker.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, attacker.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, battle.getId());
+
+        assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(1);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("May keep attacking the originally selected player")
+    void canReselectSamePlayer() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        int lifeBefore = gd.getLife(player2.getId());
+        preparePortalMage();
+        declareAttackers(List.of(0));
+
+        castPortalMage(attacker.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, attacker.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
     }
 
     private void castPortalMage(java.util.UUID attackerId) {
