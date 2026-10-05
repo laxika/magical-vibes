@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -92,5 +91,75 @@ class LeonardosTechniqueTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Llanowar Elves");
+    }
+
+    @Test
+    void canChooseOnlyOneCreatureAndCannotChooseSorceriesOrOpponentsCards() {
+        Card chosen = new LlanowarElves();
+        Card unchosen = new GrizzlyBears();
+        Card sorcery = new LeonardosTechnique();
+        Card opponentsCard = new LlanowarElves();
+        harness.setGraveyard(player1, List.of(chosen, unchosen, sorcery));
+        harness.setGraveyard(player2, List.of(opponentsCard));
+        harness.setHand(player1, List.of(new LeonardosTechnique()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0, List.of());
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(chosen.getId(), unchosen.getId());
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId()).containsExactly(chosen.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId).contains(unchosen.getId(), sorcery.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(Card::getId).containsExactly(opponentsCard.getId());
+    }
+
+    @Test
+    void returnsRemainingLegalTargetWhenOneTargetLeavesGraveyard() {
+        Card first = new LlanowarElves();
+        Card second = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new LeonardosTechnique()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castSorcery(player1, 0, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+
+        harness.setGraveyard(player1, List.of(second));
+        harness.setExile(player1, List.of(first));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId()).containsExactly(second.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isAttacking()).isFalse();
+    }
+
+    @Test
+    void cannotSneakOutsideDeclareBlockers() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        harness.setGraveyard(player1, List.of(new LlanowarElves()));
+        harness.setHand(player1, List.of(new LeonardosTechnique()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of(attacker.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Leonardo's Technique");
     }
 }
