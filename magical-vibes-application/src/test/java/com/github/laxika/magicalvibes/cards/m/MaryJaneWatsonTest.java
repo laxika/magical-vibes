@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.x.Xenograft;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MaryJaneWatson.class, GiantSpider.class, GrizzlyBears.class, Forest.class})
+@CardUsed({MaryJaneWatson.class, GiantSpider.class, GrizzlyBears.class, Forest.class, Xenograft.class})
 class MaryJaneWatsonTest extends BaseCardTest {
 
     @Test
@@ -27,8 +28,7 @@ class MaryJaneWatsonTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(forest));
         castCreature(player1, new GiantSpider());
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(forest);
     }
@@ -64,8 +64,7 @@ class MaryJaneWatsonTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(first, second));
 
         castCreature(player1, new GiantSpider());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second);
 
         castCreature(player1, new GiantSpider());
@@ -85,19 +84,52 @@ class MaryJaneWatsonTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(first, second, third));
 
         castCreature(player1, new GiantSpider());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, third);
 
         advanceTurn();
         advanceTurn();
 
         castCreature(player1, new GiantSpider());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).contains(third);
+    }
+
+    @Test
+    @DisplayName("Draws when Mary Jane herself enters as a Spider")
+    void drawsWhenSheEntersAsSpider() {
+        harness.setHand(player1, List.of(new Xenograft()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "SPIDER");
+
+        Forest drawn = new Forest();
+        harness.setLibrary(player1, List.of(drawn));
+        castCreature(player1, new MaryJaneWatson());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A non-Spider does not consume the trigger for the turn")
+    void nonSpiderDoesNotConsumeTrigger() {
+        harness.addToBattlefield(player1, new MaryJaneWatson());
+        Forest drawn = new Forest();
+        harness.setLibrary(player1, List.of(drawn));
+
+        castCreature(player1, new GrizzlyBears());
+        resolveAllTriggers();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+
+        castCreature(player1, new GiantSpider());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
     }
 
     private void castCreature(Player player, Card card) {
