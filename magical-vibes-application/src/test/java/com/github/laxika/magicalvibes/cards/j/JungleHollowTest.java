@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({JungleHollow.class})
 class JungleHollowTest extends BaseCardTest {
 
     @Test
@@ -19,7 +21,7 @@ class JungleHollowTest extends BaseCardTest {
     void entersTappedAndGainsOneLife() {
         harness.setHand(player1, List.of(new JungleHollow()));
 
-        gs.playCard(gd, player1, 0, 0, null, null);
+        harness.playLand(player1, 0);
         harness.passBothPriorities();
 
         Permanent hollow = gd.playerBattlefields.get(player1.getId()).getFirst();
@@ -56,9 +58,38 @@ class JungleHollowTest extends BaseCardTest {
     }
 
     private Permanent addHollowReady(Player player) {
-        Permanent perm = new Permanent(new JungleHollow());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new JungleHollow());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
+    }
+
+    @Test
+    @DisplayName("Life gain waits for the entry trigger to resolve and survives removal of the land")
+    void lifeGainTriggerSurvivesSourceLeaving() {
+        harness.setHand(player1, List.of(new JungleHollow()));
+        harness.playLand(player1, 0);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+        Permanent hollow = gd.playerBattlefields.get(player1.getId()).removeFirst();
+        gd.playerGraveyards.get(player1.getId()).add(hollow.getCard());
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entry outside a land play gains life only for the entering land's controller")
+    void enteringUnderOtherPlayersControlGainsLifeForThatPlayer() {
+        Permanent hollow = harness.enterBattlefieldAndReturn(player2, new JungleHollow());
+
+        assertThat(hollow.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 21);
     }
 }
