@@ -71,4 +71,53 @@ class NornsDominionTest extends BaseCardTest {
 
         assertThat(target.getCounterCount(CounterType.FATE)).isEqualTo(1);
     }
+
+    @Test
+    void chaosCanBeDeclinedWithoutRemovingExistingFateCounters() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.setCounterCount(CounterType.FATE, 2);
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.FATE)).isEqualTo(2);
+    }
+
+    @Test
+    void chaosCanPutAnotherFateCounterOnAnOpponentsLand() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        target.setCounterCount(CounterType.FATE, 1);
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.FATE)).isEqualTo(2);
+    }
+
+    @Test
+    void departureRemovesEveryFateCounterButPreservesOtherCounterTypes() {
+        Permanent marked = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        marked.setCounterCount(CounterType.FATE, 3);
+        marked.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent unmarked = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        unmarked.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.inMutationScope(() -> planar.planeswalk(gd));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(marked);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(land).doesNotContain(unmarked);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(unmarked.getCard());
+        assertThat(marked.getCounterCount(CounterType.FATE)).isZero();
+        assertThat(marked.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
 }
