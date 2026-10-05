@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.a.AvatarOfWoe;
 import com.github.laxika.magicalvibes.cards.d.DivingGriffin;
 import com.github.laxika.magicalvibes.cards.g.GreelsCaress;
 import com.github.laxika.magicalvibes.cards.s.SearingWind;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({MercenaryInformer.class, AgentOfShauku.class, AvatarOfWoe.class,
-        DivingGriffin.class, GreelsCaress.class, SearingWind.class})
+        DivingGriffin.class, GreelsCaress.class, SearingWind.class, TurnToFrog.class})
 class MercenaryInformerTest extends BaseCardTest {
 
     @Test
@@ -121,7 +122,7 @@ class MercenaryInformerTest extends BaseCardTest {
     @Test
     @DisplayName("Puts a controlled Mercenary in its owner's library")
     void putsControlledMercenaryInOwnersLibrary() {
-        Permanent informer = addCreatureReady(player1, new MercenaryInformer());
+        addCreatureReady(player1, new MercenaryInformer());
         AgentOfShauku ownedByPlayer1 = new AgentOfShauku();
         ownedByPlayer1.setOwnerId(player1.getId());
         Permanent mercenary = addCreatureReady(player2, ownedByPlayer1);
@@ -137,5 +138,101 @@ class MercenaryInformerTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(player1DeckSizeBefore + 1);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(player2DeckSizeBefore);
         assertThat(gd.playerDecks.get(player1.getId())).last().isSameAs(mercenary.getCard());
+    }
+
+    @Test
+    @DisplayName("Losing all abilities allows black spells to target it")
+    void canBeTargetedByBlackSpellAfterLosingAbilities() {
+        Permanent informer = addCreatureReady(player1, new MercenaryInformer());
+        harness.setHand(player2, List.of(new TurnToFrog()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, informer.getId());
+
+        harness.setHand(player2, List.of(new GreelsCaress()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player2, 0, informer.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player2, "Greel's Caress");
+        assertThat(aura.getAttachedTo()).isEqualTo(informer.getId());
+    }
+
+    @Test
+    @DisplayName("Losing all abilities allows abilities from black sources to target it")
+    void canBeTargetedByBlackAbilityAfterLosingAbilities() {
+        Permanent informer = addCreatureReady(player1, new MercenaryInformer());
+        addCreatureReady(player2, new AvatarOfWoe());
+        harness.setHand(player2, List.of(new TurnToFrog()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, informer.getId());
+
+        harness.activateAbility(player2, 0, null, informer.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(informer);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(informer.getCard());
+    }
+
+    @Test
+    @DisplayName("Can put itself on the bottom of its owner's library")
+    void canTargetItself() {
+        Permanent informer = addCreatureReady(player1, new MercenaryInformer());
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, informer.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(informer);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore + 1);
+        assertThat(gd.playerDecks.get(player1.getId())).last().isSameAs(informer.getCard());
+    }
+
+    @Test
+    @DisplayName("Can activate repeatedly while tapped and summoning sick")
+    void canActivateRepeatedlyWhileTappedAndSummoningSick() {
+        Permanent informer = harness.addToBattlefieldAndReturn(player1, new MercenaryInformer());
+        informer.setSummoningSick(true);
+        informer.setTapped(true);
+        Permanent first = addCreatureReady(player2, new AgentOfShauku());
+        Permanent second = addCreatureReady(player2, new AgentOfShauku());
+        int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, first.getId());
+        harness.activateAbility(player1, 0, null, second.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(informer);
+        assertThat(informer.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(first, second);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore + 2);
+        assertThat(gd.playerDecks.get(player2.getId())).endsWith(second.getCard(), first.getCard());
+    }
+
+    @Test
+    @DisplayName("An ability whose target has left the battlefield does not move it again")
+    void doesNotMoveTargetAgainAfterItLeavesBattlefield() {
+        addCreatureReady(player1, new MercenaryInformer());
+        Permanent mercenary = addCreatureReady(player2, new AgentOfShauku());
+        int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, mercenary.getId());
+        harness.activateAbility(player1, 0, null, mercenary.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(mercenary);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore + 1);
+        assertThat(gd.playerDecks.get(player2.getId())).last().isSameAs(mercenary.getCard());
     }
 }
