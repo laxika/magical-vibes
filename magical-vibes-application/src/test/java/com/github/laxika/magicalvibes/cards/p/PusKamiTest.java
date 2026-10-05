@@ -83,10 +83,8 @@ class PusKamiTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getId().equals(spirit.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getId().equals(spirit.getId()));
+        harness.assertInHand(player1, "Teardrop Kami");
+        harness.assertNotInGraveyard(player1, "Teardrop Kami");
     }
 
     @Test
@@ -131,10 +129,70 @@ class PusKamiTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getId().equals(spirit.getId()));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(card -> card.getId().equals(spirit.getId()));
+        harness.assertInGraveyard(player1, "Teardrop Kami");
+        harness.assertNotInHand(player1, "Teardrop Kami");
+    }
+
+    @Test
+    @DisplayName("Ability can destroy your own nonblack creature")
+    void destroysOwnNonblackCreature() {
+        harness.addToBattlefield(player1, new PusKami());
+        harness.addToBattlefield(player1, new GoblinCohort());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player1, "Goblin Cohort"));
+
+        harness.assertNotOnBattlefield(player1, "Pus Kami");
+        harness.assertOnBattlefield(player1, "Goblin Cohort");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Goblin Cohort");
+        harness.assertInGraveyard(player1, "Goblin Cohort");
+    }
+
+    @Test
+    @DisplayName("Soulshift returns a Spirit with mana value exactly six before the activated ability resolves")
+    void soulshiftReturnsBoundarySpiritBeforeDestruction() {
+        harness.addToBattlefield(player1, new PusKami());
+        harness.addToBattlefield(player2, new GoblinCohort());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        Card spirit = new PatronOfTheKitsune();
+        harness.setGraveyard(player1, List.of(spirit));
+
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Goblin Cohort"));
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Patron of the Kitsune");
+        harness.assertNotInGraveyard(player1, "Patron of the Kitsune");
+        harness.assertOnBattlefield(player2, "Goblin Cohort");
+
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Goblin Cohort");
+    }
+
+    @Test
+    @DisplayName("Soulshift cannot return a target that has left the graveyard or choose a replacement")
+    void soulshiftDoesNotRetargetMissingSpirit() {
+        harness.addToBattlefield(player1, new PusKami());
+        harness.addToBattlefield(player2, new GoblinCohort());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        Card target = new TeardropKami();
+        Card otherSpirit = new BileUrchin();
+        harness.setGraveyard(player1, List.of(target, otherSpirit));
+
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Goblin Cohort"));
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, gd.playerGraveyards.get(player1.getId()).stream()
+                .filter(card -> !card.getId().equals(target.getId()))
+                .toList());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotInHand(player1, "Teardrop Kami");
+        harness.assertNotInHand(player1, "Bile Urchin");
+        harness.assertInGraveyard(player1, "Bile Urchin");
     }
 
     @Test
