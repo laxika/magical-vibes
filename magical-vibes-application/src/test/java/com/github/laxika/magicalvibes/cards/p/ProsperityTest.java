@@ -71,7 +71,6 @@ class ProsperityTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed({GrizzlyBears.class})
     @DisplayName("X=1: each player draws one card from their own library")
     void eachPlayerDrawsOneCardFromTheirOwnLibrary() {
         Prosperity player1Spell = new Prosperity();
@@ -89,5 +88,42 @@ class ProsperityTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(player2Card);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Both players lose together when X exceeds both libraries")
+    void drawingBeyondBothLibrariesEndsInADraw() {
+        GrizzlyBears player1Card = new GrizzlyBears();
+        GrizzlyBears player2Card = new GrizzlyBears();
+        harness.setHand(player1, List.of(new Prosperity()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(player1Card));
+        harness.setLibrary(player2, List.of(player2Card));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 2);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(player1Card);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(player2Card);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty caster library does not prevent the opponent's draws")
+    void opponentDrawsBeforeCasterLosesToEmptyLibrary() {
+        GrizzlyBears opponentCard = new GrizzlyBears();
+        harness.setHand(player1, List.of(new Prosperity()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of(opponentCard));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
     }
 }
