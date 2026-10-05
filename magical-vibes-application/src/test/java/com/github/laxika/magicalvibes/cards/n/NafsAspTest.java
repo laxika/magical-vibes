@@ -28,6 +28,7 @@ class NafsAspTest extends BaseCardTest {
 
     /** Advance to player2's draw step and resolve any unpaid life-loss obligations. */
     private void advanceToPlayer2DrawStepObligation() {
+        resolveAllTriggers();
         gd.turnNumber = 2; // avoid the starting-player turn-1 draw-step skip
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.UPKEEP);
@@ -171,6 +172,64 @@ class NafsAspTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("No unpaid");
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    void delayedTriggerIsControlledByTheControllerOfTheDamageTrigger() {
+        Permanent asp = addReadyAsp();
+        asp.setAttacking(true);
+        dealCombatDamageToPlayer2();
+        resolveAllTriggers();
+        gd.turnNumber = 2;
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        resolveAllTriggers();
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void obligationSurvivesTheAspLeavingTheBattlefieldAndDoesNotRepeat() {
+        Permanent asp = addReadyAsp();
+        asp.setAttacking(true);
+        dealCombatDamageToPlayer2();
+        resolveAllTriggers();
+        gd.playerBattlefields.get(player1.getId()).remove(asp);
+        gd.playerGraveyards.get(player1.getId()).add(asp.getCard());
+
+        advanceToPlayer2DrawStepObligation();
+        harness.assertLife(player2, 18);
+        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).isEmpty();
+
+        advanceToPlayer2DrawStepObligation();
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void damageToTheAspsControllerAlsoCreatesAnObligation() {
+        Permanent asp = addReadyAsp();
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HermeticStudy());
+        aura.setAttachedTo(asp.getId());
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+        harness.assertLife(player1, 19);
+
+        gd.turnNumber = 2;
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).isEmpty();
     }
 
     @Test
