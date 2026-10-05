@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TrollAscetic;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LoyalSentry.class, GrizzlyBears.class})
+@CardUsed({LoyalSentry.class, GrizzlyBears.class, TrollAscetic.class})
 class LoyalSentryTest extends BaseCardTest {
 
     private Permanent addSentryBlocker() {
@@ -221,5 +222,45 @@ class LoyalSentryTest extends BaseCardTest {
         Permanent perm = findPermanent(player1, "Loyal Sentry");
         assertThat(perm.isSummoningSick()).isTrue();
     }
+
+    @Test
+    @DisplayName("The block trigger destroys a hexproof attacker without targeting it")
+    void destroysHexproofAttacker() {
+        Permanent attacker = addCreatureReady(player1, new TrollAscetic());
+        attacker.setAttacking(true);
+
+        declareBlock(addSentryBlocker(), attacker);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Troll Ascetic");
+        harness.assertInGraveyard(player2, "Loyal Sentry");
+        harness.assertNotOnBattlefield(player1, "Troll Ascetic");
+        harness.assertNotOnBattlefield(player2, "Loyal Sentry");
+    }
+
+    @Test
+    @DisplayName("An attacker can regenerate while Loyal Sentry is still destroyed")
+    void regeneratingAttackerSurvivesAndDealsNoCombatDamage() {
+        Permanent attacker = addCreatureReady(player1, new TrollAscetic());
+        attacker.setAttacking(true);
+        harness.setLife(player2, 20);
+
+        declareBlock(addSentryBlocker(), attacker);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Troll Ascetic");
+        harness.assertNotInGraveyard(player1, "Troll Ascetic");
+        assertThat(attacker.isTapped()).isTrue();
+        assertThat(attacker.isAttacking()).isFalse();
+        harness.assertInGraveyard(player2, "Loyal Sentry");
+        harness.assertNotOnBattlefield(player2, "Loyal Sentry");
+
+        resolveCombat();
+        harness.assertLife(player2, 20);
+    }
+
 }
 
