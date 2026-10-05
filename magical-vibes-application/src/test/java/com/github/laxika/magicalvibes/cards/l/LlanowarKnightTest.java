@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AggressiveUrge;
 import com.github.laxika.magicalvibes.cards.a.AgonizingDemise;
 import com.github.laxika.magicalvibes.cards.b.BogInitiate;
 import com.github.laxika.magicalvibes.cards.c.CursedFlesh;
-import com.github.laxika.magicalvibes.cards.l.LlanowarCavalry;
+import com.github.laxika.magicalvibes.cards.s.ShivanZombie;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({LlanowarKnight.class, LlanowarCavalry.class, AgonizingDemise.class,
-        AggressiveUrge.class, BogInitiate.class, CursedFlesh.class})
+        AggressiveUrge.class, BogInitiate.class, CursedFlesh.class, ShivanZombie.class})
 class LlanowarKnightTest extends BaseCardTest {
 
     @Test
@@ -55,8 +55,7 @@ class LlanowarKnightTest extends BaseCardTest {
         addCreatureReady(player1, new BogInitiate());
         addCreatureReady(player2, new LlanowarKnight());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -92,5 +91,52 @@ class LlanowarKnightTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(3);
         harness.assertInHand(player1, "Llanowar Cavalry");
+    }
+
+    @Test
+    @DisplayName("Multicolored black creatures cannot block Llanowar Knight")
+    void multicoloredBlackCreaturesCannotBlockLlanowarKnight() {
+        addCreatureReady(player1, new LlanowarKnight());
+        addCreatureReady(player2, new ShivanZombie());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Nonblack creatures can block and deal combat damage to Llanowar Knight")
+    void nonblackCreaturesCanBlockAndDealCombatDamage() {
+        addCreatureReady(player1, new LlanowarKnight());
+        addCreatureReady(player2, new LlanowarKnight());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Llanowar Knight");
+        harness.assertInGraveyard(player2, "Llanowar Knight");
+        harness.assertLife(player2, 20);
+    }
+    @Test
+    @DisplayName("Protection prevents otherwise lethal combat damage from a black creature")
+    void preventsOtherwiseLethalBlackCombatDamage() {
+        Permanent attacker = addCreatureReady(player1, new BogInitiate());
+        Permanent knight = addCreatureReady(player2, new LlanowarKnight());
+        harness.setHand(player1, List.of(new AggressiveUrge()));
+        harness.setLibrary(player1, List.of(new LlanowarCavalry()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player2, "Llanowar Knight");
+        assertThat(knight.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Bog Initiate");
+        harness.assertLife(player2, 20);
     }
 }
