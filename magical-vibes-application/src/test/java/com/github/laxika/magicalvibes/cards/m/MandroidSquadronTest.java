@@ -9,6 +9,41 @@ import org.junit.jupiter.api.Test;
 class MandroidSquadronTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Casting it gains life only after its enter trigger resolves")
+    void castingGainsLifeOnlyWhenEnterTriggerResolves() {
+        harness.setLife(player1, 8);
+        harness.setLife(player2, 17);
+
+        harness.castFromHand(player1, new MandroidSquadron(), "{1}{W}");
+        harness.assertLife(player1, 8);
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Mandroid Squadron");
+        harness.assertLife(player1, 8);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Each entering copy creates its own life gain trigger")
+    void eachEnteringCopyGainsTwoLife() {
+        harness.setLife(player1, 8);
+        harness.setLife(player2, 17);
+
+        harness.enterBattlefieldAndReturn(player1, new MandroidSquadron());
+        harness.enterBattlefieldAndReturn(player1, new MandroidSquadron());
+        harness.assertLife(player1, 8);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 12);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
     @DisplayName("When it enters, its controller gains 2 life")
     void enteringGivesItsControllerTwoLife() {
         harness.setLife(player1, 8);
