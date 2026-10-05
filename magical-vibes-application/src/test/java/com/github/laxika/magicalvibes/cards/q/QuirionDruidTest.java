@@ -118,9 +118,75 @@ class QuirionDruidTest extends BaseCardTest {
     }
 
     private Permanent addLand(Player player) {
-        Permanent perm = new Permanent(new Quicksand());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new Quicksand());
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Druid cannot pay the tap cost")
+    void summoningSickDruidCannotActivate() {
+        harness.addToBattlefield(player1, new QuirionDruid());
+        Permanent land = addLand(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gqs.isCreature(gd, land)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Activation requires green mana")
+    void cannotActivateWithOnlyColorlessMana() {
+        Permanent druid = addCreatureReady(player1, new QuirionDruid());
+        Permanent land = addLand(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(druid.isTapped()).isFalse();
+        assertThat(gqs.isCreature(gd, land)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Animation persists after the Druid returns to hand")
+    void animationSurvivesSourceLeaving() {
+        Permanent druid = addCreatureReady(player1, new QuirionDruid());
+        Permanent land = addLand(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new ManOWar()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castCreature(player1, 0, druid.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Quirion Druid");
+        harness.assertNotOnBattlefield(player1, "Quirion Druid");
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+        assertThat(gqs.isLand(gd, land)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(2);
+        assertThat(gqs.getEffectiveColors(gd, land)).containsExactly(CardColor.GREEN);
+    }
+
+    @Test
+    @DisplayName("A later color-setting effect overrides green without ending animation")
+    void laterColorSettingOverridesGreen() {
+        addCreatureReady(player1, new QuirionDruid());
+        Permanent land = addLand(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Chaoslace()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, land.getId());
+
+        assertThat(gqs.getEffectiveColors(gd, land)).containsExactly(CardColor.RED);
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+        assertThat(gqs.isLand(gd, land)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(2);
     }
 }
