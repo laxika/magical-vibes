@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.l.LordOfAtlantis;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.t.Tsunami;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -21,14 +23,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({MagicalHack.class, GrizzlyBears.class, LordOfAtlantis.class,
-        MerfolkOfThePearlTrident.class, Swamp.class})
+        MerfolkOfThePearlTrident.class, Swamp.class, Tsunami.class, Island.class})
 class MagicalHackTest extends BaseCardTest {
-
-    private Permanent grizzly(UUID ownerId) {
-        return gd.playerBattlefields.get(ownerId).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
-    }
 
     @Test
     @DisplayName("Changes a basic land type on a target permanent")
@@ -44,7 +40,7 @@ class MagicalHackTest extends BaseCardTest {
         harness.handleListChoice(player1, "PLAINS");
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(grizzly(player2.getId()).getTextReplacements())
+        assertThat(findPermanent(player2, "Grizzly Bears").getTextReplacements())
                 .containsExactly(new TextReplacement("Swamp", "Plains"));
     }
 
@@ -81,7 +77,7 @@ class MagicalHackTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve the Grizzly Bears spell
 
-        assertThat(grizzly(player1.getId()).getTextReplacements())
+        assertThat(findPermanent(player1, "Grizzly Bears").getTextReplacements())
                 .containsExactly(new TextReplacement("Swamp", "Plains"));
     }
 
@@ -158,5 +154,62 @@ class MagicalHackTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handleListChoice(player1, "SWAMP"))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("Changes the land type in a sorcery's destruction instruction")
+    void changesLandTypeInSorceryInstruction() {
+        harness.addToBattlefield(player2, new Swamp());
+        harness.addToBattlefield(player2, new Island());
+        harness.castFromHand(player1, new Tsunami(), "{3}{G}");
+        UUID tsunamiSpellId = gd.stack.getLast().getCard().getId();
+        harness.setHand(player1, List.of(new MagicalHack()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, tsunamiSpellId);
+        harness.handleListChoice(player1, "ISLAND");
+        harness.handleListChoice(player1, "SWAMP");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Swamp");
+        harness.assertInGraveyard(player2, "Swamp");
+        harness.assertOnBattlefield(player2, "Island");
+    }
+
+    @Test
+    @DisplayName("Changing a recipient's text does not change landwalk granted by another permanent")
+    void doesNotChangeGrantedLandwalkOnRecipient() {
+        harness.addToBattlefield(player1, new LordOfAtlantis());
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new MerfolkOfThePearlTrident());
+        harness.setHand(player1, List.of(new MagicalHack()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, merfolk.getId());
+        harness.handleListChoice(player1, "ISLAND");
+        harness.handleListChoice(player1, "SWAMP");
+
+        assertThat(gqs.hasKeyword(gd, merfolk, Keyword.ISLANDWALK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, merfolk, Keyword.SWAMPWALK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Successive text changes compose on a basic land")
+    void successiveLandTypeChangesCompose() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
+        harness.setHand(player1, List.of(new MagicalHack(), new MagicalHack()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, swamp.getId());
+        harness.handleListChoice(player1, "SWAMP");
+        harness.handleListChoice(player1, "PLAINS");
+        harness.castAndResolveInstant(player1, 0, swamp.getId());
+        harness.handleListChoice(player1, "PLAINS");
+        harness.handleListChoice(player1, "FOREST");
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, swamp)).containsExactly(CardSubtype.FOREST);
+        harness.tapPermanent(player2, 0);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isZero();
     }
 }
