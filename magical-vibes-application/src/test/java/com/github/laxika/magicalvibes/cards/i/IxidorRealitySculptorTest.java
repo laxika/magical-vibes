@@ -75,4 +75,69 @@ class IxidorRealitySculptorTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void faceDownIxidorHasNoBoostAbility() {
+        Permanent ixidor = addCreatureReady(player1, new IxidorRealitySculptor());
+        Permanent target = addCreatureReady(player2, new FoothillGuide());
+        ixidor.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        target.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        assertThat(gqs.getEffectivePower(gd, ixidor)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ixidor)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    void boostsFromBothPlayersIxidorsAreCumulative() {
+        addCreatureReady(player1, new IxidorRealitySculptor());
+        addCreatureReady(player2, new IxidorRealitySculptor());
+        Permanent target = addCreatureReady(player1, new FoothillGuide());
+        target.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+    }
+
+    @Test
+    void targetCanBeTurnedFaceUpByMorphInResponse() {
+        addCreatureReady(player1, new IxidorRealitySculptor());
+        Permanent target = addCreatureReady(player2, new FoothillGuide());
+        target.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passPriority(player1);
+        harness.turnFaceUp(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(target.isFaceDown()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void activatedAbilityResolvesAfterIxidorLeavesBattlefield() {
+        Permanent ixidor = addCreatureReady(player1, new IxidorRealitySculptor());
+        Permanent target = addCreatureReady(player2, new FoothillGuide());
+        target.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(ixidor);
+        gd.playerGraveyards.get(player1.getId()).add(ixidor.getCard());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        harness.passBothPriorities();
+
+        assertThat(target.isFaceDown()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+    }
 }
