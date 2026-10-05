@@ -65,6 +65,35 @@ class MetamorphicWurmTest extends BaseCardTest {
         assertStats(wurm, 3, 3);
     }
 
+    @Test
+    @DisplayName("Multiple Wurms each receive only their own threshold bonus")
+    void thresholdBonusDoesNotStackAcrossWurms() {
+        harness.setGraveyard(player1, createGraveyard(7));
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new MetamorphicWurm());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new MetamorphicWurm());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new MetamorphicWurm());
+
+        assertStats(first, 7, 7);
+        assertStats(second, 7, 7);
+        assertStats(opposing, 3, 3);
+    }
+
+    @Test
+    @DisplayName("Threshold follows the current controller rather than the original controller")
+    void thresholdUpdatesAfterControlChanges() {
+        harness.setGraveyard(player1, createGraveyard(7));
+        harness.setGraveyard(player2, createGraveyard(6));
+        Permanent wurm = harness.addToBattlefieldAndReturn(player1, new MetamorphicWurm());
+        assertStats(wurm, 7, 7);
+
+        gd.playerBattlefields.get(player1.getId()).remove(wurm);
+        gd.playerBattlefields.get(player2.getId()).add(wurm);
+        assertStats(wurm, 3, 3);
+
+        harness.setGraveyard(player2, createGraveyard(7));
+        assertStats(wurm, 7, 7);
+    }
+
     private void assertStats(Permanent wurm, int power, int toughness) {
         assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(power);
         assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(toughness);
