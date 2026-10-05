@@ -2,14 +2,13 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.i.IronTuskElephant;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.v.VedalkenOrrery;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LightningReflexes.class, IronTuskElephant.class, Island.class})
+@CardUsed({LightningReflexes.class, IronTuskElephant.class, Island.class, VedalkenOrrery.class})
 class LightningReflexesTest extends BaseCardTest {
 
     @Test
@@ -64,7 +63,7 @@ class LightningReflexesTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, elephant.getId());
         harness.passBothPriorities();
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.passUntilWithNoAttackers(null, TurnStep.CLEANUP);
 
         harness.assertOnBattlefield(player1, "Lightning Reflexes");
     }
@@ -83,7 +82,9 @@ class LightningReflexesTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Lightning Reflexes");
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.passUntilWithNoAttackers(null, TurnStep.CLEANUP);
+        harness.assertOnBattlefield(player1, "Lightning Reflexes");
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Lightning Reflexes");
         harness.assertInGraveyard(player1, "Lightning Reflexes");
@@ -104,11 +105,56 @@ class LightningReflexesTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, opposingElephant)).isEqualTo(4);
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.passUntilWithNoAttackers(null, TurnStep.CLEANUP);
+        harness.assertOnBattlefield(player1, "Lightning Reflexes");
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Lightning Reflexes");
         harness.assertInGraveyard(player1, "Lightning Reflexes");
         assertThat(gqs.getEffectivePower(gd, opposingElephant)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Casting in a main phase with a spell on the stack still requires cleanup sacrifice")
+    void castWithNonemptyStackIsSacrificedAtCleanup() {
+        Permanent elephant = addCreatureReady(player1, new IronTuskElephant());
+        harness.setHand(player1, List.of(new LightningReflexes(), new LightningReflexes()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castEnchantment(player1, 0, elephant.getId());
+        harness.castEnchantment(player1, 0, elephant.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, elephant)).isEqualTo(5);
+
+        harness.passUntilWithNoAttackers(null, TurnStep.CLEANUP);
+        assertThat(gqs.getEffectivePower(gd, elephant)).isEqualTo(5);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, elephant)).isEqualTo(4);
+        harness.assertOnBattlefield(player1, "Lightning Reflexes");
+        harness.assertInGraveyard(player1, "Lightning Reflexes");
+    }
+
+    @Test
+    @CardUsed(VedalkenOrrery.class)
+    @DisplayName("A separate flash permission avoids the cleanup sacrifice")
+    void castUsingOrrerySurvivesCleanup() {
+        Permanent elephant = addCreatureReady(player1, new IronTuskElephant());
+        harness.addToBattlefield(player1, new VedalkenOrrery());
+        harness.setHand(player1, List.of(new LightningReflexes()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+
+        harness.castEnchantment(player1, 0, elephant.getId());
+        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(null, TurnStep.CLEANUP);
+
+        harness.assertOnBattlefield(player1, "Lightning Reflexes");
+        harness.assertNotInGraveyard(player1, "Lightning Reflexes");
+        assertThat(gqs.getEffectivePower(gd, elephant)).isEqualTo(4);
     }
 
     @Test
