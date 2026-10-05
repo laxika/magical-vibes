@@ -45,4 +45,66 @@ class MemorialVaultTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+    @Test
+    void canPlayExiledLandAndCastExiledSpellByPayingItsCost() {
+        harness.addToBattlefield(player1, new MemorialVault());
+        harness.addToBattlefield(player1, new SolRing());
+        Card land = new Forest();
+        Card spell = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(land, spell));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.castFromExile(player1, land.getId());
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThatThrownBy(() -> harness.castFromExile(player1, spell.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.GREEN, 2);
+        harness.castFromExile(player1, spell.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void chosenArtifactManaValueIsUsedWhenSeveralArtifactsAreAvailable() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new MemorialVault());
+        Permanent chosen = harness.addToBattlefieldAndReturn(player1, new MemorialVault());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new MemorialVault());
+        List<Card> library = List.of(new MemorialVault(), new MemorialVault(), new MemorialVault(),
+                new MemorialVault(), new MemorialVault(), new MemorialVault());
+        harness.setLibrary(player1, library);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, chosen.getId());
+        harness.passBothPriorities();
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(source, other).doesNotContain(chosen);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyElementsOf(library.subList(0, 5));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(library.get(5));
+    }
+
+    @Test
+    void exilesOnlyAvailableCardsWhenLibraryIsShorterThanTheAmount() {
+        harness.addToBattlefield(player1, new MemorialVault());
+        harness.addToBattlefield(player1, new MemorialVault());
+        Card top = new MemorialVault();
+        harness.setLibrary(player1, List.of(top));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(top);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
+    }
+
+    @Test
+    void cannotSacrificeAnOpponentsArtifact() {
+        harness.addToBattlefield(player1, new MemorialVault());
+        harness.addToBattlefield(player2, new MemorialVault());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }
