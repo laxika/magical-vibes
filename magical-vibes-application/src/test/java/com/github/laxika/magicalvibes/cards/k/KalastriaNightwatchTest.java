@@ -63,4 +63,58 @@ class KalastriaNightwatchTest extends BaseCardTest {
 
         assertThat(nightwatch.hasKeyword(Keyword.FLYING)).isFalse();
     }
+
+    @Test
+    @DisplayName("Flying is granted only when the life-gain trigger resolves")
+    void flyingWaitsForTriggerResolution() {
+        Permanent nightwatch = harness.addToBattlefieldAndReturn(player1, new KalastriaNightwatch());
+        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 1, null, null);
+        assertThat(nightwatch.hasKeyword(Keyword.FLYING)).isFalse();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        assertThat(nightwatch.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(nightwatch.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed({KalastriaNightwatch.class})
+    @DisplayName("One life-gain event triggers each controlled Nightwatch once regardless of amount")
+    void lifeGainTriggersEachControlledNightwatchOnce() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new KalastriaNightwatch());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new KalastriaNightwatch());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new KalastriaNightwatch());
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 5));
+        harness.assertLife(player1, 25);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(first.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(second.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(opponent.hasKeyword(Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @CardUsed({KalastriaNightwatch.class})
+    @DisplayName("Gaining zero life does not trigger Nightwatch")
+    void zeroLifeGainDoesNotTrigger() {
+        Permanent nightwatch = harness.addToBattlefieldAndReturn(player1, new KalastriaNightwatch());
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 0));
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+        assertThat(nightwatch.hasKeyword(Keyword.FLYING)).isFalse();
+    }
 }
