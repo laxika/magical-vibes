@@ -39,11 +39,46 @@ class PlatedSliverTest extends BaseCardTest {
     @Test
     @DisplayName("Does not boost a non-Sliver creature")
     void doesNotBoostNonSliver() {
-        addCreatureReady(player1, new PlatedSliver());
         Permanent wizard = addCreatureReady(player1, new FugitiveWizard());
+        Permanent opposingWizard = addCreatureReady(player2, new FugitiveWizard());
         int baseToughness = gqs.getEffectiveToughness(gd, wizard);
+        int opposingBaseToughness = gqs.getEffectiveToughness(gd, opposingWizard);
+
+        addCreatureReady(player1, new PlatedSliver());
 
         assertThat(gqs.getEffectiveToughness(gd, wizard)).isEqualTo(baseToughness);
+        assertThat(gqs.getEffectiveToughness(gd, opposingWizard)).isEqualTo(opposingBaseToughness);
+    }
+
+    @Test
+    @DisplayName("Bonuses from Plated Slivers controlled by different players stack")
+    void bonusesFromMultipleSourcesStack() {
+        Permanent first = addCreatureReady(player1, new PlatedSliver());
+        Permanent second = addCreatureReady(player2, new PlatedSliver());
+        Permanent other = addCreatureReady(player2, new ShiftingSliver());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Bonus starts when Plated Sliver resolves, not while it is on the stack")
+    void bonusStartsOnResolution() {
+        Permanent other = addCreatureReady(player2, new ShiftingSliver());
+
+        harness.castFromHand(player1, new PlatedSliver(), "{W}");
+
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(3);
+        Permanent plated = findPermanent(player1, "Plated Sliver");
+        assertThat(gqs.getEffectiveToughness(gd, plated)).isEqualTo(2);
     }
 
     @Test
