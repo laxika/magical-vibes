@@ -128,14 +128,19 @@ class MournersShieldTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, redSource.getId());
 
-        assertThat(gd.permanentsPreventedFromDealingDamage).contains(redSource.getId());
+        assertThat(gd.targetSpellDamagePreventionShields)
+                .extracting(shield -> shield.sourcePermanentId()).contains(redSource.getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.permanentsPreventedFromDealingDamage).doesNotContain(redSource.getId());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        redSource.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 17);
     }
 
     @Test
@@ -158,14 +163,84 @@ class MournersShieldTest extends BaseCardTest {
         harness.assertLife(player1, 17);
     }
 
+    @Test
+    @DisplayName("A colorless imprint cannot share a color with any source")
+    void colorlessImprintDoesNotPreventDamage() {
+        castShield(new AlphaMyr(), true);
+        Permanent redSource = addCreatureReady(player2, new VulshokBerserker());
+        Permanent colorlessSource = addCreatureReady(player2, new AlphaMyr());
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        redSource.setAttacking(true);
+        colorlessSource.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 15);
+    }
+
+    @Test
+    @DisplayName("An imprinted card that leaves exile no longer supplies a color")
+    void cannotChooseSourceAfterImprintedCardLeavesExile() {
+        Card imprinted = new VulshokBerserker();
+        castShield(imprinted, true);
+        Permanent redSource = addCreatureReady(player2, new VulshokBerserker());
+        gd.removeFromExile(imprinted.getId());
+        harness.setGraveyard(player2, List.of(imprinted));
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        redSource.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("Enters without an imprint when both graveyards are empty")
+    void entersWithEmptyGraveyards() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        harness.castFromHand(player1, new MournersShield(), "{4}");
+        harness.passBothPriorities();
+
+        Permanent shield = findPermanent(player1, "Mourner's Shield");
+        assertThat(shield).isNotNull();
+        assertThat(gd.getImprintedCard(shield.getCard())).isNull();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can choose a matching graveyard card referred to by a trigger on the stack")
+    void canChooseSourceReferredToByStackObject() {
+        Permanent shield = castShield(new VulshokBerserker(), true);
+        Permanent redSource = addCreatureReady(player2, new VulshokBerserker());
+        Card graveyardSource = new MoltenRain();
+        harness.setGraveyard(player2, List.of(graveyardSource));
+        harness.castFromHand(player1, new MournersShield(), "{4}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(graveyardSource.getId()));
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(shield), null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(redSource.getId(), graveyardSource.getId());
+    }
+
     private Permanent castShield(Card imprintedCard, boolean accept) {
         harness.setGraveyard(player2, List.of(imprintedCard));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new MournersShield()));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new MournersShield(), "{4}");
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(imprintedCard.getId()));
         harness.passBothPriorities();
