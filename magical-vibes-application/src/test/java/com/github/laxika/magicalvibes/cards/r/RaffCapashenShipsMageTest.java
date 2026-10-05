@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.t.TheFlameOfKeld;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,9 +15,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RaffCapashenShipsMage.class, LeoninScimitar.class, ReyaDawnbringer.class,
+        GrizzlyBears.class, TheFlameOfKeld.class})
 class RaffCapashenShipsMageTest extends BaseCardTest {
-
-    // ===== Grant flash to artifact spells (historic) =====
 
     @Test
     @DisplayName("Can cast artifact spell during opponent's turn with Raff on battlefield")
@@ -25,23 +26,16 @@ class RaffCapashenShipsMageTest extends BaseCardTest {
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
 
         harness.setHand(player1, List.of(new LeoninScimitar()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        // Player2 passes priority, giving player1 priority
-        harness.getGameService().passPriority(harness.getGameData(), player2);
-
         // Player1 can cast artifact with flash timing
         harness.castArtifact(player1, 0);
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Leonin Scimitar");
     }
-
-    // ===== Grant flash to legendary creature spells (historic) =====
 
     @Test
     @DisplayName("Can cast legendary creature during combat with Raff on battlefield")
@@ -49,19 +43,15 @@ class RaffCapashenShipsMageTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RaffCapashenShipsMage());
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
 
         harness.setHand(player1, List.of(new ReyaDawnbringer()));
         harness.addMana(player1, ManaColor.WHITE, 9);
 
         harness.castCreature(player1, 0);
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Reya Dawnbringer");
     }
-
-    // ===== Does NOT grant flash to non-historic spells =====
 
     @Test
     @DisplayName("Cannot cast non-historic creature at instant speed with Raff on battlefield")
@@ -69,7 +59,6 @@ class RaffCapashenShipsMageTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RaffCapashenShipsMage());
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
 
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -78,8 +67,6 @@ class RaffCapashenShipsMageTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
-
-    // ===== Effect goes away when Raff leaves =====
 
     @Test
     @DisplayName("Artifact spells lose flash timing when Raff leaves the battlefield")
@@ -90,7 +77,6 @@ class RaffCapashenShipsMageTest extends BaseCardTest {
         harness.getGameData().playerBattlefields.get(player1.getId()).clear();
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
 
         harness.setHand(player1, List.of(new LeoninScimitar()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -99,8 +85,6 @@ class RaffCapashenShipsMageTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
-
-    // ===== Only affects controller =====
 
     @Test
     @DisplayName("Raff only grants flash to its controller's historic spells")
@@ -109,7 +93,6 @@ class RaffCapashenShipsMageTest extends BaseCardTest {
         harness.addToBattlefield(player2, new RaffCapashenShipsMage());
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
 
         harness.setHand(player1, List.of(new LeoninScimitar()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -119,13 +102,10 @@ class RaffCapashenShipsMageTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
-    // ===== Cannot cast historic without Raff =====
-
     @Test
     @DisplayName("Artifact spells cannot be cast at instant speed without Raff")
     void cannotCastArtifactAtInstantSpeedWithoutRaff() {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
 
         harness.setHand(player1, List.of(new LeoninScimitar()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -133,5 +113,58 @@ class RaffCapashenShipsMageTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castArtifact(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+    @Test
+    @DisplayName("Can cast a nonlegendary Saga during the opponent's turn")
+    void canCastSagaDuringOpponentsTurn() {
+        harness.addToBattlefield(player1, new RaffCapashenShipsMage());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        TheFlameOfKeld saga = new TheFlameOfKeld();
+        harness.setHand(player1, List.of(saga));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castEnchantment(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(saga);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "The Flame of Keld");
+    }
+
+    @Test
+    @DisplayName("Raff can be cast during the opponent's turn without a flash grant")
+    void raffHasItsOwnFlash() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        RaffCapashenShipsMage raff = new RaffCapashenShipsMage();
+        harness.setHand(player1, List.of(raff));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(raff);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Raff Capashen, Ship's Mage");
+    }
+
+    @Test
+    @DisplayName("Historic spells can be cast in response to another spell")
+    void canCastHistoricSpellWithNonemptyStack() {
+        harness.addToBattlefield(player1, new RaffCapashenShipsMage());
+        harness.setHand(player1, List.of(new LeoninScimitar(), new LeoninScimitar()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castArtifact(player1, 0);
+        harness.castArtifact(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard() instanceof LeoninScimitar)
+                .hasSize(2);
     }
 }
