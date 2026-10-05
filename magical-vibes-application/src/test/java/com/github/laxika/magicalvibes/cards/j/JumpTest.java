@@ -64,6 +64,22 @@ class JumpTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
     }
 
+    @Test
+    @DisplayName("Jump grants flying only to its targeted creature")
+    void grantsFlyingOnlyToTarget() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherFriendly = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposing = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Jump()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherFriendly, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposing, Keyword.FLYING)).isFalse();
+    }
+
     // ===== End of turn cleanup =====
 
     @Test
