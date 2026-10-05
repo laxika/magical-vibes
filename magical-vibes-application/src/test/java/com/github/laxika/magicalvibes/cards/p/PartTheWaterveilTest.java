@@ -12,8 +12,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -23,7 +21,6 @@ class PartTheWaterveilTest extends BaseCardTest {
 
     @Test
     void normalCastQueuesExtraTurnAndExilesSpell() {
-        enableAutoStop();
         PartTheWaterveil card = new PartTheWaterveil();
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -32,7 +29,7 @@ class PartTheWaterveilTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
 
         assertThat(gd.extraTurns).containsExactly(player1.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -41,7 +38,6 @@ class PartTheWaterveilTest extends BaseCardTest {
 
     @Test
     void alternateCastAwakensTargetLandAndQueuesExtraTurn() {
-        enableAutoStop();
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         PartTheWaterveil card = new PartTheWaterveil();
         harness.setHand(player1, List.of(card));
@@ -49,7 +45,7 @@ class PartTheWaterveilTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
         gs.playCardWithAlternateCost(gd, player1, 0, 0, null, null, List.of(land.getId()));
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
 
         assertThat(gd.extraTurns).containsExactly(player1.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -75,12 +71,68 @@ class PartTheWaterveilTest extends BaseCardTest {
                 .hasMessageContaining("additional targets");
     }
 
-    private void enableAutoStop() {
-        Set<TurnStep> stops1 = ConcurrentHashMap.newKeySet();
-        stops1.add(TurnStep.PRECOMBAT_MAIN);
-        gd.playerAutoStopSteps.put(player1.getId(), stops1);
-        Set<TurnStep> stops2 = ConcurrentHashMap.newKeySet();
-        stops2.add(TurnStep.PRECOMBAT_MAIN);
-        gd.playerAutoStopSteps.put(player2.getId(), stops2);
+    @Test
+    void normalCastCannotChooseAnAwakenTarget() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new PartTheWaterveil()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(land.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void awakenCannotTargetOpponentsLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new PartTheWaterveil()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        assertThatThrownBy(() -> gs.playCardWithAlternateCost(
+                gd, player1, 0, 0, null, null, List.of(land.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void awakenWithMissingTargetGoesToGraveyardWithoutExtraTurn() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        PartTheWaterveil card = new PartTheWaterveil();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        gs.playCardWithAlternateCost(gd, player1, 0, 0, null, null, List.of(land.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(land);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
+
+        assertThat(gd.extraTurns).isEmpty();
+        harness.assertInGraveyard(player1, "Part the Waterveil");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void awakenedLandRetainsAnimationAndManaAbilityDuringExtraTurn() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new PartTheWaterveil()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        gs.playCardWithAlternateCost(gd, player1, 0, 0, null, null, List.of(land.getId()));
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
+        harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.extraTurns).isEmpty();
+        assertThat(gqs.isLand(gd, land)).isTrue();
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(6);
+        assertThat(gqs.hasEffectiveSubtype(gd, land, CardSubtype.ELEMENTAL)).isTrue();
+        assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isTrue();
+        harness.tapPermanent(player1, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 }
