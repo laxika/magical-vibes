@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class IriniSengirTest extends BaseCardTest {
 
     @Nested
+    @CardUsed({IriniSengir.class, PrimalOrder.class, SerraAviary.class})
     @DisplayName("Green and white enchantment spells cost {2} more")
     class EnchantmentTax {
 
@@ -37,11 +38,7 @@ class IriniSengirTest extends BaseCardTest {
         @DisplayName("Green enchantment casts with {2} extra generic mana")
         void greenEnchantmentCastableWithTax() {
             harness.addToBattlefield(player1, new IriniSengir());
-            harness.setHand(player1, List.of(new PrimalOrder()));
-            harness.addMana(player1, ManaColor.GREEN, 2);
-            harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-            harness.castEnchantment(player1, 0);
+            harness.castFromHand(player1, new PrimalOrder(), "{4}{G}{G}");
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
@@ -63,21 +60,61 @@ class IriniSengirTest extends BaseCardTest {
             harness.addToBattlefield(player1, new IriniSengir());
 
             harness.forceActivePlayer(player2);
-            harness.forceStep(gd.currentStep);
-            harness.clearPriorityPassed();
-            harness.setHand(player2, List.of(new SerraAviary()));
-            harness.addMana(player2, ManaColor.WHITE, 1);
-            harness.addMana(player2, ManaColor.COLORLESS, 3);
+            assertThatThrownBy(() -> harness.castFromHand(player2, new SerraAviary(), "{3}{W}"))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("not playable");
+        }
 
-            assertThatThrownBy(() -> harness.castEnchantment(player2, 0))
+        @Test
+        @DisplayName("An opponent's Irini taxes white enchantments by exactly two mana")
+        void opponentControlledIriniTaxesWhiteEnchantment() {
+            harness.addToBattlefield(player2, new IriniSengir());
+
+            harness.castFromHand(player1, new SerraAviary(), "{5}{W}");
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        }
+
+        @Test
+        @DisplayName("Irini controlled by each player produces a cumulative four-mana tax")
+        void taxesFromBothPlayersAccumulate() {
+            harness.addToBattlefield(player1, new IriniSengir());
+            harness.addToBattlefield(player2, new IriniSengir());
+
+            harness.castFromHand(player1, new PrimalOrder(), "{6}{G}{G}");
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        }
+
+        @Test
+        @DisplayName("Two Irini make a single two-mana tax payment insufficient")
+        void cumulativeTaxCannotBeUnderpaid() {
+            harness.addToBattlefield(player1, new IriniSengir());
+            harness.addToBattlefield(player2, new IriniSengir());
+
+            assertThatThrownBy(() -> harness.castFromHand(player1, new PrimalOrder(), "{4}{G}{G}"))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("not playable");
         }
     }
 
     @Nested
+    @CardUsed({IriniSengir.class, Torture.class, AysenBureaucrats.class, PrimalOrder.class})
     @DisplayName("Other spells are unaffected")
     class NotTaxed {
+
+        @Test
+        @DisplayName("Irini in a graveyard does not tax enchantments")
+        void graveyardIriniDoesNotTax() {
+            harness.setGraveyard(player1, List.of(new IriniSengir()));
+
+            harness.castFromHand(player1, new PrimalOrder(), "{2}{G}{G}");
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        }
 
         @Test
         @DisplayName("A black enchantment is not taxed")
