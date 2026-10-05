@@ -94,6 +94,112 @@ class LoreholdArchivistRestoreRelicTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void doesNotTriggerWhenThresholdIsReachedOnlyAfterUpkeepBegins() {
+        Permanent archivist = addArchivist();
+        harness.setGraveyard(player1, List.of(new MindStone(), new MindStone()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+        harness.setGraveyard(player1, List.of(new MindStone(), new MindStone(), new MindStone()));
+        harness.passBothPriorities();
+
+        assertThat(archivist.isPrepared()).isFalse();
+    }
+
+    @Test
+    void rechecksGraveyardThresholdWhenUpkeepTriggerResolves() {
+        Permanent archivist = addArchivist();
+        harness.setGraveyard(player1, List.of(new MindStone(), new MindStone(), new MindStone()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.setGraveyard(player1, List.of(new MindStone(), new MindStone()));
+        harness.passBothPriorities();
+
+        assertThat(archivist.isPrepared()).isFalse();
+    }
+
+    @Test
+    void ignoresOpponentsGraveyardAndUpkeep() {
+        Permanent archivist = addArchivist();
+        harness.setGraveyard(player2, List.of(new MindStone(), new MindStone(), new MindStone()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+        harness.setGraveyard(player1, List.of(new MindStone(), new MindStone(), new MindStone()));
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).isEmpty();
+
+        assertThat(archivist.isPrepared()).isFalse();
+    }
+
+    @Test
+    void alreadyPreparedArchivistDoesNotCreateAnotherSpellCopy() {
+        Permanent archivist = prepareArchivist();
+        UUID copyId = archivist.getPreparedSpellCardId();
+        int exileSize = gd.getPlayerExiledCards(player1.getId()).size();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(archivist.getPreparedSpellCardId()).isEqualTo(copyId);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(exileSize);
+    }
+
+    @Test
+    void restoreRelicCannotTargetOpponentsGraveyard() {
+        Permanent archivist = prepareArchivist();
+        Card target = new MindStone();
+        harness.setGraveyard(player2, List.of(target));
+        harness.forceActivePlayer(player1);
+        addRestoreRelicMana();
+
+        assertThatThrownBy(() -> harness.castFromExile(
+                player1, archivist.getPreparedSpellCardId(), target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(archivist.isPrepared()).isTrue();
+    }
+
+    @Test
+    void restoreRelicCreatesNoTokenWhenTargetLeavesGraveyard() {
+        Permanent archivist = prepareArchivist();
+        Card target = new MindStone();
+        harness.setGraveyard(player1, List.of(target));
+        harness.forceActivePlayer(player1);
+        addRestoreRelicMana();
+        harness.castFromExile(player1, archivist.getPreparedSpellCardId(), target.getId());
+        assertThat(archivist.isPrepared()).isFalse();
+        harness.setGraveyard(player1, List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(permanent -> permanent.getCard().isToken());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).noneMatch(card -> card.getId().equals(target.getId()));
+    }
+
+    @Test
+    void restoredArchivistTokenCanBecomePreparedAndCastRestoreRelic() {
+        Permanent archivist = prepareArchivist();
+        Card target = new LoreholdArchivistRestoreRelic();
+        harness.setGraveyard(player1, List.of(target));
+        castPreparedSpell(archivist, target);
+        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .findFirst().orElseThrow();
+        harness.setGraveyard(player1, List.of(new MindStone(), new MindStone(), new MindStone()));
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(token.isPrepared()).isTrue();
+        Card artifact = gd.playerGraveyards.get(player1.getId()).getFirst();
+        castPreparedSpell(token, artifact);
+        assertThat(token.isPrepared()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(permanent ->
+                permanent.getCard().isToken() && permanent.getCard().getName().equals("Mind Stone"));
+    }
+
     private Permanent addArchivist() {
         return addCreatureReady(player1, new LoreholdArchivistRestoreRelic());
     }
