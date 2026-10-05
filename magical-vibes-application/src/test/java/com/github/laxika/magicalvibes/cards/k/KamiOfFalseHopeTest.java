@@ -62,10 +62,71 @@ class KamiOfFalseHopeTest extends BaseCardTest {
         harness.setHand(player2, List.of(new FirstVolley()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Kami is sacrificed immediately but prevention waits for resolution")
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent kami = harness.addToBattlefieldAndReturn(player1, new KamiOfFalseHope());
+        kami.setTapped(true);
+        kami.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Kami of False Hope");
+        harness.assertInGraveyard(player1, "Kami of False Hope");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.preventAllCombatDamage).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.preventAllCombatDamage).isTrue();
+    }
+
+    @Test
+    @DisplayName("Combat damage to both attacking and blocking creatures is prevented")
+    void preventsDamageToBothCombatants() {
+        harness.addToBattlefield(player1, new KamiOfFalseHope());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        Permanent attacker = addCreatureReady(player2, new GnarledMass());
+        Permanent blocker = addCreatureReady(player1, new GnarledMass());
+        attacker.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        blocker.addBlockingTargetId(attacker.getId());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+
+        harness.resolveCombatDamage();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(blocker.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Gnarled Mass");
+        harness.assertOnBattlefield(player2, "Gnarled Mass");
+    }
+
+    @Test
+    @DisplayName("Prevention expires when the turn ends")
+    void combatDamageIsDealtNormallyNextTurn() {
+        harness.addToBattlefield(player1, new KamiOfFalseHope());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        Permanent attacker = addCreatureReady(player2, new GnarledMass());
+        attacker.setAttacking(true);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player1, 17);
     }
 }
