@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SorcerersStrongbox;
 import com.github.laxika.magicalvibes.cards.z.ZndrspltEyeOfWisdom;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,14 +19,14 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OkaunEyeOfChaos.class, ZndrspltEyeOfWisdom.class, GrizzlyBears.class,
+@CardUsed({OkaunEyeOfChaos.class, ZndrspltEyeOfWisdom.class,
         SorcerersStrongbox.class})
 class OkaunEyeOfChaosTest extends BaseCardTest {
 
     @Test
     @DisplayName("Partner with lets the target player search for Zndrsplt")
     void partnerWithSearchesTargetPlayersLibrary() {
-        Card zndrsplt = namedCard("Zndrsplt, Eye of Wisdom");
+        Card zndrsplt = new ZndrspltEyeOfWisdom();
         harness.setLibrary(player2, List.of(zndrsplt));
         harness.setHand(player2, List.of());
 
@@ -81,6 +81,7 @@ class OkaunEyeOfChaosTest extends BaseCardTest {
     @DisplayName("Okaun doubles when another player wins a coin flip")
     void doublesWhenAnotherPlayerWinsCoinFlip() {
         Permanent okaun = addCreatureReady(player1, new OkaunEyeOfChaos());
+        harness.setLibrary(player2, cards(10));
         harness.addToBattlefield(player2, new SorcerersStrongbox());
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
@@ -88,9 +89,7 @@ class OkaunEyeOfChaosTest extends BaseCardTest {
         harness.passBothPriorities();
         resolveAllTriggers();
 
-        boolean won = gd.gameLog.stream()
-                .map(GameLogEntry::plainText)
-                .anyMatch(log -> log.contains("wins the coin flip for Sorcerer's Strongbox"));
+        boolean won = gameLogContains("wins the coin flip for Sorcerer's Strongbox");
         assertThat(gqs.getEffectivePower(gd, okaun)).isEqualTo(won ? 6 : 3);
         assertThat(gqs.getEffectiveToughness(gd, okaun)).isEqualTo(won ? 6 : 3);
 
@@ -102,22 +101,97 @@ class OkaunEyeOfChaosTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, okaun)).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("The target player may decline the partner search")
+    void partnerSearchCanBeDeclined() {
+        Card zndrsplt = new ZndrspltEyeOfWisdom();
+        harness.setLibrary(player2, List.of(zndrsplt));
+        harness.setHand(player2, List.of());
+
+        harness.enterBattlefieldAndReturn(player1, new OkaunEyeOfChaos());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zndrsplt);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gameLogContains("library is shuffled")).isFalse();
+    }
+
+    @Test
+    @DisplayName("An accepted partner search shuffles even without a matching card")
+    void partnerSearchWithoutMatchShuffles() {
+        Card otherCard = new OkaunEyeOfChaos();
+        harness.setLibrary(player1, List.of(otherCard));
+        harness.setHand(player1, List.of());
+
+        harness.enterBattlefieldAndReturn(player1, new OkaunEyeOfChaos());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(otherCard);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gameLogContains("library is shuffled")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Okaun does not flip at the beginning of an opponent's combat")
+    void doesNotFlipDuringOpponentsCombat() {
+        Permanent okaun = addCreatureReady(player1, new OkaunEyeOfChaos());
+
+        advanceToBeginningOfCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gameLogContains("the coin flip for Okaun, Eye of Chaos")).isFalse();
+        assertThat(gqs.getEffectivePower(gd, okaun)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, okaun)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Okaun doubles its current power and toughness including counters")
+    void doublesPowerAndToughnessIncludingCounters() {
+        Permanent okaun = addCreatureReady(player1, new OkaunEyeOfChaos());
+        okaun.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, cards(10));
+
+        advanceToBeginningOfCombat(player1);
+        resolveAllTriggers();
+
+        long wins = gd.gameLog.stream()
+                .map(GameLogEntry::plainText)
+                .filter(log -> log.contains("wins the coin flip for Okaun, Eye of Chaos"))
+                .count();
+        int expected = 5;
+        for (int i = 0; i < wins; i++) {
+            expected *= 2;
+        }
+        assertThat(gqs.getEffectivePower(gd, okaun)).isEqualTo(expected);
+        assertThat(gqs.getEffectiveToughness(gd, okaun)).isEqualTo(expected);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, okaun)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, okaun)).isEqualTo(5);
+    }
+
     private void advanceToBeginningOfCombat(com.github.laxika.magicalvibes.model.Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 
     private List<Card> cards(int count) {
         return IntStream.range(0, count)
-                .mapToObj(index -> (Card) new GrizzlyBears())
+                .mapToObj(index -> (Card) new ZndrspltEyeOfWisdom())
                 .toList();
-    }
-
-    private Card namedCard(String name) {
-        Card card = new Card();
-        card.setName(name);
-        return card;
     }
 }
