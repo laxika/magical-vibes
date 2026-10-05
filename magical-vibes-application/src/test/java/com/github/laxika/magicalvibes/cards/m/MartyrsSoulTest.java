@@ -58,6 +58,61 @@ class MartyrsSoulTest extends BaseCardTest {
         return findPermanent(player1, "Martyr's Soul");
     }
 
+    @Test
+    void untappedLandsAndOpponentsTappedLandsDoNotPreventCounters() {
+        harness.addToBattlefield(player1, new Plains());
+        Permanent opponentsLand = harness.addToBattlefieldAndReturn(player2, new Plains());
+        opponentsLand.tap();
+
+        Permanent soul = castMartyrsSoul();
+        resolveEtb();
+
+        assertThat(soul.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void tappingLandBeforeTriggerResolvesPreventsCounters() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent soul = castMartyrsSoul();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.tapPermanent(player1, 0);
+        resolveEtb();
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(soul.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void noAbilityTriggersWhenLandIsTappedOnEntry() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Plains());
+        land.tap();
+
+        Permanent soul = castMartyrsSoul();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(soul.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void convokeCanPayEntireCostAndTappedCreaturesDoNotPreventCounters() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new MartyrsSoul());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new MartyrsSoul());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new MartyrsSoul());
+        harness.setHand(player1, List.of(new MartyrsSoul()));
+
+        gs.playCard(gd, player1, 0, 0, null, null, List.of(),
+                List.of(first.getId(), second.getId(), third.getId()));
+        harness.passBothPriorities();
+        Permanent soul = gd.playerBattlefields.get(player1.getId()).getLast();
+        resolveEtb();
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(third.isTapped()).isTrue();
+        assertThat(soul.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
     private void resolveEtb() {
         harness.passBothPriorities();
     }
