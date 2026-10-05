@@ -10,10 +10,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Phantasmagorian.class, GossamerPhantasm.class})
 class PhantasmagorianTest extends BaseCardTest {
@@ -94,13 +95,96 @@ class PhantasmagorianTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardCostChoice.class);
     }
 
+    @Test
+    void spellResolvesWhenBothEligiblePlayersDecline() {
+        castPhantasmagorian(player1, threeGossamerPhantasms(), threeGossamerPhantasms());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Phantasmagorian");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+    }
+
+    @Test
+    void playerWithOnlyTwoCardsCannotDiscardToCounterSpell() {
+        castPhantasmagorian(player1, List.of(), List.of(new GossamerPhantasm(), new GossamerPhantasm()));
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Phantasmagorian");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    void graveyardAbilityCannotBeActivatedWithOnlyTwoCards() {
+        Phantasmagorian source = new Phantasmagorian();
+        harness.setGraveyard(player1, List.of(source));
+        harness.setHand(player1, List.of(new GossamerPhantasm(), new GossamerPhantasm()));
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(source);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void graveyardAbilityReturnsOnlyItsSourceCopyAndPaysCostBeforeResolution() {
+        Phantasmagorian source = new Phantasmagorian();
+        Phantasmagorian other = new Phantasmagorian();
+        harness.setGraveyard(player1, List.of(source, other));
+        harness.setHand(player1, threeGossamerPhantasms());
+
+        harness.activateGraveyardAbility(player1, 0);
+        discardThreeCards(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(source, other).hasSize(5);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(source);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(other).doesNotContain(source).hasSize(4);
+    }
+
+    @Test
+    void olderActivationCannotReturnSourceAfterItLeavesAndReentersGraveyard() {
+        Phantasmagorian source = new Phantasmagorian();
+        Phantasmagorian other = new Phantasmagorian();
+        harness.setGraveyard(player1, List.of(source, other));
+        List<Card> hand = new ArrayList<>(threeGossamerPhantasms());
+        hand.addAll(threeGossamerPhantasms());
+        hand.add(new GossamerPhantasm());
+        hand.add(new GossamerPhantasm());
+        harness.setHand(player1, hand);
+
+        harness.activateGraveyardAbility(player1, 0);
+        discardThreeCards(player1);
+        harness.activateGraveyardAbility(player1, 0);
+        discardThreeCards(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(source).hasSize(3);
+
+        harness.activateGraveyardAbility(player1, 0);
+        discardThreeCards(player1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(other);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(source);
+    }
+
     private void castPhantasmagorian(Player caster, List<Card> casterCards, List<Card> opponentCards) {
-        Phantasmagorian phantasmagorian = new Phantasmagorian();
-        harness.setHand(caster, concat(List.of(phantasmagorian), casterCards));
         harness.setHand(player2, opponentCards);
-        harness.addMana(caster, ManaColor.BLACK, 2);
-        harness.addMana(caster, ManaColor.COLORLESS, 5);
-        harness.castCreature(caster, 0);
+        harness.castFromHand(caster, new Phantasmagorian(), "{5}{B}{B}");
+        harness.setHand(caster, casterCards);
     }
 
     private void discardThreeCards(Player player) {
@@ -113,9 +197,4 @@ class PhantasmagorianTest extends BaseCardTest {
         return List.of(new GossamerPhantasm(), new GossamerPhantasm(), new GossamerPhantasm());
     }
 
-    private List<Card> concat(List<Card> first, List<Card> second) {
-        List<Card> cards = new ArrayList<>(first);
-        cards.addAll(second);
-        return cards;
-    }
 }
