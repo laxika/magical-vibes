@@ -103,8 +103,7 @@ class MindsEyeTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Thoughtcast()));
         harness.addMana(player2, ManaColor.BLUE, 5);
 
-        harness.castSorcery(player2, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, 0);
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
         harness.passBothPriorities();
@@ -114,4 +113,67 @@ class MindsEyeTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
     }
+
+    @Test
+    @DisplayName("Colored mana can pay the generic cost")
+    void coloredManaPaysForDraw() {
+        harness.addToBattlefield(player1, new MindsEye());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToDraw(player2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each copy triggers independently for an opponent's draw")
+    void multipleCopiesTriggerIndependently() {
+        harness.addToBattlefield(player1, new MindsEye());
+        harness.addToBattlefield(player1, new MindsEye());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToDraw(player2);
+        assertThat(gd.stack).hasSize(2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Declining one draw trigger does not decline the next")
+    void choicesAreIndependentForEachDraw() {
+        harness.addToBattlefield(player1, new MindsEye());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Thoughtcast()));
+        harness.addMana(player2, ManaColor.BLUE, 5);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.castAndResolveSorcery(player2, 0, 0);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
 }
