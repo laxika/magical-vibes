@@ -192,5 +192,62 @@ class LoxodonMysticTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
+
+    @Test
+    @DisplayName("Loxodon Mystic can target itself")
+    void canTargetItself() {
+        Permanent mystic = addCreatureReady(player1, new LoxodonMystic());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, mystic.getId());
+
+        assertThat(mystic.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(mystic.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(mystic.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .noneMatch(log -> log.contains("fizzles"));
+    }
+
+    @Test
+    @DisplayName("Target stays untapped until the ability resolves, even if Mystic leaves")
+    void resolvesAfterMysticLeavesBattlefield() {
+        Permanent mystic = addCreatureReady(player1, new LoxodonMystic());
+        Permanent target = addCreatureReady(player2, new MyrMoonvessel());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(mystic.isTapped()).isTrue();
+        assertThat(target.isTapped()).isFalse();
+        gd.playerBattlefields.get(player1.getId()).remove(mystic);
+        gd.playerHands.get(player1.getId()).add(mystic.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Nonwhite mana cannot pay the ability's white mana cost")
+    void cannotActivateWithOnlyBlueMana() {
+        Permanent mystic = addCreatureReady(player1, new LoxodonMystic());
+        Permanent target = addCreatureReady(player2, new MyrMoonvessel());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(mystic.isTapped()).isFalse();
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
 }
 
