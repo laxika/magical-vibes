@@ -16,7 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Lichenthrope.class, Fireblast.class, Python.class})
+@CardUsed({Lichenthrope.class, Fireblast.class, Python.class, MeliraSylvokOutcast.class})
 class LichenthropeTest extends BaseCardTest {
 
     @Test
@@ -55,7 +55,6 @@ class LichenthropeTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(MeliraSylvokOutcast.class)
     @DisplayName("Damage replacement respects an effect that forbids -1/-1 counters")
     void damageReplacementRespectsMinusCounterRestriction() {
         harness.addToBattlefield(player2, new MeliraSylvokOutcast());
@@ -92,5 +91,49 @@ class LichenthropeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(lichenthrope.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Damage replacement still applies when damage cannot be prevented")
+    void unpreventableDamageIsReplacedWithCounters() {
+        Permanent lichenthrope = harness.addToBattlefieldAndReturn(player2, new Lichenthrope());
+        lichenthrope.setDamageCantBePreventedOrRedirectedThisTurn(true);
+        harness.setHand(player1, List.of(new Fireblast()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castAndResolveInstant(player1, 0, lichenthrope.getId());
+
+        harness.assertOnBattlefield(player2, "Lichenthrope");
+        assertThat(lichenthrope.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(4);
+        assertThat(lichenthrope.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Damage replacement can reduce toughness to zero")
+    void damageCountersCanKillLichenthrope() {
+        Permanent lichenthrope = harness.addToBattlefieldAndReturn(player2, new Lichenthrope());
+        lichenthrope.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        harness.setHand(player1, List.of(new Fireblast()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castAndResolveInstant(player1, 0, lichenthrope.getId());
+
+        harness.assertNotOnBattlefield(player2, "Lichenthrope");
+        harness.assertInGraveyard(player2, "Lichenthrope");
+        assertThat(lichenthrope.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Upkeep with no -1/-1 counters leaves other counters alone")
+    void upkeepWithoutMinusCountersDoesNothing() {
+        Permanent lichenthrope = harness.addToBattlefieldAndReturn(player1, new Lichenthrope());
+        lichenthrope.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Lichenthrope");
+        assertThat(lichenthrope.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(lichenthrope.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 }
