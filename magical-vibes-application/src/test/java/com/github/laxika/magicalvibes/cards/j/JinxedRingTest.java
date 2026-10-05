@@ -64,6 +64,76 @@ class JinxedRingTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Jinxed Ring deals damage when it is put into its controller's graveyard")
+    void damagesWhenRingItselfGoesToGraveyard() {
+        Permanent ring = harness.addToBattlefieldAndReturn(player1, new JinxedRing());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, ring));
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Jinxed Ring");
+        harness.assertLife(player1, lifeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("Jinxed Ring ignores an opponent-owned permanent you control going to their graveyard")
+    void ignoresBorrowedPermanentGoingToOwnerGraveyard() {
+        harness.addToBattlefield(player1, new JinxedRing());
+        EnsnaringBridge bridgeCard = new EnsnaringBridge();
+        bridgeCard.setOwnerId(player2.getId());
+        Permanent bridge = harness.addToBattlefieldAndReturn(player1, bridgeCard);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, bridge));
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Ensnaring Bridge");
+        harness.assertLife(player1, lifeBefore);
+    }
+
+    @Test
+    @DisplayName("After transfer Jinxed Ring damages its new controller for their graveyard events")
+    void damagesNewControllerAfterTransfer() {
+        harness.addToBattlefield(player1, new JinxedRing());
+        harness.addToBattlefield(player1, new SkyshroudFalcon());
+        Permanent bridge = harness.addToBattlefieldAndReturn(player2, new EnsnaringBridge());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        resolveAllTriggers();
+        int player1LifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int player2LifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, bridge));
+        resolveAllTriggers();
+
+        harness.assertLife(player1, player1LifeBefore);
+        harness.assertLife(player2, player2LifeBefore - 1);
+        harness.assertOnBattlefield(player2, "Jinxed Ring");
+    }
+
+    @Test
+    @DisplayName("A damage trigger still resolves after Jinxed Ring leaves the battlefield")
+    void pendingDamageSurvivesSourceLeavingBattlefield() {
+        Permanent ring = harness.addToBattlefieldAndReturn(player1, new JinxedRing());
+        Permanent bridge = harness.addToBattlefieldAndReturn(player1, new EnsnaringBridge());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bridge);
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, ring);
+        });
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Ensnaring Bridge");
+        harness.assertInGraveyard(player1, "Jinxed Ring");
+        harness.assertLife(player1, lifeBefore - 2);
+    }
+
+    @Test
     @DisplayName("Sacrifice a creature to give Jinxed Ring to an opponent")
     void sacrificeCreatureGivesRingToOpponent() {
         harness.addToBattlefield(player1, new JinxedRing());
