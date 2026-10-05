@@ -24,8 +24,7 @@ class KyoshiWarriorsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent ally = findPermanent(player1, "Ally");
         assertThat(ally.getCard().isToken()).isTrue();
@@ -33,5 +32,27 @@ class KyoshiWarriorsTest extends BaseCardTest {
         assertThat(ally.getCard().getToughness()).isEqualTo(1);
         assertThat(ally.getCard().getColor()).isEqualTo(CardColor.WHITE);
         assertThat(ally.getCard().getSubtypes()).contains(CardSubtype.ALLY);
+    }
+
+    @Test
+    @DisplayName("Enter trigger creates the token even after Kyoshi Warriors dies")
+    void triggerResolvesAfterSourceDies() {
+        harness.setHand(player1, List.of(new KyoshiWarriors()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        assertThat(countPermanents(player1, "Ally")).isZero();
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Ally")).isZero();
+
+        Permanent warriors = findPermanent(player1, "Kyoshi Warriors");
+        warriors.setMarkedDamage(gqs.getEffectiveToughness(gd, warriors));
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player1, "Kyoshi Warriors");
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Ally")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Ally")).isZero();
     }
 }
