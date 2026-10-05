@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({NihilisticGlee.class, GuardianOfTheGuildpact.class})
@@ -85,5 +86,61 @@ class NihilisticGleeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no cards in hand");
+    }
+
+    @Test
+    @DisplayName("Hellbent pays life before drawing on resolution")
+    void hellbentPaysLifeBeforeResolution() {
+        harness.addToBattlefield(player1, new NihilisticGlee());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GuardianOfTheGuildpact()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertLife(player1, 18);
+        harness.assertNotInHand(player1, "Guardian of the Guildpact");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Guardian of the Guildpact");
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Hellbent cannot activate when its life cost cannot be paid")
+    void hellbentRequiresEnoughLife() {
+        harness.addToBattlefield(player1, new NihilisticGlee());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GuardianOfTheGuildpact()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setLife(player1, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player1, 1);
+        harness.assertNotInHand(player1, "Guardian of the Guildpact");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hellbent activations still draw after an earlier activation fills the hand")
+    void stackedHellbentActivationsDoNotRecheckHandOnResolution() {
+        harness.addToBattlefield(player1, new NihilisticGlee());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GuardianOfTheGuildpact(), new GuardianOfTheGuildpact()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.assertLife(player1, 16);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.assertLife(player1, 16);
     }
 }
