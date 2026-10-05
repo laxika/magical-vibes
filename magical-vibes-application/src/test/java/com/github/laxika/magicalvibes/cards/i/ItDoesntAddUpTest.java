@@ -27,8 +27,7 @@ class ItDoesntAddUpTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ItDoesntAddUp()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(returned.isSuspected()).isTrue();
@@ -47,5 +46,36 @@ class ItDoesntAddUpTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, instant.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature card in an opponent's graveyard")
+    void cannotTargetOpponentsCreature() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.setHand(player1, List.of(new ItDoesntAddUp()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Does not return another creature when the target leaves the graveyard")
+    void doesNotReturnAnotherCreatureWhenTargetLeavesGraveyard() {
+        Card target = new GrizzlyBears();
+        Card other = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target, other));
+        harness.setHand(player1, List.of(new ItDoesntAddUp()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.setGraveyard(player1, List.of(other));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(other);
+        harness.assertInGraveyard(player1, "It Doesn't Add Up");
+        assertThat(gd.stack).isEmpty();
     }
 }
