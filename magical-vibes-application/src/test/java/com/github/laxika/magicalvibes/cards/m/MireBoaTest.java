@@ -85,6 +85,76 @@ class MireBoaTest extends BaseCardTest {
         assertThat(boa.getMarkedDamage()).isZero();
     }
 
+    @Test
+    @DisplayName("Creating a regeneration shield does not tap Mire Boa or remove it from combat")
+    void shieldDoesNotImmediatelyRegenerate() {
+        Permanent boa = addAttackingBoa();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(boa.getRegenerationShield()).isEqualTo(1);
+        assertThat(boa.isTapped()).isFalse();
+        assertThat(boa.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Mire Boa can activate regeneration while tapped and summoning sick")
+    void canRegenerateWhileTappedAndSummoningSick() {
+        harness.addToBattlefield(player1, new MireBoa());
+        Permanent boa = findPermanent(player1, "Mire Boa");
+        boa.setSummoningSick(true);
+        boa.tap();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(boa.getRegenerationShield()).isEqualTo(1);
+        assertThat(boa.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Lethal combat damage consumes only one of multiple regeneration shields")
+    void lethalDamageConsumesOnlyOneShield() {
+        Permanent boa = addAttackingBoa();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        Permanent blocker = addCreatureReady(player2, new PouncingWurm());
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(boa))));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(boa);
+        assertThat(boa.getRegenerationShield()).isEqualTo(1);
+        assertThat(boa.getMarkedDamage()).isZero();
+        assertThat(boa.isTapped()).isTrue();
+        assertThat(boa.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Mire Boa dies to lethal combat damage without an activated regeneration shield")
+    void lethalCombatDamageWithoutShieldDestroysBoa() {
+        Permanent boa = addAttackingBoa();
+        Permanent blocker = addCreatureReady(player2, new PouncingWurm());
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(boa))));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(boa);
+        harness.assertInGraveyard(player1, "Mire Boa");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+    }
+
     private Permanent addAttackingBoa() {
         Permanent boa = addCreatureReady(player1, new MireBoa());
         boa.setAttacking(true);
