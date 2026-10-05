@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.d.DisciplesOfTheInferno;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RalsReinforcements;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,8 +16,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DisciplesOfTheInferno.class, GrizzlyBears.class, InvasionOfRegatha.class, Shock.class})
+@CardUsed({DisciplesOfTheInferno.class, GrizzlyBears.class, InvasionOfRegatha.class,
+        RalsReinforcements.class, Shock.class})
 class InvasionOfRegathaTest extends BaseCardTest {
 
     @Test
@@ -27,8 +30,7 @@ class InvasionOfRegathaTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new InvasionOfRegatha()));
         addInvasionMana();
-        gs.playCard(gd, player1, 0, 0, null, null,
-                List.of(otherBattle.getId(), creature.getId()), List.of());
+        harness.castSorcery(player1, 0, List.of(otherBattle.getId(), creature.getId()));
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -42,8 +44,7 @@ class InvasionOfRegathaTest extends BaseCardTest {
         addInvasionMana();
         harness.setLife(player2, 20);
 
-        gs.playCard(gd, player1, 0, 0, null, null,
-                List.of(player2.getId()), List.of());
+        harness.castSorcery(player1, 0, List.of(player2.getId()));
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -75,8 +76,7 @@ class InvasionOfRegathaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setLife(player2, 20);
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
@@ -90,11 +90,160 @@ class InvasionOfRegathaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setLife(player2, 20);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    void backFaceProwessTriggersForControllerNoncreatureSpell() {
+        Permanent disciples = harness.addToBattlefieldAndReturn(player1,
+                new InvasionOfRegatha().getBackFaceCard());
+
+        harness.castFromHand(player1, new RalsReinforcements(), "{1}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, disciples)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, disciples)).isEqualTo(5);
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void backFaceProwessDoesNotTriggerForCreatureSpell() {
+        Permanent disciples = harness.addToBattlefieldAndReturn(player1,
+                new InvasionOfRegatha().getBackFaceCard());
+
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, disciples)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, disciples)).isEqualTo(4);
+    }
+
+    @Test
+    void backFaceAddsExactlyTwoToTheSiegesCreatureDamage() {
+        harness.addToBattlefield(player1, new InvasionOfRegatha().getBackFaceCard());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2,
+                new InvasionOfRegatha().getBackFaceCard());
+        harness.setHand(player1, List.of(new InvasionOfRegatha()));
+        addInvasionMana();
+
+        harness.castSorcery(player1, 0, List.of(player2.getId(), creature.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    void backFaceAddsTwoDamageToBattlesEvenWhenControllerOwnsTheBattle() {
+        harness.addToBattlefield(player1, new InvasionOfRegatha().getBackFaceCard());
+        Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfRegatha());
+        battle.setCounterCount(CounterType.DEFENSE, 5);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, battle.getId());
+        harness.passBothPriorities();
+
+        assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(1);
+    }
+
+    @Test
+    void backFaceDoesNotIncreaseDamageToItsController() {
+        harness.addToBattlefield(player1, new InvasionOfRegatha().getBackFaceCard());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    void backFaceDoesNotIncreaseOpponentsDamageOrTriggerForTheirSpells() {
+        Permanent disciples = harness.addToBattlefieldAndReturn(player1,
+                new InvasionOfRegatha().getBackFaceCard());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, disciples.getId());
+
+        assertThat(disciples.getMarkedDamage()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, disciples)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, disciples)).isEqualTo(4);
+    }
+
+    @Test
+    void controllerCanDeclineCastingTheDefeatedSiege() {
+        Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfRegatha());
+        battle.setCounterCount(CounterType.DEFENSE, 0);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
+                .checkAfterDefenseRemoved(gd, battle));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.findExiledCard(battle.getCard().getId())).isNotNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Disciples of the Inferno");
+    }
+
+    @Test
+    void castingTheDefeatedSiegeAsACreatureDoesNotTriggerProwess() {
+        Permanent disciples = harness.addToBattlefieldAndReturn(player1,
+                new InvasionOfRegatha().getBackFaceCard());
+        Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfRegatha());
+        battle.setCounterCount(CounterType.DEFENSE, 0);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
+                .checkAfterDefenseRemoved(gd, battle));
+
+        harness.passBothPriorities();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+        harness.passBothPriorities();
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+
+        assertThat(gqs.getEffectivePower(gd, disciples)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, disciples)).isEqualTo(4);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard() instanceof DisciplesOfTheInferno)
+                .hasSize(2);
+    }
+
+    @Test
+    void fourDamageCannotTargetTheController() {
+        harness.setHand(player1, List.of(new InvasionOfRegatha()));
+        addInvasionMana();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(player1.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void fourDamageStillResolvesWhenTheCreatureTargetDies() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new InvasionOfRegatha(), new Shock()));
+        addInvasionMana();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castSorcery(player1, 0, List.of(player2.getId(), creature.getId()));
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
     }
 
     private void addInvasionMana() {
