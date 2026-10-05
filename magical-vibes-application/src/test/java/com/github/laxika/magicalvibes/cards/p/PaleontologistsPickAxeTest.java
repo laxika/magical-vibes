@@ -45,6 +45,65 @@ class PaleontologistsPickAxeTest extends BaseCardTest {
     }
 
     @Test
+    void unequippedCreatureAttackingDoesNotLoot() {
+        harness.addToBattlefield(player1, new PaleontologistsPickAxe());
+        addCreatureReady(player1, new GrizzlyBears());
+        Card handCard = new HillGiant();
+        Card libraryCard = new Forest();
+        harness.setHand(player1, List.of(handCard));
+        harness.setLibrary(player1, List.of(libraryCard));
+
+        declareAttackers(player1, List.of(1));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(handCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void headdressCopiesMaterialAsItAttachesWithoutAnotherStackResolution() {
+        harness.addToBattlefield(player1, new PaleontologistsPickAxe());
+        Permanent material = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent host = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleMultipleCardsChosen(player1, List.of(material.getCard().getId()));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, host.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void craftAcceptsMultipleMaterialsFromBattlefieldAndGraveyard() {
+        harness.addToBattlefield(player1, new PaleontologistsPickAxe());
+        Permanent material = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Card graveyardMaterial = new HillGiant();
+        harness.setGraveyard(player1, List.of(graveyardMaterial));
+        Permanent host = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleMultipleCardsChosen(player1,
+                List.of(material.getCard().getId(), graveyardMaterial.getId()));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, host.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(graveyardMaterial.getId()));
+
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(3);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(graveyardMaterial);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(material);
+    }
+
+    @Test
     void craftReturnsTransformedHeaddressAttachedToAChosenCreatureAndCopiesCraftMaterial() {
         Permanent axe = harness.addToBattlefieldAndReturn(player1, new PaleontologistsPickAxe());
         Permanent material = harness.addToBattlefieldAndReturn(player1, new HillGiant());
