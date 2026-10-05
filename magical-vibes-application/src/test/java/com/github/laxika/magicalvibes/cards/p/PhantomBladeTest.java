@@ -43,6 +43,9 @@ class PhantomBladeTest extends BaseCardTest {
         castPhantomBlade();
 
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
 
         Permanent blade = findPermanent(player1, "Phantom Blade");
         assertThat(blade.getAttachedTo()).isNull();
@@ -72,6 +75,95 @@ class PhantomBladeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void canAttachWithoutDestroyingACreature() {
+        Permanent creature = addCreatureReady(player1);
+        Permanent blade = harness.enterBattlefieldAndReturn(player1, new PhantomBlade());
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(blade.getAttachedTo()).isEqualTo(creature.getId());
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void canDestroyWithoutAttaching() {
+        Permanent ownCreature = addCreatureReady(player1);
+        Permanent opponentCreature = addCreatureReady(player2);
+        Permanent blade = harness.enterBattlefieldAndReturn(player1, new PhantomBlade());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handlePermanentChosen(player1, opponentCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(blade.getAttachedTo()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void canDestroyYourOwnCreatureWithoutAttaching() {
+        Permanent creature = addCreatureReady(player1);
+        Permanent blade = harness.enterBattlefieldAndReturn(player1, new PhantomBlade());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(blade.getAttachedTo()).isNull();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void destroysTheOtherTargetWhenTheAttachTargetLeaves() {
+        Permanent creature = addCreatureReady(player1);
+        Permanent opponentCreature = addCreatureReady(player2);
+        Permanent blade = harness.enterBattlefieldAndReturn(player1, new PhantomBlade());
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.handlePermanentChosen(player1, opponentCreature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerGraveyards.get(player1.getId()).add(creature.getCard());
+        harness.passBothPriorities();
+
+        assertThat(blade.getAttachedTo()).isNull();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void attachesWhenTheDestroyTargetLeaves() {
+        Permanent creature = addCreatureReady(player1);
+        Permanent opponentCreature = addCreatureReady(player2);
+        Permanent blade = harness.enterBattlefieldAndReturn(player1, new PhantomBlade());
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.handlePermanentChosen(player1, opponentCreature.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(opponentCreature);
+        gd.playerGraveyards.get(player2.getId()).add(opponentCreature.getCard());
+        harness.passBothPriorities();
+
+        assertThat(blade.getAttachedTo()).isEqualTo(creature.getId());
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void reequippingMovesTheBonusesToTheNewCreature() {
+        Permanent blade = addBladeReady();
+        Permanent firstCreature = addCreatureReady(player1);
+        Permanent secondCreature = addCreatureReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, null, firstCreature.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, secondCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(blade.getAttachedTo()).isEqualTo(secondCreature.getId());
+        assertThat(gqs.getEffectivePower(gd, firstCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, firstCreature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, firstCreature, Keyword.MENACE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, secondCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, secondCreature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, secondCreature, Keyword.MENACE)).isTrue();
+    }
+
     private void castPhantomBlade(java.util.UUID... targets) {
         castCard(List.of(targets));
     }
@@ -88,16 +180,14 @@ class PhantomBladeTest extends BaseCardTest {
     }
 
     private Permanent addCreatureReady(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent creature = new Permanent(new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
         creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
         return creature;
     }
 
     private Permanent addBladeReady() {
-        Permanent blade = new Permanent(new PhantomBlade());
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new PhantomBlade());
         blade.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(blade);
         return blade;
     }
 }
