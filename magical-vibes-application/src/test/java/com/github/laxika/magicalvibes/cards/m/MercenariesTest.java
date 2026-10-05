@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.s.SwordsToPlowshares;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Mercenaries.class, BalduvianBears.class})
+@CardUsed({Mercenaries.class, BalduvianBears.class, SwordsToPlowshares.class})
 class MercenariesTest extends BaseCardTest {
 
     @Test
@@ -68,8 +69,7 @@ class MercenariesTest extends BaseCardTest {
         // Advance past cleanup so combat flags reset, then swing again without a new shield.
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         mercs.setSummoningSick(false);
         mercs.setAttacking(true);
@@ -184,6 +184,50 @@ class MercenariesTest extends BaseCardTest {
         harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Prevention resolves after Mercenaries leaves and prevents its pending damage")
+    void preventsPendingDamageAfterSourceLeaves() {
+        harness.setLife(player2, 20);
+        Permanent mercs = addMercenariesWithDamageAbility(player1);
+        harness.setHand(player1, List.of(new SwordsToPlowshares()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.activateAbility(player2, 0, null, null);
+        harness.castInstant(player1, 0, mercs.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(mercs);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Repeated activations each protect a separate damage event in the same turn")
+    void repeatedActivationsProtectSeparateDamageEvents() {
+        harness.setLife(player2, 20);
+        addMercenariesWithDamageAbility(player1);
+        harness.addMana(player2, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        for (int i = 0; i < 2; i++) {
+            harness.activateAbility(player1, 0, 1, null, player2.getId());
+            harness.passBothPriorities();
+            harness.assertLife(player2, 20);
+        }
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
     }
 
     private Permanent addMercenariesWithDamageAbility(Player player) {
