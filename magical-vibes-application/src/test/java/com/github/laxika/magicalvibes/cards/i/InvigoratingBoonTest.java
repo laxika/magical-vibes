@@ -93,8 +93,7 @@ class InvigoratingBoonTest extends BaseCardTest {
         harness.setHand(player2, List.of(new ElvishWarrior()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
@@ -130,5 +129,52 @@ class InvigoratingBoonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The counter trigger resolves before the cycling card draw")
+    void counterResolvesBeforeCyclingDraw() {
+        harness.addToBattlefield(player1, new InvigoratingBoon());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
+        ElvishWarrior drawnCard = new ElvishWarrior();
+        harness.setHand(player1, List.of(new ForgottenCave()));
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    @DisplayName("Each cycled card can add another counter to the same creature")
+    void repeatedCyclingAddsCounters() {
+        harness.addToBattlefield(player1, new InvigoratingBoon());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
+        harness.setHand(player1, List.of(new ForgottenCave(), new ForgottenCave()));
+        harness.setLibrary(player1, List.of(new ElvishWarrior(), new ElvishWarrior()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        for (int count = 1; count <= 2; count++) {
+            harness.activateHandAbility(player1, 0, null);
+            harness.handlePermanentChosen(player1, target.getId());
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+            harness.passBothPriorities();
+
+            assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(count);
+        }
     }
 }
