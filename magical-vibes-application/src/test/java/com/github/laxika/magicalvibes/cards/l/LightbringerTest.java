@@ -99,6 +99,35 @@ class LightbringerTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Lightbringer");
     }
 
+    @Test
+    @DisplayName("Cannot activate Lightbringer with summoning sickness")
+    void cannotActivateWithSummoningSickness() {
+        harness.addToBattlefield(player1, new Lightbringer());
+        Permanent target = addCreatureReady(player2, new SpinelessThug());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        harness.assertOnBattlefield(player1, "Lightbringer");
+        harness.assertNotInGraveyard(player1, "Lightbringer");
+        harness.assertOnBattlefield(player2, "Spineless Thug");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice Lightbringer without a target")
+    void cannotActivateWithoutTarget() {
+        addLightbringer(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Lightbringer");
+        harness.assertNotInGraveyard(player1, "Lightbringer");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addLightbringer(Player player) {
         return addCreatureReady(player, new Lightbringer());
     }
