@@ -39,6 +39,49 @@ class KavuAggressorTest extends BaseCardTest {
     }
 
     @Test
+    void cannotPayKickerWithOnlyBaseCostMana() {
+        harness.setHand(player1, List.of(new KavuAggressor()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castKickedCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Kavu Aggressor");
+        harness.assertNotOnBattlefield(player1, "Kavu Aggressor");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void entersWithoutCounterWhenPutOntoBattlefieldWithoutCasting() {
+        Permanent kavu = harness.enterBattlefieldAndReturn(player1, new KavuAggressor());
+
+        assertThat(kavu.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void kickedCreatureStillCannotBlock() {
+        harness.setHand(player2, List.of(new KavuAggressor()));
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 6);
+        harness.castKickedCreature(player2, 0);
+        harness.passBothPriorities();
+
+        Permanent blocker = findPermanent(player2, "Kavu Aggressor");
+        Permanent attacker = addCreatureReady(player1, new KavuAggressor());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThat(blocker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker)))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     void cannotBeDeclaredAsBlocker() {
         Permanent blocker = addCreatureReady(player2, new KavuAggressor());
         Permanent attacker = addCreatureReady(player1, new KavuAggressor());
