@@ -23,11 +23,52 @@ class PullFromEternityTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PullFromEternity()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, exiledCard.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, exiledCard.getId());
 
         assertThat(gd.findExiledCard(exiledCard.getId())).isNull();
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(exiledCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(exiledCard);
+    }
+
+    @Test
+    @DisplayName("Can move its controller's exiled noncreature card to the graveyard")
+    void movesOwnExiledNoncreatureCardToGraveyard() {
+        PullFromEternity exiledCard = new PullFromEternity();
+        PullFromEternity spell = new PullFromEternity();
+        harness.setExile(player1, List.of(exiledCard));
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, exiledCard.getId());
+
+        assertThat(gd.findExiledCard(exiledCard.getId())).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(exiledCard, spell);
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(exiledCard);
+    }
+
+    @Test
+    @DisplayName("Only the first resolving copy moves a shared exile target")
+    void respondingCopyMakesOriginalTargetIllegal() {
+        BenalishCavalry exiledCard = new BenalishCavalry();
+        PullFromEternity original = new PullFromEternity();
+        PullFromEternity response = new PullFromEternity();
+        harness.setExile(player2, List.of(exiledCard));
+        harness.setHand(player1, List.of(original, response));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castInstant(player1, 0, exiledCard.getId());
+        harness.castInstant(player1, 0, exiledCard.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(exiledCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(response).doesNotContain(original);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(exiledCard.getId())).isNull();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(exiledCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(original, response);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
