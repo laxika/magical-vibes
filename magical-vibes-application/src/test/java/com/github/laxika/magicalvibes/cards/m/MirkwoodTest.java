@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.a.ArachnusSpinner;
+import com.github.laxika.magicalvibes.cards.a.ArtificialEvolution;
+import com.github.laxika.magicalvibes.cards.b.BoggartShenanigans;
 import com.github.laxika.magicalvibes.cards.d.DwarvenLieutenant;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlpackWolf;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,10 +16,13 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Mirkwood.class, GrizzlyBears.class, ArachnusSpinner.class, HowlpackWolf.class, DwarvenLieutenant.class})
+@CardUsed({Mirkwood.class, GrizzlyBears.class, ArachnusSpinner.class, HowlpackWolf.class,
+        DwarvenLieutenant.class, ArtificialEvolution.class, BoggartShenanigans.class})
 class MirkwoodTest extends BaseCardTest {
 
     @Test
@@ -44,7 +49,7 @@ class MirkwoodTest extends BaseCardTest {
     @DisplayName("Sacrifice ability puts two counters on a Bear")
     void sacrificeAbilityBoostsBear() {
         Permanent mirkwood = addReadyMirkwood();
-        Permanent bear = addReadyPermanent(player1, new GrizzlyBears());
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
         addCounterAbilityMana();
 
         harness.activateAbility(player1, battlefieldIndex(mirkwood), 1, null, bear.getId());
@@ -60,8 +65,8 @@ class MirkwoodTest extends BaseCardTest {
     void sacrificeAbilityBoostsSpiderAndWolf() {
         Permanent firstMirkwood = addReadyMirkwood();
         Permanent secondMirkwood = addReadyMirkwood();
-        Permanent spider = addReadyPermanent(player1, new ArachnusSpinner());
-        Permanent wolf = addReadyPermanent(player1, new HowlpackWolf());
+        Permanent spider = addCreatureReady(player1, new ArachnusSpinner());
+        Permanent wolf = addCreatureReady(player1, new HowlpackWolf());
         addCounterAbilityMana(2);
         readyMainPhase();
 
@@ -78,7 +83,7 @@ class MirkwoodTest extends BaseCardTest {
     @DisplayName("Sacrifice ability cannot target another creature type")
     void sacrificeAbilityRejectsOtherCreature() {
         Permanent mirkwood = addReadyMirkwood();
-        Permanent dwarf = addReadyPermanent(player1, new DwarvenLieutenant());
+        Permanent dwarf = addCreatureReady(player1, new DwarvenLieutenant());
         addCounterAbilityMana();
 
         assertThatThrownBy(() -> harness.activateAbility(
@@ -91,7 +96,7 @@ class MirkwoodTest extends BaseCardTest {
     @DisplayName("Sacrifice ability can only be activated as a sorcery")
     void sacrificeAbilityIsSorcerySpeedOnly() {
         Permanent mirkwood = addReadyMirkwood();
-        Permanent bear = addReadyPermanent(player1, new GrizzlyBears());
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
         addCounterAbilityMana();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -102,17 +107,155 @@ class MirkwoodTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReadyMirkwood() {
-        Permanent mirkwood = addReadyPermanent(player1, new Mirkwood());
-        mirkwood.untap();
-        return mirkwood;
+    @Test
+    void manaAbilityAddsBlackImmediately() {
+        Permanent mirkwood = addReadyMirkwood();
+
+        harness.activateAbility(player1, battlefieldIndex(mirkwood), 0, null, null);
+        harness.handleListChoice(player1, ManaColor.BLACK.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(mirkwood.isTapped()).isTrue();
     }
 
-    private Permanent addReadyPermanent(com.github.laxika.magicalvibes.model.Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void sacrificesAndPaysManaBeforeCountersResolve() {
+        Permanent mirkwood = addReadyMirkwood();
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        addCounterAbilityMana();
+        readyMainPhase();
+
+        harness.activateAbility(player1, battlefieldIndex(mirkwood), 1, null, bear.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(mirkwood);
+        harness.assertInGraveyard(player1, "Mirkwood");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void cannotTargetOpponentsBear() {
+        Permanent mirkwood = addReadyMirkwood();
+        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
+        addCounterAbilityMana();
+        readyMainPhase();
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(mirkwood), 1, null, bear.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(mirkwood);
+        assertThat(mirkwood.isTapped()).isFalse();
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent mirkwood = harness.enterBattlefieldAndReturn(player1, new Mirkwood());
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        addCounterAbilityMana();
+        readyMainPhase();
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(mirkwood), 1, null, bear.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(mirkwood);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWithAnAbilityOnTheStack() {
+        Permanent firstMirkwood = addReadyMirkwood();
+        Permanent secondMirkwood = addReadyMirkwood();
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        addCounterAbilityMana(2);
+        readyMainPhase();
+        harness.activateAbility(player1, battlefieldIndex(firstMirkwood), 1, null, bear.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(secondMirkwood), 1, null, bear.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(secondMirkwood);
+        assertThat(secondMirkwood.isTapped()).isFalse();
+        harness.passBothPriorities();
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void canPutCountersOnANoncreatureKindredBear() {
+        Permanent mirkwood = addReadyMirkwood();
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new BoggartShenanigans());
+        harness.setHand(player1, List.of(new ArtificialEvolution()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, enchantment.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GOBLIN");
+        harness.handleListChoice(player1, "BEAR");
+        assertThat(gqs.hasEffectiveSubtype(gd, enchantment, CardSubtype.BEAR)).isTrue();
+        assertThat(gqs.isCreature(gd, enchantment)).isFalse();
+        addCounterAbilityMana();
+        readyMainPhase();
+
+        harness.activateAbility(player1, battlefieldIndex(mirkwood), 1, null, enchantment.getId());
+        harness.passBothPriorities();
+
+        assertThat(enchantment.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Mirkwood");
+    }
+
+    @Test
+    void countersAreNotPlacedIfTargetLosesItsEligibleSubtype() {
+        Permanent mirkwood = addReadyMirkwood();
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        addCounterAbilityMana();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player1, List.of(new ArtificialEvolution()));
+        readyMainPhase();
+        harness.activateAbility(player1, battlefieldIndex(mirkwood), 1, null, bear.getId());
+        harness.castInstant(player1, 0, bear.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BEAR");
+        harness.handleListChoice(player1, "ELF");
+        assertThat(gqs.hasEffectiveSubtype(gd, bear, CardSubtype.BEAR)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Mirkwood");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateOutsideAMainPhase() {
+        Permanent mirkwood = addReadyMirkwood();
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        addCounterAbilityMana();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(mirkwood), 1, null, bear.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(mirkwood);
+        assertThat(mirkwood.isTapped()).isFalse();
+    }
+
+    private Permanent addReadyMirkwood() {
+        Permanent mirkwood = harness.addToBattlefieldAndReturn(player1, new Mirkwood());
+        mirkwood.untap();
+        return mirkwood;
     }
 
     private void addCounterAbilityMana() {
