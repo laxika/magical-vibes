@@ -2,6 +2,10 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HermeticStudy;
+import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -9,7 +13,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -70,6 +76,68 @@ class PuppetMasterStringPullerTest extends BaseCardTest {
 
         assertThat(countPermanents(player1, "Treasure")).isZero();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
+    void opponentsGoadedCreatureDamagingAnotherOpponentCreatesTreasure() {
+        Player third = addOpponent();
+        addCreatureReady(player1, new PuppetMasterStringPuller());
+        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
+        goadTarget(bear);
+
+        bear.setAttacking(true);
+        bear.setAttackTarget(third.getId());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(third.getId())).isEqualTo(18);
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
+        assertThat(countPermanents(third, "Treasure")).isZero();
+    }
+
+    @Test
+    void simultaneousCombatDamageCreatesOnlyOneTreasure() {
+        addCreatureReady(player1, new PuppetMasterStringPuller());
+        Permanent goaded = addCreatureReady(player1, new GrizzlyBears());
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new PuppetMasterStringPuller());
+        declareAttackers(player2, List.of(0));
+        harness.handlePermanentChosen(player2, goaded.getId());
+        resolveAllTriggers();
+        assertThat(gqs.isGoaded(gd, goaded)).isTrue();
+
+        for (Permanent bear : List.of(goaded, other)) {
+            bear.setAttacking(true);
+            bear.setAttackTarget(player2.getId());
+        }
+        gd.playerBattlefields.get(player2.getId()).forEach(p -> p.setAttacking(false));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
+    }
+
+    private Player addOpponent() {
+        UUID id = UUID.randomUUID();
+        Player opponent = new Player(id, "Charlie");
+        gd.playerIds.add(id);
+        gd.orderedPlayerIds.add(id);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(id, "Charlie");
+        gd.playerDecks.put(id, new ArrayList<>());
+        gd.playerHands.put(id, new ArrayList<>());
+        gd.playerBattlefields.put(id, new ArrayList<>());
+        gd.playerGraveyards.put(id, new ArrayList<>());
+        gd.playerCommandZones.put(id, new ArrayList<>());
+        gd.playerManaPools.put(id, new ManaPool());
+        gd.playerLifeTotals.put(id, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection("conn-Charlie"), id, "Charlie");
+        return opponent;
     }
 
     private void goadTarget(Permanent target) {
