@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
+import com.github.laxika.magicalvibes.cards.q.QuestingDruid;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({JohannApprenticeSorcerer.class, Shock.class, Pyroclasm.class, GrizzlyBears.class})
+@CardUsed({JohannApprenticeSorcerer.class, Shock.class, Pyroclasm.class, GrizzlyBears.class,
+        QuestingDruid.class})
 class JohannApprenticeSorcererTest extends BaseCardTest {
 
     @Test
@@ -57,6 +59,7 @@ class JohannApprenticeSorcererTest extends BaseCardTest {
         harness.addToBattlefield(player1, new JohannApprenticeSorcerer());
         Card bears = new GrizzlyBears();
         harness.setLibrary(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
         prepareMainPhase();
 
         assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
@@ -79,6 +82,120 @@ class JohannApprenticeSorcererTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromLibraryTop(player1, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(secondShock);
+    }
+
+    @Test
+    void topCardRemainsPrivateAndVisibleAfterCastingPermissionIsUsed() {
+        harness.addToBattlefield(player1, new JohannApprenticeSorcerer());
+        harness.setLibrary(player1, List.of(new Shock(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        prepareMainPhase();
+        harness.castAndResolveFromLibraryTop(player1, player2.getId());
+        harness.forceActivePlayer(player2);
+        harness.ensurePriority(player2);
+        harness.clearMessages();
+
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages())
+                .anyMatch(message -> message.contains("\"revealedLibraryTopCards\":[[{")
+                        && message.contains("Grizzly Bears"));
+        assertThat(harness.getConn2().getSentMessages())
+                .anyMatch(message -> message.contains("\"revealedLibraryTopCards\":[[],[]]"));
+    }
+
+    @Test
+    void castsInstantDuringOpponentsTurn() {
+        harness.addToBattlefield(player1, new JohannApprenticeSorcerer());
+        harness.setLibrary(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castAndResolveFromLibraryTop(player1, player2.getId());
+
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player1, "Shock");
+    }
+
+    @Test
+    void rejectsSorceryDuringOpponentsTurn() {
+        harness.addToBattlefield(player1, new JohannApprenticeSorcerer());
+        Pyroclasm pyroclasm = new Pyroclasm();
+        harness.setLibrary(player1, List.of(pyroclasm));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(pyroclasm);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    void failedManaPaymentDoesNotConsumeCastingPermission() {
+        harness.addToBattlefield(player1, new JohannApprenticeSorcerer());
+        Shock shock = new Shock();
+        harness.setLibrary(player1, List.of(shock));
+        prepareMainPhase();
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(shock);
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveFromLibraryTop(player1, player2.getId());
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void newJohannGrantsANewPermissionInTheSameTurn() {
+        harness.addToBattlefield(player1, new JohannApprenticeSorcerer());
+        harness.setLibrary(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        prepareMainPhase();
+        harness.castAndResolveFromLibraryTop(player1, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.addToBattlefield(player1, new JohannApprenticeSorcerer());
+
+        harness.castAndResolveFromLibraryTop(player1, player2.getId());
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void castingPermissionResetsOnTheNextPlayersTurn() {
+        harness.addToBattlefield(player1, new JohannApprenticeSorcerer());
+        harness.setLibrary(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        prepareMainPhase();
+        harness.castAndResolveFromLibraryTop(player1, player2.getId());
+        harness.forceStep(TurnStep.END_STEP);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveFromLibraryTop(player1, player2.getId());
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void adventureOnTopIsOfferedAsPlayableUsingItsInstantCharacteristics() {
+        harness.addToBattlefield(player1, new JohannApprenticeSorcerer());
+        harness.setLibrary(player1, List.of(new QuestingDruid()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        prepareMainPhase();
+        harness.ensurePriority(player1);
+        harness.clearMessages();
+
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages())
+                .anyMatch(message -> message.contains("\"playableLibraryTopCards\":[{"));
     }
 
     private void prepareMainPhase() {
