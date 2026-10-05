@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({PsychicSpear.class, KamiOfFalseHope.class, DisruptingShoal.class, BakuAltar.class})
 class PsychicSpearTest extends BaseCardTest {
@@ -92,5 +93,73 @@ class PsychicSpearTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         harness.assertInGraveyard(player1, "Kami of False Hope");
+    }
+
+    @Test
+    @DisplayName("Exactly one matching card is discarded when several are available")
+    void discardsOnlyOneMatchingCard() {
+        harness.setHand(player2, List.of(new KamiOfFalseHope(), new DisruptingShoal(), new BakuAltar()));
+        harness.setHand(player1, List.of(new PsychicSpear()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInGraveyard(player2, "Disrupting Shoal");
+        harness.assertInHand(player2, "Kami of False Hope");
+        harness.assertInHand(player2, "Baku Altar");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Psychic Spear");
+    }
+
+    @Test
+    @DisplayName("A matching card must be chosen and a nonmatching card cannot be chosen")
+    void cannotDeclineOrChooseNonmatchingCard() {
+        harness.setHand(player2, List.of(new BakuAltar(), new KamiOfFalseHope()));
+        harness.setHand(player1, List.of(new PsychicSpear()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCardChosen(player2, 1))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleCardChosen(player1, 1);
+        harness.assertInGraveyard(player2, "Kami of False Hope");
+        harness.assertInHand(player2, "Baku Altar");
+    }
+
+    @Test
+    @DisplayName("An empty hand resolves without a discard choice")
+    void emptyHandResolvesWithoutChoice() {
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new PsychicSpear()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Psychic Spear");
+    }
+
+    @Test
+    @DisplayName("The entire hand is revealed even when no card can be discarded")
+    void revealsHandWithoutMatchingCards() {
+        harness.setHand(player2, List.of(new BakuAltar()));
+        harness.setHand(player1, List.of(new PsychicSpear()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(log -> log.contains("reveals their hand:") && log.contains("Baku Altar"));
+        harness.assertInHand(player2, "Baku Altar");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
