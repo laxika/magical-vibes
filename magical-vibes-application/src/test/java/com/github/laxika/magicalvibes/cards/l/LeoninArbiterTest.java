@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,9 +22,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LeoninArbiter.class, DiabolicTutor.class, Forest.class, GrizzlyBears.class,
+        Plains.class, Swamp.class, TerramorphicExpanse.class})
 class LeoninArbiterTest extends BaseCardTest {
-
-    // ===== Search restriction — opponent =====
 
     @Test
     @DisplayName("Opponent cannot search library when Leonin Arbiter is on the battlefield and they have no mana")
@@ -111,9 +112,8 @@ class LeoninArbiterTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
+        harness.setLibrary(player2, List.of(new Plains(), new Swamp(), new GrizzlyBears(), new GrizzlyBears()));
         List<Card> deck = gd.playerDecks.get(player2.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Swamp(), new GrizzlyBears(), new GrizzlyBears()));
         int deckSizeBefore = deck.size();
 
         harness.castSorcery(player2, 0, 0);
@@ -124,8 +124,6 @@ class LeoninArbiterTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("prevented by Leonin Arbiter"));
         assertThat(deck).hasSize(deckSizeBefore); // deck preserved (shuffled, not emptied)
     }
-
-    // ===== Search restriction — controller =====
 
     @Test
     @DisplayName("Controller also cannot search when Leonin Arbiter is on the battlefield and they have no extra mana")
@@ -171,8 +169,6 @@ class LeoninArbiterTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("pays {2} for Leonin Arbiter search tax"));
     }
 
-    // ===== Payment persists until end of turn =====
-
     @Test
     @DisplayName("After paying for Leonin Arbiter, subsequent searches this turn do not require payment again")
     void paymentPersistsUntilEndOfTurn() {
@@ -193,7 +189,7 @@ class LeoninArbiterTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Diabolic Tutor
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player2, 0);
 
         // Second search — should NOT require additional payment (Arbiter already paid this turn)
         harness.setHand(player2, List.of(new DiabolicTutor()));
@@ -208,8 +204,6 @@ class LeoninArbiterTest extends BaseCardTest {
         // Search should proceed without additional tax payment
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
     }
-
-    // ===== Payment resets at turn change =====
 
     @Test
     @DisplayName("Payment resets when a new turn begins")
@@ -231,13 +225,13 @@ class LeoninArbiterTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player2, 0);
 
         // Verify paid status is recorded
         assertThat(gd.paidSearchTaxPermanentIds.get(player2.getId())).isNotEmpty();
 
-        // Simulate new turn
-        gd.paidSearchTaxPermanentIds.clear();
+        // Advance through an actual turn boundary so the engine must expire the payment.
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         // Now player2 should need to pay again — no mana means prevented
         harness.setHand(player2, List.of(new DiabolicTutor()));
@@ -250,8 +244,6 @@ class LeoninArbiterTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("prevented by Leonin Arbiter"));
     }
-
-    // ===== Removing Arbiter restores search =====
 
     @Test
     @DisplayName("Removing Leonin Arbiter from battlefield restores ability to search freely")
@@ -278,8 +270,6 @@ class LeoninArbiterTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(entry -> entry.contains("Leonin Arbiter"));
     }
-
-    // ===== Multiple Arbiters =====
 
     @Test
     @DisplayName("Two Leonin Arbiters require {4} to search")
@@ -324,17 +314,13 @@ class LeoninArbiterTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("prevented by Leonin Arbiter"));
     }
 
-    // ===== Works with activated ability search (Terramorphic Expanse) =====
-
     @Test
     @DisplayName("Leonin Arbiter prevents Terramorphic Expanse search without mana")
     void preventsActivatedAbilitySearchWithoutMana() {
         harness.addToBattlefield(player1, new LeoninArbiter());
         harness.addToBattlefield(player1, new TerramorphicExpanse());
 
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Forest()));
+        harness.setLibrary(player1, List.of(new Plains(), new Forest()));
 
         harness.activateAbility(player1, 1, null, null); // activate Terramorphic Expanse (index 1)
         harness.passBothPriorities();
@@ -351,9 +337,7 @@ class LeoninArbiterTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TerramorphicExpanse());
         harness.addMana(player1, ManaColor.COLORLESS, 2); // for Arbiter tax
 
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Forest()));
+        harness.setLibrary(player1, List.of(new Plains(), new Forest()));
 
         harness.activateAbility(player1, 1, null, null);
 
@@ -366,8 +350,6 @@ class LeoninArbiterTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("pays {2} for Leonin Arbiter search tax"));
     }
-
-    // ===== Special action retains priority =====
 
     @Test
     @DisplayName("Paying search tax retains priority (does not pass)")
@@ -390,11 +372,76 @@ class LeoninArbiterTest extends BaseCardTest {
         assertThat(gd.priorityPassedBy).doesNotContain(player2.getId());
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("A player can pay for one Arbiter even when unable to pay for both")
+    void canIgnoreOneOfTwoArbiters() {
+        harness.addToBattlefield(player1, new LeoninArbiter());
+        harness.addToBattlefield(player2, new LeoninArbiter());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.paySearchTax(player1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.paidSearchTaxPermanentIds.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @CardUsed({TurnToFrog.class})
+    @DisplayName("An Arbiter that has lost all abilities does not prevent searching")
+    void abilityRemovalRestoresSearching() {
+        harness.addToBattlefield(player1, new LeoninArbiter());
+        harness.setHand(player1, List.of(new TurnToFrog(), new DiabolicTutor()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        setupLibrary(player1);
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Leonin Arbiter"));
+        harness.passBothPriorities();
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+    }
+
+    @Test
+    @DisplayName("Paying for one player does not allow the other player to search")
+    void paymentAppliesOnlyToPayingPlayer() {
+        harness.addToBattlefield(player1, new LeoninArbiter());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.paySearchTax(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new DiabolicTutor()));
+        harness.addMana(player2, ManaColor.BLACK, 4);
+        setupLibrary(player2);
+
+        harness.castSorcery(player2, 0, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("An Arbiter entering after payment imposes a new restriction")
+    void newArbiterRequiresNewPayment() {
+        harness.addToBattlefield(player1, new LeoninArbiter());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.paySearchTax(player1);
+        harness.addToBattlefield(player2, new LeoninArbiter());
+        harness.setHand(player1, List.of(new DiabolicTutor()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        setupLibrary(player1);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
+    }
 
     private void setupLibrary(com.github.laxika.magicalvibes.model.Player player) {
-        List<Card> deck = gd.playerDecks.get(player.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Swamp(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player, List.of(new Plains(), new Swamp(), new GrizzlyBears(), new GrizzlyBears()));
     }
 }
