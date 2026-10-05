@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PrimordialHydra.class})
 class PrimordialHydraTest extends BaseCardTest {
 
     @Test
@@ -45,8 +47,7 @@ class PrimordialHydraTest extends BaseCardTest {
     @Test
     @DisplayName("Upkeep trigger doubles the +1/+1 counters")
     void upkeepDoublesCounters() {
-        harness.addToBattlefield(player1, new PrimordialHydra());
-        Permanent hydra = findPermanent(player1, "Primordial Hydra");
+        Permanent hydra = harness.addToBattlefieldAndReturn(player1, new PrimordialHydra());
         hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
 
         advanceToUpkeep(player1);
@@ -59,8 +60,7 @@ class PrimordialHydraTest extends BaseCardTest {
     @Test
     @DisplayName("Upkeep trigger does not fire on an opponent's upkeep")
     void doesNotDoubleOnOpponentUpkeep() {
-        harness.addToBattlefield(player1, new PrimordialHydra());
-        Permanent hydra = findPermanent(player1, "Primordial Hydra");
+        Permanent hydra = harness.addToBattlefieldAndReturn(player1, new PrimordialHydra());
         hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
 
         advanceToUpkeep(player2);
@@ -72,13 +72,40 @@ class PrimordialHydraTest extends BaseCardTest {
     @Test
     @DisplayName("No trample below ten +1/+1 counters, trample at ten or more")
     void trampleOnlyAtTenCounters() {
-        harness.addToBattlefield(player1, new PrimordialHydra());
-        Permanent hydra = findPermanent(player1, "Primordial Hydra");
+        Permanent hydra = harness.addToBattlefieldAndReturn(player1, new PrimordialHydra());
 
         hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 9);
         assertThat(gqs.hasKeyword(gd, hydra, Keyword.TRAMPLE)).isFalse();
 
         hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 10);
         assertThat(gqs.hasKeyword(gd, hydra, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Doubling uses the counters present when the upkeep trigger resolves")
+    void doublesCurrentCountersAtResolution() {
+        Permanent hydra = harness.addToBattlefieldAndReturn(player1, new PrimordialHydra());
+        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+        harness.passBothPriorities();
+
+        assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(10);
+        assertThat(gqs.hasKeyword(gd, hydra, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Trample is lost when the +1/+1 counter count falls below ten")
+    void losesTrampleBelowThreshold() {
+        Permanent hydra = harness.addToBattlefieldAndReturn(player1, new PrimordialHydra());
+        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 10);
+        assertThat(gqs.hasKeyword(gd, hydra, Keyword.TRAMPLE)).isTrue();
+
+        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 9);
+        hydra.setCounterCount(CounterType.CHARGE, 1);
+
+        assertThat(gqs.hasKeyword(gd, hydra, Keyword.TRAMPLE)).isFalse();
     }
 }
