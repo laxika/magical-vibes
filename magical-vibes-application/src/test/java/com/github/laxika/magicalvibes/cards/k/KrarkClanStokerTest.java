@@ -78,4 +78,37 @@ class KrarkClanStokerTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
         harness.assertOnBattlefield(player1, "Darksteel Brute");
     }
+
+    @Test
+    @DisplayName("A tapped indestructible artifact can be sacrificed for mana")
+    void canSacrificeTappedArtifact() {
+        addCreatureReady(player1, new KrarkClanStoker());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new DarksteelBrute());
+        artifact.tap();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Darksteel Brute");
+        harness.assertInGraveyard(player1, "Darksteel Brute");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("With multiple artifacts only the chosen artifact is sacrificed")
+    void sacrificesOnlyChosenArtifact() {
+        Permanent stoker = addCreatureReady(player1, new KrarkClanStoker());
+        Permanent retained = harness.addToBattlefieldAndReturn(player1, new DarksteelBrute());
+        Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new DarksteelBrute());
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        harness.handlePermanentChosen(player1, sacrificed.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(stoker, retained);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(sacrificed.getCard());
+        assertThat(stoker.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
 }
