@@ -45,8 +45,7 @@ class MindSludgeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindSludge()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Target must choose 3 cards to discard
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(3);
@@ -66,8 +65,7 @@ class MindSludgeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindSludge(), new GrizzlyBears(), new HillGiant()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         PendingInteraction.DiscardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class);
@@ -105,8 +103,7 @@ class MindSludgeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindSludge()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Caster controls only 1 Swamp -> exactly 1 discard
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(1);
@@ -114,6 +111,50 @@ class MindSludgeTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Swamps are counted at resolution and other permanents do not count")
+    void countsSwampsAtResolution() {
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new GrizzlyBears(), new HillGiant(), new GiantGrowth()));
+        harness.setHand(player1, List.of(new MindSludge()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.passBothPriorities();
+
+        PendingInteraction.DiscardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.remainingCount()).isEqualTo(2);
+        harness.handleCardChosen(player2, 1);
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId()).getFirst()).isInstanceOf(GrizzlyBears.class);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("An empty-handed target requires no discard choice")
+    void emptyHandRequiresNoChoice() {
+        harness.addToBattlefield(player1, new Swamp());
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new MindSludge()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
     }
 
     @Test
@@ -126,8 +167,7 @@ class MindSludgeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindSludge()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.handleCardChosen(player2, 0);
 
