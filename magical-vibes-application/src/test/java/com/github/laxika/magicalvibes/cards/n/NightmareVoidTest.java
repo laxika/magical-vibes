@@ -123,6 +123,47 @@ class NightmareVoidTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Dredging mills exactly two cards and returns only the chosen copy")
+    void dredgesOnlyChosenCopy() {
+        NightmareVoid unchosen = new NightmareVoid();
+        NightmareVoid chosen = new NightmareVoid();
+        Card first = new Forest();
+        Card second = new Forest();
+        Card remaining = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(unchosen, chosen));
+        harness.setLibrary(player1, List.of(first, second, remaining));
+
+        resolveDraw();
+        harness.handleGraveyardCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(unchosen, first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's Nightmare Void cannot replace your draw")
+    void opponentsGraveyardDoesNotReplaceDraw() {
+        NightmareVoid nightmareVoid = new NightmareVoid();
+        Card top = new Forest();
+        Card remaining = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(nightmareVoid));
+        harness.setLibrary(player1, List.of(top, remaining));
+
+        resolveDraw();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(top);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(nightmareVoid);
+        assertThat(gd.cardsDrawnThisTurn.get(player1.getId())).isEqualTo(1);
+    }
+
     private void castNightmareVoid(java.util.UUID targetId) {
         harness.setHand(player1, List.of(new NightmareVoid()));
         harness.addMana(player1, ManaColor.BLACK, 4);
