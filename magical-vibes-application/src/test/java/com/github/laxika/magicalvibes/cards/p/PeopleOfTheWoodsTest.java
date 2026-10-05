@@ -10,9 +10,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PeopleOfTheWoods.class, Forest.class, GloriousAnthem.class, Plains.class})
+@CardUsed({PeopleOfTheWoods.class, Forest.class, GloriousAnthem.class, Plains.class, TempleGarden.class})
 class PeopleOfTheWoodsTest extends BaseCardTest {
 
     @Test
@@ -69,6 +71,48 @@ class PeopleOfTheWoodsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TempleGarden());
 
         assertStats(people, 1, 1);
+    }
+
+    @Test
+    @DisplayName("People of the Woods counts its current controller's Forests")
+    void toughnessChangesWithController() {
+        Permanent people = addCreatureReady(player1, new PeopleOfTheWoods());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+
+        assertStats(people, 1, 1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(people);
+        gd.playerBattlefields.get(player2.getId()).add(people);
+
+        assertStats(people, 1, 2);
+    }
+
+    @Test
+    @DisplayName("People of the Woods defines its toughness in the graveyard")
+    void toughnessIsDefinedInGraveyard() {
+        PeopleOfTheWoods people = new PeopleOfTheWoods();
+        harness.setGraveyard(player1, List.of(people));
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+
+        assertThat(gqs.getEffectiveCardToughness(gd, people)).isEqualTo(1);
+
+        harness.addToBattlefield(player1, new Forest());
+
+        assertThat(gqs.getEffectiveCardToughness(gd, people)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("People of the Woods dies on entering without any Forests")
+    void diesWhenCastWithoutForests() {
+        harness.castFromHand(player1, new PeopleOfTheWoods(), "{G}{G}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "People of the Woods");
+        harness.assertInGraveyard(player1, "People of the Woods");
     }
 
     private void assertStats(Permanent people, int power, int toughness) {
