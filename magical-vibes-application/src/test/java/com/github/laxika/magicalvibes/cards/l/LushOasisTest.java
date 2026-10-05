@@ -55,4 +55,27 @@ class LushOasisTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("Entry trigger resolves after the land leaves the battlefield")
+    void entryTriggerResolvesAfterLandLeavesBattlefield() {
+        harness.setHand(player1, List.of(new LushOasis()));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        harness.assertLife(player2, 20);
+        Permanent land = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, land));
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+        harness.assertNotOnBattlefield(player1, "Lush Oasis");
+        harness.assertInGraveyard(player1, "Lush Oasis");
+    }
 }
