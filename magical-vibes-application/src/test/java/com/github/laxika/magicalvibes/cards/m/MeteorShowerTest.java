@@ -90,4 +90,45 @@ class MeteorShowerTest extends BaseCardTest {
                 harness.castSorceryForX(player1, 0, 3, Map.of(player2.getId(), 4))
         ).isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Each chosen target must receive at least one damage")
+    void rejectsZeroDamageAssignment() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        harness.setHand(player1, List.of(new MeteorShower()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() ->
+                harness.castSorceryForX(player1, 0, 1, Map.of(bears.getId(), 0, player2.getId(), 2))
+        ).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Resolves with exactly enough mana for both X symbols")
+    void resolvesWithExactMana() {
+        harness.setHand(player1, List.of(new MeteorShower()));
+        harness.addMana(player1, ManaColor.RED, 7);
+
+        harness.castSorceryForX(player1, 0, 3, Map.of(player2.getId(), 4));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        harness.assertInGraveyard(player1, "Meteor Shower");
+    }
+
+    @Test
+    @DisplayName("Damage assigned to a departed target is not redistributed")
+    void doesNotRedistributeDamageFromDepartedTarget() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        harness.setHand(player1, List.of(new MeteorShower()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castSorceryForX(player1, 0, 2, Map.of(bears.getId(), 2, player2.getId(), 1));
+        gd.playerBattlefields.get(player2.getId()).remove(bears);
+        harness.setGraveyard(player2, List.of(bears.getCard()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player1, "Meteor Shower");
+    }
 }
