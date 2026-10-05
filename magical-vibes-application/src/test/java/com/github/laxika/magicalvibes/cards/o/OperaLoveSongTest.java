@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -93,6 +94,146 @@ class OperaLoveSongTest extends BaseCardTest {
         addMana();
         harness.castModalInstant(player1, 0, mode, targetIds);
         harness.passBothPriorities();
+    }
+
+    @Test
+    void exileModeWithOneCardExilesOnlyThatCard() {
+        Card only = new Mountain();
+        harness.setLibrary(player1, List.of(only));
+
+        cast(0, List.of());
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(only);
+        assertThat(gd.exilePlayPermissions).containsEntry(only.getId(), player1.getId());
+    }
+
+    @Test
+    void exileModeWithEmptyLibraryDoesNotRequireTargets() {
+        harness.setLibrary(player1, List.of());
+
+        cast(0, List.of());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Opera Love Song");
+        assertThat(gd.exilePlayPermissions).isEmpty();
+    }
+
+    @Test
+    void exiledLandsCanBePlayedButDoNotGrantAnAdditionalLandPlay() {
+        Card first = new Mountain();
+        Card second = new Mountain();
+        harness.setLibrary(player1, List.of(first, second));
+
+        cast(0, List.of());
+        harness.castFromExile(player1, first.getId());
+
+        harness.assertOnBattlefield(player1, "Mountain");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(first).contains(second);
+        assertThatThrownBy(() -> harness.castFromExile(player1, second.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void exiledCreatureRequiresNormalManaCost() {
+        Card creature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(creature));
+
+        cast(0, List.of());
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromExile(player1, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(creature);
+    }
+
+    @Test
+    void exilePermissionEndsWhenControllersNextEndStepBegins() {
+        Card exiled = new OperaLoveSong();
+        harness.setLibrary(player1, List.of(exiled));
+
+        cast(0, List.of());
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(exiled);
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(exiled.getId());
+    }
+
+    @Test
+    void permissionCreatedDuringEndStepLastsUntilFollowingControllersEndStep() {
+        Card exiled = new OperaLoveSong();
+        harness.setLibrary(player1, List.of(exiled, new Mountain(), new Mountain()));
+        harness.forceStep(TurnStep.END_STEP);
+
+        cast(0, List.of());
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gd.exilePlayPermissions).containsEntry(exiled.getId(), player1.getId());
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(exiled.getId());
+    }
+
+    @Test
+    void opponentsExtraTurnDoesNotExpirePermissionBeforeControllersNextEndStep() {
+        Card exiled = new OperaLoveSong();
+        harness.setLibrary(player1, List.of(exiled, new Mountain(), new Mountain()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gd.queueExtraTurnFirst(player2.getId(), false);
+
+        cast(0, List.of());
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gd.exilePlayPermissions).containsEntry(exiled.getId(), player1.getId());
+    }
+
+    @Test
+    void boostModeRejectsMoreThanTwoTargets() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new OperaLoveSong()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 1,
+                List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void boostModeStillBoostsRemainingLegalTarget() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new OperaLoveSong()));
+        addMana();
+        harness.castModalInstant(player1, 0, 1, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        gd.playerGraveyards.get(player1.getId()).add(first.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
+    }
+
+    @Test
+    void boostEndsDuringCleanup() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        cast(1, List.of(target.getId()));
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     private void addMana() {
