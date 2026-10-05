@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MoleManMoloidMaster.class, Forest.class, GrizzlyBears.class})
+@CardUsed({MoleManMoloidMaster.class, Forest.class})
 class MoleManMoloidMasterTest extends BaseCardTest {
 
     @Test
@@ -41,10 +40,8 @@ class MoleManMoloidMasterTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        Permanent moloid = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().isToken() && p.getCard().getName().equals("Moloid"))
-                .findFirst()
-                .orElseThrow();
+        Permanent moloid = findPermanent(player1, "Moloid");
+        assertThat(moloid.getCard().isToken()).isTrue();
         assertThat(moloid.getEffectivePower()).isEqualTo(1);
         assertThat(moloid.getEffectiveToughness()).isEqualTo(1);
     }
@@ -57,12 +54,10 @@ class MoleManMoloidMasterTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        Permanent moloid = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().isToken() && p.getCard().getName().equals("Moloid"))
-                .findFirst()
-                .orElseThrow();
+        Permanent moloid = findPermanent(player1, "Moloid");
+        assertThat(moloid.getCard().isToken()).isTrue();
         moloid.setSummoningSick(false);
-        GrizzlyBears milled = new GrizzlyBears();
+        Forest milled = new Forest();
         harness.setLibrary(player1, List.of(milled));
 
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(moloid)));
@@ -86,6 +81,74 @@ class MoleManMoloidMasterTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.playGraveyardLand(player2, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable from graveyard");
+    }
+
+    @Test
+    @DisplayName("A land played from the graveyard also creates a Moloid")
+    void graveyardLandTriggersLandfall() {
+        harness.addToBattlefield(player1, new MoleManMoloidMaster());
+        harness.setGraveyard(player1, List.of(new Forest()));
+        prepareMainPhase(player1);
+
+        harness.playGraveyardLand(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Moloid")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Moloid")).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's land does not trigger Mole Man's landfall")
+    void opponentsLandDoesNotCreateMoloid() {
+        harness.addToBattlefield(player1, new MoleManMoloidMaster());
+        harness.setHand(player2, List.of(new Forest()));
+        prepareMainPhase(player2);
+
+        harness.playLand(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Moloid")).isZero();
+        assertThat(countPermanents(player2, "Moloid")).isZero();
+    }
+
+    @Test
+    @DisplayName("Graveyard land permission does not grant an additional land play")
+    void graveyardLandStillUsesNormalLandLimit() {
+        harness.addToBattlefield(player1, new MoleManMoloidMaster());
+        harness.setHand(player1, List.of(new Forest()));
+        Forest graveyardLand = new Forest();
+        harness.setGraveyard(player1, List.of(graveyardLand));
+        prepareMainPhase(player1);
+        harness.playLand(player1, 0);
+        resolveAllTriggers();
+        prepareMainPhase(player1);
+
+        assertThatThrownBy(() -> harness.playGraveyardLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyardLand);
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The attacking Moloid's controller can decline to mill")
+    void moloidMayDeclineMill() {
+        harness.addToBattlefield(player1, new MoleManMoloidMaster());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+        resolveAllTriggers();
+        Permanent moloid = findPermanent(player1, "Moloid");
+        moloid.setSummoningSick(false);
+        Forest libraryCard = new Forest();
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setGraveyard(player1, List.of());
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(moloid)));
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
     private void prepareMainPhase(com.github.laxika.magicalvibes.model.Player player) {
