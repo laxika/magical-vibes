@@ -103,4 +103,45 @@ class LimDLsHighGuardTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Lim-Dûl's High Guard");
     }
 
+
+    @Test
+    @DisplayName("Tapped summoning-sick guard can activate regeneration repeatedly")
+    void tappedSummoningSickGuardCanActivateRepeatedly() {
+        Permanent guard = addCreatureReady(player1, new LimDLsHighGuard());
+        guard.setSummoningSick(true);
+        guard.tap();
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(guard.getRegenerationShield()).isEqualTo(2);
+        assertThat(guard.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Activated regeneration saves the guard and removes it from combat")
+    void activatedShieldSavesGuardAndRemovesItFromCombat() {
+        Permanent guard = addCreatureReady(player1, new LimDLsHighGuard());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(guard.isTapped()).isFalse();
+        guard.setBlocking(true);
+        guard.addBlockingTarget(0);
+        Permanent attacker = addCreatureReady(player2, new GorillaChieftain());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(guard);
+        assertThat(guard.getRegenerationShield()).isZero();
+        assertThat(guard.isTapped()).isTrue();
+        assertThat(guard.isBlocking()).isFalse();
+        assertThat(guard.getBlockingTargets()).isEmpty();
+        assertThat(guard.getMarkedDamage()).isZero();
+    }
 }
