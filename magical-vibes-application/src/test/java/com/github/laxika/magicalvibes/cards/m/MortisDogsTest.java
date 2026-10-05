@@ -2,10 +2,14 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CagedSun;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianHulk;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,9 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MortisDogs.class, PhyrexianHulk.class, CagedSun.class})
 class MortisDogsTest extends BaseCardTest {
-
-    // ===== Attack trigger =====
 
     @Test
     @DisplayName("Gets +2/+0 when attacking and trigger resolves")
@@ -29,8 +32,6 @@ class MortisDogsTest extends BaseCardTest {
         assertThat(dogs.getToughnessModifier()).isEqualTo(0);
     }
 
-    // ===== Death trigger =====
-
     @Test
     @DisplayName("When Mortis Dogs dies, controller is prompted to choose a target player")
     void deathTriggerPromptsForTargetPlayer() {
@@ -38,7 +39,7 @@ class MortisDogsTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         setupCombatWhereMortisDogsDies();
-        harness.passBothPriorities(); // Combat damage — Mortis Dogs dies
+        resolveCombat();
 
         // Mortis Dogs should be in graveyard
         harness.assertInGraveyard(player1, "Mortis Dogs");
@@ -56,7 +57,7 @@ class MortisDogsTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         setupCombatWhereMortisDogsDies();
-        harness.passBothPriorities(); // Combat damage — Mortis Dogs dies
+        resolveCombat();
 
         // Choose opponent as target
         harness.handlePermanentChosen(player1, player2.getId());
@@ -79,8 +80,8 @@ class MortisDogsTest extends BaseCardTest {
         Permanent dogsPerm = findPermanent(player1, "Mortis Dogs");
         dogsPerm.setPowerModifier(2);
 
-        setupCombatWhereBoostedMortisDogsDies(dogsPerm);
-        harness.passBothPriorities(); // Combat damage — Mortis Dogs (4/2) dies
+        setupCombatWhereMortisDogsDies();
+        resolveCombat();
 
         // Choose opponent as target
         harness.handlePermanentChosen(player1, player2.getId());
@@ -100,7 +101,7 @@ class MortisDogsTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         setupCombatWhereMortisDogsDies();
-        harness.passBothPriorities(); // Combat damage — Mortis Dogs dies
+        resolveCombat();
 
         // Choose self as target
         harness.handlePermanentChosen(player1, player1.getId());
@@ -114,10 +115,64 @@ class MortisDogsTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Death trigger includes continuous power bonuses at death")
+    void deathTriggerIncludesContinuousPowerBonus() {
+        harness.addToBattlefield(player1, new MortisDogs());
+        Permanent sun = harness.addToBattlefieldAndReturn(player1, new CagedSun());
+        sun.setChosenColor(CardColor.BLACK);
+        Permanent dogs = findPermanent(player1, "Mortis Dogs");
+        assertThat(gqs.getEffectivePower(gd, dogs)).isEqualTo(3);
+        harness.setLife(player2, 20);
+
+        addCreatureReady(player2, new PhyrexianHulk());
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player2);
+        harness.assertInGraveyard(player1, "Mortis Dogs");
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Resolved attack boost is included in the death trigger after lethal combat")
+    void attackBoostIsIncludedWhenDogsDiesInCombat() {
+        Permanent dogs = addCreatureReady(player1, new MortisDogs());
+        addCreatureReady(player2, new PhyrexianHulk());
+        harness.setLife(player2, 20);
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+        assertThat(gqs.getEffectivePower(gd, dogs)).isEqualTo(4);
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        harness.assertInGraveyard(player1, "Mortis Dogs");
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Attack boost expires at end of turn")
+    void attackBoostExpiresAtEndOfTurn() {
+        Permanent dogs = addCreatureReady(player1, new MortisDogs());
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+        assertThat(gqs.getEffectivePower(gd, dogs)).isEqualTo(4);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, dogs)).isEqualTo(2);
+    }
 
     /**
-     * Sets up combat where Mortis Dogs (player1, 2/2) attacks and is blocked by a 3/3 creature (player2).
+     * Sets up combat where Mortis Dogs attacks and is blocked by Phyrexian Hulk.
      * Mortis Dogs will die from combat damage (does NOT get the attack boost since we skip declare attackers).
      */
     private void setupCombatWhereMortisDogsDies() {
@@ -125,39 +180,8 @@ class MortisDogsTest extends BaseCardTest {
         dogsPerm.setSummoningSick(false);
         dogsPerm.setAttacking(true);
 
-        GrizzlyBears bigBear = new GrizzlyBears();
-        bigBear.setPower(3);
-        bigBear.setToughness(3);
-        Permanent blockerPerm = new Permanent(bigBear);
-        blockerPerm.setSummoningSick(false);
+        Permanent blockerPerm = addCreatureReady(player2, new PhyrexianHulk());
         blockerPerm.setBlocking(true);
         blockerPerm.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-    }
-
-    /**
-     * Sets up combat where a boosted Mortis Dogs (4/2) attacks and is blocked by a 5/5 creature.
-     * Mortis Dogs will die from combat damage.
-     */
-    private void setupCombatWhereBoostedMortisDogsDies(Permanent dogsPerm) {
-        dogsPerm.setSummoningSick(false);
-        dogsPerm.setAttacking(true);
-
-        GrizzlyBears bigBlocker = new GrizzlyBears();
-        bigBlocker.setPower(5);
-        bigBlocker.setToughness(5);
-        Permanent blockerPerm = new Permanent(bigBlocker);
-        blockerPerm.setSummoningSick(false);
-        blockerPerm.setBlocking(true);
-        blockerPerm.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
     }
 }
