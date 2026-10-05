@@ -20,6 +20,68 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class NightSoilTest extends BaseCardTest {
 
     @Test
+    void paysExileCostBeforeResolutionAndCanActivateAgainWithoutTapping() {
+        var nightSoil = harness.addToBattlefieldAndReturn(player1, new NightSoil());
+        ElvishFarmer first = new ElvishFarmer();
+        ElvishFarmer second = new ElvishFarmer();
+        FeralThallid third = new FeralThallid();
+        FeralThallid fourth = new FeralThallid();
+        harness.setGraveyard(player2, List.of(first, second, third, fourth));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(third, fourth);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(countPermanents(player1, "Saproling")).isZero();
+        assertThat(nightSoil.isTapped()).isFalse();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleMultipleCardsChosen(player1, List.of(third.getId(), fourth.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .containsExactlyInAnyOrder(first, second, third, fourth);
+        assertThat(countPermanents(player1, "Saproling")).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(nightSoil.isTapped()).isFalse();
+    }
+
+    @Test
+    void rejectsDuplicateAndCrossGraveyardSelectionsWithoutPayingCosts() {
+        harness.addToBattlefield(player1, new NightSoil());
+        ElvishFarmer first = new ElvishFarmer();
+        FeralThallid second = new FeralThallid();
+        ElvishFarmer opponentCreature = new ElvishFarmer();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setGraveyard(player2, List.of(opponentCreature));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(first.getId(), first.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(first.getId(), opponentCreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, second);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCreature);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(countPermanents(player1, "Saproling")).isZero();
+
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCreature);
+        assertThat(countPermanents(player1, "Saproling")).isEqualTo(1);
+    }
+
+    @Test
     void exilesTwoCreatureCardsFromOpponentGraveyardAndCreatesSaproling() {
         var nightSoil = harness.addToBattlefieldAndReturn(player1, new NightSoil());
         ElvishFarmer farmer = new ElvishFarmer();
