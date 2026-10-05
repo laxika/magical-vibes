@@ -42,8 +42,9 @@ class MadameWebClairvoyantTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(shock));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castAndResolveFromLibraryTop(player1);
+        harness.castAndResolveFromLibraryTop(player1, player2.getId());
 
+        harness.assertLife(player2, 18);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(shock);
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(shock);
     }
@@ -95,5 +96,76 @@ class MadameWebClairvoyantTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    void showsNonSpiderCreatureOnTopOnlyToController() {
+        harness.addToBattlefield(player1, new MadameWebClairvoyant());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.clearMessages();
+
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages())
+                .anyMatch(message -> message.contains("\"revealedLibraryTopCards\":[[{")
+                        && message.contains("Grizzly Bears"));
+        assertThat(harness.getConn2().getSentMessages())
+                .noneMatch(message -> message.contains("Grizzly Bears"));
+    }
+
+    @Test
+    void mayDeclineMillWhenMadameWebItselfAttacks() {
+        addCreatureReady(player1, new MadameWebClairvoyant());
+        Card top = new Shock();
+        harness.setLibrary(player1, List.of(top));
+
+        declareAttackers(List.of(0));
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void mayMillWithEmptyLibrary() {
+        addCreatureReady(player1, new MadameWebClairvoyant());
+        harness.setLibrary(player1, List.of());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void doesNotTriggerWithoutAttackers() {
+        harness.addToBattlefield(player1, new MadameWebClairvoyant());
+        Card top = new Shock();
+        harness.setLibrary(player1, List.of(top));
+
+        declareAttackers(List.of());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+    }
+
+    @Test
+    void losingAbilitiesRemovesLibraryCastingPermission() {
+        Permanent madameWeb = harness.addToBattlefieldAndReturn(player1, new MadameWebClairvoyant());
+        madameWeb.setLosesAllAbilitiesUntilEndOfTurn(true);
+        Card top = new Shock();
+        harness.setLibrary(player1, List.of(top));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
     }
 }
