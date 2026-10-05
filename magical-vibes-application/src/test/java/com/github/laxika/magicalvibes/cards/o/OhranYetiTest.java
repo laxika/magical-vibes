@@ -99,6 +99,52 @@ class OhranYetiTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, snowCreature, Keyword.FIRST_STRIKE)).isTrue();
     }
 
+    @Test
+    @DisplayName("A summoning-sick tapped Yeti can grant itself first strike")
+    void summoningSickTappedYetiCanTargetItself() {
+        Permanent yeti = harness.addToBattlefieldAndReturn(player1, new OhranYeti());
+        yeti.setSummoningSick(true);
+        yeti.setTapped(true);
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, 0, yeti.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, yeti, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(yeti.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Colored mana from a snow land pays the snow activation cost")
+    void snowMountainManaPaysSnowCost() {
+        Permanent yeti = addCreatureReady(player1, new OhranYeti());
+        harness.addToBattlefield(player1, new SnowCoveredMountain());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.tapPermanent(player1, 1);
+
+        harness.activateAbility(player1, 0, 0, yeti.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, yeti, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("The activated ability resolves after its source leaves the battlefield")
+    void abilityResolvesWithoutItsSource() {
+        Permanent yeti = addCreatureReady(player1, new OhranYeti());
+        Permanent snowCreature = addCreatureReady(player1, new BorealDruid());
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, 0, snowCreature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(yeti);
+        gd.playerGraveyards.get(player1.getId()).add(yeti.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, snowCreature, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
     private void addAbilityMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.COLORLESS, 1);
