@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.s.SkyhunterSkirmisher;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -17,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NewWayForward.class, GoblinPiker.class, GrizzlyBears.class, Shock.class})
+@CardUsed({NewWayForward.class, GoblinPiker.class, GrizzlyBears.class, Shock.class, SkyhunterSkirmisher.class})
 class NewWayForwardTest extends BaseCardTest {
 
     @Test
@@ -27,13 +27,14 @@ class NewWayForwardTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
         cast(player1);
-        Permanent goblin = addReady(player2, new GoblinPiker());
+        Permanent goblin = addCreatureReady(player2, new GoblinPiker());
 
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, goblin.getId());
 
         goblin.setAttacking(true);
         resolveCombat(player2);
+        harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 18);
@@ -47,8 +48,8 @@ class NewWayForwardTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         cast(player1);
-        Permanent chosen = addReady(player2, new GoblinPiker());
-        Permanent other = addReady(player2, new GoblinPiker());
+        Permanent chosen = addCreatureReady(player2, new GoblinPiker());
+        Permanent other = addCreatureReady(player2, new GoblinPiker());
 
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, chosen.getId());
@@ -80,10 +81,66 @@ class NewWayForwardTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, shock.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 18);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Prevented damage creates a trigger before damage and cards are received")
+    void riderWaitsForTriggeredAbilityToResolve() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        Permanent goblin = addCreatureReady(player2, new GoblinPiker());
+        cast(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, goblin.getId());
+
+        goblin.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Damage to a creature is not prevented and does not trigger the rider")
+    void chosenSpellDamagingCreatureIsNotPrevented() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        Permanent goblin = addCreatureReady(player1, new GoblinPiker());
+        Shock shock = new Shock();
+        harness.setHand(player2, List.of(shock));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castInstant(player2, 0, goblin.getId());
+        harness.passPriority(player2);
+        cast(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, shock.getId());
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Goblin Piker");
+        harness.assertNotOnBattlefield(player1, "Goblin Piker");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void cast(Player player) {
@@ -95,10 +152,24 @@ class NewWayForwardTest extends BaseCardTest {
         harness.castInstant(player, 0);
     }
 
-    private Permanent addReady(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Only the first damage event from a double strike source is prevented")
+    void shieldPreventsOnlyOneDamageEvent() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        Permanent attacker = addCreatureReady(player2, new SkyhunterSkirmisher());
+        cast(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, attacker.getId());
+
+        attacker.setAttacking(true);
+        resolveCombat(player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
     }
 }
