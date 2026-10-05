@@ -46,7 +46,7 @@ class LuckyThePizzaDogTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
-        resolveStack();
+        resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Food")).isZero();
     }
@@ -74,16 +74,82 @@ class LuckyThePizzaDogTest extends BaseCardTest {
         assertThat(lucky.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    void opponentsMatchingSpellDoesNotCreateFood() {
+        harness.addToBattlefield(player1, new LuckyThePizzaDog());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new CaptainAmericaTeamLeader()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castCreature(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Food")).isZero();
+        assertThat(countPermanents(player2, "Food")).isZero();
+    }
+
+    @Test
+    void sacrificingFoodBeforeEndStepGrowsLuckyOnce() {
+        Permanent lucky = harness.addToBattlefieldAndReturn(player1, new LuckyThePizzaDog());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        castAndResolve(new CaptainAmericaTeamLeader());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        int foodIndex = gd.playerBattlefields.get(player1.getId()).indexOf(
+                gd.playerBattlefields.get(player1.getId()).stream()
+                        .filter(p -> p.getCard().getName().equals("Food")).findFirst().orElseThrow());
+
+        harness.activateAbility(player1, foodIndex, null, null);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, lifeBefore + 3);
+        assertThat(countPermanents(player1, "Food")).isZero();
+        advanceToEndStep(player1);
+        resolveAllTriggers();
+        assertThat(lucky.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void opponentsLifeGainDoesNotGrowLucky() {
+        Permanent lucky = harness.addToBattlefieldAndReturn(player1, new LuckyThePizzaDog());
+        gd.lifeGainedThisTurn.put(player2.getId(), 3);
+
+        advanceToEndStep(player2);
+        resolveAllTriggers();
+
+        assertThat(lucky.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void lifeGainAfterEndStepBeginsDoesNotRetroactivelyTrigger() {
+        Permanent lucky = harness.addToBattlefieldAndReturn(player1, new LuckyThePizzaDog());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        castAndResolve(new CaptainAmericaTeamLeader());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        advanceToEndStep(player1);
+        assertThat(gd.stack).isEmpty();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        int foodIndex = gd.playerBattlefields.get(player1.getId()).indexOf(
+                gd.playerBattlefields.get(player1.getId()).stream()
+                        .filter(p -> p.getCard().getName().equals("Food")).findFirst().orElseThrow());
+
+        harness.activateAbility(player1, foodIndex, null, null);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, lifeBefore + 3);
+        assertThat(gd.stack).isEmpty();
+        assertThat(lucky.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
     private void castAndResolve(Card card) {
         harness.setHand(player1, List.of(card));
         harness.castCreature(player1, 0);
-        resolveStack();
-    }
-
-    private void resolveStack() {
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
     }
 
     private void advanceToEndStep(Player activePlayer) {
