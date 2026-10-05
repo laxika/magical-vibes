@@ -98,6 +98,66 @@ class PacksBetrayalTest extends BaseCardTest {
                 .hasMessageContaining("creature");
     }
 
+    @Test
+    @DisplayName("Stealing the only Wolf enables scry after control changes")
+    void stolenWolfEnablesScry() {
+        Permanent wolf = harness.addToBattlefieldAndReturn(player2, new WyluliWolf());
+        wolf.tap();
+        GrizzlyBears first = new GrizzlyBears();
+        Forest second = new Forest();
+        GreaterWerewolf third = new GreaterWerewolf();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        castPackBetrayal(wolf);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(wolf);
+        assertThat(wolf.isTapped()).isFalse();
+        assertThat(wolf.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(first, second);
+
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(1), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, third, first);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's Wolf does not enable scry when a Bear is stolen")
+    void opponentsWolfDoesNotEnableScry() {
+        Permanent target = addTappedCreature(player2);
+        harness.addToBattlefield(player2, new WyluliWolf());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest()));
+
+        castPackBetrayal(target);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("An illegal sole target prevents scry even when a Wolf is controlled")
+    void removedTargetPreventsScry() {
+        Permanent target = addTappedCreature(player2);
+        harness.addToBattlefield(player1, new WyluliWolf());
+        GrizzlyBears first = new GrizzlyBears();
+        Forest second = new Forest();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new PacksBetrayal()));
+        addMana();
+        harness.castSorcery(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.setGraveyard(player2, List.of(target.getCard()));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, second);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addTappedCreature(Player player) {
         Permanent target = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
         target.tap();
@@ -107,8 +167,7 @@ class PacksBetrayalTest extends BaseCardTest {
     private void castPackBetrayal(Permanent target) {
         harness.setHand(player1, List.of(new PacksBetrayal()));
         addMana();
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 
     private void addMana() {
