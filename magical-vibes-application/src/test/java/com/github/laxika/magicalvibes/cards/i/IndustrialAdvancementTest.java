@@ -95,11 +95,90 @@ class IndustrialAdvancementTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    void decliningCreatureChoicePutsLookedAtCardsBelowUntouchedLibrary() {
+        IndustrialAdvancement advancement = new IndustrialAdvancement();
+        GrizzlyBears sacrificed = new GrizzlyBears();
+        AirElemental first = new AirElemental();
+        GrizzlyBears second = new GrizzlyBears();
+        Shock untouched = new Shock();
+        harness.addToBattlefield(player1, advancement);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, sacrificed);
+        harness.setLibrary(player1, List.of(first, second, untouched));
+
+        moveToEndStep();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, permanent.getId());
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream().map(Permanent::getCard))
+                .containsExactly(advancement);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(sacrificed);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(untouched);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(1, 3))
+                .containsExactlyInAnyOrder(first, second);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void shortLibraryStillAllowsPuttingItsCreatureOntoBattlefield() {
+        IndustrialAdvancement advancement = new IndustrialAdvancement();
+        AirElemental sacrificed = new AirElemental();
+        GrizzlyBears found = new GrizzlyBears();
+        harness.addToBattlefield(player1, advancement);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, sacrificed);
+        harness.setLibrary(player1, List.of(found));
+
+        moveToEndStep();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, permanent.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(found.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream().map(Permanent::getCard))
+                .containsExactly(advancement, found);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(sacrificed);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void emptyLibraryDoesNotPreventSacrificeOrRequireAChoice() {
+        IndustrialAdvancement advancement = new IndustrialAdvancement();
+        GrizzlyBears sacrificed = new GrizzlyBears();
+        harness.addToBattlefield(player1, advancement);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, sacrificed);
+        harness.setLibrary(player1, List.of());
+
+        moveToEndStep();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, permanent.getId());
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(sacrificed);
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream().map(Permanent::getCard))
+                .containsExactly(advancement);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void opponentEndStepDoesNotTrigger() {
+        harness.addToBattlefield(player1, new IndustrialAdvancement());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
     private void moveToEndStep() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+        harness.passUntil(player1, TurnStep.END_STEP);
     }
 }
