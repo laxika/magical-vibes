@@ -111,4 +111,41 @@ class OptTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Opt");
     }
+
+    @Test
+    @DisplayName("Opt waits for the scry choice before drawing the kept card")
+    void drawsKeptCardOnlyAfterScryChoice() {
+        Opt topCard = new Opt();
+        Opt nextCard = new Opt();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        harness.castFromHand(player1, new Opt(), "{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(topCard);
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        harness.assertInGraveyard(player1, "Opt");
+    }
+
+    @Test
+    @DisplayName("Bottoming the library's only card still draws that card")
+    void bottomingOnlyCardStillDrawsIt() {
+        Opt onlyCard = new Opt();
+        harness.setLibrary(player1, List.of(onlyCard));
+        harness.castFromHand(player1, new Opt(), "{U}");
+        harness.passBothPriorities();
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        harness.assertInGraveyard(player1, "Opt");
+    }
 }
