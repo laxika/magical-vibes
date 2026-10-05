@@ -24,17 +24,14 @@ class LimitedResourcesTest extends BaseCardTest {
     }
 
     private List<java.util.UUID> landIds(Player player, int count) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof CityOfTraitors)
+        return findPermanents(player, "City of Traitors").stream()
                 .limit(count)
                 .map(Permanent::getId)
                 .toList();
     }
 
     private long landCount(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof CityOfTraitors)
-                .count();
+        return countPermanents(player, "City of Traitors");
     }
 
     private void castLimitedResources() {
@@ -79,9 +76,7 @@ class LimitedResourcesTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(landCount(player1)).isEqualTo(5);
         assertThat(landCount(player2)).isEqualTo(5);
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof LimitedResources)
-                .count()).isEqualTo(2);
+        assertThat(countPermanents(player1, "Limited Resources")).isEqualTo(2);
     }
 
     @Test
@@ -123,6 +118,65 @@ class LimitedResourcesTest extends BaseCardTest {
         addLands(player2, 4);
         castLimitedResources();
         resolveAllTriggers();
+
+        for (Player player : List.of(player1, player2)) {
+            assertThat(playableLandIndices(player)).contains(0);
+        }
+    }
+
+    @Test
+    @DisplayName("Sacrifices wait until both players have chosen their excess lands")
+    void waitsForAllPlayersBeforeSacrificing() {
+        addLands(player1, 6);
+        addLands(player2, 6);
+        castLimitedResources();
+        resolveAllTriggers();
+
+        harness.handleMultiplePermanentsChosen(player1, landIds(player1, 1));
+
+        assertThat(landCount(player1)).isEqualTo(6);
+        assertThat(landCount(player2)).isEqualTo(6);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+
+        harness.handleMultiplePermanentsChosen(player2, landIds(player2, 1));
+
+        assertThat(landCount(player1)).isEqualTo(5);
+        assertThat(landCount(player2)).isEqualTo(5);
+        harness.assertInGraveyard(player1, "City of Traitors");
+        harness.assertInGraveyard(player2, "City of Traitors");
+    }
+
+    @Test
+    @DisplayName("Land plays become available as soon as the battlefield falls below ten lands")
+    void liftsRestrictionWhenLandLeaves() {
+        addLands(player1, 5);
+        addLands(player2, 5);
+        castLimitedResources();
+        resolveAllTriggers();
+        assertThat(playableLandIndices(player1)).isEmpty();
+
+        Permanent land = findPermanent(player2, "City of Traitors");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, land));
+
+        for (Player player : List.of(player1, player2)) {
+            assertThat(playableLandIndices(player)).contains(0);
+        }
+    }
+
+    @Test
+    @DisplayName("Removing Limited Resources lifts the restriction even with ten lands")
+    void liftsRestrictionWhenEnchantmentLeaves() {
+        addLands(player1, 5);
+        addLands(player2, 5);
+        castLimitedResources();
+        resolveAllTriggers();
+        assertThat(playableLandIndices(player2)).isEmpty();
+
+        Permanent enchantment = findPermanent(player1, "Limited Resources");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, enchantment));
 
         for (Player player : List.of(player1, player2)) {
             assertThat(playableLandIndices(player)).contains(0);
