@@ -31,7 +31,7 @@ class MycelicBalladTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertLife(player1, 12);
         assertThat(gd.getCardIntensity(findBalladId())).isEqualTo(3);
-        assertThat(gd.getCardIntensity(otherBallad.getId())).isEqualTo(1);
+        assertThat(gd.getCardIntensity(otherBallad.getId())).isEqualTo(3);
     }
 
     @Test
@@ -54,12 +54,80 @@ class MycelicBalladTest extends BaseCardTest {
         harness.assertLife(player1, 22);
     }
 
+    @Test
+    @DisplayName("Sacrifices and life gain wait until both players have chosen")
+    void waitsForBothPlayersBeforeSacrificing() {
+        addCreatures(player1, 3);
+        addCreatures(player2, 3);
+
+        castMycelicBallad();
+        chooseAllCreatures(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(3);
+        harness.assertLife(player1, 20);
+
+        chooseAllCreatures(player2);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Life gain does not depend on how many creatures can be sacrificed")
+    void gainsFullLifeWithTooFewCreatures() {
+        addCreatures(player2, 1);
+
+        castMycelicBallad();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The spell gains life and intensifies even when neither player has creatures")
+    void resolvesWithoutCreatures() {
+        castMycelicBallad();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+        assertThat(gd.getCardIntensity(findBalladId())).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An uncast Chorus uses starting intensity plus prior increases when cast")
+    void previouslyIntensifiedBalladSacrificesThreeCreatures() {
+        MycelicBallad nextBallad = new MycelicBallad();
+        harness.setLibrary(player1, List.of(nextBallad));
+        castMycelicBallad();
+
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(nextBallad));
+        addCreatures(player1, 3);
+        addCreatures(player2, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        if (gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class) != null) {
+            chooseAllCreatures(player1);
+            chooseAllCreatures(player2);
+        }
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertLife(player1, 25);
+        assertThat(gd.getCardIntensity(nextBallad.getId())).isEqualTo(4);
+    }
+
     private void castMycelicBallad() {
         harness.setHand(player1, List.of(new MycelicBallad()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     private void chooseAllCreatures(com.github.laxika.magicalvibes.model.Player player) {
