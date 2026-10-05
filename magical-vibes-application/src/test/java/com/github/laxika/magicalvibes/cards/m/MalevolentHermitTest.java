@@ -143,6 +143,66 @@ class MalevolentHermitTest extends BaseCardTest {
         assertThat(gd.exiledCards.stream().map(exiled -> exiled.card().getId())).contains(cardId);
     }
 
+    @Test
+    @DisplayName("A countered disturb spell is exiled rather than returned to the graveyard")
+    void counteredDisturbSpellIsExiled() {
+        MalevolentHermit hermit = new MalevolentHermit();
+        harness.setGraveyard(player1, List.of(hermit));
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castFlashback(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, hermit.getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards.stream().map(exiled -> exiled.card().getId())).contains(hermit.getId());
+    }
+
+    @Test
+    @DisplayName("Benevolent Geist does not protect an opponent's noncreature spells")
+    void doesNotProtectOpponentsSpells() {
+        putGeistOnBattlefield();
+        Shock shock = new Shock();
+        harness.setHand(player2, List.of(shock));
+        harness.setHand(player1, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.forceActivePlayer(player2);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+        harness.castAndResolveInstant(player1, 0, shock.getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(shock);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("The spell is countered when its controller declines an affordable payment")
+    void countersWhenPaymentIsDeclined() {
+        harness.addToBattlefield(player1, new MalevolentHermit());
+        Shock shock = new Shock();
+        harness.setHand(player2, List.of(shock));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.RED, 4);
+        harness.forceActivePlayer(player2);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+        harness.activateAbility(player1, 0, null, shock.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(shock);
+        harness.assertLife(player1, 20);
+    }
+
     private Permanent putGeistOnBattlefield() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -150,8 +210,7 @@ class MalevolentHermitTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(hermit));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
         return gd.playerBattlefields.get(player1.getId()).getFirst();
     }
 }
