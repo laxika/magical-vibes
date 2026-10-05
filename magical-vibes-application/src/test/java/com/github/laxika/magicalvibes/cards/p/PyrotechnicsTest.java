@@ -271,4 +271,49 @@ class PyrotechnicsTest extends BaseCardTest {
                 harness.castSorcery(player1, 0, Map.of(spellbook.getId(), 4))
         ).isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void canTargetItsControllersHexproofCreature() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new Pyrotechnics()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bear.getGrantedKeywords().add(Keyword.HEXPROOF);
+
+        harness.castSorcery(player1, 0, Map.of(bear.getId(), 1, player2.getId(), 3));
+        harness.passBothPriorities();
+
+        assertThat(bear.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    void doesNotRedistributeDamageFromIllegalTargetToPlayer() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new Pyrotechnics()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.castSorcery(player1, 0, Map.of(bear.getId(), 3, player2.getId(), 1));
+        bear.getGrantedKeywords().add(Keyword.HEXPROOF);
+        harness.passBothPriorities();
+
+        assertThat(bear.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void rejectsNegativeAssignmentEvenWhenTotalIsFour() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new Pyrotechnics()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
+                Map.of(player1.getId(), -1, player2.getId(), 5)))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }
