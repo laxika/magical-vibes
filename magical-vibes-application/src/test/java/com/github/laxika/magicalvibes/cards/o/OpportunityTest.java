@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -76,6 +77,36 @@ class OpportunityTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Draws the remaining cards and loses when the library has fewer than four cards")
+    void targetWithInsufficientLibraryLoses() {
+        GiantCockroach first = new GiantCockroach();
+        GiantCockroach second = new GiantCockroach();
+        harness.setLibrary(player2, List.of(first, second));
+        harness.setHand(player2, List.of());
+
+        castOpportunityTargeting(player2.getId());
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(first, second);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+        harness.assertInGraveyard(player1, "Opportunity");
+    }
+
+    @Test
+    @DisplayName("Targeting yourself with an empty library loses the game")
+    void selfTargetWithEmptyLibraryLoses() {
+        harness.setLibrary(player1, List.of());
+
+        castOpportunityTargeting(player1.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+        harness.assertInGraveyard(player1, "Opportunity");
     }
 
     private void castOpportunityTargeting(UUID targetPlayerId) {
