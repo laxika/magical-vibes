@@ -60,7 +60,7 @@ class KimoyoBeadsTest extends BaseCardTest {
         harness.handleListChoice(player1, PRIME_BEAD);
         harness.passBothPriorities();
 
-        Permanent returned = findPermanents(player1, "Kimoyo Beads").getFirst();
+        Permanent returned = findPermanent(player1, "Kimoyo Beads");
         assertThat(gd.getLife(player1.getId())).isEqualTo(23);
         assertThat(returned.getId()).isNotEqualTo(beads.getId());
     }
@@ -88,6 +88,71 @@ class KimoyoBeadsTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handleListChoice(player1, AV_BEAD))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("Returning as a new object makes previously chosen modes available again")
+    void primeBeadResetsPreviouslyChosenModes() {
+        harness.addToBattlefield(player1, new KimoyoBeads());
+        harness.setLibrary(player1, List.of(new KimoyoBeads(), new KimoyoBeads()));
+        harness.setLife(player1, 20);
+
+        advanceToEndStep();
+        harness.handleListChoice(player1, AV_BEAD);
+        harness.passBothPriorities();
+
+        advanceToEndStep();
+        harness.handleListChoice(player1, PRIME_BEAD);
+        harness.passBothPriorities();
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        advanceToEndStep();
+        harness.handleListChoice(player1, AV_BEAD);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+
+        advanceToEndStep();
+        harness.handleListChoice(player1, PRIME_BEAD);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 26);
+        assertThat(findPermanents(player1, "Kimoyo Beads")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Prime Bead benefits the controller but returns the artifact to its owner")
+    void primeBeadReturnsToDifferentOwner() {
+        KimoyoBeads card = new KimoyoBeads();
+        card.setOwnerId(player2.getId());
+        Permanent beads = harness.addToBattlefieldAndReturn(player1, card);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToEndStep();
+        harness.handleListChoice(player1, PRIME_BEAD);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player1, "Kimoyo Beads");
+        Permanent returned = findPermanent(player2, "Kimoyo Beads");
+        assertThat(returned.getId()).isNotEqualTo(beads.getId());
+    }
+
+    @Test
+    @DisplayName("Kimoyo Beads does not trigger during an opponent's end step")
+    void doesNotTriggerDuringOpponentsEndStep() {
+        harness.addToBattlefield(player1, new KimoyoBeads());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(findPermanents(player1, "Soldier")).isEmpty();
     }
 
     private void advanceToEndStep() {
