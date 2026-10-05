@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -25,7 +26,7 @@ class LeoriSparktouchedHunterTest extends BaseCardTest {
         leori.setAttackTarget(player2.getId());
 
         declareAttackersAndPrepareBlockers(List.of(0));
-        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE,
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE,
                 () -> gs.declareBlockers(gd, player2, List.of()));
         harness.passBothPriorities();
 
@@ -76,5 +77,78 @@ class LeoriSparktouchedHunterTest extends BaseCardTest {
 
         assertThat(leori.getChosenSubtype()).isNull();
         assertThat(gd.temporaryChosenSubtypePermanentIds).isEmpty();
+    }
+
+    @Test
+    void delayedCopySurvivesLeoriLeavingTheBattlefield() {
+        Permanent leori = addCreatureReady(player1, new LeoriSparktouchedHunter());
+        dealCombatDamageAndChooseType(leori, "JACE");
+        gd.playerBattlefields.get(player1.getId()).remove(leori);
+        gd.playerGraveyards.get(player1.getId()).add(leori.getCard());
+        Permanent jace = harness.addToBattlefieldAndReturn(player1, new JaceBeleren());
+        jace.setCounterCount(CounterType.LOYALTY, 5);
+
+        int handSize = gd.playerHands.get(player1.getId()).size();
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize + 2);
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(7);
+    }
+
+    @Test
+    void choosingTheSameTypeTwiceCreatesTwoCopies() {
+        Permanent leori = addCreatureReady(player1, new LeoriSparktouchedHunter());
+        dealCombatDamageAndChooseType(leori, "JACE");
+        dealCombatDamageAndChooseType(leori, "JACE");
+        Permanent jace = harness.addToBattlefieldAndReturn(player1, new JaceBeleren());
+        jace.setCounterCount(CounterType.LOYALTY, 5);
+
+        int handSize = gd.playerHands.get(player1.getId()).size();
+        harness.activateAbility(player1, 1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize + 3);
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(7);
+    }
+
+    @Test
+    void choosingAnotherTypeDoesNotEraseTheEarlierDelayedTrigger() {
+        Permanent leori = addCreatureReady(player1, new LeoriSparktouchedHunter());
+        dealCombatDamageAndChooseType(leori, "JACE");
+        dealCombatDamageAndChooseType(leori, "GARRUK");
+        Permanent jace = harness.addToBattlefieldAndReturn(player1, new JaceBeleren());
+        jace.setCounterCount(CounterType.LOYALTY, 5);
+
+        int handSize = gd.playerHands.get(player1.getId()).size();
+        harness.activateAbility(player1, 1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize + 2);
+    }
+
+    @Test
+    void doesNotCopyBeforeCombatDamageHasResolved() {
+        addCreatureReady(player1, new LeoriSparktouchedHunter());
+        Permanent jace = harness.addToBattlefieldAndReturn(player1, new JaceBeleren());
+        jace.setCounterCount(CounterType.LOYALTY, 5);
+
+        int handSize = gd.playerHands.get(player1.getId()).size();
+        harness.activateAbility(player1, 1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize + 1);
+    }
+
+    private void dealCombatDamageAndChooseType(Permanent leori, String type) {
+        leori.setAttacking(false);
+        leori.setAttackTarget(player2.getId());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE,
+                () -> gs.declareBlockers(gd, player2, List.of()));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+        harness.handleListChoice(player1, type);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
     }
 }
