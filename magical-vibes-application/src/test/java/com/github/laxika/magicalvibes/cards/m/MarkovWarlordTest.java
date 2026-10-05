@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MarkovWarlord.class, GrizzlyBears.class, FountainOfYouth.class})
 class MarkovWarlordTest extends BaseCardTest {
 
     
@@ -90,10 +92,8 @@ class MarkovWarlordTest extends BaseCardTest {
     @Test
     @DisplayName("Targeted creature cannot declare as blocker after ETB resolves")
     void targetedCreatureCannotBlock() {
-        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        blocker.setSummoningSick(false);
 
         castMarkovWarlord(List.of(blocker.getId()));
         harness.passBothPriorities();
@@ -102,13 +102,80 @@ class MarkovWarlordTest extends BaseCardTest {
         assertThat(blocker.isCantBlockThisTurn()).isTrue();
 
         attacker.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("ETB may target a creature controlled by its controller")
+    void canTargetOwnCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent untargeted = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castMarkovWarlord(List.of(creature.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(creature.isCantBlockThisTurn()).isTrue();
+        assertThat(untargeted.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The remaining target is affected when the other target leaves before resolution")
+    void resolvesForRemainingTarget() {
+        Permanent removed = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent remaining = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castMarkovWarlord(List.of(removed.getId(), remaining.getId()));
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player2.getId()).remove(removed);
+        harness.passBothPriorities();
+
+        assertThat(remaining.isCantBlockThisTurn()).isTrue();
+        assertThat(removed.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Removing the Warlord does not stop its triggered ability")
+    void triggerResolvesWithoutSource() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castMarkovWarlord(List.of(creature.getId()));
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Markov Warlord"));
+        harness.passBothPriorities();
+
+        assertThat(creature.isCantBlockThisTurn()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The blocking restriction expires during cleanup")
+    void restrictionExpiresAtEndOfTurn() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castMarkovWarlord(List.of(creature.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(creature.isCantBlockThisTurn()).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(creature.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Haste allows the Warlord to attack on the turn it enters")
+    void canAttackImmediately() {
+        castMarkovWarlord(List.of());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(findPermanent(player1, "Markov Warlord").isAttacking()).isTrue();
     }
 
     private void castMarkovWarlord(List<UUID> targetIds) {
