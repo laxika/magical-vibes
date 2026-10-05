@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.d.DragonscaleBoon;
+import com.github.laxika.magicalvibes.cards.c.CourageInCrisis;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.z.ZameckGuildmage;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -14,7 +15,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MowuLoyalCompanion.class, DragonscaleBoon.class, GrizzlyBears.class, ZameckGuildmage.class})
+@CardUsed({MowuLoyalCompanion.class, DragonscaleBoon.class, GrizzlyBears.class, ZameckGuildmage.class,
+        CourageInCrisis.class})
 class MowuLoyalCompanionTest extends BaseCardTest {
 
     @Test
@@ -54,7 +56,45 @@ class MowuLoyalCompanionTest extends BaseCardTest {
     private void castDragonscaleBoon(Permanent target) {
         harness.setHand(player1, List.of(new DragonscaleBoon()));
         harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+    }
+
+    @Test
+    void addsOneForEachSeparateCounterPlacementIncludingProliferate() {
+        Permanent mowu = harness.addToBattlefieldAndReturn(player1, new MowuLoyalCompanion());
+        mowu.setCounterCount(CounterType.CHARGE, 1);
+        harness.setHand(player1, List.of(new CourageInCrisis()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveSorcery(player1, 0, mowu.getId());
+        assertThat(mowu.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.handleMultiplePermanentsChosen(player1, List.of(mowu.getId()));
+
+        assertThat(mowu.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(mowu.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+    }
+
+    @Test
+    void addsOneWhenAnOpponentPutsACounterOnMowu() {
+        Permanent mowu = harness.addToBattlefieldAndReturn(player2, new MowuLoyalCompanion());
+        harness.setHand(player1, List.of(new CourageInCrisis()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveSorcery(player1, 0, mowu.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(mowu.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void doesNotCreateACounterWhenEnteringWithoutCounters() {
+        harness.setHand(player1, List.of(new MowuLoyalCompanion()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+
+        Permanent mowu = findPermanent(player1, "Mowu, Loyal Companion");
+        assertThat(mowu.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }
