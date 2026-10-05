@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TuinvaleGuide;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,20 +20,19 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KindledHeroism.class, Forest.class, GrizzlyBears.class})
+@CardUsed({KindledHeroism.class, Forest.class, TuinvaleGuide.class})
 class KindledHeroismTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gives target creature +1/+0 and first strike, then scries 1")
     void boostsAndScries() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new TuinvaleGuide());
         harness.setLibrary(player1, List.of(new Forest()));
         harness.setHand(player1, List.of(new KindledHeroism()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        UUID targetId = harness.getPermanentId(player1, "Tuinvale Guide");
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent target = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(target.getPowerModifier()).isEqualTo(1);
@@ -47,13 +46,12 @@ class KindledHeroismTest extends BaseCardTest {
     void scryFinishesResolving() {
         Permanent target = addCreature();
         Card bottom = new Forest();
-        Card top = new GrizzlyBears();
+        Card top = new TuinvaleGuide();
         harness.setLibrary(player1, List.of(bottom, top));
         harness.setHand(player1, List.of(new KindledHeroism()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(bottom);
@@ -69,8 +67,7 @@ class KindledHeroismTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KindledHeroism()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         harness.forceStep(TurnStep.END_STEP);
@@ -94,9 +91,66 @@ class KindledHeroismTest extends BaseCardTest {
     }
 
     private Permanent addCreature() {
-        Permanent target = new Permanent(new GrizzlyBears());
-        target.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(target);
-        return target;
+        return harness.addToBattlefieldAndReturn(player1, new TuinvaleGuide());
+    }
+
+    @Test
+    void canBoostOpponentsCreatureWhileCasterScriesToBottom() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TuinvaleGuide());
+        Card first = new Forest();
+        Card second = new Forest();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.setHand(player1, List.of(new KindledHeroism()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(target.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry.playerId()).isEqualTo(player1.getId());
+        assertThat(scry.cards()).containsExactly(first);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Kindled Heroism");
+    }
+
+    @Test
+    void removedTargetPreventsScry() {
+        Permanent target = addCreature();
+        Card top = new Forest();
+        harness.setLibrary(player1, List.of(top));
+        harness.setHand(player1, List.of(new KindledHeroism()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerGraveyards.get(player1.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Kindled Heroism");
+    }
+
+    @Test
+    void emptyLibraryDoesNotPreventBoostOrSpellCompletion() {
+        Permanent target = addCreature();
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new KindledHeroism()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Kindled Heroism");
     }
 }
