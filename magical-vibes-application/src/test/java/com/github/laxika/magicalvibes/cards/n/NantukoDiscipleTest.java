@@ -129,6 +129,41 @@ class NantukoDiscipleTest extends BaseCardTest {
         setupDisciple(1);
     }
 
+    @Test
+    @DisplayName("Can target itself, with the boost applied only on resolution")
+    void boostsItselfOnResolution() {
+        setupDisciple();
+        Permanent disciple = findPermanent(player1, "Nantuko Disciple");
+
+        harness.activateAbility(player1, 0, null, disciple.getId());
+
+        assertThat(disciple.isTapped()).isTrue();
+        assertThat(disciple.getPowerModifier()).isZero();
+        assertThat(disciple.getToughnessModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(disciple.getPowerModifier()).isEqualTo(2);
+        assertThat(disciple.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Boosts from two Disciples accumulate on the same creature")
+    void multipleBoostsAccumulate() {
+        setupDisciple(2);
+        addCreatureReady(player1, new NantukoDisciple());
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
+
+        harness.activateAbility(player1, 0, null, bear.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 2, null, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(bear.getPowerModifier()).isEqualTo(4);
+        assertThat(bear.getToughnessModifier()).isEqualTo(4);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
     private void setupDisciple(int greenMana) {
         addCreatureReady(player1, new NantukoDisciple());
         harness.addToBattlefield(player1, new GrizzlyBears());
