@@ -45,6 +45,61 @@ class NecrosavantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Pays the sacrifice cost before the return ability resolves")
+    void paysSacrificeBeforeResolution() {
+        advanceToUpkeep(player1);
+        harness.setGraveyard(player1, List.of(new Necrosavant()));
+        harness.addToBattlefield(player1, new PantherWarriors());
+        addMana(player1);
+
+        harness.activateGraveyardAbility(player1, 0);
+
+        harness.assertNotOnBattlefield(player1, "Panther Warriors");
+        harness.assertInGraveyard(player1, "Panther Warriors");
+        harness.assertInGraveyard(player1, "Necrosavant");
+        harness.assertNotOnBattlefield(player1, "Necrosavant");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Necrosavant");
+    }
+
+    @Test
+    @DisplayName("An older activation cannot return a source that returned and died again")
+    void olderActivationCannotReturnNewGraveyardObject() {
+        advanceToUpkeep(player1);
+        Necrosavant source = new Necrosavant();
+        Necrosavant otherCopy = new Necrosavant();
+        harness.setGraveyard(player1, List.of(source));
+        harness.addToBattlefield(player1, otherCopy);
+        Permanent firstSacrifice = harness.addToBattlefieldAndReturn(player1, new PantherWarriors());
+        addMana(player1);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.handlePermanentChosen(player1, firstSacrifice.getId());
+
+        addMana(player1);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(source.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(otherCopy);
+
+        addMana(player1);
+        harness.activateGraveyardAbility(player1, gd.playerGraveyards.get(player1.getId()).indexOf(otherCopy));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(source);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(source);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(source.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(otherCopy.getId()));
+    }
+
+    @Test
     @DisplayName("Cannot activate outside of your upkeep")
     void cannotActivateOutsideUpkeep() {
         harness.forceActivePlayer(player1);
