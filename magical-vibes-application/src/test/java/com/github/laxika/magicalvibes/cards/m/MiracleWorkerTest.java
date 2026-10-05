@@ -52,6 +52,45 @@ class MiracleWorkerTest extends BaseCardTest {
                 .hasMessageContaining("Aura attached to a creature");
     }
 
+    @Test
+    void destroysAuraYouControlAttachedToMiracleWorker() {
+        Permanent worker = addReadyMiracleWorker(player1);
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Brainwash());
+        aura.setAttachedTo(worker.getId());
+
+        harness.activateAbility(player1, 0, null, aura.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Brainwash");
+        harness.assertInGraveyard(player1, "Brainwash");
+        harness.assertOnBattlefield(player1, "Miracle Worker");
+    }
+
+    @Test
+    void cannotTargetCreatureItself() {
+        addReadyMiracleWorker(player1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Squire());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Aura attached to a creature");
+    }
+
+    @Test
+    void doesNotDestroyAuraIfEnchantedCreatureChangesControllerBeforeResolution() {
+        addReadyMiracleWorker(player1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Squire());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new Brainwash());
+        aura.setAttachedTo(creature.getId());
+
+        harness.activateAbility(player1, 0, null, aura.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerBattlefields.get(player2.getId()).add(creature);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Brainwash");
+    }
+
     private Permanent addReadyMiracleWorker(Player player) {
         return addCreatureReady(player, new MiracleWorker());
     }
