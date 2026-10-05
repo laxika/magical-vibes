@@ -66,6 +66,70 @@ class KeeperOfTheLightTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Life gain still resolves after the controller's life exceeds the opponent's")
+    void resolvesAfterControllerGainsLife() {
+        readyKeeper(10, 11);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.setLife(player1, 15);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 11);
+    }
+
+    @Test
+    @DisplayName("Life gain still resolves after Keeper leaves the battlefield")
+    void resolvesWithoutSource() {
+        Permanent keeper = readyKeeper(10, 11);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(keeper);
+        gd.playerGraveyards.get(player1.getId()).add(keeper.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 13);
+        harness.assertLife(player2, 11);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent keeper = readyKeeper(10, 11);
+        keeper.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player1, 10);
+        assertThat(keeper.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent keeper = readyKeeper(10, 11);
+        keeper.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player1, 10);
+    }
+
+    @Test
+    @DisplayName("Cannot activate without white mana")
+    void cannotActivateWithoutWhiteMana() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 11);
+        Permanent keeper = addCreatureReady(player1, new KeeperOfTheLight());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player1, 10);
+        assertThat(keeper.isTapped()).isFalse();
+    }
+
     private Permanent readyKeeper(int controllerLife, int opponentLife) {
         harness.setLife(player1, controllerLife);
         harness.setLife(player2, opponentLife);
