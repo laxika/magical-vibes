@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.j.JayaVeneratedFiremage;
+import com.github.laxika.magicalvibes.cards.t.TamiyoCompleatedSage;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MastersRebuke.class, HillGiant.class, GrizzlyBears.class})
+@CardUsed({MastersRebuke.class, HillGiant.class, GrizzlyBears.class,
+        TamiyoCompleatedSage.class, JayaVeneratedFiremage.class})
 class MastersRebukeTest extends BaseCardTest {
 
     @Test
@@ -64,13 +65,111 @@ class MastersRebukeTest extends BaseCardTest {
     }
 
     private Permanent addPlaneswalker(Player player, int loyalty) {
-        Card card = new Card();
-        card.setName("Test Planeswalker");
-        card.setType(CardType.PLANESWALKER);
-        card.setLoyalty(loyalty);
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new TamiyoCompleatedSage());
         permanent.setCounterCount(CounterType.LOYALTY, loyalty);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
+    }
+
+    @Test
+    void usesPowerAtResolution() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent target = addPlaneswalker(player2, 5);
+        harness.setHand(player1, List.of(new MastersRebuke()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
+        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+    }
+
+    @Test
+    void dealsNoDamageWhenSourceLeavesBattlefield() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MastersRebuke()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Master's Rebuke");
+    }
+
+    @Test
+    void dealsNoDamageWhenSourceChangesController() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MastersRebuke()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerBattlefields.get(player2.getId()).add(source);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void dealsNoDamageWhenVictimChangesController() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MastersRebuke()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerBattlefields.get(player1.getId()).add(target);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void cannotUseOpposingCreatureAsDamageSource() {
+        Permanent source = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MastersRebuke()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(source.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void appliesDamageBonusForTheRedCreatureRatherThanTheGreenSpell() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent jaya = harness.addToBattlefieldAndReturn(player1, new JayaVeneratedFiremage());
+        jaya.setCounterCount(CounterType.LOYALTY, 5);
+        Permanent target = addPlaneswalker(player2, 5);
+        harness.setHand(player1, List.of(new MastersRebuke()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+    }
+
+    @Test
+    void victimDoesNotDealDamageBack() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new MastersRebuke()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(source.getMarkedDamage()).isZero();
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
     }
 }
