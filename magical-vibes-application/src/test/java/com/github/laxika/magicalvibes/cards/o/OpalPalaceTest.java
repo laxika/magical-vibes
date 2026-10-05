@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GoreclawTerrorOfQalSisma;
+import com.github.laxika.magicalvibes.cards.k.KozilekTheGreatDistortion;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DeckFormat;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OpalPalace.class, GrizzlyBears.class})
+@CardUsed({OpalPalace.class, GoreclawTerrorOfQalSisma.class, KozilekTheGreatDistortion.class})
 class OpalPalaceTest extends BaseCardTest {
 
     @Test
@@ -46,7 +47,7 @@ class OpalPalaceTest extends BaseCardTest {
 
     @Test
     void commanderEntersWithCountersEqualToCommandZoneCastsIncludingCurrentCast() {
-        GrizzlyBears commander = prepareCommander();
+        GoreclawTerrorOfQalSisma commander = prepareCommander();
         gd.commanderTaxByCardId.put(commander.getId(), 4);
         harness.addToBattlefield(player1, new OpalPalace());
 
@@ -54,26 +55,155 @@ class OpalPalaceTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handleListChoice(player1, ManaColor.GREEN.name());
 
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
         gs.castCommander(gd, player1, commander.getId(),
                 () -> gs.playCard(gd, player1, 0, null, null, null));
         harness.passBothPriorities();
 
-        var permanent = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(candidate -> candidate.getCard().getId().equals(commander.getId()))
-                .findFirst()
-                .orElseThrow();
+        var permanent = findPermanent(player1, commander.getName());
         assertThat(permanent.getCounters().get(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
-    private GrizzlyBears prepareCommander() {
-        GrizzlyBears commander = new GrizzlyBears();
+    @Test
+    void firstCommandZoneCastEntersWithOneCounter() {
+        var commander = prepareCommander();
+        producePalaceMana();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        gs.castCommander(gd, player1, commander.getId(),
+                () -> gs.playCard(gd, player1, 0, null, null, null));
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, commander.getName()).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(1);
+    }
+
+    @Test
+    void colorlessManaFromFirstAbilityDoesNotGrantCounters() {
+        var commander = prepareCommander();
+        harness.addToBattlefield(player1, new OpalPalace());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        gs.castCommander(gd, player1, commander.getId(),
+                () -> gs.playCard(gd, player1, 0, null, null, null));
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, commander.getName()).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isZero();
+    }
+
+    @Test
+    void commanderCastFromHandReceivesCountersForPreviousCommandZoneCasts() {
+        var commander = prepareCommander();
+        gd.commanderTaxByCardId.put(commander.getId(), 4);
+        gd.playerCommandZones.get(player1.getId()).clear();
+        harness.setHand(player1, List.of(commander));
+        producePalaceMana();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, commander.getName()).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(2);
+    }
+
+    @Test
+    void commanderCastFromHandWithoutCommandZoneCastsReceivesNoCounters() {
+        var commander = prepareCommander();
+        gd.playerCommandZones.get(player1.getId()).clear();
+        harness.setHand(player1, List.of(commander));
+        producePalaceMana();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, commander.getName()).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isZero();
+    }
+
+    @Test
+    void manaCanCastNonCommanderWithoutGrantingCounters() {
+        prepareCommander();
+        var creature = new GoreclawTerrorOfQalSisma();
+        harness.setHand(player1, List.of(creature));
+        producePalaceMana();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, creature.getName()).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isZero();
+    }
+
+    @Test
+    void spendingManaFromTwoPalacesAddsBothCounterGrants() {
+        var commander = prepareCommander();
+        gd.commanderTaxByCardId.put(commander.getId(), 4);
+        producePalaceMana();
+        harness.addToBattlefield(player1, new OpalPalace());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        gs.castCommander(gd, player1, commander.getId(),
+                () -> gs.playCard(gd, player1, 0, null, null, null));
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, commander.getName()).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(6);
+    }
+
+    @Test
+    void colorlessCommanderProducesNoManaFromSecondAbility() {
+        gd.format = DeckFormat.COMMANDER;
+        gd.makeCommander(player1.getId(), new KozilekTheGreatDistortion());
+        harness.addToBattlefield(player1, new OpalPalace());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        for (ManaColor color : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isZero();
+        }
+        assertThat(findPermanent(player1, "Opal Palace").isTapped()).isTrue();
+    }
+
+    @Test
+    void noCommanderProducesNoManaFromSecondAbility() {
+        harness.addToBattlefield(player1, new OpalPalace());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        for (ManaColor color : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isZero();
+        }
+        assertThat(findPermanent(player1, "Opal Palace").isTapped()).isTrue();
+    }
+
+    private void producePalaceMana() {
+        harness.addToBattlefield(player1, new OpalPalace());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+    }
+
+    private GoreclawTerrorOfQalSisma prepareCommander() {
+        GoreclawTerrorOfQalSisma commander = new GoreclawTerrorOfQalSisma();
         gd.format = DeckFormat.COMMANDER;
         gd.makeCommander(player1.getId(), commander);
         gd.playerCommandZones.put(player1.getId(), new ArrayList<>(List.of(commander)));
-        gd.currentStep = TurnStep.PRECOMBAT_MAIN;
-        gd.activePlayerId = player1.getId();
-        gd.priorityPassedBy.clear();
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        harness.clearPriorityPassed();
         return commander;
     }
 }
