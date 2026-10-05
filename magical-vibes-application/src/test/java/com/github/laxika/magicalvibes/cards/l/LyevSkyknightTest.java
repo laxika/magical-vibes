@@ -1,22 +1,24 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LyevSkyknight.class, GrizzlyBears.class, LlanowarElves.class, FountainOfYouth.class, Forest.class})
 class LyevSkyknightTest extends BaseCardTest {
 
     @Test
@@ -102,8 +104,47 @@ class LyevSkyknightTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         detain("Grizzly Bears");
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard().getName().equals("Lyev Skyknight"));
+        harness.assertOnBattlefield(player1, "Lyev Skyknight");
+    }
+
+    @Test
+    @DisplayName("Cannot detain an opponent's land")
+    void cannotTargetLand() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new LyevSkyknight()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Detain does not expire at the opponent's next turn")
+    void detainPersistsThroughOpponentsTurn() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent bears = detain("Grizzly Bears");
+
+        gd.expireFloatingEffectsAtTurnStart(player2.getId());
+
+        assertThatThrownBy(() -> declareAttack(bears))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Detain persists after Skyknight leaves the battlefield")
+    void detainPersistsAfterSourceLeaves() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent bears = detain("Grizzly Bears");
+        Permanent skyknight = findPermanent(player1, "Lyev Skyknight");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, skyknight));
+
+        assertThatThrownBy(() -> declareAttack(bears))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
     }
 
     private void castSkyknight(String targetName) {
@@ -119,10 +160,7 @@ class LyevSkyknightTest extends BaseCardTest {
         castSkyknight(targetName);
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
-        return gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals(targetName))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player2, targetName);
     }
 
     /** Attempts to declare the given player2 creature as an attacker. */
