@@ -93,6 +93,60 @@ class LlanowarMentorTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 
+    @Test
+    void paysCostsBeforeCreatingTokenOnResolution() {
+        Permanent mentor = addReadyMentor();
+        harness.setHand(player1, List.of(new LlanowarAugur(), new LlanowarMentor()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(mentor.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        harness.assertInGraveyard(player1, "Llanowar Mentor");
+        harness.assertInHand(player1, "Llanowar Augur");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(countPermanents(player1, "Llanowar Elves")).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Llanowar Elves")).isEqualTo(1);
+        assertThat(findPermanent(player1, "Llanowar Elves").isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWithoutGreenMana() {
+        Permanent mentor = addReadyMentor();
+        harness.setHand(player1, List.of(new LlanowarAugur()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(mentor.isTapped()).isFalse();
+        harness.assertInHand(player1, "Llanowar Augur");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhenAlreadyTapped() {
+        Permanent mentor = addReadyMentor();
+        mentor.setTapped(true);
+        harness.setHand(player1, List.of(new LlanowarAugur()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Llanowar Augur");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyMentor() {
         return addCreatureReady(player1, new LlanowarMentor());
     }
