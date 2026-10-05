@@ -64,11 +64,72 @@ class InchbladeCompanionTest extends BaseCardTest {
         assertThat(companion.getAttachedTo()).isNull();
     }
 
+    @Test
+    void reconfigureCannotTargetItself() {
+        Permanent companion = addReadyCompanion();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(companion), 0, null, companion.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(companion.getAttachedTo()).isNull();
+    }
+
+    @Test
+    void unattachRestoresCreatureAndRemovesTheBoostWithoutCreatingAnotherToken() {
+        Permanent companion = addReadyCompanion();
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, battlefieldIndex(companion), 0, null, creature.getId());
+        resolveAllTriggers();
+        assertThat(companion.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.isCreature(gd, companion)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+
+        harness.activateAbility(player1, battlefieldIndex(companion), 1, null, null);
+        resolveAllTriggers();
+
+        assertThat(companion.getAttachedTo()).isNull();
+        assertThat(gqs.isCreature(gd, companion)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(1);
+    }
+
+    @Test
+    void reconfiguringToTheSameCreatureDoesNotCreateAnotherToken() {
+        Permanent companion = addReadyCompanion();
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, battlefieldIndex(companion), 0, null, creature.getId());
+        resolveAllTriggers();
+        harness.activateAbility(player1, battlefieldIndex(companion), 0, null, creature.getId());
+        resolveAllTriggers();
+
+        assertThat(companion.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(1);
+    }
+
+    @Test
+    void reconfigureRequiresTwoMana() {
+        Permanent companion = addReadyCompanion();
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(companion), 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(companion.getAttachedTo()).isNull();
+    }
+
     private Permanent addReadyCompanion() {
-        Permanent companion = new Permanent(new InchbladeCompanion());
-        companion.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(companion);
-        return companion;
+        return addCreatureReady(player1, new InchbladeCompanion());
     }
 
     private int battlefieldIndex(Permanent permanent) {
