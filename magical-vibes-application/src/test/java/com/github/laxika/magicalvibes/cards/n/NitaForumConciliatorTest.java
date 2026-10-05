@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({NitaForumConciliator.class, Divination.class, GrizzlyBears.class, Island.class})
 class NitaForumConciliatorTest extends BaseCardTest {
 
     private void mainPhase() {
@@ -24,7 +26,6 @@ class NitaForumConciliatorTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
     }
 
-    // ===== Ability 1: cast a spell you don't own =====
 
     @Test
     @DisplayName("Casting a spell you don't own puts a +1/+1 counter on each creature you control")
@@ -39,8 +40,7 @@ class NitaForumConciliatorTest extends BaseCardTest {
         harness.setHand(player1, List.of(divination));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities(); // resolve trigger, then Divination
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(nita.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -59,14 +59,12 @@ class NitaForumConciliatorTest extends BaseCardTest {
         harness.setHand(player1, List.of(divination));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(nita.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
-    // ===== Ability 2: exile target instant/sorcery from an opponent's graveyard =====
 
     @Test
     @DisplayName("Activating exiles the opponent's instant/sorcery and grants this-turn cast permission")
@@ -111,6 +109,7 @@ class NitaForumConciliatorTest extends BaseCardTest {
         // Pay {2}{U} entirely with green mana — only legal because "mana of any type" is granted.
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.castFromExile(player1, target.getId());
+        harness.passBothPriorities(); // resolve Nita's cast trigger
         harness.passBothPriorities(); // resolve Divination
 
         // Drew 2 cards from the 2-card library.
@@ -138,16 +137,13 @@ class NitaForumConciliatorTest extends BaseCardTest {
 
         // Advance through end step to the cleanup step.
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to end step
-        harness.passBothPriorities(); // advance to cleanup
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gd.exilePlayPermissions).doesNotContainKey(target.getId());
         assertThat(gd.exilePlayAnyManaType).doesNotContain(target.getId());
         assertThat(gd.exileInsteadOfGraveyard).doesNotContain(target.getId());
     }
 
-    // ===== Ability 2: illegal targets =====
 
     @Test
     @DisplayName("Cannot target a card in your own graveyard")
@@ -180,4 +176,73 @@ class NitaForumConciliatorTest extends BaseCardTest {
                 harness.activateAbility(player1, 0, 0, 0, creatureCard.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class);
     }
+    @Test
+    @DisplayName("Nita cannot sacrifice herself to activate her ability")
+    void cannotSacrificeHerself() {
+        mainPhase();
+        harness.addToBattlefield(player1, new NitaForumConciliator());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        Divination target = new Divination();
+        harness.setGraveyard(player2, List.of(target));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, 0,
+                target.getId(), Zone.GRAVEYARD)).isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Nita, Forum Conciliator");
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("The ability cannot be activated outside a main phase")
+    void cannotActivateDuringCombat() {
+        mainPhase();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.addToBattlefield(player1, new NitaForumConciliator());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        Divination target = new Divination();
+        harness.setGraveyard(player2, List.of(target));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, 0,
+                target.getId(), Zone.GRAVEYARD)).isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("An unowned spell gives counters only to the controller's creatures")
+    void countersExcludeOpposingCreaturesAndLands() {
+        mainPhase();
+        Permanent nita = harness.addToBattlefieldAndReturn(player1, new NitaForumConciliator());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Island());
+        Divination spell = new Divination();
+        spell.setOwnerId(player2.getId());
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(nita.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opposingCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The exile permission still requires paying the spell's mana cost")
+    void exilePermissionDoesNotWaiveManaCost() {
+        mainPhase();
+        harness.addToBattlefield(player1, new NitaForumConciliator());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        Divination target = new Divination();
+        harness.setGraveyard(player2, List.of(target));
+        harness.activateAbility(player1, 0, 0, 0, target.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.findExiledCard(target.getId())).isNotNull();
+        assertThat(gd.exilePlayPermissions.get(target.getId())).isEqualTo(player1.getId());
+    }
+
 }
