@@ -23,9 +23,8 @@ class QuantumReductionTest extends BaseCardTest {
     @DisplayName("Enchanted creature gets -5/-0 and loses all abilities")
     void appliesReductionAndRemovesAbilities() {
         Permanent elves = addCreatureReady(player2, new LlanowarElves());
-        Permanent aura = new Permanent(new QuantumReduction());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new QuantumReduction());
         aura.setAttachedTo(elves.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.getEffectivePower(gd, elves)).isEqualTo(-4);
         assertThat(gqs.getEffectiveToughness(gd, elves)).isEqualTo(1);
@@ -76,6 +75,95 @@ class QuantumReductionTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Teamwork is optional at sorcery speed and the Aura removes mana abilities")
+    void castsWithoutTeamworkAndRemovesManaAbility() {
+        Permanent target = addCreatureReady(player1, new LlanowarElves());
+        harness.setHand(player1, List.of(new QuantumReduction()));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+        assertThatThrownBy(() -> harness.tapPermanent(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("lost its abilities");
+    }
+
+    @Test
+    @DisplayName("Teamwork can combine the power of summoning-sick creatures")
+    void teamworkCombinesSummoningSickCreatures() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        harness.setHand(player1, List.of(new QuantumReduction()));
+        addMana();
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+
+        harness.castSorceryTappingPermanents(player1, 0, target.getId(), List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(first, second);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Teamwork rejects creatures whose combined power is too small")
+    void rejectsInsufficientTeamworkPower() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent teammate = addCreatureReady(player1, new LlanowarElves());
+        harness.setHand(player1, List.of(new QuantumReduction()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castSorceryTappingPermanents(player1, 0, target.getId(), List.of(teammate.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("total power at least 2");
+        assertThat(teammate.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Teamwork cannot tap an opponent's creature")
+    void rejectsOpponentCreatureForTeamwork() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new QuantumReduction()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castSorceryTappingPermanents(player1, 0, target.getId(), List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creatures you control");
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Negative power of an unchosen creature does not prevent teamwork flash")
+    void negativePowerOfUnchosenCreatureDoesNotPreventFlash() {
+        Permanent reducedCreature = addCreatureReady(player1, new LlanowarElves());
+        Permanent teammate = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new QuantumReduction(), new QuantumReduction()));
+        addMana();
+        harness.castAndResolveSorcery(player1, 0, reducedCreature.getId());
+        assertThat(gqs.getEffectivePower(gd, reducedCreature)).isEqualTo(-4);
+        addMana();
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+
+        harness.castSorceryTappingPermanents(player1, 0, target.getId(), List.of(teammate.getId()));
+        harness.passBothPriorities();
+
+        assertThat(teammate.isTapped()).isTrue();
+        assertThat(reducedCreature.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-4);
     }
 
     private void addMana() {
