@@ -1,19 +1,27 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.b.BlindSeer;
 import com.github.laxika.magicalvibes.cards.c.ChromaticSphere;
 import com.github.laxika.magicalvibes.cards.g.GalinasKnight;
 import com.github.laxika.magicalvibes.cards.g.GoblinSpy;
+import com.github.laxika.magicalvibes.cards.o.Opt;
+import com.github.laxika.magicalvibes.cards.s.ScorchingLava;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ManaMaze.class, GoblinSpy.class, GalinasKnight.class, ChromaticSphere.class})
+@CardUsed({ManaMaze.class, GoblinSpy.class, GalinasKnight.class, ChromaticSphere.class,
+        MycosynthLattice.class, BlindSeer.class, Opt.class, ScorchingLava.class})
 class ManaMazeTest extends BaseCardTest {
 
     private void addManaMaze() {
@@ -137,7 +145,6 @@ class ManaMazeTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(MycosynthLattice.class)
     @DisplayName("Colors made colorless before announcement do not share a color")
     void ignoresColorsMadeColorlessBeforeCasting() {
         addManaMaze();
@@ -148,6 +155,58 @@ class ManaMazeTest extends BaseCardTest {
 
         assertThatCode(() -> harness.castFromHand(player1, new GoblinSpy(), "{R}"))
                 .doesNotThrowAnyException();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Casting Mana Maze itself restricts subsequent blue spells")
+    void itsOwnCastCountsAsMostRecentSpell() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new ManaMaze(), "{1}{U}");
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new GalinasKnight(), "{W}{U}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Changing the previous spell's color does not remove its original color restriction")
+    void retainsOriginalColorAfterSpellColorChange() {
+        castRedSpellAndChangeItToBlue();
+        harness.setHand(player1, List.of(new ScorchingLava()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Changing the previous spell's color does not restrict its new color")
+    void doesNotRestrictNewColorAfterSpellColorChange() {
+        castRedSpellAndChangeItToBlue();
+
+        harness.castFromHand(player1, new Opt(), "{U}");
+
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    private void castRedSpellAndChangeItToBlue() {
+        addManaMaze();
+        harness.addToBattlefield(player1, new BlindSeer());
+        harness.castFromHand(player1, new GoblinSpy(), "{R}");
+        var spellId = gd.stack.getFirst().getCard().getId();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 1, 0, null, spellId, Zone.STACK);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLUE");
+
         assertThat(gd.stack).hasSize(1);
     }
 }
