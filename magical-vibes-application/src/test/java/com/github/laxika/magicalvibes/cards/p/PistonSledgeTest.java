@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.testutil.TestCards;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,10 +17,10 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PistonSledge.class, GrizzlyBears.class, Spellbook.class})
 class PistonSledgeTest extends BaseCardTest {
-
-    // ===== ETB attach =====
 
     @Test
     @DisplayName("Casting Piston Sledge with a target creature triggers ETB attach")
@@ -76,8 +77,6 @@ class PistonSledgeTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
     }
 
-    // ===== ETB without target =====
-
     @Test
     @DisplayName("Can cast without target when no creatures are controlled")
     void canCastWithoutTargetWhenNoCreatures() {
@@ -91,8 +90,8 @@ class PistonSledgeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("ETB does not trigger when cast without a target")
-    void etbDoesNotTriggerWithoutTarget() {
+    @DisplayName("ETB has no legal target when no creatures are controlled")
+    void etbHasNoLegalTargetWithoutCreatures() {
         harness.setHand(player1, List.of(new PistonSledge()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
@@ -102,8 +101,6 @@ class PistonSledgeTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Piston Sledge");
         assertThat(gd.stack).isEmpty();
     }
-
-    // ===== ETB fizzle =====
 
     @Test
     @DisplayName("ETB fizzles if target creature is removed before resolution")
@@ -128,16 +125,12 @@ class PistonSledgeTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Equip with sacrifice artifact cost =====
-
     @Test
     @DisplayName("Equip by sacrificing another artifact moves equipment to target creature")
     void equipBySacrificingArtifact() {
         harness.addToBattlefield(player1, new PistonSledge());
         harness.addToBattlefield(player1, new Spellbook());
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         UUID spellbookId = findPermanent(player1, "Spellbook").getId();
         harness.activateAbility(player1, 0, null, bears.getId());
@@ -170,10 +163,7 @@ class PistonSledgeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Add a second creature and another artifact to sacrifice
-        Permanent secondCreature = new Permanent(new GrizzlyBears());
-        TestCards.mutableCard(secondCreature).setName("Second Bear");
-        secondCreature.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(secondCreature);
+        Permanent secondCreature = addCreatureReady(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new Spellbook());
 
         // Equip to second creature by sacrificing Spellbook
@@ -197,7 +187,72 @@ class PistonSledgeTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, firstBear)).isEqualTo(2);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Piston Sledge can sacrifice itself to pay its equip cost")
+    void canSacrificeItselfToEquip() {
+        Permanent sledge = harness.addToBattlefieldAndReturn(player1, new PistonSledge());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.handlePermanentChosen(player1, sledge.getId());
+
+        harness.assertInGraveyard(player1, "Piston Sledge");
+        harness.assertNotOnBattlefield(player1, "Piston Sledge");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Equip can target the creature already wearing Piston Sledge")
+    void canEquipAlreadyEquippedCreature() {
+        Permanent sledge = harness.addToBattlefieldAndReturn(player1, new PistonSledge());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent spellbook = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        sledge.setAttachedTo(bears.getId());
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.handlePermanentChosen(player1, spellbook.getId());
+
+        harness.assertInGraveyard(player1, "Spellbook");
+        harness.passBothPriorities();
+
+        assertThat(sledge.getAttachedTo()).isEqualTo(bears.getId());
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Equip cannot target an opponent's creature")
+    void equipRejectsOpponentsCreature() {
+        harness.addToBattlefield(player1, new PistonSledge());
+        harness.addToBattlefield(player1, new Spellbook());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Spellbook");
+        assertThat(findPermanent(player1, "Piston Sledge").getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Equip cannot be activated during combat")
+    void equipRequiresSorceryTiming() {
+        harness.addToBattlefield(player1, new PistonSledge());
+        harness.addToBattlefield(player1, new Spellbook());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Spellbook");
+        assertThat(gd.stack).isEmpty();
+    }
 
     private int findPermanentIndex(Player player, String name) {
         List<Permanent> battlefield = gd.playerBattlefields.get(player.getId());
