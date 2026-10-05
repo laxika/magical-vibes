@@ -80,11 +80,8 @@ class MindCarverTest extends BaseCardTest {
     @Test
     @DisplayName("Equip attaches Mind Carver for two generic and one black mana")
     void equipAttachesToCreature() {
-        Permanent mindCarver = new Permanent(new MindCarver());
-        mindCarver.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(mindCarver);
+        Permanent mindCarver = harness.addToBattlefieldAndReturn(player1, new MindCarver());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setSummoningSick(false);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -92,6 +89,37 @@ class MindCarverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(mindCarver.getAttachedTo()).isEqualTo(bears.getId());
+    }
+
+    @Test
+    @DisplayName("Mind Carver can enter without any creature to attach to")
+    void entersWithoutCreatures() {
+        harness.castFromHand(player1, new MindCarver(), "{B}");
+        harness.passBothPriorities();
+
+        Permanent mindCarver = findPermanent(player1, "Mind Carver");
+        assertThat(mindCarver).isNotNull();
+        assertThat(mindCarver.getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Equip moves the entire bonus to the new creature")
+    void equipMovesBonusToNewCreature() {
+        Permanent mindCarver = harness.addToBattlefieldAndReturn(player1, new MindCarver());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        mindCarver.setAttachedTo(first.getId());
+        setGraveyardSize(player2, 9);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(mindCarver.getAttachedTo()).isEqualTo(second.getId());
+        assertStats(first, 2, 2);
+        assertStats(second, 5, 3);
     }
 
     private void setGraveyardSize(Player player, int size) {
