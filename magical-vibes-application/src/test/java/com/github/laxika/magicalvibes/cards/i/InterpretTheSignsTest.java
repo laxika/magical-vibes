@@ -11,11 +11,13 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+@CardUsed({InterpretTheSigns.class, Forest.class, GrizzlyBears.class, Mountain.class})
 class InterpretTheSignsTest extends BaseCardTest {
 
     @Test
@@ -69,13 +71,48 @@ class InterpretTheSignsTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("Putting all three scry cards on the bottom reveals the previously fourth card")
+    void puttingAllCardsOnBottomRevealsNextCard() {
+        Card first = new Forest();
+        Card second = new Mountain();
+        Card third = new Forest();
+        Card bears = new GrizzlyBears();
+        Card rest = new Mountain();
+        harness.setLibrary(player1, List.of(first, second, third, bears, rest));
+        castInterpretTheSigns();
+
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(2, 0, 1)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bears, rest);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third, first, second);
+    }
+
+    @Test
+    @DisplayName("Scrying a two-card library allows reordering and drawing its last two cards")
+    void scriesAndDrawsShortLibrary() {
+        Card forest = new Forest();
+        Card bears = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(forest, bears));
+        castInterpretTheSigns();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(forest, bears);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(1, 0), List.of()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bears, forest);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void castInterpretTheSigns() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new InterpretTheSigns()));
         harness.addMana(player1, ManaColor.COLORLESS, 6);
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castSorcery(player1, 0, (UUID) null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, (UUID) null);
     }
 }
