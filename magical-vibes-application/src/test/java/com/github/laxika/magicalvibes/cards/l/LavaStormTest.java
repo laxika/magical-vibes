@@ -11,12 +11,14 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LavaStorm.class, BenalishKnight.class, ArdentMilitia.class})
+@CardUsed({LavaStorm.class, BenalishKnight.class, ArdentMilitia.class, SoulSculptor.class})
 class LavaStormTest extends BaseCardTest {
 
     private void setUpCombat() {
@@ -24,8 +26,7 @@ class LavaStormTest extends BaseCardTest {
         addCreatureReady(player2, new BenalishKnight());
         addCreatureReady(player2, new ArdentMilitia());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
     }
 
@@ -83,8 +84,7 @@ class LavaStormTest extends BaseCardTest {
     void blockingModeDealsExactlyTwoDamage() {
         addCreatureReady(player1, new BenalishKnight());
         Permanent blocker = addCreatureReady(player2, new ArdentMilitia());
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         castLavaStorm(1);
@@ -92,12 +92,13 @@ class LavaStormTest extends BaseCardTest {
         assertThat(blocker.getMarkedDamage()).isEqualTo(2);
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
     @DisplayName("Outside combat neither mode damages anything")
-    void noCombatNoDamage() {
+    void noCombatNoDamage(int modeIndex) {
         addCreatureReady(player1, new BenalishKnight());
 
-        castLavaStorm(0);
+        castLavaStorm(modeIndex);
 
         harness.assertOnBattlefield(player1, "Benalish Knight");
         assertThat(findPermanent(player1, "Benalish Knight").getMarkedDamage()).isZero();
@@ -123,10 +124,51 @@ class LavaStormTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, attacker)).isFalse();
         assertThat(gd.currentStep).isIn(TurnStep.DECLARE_ATTACKERS, TurnStep.DECLARE_BLOCKERS,
                 TurnStep.COMBAT_DAMAGE, TurnStep.END_OF_COMBAT);
-        assertThat(attacker.isAttacking()).isTrue();
+        assertThat(attacker.isAttacking()).isFalse();
 
         harness.passBothPriorities();
 
         assertThat(attacker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Attacking mode damages every attacker and leaves nonattackers unharmed")
+    void attackingModeHitsMultipleAttackers() {
+        Permanent first = addCreatureReady(player1, new ArdentMilitia());
+        Permanent second = addCreatureReady(player1, new ArdentMilitia());
+        Permanent idle = addCreatureReady(player1, new ArdentMilitia());
+        Permanent defender = addCreatureReady(player2, new ArdentMilitia());
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        castLavaStorm(0);
+
+        assertThat(first.getMarkedDamage()).isEqualTo(2);
+        assertThat(second.getMarkedDamage()).isEqualTo(2);
+        assertThat(idle.getMarkedDamage()).isZero();
+        assertThat(defender.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Blocking mode damages every blocker and leaves nonblockers unharmed")
+    void blockingModeHitsMultipleBlockers() {
+        Permanent attacker = addCreatureReady(player1, new ArdentMilitia());
+        Permanent first = addCreatureReady(player2, new ArdentMilitia());
+        Permanent second = addCreatureReady(player2, new ArdentMilitia());
+        Permanent idle = addCreatureReady(player2, new ArdentMilitia());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+
+        castLavaStorm(1);
+
+        assertThat(first.getMarkedDamage()).isEqualTo(2);
+        assertThat(second.getMarkedDamage()).isEqualTo(2);
+        assertThat(idle.getMarkedDamage()).isZero();
+        assertThat(attacker.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }
