@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.StoneRain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -81,5 +82,66 @@ class MerchantShipTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(12);
+    }
+
+    @Test
+    @DisplayName("An opponent's Island does not prevent sacrifice")
+    void opponentsIslandDoesNotPreventSacrifice() {
+        harness.addToBattlefield(player2, new Island());
+        harness.castFromHand(player1, new MerchantShip(), "{U}");
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Merchant Ship");
+        harness.assertInGraveyard(player1, "Merchant Ship");
+    }
+
+    @Test
+    @DisplayName("Sacrifice still resolves after its controller gains an Island")
+    void sacrificeStillResolvesAfterIslandReturns() {
+        harness.castFromHand(player1, new MerchantShip(), "{U}");
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.addToBattlefield(player1, new Island());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Merchant Ship");
+        harness.assertInGraveyard(player1, "Merchant Ship");
+    }
+
+    @Test
+    @DisplayName("Losing one of two Islands does not trigger sacrifice")
+    void survivesLosingOneOfTwoIslands() {
+        var island = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+        addCreatureReady(player1, new MerchantShip());
+        harness.setHand(player1, List.of(new StoneRain()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castSorcery(player1, 0, island.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Merchant Ship");
+    }
+
+    @Test
+    @DisplayName("Does not gain life when blocked")
+    void doesNotGainLifeWhenBlocked() {
+        harness.setLife(player1, 10);
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player2, new Island());
+        Permanent ship = addCreatureReady(player1, new MerchantShip());
+        Permanent blocker = addCreatureReady(player2, new MerchantShip());
+
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(ship);
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        declareAttackersAndPrepareBlockers(List.of(attackerIndex));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 20);
     }
 }
