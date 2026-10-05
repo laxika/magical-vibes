@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LotusguardDisciple.class, GrizzlyBears.class, DuskLegionDreadnought.class, Forest.class})
 class LotusguardDiscipleTest extends BaseCardTest {
 
     @Test
@@ -63,6 +65,60 @@ class LotusguardDiscipleTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Keywords are granted by the ETB trigger, not by the creature spell")
+    void keywordsAreGrantedOnlyWhenTriggerResolves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new LotusguardDisciple());
+        harness.setHand(player1, List.of(new LotusguardDisciple()));
+        addMana();
+
+        harness.castCreature(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(target.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("ETB trigger still grants keywords after its source leaves")
+    void triggerResolvesAfterSourceLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LotusguardDisciple());
+        harness.setHand(player1, List.of(new LotusguardDisciple()));
+        addMana();
+        harness.castCreature(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(target.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("ETB trigger does not grant keywords to a replacement for a departed target")
+    void departedTargetDoesNotTransferKeywords() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LotusguardDisciple());
+        harness.setHand(player1, List.of(new LotusguardDisciple()));
+        addMana();
+        harness.castCreature(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        Permanent replacement = harness.addToBattlefieldAndReturn(player2, new LotusguardDisciple());
+        harness.passBothPriorities();
+
+        assertThat(replacement.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(replacement.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Lotusguard Disciple");
     }
 
     private void castWithTarget(Permanent target) {
