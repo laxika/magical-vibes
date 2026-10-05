@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.t.TwinBolt;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,10 +10,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(KinTreeNurturer.class)
+@CardUsed({KinTreeNurturer.class, TwinBolt.class})
 class KinTreeNurturerTest extends BaseCardTest {
 
     @Test
@@ -58,9 +60,31 @@ class KinTreeNurturerTest extends BaseCardTest {
     }
 
     private void castNurturer() {
-        harness.setHand(player1, List.of(new KinTreeNurturer()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new KinTreeNurturer(), "{2}{B}");
+    }
+
+    @Test
+    @DisplayName("Endure creates a Spirit when Nurturer dies before its trigger resolves")
+    void createsSpiritWhenSourceDiesBeforeEndureResolves() {
+        castNurturer();
+        harness.passBothPriorities();
+        Permanent nurturer = findPermanent(player1, "Kin-Tree Nurturer");
+
+        harness.setHand(player2, List.of(new TwinBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.ensurePriority(player2);
+        harness.castInstant(player2, 0, Map.of(nurturer.getId(), 2));
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Kin-Tree Nurturer");
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Kin-Tree Nurturer");
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1);
+        assertThat(findPermanents(player2, "Spirit")).isEmpty();
+        Permanent spirit = findPermanent(player1, "Spirit");
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(1);
     }
 }
