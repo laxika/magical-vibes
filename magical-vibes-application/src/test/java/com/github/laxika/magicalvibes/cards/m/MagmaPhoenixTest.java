@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
+import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
+import com.github.laxika.magicalvibes.cards.s.StampedingRhino;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -15,10 +18,10 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MagmaPhoenix.class, MerfolkLooter.class, RuneclawBear.class, ShivanDragon.class, StampedingRhino.class})
 class MagmaPhoenixTest extends BaseCardTest {
 
-    // ===== Death trigger =====
-
+    @CardUsed({MagmaPhoenix.class, RuneclawBear.class, ShivanDragon.class, StampedingRhino.class})
     @Nested
     @DisplayName("Death trigger")
     class DeathTriggerTests {
@@ -66,12 +69,7 @@ class MagmaPhoenixTest extends BaseCardTest {
             harness.setLife(player2, 20);
 
             // Add a 4/4 creature for player2 that will survive 3 damage
-            GrizzlyBears toughCreature = new GrizzlyBears();
-            toughCreature.setPower(4);
-            toughCreature.setToughness(4);
-            Permanent toughPerm = new Permanent(toughCreature);
-            toughPerm.setSummoningSick(false);
-            gd.playerBattlefields.get(player2.getId()).add(toughPerm);
+            harness.addToBattlefield(player2, new StampedingRhino());
 
             setupCombatWherePhoenixDies();
             harness.passBothPriorities(); // Combat damage — Phoenix dies
@@ -81,7 +79,8 @@ class MagmaPhoenixTest extends BaseCardTest {
 
             // The 4/4 should have taken 3 damage — check it's still on battlefield
             // (SBA will handle lethal damage but 4/4 with 3 damage survives)
-            harness.assertOnBattlefield(player2, "Grizzly Bears");
+            harness.assertOnBattlefield(player2, "Stampeding Rhino");
+            assertThat(findPermanent(player2, "Stampeding Rhino").getMarkedDamage()).isEqualTo(3);
         }
 
         @Test
@@ -92,10 +91,7 @@ class MagmaPhoenixTest extends BaseCardTest {
             harness.setLife(player2, 20);
 
             // Add a 2/2 creature for player2 that should die from 3 damage
-            GrizzlyBears smallCreature = new GrizzlyBears();
-            Permanent smallPerm = new Permanent(smallCreature);
-            smallPerm.setSummoningSick(false);
-            gd.playerBattlefields.get(player2.getId()).add(smallPerm);
+            harness.addToBattlefield(player2, new RuneclawBear());
 
             setupCombatWherePhoenixDies();
             harness.passBothPriorities(); // Combat damage — Phoenix dies
@@ -104,12 +100,12 @@ class MagmaPhoenixTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // The 2/2 should be dead
-            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+            harness.assertNotOnBattlefield(player2, "Runeclaw Bear");
+            harness.assertInGraveyard(player2, "Runeclaw Bear");
         }
     }
 
-    // ===== Graveyard activated ability =====
-
+    @CardUsed({MagmaPhoenix.class, RuneclawBear.class, ShivanDragon.class, StampedingRhino.class})
     @Nested
     @DisplayName("Graveyard activated ability")
     class GraveyardAbilityTests {
@@ -175,7 +171,7 @@ class MagmaPhoenixTest extends BaseCardTest {
         @Test
         @DisplayName("Card without graveyard ability cannot be activated from graveyard")
         void cannotActivateNonGraveyardAbilityCard() {
-            GrizzlyBears bears = new GrizzlyBears();
+            RuneclawBear bears = new RuneclawBear();
             harness.setGraveyard(player1, List.of(bears));
 
             assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
@@ -184,21 +180,99 @@ class MagmaPhoenixTest extends BaseCardTest {
         }
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Only the Phoenix whose ability was activated returns")
+    void returnsOnlyActivatedPhoenix() {
+        MagmaPhoenix source = new MagmaPhoenix();
+        MagmaPhoenix other = new MagmaPhoenix();
+        RuneclawBear bear = new RuneclawBear();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(source, other, bear));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(source);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other, bear);
+    }
+
+    @Test
+    @DisplayName("Generic mana cannot replace the two required red mana")
+    void requiresTwoRedMana() {
+        harness.setGraveyard(player1, List.of(new MagmaPhoenix()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Magma Phoenix");
+    }
+
+    @Test
+    @DisplayName("Returning Phoenix before its death trigger resolves does not stop the damage")
+    void deathTriggerResolvesAfterPhoenixReturnsToHand() {
+        harness.setHand(player1, List.of());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new MagmaPhoenix());
+        harness.addToBattlefield(player1, new RuneclawBear());
+        harness.addToBattlefield(player2, new RuneclawBear());
+        setupCombatWherePhoenixDies();
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Magma Phoenix");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
+        harness.assertInGraveyard(player1, "Runeclaw Bear");
+        harness.assertInGraveyard(player2, "Runeclaw Bear");
+        harness.assertInHand(player1, "Magma Phoenix");
+    }
+
+    @Test
+    @CardUsed({MagmaPhoenix.class, MerfolkLooter.class, RuneclawBear.class})
+    @DisplayName("An older activation cannot return Phoenix after it leaves and reenters the graveyard")
+    void olderActivationCannotReturnNewGraveyardObject() {
+        MagmaPhoenix phoenix = new MagmaPhoenix();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new RuneclawBear()));
+        harness.setGraveyard(player1, List.of(phoenix));
+        Permanent looter = harness.addToBattlefieldAndReturn(player1, new MerfolkLooter());
+        looter.setSummoningSick(false);
+        harness.addMana(player1, ManaColor.RED, 10);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Magma Phoenix");
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.assertInGraveyard(player1, "Magma Phoenix");
+        harness.assertNotInHand(player1, "Magma Phoenix");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Magma Phoenix");
+        harness.assertNotInHand(player1, "Magma Phoenix");
+    }
 
     private void setupCombatWherePhoenixDies() {
         Permanent phoenixPerm = findPermanent(player1, "Magma Phoenix");
         phoenixPerm.setSummoningSick(false);
         phoenixPerm.setAttacking(true);
 
-        GrizzlyBears bigCreature = new GrizzlyBears();
-        bigCreature.setPower(4);
-        bigCreature.setToughness(4);
-        Permanent blockerPerm = new Permanent(bigCreature);
+        Permanent blockerPerm = harness.addToBattlefieldAndReturn(player2, new ShivanDragon());
         blockerPerm.setSummoningSick(false);
         blockerPerm.setBlocking(true);
         blockerPerm.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
