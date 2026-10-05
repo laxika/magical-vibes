@@ -32,8 +32,8 @@ class KickInTheDoorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KickInTheDoor()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castSorcery(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
+        harness.handleListChoice(player1, "Lost Mine of Phandelver");
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(bears.getGrantedKeywords()).contains(Keyword.HASTE);
@@ -82,8 +82,10 @@ class KickInTheDoorTest extends BaseCardTest {
         castKickInTheDoor(attacker);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(attacker.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         int wallIndex = gd.playerBattlefields.get(player2.getId()).indexOf(wall);
@@ -105,12 +107,61 @@ class KickInTheDoorTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private void castKickInTheDoor(Permanent target) {
+    @Test
+    @DisplayName("Can target an opponent's creature while the caster ventures")
+    void targetsOpponentsCreature() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        castKickInTheDoor(target);
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(target.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gd.playerDungeonProgress.get(player1.getId()))
+                .isEqualTo(new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 0));
+        assertThat(gd.playerDungeonProgress).doesNotContainKey(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Does not venture when its only target leaves before resolution")
+    void doesNotVentureWithMissingTarget() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new KickInTheDoor()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castSorcery(player1, 0, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerGraveyards.get(player1.getId()).add(target.getCard());
+
         harness.passBothPriorities();
-        harness.passBothPriorities();
+
+        assertThat(gd.playerDungeonProgress).doesNotContainKey(player1.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Kick in the Door");
+    }
+
+    @Test
+    @DisplayName("Allows the caster to choose a different dungeon")
+    void choosesTombOfAnnihilation() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new KickInTheDoor()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.handleListChoice(player1, "Tomb of Annihilation");
+        resolveAllTriggers();
+
+        assertThat(gd.playerDungeonProgress.get(player1.getId()))
+                .isEqualTo(new DungeonProgress(Dungeon.TOMB_OF_ANNIHILATION, 0));
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+    }
+
+    private void castKickInTheDoor(Permanent target) {
+        harness.setHand(player1, List.of(new KickInTheDoor()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+        harness.handleListChoice(player1, "Lost Mine of Phandelver");
+        resolveAllTriggers();
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
     }
 }
