@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.b.BalduvianBarbarians;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.f.FolkOfThePines;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
+import com.github.laxika.magicalvibes.cards.m.Manabarbs;
 import com.github.laxika.magicalvibes.cards.m.MoorFiend;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Justice.class, BalduvianBarbarians.class, BalduvianBears.class, Incinerate.class,
-        FolkOfThePines.class, Pyroclasm.class, MoorFiend.class})
+        FolkOfThePines.class, Pyroclasm.class, MoorFiend.class, Manabarbs.class, Mountain.class})
 class JusticeTest extends BaseCardTest {
 
     @Test
@@ -31,8 +33,7 @@ class JusticeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Incinerate()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities(); // Incinerate resolves: player2 takes 3, Justice trigger queued
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities(); // Justice resolves: 3 to Incinerate's controller (player1)
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
@@ -106,8 +107,7 @@ class JusticeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Pyroclasm()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities(); // Pyroclasm deals 2 to each of 3 creatures = 6 total; Justice queued
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.passBothPriorities(); // Justice resolves: 6 to Pyroclasm's controller (player1)
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(14);
@@ -156,6 +156,59 @@ class JusticeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
+        harness.assertInGraveyard(player1, "Justice");
+    }
+
+    @Test
+    void redNoncreaturePermanentDamageDoesNotTriggerJustice() {
+        harness.addToBattlefield(player1, new Manabarbs());
+        harness.addToBattlefield(player2, new Justice());
+        harness.addToBattlefield(player2, new Mountain());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.tapPermanent(player2, 1);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void controllersOwnRedSpellAlsoTriggersJustice() {
+        harness.addToBattlefield(player1, new Justice());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 14);
+    }
+
+    @Test
+    void opponentsUpkeepDoesNotRequirePayment() {
+        harness.addToBattlefield(player1, new Justice());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Justice");
+    }
+
+    @Test
+    void insufficientWhiteManaCannotPayUpkeep() {
+        harness.addToBattlefield(player1, new Justice());
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Justice");
         harness.assertInGraveyard(player1, "Justice");
     }
 }
