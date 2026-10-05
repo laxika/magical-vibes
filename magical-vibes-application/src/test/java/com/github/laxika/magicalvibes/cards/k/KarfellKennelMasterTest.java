@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KarfellKennelMaster.class, GrizzlyBears.class, Island.class})
 class KarfellKennelMasterTest extends BaseCardTest {
 
     @Test
@@ -66,6 +68,51 @@ class KarfellKennelMasterTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0, List.of(island.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotChooseMoreThanTwoTargets() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new KarfellKennelMaster());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new KarfellKennelMaster());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new KarfellKennelMaster());
+        harness.setHand(player1, List.of(new KarfellKennelMaster()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0,
+                List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotChooseTheSameCreatureTwice() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new KarfellKennelMaster());
+        harness.setHand(player1, List.of(new KarfellKennelMaster()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0,
+                List.of(target.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void remainingTargetGetsBothEffectsWhenOtherTargetLeaves() {
+        Permanent remaining = harness.addToBattlefieldAndReturn(player1, new KarfellKennelMaster());
+        Permanent removed = harness.addToBattlefieldAndReturn(player2, new KarfellKennelMaster());
+        Permanent untargeted = harness.addToBattlefieldAndReturn(player1, new KarfellKennelMaster());
+        harness.setHand(player1, List.of(new KarfellKennelMaster()));
+        addMana();
+        harness.castCreature(player1, 0, List.of(remaining.getId(), removed.getId()));
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player2.getId()).remove(removed);
+        harness.setGraveyard(player2, List.of(removed.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(remaining.getEffectivePower()).isEqualTo(5);
+        assertThat(remaining.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, remaining, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(untargeted.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, untargeted, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     private void castKarfellKennelMaster(List<java.util.UUID> targetIds) {
