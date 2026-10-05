@@ -34,8 +34,7 @@ class LolthSpiderQueenTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
         harness.passBothPriorities();
 
         assertThat(lolth.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
@@ -116,11 +115,59 @@ class LolthSpiderQueenTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(12);
     }
 
+    @Test
+    @DisplayName("An opponent's creature dying does not add loyalty")
+    void opponentCreatureDeathDoesNotAddLoyalty() {
+        Permanent lolth = addReadyLolth(player1, 4);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
+        assertThat(lolth.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A Spider token dying adds loyalty")
+    void tokenDeathAddsLoyalty() {
+        Permanent lolth = addReadyLolth(player1, 4);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        Permanent spider = findPermanents(player1, "Spider").getFirst();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, spider.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Spider")).hasSize(1);
+        assertThat(lolth.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The emblem includes noncombat life loss earlier in the turn")
+    void emblemCountsEarlierNoncombatDamage() {
+        addReadyLolth(player1, 8);
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(bear)));
+        resolveCombat(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(12);
+    }
+
     private Permanent addReadyLolth(Player player, int loyalty) {
-        Permanent permanent = new Permanent(new LolthSpiderQueen());
+        Permanent permanent = addCreatureReady(player, new LolthSpiderQueen());
         permanent.setCounterCount(CounterType.LOYALTY, loyalty);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return permanent;
