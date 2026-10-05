@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.d.DragToTheUnderworld;
+import com.github.laxika.magicalvibes.cards.f.FinalDeath;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RageScarredBerserker.class, GrizzlyBears.class})
+@CardUsed({RageScarredBerserker.class, GrizzlyBears.class, FinalDeath.class, DragToTheUnderworld.class})
 class RageScarredBerserkerTest extends BaseCardTest {
 
     @Test
@@ -57,12 +59,103 @@ class RageScarredBerserkerTest extends BaseCardTest {
         assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
-    private void castResolve(Permanent target) {
+    @Test
+    @DisplayName("Can choose itself after entering an otherwise empty battlefield")
+    void canTargetItself() {
+        harness.setHand(player1, List.of(new RageScarredBerserker()));
+        addManaForBerserker();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent berserker = findPermanent(player1, "Rage-Scarred Berserker");
+        harness.handlePermanentChosen(player1, berserker.getId());
+        resolveAllTriggers();
+
+        assertThat(berserker.getPowerModifier()).isEqualTo(1);
+        assertThat(berserker.getToughnessModifier()).isZero();
+        assertThat(berserker.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB still resolves when the Berserker is exiled in response")
+    void triggerResolvesAfterSourceLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new RageScarredBerserker());
         harness.setHand(player1, List.of(new RageScarredBerserker()));
         addManaForBerserker();
         harness.castCreature(player1, 0, target.getId());
         harness.passBothPriorities();
+        Permanent source = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> !permanent.getId().equals(target.getId()))
+                .findFirst().orElseThrow();
+
+        exileInResponse(source);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(target);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(source.getCard());
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB does not affect the source when its target is exiled in response")
+    void removedTargetDoesNotRedirectEffectsToSource() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new RageScarredBerserker());
+        harness.setHand(player1, List.of(new RageScarredBerserker()));
+        addManaForBerserker();
+        harness.castCreature(player1, 0, target.getId());
         harness.passBothPriorities();
+
+        exileInResponse(target);
+        resolveAllTriggers();
+
+        Permanent source = findPermanent(player1, "Rage-Scarred Berserker");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target.getCard());
+        assertThat(source.getPowerModifier()).isZero();
+        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(source.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Granted indestructible prevents destruction but does not prevent exile")
+    void indestructiblePreventsDestructionButNotExile() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new RageScarredBerserker());
+        castResolve(target);
+        harness.setHand(player2, List.of(new DragToTheUnderworld(), new FinalDeath()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player2, 0, target.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        harness.assertInGraveyard(player2, "Drag to the Underworld");
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveInstant(player2, 0, target.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target.getCard());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void exileInResponse(Permanent target) {
+        harness.setHand(player2, List.of(new FinalDeath()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+    }
+
+    private void castResolve(Permanent target) {
+        harness.setHand(player1, List.of(new RageScarredBerserker()));
+        addManaForBerserker();
+        harness.castCreature(player1, 0, target.getId());
+        resolveAllTriggers();
     }
 
     private void addManaForBerserker() {
