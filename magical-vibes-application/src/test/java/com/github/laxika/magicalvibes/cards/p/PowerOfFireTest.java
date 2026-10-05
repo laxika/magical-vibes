@@ -182,4 +182,79 @@ class PowerOfFireTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("Granted ability can target the enchanted creature itself")
+    void grantedAbilityCanTargetItself() {
+        Permanent creature = addCreatureReady(player1, new BriarberryCohort());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new PowerOfFire());
+        aura.setAttachedTo(creature.getId());
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Briarberry Cohort");
+        harness.assertInGraveyard(player1, "Briarberry Cohort");
+        harness.assertInGraveyard(player1, "Power of Fire");
+    }
+
+    @Test
+    @DisplayName("Activated ability still resolves after Power of Fire leaves the battlefield")
+    void activatedAbilitySurvivesAuraRemoval() {
+        Permanent creature = addCreatureReady(player1, new BriarberryCohort());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new PowerOfFire());
+        aura.setAttachedTo(creature.getId());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Activated ability still resolves after the enchanted creature leaves the battlefield")
+    void activatedAbilitySurvivesCreatureRemoval() {
+        Permanent creature = addCreatureReady(player1, new BriarberryCohort());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new PowerOfFire());
+        aura.setAttachedTo(creature.getId());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Power of Fire does not resolve when its creature target leaves the battlefield")
+    void auraDoesNotResolveWithoutItsTarget() {
+        Permanent creature = addCreatureReady(player1, new BriarberryCohort());
+        harness.setHand(player1, List.of(new PowerOfFire()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Power of Fire");
+        harness.assertInGraveyard(player1, "Power of Fire");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Granted damage ability cannot target a noncreature enchantment")
+    void grantedAbilityCannotTargetNoncreatureEnchantment() {
+        Permanent creature = addCreatureReady(player1, new BriarberryCohort());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new PowerOfFire());
+        aura.setAttachedTo(creature.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BoonReflection());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 }
