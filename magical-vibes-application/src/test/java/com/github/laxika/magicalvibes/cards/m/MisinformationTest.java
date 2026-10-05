@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.s.StormCrow;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArcaneDenial.class, Misinformation.class, ShieldSphere.class, SoldeviDigger.class,
+@CardUsed({ArcaneDenial.class, GroundSeal.class, Misinformation.class, ShieldSphere.class, SoldeviDigger.class,
         StormCrow.class})
 class MisinformationTest extends BaseCardTest {
 
@@ -25,10 +26,7 @@ class MisinformationTest extends BaseCardTest {
     @DisplayName("At most three cards may be chosen")
     void choiceIsCappedAtThree() {
         harness.setGraveyard(player2, List.of(new ArcaneDenial(), new ShieldSphere(), new SoldeviDigger(), new StormCrow()));
-        harness.setHand(player1, List.of(new Misinformation()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Misinformation(), "{B}");
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).maxCount()).isEqualTo(3);
     }
@@ -39,31 +37,32 @@ class MisinformationTest extends BaseCardTest {
         Card opponentCard = new ShieldSphere();
         harness.setGraveyard(player2, List.of(opponentCard));
         harness.setGraveyard(player1, List.of(new SoldeviDigger()));
-        harness.setHand(player1, List.of(new Misinformation()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Misinformation(), "{B}");
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
                 .containsExactly(opponentCard.getId());
     }
 
     @Test
-    @DisplayName("Chosen cards move to the top of the opponent's library, last chosen on top")
+    @DisplayName("The caster chooses the order on the opponent's library during resolution")
     void chosenCardsGoOnTopOfOpponentLibrary() {
         Card firstCard = new ArcaneDenial();
         Card secondCard = new ShieldSphere();
         harness.setGraveyard(player2, List.of(firstCard, secondCard));
-        harness.setHand(player1, List.of(new Misinformation()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Misinformation(), "{B}");
         harness.handleMultipleCardsChosen(player1, List.of(firstCard.getId(), secondCard.getId()));
         harness.passBothPriorities();
 
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder).isNotNull();
+        assertThat(reorder.cards()).containsExactlyInAnyOrder(firstCard, secondCard);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(
+                reorder.cards().indexOf(firstCard), reorder.cards().indexOf(secondCard))));
+
         assertThat(gd.playerDecks.get(player2.getId()).subList(0, 2))
                 .extracting(Card::getId)
-                .containsExactly(secondCard.getId(), firstCard.getId());
+                .containsExactly(firstCard.getId(), secondCard.getId());
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Misinformation");
     }
@@ -74,10 +73,7 @@ class MisinformationTest extends BaseCardTest {
         Card chosenCard = new StormCrow();
         Card untouchedCard = new ArcaneDenial();
         harness.setGraveyard(player2, List.of(chosenCard, untouchedCard));
-        harness.setHand(player1, List.of(new Misinformation()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Misinformation(), "{B}");
         harness.handleMultipleCardsChosen(player1, List.of(chosenCard.getId()));
         harness.passBothPriorities();
 
@@ -86,14 +82,55 @@ class MisinformationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("All three targets can be ordered independently of their selection order")
+    void threeTargetsCanBeReorderedAtResolution() {
+        Card first = new ArcaneDenial();
+        Card second = new ShieldSphere();
+        Card third = new SoldeviDigger();
+        Card existingTop = new StormCrow();
+        harness.setGraveyard(player2, List.of(first, second, third));
+        harness.setLibrary(player2, List.of(existingTop));
+        harness.castFromHand(player1, new Misinformation(), "{B}");
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId(), third.getId()));
+        harness.passBothPriorities();
+
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder).isNotNull();
+        assertThat(reorder.cards()).containsExactlyInAnyOrder(first, second, third);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(
+                reorder.cards().indexOf(second), reorder.cards().indexOf(first),
+                reorder.cards().indexOf(third))));
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(second, first, third, existingTop);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A remaining legal target moves even if another target leaves the graveyard")
+    void remainingLegalTargetStillMoves() {
+        Card removed = new ShieldSphere();
+        Card retained = new StormCrow();
+        harness.setGraveyard(player2, List.of(retained, removed));
+        harness.addToBattlefield(player2, new SoldeviDigger());
+        harness.castFromHand(player1, new Misinformation(), "{B}");
+        harness.handleMultipleCardsChosen(player1, List.of(removed.getId(), retained.getId()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst()).isEqualTo(retained);
+        assertThat(gd.playerDecks.get(player2.getId()).getLast()).isEqualTo(removed);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("Choosing no cards is allowed when the opponent's graveyard is nonempty")
     void choosingNoCardsIsAllowed() {
         Card retainedCard = new ShieldSphere();
         harness.setGraveyard(player2, List.of(retainedCard));
-        harness.setHand(player1, List.of(new Misinformation()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Misinformation(), "{B}");
         harness.handleMultipleCardsChosen(player1, List.of());
         harness.passBothPriorities();
 
@@ -108,10 +145,7 @@ class MisinformationTest extends BaseCardTest {
         Card targetCard = new StormCrow();
         harness.addToBattlefield(player1, new GroundSeal());
         harness.setGraveyard(player2, List.of(targetCard));
-        harness.setHand(player1, List.of(new Misinformation()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Misinformation(), "{B}");
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         assertThat(gd.stack).hasSize(1);
@@ -127,10 +161,7 @@ class MisinformationTest extends BaseCardTest {
     void groundSealEnteringAfterTargetSelectionMakesTargetsIllegal() {
         Card targetCard = new StormCrow();
         harness.setGraveyard(player2, List.of(targetCard));
-        harness.setHand(player1, List.of(new Misinformation()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Misinformation(), "{B}");
         harness.handleMultipleCardsChosen(player1, List.of(targetCard.getId()));
         harness.addToBattlefield(player1, new GroundSeal());
         harness.passBothPriorities();
@@ -145,11 +176,8 @@ class MisinformationTest extends BaseCardTest {
     void noOpponentGraveyardCardsResolvesWithNoEffect() {
         Card topCard = new StormCrow();
         harness.setGraveyard(player1, List.of(new SoldeviDigger()));
-        gd.playerDecks.get(player2.getId()).addFirst(topCard);
-        harness.setHand(player1, List.of(new Misinformation()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-
-        harness.castInstant(player1, 0);
+        harness.setLibrary(player2, List.of(topCard));
+        harness.castFromHand(player1, new Misinformation(), "{B}");
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).hasSize(1);
