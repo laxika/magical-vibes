@@ -70,4 +70,59 @@ class InnovativeMetatectTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(card);
     }
+
+    @Test
+    void seekWithNoEligibleCardsLeavesLibraryUnchanged() {
+        harness.setHand(player1, List.of());
+        Card land = new Forest();
+        Card tooExpensive = new HillGiant();
+        harness.setLibrary(player1, List.of(land, tooExpensive));
+        addCreatureReady(player1, new InnovativeMetatect());
+        addCreatureReady(player1, new AlphaMyr());
+
+        declareAttackers(List.of(1));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land, tooExpensive);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void eachMetatectSeeksOnceForMultipleArtifactCreatures() {
+        harness.setHand(player1, List.of());
+        Card first = new GrizzlyBears();
+        Card second = new AlphaMyr();
+        harness.setLibrary(player1, List.of(first, second));
+        addCreatureReady(player1, new InnovativeMetatect());
+        addCreatureReady(player1, new InnovativeMetatect());
+        addCreatureReady(player1, new AlphaMyr());
+        addCreatureReady(player1, new AlphaMyr());
+
+        declareAttackers(List.of(2, 3));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void opponentsArtifactCreatureDamageDoesNotTrigger() {
+        harness.setHand(player1, List.of());
+        Card eligible = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(eligible));
+        addCreatureReady(player1, new InnovativeMetatect());
+        addCreatureReady(player2, new AlphaMyr());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of());
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(eligible);
+    }
 }
