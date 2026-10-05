@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.t.TrueBeliever;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MemoryErosion.class, GrizzlyBears.class, SuntailHawk.class, TrueBeliever.class})
 class MemoryErosionTest extends BaseCardTest {
 
     private List<com.github.laxika.magicalvibes.model.Card> tenCardLibrary() {
@@ -33,11 +35,9 @@ class MemoryErosionTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new GrizzlyBears()));
         harness.setLibrary(player2, tenCardLibrary());
-        harness.addMana(player2, ManaColor.GREEN, 2);
 
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
 
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -52,11 +52,9 @@ class MemoryErosionTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new GrizzlyBears()));
         harness.setLibrary(player2, tenCardLibrary());
-        harness.addMana(player2, ManaColor.GREEN, 2);
 
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
         int libraryBefore = gd.playerDecks.get(player2.getId()).size();
 
         harness.passBothPriorities(); // resolve the triggered ability
@@ -74,12 +72,10 @@ class MemoryErosionTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new GrizzlyBears()));
         harness.setLibrary(player2, tenCardLibrary());
         harness.setLibrary(player1, tenCardLibrary());
-        harness.addMana(player2, ManaColor.GREEN, 2);
 
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
@@ -89,13 +85,88 @@ class MemoryErosionTest extends BaseCardTest {
     @DisplayName("Does NOT trigger when the controller casts a spell")
     void doesNotTriggerOnControllerSpell() {
         harness.addToBattlefield(player1, new MemoryErosion());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.setLibrary(player1, tenCardLibrary());
-        harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
+
+    @Test
+    @DisplayName("Milling does not target an opponent with shroud")
+    void millsOpponentWithShroud() {
+        harness.addToBattlefield(player1, new MemoryErosion());
+        harness.addToBattlefield(player2, new TrueBeliever());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setLibrary(player2, tenCardLibrary());
+
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(8);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Each Memory Erosion mills independently before the spell resolves")
+    void multipleCopiesEachMillTwo() {
+        harness.addToBattlefield(player1, new MemoryErosion());
+        harness.addToBattlefield(player1, new MemoryErosion());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setLibrary(player2, tenCardLibrary());
+
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(6);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(4);
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Milling a one-card library puts only that card in the graveyard")
+    void millsRemainingCardFromShortLibrary() {
+        harness.addToBattlefield(player1, new MemoryErosion());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        var remainingCard = new SuntailHawk();
+        harness.setLibrary(player2, List.of(remainingCard));
+
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(remainingCard);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A noncreature spell triggers milling of the top two cards")
+    void noncreatureSpellMillsTopTwoCards() {
+        harness.addToBattlefield(player1, new MemoryErosion());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        var first = new SuntailHawk();
+        var second = new GrizzlyBears();
+        var third = new SuntailHawk();
+        harness.setLibrary(player2, List.of(first, second, third));
+
+        harness.castFromHand(player2, new MemoryErosion(), "{1}{U}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(third);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.stack).hasSize(1);
     }
 }
