@@ -65,7 +65,6 @@ class ParapetWatchersTest extends BaseCardTest {
         assertThat(watchers.getToughnessModifier()).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(watchers.getPowerModifier()).isEqualTo(0);
@@ -79,5 +78,63 @@ class ParapetWatchersTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Stacked activations boost only their source when each resolves")
+    void stackedActivationsBoostOnlyTheirSource() {
+        Permanent watchers = addCreatureReady(player1, new ParapetWatchers());
+        Permanent other = addCreatureReady(player1, new ParapetWatchers());
+        Permanent opponent = addCreatureReady(player2, new ParapetWatchers());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(watchers.getToughnessModifier()).isZero();
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        assertThat(watchers.getToughnessModifier()).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        assertThat(watchers.getPowerModifier()).isZero();
+        assertThat(watchers.getToughnessModifier()).isEqualTo(2);
+        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(opponent.getToughnessModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent watchers = harness.addToBattlefieldAndReturn(player1, new ParapetWatchers());
+        watchers.setSummoningSick(true);
+        watchers.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(watchers.getToughnessModifier()).isEqualTo(1);
+        assertThat(watchers.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Other mana colors and colorless cannot pay the hybrid cost")
+    void cannotPayWithOtherMana() {
+        Permanent watchers = addCreatureReady(player1, new ParapetWatchers());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(watchers.getToughnessModifier()).isZero();
     }
 }
