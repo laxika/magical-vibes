@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.l.LanternKami;
 import com.github.laxika.magicalvibes.cards.r.RendSpirit;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -73,5 +74,58 @@ class NineRingedBoTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Spirit");
+    }
+
+    @Test
+    @DisplayName("Can target its controller's Spirit and taps as an activation cost")
+    void targetsOwnSpiritAndRequiresUntappedSource() {
+        Permanent bo = harness.addToBattlefieldAndReturn(player1, new NineRingedBo());
+        Permanent kami = harness.addToBattlefieldAndReturn(player1, new KamiOfOldStone());
+
+        harness.activateAbility(player1, 0, null, kami.getId());
+
+        assertThat(bo.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, kami.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passBothPriorities();
+        assertThat(kami.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Kami of Old Stone");
+    }
+
+    @Test
+    @DisplayName("The exile replacement expires after the turn ends")
+    void replacementExpiresAfterTurn() {
+        harness.addToBattlefield(player1, new NineRingedBo());
+        Permanent kami = harness.addToBattlefieldAndReturn(player2, new KamiOfOldStone());
+
+        harness.activateAbility(player1, 0, null, kami.getId());
+        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        harness.setHand(player1, List.of(new RendSpirit()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(player1, 0, kami.getId());
+
+        harness.assertNotOnBattlefield(player2, "Kami of Old Stone");
+        harness.assertInGraveyard(player2, "Kami of Old Stone");
+        assertThat(gd.exiledCards).noneMatch(e -> e.card().getName().equals("Kami of Old Stone"));
+    }
+
+    @Test
+    @DisplayName("A Spirit destroyed in response is not exiled by the unresolved ability")
+    void targetDestroyedInResponseGoesToGraveyard() {
+        harness.addToBattlefield(player1, new NineRingedBo());
+        Permanent kami = harness.addToBattlefieldAndReturn(player2, new KamiOfOldStone());
+
+        harness.activateAbility(player1, 0, null, kami.getId());
+        harness.setHand(player1, List.of(new RendSpirit()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(player1, 0, kami.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Kami of Old Stone");
+        assertThat(gd.exiledCards).noneMatch(e -> e.card().getName().equals("Kami of Old Stone"));
+        assertThat(gd.stack).isEmpty();
     }
 }
