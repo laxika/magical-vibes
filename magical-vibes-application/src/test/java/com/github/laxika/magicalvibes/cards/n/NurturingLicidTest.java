@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.l.LowlandGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,10 +11,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NurturingLicid.class, LowlandGiant.class, Forest.class})
+@CardUsed({NurturingLicid.class, LowlandGiant.class, Forest.class, Disenchant.class})
 class NurturingLicidTest extends BaseCardTest {
 
     @Test
@@ -78,7 +81,7 @@ class NurturingLicidTest extends BaseCardTest {
     @Test
     @DisplayName("The regenerate ability survives becoming an Aura but the Licid ability does not")
     void keepsRegenerateAbilityLosesLicidAbility() {
-        Permanent licid = addReadyLicid(player1);
+        addReadyLicid(player1);
         Permanent host = addCreatureReady(player1, new LowlandGiant());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -151,6 +154,60 @@ class NurturingLicidTest extends BaseCardTest {
         assertThat(licid.getAttachedTo()).isNull();
         assertThat(licid.getCard().isAura()).isFalse();
         assertThat(gqs.isCreature(gd, licid)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Regeneration uses the destroyed Aura's last known enchanted creature")
+    void regeneratesHostAfterLicidIsDestroyed() {
+        Permanent licid = addReadyLicid(player1);
+        Permanent host = addCreatureReady(player1, new LowlandGiant());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, null, host.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, licid.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Nurturing Licid");
+        assertThat(host.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Ending the Aura effect before regeneration resolves leaves no enchanted creature")
+    void regenerationDoesNothingAfterDetaching() {
+        Permanent licid = addReadyLicid(player1);
+        Permanent host = addCreatureReady(player1, new LowlandGiant());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.activateAbility(player1, 0, null, host.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(host.getRegenerationShield()).isZero();
+        assertThat(licid.getRegenerationShield()).isZero();
+        assertThat(licid.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The Licid's controller can regenerate an opponent's enchanted creature")
+    void regeneratesOpponentsEnchantedCreature() {
+        addReadyLicid(player1);
+        Permanent host = addCreatureReady(player2, new LowlandGiant());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, null, host.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(host.getRegenerationShield()).isEqualTo(1);
     }
 
     private Permanent addReadyLicid(Player player) {
