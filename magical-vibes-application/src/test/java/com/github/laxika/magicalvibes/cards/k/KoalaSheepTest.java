@@ -23,10 +23,48 @@ class KoalaSheepTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Life is gained only when the enter trigger resolves")
+    void lifeGainWaitsForTriggerResolution() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new KoalaSheep()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Koala-Sheep");
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 23);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The second player's Koala-Sheep gains life for that player only")
+    void secondPlayerGainsLifeForTheirCreature() {
+        harness.forceActivePlayer(player2);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player2, List.of(new KoalaSheep()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player2, 0);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 23);
     }
 }
