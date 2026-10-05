@@ -70,6 +70,55 @@ class PathOfTheEnigmaTest extends BaseCardTest {
     }
 
     @Test
+    void canTargetItsControllerAndDrawsBeforeVoting() {
+        List<Card> cards = List.of(new Forest(), new Forest(), new Forest(), new Forest());
+        harness.setLibrary(player1, cards);
+        cast(player1.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(cards);
+        assertThat(gd.planechase.faceUp).containsExactly(startingPlane);
+
+        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
+
+        assertThat(gd.planechase.faceUp).containsExactly(startingPlane);
+    }
+
+    @Test
+    void chaosMajorityTriggersChaosWithoutPlaneswalking() {
+        Forest chaosDraw = new Forest();
+        harness.setLibrary(player1, List.of(chaosDraw));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        cast(player2.getId());
+
+        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.passBothPriorities();
+
+        assertThat(gd.planechase.faceUp).containsExactly(startingPlane);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chaosDraw);
+    }
+
+    @Test
+    void drawsAndCompletesVotingOutsidePlanechase() {
+        gd.planechase = null;
+        List<Card> cards = List.of(new Forest(), new Forest(), new Forest(), new Forest());
+        harness.setLibrary(player2, cards);
+        int targetHandBefore = gd.playerHands.get(player2.getId()).size();
+        cast(player2.getId());
+
+        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
+        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(targetHandBefore + 4).containsAll(cards);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Path of the Enigma");
+    }
+
+    @Test
     void cannotTargetAPermanent() {
         var creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new PathOfTheEnigma()));
