@@ -171,6 +171,76 @@ class IzzetGuildmageTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Declining new targets resolves both Pyromatics spells against the original target")
+    void decliningNewTargetsPreservesDamageAndOriginalSpell() {
+        Pyromatics pyromatics = new Pyromatics();
+        harness.setHand(player1, List.of(pyromatics));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        addGuildmage();
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.activateAbility(player1, 0, 0, null, pyromatics.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(pyromatics);
+    }
+
+    @Test
+    @DisplayName("An untargeted sorcery copy and its original each draw a card")
+    void untargetedSorceryCopyResolvesWithoutRetargeting() {
+        TrainOfThought original = new TrainOfThought();
+        Pyromatics firstDraw = new Pyromatics();
+        CerebralVortex secondDraw = new CerebralVortex();
+        harness.setHand(player1, List.of(original));
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 4);
+        addGuildmage();
+
+        harness.castSorcery(player1, 0);
+        harness.activateAbility(player1, 0, 1, null, original.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(firstDraw, secondDraw);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(original);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Guildmage can activate twice without tapping")
+    void summoningSickGuildmageCanCopyTheSameSpellTwice() {
+        TrainOfThought original = new TrainOfThought();
+        Pyromatics firstDraw = new Pyromatics();
+        Pyromatics secondDraw = new Pyromatics();
+        Pyromatics thirdDraw = new Pyromatics();
+        harness.setHand(player1, List.of(original));
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw, thirdDraw));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 7);
+        harness.addToBattlefield(player1, new IzzetGuildmage());
+
+        harness.castSorcery(player1, 0);
+        harness.activateAbility(player1, 0, 1, null, original.getId());
+        harness.activateAbility(player1, 0, 1, null, original.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactlyInAnyOrder(firstDraw, secondDraw, thirdDraw);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(original);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void addGuildmage() {
         addCreatureReady(player1, new IzzetGuildmage());
     }
