@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -28,8 +27,7 @@ class OthelmSigardianOutcastTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         int othelmIndex = gd.playerBattlefields.get(player1.getId()).indexOf(othelm);
@@ -74,5 +72,102 @@ class OthelmSigardianOutcastTest extends BaseCardTest {
                 player1, othelmIndex, 0, null, land.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature card");
+    }
+
+    @Test
+    @DisplayName("Graveyard target lists cannot bypass the battlefield-this-turn restriction")
+    void rejectsIneligibleCreatureThroughGraveyardTargetList() {
+        Permanent othelm = addCreatureReady(player1, new OthelmSigardianOutcast());
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        int othelmIndex = gd.playerBattlefields.get(player1.getId()).indexOf(othelm);
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, othelmIndex, 0, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(othelm.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A graveyard target list can return an eligible creature tapped")
+    void returnsEligibleCreatureThroughGraveyardTargetList() {
+        Permanent othelm = addCreatureReady(player1, new OthelmSigardianOutcast());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        int othelmIndex = gd.playerBattlefields.get(player1.getId()).indexOf(othelm);
+        harness.activateAbilityWithGraveyardTargets(player1, othelmIndex, 0, List.of(bears.getCard().getId()));
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getId().equals(bears.getCard().getId()))
+                .singleElement().satisfies(permanent -> assertThat(permanent.isTapped()).isTrue());
+        assertThat(othelm.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot target an opponent's creature even if it died this turn")
+    void rejectsCreatureInOpponentsGraveyard() {
+        Permanent othelm = addCreatureReady(player1, new OthelmSigardianOutcast());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        int othelmIndex = gd.playerBattlefields.get(player1.getId()).indexOf(othelm);
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, othelmIndex, 0, null, bears.getCard().getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("your graveyard");
+        assertThat(othelm.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability resolves after Othelm is destroyed in response")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent othelm = addCreatureReady(player1, new OthelmSigardianOutcast());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DoomBlade(), new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        int othelmIndex = gd.playerBattlefields.get(player1.getId()).indexOf(othelm);
+        harness.activateAbility(player1, othelmIndex, 0, null, bears.getCard().getId(), Zone.GRAVEYARD);
+        harness.castAndResolveInstant(player1, 0, othelm.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Othelm, Sigardian Outcast");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getId().equals(bears.getCard().getId()))
+                .singleElement().satisfies(permanent -> assertThat(permanent.isTapped()).isTrue());
+    }
+
+    @Test
+    @DisplayName("Cannot activate with less than two mana")
+    void requiresTwoMana() {
+        Permanent othelm = addCreatureReady(player1, new OthelmSigardianOutcast());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        int othelmIndex = gd.playerBattlefields.get(player1.getId()).indexOf(othelm);
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, othelmIndex, 0, null, bears.getCard().getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(othelm.isTapped()).isFalse();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
     }
 }
