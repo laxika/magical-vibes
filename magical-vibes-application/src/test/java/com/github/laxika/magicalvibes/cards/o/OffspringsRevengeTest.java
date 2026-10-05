@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.d.DemonOfDeathsGate;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.n.NightsquadCommando;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.SpriteDragon;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -23,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({OffspringsRevenge.class, DemonOfDeathsGate.class, GrizzlyBears.class,
-        HillGiant.class, Plains.class, SerraAngel.class})
+        HillGiant.class, NightsquadCommando.class, Plains.class, SerraAngel.class, SpriteDragon.class})
 class OffspringsRevengeTest extends BaseCardTest {
 
     @Test
@@ -56,17 +58,14 @@ class OffspringsRevengeTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(red.getId()));
         harness.passBothPriorities();
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .findFirst()
-                .orElseThrow();
+        Permanent token = findPermanent(player1, "Hill Giant");
         assertThat(token.getCard().getPower()).isEqualTo(1);
         assertThat(token.getCard().getToughness()).isEqualTo(1);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.RED);
         assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(red);
 
-        advanceToPlayer1NextTurn();
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isFalse();
     }
@@ -105,11 +104,118 @@ class OffspringsRevengeTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private void advanceToPlayer1NextTurn() {
-        declareAttackers(List.of());
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.UPKEEP);
+    @Test
+    @DisplayName("Copies all colors and preserves printed haste after the temporary grant expires")
+    void copiesMulticoloredCreatureWithPrintedHaste() {
+        SpriteDragon dragon = new SpriteDragon();
+        harness.setGraveyard(player1, List.of(dragon));
+        harness.addToBattlefield(player1, new OffspringsRevenge());
+
+        advanceToCombat(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(dragon.getId()));
+        harness.passBothPriorities();
+
+        Permanent token = findPermanent(player1, "Sprite Dragon");
+        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(gqs.getEffectiveColors(gd, token)).containsExactlyInAnyOrder(CardColor.RED, CardColor.BLUE);
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(dragon);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
+
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A copied creature's enters ability triggers in a later combat after attacking")
+    void copiedEntersAbilityTriggers() {
+        NightsquadCommando commando = new NightsquadCommando();
+        harness.setGraveyard(player1, List.of(commando));
+        harness.addToBattlefield(player1, new OffspringsRevenge());
+        gd.playersDeclaredAttackersThisTurn.add(player1.getId());
+
+        advanceToCombat(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(commando.getId()));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        Permanent copy = findPermanent(player1, "Nightsquad Commando");
+        assertThat(copy.getCard().isToken()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(1);
+        assertThat(countPermanents(player1, "Human Soldier")).isEqualTo(1);
+        Permanent soldier = findPermanent(player1, "Human Soldier");
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Copies printed abilities while replacing power and toughness")
+    void copiesAbilitiesOfBlackCreature() {
+        DemonOfDeathsGate demon = new DemonOfDeathsGate();
+        harness.setGraveyard(player1, List.of(demon));
+        harness.addToBattlefield(player1, new OffspringsRevenge());
+
+        advanceToCombat(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(demon.getId()));
+        harness.passBothPriorities();
+
+        Permanent token = findPermanent(player1, "Demon of Death's Gate");
+        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot target an opponent's matching creature card")
+    void excludesOpponentsGraveyard() {
+        HillGiant own = new HillGiant();
+        HillGiant opposing = new HillGiant();
+        harness.setGraveyard(player1, List.of(own));
+        harness.setGraveyard(player2, List.of(opposing));
+        harness.addToBattlefield(player1, new OffspringsRevenge());
+
+        advanceToCombat(player1);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(own.getId());
+    }
+
+    @Test
+    @DisplayName("Creates no token when the selected card leaves the graveyard before resolution")
+    void missingTargetCreatesNoToken() {
+        HillGiant red = new HillGiant();
+        harness.setGraveyard(player1, List.of(red));
+        harness.addToBattlefield(player1, new OffspringsRevenge());
+
+        advanceToCombat(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(red.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(red);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not request a target or create a token when no legal target exists")
+    void noLegalTarget() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Plains()));
+        harness.setGraveyard(player2, List.of(new HillGiant()));
+        harness.addToBattlefield(player1, new OffspringsRevenge());
+
+        advanceToCombat(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
     }
 }
