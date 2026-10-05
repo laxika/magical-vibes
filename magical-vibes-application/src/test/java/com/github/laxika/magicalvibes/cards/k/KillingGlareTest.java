@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.m.MillennialGargoyle;
+import com.github.laxika.magicalvibes.cards.p.PropheticPrism;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KillingGlare.class, MillennialGargoyle.class, PropheticPrism.class})
 class KillingGlareTest extends BaseCardTest {
 
     @Test
@@ -23,8 +26,8 @@ class KillingGlareTest extends BaseCardTest {
         castKillingGlare(2, target);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Millennial Gargoyle");
+        harness.assertInGraveyard(player2, "Millennial Gargoyle");
     }
 
     @Test
@@ -45,9 +48,7 @@ class KillingGlareTest extends BaseCardTest {
         target.setPowerModifier(target.getPowerModifier() + 1);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .extracting(Permanent::getId)
-                .contains(target.getId());
+        harness.assertOnBattlefield(player2, "Millennial Gargoyle");
     }
 
     @Test
@@ -58,7 +59,100 @@ class KillingGlareTest extends BaseCardTest {
         castKillingGlare(0, target);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Millennial Gargoyle");
+    }
+
+    @Test
+    @DisplayName("Destroys a creature whose power is strictly less than X")
+    void destroysCreatureBelowPowerLimit() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MillennialGargoyle());
+
+        castKillingGlare(3, target);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Millennial Gargoyle");
+    }
+
+    @Test
+    @DisplayName("Can destroy a creature controlled by the caster")
+    void destroysOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new MillennialGargoyle());
+
+        castKillingGlare(2, target);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Millennial Gargoyle");
+        harness.assertInGraveyard(player1, "Millennial Gargoyle");
+    }
+
+    @Test
+    @DisplayName("X=0 cannot target a creature with positive power")
+    void zeroXRejectsPositivePower() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MillennialGargoyle());
+
+        assertThatThrownBy(() -> castKillingGlare(0, target))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("X=0 can destroy a creature with negative power")
+    void zeroXDestroysNegativePowerCreature() {
+        Permanent target = addCreature(player2, -1, 2);
+
+        castKillingGlare(0, target);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Millennial Gargoyle");
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature artifact")
+    void rejectsNoncreaturePermanent() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PropheticPrism());
+
+        assertThatThrownBy(() -> castKillingGlare(5, target))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Target remains legal when its power decreases before resolution")
+    void destroysTargetAfterPowerDecreases() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MillennialGargoyle());
+
+        castKillingGlare(2, target);
+        target.setPowerModifier(-1);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Millennial Gargoyle");
+    }
+
+    @Test
+    @DisplayName("Destruction allows regeneration")
+    void regenerationSavesTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MillennialGargoyle());
+        target.setRegenerationShield(1);
+
+        castKillingGlare(2, target);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Millennial Gargoyle");
+        harness.assertNotInGraveyard(player2, "Millennial Gargoyle");
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Indestructible prevents destruction of an otherwise legal target")
+    void indestructibleSavesTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MillennialGargoyle());
+        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+
+        castKillingGlare(2, target);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Millennial Gargoyle");
+        harness.assertNotInGraveyard(player2, "Millennial Gargoyle");
+        harness.assertInGraveyard(player1, "Killing Glare");
     }
 
     private void castKillingGlare(int xValue, Permanent target) {
@@ -68,11 +162,9 @@ class KillingGlareTest extends BaseCardTest {
     }
 
     private Permanent addCreature(com.github.laxika.magicalvibes.model.Player player, int power, int toughness) {
-        Card card = new GrizzlyBears();
-        card.setPower(power);
-        card.setToughness(toughness);
-        Permanent permanent = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new MillennialGargoyle());
+        permanent.setPowerModifier(power - 2);
+        permanent.setToughnessModifier(toughness - 2);
         return permanent;
     }
 }
