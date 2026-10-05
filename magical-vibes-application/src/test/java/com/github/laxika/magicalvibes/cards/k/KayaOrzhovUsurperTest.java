@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KayaOrzhovUsurper.class, Forest.class, GrizzlyBears.class, LlanowarElves.class, Shock.class})
 class KayaOrzhovUsurperTest extends BaseCardTest {
 
     @Test
@@ -95,11 +97,93 @@ class KayaOrzhovUsurperTest extends BaseCardTest {
         assertThat(kaya.getCounterCount(CounterType.LOYALTY)).isZero();
     }
 
+    @Test
+    void plusOneCanChooseZeroTargetsWithEmptyGraveyards() {
+        Permanent kaya = addReadyKaya(3);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(kaya.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void plusOneGainsOnlyTwoLifeForTwoCreaturesFromOwnGraveyard() {
+        addReadyKaya(3);
+        Card first = new GrizzlyBears();
+        Card second = new LlanowarElves();
+        harness.setGraveyard(player1, List.of(first, second));
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0,
+                List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(22);
+    }
+
+    @Test
+    void plusOneRejectsTargetsFromDifferentGraveyards() {
+        addReadyKaya(3);
+        Card first = new GrizzlyBears();
+        Card second = new Shock();
+        harness.setGraveyard(player1, List.of(first));
+        harness.setGraveyard(player2, List.of(second));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, 0, 0,
+                List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void plusOneDoesNotGainLifeForCreatureThatLeavesBeforeResolution() {
+        addReadyKaya(3);
+        Card creature = new GrizzlyBears();
+        Card noncreature = new Shock();
+        harness.setGraveyard(player2, List.of(creature, noncreature));
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0,
+                List.of(creature.getId(), noncreature.getId()));
+        harness.setGraveyard(player2, List.of(noncreature));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(noncreature);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void minusFiveCanTargetControllerAndUsesOnlyTheirExiledCards() {
+        addReadyKaya(5);
+        harness.setExile(player1, List.of(new Forest(), new Shock()));
+        harness.setExile(player2, List.of(new GrizzlyBears()));
+
+        harness.activateAbility(player1, 0, 2, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void minusFiveUsesExileCountAtResolution() {
+        addReadyKaya(5);
+        harness.setExile(player2, List.of(new Forest()));
+        harness.setExile(player1, List.of(new GrizzlyBears(), new LlanowarElves()));
+        harness.activateAbility(player1, 0, 2, null, player2.getId());
+        harness.setExile(player2, List.of(new Forest(), new Shock(), new GrizzlyBears()));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(23);
+    }
+
     private Permanent addReadyKaya(int loyalty) {
-        Permanent perm = new Permanent(new KayaOrzhovUsurper());
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new KayaOrzhovUsurper());
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
