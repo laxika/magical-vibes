@@ -61,10 +61,81 @@ class IsolationZoneTest extends BaseCardTest {
         UUID isolationZoneId = harness.getPermanentId(player1, "Isolation Zone");
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, isolationZoneId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, isolationZoneId);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Target is not exiled if Isolation Zone leaves before its ETB resolves")
+    void sourceLeavesBeforeTriggerResolves() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.setHand(player1, List.of(new IsolationZone()));
+        addIsolationZoneMana();
+        harness.castEnchantment(player1, 0, bearsId);
+        harness.passBothPriorities();
+
+        UUID isolationZoneId = harness.getPermanentId(player1, "Isolation Zone");
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, isolationZoneId);
+        harness.assertInGraveyard(player1, "Isolation Zone");
+        harness.passBothPriorities();
+
+        assertThat(harness.getPermanentId(player2, "Grizzly Bears")).isEqualTo(bearsId);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A stolen creature returns to its owner rather than its previous controller")
+    void stolenCreatureReturnsToOwner() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        gd.stolenCreatures.put(bearsId, player1.getId());
+
+        castAndResolveIsolationZone(bearsId);
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        UUID isolationZoneId = harness.getPermanentId(player1, "Isolation Zone");
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, isolationZoneId);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB does not exile an enchantment destroyed in response")
+    void targetLeavesBeforeTriggerResolves() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player2, new GloriousAnthem());
+        UUID anthemId = harness.getPermanentId(player2, "Glorious Anthem");
+        harness.setHand(player1, List.of(new IsolationZone()));
+        addIsolationZoneMana();
+        harness.castEnchantment(player1, 0, anthemId);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, anthemId);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Isolation Zone");
+        harness.assertInGraveyard(player2, "Glorious Anthem");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
