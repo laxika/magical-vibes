@@ -56,8 +56,7 @@ class IntimidationTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Intimidation());
         Permanent blocker = addCreatureReady(player2, new FreshVolunteers());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
@@ -72,8 +71,7 @@ class IntimidationTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Intimidation());
         Permanent blocker = addCreatureReady(player2, new CateranBrute());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
@@ -88,12 +86,53 @@ class IntimidationTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Intimidation());
         Permanent blocker = addCreatureReady(player2, new HengeGuardian());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Intimidation grants fear only after the enchantment resolves")
+    void grantsFearAfterResolving() {
+        Permanent volunteers = addCreatureReady(player1, new FreshVolunteers());
+
+        harness.castFromHand(player1, new Intimidation(), "{2}{B}{B}{B}");
+
+        assertThat(gqs.hasKeyword(gd, volunteers, Keyword.FEAR)).isFalse();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Intimidation");
+        assertThat(gqs.hasKeyword(gd, volunteers, Keyword.FEAR)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creatures entering after Intimidation also have fear")
+    void laterCreaturesHaveFear() {
+        harness.addToBattlefield(player1, new Intimidation());
+
+        Permanent volunteers = harness.enterBattlefieldAndReturn(player1, new FreshVolunteers());
+        Permanent opponentVolunteers = harness.enterBattlefieldAndReturn(player2, new FreshVolunteers());
+
+        assertThat(gqs.hasKeyword(gd, volunteers, Keyword.FEAR)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentVolunteers, Keyword.FEAR)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Fear remains until the last Intimidation leaves the battlefield")
+    void overlappingCopiesContinueGrantingFear() {
+        Permanent volunteers = addCreatureReady(player1, new FreshVolunteers());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Intimidation());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new Intimidation());
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+
+        assertThat(gqs.hasKeyword(gd, volunteers, Keyword.FEAR)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(second);
+
+        assertThat(gqs.hasKeyword(gd, volunteers, Keyword.FEAR)).isFalse();
     }
 }
