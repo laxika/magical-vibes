@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.c.CrystalBarricade;
 import com.github.laxika.magicalvibes.cards.g.GodsEyeGateToTheReikai;
+import com.github.laxika.magicalvibes.cards.s.Shuko;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OrnateKanzashi.class, GodsEyeGateToTheReikai.class})
+@CardUsed({OrnateKanzashi.class, GodsEyeGateToTheReikai.class, CrystalBarricade.class, Shuko.class})
 class OrnateKanzashiTest extends BaseCardTest {
 
     @Test
@@ -105,5 +107,108 @@ class OrnateKanzashiTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("hexproof");
+    }
+
+    @Test
+    void emptyLibraryDoesNotGrantPermissionOrCauseLoss() {
+        Permanent kanzashi = harness.addToBattlefieldAndReturn(player1, new OrnateKanzashi());
+        harness.setLibrary(player2, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(kanzashi.isTapped()).isTrue();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    void cannotTargetItsController() {
+        Permanent kanzashi = harness.addToBattlefieldAndReturn(player1, new OrnateKanzashi());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(kanzashi.isTapped()).isFalse();
+    }
+
+    @Test
+    void exiledSpellRequiresItsManaCostAndCanBeCastAfterSourceLeaves() {
+        harness.addToBattlefield(player1, new OrnateKanzashi());
+        Card top = new Shuko();
+        harness.setLibrary(player2, List.of(top));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, top.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("mana");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(top);
+        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
+
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromExile(player1, top.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Shuko");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(top);
+    }
+
+    @Test
+    void permissionDoesNotOverrideSpellTiming() {
+        harness.addToBattlefield(player1, new OrnateKanzashi());
+        Card top = new Shuko();
+        harness.setLibrary(player2, List.of(top));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, top.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(top);
+    }
+
+    @Test
+    void permissionDoesNotGrantAnAdditionalLandPlay() {
+        harness.addToBattlefield(player1, new OrnateKanzashi());
+        Card top = new GodsEyeGateToTheReikai();
+        harness.setLibrary(player2, List.of(top));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+        gd.landsPlayedThisTurn.put(player1.getId(), 1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, top.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(top);
+    }
+
+    @Test
+    void gainingHexproofBeforeResolutionPreventsExile() {
+        harness.addToBattlefield(player1, new OrnateKanzashi());
+        Card top = new GodsEyeGateToTheReikai();
+        harness.setLibrary(player2, List.of(top));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.addToBattlefield(player2, new CrystalBarricade());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(top);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.exilePlayPermissions).isEmpty();
     }
 }
