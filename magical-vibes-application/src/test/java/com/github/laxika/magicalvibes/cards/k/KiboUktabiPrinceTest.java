@@ -45,6 +45,51 @@ class KiboUktabiPrinceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrificing your own Banana gains life and green mana without triggering Kibo")
+    void ownBananaDoesNotGiveCounters() {
+        Permanent kibo = addCreatureReady(player1, new KiboUktabiPrince());
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        Permanent banana = findPermanent(player1, "Banana");
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(banana), null, null);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        harness.assertLife(player1, startingLife + 2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(banana);
+        assertThat(kibo.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(countPermanents(player2, "Banana")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's Banana triggers counters only for your creatures")
+    void opponentBananaTriggersCounters() {
+        Permanent kibo = addCreatureReady(player1, new KiboUktabiPrince());
+        Permanent opposingKibo = addCreatureReady(player2, new KiboUktabiPrince());
+        int startingLife = gd.playerLifeTotals.get(player2.getId());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        Permanent banana = findPermanent(player2, "Banana");
+
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(banana), null, null);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player2, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        harness.assertLife(player2, startingLife + 2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(banana);
+        harness.passBothPriorities();
+
+        assertThat(kibo.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opposingKibo.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(countPermanents(player1, "Banana")).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Counters controlled Apes and Monkeys when an opponent artifact is sacrificed")
     void countersApesAndMonkeysFromOpponentArtifact() {
         Permanent kibo = addCreatureReady(player1, new KiboUktabiPrince());
