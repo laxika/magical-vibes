@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CoalitionWarbrute;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,16 +18,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LoveSongOfNightAndDay.class, GrizzlyBears.class})
+@CardUsed({LoveSongOfNightAndDay.class, CoalitionWarbrute.class})
 class LoveSongOfNightAndDayTest extends BaseCardTest {
 
     @Test
     @DisplayName("Chapter I makes you and a target opponent draw two cards")
     void chapterIDrawsTwoCardsForBothPlayers() {
-        Card ownFirst = vanillaCard("Own first");
-        Card ownSecond = vanillaCard("Own second");
-        Card opponentFirst = vanillaCard("Opponent first");
-        Card opponentSecond = vanillaCard("Opponent second");
+        Card ownFirst = new CoalitionWarbrute();
+        Card ownSecond = new CoalitionWarbrute();
+        Card opponentFirst = new CoalitionWarbrute();
+        Card opponentSecond = new CoalitionWarbrute();
         harness.setLibrary(player1, List.of(ownFirst, ownSecond));
         harness.setLibrary(player2, List.of(opponentFirst, opponentSecond));
         harness.setHand(player1, List.of());
@@ -60,6 +59,8 @@ class LoveSongOfNightAndDayTest extends BaseCardTest {
                 .findFirst()
                 .orElse(null);
         assertThat(bird).isNotNull();
+        assertThat(bird.getEffectivePower()).isEqualTo(1);
+        assertThat(bird.getEffectiveToughness()).isEqualTo(1);
         assertThat(bird.getCard().getColor()).isEqualTo(CardColor.WHITE);
         assertThat(bird.getCard().getSubtypes()).contains(CardSubtype.BIRD);
         assertThat(bird.getCard().getKeywords()).contains(Keyword.FLYING);
@@ -68,8 +69,8 @@ class LoveSongOfNightAndDayTest extends BaseCardTest {
     @Test
     @DisplayName("Chapter III puts counters on up to two creatures")
     void chapterIIICountersTwoTargetCreatures() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new CoalitionWarbrute());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new CoalitionWarbrute());
         addSagaWithLore(2);
 
         triggerChapter();
@@ -85,6 +86,83 @@ class LoveSongOfNightAndDayTest extends BaseCardTest {
         assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Read ahead can start at chapter II without either player drawing")
+    void readAheadStartsAtChapterTwo() {
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new CoalitionWarbrute(), new CoalitionWarbrute()));
+        harness.setLibrary(player2, List.of(new CoalitionWarbrute(), new CoalitionWarbrute()));
+        harness.castFromHand(player1, new LoveSongOfNightAndDay(), "{2}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "2");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Bird");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof LoveSongOfNightAndDay)
+                .findFirst().orElseThrow();
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Chapter III may choose no creatures and the Saga is sacrificed")
+    void chapterIIICanChooseZeroTargets() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new CoalitionWarbrute());
+        addSagaWithLore(2);
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Love Song of Night and Day");
+        harness.assertNotOnBattlefield(player1, "Love Song of Night and Day");
+    }
+
+    @Test
+    @DisplayName("Chapter III may choose just one creature even when two are available")
+    void chapterIIICanChooseOneTarget() {
+        Permanent chosen = harness.addToBattlefieldAndReturn(player1, new CoalitionWarbrute());
+        Permanent unchosen = harness.addToBattlefieldAndReturn(player2, new CoalitionWarbrute());
+        Permanent saga = addSagaWithLore(2);
+
+        triggerChapter();
+        PendingInteraction.PermanentChoice firstChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(firstChoice.validIds()).doesNotContain(saga.getId());
+        harness.handlePermanentChosen(player1, chosen.getId());
+        PendingInteraction.PermanentChoice secondChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(secondChoice.validIds()).doesNotContain(chosen.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(chosen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(unchosen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Love Song of Night and Day");
+    }
+
+    @Test
+    @DisplayName("Chapter III still counters the remaining target if another leaves the battlefield")
+    void chapterIIIPartiallyResolves() {
+        Permanent removed = harness.addToBattlefieldAndReturn(player1, new CoalitionWarbrute());
+        Permanent remaining = harness.addToBattlefieldAndReturn(player2, new CoalitionWarbrute());
+        addSagaWithLore(2);
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, removed.getId());
+        harness.handlePermanentChosen(player1, remaining.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(removed);
+        harness.passBothPriorities();
+
+        assertThat(remaining.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(removed.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private Permanent addSagaWithLore(int loreCounters) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new LoveSongOfNightAndDay());
         saga.setCounterCount(CounterType.LORE, loreCounters);
@@ -98,10 +176,4 @@ class LoveSongOfNightAndDayTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private Card vanillaCard(String name) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.ARTIFACT);
-        return card;
-    }
 }
