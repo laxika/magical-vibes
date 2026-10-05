@@ -25,8 +25,7 @@ class MockingbirdBobbiMorseTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID mockingbirdId = mockingbird.getId();
-        harness.castInstant(player1, 0, mockingbirdId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, mockingbirdId);
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(mockingbird);
@@ -42,11 +41,32 @@ class MockingbirdBobbiMorseTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID mockingbirdId = harness.getPermanentId(player2, "Mockingbird, Bobbi Morse");
-        harness.castInstant(player1, 0, mockingbirdId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, mockingbirdId);
 
         harness.assertInGraveyard(player2, "Mockingbird, Bobbi Morse");
         resolveAllTriggers();
         harness.assertInGraveyard(player2, "Mockingbird, Bobbi Morse");
+    }
+
+    @Test
+    @DisplayName("Damage counters wait for resolution and cannot save Mockingbird from a second Shock")
+    void lethalDamageInResponseToCounterTrigger() {
+        Permanent mockingbird = harness.addToBattlefieldAndReturn(player2, new MockingbirdBobbiMorse());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, mockingbird.getId());
+
+        assertThat(mockingbird.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(mockingbird);
+
+        harness.castAndResolveInstant(player1, 0, mockingbird.getId());
+        harness.assertInGraveyard(player2, "Mockingbird, Bobbi Morse");
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Mockingbird, Bobbi Morse");
+        assertThat(mockingbird.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 }
