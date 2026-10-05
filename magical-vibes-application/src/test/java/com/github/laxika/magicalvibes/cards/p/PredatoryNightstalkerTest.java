@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PredatoryNightstalker.class, BearCub.class, GoldenBear.class})
+@CardUsed({PredatoryNightstalker.class, BearCub.class, GoldenBear.class, Forest.class})
 class PredatoryNightstalkerTest extends BaseCardTest {
 
     private void castNightstalker() {
@@ -105,7 +105,6 @@ class PredatoryNightstalkerTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Forest.class)
     @DisplayName("Only creatures are offered for the sacrifice")
     void sacrificeChoiceExcludesNoncreatures() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new BearCub());
@@ -144,5 +143,28 @@ class PredatoryNightstalkerTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Bear Cub");
         harness.assertInGraveyard(player2, "Bear Cub");
+    }
+
+    @Test
+    @DisplayName("The trigger can make the opponent sacrifice after its source dies")
+    void triggerResolvesAfterSourceDiesWithNoControllerCreatures() {
+        harness.addToBattlefield(player2, new BearCub());
+        castNightstalker();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        Permanent nightstalker = gd.playerBattlefields.get(player1.getId()).getFirst();
+        nightstalker.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player1, "Predatory Nightstalker");
+        harness.assertInGraveyard(player1, "Predatory Nightstalker");
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player2, "Bear Cub");
+        harness.assertInGraveyard(player2, "Bear Cub");
+        assertThat(gd.stack).isEmpty();
     }
 }
