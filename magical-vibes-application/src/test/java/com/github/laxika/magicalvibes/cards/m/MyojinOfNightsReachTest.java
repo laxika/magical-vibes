@@ -75,6 +75,61 @@ class MyojinOfNightsReachTest extends BaseCardTest {
                 .hasMessageContaining("Not enough counters");
     }
 
+    @Test
+    @DisplayName("Removing the counter is an immediate cost, before opponents discard")
+    void counterIsRemovedBeforeAbilityResolves() {
+        Permanent myojin = addReadyMyojin(player1);
+        harness.setHand(player2, List.of(new LanternKami()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(myojin.getCounterCount(CounterType.DIVINITY)).isZero();
+        assertThat(gqs.hasKeyword(gd, myojin, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Lantern Kami");
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Myojin can activate its ability")
+    void tappedSummoningSickMyojinCanActivate() {
+        Permanent myojin = addReadyMyojin(player1);
+        myojin.setSummoningSick(true);
+        myojin.setTapped(true);
+        harness.setHand(player2, List.of(new DevotedRetainer()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(myojin.getCounterCount(CounterType.DIVINITY)).isZero();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Devoted Retainer");
+    }
+
+    @Test
+    @DisplayName("Removing one of two divinity counters preserves indestructible even with an empty opponent hand")
+    void remainingDivinityCounterPreservesIndestructible() {
+        Permanent myojin = addReadyMyojin(player1);
+        myojin.setCounterCount(CounterType.DIVINITY, 2);
+        harness.setHand(player2, List.of());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(myojin.getCounterCount(CounterType.DIVINITY)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, myojin, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
     private Permanent addReadyMyojin(Player player) {
         Permanent myojin = addCreatureReady(player, new MyojinOfNightsReach());
         myojin.setCounterCount(CounterType.DIVINITY, 1);
