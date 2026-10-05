@@ -18,6 +18,66 @@ import static org.assertj.core.api.Assertions.assertThat;
 class KnowledgeVaultTest extends BaseCardTest {
 
     @Test
+    @DisplayName("An empty library can be activated without exiling a card")
+    void emptyLibraryExilesNothing() {
+        Permanent vault = harness.addToBattlefieldAndReturn(player1, new KnowledgeVault());
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(vault.isTapped()).isTrue();
+        assertThat(gd.getCardsExiledByPermanent(vault.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Knowledge Vault");
+    }
+
+    @Test
+    @DisplayName("A second sacrifice activation does not discard the cards returned by the first")
+    void repeatedSacrificeActivationsDiscardOnlyOnce() {
+        harness.addToBattlefield(player1, new KnowledgeVault());
+        Card exiledCard = new WallOfDust();
+        Card discardedCard = new WallOfDust();
+        harness.setLibrary(player1, List.of(exiledCard));
+        harness.setHand(player1, List.of(discardedCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(exiledCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discardedCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(exiledCard);
+    }
+
+    @Test
+    @DisplayName("Sacrificing one Vault leaves cards exiled with another Vault untouched")
+    void separateVaultsKeepTheirExiledCardsSeparate() {
+        Permanent firstVault = harness.addToBattlefieldAndReturn(player1, new KnowledgeVault());
+        Permanent secondVault = harness.addToBattlefieldAndReturn(player1, new KnowledgeVault());
+        Card firstCard = new WallOfDust();
+        Card secondCard = new WallOfDust();
+        harness.setLibrary(player1, List.of(firstCard, secondCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+        harness.activateAbility(player1, 1, 0, null, null);
+        resolveAllTriggers();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstCard);
+        assertThat(gd.findExiledCard(secondCard.getId())).satisfies(exiled ->
+                assertThat(exiled.sourcePermanentId()).isEqualTo(secondVault.getId()));
+        assertThat(gd.getCardsExiledByPermanent(firstVault.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(firstCard, secondCard);
+    }
+
+    @Test
     @DisplayName("Exiles the top card of its controller's library face down and tracks it")
     void exilesTopCardFaceDownWithSource() {
         Permanent vault = harness.addToBattlefieldAndReturn(player1, new KnowledgeVault());
