@@ -64,6 +64,47 @@ class PlagueSliverTest extends BaseCardTest {
         harness.assertLife(player1, 18);
     }
 
+    @Test
+    @DisplayName("Multiple Plague Slivers grant separate upkeep abilities to every Sliver")
+    void multiplePlagueSliversStackTheirGrantedAbilities() {
+        addCreatureReady(player1, new PlagueSliver());
+        addCreatureReady(player2, new PlagueSliver());
+        addCreatureReady(player1, new FungusSliver());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).hasSize(4);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Each Sliver is the source of its own upkeep damage")
+    void damageIsAttributedToEachSliver() {
+        var plagueSliver = addCreatureReady(player1, new PlagueSliver());
+        var fungusSliver = addCreatureReady(player1, new FungusSliver());
+
+        resolveUpkeep(player1);
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.damageDealtThisTurnBySource.get(plagueSliver.getId())).isEqualTo(1);
+        assertThat(gd.damageDealtThisTurnBySource.get(fungusSliver.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A Sliver entering after upkeep begins does not trigger retroactively")
+    void sliverEnteringAfterUpkeepBeginsDoesNotTrigger() {
+        addCreatureReady(player1, new PlagueSliver());
+
+        advanceToUpkeep(player1);
+        addCreatureReady(player1, new FungusSliver());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
+    }
+
     private void resolveUpkeep(Player activePlayer) {
         advanceToUpkeep(activePlayer);
         resolveAllTriggers();
