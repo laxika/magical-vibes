@@ -74,6 +74,21 @@ class NaturesCloakTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("All eligible creatures present at resolution gain forestwalk")
+    void includesCreaturesEnteringBeforeResolution() {
+        Permanent firstBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.castFromHand(player1, new NaturesCloak(), "{2}{G}");
+        Permanent secondBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, firstBears, Keyword.FORESTWALK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, secondBears, Keyword.FORESTWALK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.FORESTWALK)).isFalse();
+    }
+
+    @Test
     @DisplayName("Granted forestwalk prevents blocking while the defender controls a Forest")
     void forestwalkPreventsBlockingWithForest() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
