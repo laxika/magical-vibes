@@ -68,11 +68,82 @@ class LilianasTriumphTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Opponent chooses the sacrificed creature before choosing a discard")
+    void opponentChoosesSacrificeThenDiscard() {
+        Permanent liliana = harness.addToBattlefieldAndReturn(player1, new LilianaWakerOfTheDead());
+        liliana.setCounterCount(CounterType.LOYALTY, 4);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GiantSpider());
+        Permanent sacrificed = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        GiantSpider kept = new GiantSpider();
+        GrizzlyBears discarded = new GrizzlyBears();
+        harness.setHand(player2, List.of(kept, discarded));
+
+        castTriumph();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(kept, discarded);
+        harness.handleMultiplePermanentsChosen(player2, List.of(sacrificed.getId()));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Giant Spider");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(kept);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(discarded);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Opponent still discards with no creature to sacrifice")
+    void discardsWithoutCreature() {
+        Permanent liliana = harness.addToBattlefieldAndReturn(player1, new LilianaWakerOfTheDead());
+        liliana.setCounterCount(CounterType.LOYALTY, 4);
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+
+        castTriumph();
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty hand does not prevent sacrificing a creature")
+    void sacrificesWithEmptyHand() {
+        Permanent liliana = harness.addToBattlefieldAndReturn(player1, new LilianaWakerOfTheDead());
+        liliana.setCounterCount(CounterType.LOYALTY, 4);
+        harness.addToBattlefield(player2, new GiantSpider());
+        harness.setHand(player2, List.of());
+
+        castTriumph();
+
+        harness.assertInGraveyard(player2, "Giant Spider");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Without Liliana, an opponent with no creatures keeps their hand")
+    void noCreaturesAndNoLiliana() {
+        GrizzlyBears kept = new GrizzlyBears();
+        harness.setHand(player2, List.of(kept));
+
+        castTriumph();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(kept);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castTriumph() {
         harness.setHand(player1, List.of(new LilianasTriumph()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
     }
 }
