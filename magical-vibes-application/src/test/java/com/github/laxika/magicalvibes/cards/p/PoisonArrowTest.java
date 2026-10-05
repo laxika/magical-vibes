@@ -24,8 +24,7 @@ class PoisonArrowTest extends BaseCardTest {
         preparePoisonArrow();
 
         UUID targetId = harness.getPermanentId(player2, "Wu Infantry");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Wu Infantry");
         harness.assertInGraveyard(player2, "Wu Infantry");
@@ -67,12 +66,41 @@ class PoisonArrowTest extends BaseCardTest {
         target.setRegenerationShield(1);
         preparePoisonArrow();
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         harness.assertOnBattlefield(player2, "Wu Infantry");
         harness.assertNotInGraveyard(player2, "Wu Infantry");
         harness.assertLife(player1, 23);
+    }
+
+    @Test
+    @DisplayName("Does not gain life when the only target leaves before resolution")
+    void doesNotGainLifeWhenTargetLeavesBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WuInfantry());
+        preparePoisonArrow();
+
+        harness.castSorcery(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.setGraveyard(player2, List.of(target.getCard()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Poison Arrow");
+    }
+
+    @Test
+    @DisplayName("Can destroy your own nonblack creature and still gain life")
+    void destroysOwnCreatureAndGainsLife() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new WuInfantry());
+        preparePoisonArrow();
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Wu Infantry");
+        harness.assertInGraveyard(player1, "Wu Infantry");
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 20);
     }
 
     private void preparePoisonArrow() {
