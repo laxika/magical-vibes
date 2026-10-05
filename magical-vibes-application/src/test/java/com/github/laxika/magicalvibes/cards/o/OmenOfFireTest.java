@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.c.ConsecrateLand;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SavannahLions;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -19,13 +19,11 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({OmenOfFire.class, Island.class, Mountain.class, Plains.class, GrizzlyBears.class,
-        SavannahLions.class})
+        SavannahLions.class, ConsecrateLand.class})
 class OmenOfFireTest extends BaseCardTest {
 
     private void cast() {
-        harness.setHand(player1, List.of(new OmenOfFire()));
-        harness.addMana(player1, ManaColor.RED, 5);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new OmenOfFire(), "{3}{R}{R}");
         harness.passBothPriorities();
     }
 
@@ -106,6 +104,71 @@ class OmenOfFireTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Savannah Lions");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A player may sacrifice their white creature and keep their Plains")
+    void canChooseWhitePermanentInsteadOfPlains() {
+        Permanent lions = harness.addToBattlefieldAndReturn(player2, new SavannahLions());
+        harness.addToBattlefield(player2, new Plains());
+
+        cast();
+        harness.handleMultiplePermanentsChosen(player2, List.of(lions.getId()));
+
+        harness.assertNotOnBattlefield(player2, "Savannah Lions");
+        harness.assertInGraveyard(player2, "Savannah Lions");
+        harness.assertOnBattlefield(player2, "Plains");
+    }
+
+    @Test
+    @DisplayName("The active player chooses first even when the other player casts Omen of Fire")
+    void activePlayerChoosesBeforeNonactiveCaster() {
+        harness.forceActivePlayer(player2);
+        Permanent firstLions = harness.addToBattlefieldAndReturn(player1, new SavannahLions());
+        harness.addToBattlefield(player1, new Plains());
+        Permanent secondLions = harness.addToBattlefieldAndReturn(player2, new SavannahLions());
+        harness.addToBattlefield(player2, new Plains());
+
+        cast();
+
+        PendingInteraction.MultiPermanentChoice first =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(first.playerId()).isEqualTo(player2.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(secondLions.getId()));
+        harness.assertOnBattlefield(player2, "Savannah Lions");
+
+        PendingInteraction.MultiPermanentChoice second =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(second.playerId()).isEqualTo(player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstLions.getId()));
+
+        harness.assertInGraveyard(player1, "Savannah Lions");
+        harness.assertInGraveyard(player2, "Savannah Lions");
+        harness.assertOnBattlefield(player1, "Plains");
+        harness.assertOnBattlefield(player2, "Plains");
+    }
+
+    @Test
+    @DisplayName("A white Aura on a returned Island still counts before state-based actions")
+    void whiteAuraOnReturnedIslandCountsForSacrifice() {
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new ConsecrateLand());
+        aura.setAttachedTo(island.getId());
+        Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
+
+        cast();
+
+        harness.assertInHand(player2, "Island");
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxCount()).isEqualTo(1);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(aura.getId(), plains.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(plains.getId()));
+
+        harness.assertInGraveyard(player2, "Plains");
+        harness.assertInGraveyard(player2, "Consecrate Land");
+        harness.assertNotOnBattlefield(player2, "Consecrate Land");
     }
 
     @Test
