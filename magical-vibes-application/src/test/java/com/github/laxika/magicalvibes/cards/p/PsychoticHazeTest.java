@@ -72,6 +72,50 @@ class PsychoticHazeTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("Damage kills creatures with existing damage on both sides")
+    void killsCreaturesWithExistingDamage() {
+        Permanent player1Collaborator = harness.addToBattlefieldAndReturn(player1, new PardicCollaborator());
+        Permanent player2Collaborator = harness.addToBattlefieldAndReturn(player2, new PardicCollaborator());
+        player1Collaborator.setMarkedDamage(1);
+        player2Collaborator.setMarkedDamage(1);
+
+        harness.castFromHand(player1, new PsychoticHaze(), "{2}{B}{B}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Pardic Collaborator");
+        harness.assertNotOnBattlefield(player2, "Pardic Collaborator");
+        harness.assertInGraveyard(player1, "Pardic Collaborator");
+        harness.assertInGraveyard(player2, "Pardic Collaborator");
+        harness.assertInGraveyard(player1, "Psychotic Haze");
+    }
+
+    @Test
+    @DisplayName("Madness exiles the discarded card and still damages every creature")
+    void madnessDamagesCreaturesOnBothSides() {
+        Permanent player1Collaborator = harness.addToBattlefieldAndReturn(player1, new PardicCollaborator());
+        Permanent player2Collaborator = harness.addToBattlefieldAndReturn(player2, new PardicCollaborator());
+        PsychoticHaze haze = discardPsychoticHaze();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(haze.getId()));
+        harness.assertNotInGraveyard(player1, "Psychotic Haze");
+        assertThat(player1Collaborator.getMarkedDamage()).isZero();
+        assertThat(player2Collaborator.getMarkedDamage()).isZero();
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(player1Collaborator.getMarkedDamage()).isEqualTo(1);
+        assertThat(player2Collaborator.getMarkedDamage()).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Psychotic Haze");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(haze.getId()));
+    }
+
     private PsychoticHaze discardPsychoticHaze() {
         PsychoticHaze haze = new PsychoticHaze();
         harness.setHand(player1, List.of(haze));
