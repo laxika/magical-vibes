@@ -30,9 +30,7 @@ class LeylineOfLightningTest extends BaseCardTest {
 
         openingHarness.handleMayAbilityChosen(openingHarness.getPlayer1(), true);
 
-        assertThat(openingHarness.getGameData().playerBattlefields
-                .get(openingHarness.getPlayer1().getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Leyline of Lightning"));
+        openingHarness.assertOnBattlefield(openingHarness.getPlayer1(), "Leyline of Lightning");
     }
 
     @Test
@@ -45,9 +43,7 @@ class LeylineOfLightningTest extends BaseCardTest {
 
         openingHarness.handleMayAbilityChosen(openingHarness.getPlayer1(), false);
 
-        assertThat(openingHarness.getGameData().playerBattlefields
-                .get(openingHarness.getPlayer1().getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Leyline of Lightning"));
+        openingHarness.assertNotOnBattlefield(openingHarness.getPlayer1(), "Leyline of Lightning");
         assertThat(openingHarness.getGameData().playerHands
                 .get(openingHarness.getPlayer1().getId()))
                 .containsExactly(leyline);
@@ -62,9 +58,9 @@ class LeylineOfLightningTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(19);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
@@ -81,9 +77,9 @@ class LeylineOfLightningTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, planeswalker.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
     }
@@ -97,6 +93,8 @@ class LeylineOfLightningTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
@@ -120,5 +118,27 @@ class LeylineOfLightningTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Target is chosen before the optional payment, which waits for resolution")
+    void choosesTargetBeforePayingOnResolution() {
+        harness.addToBattlefield(player1, new LeylineOfLightning());
+        harness.setHand(player1, List.of(new GhostWarden()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, player1.getId());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 }
