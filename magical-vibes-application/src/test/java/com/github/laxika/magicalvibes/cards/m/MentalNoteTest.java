@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.b.BenevolentBodyguard;
 import com.github.laxika.magicalvibes.cards.h.HaplessResearcher;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameStatus;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -40,14 +39,59 @@ class MentalNoteTest extends BaseCardTest {
         Card onlyLibraryCard = new HaplessResearcher();
 
         harness.setLibrary(player1, List.of(onlyLibraryCard));
-        harness.setHand(player1, List.of(new MentalNote()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
-        harness.castAndResolveInstant(player1, 0);
+        harness.castFromHand(player1, new MentalNote(), "{U}");
+        harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(onlyLibraryCard);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    void drawsFromEmptyLibraryAfterMillingNothing() {
+        harness.setLibrary(player1, List.of());
+        harness.castFromHand(player1, new MentalNote(), "{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    void losesAfterMillingExactlyTwoRemainingCards() {
+        Card first = new BenevolentBodyguard();
+        Card second = new HaplessResearcher();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.castFromHand(player1, new MentalNote(), "{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    void millsAndDrawsOnlyForItsController() {
+        Card first = new BenevolentBodyguard();
+        Card second = new HaplessResearcher();
+        Card drawn = new BenevolentBodyguard();
+        Card remaining = new HaplessResearcher();
+        Card opponentsCard = new BenevolentBodyguard();
+        harness.setLibrary(player1, List.of(opponentsCard));
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player2, List.of(first, second, drawn, remaining));
+        harness.castFromHand(player2, new MentalNote(), "{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(first, second).doesNotContain(drawn, remaining);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawn);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remaining);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(opponentsCard);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 }
