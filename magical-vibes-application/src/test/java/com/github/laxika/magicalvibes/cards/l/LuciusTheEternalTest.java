@@ -22,8 +22,8 @@ class LuciusTheEternalTest extends BaseCardTest {
     @Test
     @DisplayName("When Lucius dies, it exiles itself haunting an opponent's creature and returns when it leaves")
     void hauntsOpponentCreatureAndReturnsWhenItLeaves() {
-        Permanent lucius = addReadyCard(player1, new LuciusTheEternal());
-        Permanent bears = addReadyCard(player2, new GrizzlyBears());
+        Permanent lucius = harness.addToBattlefieldAndReturn(player1, new LuciusTheEternal());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         destroyWithMurder(player2, lucius.getId());
 
@@ -38,6 +38,12 @@ class LuciusTheEternalTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToHand(gd, bears));
 
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(
+                permanent -> permanent.getCard().getId().equals(lucius.getCard().getId()));
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(lucius.getCard().getId()));
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(
                 permanent -> permanent.getCard().getId().equals(lucius.getCard().getId()));
         assertThat(gd.hauntingCardToPermanentId).doesNotContainKey(lucius.getCard().getId());
@@ -47,7 +53,7 @@ class LuciusTheEternalTest extends BaseCardTest {
     @Test
     @DisplayName("Lucius's death trigger is skipped when the opponent controls no creature")
     void deathTriggerNeedsAnOpponentCreature() {
-        Permanent lucius = addReadyCard(player1, new LuciusTheEternal());
+        Permanent lucius = harness.addToBattlefieldAndReturn(player1, new LuciusTheEternal());
 
         destroyWithMurder(player2, lucius.getId());
 
@@ -56,20 +62,64 @@ class LuciusTheEternalTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(lucius.getCard());
     }
 
+    @Test
+    @DisplayName("A creature controlled by Lucius's controller cannot keep the death trigger on the stack")
+    void ownCreatureIsNotALegalTarget() {
+        Permanent lucius = harness.addToBattlefieldAndReturn(player1, new LuciusTheEternal());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        destroyWithMurder(player2, lucius.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(lucius.getCard());
+    }
+
+    @Test
+    @DisplayName("Lucius stays in the graveyard if its target leaves before the death trigger resolves")
+    void targetLeavingBeforeResolutionPreventsExile() {
+        Permanent lucius = harness.addToBattlefieldAndReturn(player1, new LuciusTheEternal());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        destroyWithMurder(player2, lucius.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, bears));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(lucius.getCard());
+        assertThat(gd.exiledCards).noneMatch(entry -> entry.card().getId().equals(lucius.getCard().getId()));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The return ability cannot find Lucius after it leaves exile and is exiled again")
+    void leavingAndReenteringExileBreaksTheReturnLink() {
+        Permanent lucius = harness.addToBattlefieldAndReturn(player1, new LuciusTheEternal());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        destroyWithMurder(player2, lucius.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> {
+            assertThat(gd.removeFromExile(lucius.getCard().getId())).isTrue();
+            gd.addCardToHand(player1.getId(), lucius.getCard());
+            gd.playerHands.get(player1.getId()).remove(lucius.getCard());
+            gd.addToExile(player1.getId(), lucius.getCard());
+        });
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, bears));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(
+                permanent -> permanent.getCard().getId().equals(lucius.getCard().getId()));
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(lucius.getCard().getId()));
+    }
+
     private void destroyWithMurder(Player caster, java.util.UUID targetId) {
         harness.forceActivePlayer(caster);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(caster, List.of(new Murder()));
         harness.addMana(caster, ManaColor.BLACK, 3);
-        harness.castInstant(caster, 0, targetId);
-        harness.passBothPriorities();
-    }
-
-    private Permanent addReadyCard(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent creature = new Permanent(card);
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
+        harness.castAndResolveInstant(caster, 0, targetId);
     }
 }
