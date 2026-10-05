@@ -121,4 +121,42 @@ class LowlandTrackerTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
+    @Test
+    @DisplayName("Provoke requires an already untapped creature to block")
+    void alreadyUntappedTargetMustBlock() {
+        addCreatureReady(player1, new LowlandTracker());
+        Permanent defendingCreature = addCreatureReady(player2, new FugitiveWizard());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, defendingCreature.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        prepareDeclareBlockers();
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(defendingCreature.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A provoked creature tapped again before blockers cannot block")
+    void targetTappedAfterProvokeIsNotRequiredToBlock() {
+        addCreatureReady(player1, new LowlandTracker());
+        Permanent defendingCreature = addCreatureReady(player2, new FugitiveWizard());
+        defendingCreature.tap();
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, defendingCreature.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(defendingCreature.isTapped()).isFalse();
+
+        defendingCreature.tap();
+        prepareDeclareBlockers();
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
+                .doesNotThrowAnyException();
+        assertThat(defendingCreature.isBlocking()).isFalse();
+    }
 }
