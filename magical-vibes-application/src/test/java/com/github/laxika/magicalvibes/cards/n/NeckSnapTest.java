@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.h.HillcomberGiant;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -28,10 +27,8 @@ class NeckSnapTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, attacker.getId());
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getId().equals(attacker.getId()));
+        harness.assertNotOnBattlefield(player2, "Hillcomber Giant");
         harness.assertInGraveyard(player2, "Hillcomber Giant");
     }
 
@@ -44,10 +41,8 @@ class NeckSnapTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, blocker.getId());
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getId().equals(blocker.getId()));
+        harness.assertNotOnBattlefield(player2, "Hillcomber Giant");
         harness.assertInGraveyard(player2, "Hillcomber Giant");
     }
 
@@ -74,12 +69,42 @@ class NeckSnapTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getId().equals(attacker.getId()));
+        harness.assertOnBattlefield(player2, "Hillcomber Giant");
         assertThat(gd.gameLog).anyMatch(log -> log.plainText().contains("fizzles"));
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Fizzles if the target stops blocking before resolution")
+    void fizzlesIfTargetStopsBlockingBeforeResolution() {
+        Permanent blocker = addBlocker(player2);
+        harness.setHand(player1, List.of(new NeckSnap()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castInstant(player1, 0, blocker.getId());
+        blocker.clearCombatState();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Hillcomber Giant");
+        harness.assertNotInGraveyard(player2, "Hillcomber Giant");
+        harness.assertInGraveyard(player1, "Neck Snap");
+    }
+
+    @Test
+    @DisplayName("Can destroy your own attacking creature")
+    void destroysOwnAttacker() {
+        Permanent attacker = addCreatureReady(player1, new HillcomberGiant());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        harness.setHand(player1, List.of(new NeckSnap()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
+
+        harness.assertNotOnBattlefield(player1, "Hillcomber Giant");
+        harness.assertInGraveyard(player1, "Hillcomber Giant");
+        harness.assertInGraveyard(player1, "Neck Snap");
+    }
 
     private Permanent addAttacker(Player owner) {
         Permanent attacker = addCreatureReady(owner, new HillcomberGiant());
