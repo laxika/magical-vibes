@@ -27,8 +27,7 @@ class MaritLagesSlumberTest extends BaseCardTest {
     @DisplayName("Entering the battlefield causes Marit Lage's Slumber to scry 1")
     void enteringCausesScry() {
         harness.castFromHand(player1, new MaritLagesSlumber(), "{1}{U}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
     }
@@ -75,6 +74,51 @@ class MaritLagesSlumberTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Marit Lage")).isEmpty();
     }
 
+    @Test
+    @DisplayName("Losing a snow permanent before resolution prevents the sacrifice")
+    void rechecksSnowThresholdOnResolution() {
+        harness.addToBattlefield(player1, new MaritLagesSlumber());
+        addSnowPermanents(9);
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        Permanent land = findPermanent(player1, "Snow-Covered Island");
+        gd.playerBattlefields.get(player1.getId()).remove(land);
+        gd.playerHands.get(player1.getId()).add(land.getCard());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Marit Lage's Slumber");
+        assertThat(findPermanents(player1, "Marit Lage")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A missing source cannot be sacrificed even if ten snow permanents remain")
+    void missingSourceDoesNotCreateToken() {
+        Permanent slumber = harness.addToBattlefieldAndReturn(player1, new MaritLagesSlumber());
+        addSnowPermanents(10);
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(slumber);
+        gd.playerHands.get(player1.getId()).add(slumber.getCard());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Marit Lage")).isEmpty();
+        harness.assertNotInGraveyard(player1, "Marit Lage's Slumber");
+    }
+
+    @Test
+    @DisplayName("Ten snow permanents do not trigger during an opponent's upkeep")
+    void doesNotTriggerOnOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new MaritLagesSlumber());
+        addSnowPermanents(9);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Marit Lage's Slumber");
+        assertThat(findPermanents(player1, "Marit Lage")).isEmpty();
+    }
     private void addSnowPermanents(int count) {
         for (int i = 0; i < count; i++) {
             harness.addToBattlefield(player1, new SnowCoveredIsland());
@@ -126,11 +170,8 @@ class Mh1MaritLagesSlumberTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getId().equals(slumber.getId()));
         harness.assertInGraveyard(player1, "Marit Lage's Slumber");
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .filter(permanent -> permanent.getCard().getName().equals("Marit Lage"))
-                .findFirst()
-                .orElseThrow();
+        Permanent token = findPermanent(player1, "Marit Lage");
+        assertThat(token.getCard().isToken()).isTrue();
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(token.getCard().getPower()).isEqualTo(20);
         assertThat(token.getCard().getToughness()).isEqualTo(20);
