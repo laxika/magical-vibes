@@ -141,4 +141,43 @@ class LlanowarBehemothTest extends BaseCardTest {
 
         assertThat(opponentCreature.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("A summoning-sick Behemoth can tap itself to pay the cost")
+    void summoningSickBehemothCanTapItself() {
+        Permanent behemoth = harness.addToBattlefieldAndReturn(player1, new LlanowarBehemoth());
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(behemoth);
+
+        harness.activateAbility(player1, idx, null, null);
+
+        assertThat(behemoth.isTapped()).isTrue();
+        assertThat(behemoth.getEffectivePower()).isEqualTo(4);
+        assertThat(behemoth.getEffectiveToughness()).isEqualTo(4);
+
+        harness.passBothPriorities();
+
+        assertThat(behemoth.getEffectivePower()).isEqualTo(5);
+        assertThat(behemoth.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("A tapped Behemoth can activate by tapping another creature")
+    void tappedBehemothCanActivate() {
+        Permanent behemoth = addCreatureReady(player1, new LlanowarBehemoth());
+        behemoth.tap();
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(behemoth);
+
+        harness.activateAbility(player1, idx, null, null);
+
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(behemoth.getEffectivePower()).isEqualTo(4);
+        assertThat(behemoth.getEffectiveToughness()).isEqualTo(4);
+
+        harness.passBothPriorities();
+
+        assertThat(behemoth.isTapped()).isTrue();
+        assertThat(behemoth.getEffectivePower()).isEqualTo(5);
+        assertThat(behemoth.getEffectiveToughness()).isEqualTo(5);
+    }
 }
