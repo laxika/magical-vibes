@@ -91,6 +91,53 @@ class PulmonicSliverTest extends BaseCardTest {
                 .doesNotContain(pulmonic.getCard(), sliver.getCard());
     }
 
+    @Test
+    @DisplayName("Pulmonic Sliver can replace its own death")
+    void replacesItsOwnDeath() {
+        Card filler = new Forest();
+        harness.setLibrary(player1, List.of(filler));
+        Permanent pulmonic = addCreatureReady(player1, new PulmonicSliver());
+
+        killWithSuddenDeath(pulmonic);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(pulmonic);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(pulmonic.getCard(), filler);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(pulmonic.getCard());
+    }
+
+    @Test
+    @DisplayName("A Sliver's controller chooses but its owner receives the card")
+    void returnsStolenSliverToOwnersLibrary() {
+        Card filler = new Forest();
+        harness.setLibrary(player2, List.of(filler));
+        addCreatureReady(player1, new PulmonicSliver());
+        Card stolenCard = new BonesplitterSliver();
+        stolenCard.setOwnerId(player2.getId());
+        Permanent stolen = addCreatureReady(player1, stolenCard);
+
+        killWithSuddenDeath(stolen);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(stolenCard, filler);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(stolenCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(stolenCard);
+    }
+
+    @Test
+    @DisplayName("Non-Slivers go to the graveyard without a replacement choice")
+    void doesNotReplaceNonSliverDeath() {
+        addCreatureReady(player1, new PulmonicSliver());
+        Permanent bear = addCreatureReady(player1, new AshcoatBear());
+
+        killWithSuddenDeath(bear);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bear.getCard());
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(bear.getCard());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
     private void killWithSuddenDeath(Permanent target) {
         harness.setHand(player2, List.of(new SuddenDeath()));
         harness.addMana(player2, ManaColor.BLACK, 3);
