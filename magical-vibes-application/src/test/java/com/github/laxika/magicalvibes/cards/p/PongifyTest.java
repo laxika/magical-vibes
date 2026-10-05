@@ -28,8 +28,7 @@ class PongifyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Pongify()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Serra Sphinx"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Serra Sphinx"));
 
         harness.assertNotOnBattlefield(player2, "Serra Sphinx");
         harness.assertInGraveyard(player2, "Serra Sphinx");
@@ -51,8 +50,7 @@ class PongifyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Pongify()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, sphinx.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, sphinx.getId());
 
         harness.assertNotOnBattlefield(player2, "Serra Sphinx");
         harness.assertInGraveyard(player2, "Serra Sphinx");
@@ -66,8 +64,7 @@ class PongifyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Pongify()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, sphinx.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, sphinx.getId());
 
         harness.assertOnBattlefield(player2, "Serra Sphinx");
         harness.assertNotInGraveyard(player2, "Serra Sphinx");
@@ -88,5 +85,46 @@ class PongifyTest extends BaseCardTest {
                 harness.getPermanentId(player2, "Gaea's Anthem")))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
+    }
+
+    @Test
+    @DisplayName("Can destroy your own creature and gives you the Ape")
+    void canTargetOwnCreature() {
+        Permanent sphinx = harness.addToBattlefieldAndReturn(player1, new SerraSphinx());
+        harness.setHand(player1, List.of(new Pongify()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, sphinx.getId());
+
+        harness.assertInGraveyard(player1, "Serra Sphinx");
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement()
+                .satisfies(permanent -> {
+                    assertThat(permanent.getCard().isToken()).isTrue();
+                    assertThat(permanent.getCard().getName()).isEqualTo("Ape");
+                });
+        harness.assertNotOnBattlefield(player2, "Ape");
+    }
+
+    @Test
+    @DisplayName("Does not create another Ape when its target leaves before resolution")
+    void doesNotCreateTokenWhenTargetLeaves() {
+        Permanent sphinx = harness.addToBattlefieldAndReturn(player2, new SerraSphinx());
+        harness.setHand(player1, List.of(new Pongify(), new Pongify()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, sphinx.getId());
+        harness.castAndResolveInstant(player1, 0, sphinx.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Serra Sphinx");
+        assertThat(gd.playerBattlefields.get(player2.getId())).singleElement()
+                .satisfies(permanent -> {
+                    assertThat(permanent.getCard().isToken()).isTrue();
+                    assertThat(permanent.getCard().getName()).isEqualTo("Ape");
+                });
+        harness.assertNotOnBattlefield(player1, "Ape");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Pongify"))
+                .hasSize(2);
     }
 }
