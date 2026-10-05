@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
@@ -101,8 +103,7 @@ class MoxDiamondTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping Mox Diamond adds one mana of the chosen color")
     void manaAbilityAddsChosenColor() {
-        harness.addToBattlefield(player1, new MoxDiamond());
-        Permanent mox = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent mox = harness.addToBattlefieldAndReturn(player1, new MoxDiamond());
 
         harness.activateAbility(player1, 0, null, null);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
@@ -111,6 +112,65 @@ class MoxDiamondTest extends BaseCardTest {
 
         assertThat(mox.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty hand sends Mox Diamond to the graveyard without entering")
+    void emptyHandPreventsEntry() {
+        harness.setHand(player1, List.of(new MoxDiamond()));
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Mox Diamond");
+        harness.assertNotOnBattlefield(player1, "Mox Diamond");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entry without casting requires the entering controller to discard a land")
+    void noncastEntryUsesEnteringControllersHand() {
+        MoxDiamond moxDiamond = new MoxDiamond();
+        moxDiamond.setOwnerId(player1.getId());
+        VolrathsStronghold ownersLand = new VolrathsStronghold();
+        VolrathsStronghold controllersLand = new VolrathsStronghold();
+        harness.setHand(player1, List.of(ownersLand));
+        harness.setHand(player2, List.of(controllersLand));
+
+        Permanent entering = harness.enterBattlefieldAndReturn(player2, moxDiamond);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(entering);
+        harness.assertNotOnBattlefield(player2, "Mox Diamond");
+
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(entering);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(controllersLand);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(ownersLand);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    @DisplayName("Mox Diamond can produce each of the five colors immediately after entering")
+    void producesEachColorAfterEntry(ManaColor color) {
+        harness.setHand(player1, List.of(new MoxDiamond(), new VolrathsStronghold()));
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, color.name());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        for (ManaColor candidate : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(candidate))
+                    .isEqualTo(candidate == color ? 1 : 0);
+        }
         assertThat(gd.stack).isEmpty();
     }
 }
