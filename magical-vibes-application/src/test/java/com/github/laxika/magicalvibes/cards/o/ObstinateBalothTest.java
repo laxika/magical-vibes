@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.m.MindRot;
 import com.github.laxika.magicalvibes.cards.s.Sift;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ObstinateBaloth.class, Distress.class, GrizzlyBears.class, MindRot.class, Sift.class})
 class ObstinateBalothTest extends BaseCardTest {
 
     // ===== ETB life gain when cast normally =====
@@ -57,8 +59,7 @@ class ObstinateBalothTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Player1 chooses Obstinate Baloth from player2's revealed hand
         harness.handleCardChosen(player1, 0);
@@ -79,8 +80,7 @@ class ObstinateBalothTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Player1 chooses Obstinate Baloth from player2's revealed hand
         harness.handleCardChosen(player1, 0);
@@ -103,8 +103,7 @@ class ObstinateBalothTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindRot()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Player2 discards Obstinate Baloth first
         harness.handleCardChosen(player2, 0);
@@ -125,8 +124,7 @@ class ObstinateBalothTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindRot()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Player2 discards Obstinate Baloth first
         harness.handleCardChosen(player2, 0);
@@ -148,15 +146,12 @@ class ObstinateBalothTest extends BaseCardTest {
     void doesNotEnterBattlefieldOnSelfDiscard() {
         harness.setLife(player1, 20);
 
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
         harness.setHand(player1, List.of(new Sift(), new ObstinateBaloth()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities(); // Resolve Sift — draws 3, prompts for discard
+        harness.castAndResolveSorcery(player1, 0, 0); // Resolve Sift — draws 3, prompts for discard
 
         // Player1 discards Obstinate Baloth
         harness.handleCardChosen(player1, 0);
@@ -179,11 +174,72 @@ class ObstinateBalothTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Discard replacement does not gain life until the ETB trigger resolves")
+    void discardReplacementQueuesLifeGain() {
+        harness.setLife(player2, 20);
+        harness.setHand(player2, List.of(new ObstinateBaloth()));
+        harness.setHand(player1, List.of(new Distress()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player2, "Obstinate Baloth");
+        harness.assertNotOnBattlefield(player1, "Obstinate Baloth");
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 24);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Both Baloths enter and each gains life when discarded to opponent's Mind Rot")
+    void twoBalothsDiscardedToMindRot() {
+        harness.setLife(player2, 20);
+        harness.setHand(player2, List.of(new ObstinateBaloth(), new ObstinateBaloth()));
+        harness.setHand(player1, List.of(new MindRot()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .filteredOn(permanent -> permanent.getCard() instanceof ObstinateBaloth)
+                .hasSize(2);
+        harness.assertNotInGraveyard(player2, "Obstinate Baloth");
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 28);
+    }
+
+    @Test
+    @DisplayName("Mind Rot targeting its own controller does not replace Baloth's discard")
+    void selfTargetedMindRotDoesNotReplaceDiscard() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new MindRot(), new ObstinateBaloth(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Obstinate Baloth");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Obstinate Baloth");
+        harness.assertLife(player1, 20);
     }
 }
