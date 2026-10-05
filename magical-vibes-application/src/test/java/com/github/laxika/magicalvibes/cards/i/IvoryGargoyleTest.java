@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({IvoryGargoyle.class})
+@CardUsed({IvoryGargoyle.class, Disallow.class})
 class IvoryGargoyleTest extends BaseCardTest {
 
     @Test
@@ -26,7 +26,7 @@ class IvoryGargoyleTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Ivory Gargoyle");
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passBothPriorities(); // advance to the end step, processing the delayed return
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities(); // resolve the delayed return
 
         harness.assertOnBattlefield(player1, "Ivory Gargoyle");
@@ -100,7 +100,7 @@ class IvoryGargoyleTest extends BaseCardTest {
         assertThat(gd.exiledCards).anyMatch(e -> e.card().getName().equals("Ivory Gargoyle"));
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Ivory Gargoyle");
@@ -142,11 +142,11 @@ class IvoryGargoyleTest extends BaseCardTest {
         assertThat(gd.skipNextDrawStepCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Ivory Gargoyle");
-        assertThat(gd.skipNextDrawStepCount.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.skipNextDrawStepCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
         assertThat(gd.skipNextDrawStepCount.getOrDefault(player1.getId(), 0)).isZero();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore);
@@ -156,10 +156,72 @@ class IvoryGargoyleTest extends BaseCardTest {
         killGargoyle(harness.addToBattlefieldAndReturn(player, new IvoryGargoyle()));
     }
 
+    @Test
+    @CardUsed({IvoryGargoyle.class, Disallow.class})
+    @DisplayName("Countering the delayed return does not undo the draw-step skip")
+    void counteringDelayedReturnDoesNotUndoSkip() {
+        harness.setHand(player2, List.of(new Disallow()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        killGargoyle(player1);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, gd.stack.getLast().getCard().getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Ivory Gargoyle");
+        harness.assertNotOnBattlefield(player1, "Ivory Gargoyle");
+        assertThat(gd.skipNextDrawStepCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Two deaths cause two successive draw steps to be skipped")
+    void twoDeathsSkipTwoDrawSteps() {
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        killGargoyle(player1);
+        killGargoyle(player1);
+        harness.forceActivePlayer(player1);
+        gd.turnNumber = 2;
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        int deckBefore = gd.playerDecks.get(player1.getId()).size();
+
+        for (int i = 0; i < 2; i++) {
+            harness.forceStep(TurnStep.UPKEEP);
+            harness.passBothPriorities();
+            assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+            assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore);
+        }
+
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
+    }
+
+    @Test
+    @DisplayName("Dying during the end step waits until the following end step to return")
+    void deathDuringEndStepWaitsForFollowingEndStep() {
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        killGargoyle(player1);
+        harness.assertInGraveyard(player1, "Ivory Gargoyle");
+        harness.assertNotOnBattlefield(player1, "Ivory Gargoyle");
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Ivory Gargoyle");
+        assertThat(gd.skipNextDrawStepCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+    }
+
     private void killGargoyle(Permanent gargoyle) {
         gargoyle.setMarkedDamage(2);
         harness.runStateBasedActions();
-        harness.passBothPriorities(); // resolve the skip-draw-step death trigger
-        harness.passBothPriorities(); // resolve the delayed-return death trigger
+        harness.passBothPriorities(); // resolve the death trigger
     }
 }
