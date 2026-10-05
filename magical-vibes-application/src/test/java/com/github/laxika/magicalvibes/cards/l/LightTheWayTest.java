@@ -62,6 +62,46 @@ class LightTheWayTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a permanent you control");
     }
 
+    @Test
+    void putsCounterOnAndUntapsOpponentsCreature() {
+        Permanent target = tappedPermanent(player2, new GrizzlyBears());
+
+        cast(0, target.getId());
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void putsCounterOnAndUntapsOpponentsUncrewedVehicle() {
+        Permanent target = tappedPermanent(player2, new AirResponseUnit());
+
+        cast(0, target.getId());
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void putsCounterOnAlreadyUntappedCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        cast(0, target.getId());
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void rejectsNoncreatureNonvehicleArtifactForCounterMode() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        harness.setHand(player1, List.of(new LightTheWay()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void cast(int modeIndex, UUID targetId) {
         harness.setHand(player1, List.of(new LightTheWay()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -70,8 +110,7 @@ class LightTheWayTest extends BaseCardTest {
     }
 
     private Permanent tappedPermanent(Player player, Card card) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
-        permanent.setSummoningSick(false);
+        Permanent permanent = addCreatureReady(player, card);
         permanent.tap();
         return permanent;
     }
