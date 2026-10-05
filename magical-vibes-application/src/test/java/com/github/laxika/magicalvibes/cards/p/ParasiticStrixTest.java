@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
+import com.github.laxika.magicalvibes.cards.s.SalvageSlasher;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,9 +13,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ParasiticStrix.class, SalvageSlasher.class})
 class ParasiticStrixTest extends BaseCardTest {
-
-    // ===== ETB with a black permanent controlled =====
 
     @Test
     @DisplayName("ETB target is chosen as the trigger goes on the stack, not at cast time")
@@ -90,8 +89,6 @@ class ParasiticStrixTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("gains 2 life"));
     }
 
-    // ===== ETB without a black permanent =====
-
     @Test
     @DisplayName("ETB does NOT trigger without a black permanent — no target prompt, no life change")
     void etbDoesNotTriggerWithoutBlackPermanent() {
@@ -108,8 +105,6 @@ class ParasiticStrixTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
-    // ===== Gate lost before resolution =====
-
     @Test
     @DisplayName("ETB does nothing if the black permanent is gone before resolution")
     void etbFizzlesWhenGateLost() {
@@ -120,7 +115,7 @@ class ParasiticStrixTest extends BaseCardTest {
 
         // Remove the black permanent before the ETB resolves.
         gd.playerBattlefields.get(player1.getId()).removeIf(
-                p -> p.getCard().getName().equals("Scathe Zombies"));
+                p -> p.getCard().getName().equals("Salvage Slasher"));
 
         harness.passBothPriorities(); // resolve ETB trigger — gate no longer met
 
@@ -128,15 +123,84 @@ class ParasiticStrixTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("An opponent's black permanent does not satisfy the condition")
+    void opponentsBlackPermanentDoesNotEnableTrigger() {
+        harness.addToBattlefield(player2, new SalvageSlasher());
+        castParasiticStrix();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Black cards in hand and graveyard do not satisfy the condition")
+    void blackCardsOutsideBattlefieldDoNotEnableTrigger() {
+        castParasiticStrix();
+        harness.setHand(player1, List.of(new SalvageSlasher()));
+        harness.setGraveyard(player1, List.of(new SalvageSlasher()));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Gaining a black permanent after entry does not create a missed trigger")
+    void blackPermanentAcquiredAfterEntryDoesNotTrigger() {
+        castParasiticStrix();
+        harness.passBothPriorities();
+        setupBlackPermanent();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A different black permanent can satisfy the condition at resolution")
+    void replacementBlackPermanentEnablesResolution() {
+        setupBlackPermanent();
+        castParasiticStrix();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        gd.playerBattlefields.get(player1.getId()).removeIf(
+                p -> p.getCard() instanceof SalvageSlasher);
+        setupBlackPermanent();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("The drain resolves after Parasitic Strix leaves the battlefield")
+    void triggerResolvesWithoutSource() {
+        setupBlackPermanent();
+        castParasiticStrix();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        gd.playerBattlefields.get(player1.getId()).removeIf(
+                p -> p.getCard() instanceof ParasiticStrix);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
 
     private void setupBlackPermanent() {
-        harness.addToBattlefield(player1, new ScatheZombies());
+        harness.addToBattlefield(player1, new SalvageSlasher());
     }
 
     private void castParasiticStrix() {
-        harness.setHand(player1, List.of(new ParasiticStrix()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
+        harness.castFromHand(player1, new ParasiticStrix(), "{2}{U}");
     }
 }
