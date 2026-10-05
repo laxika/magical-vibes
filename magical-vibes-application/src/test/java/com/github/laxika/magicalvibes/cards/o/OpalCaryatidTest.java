@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.r.Rewind;
 import com.github.laxika.magicalvibes.cards.w.WildDogs;
 import com.github.laxika.magicalvibes.cards.w.WornPowerstone;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,9 +12,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OpalCaryatid.class, WildDogs.class, WornPowerstone.class})
+@CardUsed({OpalCaryatid.class, WildDogs.class, WornPowerstone.class, Rewind.class})
 class OpalCaryatidTest extends BaseCardTest {
 
     private Permanent addOpalCaryatid() {
@@ -84,5 +88,48 @@ class OpalCaryatidTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, opal)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opal)).isEqualTo(2);
         assertThat(gqs.effectiveCreatureSubtypes(gd, opal)).containsExactly(CardSubtype.SOLDIER);
+    }
+
+    @Test
+    @DisplayName("A creature entering without being cast does not animate Opal Caryatid")
+    void doesNotTriggerForCreatureEnteringWithoutCast() {
+        Permanent opal = addOpalCaryatid();
+
+        harness.enterBattlefieldAndReturn(player2, new WildDogs());
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.isEnchantment(gd, opal)).isTrue();
+        assertThat(gqs.isCreature(gd, opal)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Countering the creature spell does not stop Opal Caryatid's trigger")
+    void becomesCreatureEvenWhenTriggeringSpellIsCountered() {
+        Permanent opal = addOpalCaryatid();
+        prepareOpponentCast();
+        WildDogs dogs = new WildDogs();
+        harness.castFromHand(player2, dogs, "{G}");
+
+        assertThat(gd.stack).hasSize(2);
+        harness.setHand(player1, List.of(new Rewind()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.passPriority(player2);
+        harness.castInstant(player1, 0, dogs.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Wild Dogs");
+        assertThat(gqs.isEnchantment(gd, opal)).isTrue();
+        assertThat(gqs.isCreature(gd, opal)).isFalse();
+
+        resolveAllTriggers();
+
+        assertThat(gqs.isCreature(gd, opal)).isTrue();
+        assertThat(gqs.isEnchantment(gd, opal)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, opal)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opal)).isEqualTo(2);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, opal)).containsExactly(CardSubtype.SOLDIER);
+        harness.assertNotOnBattlefield(player2, "Wild Dogs");
     }
 }
