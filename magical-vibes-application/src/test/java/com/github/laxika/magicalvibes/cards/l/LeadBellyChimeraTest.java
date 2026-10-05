@@ -94,4 +94,58 @@ class LeadBellyChimeraTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Lead-Belly Chimera");
         assertThat(source.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isZero();
     }
+    @Test
+    @DisplayName("Sacrifice is paid before the ability resolves")
+    void sacrificeIsPaidImmediately() {
+        harness.addToBattlefield(player1, new LeadBellyChimera());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BrassTalonChimera());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Lead-Belly Chimera");
+        harness.assertInGraveyard(player1, "Lead-Belly Chimera");
+        assertThat(target.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isZero();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A Chimera sacrificed in response receives neither counters nor trample")
+    void targetSacrificedInResponse() {
+        harness.addToBattlefield(player1, new LeadBellyChimera());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BrassTalonChimera());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Lead-Belly Chimera");
+        harness.assertInGraveyard(player1, "Brass-Talon Chimera");
+        assertThat(target.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isZero();
+        assertThat(target.getPersistentGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+    }
+
+    @Test
+    @DisplayName("Two sacrifices accumulate two distinct +2/+2 counters")
+    void multipleSacrificesAccumulateCounters() {
+        harness.addToBattlefield(player1, new LeadBellyChimera());
+        harness.addToBattlefield(player1, new LeadBellyChimera());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BrassTalonChimera());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+    }
+
 }
