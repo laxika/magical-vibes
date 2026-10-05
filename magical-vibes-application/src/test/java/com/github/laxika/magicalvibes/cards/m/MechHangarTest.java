@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HotshotMechanic;
-import com.github.laxika.magicalvibes.cards.s.SmugglersCopter;
+import com.github.laxika.magicalvibes.cards.j.JukaiPreserver;
+import com.github.laxika.magicalvibes.cards.p.ProdigysPrototype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MechHangar.class, HotshotMechanic.class, SmugglersCopter.class, GrizzlyBears.class})
+@CardUsed({MechHangar.class, HotshotMechanic.class, ProdigysPrototype.class, JukaiPreserver.class})
 class MechHangarTest extends BaseCardTest {
 
     @Test
@@ -57,8 +57,9 @@ class MechHangarTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handleListChoice(player1, "RED");
 
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.setHand(player1, List.of(new SmugglersCopter()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player1, List.of(new ProdigysPrototype()));
         harness.castArtifact(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
@@ -73,7 +74,8 @@ class MechHangarTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handleListChoice(player1, "GREEN");
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player1, List.of(new JukaiPreserver()));
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
@@ -83,7 +85,7 @@ class MechHangarTest extends BaseCardTest {
     @DisplayName("The third ability animates a target Vehicle until end of turn")
     void animatesTargetVehicleUntilEndOfTurn() {
         addHangar(player1);
-        Permanent vehicle = harness.addToBattlefieldAndReturn(player1, new SmugglersCopter());
+        Permanent vehicle = harness.addToBattlefieldAndReturn(player1, new ProdigysPrototype());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 2, null, vehicle.getId());
@@ -92,9 +94,9 @@ class MechHangarTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, vehicle)).isTrue();
         assertThat(gqs.isArtifact(gd, vehicle)).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        assertThat(gqs.isCreature(gd, vehicle)).isTrue();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, vehicle)).isFalse();
     }
@@ -103,23 +105,70 @@ class MechHangarTest extends BaseCardTest {
     @DisplayName("The third ability cannot target a non-Vehicle")
     void cannotTargetNonVehicle() {
         addHangar(player1);
-        Permanent creature = addPermanent(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new JukaiPreserver());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The third ability can animate an opponent's Vehicle without tapping it")
+    void animatesOpponentsVehicle() {
+        Permanent hangar = addHangar(player1);
+        Permanent vehicle = harness.addToBattlefieldAndReturn(player2, new ProdigysPrototype());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 2, null, vehicle.getId());
+
+        assertThat(hangar.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        assertThat(gqs.isCreature(gd, vehicle)).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, vehicle)).isTrue();
+        assertThat(gqs.isArtifact(gd, vehicle)).isTrue();
+        assertThat(vehicle.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(vehicle);
+    }
+
+    @Test
+    @DisplayName("Restricted mana can pay a Vehicle spell's colored mana cost")
+    void restrictedManaPaysColoredVehicleCost() {
+        addHangar(player1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "BLUE");
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new ProdigysPrototype()));
+
+        harness.castArtifact(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("Restricted mana cannot pay for Mech Hangar's animation ability")
+    void restrictedManaCannotPayActivationCost() {
+        addHangar(player1);
+        addHangar(player1);
+        Permanent vehicle = harness.addToBattlefieldAndReturn(player1, new ProdigysPrototype());
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "BLUE");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 2, null, vehicle.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.isCreature(gd, vehicle)).isFalse();
+    }
+
     private Permanent addHangar(Player player) {
         Permanent hangar = harness.addToBattlefieldAndReturn(player, new MechHangar());
         hangar.setSummoningSick(false);
         return hangar;
-    }
-
-    private Permanent addPermanent(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }
