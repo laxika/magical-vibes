@@ -78,11 +78,101 @@ class MechanozoaTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(mechanozoa.getId()));
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        assertThat(gd.findExiledCard(mechanozoa.getId())).isNull();
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(mechanozoa.getId())).isNotNull();
+    }
+
+    @Test
+    void canEnterWhenOpponentHasNoLegalTargets() {
+        harness.setHand(player1, List.of(new Mechanozoa()));
+        addNormalMana();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Mechanozoa");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void alreadyTappedTargetStillReceivesAStunCounter() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setTapped(true);
+        harness.setHand(player1, List.of(new Mechanozoa()));
+        addNormalMana();
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(1);
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.STUN)).isZero();
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void cannotTargetOwnNoncreatureArtifact() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        harness.setHand(player1, List.of(new Mechanozoa()));
+        addNormalMana();
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void normalCastDoesNotExileAtEndStep() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Mechanozoa()));
+        addNormalMana();
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.passUntil(TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Mechanozoa");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void warpedCardCanBeCastOnALaterTurnAndStaysAfterNormalRecast() {
+        Mechanozoa card = new Mechanozoa();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Mechanozoa(), new Mechanozoa()));
+        harness.setLibrary(player2, List.of(new Mechanozoa(), new Mechanozoa()));
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(1);
+
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        addNormalMana();
+        harness.castFromExile(player1, card.getId(), target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Mechanozoa");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(1);
+
+        harness.passUntil(TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Mechanozoa");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addNormalMana() {
