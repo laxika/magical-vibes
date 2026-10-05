@@ -1,36 +1,37 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AvenSquire;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({OdricMasterTactician.class, WalkingCorpse.class, AvenSquire.class, Unsummon.class})
 class OdricMasterTacticianTest extends BaseCardTest {
 
-    private Permanent addReadyCreature(java.util.UUID playerId, Permanent permanent) {
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(playerId).add(permanent);
-        return permanent;
-    }
-
     private Permanent addOdric() {
-        return addReadyCreature(player1.getId(), new Permanent(new OdricMasterTactician()));
+        return addCreatureReady(player1, new OdricMasterTactician());
     }
 
     private Permanent addAlly() {
-        return addReadyCreature(player1.getId(), new Permanent(new GrizzlyBears()));
+        return addCreatureReady(player1, new WalkingCorpse());
     }
 
     private Permanent addDefender() {
-        return addReadyCreature(player2.getId(), new Permanent(new GrizzlyBears()));
+        return addCreatureReady(player2, new WalkingCorpse());
     }
 
     /** Resolves attack triggers, then advances into the declare-blockers prompt. */
@@ -122,5 +123,87 @@ class OdricMasterTacticianTest extends BaseCardTest {
         assertThat(pending).isNotNull();
         assertThat(pending.decidingPlayerId()).isEqualTo(player2.getId());
         assertThat(pending.choosingForOpponent()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Odric's controller may choose no blockers")
+    void controllerCanChooseNoBlocks() {
+        addOdric();
+        addAlly();
+        addAlly();
+        addAlly();
+        Permanent blocker = addDefender();
+
+        declareAttackers(List.of(0, 1, 2, 3));
+        advanceToBlockerDeclaration();
+        gs.declareBlockers(gd, player1, List.of());
+
+        assertThat(blocker.isBlocking()).isFalse();
+        assertThat(blocker.getBlockingTargetIds()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Odric cannot make a ground creature block a flying attacker")
+    void controllerMustRespectFlyingRestriction() {
+        addOdric();
+        addCreatureReady(player1, new AvenSquire());
+        addAlly();
+        addAlly();
+        Permanent blocker = addDefender();
+
+        declareAttackers(List.of(0, 1, 2, 3));
+        advanceToBlockerDeclaration();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1,
+                List.of(new BlockerAssignment(0, 1))))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(blocker.isBlocking()).isFalse();
+        gs.declareBlockers(gd, player1, List.of());
+    }
+
+    @Test
+    @DisplayName("Odric cannot make a tapped creature block")
+    void controllerCannotChooseTappedBlocker() {
+        addOdric();
+        addAlly();
+        addAlly();
+        addAlly();
+        Permanent tappedBlocker = addDefender();
+        tappedBlocker.setTapped(true);
+        addDefender();
+
+        declareAttackers(List.of(0, 1, 2, 3));
+        advanceToBlockerDeclaration();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(tappedBlocker.isBlocking()).isFalse();
+        gs.declareBlockers(gd, player1, List.of());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    @DisplayName("Removing Odric or an ally in response does not undo the attack trigger")
+    void triggerSurvivesAttackerRemoval(boolean removeOdric) {
+        Permanent odric = addOdric();
+        Permanent ally = addAlly();
+        addAlly();
+        addAlly();
+        addDefender();
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        declareAttackers(List.of(0, 1, 2, 3));
+        harness.castAndResolveInstant(player2, 0, removeOdric ? odric.getId() : ally.getId());
+        harness.assertInHand(player1, removeOdric ? "Odric, Master Tactician" : "Walking Corpse");
+        advanceToBlockerDeclaration();
+
+        PendingInteraction.BlockerDeclaration pending =
+                gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class);
+        assertThat(pending).isNotNull();
+        assertThat(pending.decidingPlayerId()).isEqualTo(player1.getId());
+        assertThat(pending.choosingForOpponent()).isTrue();
+        gs.declareBlockers(gd, player1, List.of());
     }
 }
