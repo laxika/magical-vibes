@@ -83,9 +83,15 @@ class MartyrOfFrostTest extends BaseCardTest {
     void cannotRevealMoreBlueCardsThanAreInHand() {
         harness.setHand(player1, List.of(new BorealDruid()));
         Permanent martyr = addCreatureReady(player1, new MartyrOfFrost());
+        harness.forceActivePlayer(player2);
+        BorealDruid druid = new BorealDruid();
+        harness.setHand(player2, List.of(druid));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.castCreature(player2, 0);
+        harness.passPriority(player2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, druid.getId()))
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(martyr);
@@ -116,5 +122,55 @@ class MartyrOfFrostTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Boreal Druid");
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(martyr);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(martyr.getCard());
+    }
+
+    @Test
+    @DisplayName("Counters the spell when its controller declines an affordable payment")
+    void countersWhenOpponentDeclinesPayment() {
+        RimewindCryomancer blueCard = new RimewindCryomancer();
+        harness.setHand(player1, List.of(blueCard));
+        addCreatureReady(player1, new MartyrOfFrost());
+        harness.forceActivePlayer(player2);
+        BorealDruid druid = new BorealDruid();
+        harness.setHand(player2, List.of(druid));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castCreature(player2, 0);
+        harness.passPriority(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 1, druid.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(blueCard.getId()));
+        harness.assertInGraveyard(player1, "Martyr of Frost");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player2, "Boreal Druid");
+        harness.assertNotOnBattlefield(player2, "Boreal Druid");
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Revealing only one of two blue cards requires a payment of only one mana")
+    void canRevealFewerThanAllBlueCards() {
+        RimewindCryomancer revealed = new RimewindCryomancer();
+        RimewindCryomancer unrevealed = new RimewindCryomancer();
+        harness.setHand(player1, List.of(revealed, unrevealed));
+        addCreatureReady(player1, new MartyrOfFrost());
+        harness.forceActivePlayer(player2);
+        BorealDruid druid = new BorealDruid();
+        harness.setHand(player2, List.of(druid));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castCreature(player2, 0);
+        harness.passPriority(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 1, druid.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(revealed.getId()));
+        harness.assertInGraveyard(player1, "Martyr of Frost");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Boreal Druid");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(revealed, unrevealed);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
     }
 }
