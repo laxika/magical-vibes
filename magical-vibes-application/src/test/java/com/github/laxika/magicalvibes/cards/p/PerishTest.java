@@ -18,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AirElemental.class, BrokenFall.class, GrizzlyBears.class, MoggFanatic.class, Ornithopter.class, Perish.class, Regeneration.class, SkyshroudTroll.class})
+@CardUsed({AirElemental.class, BrokenFall.class, GrizzlyBears.class, MoggFanatic.class, Ornithopter.class, Perish.class, PincherBeetles.class, Regeneration.class, SkyshroudTroll.class})
 class PerishTest extends BaseCardTest {
 
     @Test
@@ -122,5 +122,36 @@ class PerishTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Air Elemental");
         harness.assertOnBattlefield(player1, "Ornithopter");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Destroys green creatures with shroud without targeting them")
+    void destroysGreenCreaturesWithShroud() {
+        harness.addToBattlefield(player2, new PincherBeetles());
+
+        harness.castFromHand(player1, new Perish(), "{2}{B}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Pincher Beetles");
+        harness.assertInGraveyard(player2, "Pincher Beetles");
+    }
+
+    @Test
+    @DisplayName("A green aura goes to the graveyard when its green enchanted creature is destroyed")
+    void removesAuraWhenEnchantedGreenCreatureIsDestroyed() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Regeneration()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.castFromHand(player1, new Perish(), "{2}{B}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Regeneration");
+        harness.assertInGraveyard(player1, "Regeneration");
     }
 }
