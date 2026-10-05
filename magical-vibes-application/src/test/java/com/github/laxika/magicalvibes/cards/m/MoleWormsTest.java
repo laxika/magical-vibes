@@ -228,6 +228,52 @@ class MoleWormsTest extends BaseCardTest {
 
     // ===== Helpers =====
 
+    @Test
+    @DisplayName("An already tapped land can be targeted and remains locked")
+    void alreadyTappedLandRemainsLocked() {
+        addReadyMoleWorms(player1);
+        Permanent targetLand = addReadyLand(player2);
+        targetLand.tap();
+
+        harness.activateAbility(player1, 0, null, targetLand.getId());
+        harness.passBothPriorities();
+        advanceToNextTurn(player1);
+
+        assertThat(targetLand.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability still taps the land if Mole Worms leaves before resolution")
+    void sourceLeavingBeforeResolutionStillTapsLandWithoutLockingIt() {
+        Permanent moleWorms = addReadyMoleWorms(player1);
+        Permanent targetLand = addReadyLand(player2);
+
+        harness.activateAbility(player1, 0, null, targetLand.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(moleWorms);
+        harness.passBothPriorities();
+
+        assertThat(targetLand.isTapped()).isTrue();
+        advanceToNextTurn(player1);
+        assertThat(targetLand.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Untapping the land outside its untap step does not end its lock")
+    void untappingAndRetappingLandDoesNotEndLock() {
+        Permanent moleWorms = addReadyMoleWorms(player1);
+        Permanent targetLand = addReadyLand(player2);
+
+        harness.activateAbility(player1, 0, null, targetLand.getId());
+        harness.passBothPriorities();
+        targetLand.untap();
+        assertThat(targetLand.isTapped()).isFalse();
+        targetLand.tap();
+        advanceToNextTurn(player1);
+
+        assertThat(moleWorms.isTapped()).isTrue();
+        assertThat(targetLand.isTapped()).isTrue();
+    }
+
     private Permanent addReadyMoleWorms(Player player) {
         return addCreatureReady(player, new MoleWorms());
     }
