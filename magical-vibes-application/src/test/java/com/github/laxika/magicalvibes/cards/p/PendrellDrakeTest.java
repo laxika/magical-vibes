@@ -14,6 +14,27 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({PendrellDrake.class, Island.class})
 class PendrellDrakeTest extends BaseCardTest {
+    @Test
+    @DisplayName("Cycling accepts colored mana and discards before the draw resolves")
+    void cyclingPaysCostsBeforeDrawing() {
+        harness.setHand(player1, List.of(new PendrellDrake()));
+        harness.setLibrary(player1, List.of(new Island(), new Island()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Pendrell Drake");
+        harness.assertNotInHand(player1, "Pendrell Drake");
+        harness.assertNotInHand(player1, "Island");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Island");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
 
     @Test
     @DisplayName("Cycling discards the card and draws one")
