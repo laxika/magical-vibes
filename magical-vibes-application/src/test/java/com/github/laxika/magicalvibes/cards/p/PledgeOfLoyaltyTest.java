@@ -102,4 +102,43 @@ class PledgeOfLoyaltyTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    void protectionUpdatesWhenControlledPermanentChangesColorAfterAttachment() {
+        Permanent enchanted = addCreatureReady(player1, new KavuChameleon());
+        harness.setHand(player1, List.of(new PledgeOfLoyalty()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasProtectionFrom(gd, enchanted, CardColor.GREEN)).isTrue();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThat(gqs.hasProtectionFrom(gd, enchanted, CardColor.BLACK)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, enchanted, CardColor.GREEN)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, enchanted, CardColor.WHITE)).isTrue();
+        assertThat(findPermanent(player1, "Pledge of Loyalty").getAttachedTo()).isEqualTo(enchanted.getId());
+    }
+
+    @Test
+    void ownAuraExceptionDoesNotAllowAnotherWhiteAuraToTargetCreature() {
+        Permanent enchanted = addCreatureReady(player1, new BenalishLancer());
+        harness.setHand(player1, List.of(new PledgeOfLoyalty()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new PledgeOfLoyalty()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, enchanted.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from white");
+        assertThat(findPermanent(player1, "Pledge of Loyalty").getAttachedTo()).isEqualTo(enchanted.getId());
+    }
 }
