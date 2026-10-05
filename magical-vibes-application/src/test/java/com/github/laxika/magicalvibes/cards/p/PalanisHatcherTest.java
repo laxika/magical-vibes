@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.a.Abrade;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(PalanisHatcher.class)
+@CardUsed({PalanisHatcher.class, Abrade.class})
 class PalanisHatcherTest extends BaseCardTest {
 
     @Test
@@ -77,13 +78,88 @@ class PalanisHatcherTest extends BaseCardTest {
                 .toList()).isEmpty();
     }
 
-    private void castAndResolveEtb() {
-        harness.setHand(player1, List.of(new PalanisHatcher()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+    @Test
+    void doesNotTriggerDuringOpponentsCombat() {
+        castAndResolveEtb();
 
-        harness.castCreature(player1, 0);
+        advanceToCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(eggs(player1)).hasSize(2);
+        assertThat(countPermanents(player1, "Dinosaur")).isZero();
+    }
+
+    @Test
+    void noEggAtTriggerTimeMeansNoAbilityOnStack() {
+        harness.addToBattlefield(player1, new PalanisHatcher());
+
+        advanceToCombat(player1);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void lastEggRemovedInResponsePreventsDinosaurCreation() {
+        castAndResolveEtb();
+        Permanent firstEgg = eggs(player1).getFirst();
+        Permanent lastEgg = eggs(player1).getLast();
+        harness.setHand(player2, List.of(new Abrade(), new Abrade()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castInstant(player2, 0, 0, firstEgg.getId());
+        harness.passBothPriorities();
+        assertThat(eggs(player1)).hasSize(1);
+
+        advanceToCombat(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castInstant(player2, 0, 0, lastEgg.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(eggs(player1)).isEmpty();
+        assertThat(countPermanents(player1, "Dinosaur")).isZero();
+    }
+
+    @Test
+    void combatAbilityStillResolvesAfterHatcherIsRemoved() {
+        castAndResolveEtb();
+        Permanent hatcher = findPermanent(player1, "Palani's Hatcher");
+        Permanent egg = eggs(player1).getFirst();
+
+        advanceToCombat(player1);
+        harness.setHand(player2, List.of(new Abrade()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castInstant(player2, 0, 0, hatcher.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+        harness.handleMultiplePermanentsChosen(player1, List.of(egg.getId()));
+
+        assertThat(countPermanents(player1, "Palani's Hatcher")).isZero();
+        assertThat(eggs(player1)).hasSize(1);
+        Permanent dinosaur = findPermanent(player1, "Dinosaur");
+        assertThat(gqs.hasKeyword(gd, dinosaur, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, eggs(player1).getFirst(), Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    void grantsHasteOnlyToOtherDinosaursControlledByItsController() {
+        harness.addToBattlefield(player1, new PalanisHatcher());
+        Permanent first = findPermanent(player1, "Palani's Hatcher");
+        harness.addToBattlefield(player2, new PalanisHatcher());
+        Permanent opponent = findPermanent(player2, "Palani's Hatcher");
+        assertThat(gqs.hasKeyword(gd, first, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.HASTE)).isFalse();
+
+        harness.addToBattlefield(player1, new PalanisHatcher());
+        Permanent second = findPermanents(player1, "Palani's Hatcher").getLast();
+
+        assertThat(gqs.hasKeyword(gd, first, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.HASTE)).isFalse();
+    }
+
+    private void castAndResolveEtb() {
+        harness.castFromHand(player1, new PalanisHatcher(), "{3}{R}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
