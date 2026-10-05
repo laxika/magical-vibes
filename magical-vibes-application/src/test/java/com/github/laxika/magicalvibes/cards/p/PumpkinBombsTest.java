@@ -68,6 +68,99 @@ class PumpkinBombsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("A newly controlled noncreature artifact can activate and pays costs before resolution")
+    void paysTapAndDiscardCostsBeforeResolving() {
+        Permanent bombs = addReadyPumpkinBombs();
+        bombs.setSummoningSick(true);
+        harness.setHand(player1, List.of(new PumpkinBombs(), new PumpkinBombs()));
+        harness.setLibrary(player1, List.of(new PumpkinBombs(), new PumpkinBombs(), new PumpkinBombs()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(bombs.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(bombs.getCounterCount(CounterType.FUSE)).isZero();
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player1, "Pumpkin Bombs");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(bombs.isTapped()).isTrue();
+        harness.assertOnBattlefield(player2, "Pumpkin Bombs");
+    }
+
+    @Test
+    @DisplayName("A tapped Pumpkin Bombs cannot activate")
+    void cannotActivateWhileTapped() {
+        Permanent bombs = addReadyPumpkinBombs();
+        bombs.setTapped(true);
+        harness.setHand(player1, List.of(new PumpkinBombs(), new PumpkinBombs()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(bombs.getCounterCount(CounterType.FUSE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The new controller draws and can send Pumpkin Bombs back with another fuse counter")
+    void newControllerCanActivateAndReturnControl() {
+        Permanent bombs = addReadyPumpkinBombs();
+        harness.setHand(player1, List.of(new PumpkinBombs(), new PumpkinBombs()));
+        harness.setLibrary(player1, List.of(new PumpkinBombs(), new PumpkinBombs(), new PumpkinBombs()));
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        bombs.setTapped(false);
+        harness.setHand(player2, List.of(new PumpkinBombs(), new PumpkinBombs()));
+        harness.setLibrary(player2, List.of(new PumpkinBombs(), new PumpkinBombs(), new PumpkinBombs()));
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(bombs.getCounterCount(CounterType.FUSE)).isEqualTo(2);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 19);
+        harness.assertOnBattlefield(player1, "Pumpkin Bombs");
+        harness.assertNotOnBattlefield(player2, "Pumpkin Bombs");
+    }
+
+    @Test
+    @DisplayName("Removing Pumpkin Bombs in response still draws and deals damage using its last fuse count")
+    void removedSourceUsesLastKnownFuseCounters() {
+        Permanent bombs = addReadyPumpkinBombs();
+        bombs.setCounterCount(CounterType.FUSE, 2);
+        harness.setHand(player1, List.of(new PumpkinBombs(), new PumpkinBombs()));
+        harness.setLibrary(player1, List.of(new PumpkinBombs(), new PumpkinBombs(), new PumpkinBombs()));
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bombs));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        harness.assertLife(player2, 18);
+        harness.assertNotOnBattlefield(player1, "Pumpkin Bombs");
+        harness.assertNotOnBattlefield(player2, "Pumpkin Bombs");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+    }
+
     private Permanent addReadyPumpkinBombs() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
