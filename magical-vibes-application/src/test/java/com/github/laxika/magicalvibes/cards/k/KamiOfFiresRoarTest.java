@@ -54,7 +54,7 @@ class KamiOfFiresRoarTest extends BaseCardTest {
     @DisplayName("The affected creature cannot be declared as a blocker")
     void affectedCreatureCannotBlock() {
         harness.addToBattlefield(player1, new KamiOfFiresRoar());
-        Permanent attacker = addCreatureReady(player1, new IsamaruHoundOfKonda());
+        addCreatureReady(player1, new IsamaruHoundOfKonda());
         Permanent blocker = addCreatureReady(player2, new IsamaruHoundOfKonda());
         harness.setHand(player1, List.of(new DampenThought()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -63,8 +63,7 @@ class KamiOfFiresRoarTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, blocker.getId());
         harness.passBothPriorities();
 
-        attacker.setAttacking(true);
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(1));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
@@ -119,5 +118,51 @@ class KamiOfFiresRoarTest extends BaseCardTest {
         harness.passUntil(player1, TurnStep.CLEANUP);
 
         assertThat(blocker.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The trigger can target its own source and resolves before the Spirit spell")
+    void canTargetSourceBeforeSpiritResolves() {
+        Permanent kami = harness.addToBattlefieldAndReturn(player1, new KamiOfFiresRoar());
+        harness.setHand(player1, List.of(new KamiOfFiresRoar()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, kami.getId());
+
+        assertThat(kami.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        assertThat(kami.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(countPermanents(player1, "Kami of Fire's Roar")).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Kami of Fire's Roar")).isEqualTo(2);
+        assertThat(findPermanents(player1, "Kami of Fire's Roar"))
+                .filteredOn(permanent -> !permanent.getId().equals(kami.getId()))
+                .allMatch(permanent -> !permanent.isCantBlockThisTurn());
+    }
+
+    @Test
+    @DisplayName("Kami does not trigger from its own casting while it is not on the battlefield")
+    void ownCastingDoesNotTrigger() {
+        Permanent creature = addCreatureReady(player2, new IsamaruHoundOfKonda());
+        harness.setHand(player1, List.of(new KamiOfFiresRoar()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(creature.isCantBlockThisTurn()).isFalse();
+        harness.assertOnBattlefield(player1, "Kami of Fire's Roar");
+        assertThat(gd.stack).isEmpty();
     }
 }
