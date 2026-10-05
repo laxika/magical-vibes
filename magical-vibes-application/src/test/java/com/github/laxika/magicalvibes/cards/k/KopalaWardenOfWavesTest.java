@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DeepFreeze;
+import com.github.laxika.magicalvibes.cards.d.DualShot;
+import com.github.laxika.magicalvibes.cards.m.MirrorGallery;
 import com.github.laxika.magicalvibes.cards.j.JungleDelver;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,12 +20,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({KopalaWardenOfWaves.class, JungleDelver.class, LightningBolt.class, GrizzlyBears.class,
-        KamahlPitFighter.class})
+        KamahlPitFighter.class, MirrorGallery.class, DeepFreeze.class, DualShot.class})
 class KopalaWardenOfWavesTest extends BaseCardTest {
 
     
 
     @Nested
+    @CardUsed({KopalaWardenOfWaves.class, JungleDelver.class, LightningBolt.class, GrizzlyBears.class})
     @DisplayName("Spell targeting tax")
     class SpellTargetingTax {
 
@@ -32,9 +36,6 @@ class KopalaWardenOfWavesTest extends BaseCardTest {
             harness.addToBattlefield(player1, new KopalaWardenOfWaves());
             harness.addToBattlefield(player1, new JungleDelver());
 
-            harness.forceActivePlayer(player2);
-            harness.forceStep(gd.currentStep);
-            harness.clearPriorityPassed();
             harness.setHand(player2, List.of(new LightningBolt()));
             harness.addMana(player2, ManaColor.RED, 1);
 
@@ -51,9 +52,6 @@ class KopalaWardenOfWavesTest extends BaseCardTest {
             harness.addToBattlefield(player1, new KopalaWardenOfWaves());
             harness.addToBattlefield(player1, new JungleDelver());
 
-            harness.forceActivePlayer(player2);
-            harness.forceStep(gd.currentStep);
-            harness.clearPriorityPassed();
             harness.setHand(player2, List.of(new LightningBolt()));
             harness.addMana(player2, ManaColor.RED, 3);
 
@@ -71,9 +69,6 @@ class KopalaWardenOfWavesTest extends BaseCardTest {
             harness.addToBattlefield(player1, new KopalaWardenOfWaves());
             harness.addToBattlefield(player1, new GrizzlyBears());
 
-            harness.forceActivePlayer(player2);
-            harness.forceStep(gd.currentStep);
-            harness.clearPriorityPassed();
             harness.setHand(player2, List.of(new LightningBolt()));
             harness.addMana(player2, ManaColor.RED, 1);
 
@@ -109,9 +104,6 @@ class KopalaWardenOfWavesTest extends BaseCardTest {
         void kopalaProtectsItself() {
             harness.addToBattlefield(player1, new KopalaWardenOfWaves());
 
-            harness.forceActivePlayer(player2);
-            harness.forceStep(gd.currentStep);
-            harness.clearPriorityPassed();
             harness.setHand(player2, List.of(new LightningBolt()));
             harness.addMana(player2, ManaColor.RED, 1);
 
@@ -127,9 +119,6 @@ class KopalaWardenOfWavesTest extends BaseCardTest {
         void spellTargetingPlayerNotTaxed() {
             harness.addToBattlefield(player1, new KopalaWardenOfWaves());
 
-            harness.forceActivePlayer(player2);
-            harness.forceStep(gd.currentStep);
-            harness.clearPriorityPassed();
             harness.setHand(player2, List.of(new LightningBolt()));
             harness.addMana(player2, ManaColor.RED, 1);
 
@@ -142,19 +131,18 @@ class KopalaWardenOfWavesTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({KopalaWardenOfWaves.class, JungleDelver.class, LightningBolt.class, MirrorGallery.class})
     @DisplayName("Two Kopalas stack")
     class TwoKopalasStack {
 
         @Test
         @DisplayName("Two Kopalas increase the cost by {4}")
         void twoKopalasStackCostIncrease() {
+            harness.addToBattlefield(player1, new MirrorGallery());
             harness.addToBattlefield(player1, new KopalaWardenOfWaves());
             harness.addToBattlefield(player1, new KopalaWardenOfWaves());
             harness.addToBattlefield(player1, new JungleDelver());
 
-            harness.forceActivePlayer(player2);
-            harness.forceStep(gd.currentStep);
-            harness.clearPriorityPassed();
             harness.setHand(player2, List.of(new LightningBolt()));
             harness.addMana(player2, ManaColor.RED, 3);
 
@@ -168,13 +156,11 @@ class KopalaWardenOfWavesTest extends BaseCardTest {
         @Test
         @DisplayName("Two Kopalas — can cast with enough mana")
         void twoKopalasCanCastWithEnoughMana() {
+            harness.addToBattlefield(player1, new MirrorGallery());
             harness.addToBattlefield(player1, new KopalaWardenOfWaves());
             harness.addToBattlefield(player1, new KopalaWardenOfWaves());
             harness.addToBattlefield(player1, new JungleDelver());
 
-            harness.forceActivePlayer(player2);
-            harness.forceStep(gd.currentStep);
-            harness.clearPriorityPassed();
             harness.setHand(player2, List.of(new LightningBolt()));
             harness.addMana(player2, ManaColor.RED, 5);
 
@@ -188,6 +174,7 @@ class KopalaWardenOfWavesTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({KopalaWardenOfWaves.class, JungleDelver.class, KamahlPitFighter.class, GrizzlyBears.class})
     @DisplayName("Activated ability targeting tax")
     class ActivatedAbilityTargetingTax {
 
@@ -253,7 +240,8 @@ class KopalaWardenOfWavesTest extends BaseCardTest {
             UUID merfolkId = harness.getPermanentId(player1, "Jungle Delver");
 
             // Find Kamahl's index on player1's battlefield
-            int kamahlIndex = findPermanentIndex(player1, "Kamahl, Pit Fighter");
+            int kamahlIndex = gd.playerBattlefields.get(player1.getId())
+                    .indexOf(findPermanent(player1, "Kamahl, Pit Fighter"));
 
             // No tax — controller targeting own Merfolk
             harness.activateAbility(player1, kamahlIndex, null, merfolkId);
@@ -262,13 +250,70 @@ class KopalaWardenOfWavesTest extends BaseCardTest {
         }
     }
 
-    private int findPermanentIndex(com.github.laxika.magicalvibes.model.Player player, String cardName) {
-        var battlefield = gd.playerBattlefields.get(player.getId());
-        for (int i = 0; i < battlefield.size(); i++) {
-            if (battlefield.get(i).getCard().getName().equals(cardName)) {
-                return i;
-            }
-        }
-        throw new IllegalStateException("Permanent not found: " + cardName);
+    @Test
+    @CardUsed({KopalaWardenOfWaves.class, JungleDelver.class, DualShot.class})
+    void targetingTwoProtectedMerfolkPaysTaxOnlyOnce() {
+        var kopala = harness.addToBattlefieldAndReturn(player1, new KopalaWardenOfWaves());
+        var delver = harness.addToBattlefieldAndReturn(player1, new JungleDelver());
+        harness.setHand(player2, List.of(new DualShot()));
+        harness.addMana(player2, ManaColor.RED, 3);
+
+        harness.castInstant(player2, 0, List.of(kopala.getId(), delver.getId()));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @CardUsed({KopalaWardenOfWaves.class, JungleDelver.class, DualShot.class})
+    void opponentsOwnMerfolkIsNotProtected() {
+        harness.addToBattlefield(player1, new KopalaWardenOfWaves());
+        var delver = harness.addToBattlefieldAndReturn(player2, new JungleDelver());
+        harness.setHand(player2, List.of(new DualShot()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, List.of(delver.getId()));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @CardUsed({KopalaWardenOfWaves.class, JungleDelver.class, DeepFreeze.class, DualShot.class})
+    void losingAbilitiesRemovesSpellTax() {
+        var kopala = harness.addToBattlefieldAndReturn(player1, new KopalaWardenOfWaves());
+        var delver = harness.addToBattlefieldAndReturn(player1, new JungleDelver());
+        harness.setHand(player1, List.of(new DeepFreeze()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castEnchantment(player1, 0, kopala.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Deep Freeze");
+        assertThat(gqs.hasLostAllAbilities(gd, kopala)).isTrue();
+        harness.setHand(player2, List.of(new DualShot()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, List.of(delver.getId()));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @CardUsed({KopalaWardenOfWaves.class, JungleDelver.class, DeepFreeze.class, KamahlPitFighter.class})
+    void losingAbilitiesRemovesActivatedAbilityTax() {
+        var kopala = harness.addToBattlefieldAndReturn(player1, new KopalaWardenOfWaves());
+        var delver = harness.addToBattlefieldAndReturn(player1, new JungleDelver());
+        harness.setHand(player1, List.of(new DeepFreeze()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castEnchantment(player1, 0, kopala.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Deep Freeze");
+        assertThat(gqs.hasLostAllAbilities(gd, kopala)).isTrue();
+        harness.addToBattlefield(player2, new KamahlPitFighter());
+
+        harness.activateAbility(player2, 0, null, delver.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
 }
