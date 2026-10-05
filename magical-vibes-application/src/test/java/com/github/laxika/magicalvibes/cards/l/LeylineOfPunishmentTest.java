@@ -6,8 +6,7 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.service.GameService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -19,13 +18,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("scryfall")
+@CardUsed({LeylineOfPunishment.class, AngelOfMercy.class, GrizzlyBears.class, Shock.class})
 class LeylineOfPunishmentTest {
 
     protected GameTestHarness harness;
     protected Player player1;
     protected Player player2;
-    protected GameService gs;
-    protected GameQueryService gqs;
     protected GameData gd;
 
     @BeforeEach
@@ -33,13 +31,9 @@ class LeylineOfPunishmentTest {
         harness = new GameTestHarness();
         player1 = harness.getPlayer1();
         player2 = harness.getPlayer2();
-        gs = harness.getGameService();
-        gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         // Do NOT call skipMulligan() here — leyline tests need to set hand first
     }
-
-    // ===== Leyline opening hand mechanic =====
 
     @Test
     @DisplayName("Leyline in opening hand prompts may ability at game start")
@@ -78,8 +72,6 @@ class LeylineOfPunishmentTest {
                 .anyMatch(c -> c.getName().equals("Leyline of Punishment"));
     }
 
-    // ===== Can be cast normally =====
-
     @Test
     @DisplayName("Leyline of Punishment can be cast normally for {2}{R}{R}")
     void canBeCastNormally() {
@@ -95,8 +87,6 @@ class LeylineOfPunishmentTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Leyline of Punishment"));
     }
-
-    // ===== Players can't gain life =====
 
     @Test
     @DisplayName("Players can't gain life with Leyline of Punishment on the battlefield")
@@ -164,8 +154,6 @@ class LeylineOfPunishmentTest {
         harness.assertLife(player2, 23);
     }
 
-    // ===== Damage can't be prevented =====
-
     @Test
     @DisplayName("Damage prevention shields are bypassed with Leyline of Punishment on the battlefield")
     void damagePreventionShieldsBypassed() {
@@ -179,8 +167,7 @@ class LeylineOfPunishmentTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         // Player2 should take full damage despite the shield
         harness.assertLife(player2, 18);
@@ -195,17 +182,15 @@ class LeylineOfPunishmentTest {
         harness.addToBattlefield(player1, new LeylineOfPunishment());
 
         // Add a creature and give it a prevention shield
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        var permanentId = harness.getPermanentId(player2, "Grizzly Bears");
-        var permanent = gqs.findPermanentById(gd, permanentId);
+        var permanent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        var permanentId = permanent.getId();
         permanent.setDamagePreventionShield(5);
 
         // Shock the creature
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, permanentId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, permanentId);
 
         // Grizzly Bears (2/2) should be destroyed by 2 damage despite the prevention shield
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -223,15 +208,12 @@ class LeylineOfPunishmentTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         // Player2 should not take damage — shield prevented it
         harness.assertLife(player2, 20);
         assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(8);
     }
-
-    // ===== Life loss is not prevented =====
 
     @Test
     @DisplayName("Players can still lose life (take damage) with Leyline of Punishment on the battlefield")
@@ -243,10 +225,42 @@ class LeylineOfPunishmentTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         // Damage goes through normally
         harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("The nonstarting player can begin with Leyline on the battlefield")
+    void opponentCanBeginWithLeyline() {
+        harness.setHand(player2, List.of(new LeylineOfPunishment()));
+        harness.skipMulligan();
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertOnBattlefield(player2, "Leyline of Punishment");
+        harness.assertNotInHand(player2, "Leyline of Punishment");
+        harness.assertNotOnBattlefield(player1, "Leyline of Punishment");
+    }
+
+    @Test
+    @DisplayName("Damage prevention resumes after the last Leyline leaves")
+    void damagePreventionResumesAfterLeylineLeaves() {
+        harness.skipMulligan();
+        harness.addToBattlefield(player1, new LeylineOfPunishment());
+        gd.playerDamagePreventionShields.put(player2.getId(), 10);
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(10);
+
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(8);
     }
 }
