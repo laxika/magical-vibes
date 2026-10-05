@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -24,7 +23,7 @@ class PenumbraUmbraTest extends BaseCardTest {
     @Test
     @DisplayName("Creates a black token copy of the enchanted creature when Penumbra Umbra is destroyed")
     void createsBlackCopyWhenAuraIsDestroyed() {
-        Permanent bears = addCreatureReady(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         Permanent aura = castAuraOn(bears);
 
         harness.forceActivePlayer(player2);
@@ -50,7 +49,7 @@ class PenumbraUmbraTest extends BaseCardTest {
     @Test
     @DisplayName("Umbra armor saves the enchanted creature and still creates a black copy")
     void umbraArmorCreatesBlackCopyWhenCreatureWouldBeDestroyed() {
-        Permanent bears = addCreatureReady(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         castAuraOn(bears);
 
         harness.forceActivePlayer(player2);
@@ -83,10 +82,35 @@ class PenumbraUmbraTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addCreatureReady(Player player) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
-        creature.setSummoningSick(false);
-        return creature;
+    @Test
+    @DisplayName("Copies the creature's last known values if it dies before the Aura trigger resolves")
+    void copiesCreatureThatLeavesBeforeTriggerResolves() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = castAuraOn(bears);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Disenchant(), new DoomBlade()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, aura.getId());
+        assertThat(gd.stack).hasSize(1);
+
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castInstant(player2, 0, bears.getId());
+        resolveStackFully();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .singleElement()
+                .satisfies(token -> {
+                    assertThat(token.getCard().getName()).isEqualTo("Grizzly Bears");
+                    assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
+                    assertThat(token.getCard().getPower()).isEqualTo(2);
+                    assertThat(token.getCard().getToughness()).isEqualTo(2);
+                });
     }
 
     private Permanent castAuraOn(Permanent creature) {
