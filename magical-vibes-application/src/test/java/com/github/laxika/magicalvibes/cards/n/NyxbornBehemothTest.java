@@ -51,7 +51,6 @@ class NyxbornBehemothTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sacrificed);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(behemoth.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
@@ -66,5 +65,76 @@ class NyxbornBehemothTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Reduction beyond ten generic mana still requires two green mana")
+    void excessiveReductionLeavesColoredCost() {
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, new GloriousAnthem());
+        }
+        harness.setHand(player1, List.of(new NyxbornBehemoth()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Nyxborn Behemoth");
+    }
+
+    @Test
+    @DisplayName("Excess cost reduction cannot pay the second green mana")
+    void excessiveReductionCannotReplaceGreenMana() {
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, new GloriousAnthem());
+        }
+        harness.setHand(player1, List.of(new NyxbornBehemoth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Nyxborn Behemoth");
+    }
+
+    @Test
+    @DisplayName("Another enchantment creature can be sacrificed as the activation cost")
+    void canSacrificeAnotherEnchantmentCreature() {
+        Permanent behemoth = harness.addToBattlefieldAndReturn(player1, new NyxbornBehemoth());
+        Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new NyxbornBehemoth());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, sacrificed.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sacrificed);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrificed.getCard());
+        assertThat(behemoth.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(behemoth.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+    }
+
+    @Test
+    @DisplayName("An opponent's enchantment cannot pay the sacrifice cost")
+    void opponentsEnchantmentCannotPaySacrificeCost() {
+        harness.addToBattlefield(player1, new NyxbornBehemoth());
+        Permanent opponentsEnchantment = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentsEnchantment);
+        assertThat(gd.stack).isEmpty();
     }
 }
