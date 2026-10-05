@@ -18,6 +18,60 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class KagemarosClutchTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Casting the Aura counts only cards remaining in its controller's hand")
+    void castingCountsRemainingHandAndAttachesToOpponentCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new HandOfCruelty());
+        harness.setHand(player1, List.of(new KagemarosClutch(), new ONaginata()));
+        harness.setHand(player2, List.of(new ONaginata(), new ONaginata(), new ONaginata()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Kagemaro's Clutch").getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Hand of Cruelty");
+    }
+
+    @Test
+    @DisplayName("Casting the last card in hand gives no penalty")
+    void castingLastCardGivesNoPenalty() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new HandOfCruelty());
+        harness.setHand(player1, List.of(new KagemarosClutch()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Kagemaro's Clutch");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A hand increase kills a creature at zero toughness and puts its Aura in the graveyard")
+    void handIncreaseKillsCreatureAndRemovesAura() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new HandOfCruelty());
+        harness.setHand(player1, List.of(new KagemarosClutch(), new ONaginata()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Hand of Cruelty");
+
+        harness.setHand(player1, List.of(new ONaginata(), new ONaginata()));
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player2, "Hand of Cruelty");
+        harness.assertInGraveyard(player2, "Hand of Cruelty");
+        harness.assertNotOnBattlefield(player1, "Kagemaro's Clutch");
+        harness.assertInGraveyard(player1, "Kagemaro's Clutch");
+    }
+
+    @Test
     @DisplayName("Kagemaro's Clutch gives the enchanted creature -X/-X for cards in the Aura controller's hand")
     void givesNegativeBoostBasedOnAuraControllersHand() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new HandOfCruelty());
