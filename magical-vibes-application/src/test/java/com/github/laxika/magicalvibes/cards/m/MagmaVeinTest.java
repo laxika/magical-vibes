@@ -62,4 +62,50 @@ class MagmaVeinTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         harness.assertOnBattlefield(player1, "Forest");
     }
+    @Test
+    @DisplayName("The land is sacrificed as a cost before damage resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        harness.addToBattlefield(player1, new MagmaVein());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent creature = addCreatureReady(player2, new NantukoDisciple());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(creature.getMarkedDamage()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Repeated activations accumulate lethal damage without tapping Magma Vein")
+    void repeatedActivationsKillGroundCreaturesButSpareFlyers() {
+        harness.addToBattlefield(player1, new MagmaVein());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent groundCreature = addCreatureReady(player2, new NantukoDisciple());
+        Permanent flyingCreature = addCreatureReady(player2, new AvenFlock());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(groundCreature.getMarkedDamage()).isEqualTo(1);
+
+        harness.addToBattlefield(player1, new Forest());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Nantuko Disciple");
+        harness.assertNotOnBattlefield(player2, "Nantuko Disciple");
+        harness.assertOnBattlefield(player2, "Aven Flock");
+        assertThat(flyingCreature.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Magma Vein");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
 }
