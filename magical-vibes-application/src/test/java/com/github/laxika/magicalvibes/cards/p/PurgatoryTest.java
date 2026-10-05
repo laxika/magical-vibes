@@ -25,8 +25,27 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PurgatoryTest extends BaseCardTest {
 
     @Nested
+    @CardUsed({Purgatory.class, FeralShadow.class, GoblinScouts.class, RayOfCommand.class, SavageTwister.class})
     @DisplayName("Nontoken creature death exile trigger")
     class DeathTrigger {
+
+        @Test
+        void creatureStaysInGraveyardUntilDeathTriggerResolves() {
+            UUID permId = addPurgatory();
+            harness.addToBattlefield(player1, new FeralShadow());
+            harness.setHand(player1, List.of(new SavageTwister()));
+            harness.addMana(player1, ManaColor.RED, 2);
+            harness.addMana(player1, ManaColor.GREEN, 1);
+
+            harness.castAndResolveSorcery(player1, 0, 1);
+
+            harness.assertInGraveyard(player1, "Feral Shadow");
+            assertThat(gd.getCardsExiledByPermanent(permId)).isEmpty();
+            resolveAllTriggers();
+            harness.assertNotInGraveyard(player1, "Feral Shadow");
+            assertThat(gd.getCardsExiledByPermanent(permId))
+                    .extracting(Card::getName).containsExactly("Feral Shadow");
+        }
 
         @Test
         @DisplayName("A dying nontoken creature is exiled with the enchantment instead of staying in the graveyard")
@@ -89,8 +108,37 @@ class PurgatoryTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({Purgatory.class, FeralShadow.class, GoblinScouts.class, RayOfCommand.class, SavageTwister.class})
     @DisplayName("Upkeep: pay {4} and 2 life to return an exiled card")
     class UpkeepReturn {
+
+        @Test
+        void opponentsUpkeepDoesNotOfferPaymentOrReturnCard() {
+            UUID permId = setupWithExiledShadows(1);
+
+            advanceToSecondTurnUpkeep(player2);
+            resolveAllTriggers();
+
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
+            assertThat(gd.getCardsExiledByPermanent(permId)).hasSize(1);
+            harness.assertNotOnBattlefield(player1, "Feral Shadow");
+            harness.assertLife(player1, 20);
+        }
+
+        @Test
+        void paymentCanBeMadeEvenWhenNoCardsAreExiled() {
+            UUID permId = addPurgatory();
+
+            advanceToSecondTurnUpkeep(player1);
+            harness.addMana(player1, ManaColor.WHITE, 4);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+
+            harness.assertLife(player1, 18);
+            assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+            assertThat(gd.getCardsExiledByPermanent(permId)).isEmpty();
+            harness.assertNotOnBattlefield(player1, "Feral Shadow");
+        }
 
         @Test
         @DisplayName("Accepting pays 2 life and returns the exiled card to the battlefield")
@@ -196,8 +244,7 @@ class PurgatoryTest extends BaseCardTest {
     }
 
     private UUID addPurgatory() {
-        harness.addToBattlefield(player1, new Purgatory());
-        return harness.getPermanentId(player1, "Purgatory");
+        return harness.addToBattlefieldAndReturn(player1, new Purgatory()).getId();
     }
 
     private UUID setupWithExiledShadows(int count) {
