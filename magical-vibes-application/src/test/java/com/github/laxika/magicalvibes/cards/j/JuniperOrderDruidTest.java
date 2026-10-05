@@ -55,4 +55,62 @@ class JuniperOrderDruidTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void canTargetUntappedLand() {
+        Permanent druid = addCreatureReady(player1, new JuniperOrderDruid());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.activateAbility(player1, 0, 0, null, forest.getId());
+
+        assertThat(druid.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(forest.isTapped()).isFalse();
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent druid = harness.addToBattlefieldAndReturn(player1, new JuniperOrderDruid());
+        druid.setSummoningSick(true);
+        Permanent forest = addTappedForest(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(druid.isTapped()).isFalse();
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent druid = addCreatureReady(player1, new JuniperOrderDruid());
+        druid.tap();
+        Permanent forest = addTappedForest(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void abilityResolvesAfterDruidLeavesBattlefield() {
+        Permanent druid = addCreatureReady(player1, new JuniperOrderDruid());
+        Permanent forest = addTappedForest(player1);
+
+        harness.activateAbility(player1, 0, 0, null, forest.getId());
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(druid);
+        gd.playerGraveyards.get(player1.getId()).add(druid.getCard());
+        harness.passBothPriorities();
+
+        assertThat(forest.isTapped()).isFalse();
+    }
 }
