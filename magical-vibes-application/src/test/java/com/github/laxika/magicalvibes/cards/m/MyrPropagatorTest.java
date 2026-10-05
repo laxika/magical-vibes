@@ -1,18 +1,20 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MyrPropagator.class})
 class MyrPropagatorTest extends BaseCardTest {
-
-    // ===== Token creation =====
 
     @Test
     @DisplayName("Activated ability creates a token copy of Myr Propagator")
@@ -29,8 +31,8 @@ class MyrPropagatorTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Myr Propagator") && p.getCard().isToken())
                 .findFirst().orElse(null);
         assertThat(token).isNotNull();
-        assertThat(token.getCard().getPower()).isEqualTo(1);
-        assertThat(token.getCard().getToughness()).isEqualTo(1);
+        assertThat(token.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 
     @Test
@@ -48,12 +50,14 @@ class MyrPropagatorTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Myr Propagator") && p.getCard().isToken())
                 .findFirst().orElseThrow();
 
-        // Token should also have the activated ability (copiable characteristic per CR 707.2)
-        assertThat(token.getCard().getActivatedAbilities()).hasSize(1);
-        assertThat(token.getCard().getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(token.getCard().getActivatedAbilities().getFirst().getEffects())
-                .hasSize(1)
-                .anyMatch(e -> e instanceof CreateTokenCopyOfSourceEffect);
+        token.setSummoningSick(false);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(token.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken()).count()).isEqualTo(2);
     }
 
     @Test
@@ -99,20 +103,62 @@ class MyrPropagatorTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        // Per CR 608.2b, abilities resolve even if the source left the zone;
-        // the token copy uses last-known information of the source.
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Myr Propagator") && p.getCard().isToken());
     }
 
-    // ===== Helpers =====
+    @Test
+    void newlyCreatedTokenCannotActivateWhileSummoningSick() {
+        addPropagatorReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(harness.getGameData().playerBattlefields.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void activationRequiresThreeMana() {
+        addPropagatorReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    void tappedSourceCannotActivateAgain() {
+        addPropagatorReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(harness.getGameData().playerBattlefields.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void tokenDoesNotCopyCountersOrTappedStatus() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new MyrPropagator());
+        source.setSummoningSick(false);
+        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        Permanent token = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken()).findFirst().orElseThrow();
+        assertThat(source.isTapped()).isTrue();
+        assertThat(token.isTapped()).isFalse();
+        assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
 
     private void addPropagatorReady(com.github.laxika.magicalvibes.model.Player player) {
-        harness.addToBattlefield(player, new MyrPropagator());
-        GameData gd = harness.getGameData();
-        Permanent perm = gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Myr Propagator") && !p.getCard().isToken())
-                .findFirst().orElseThrow();
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new MyrPropagator());
         perm.setSummoningSick(false);
     }
 }
