@@ -64,4 +64,32 @@ class KrosaTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
+
+    @Test
+    void boostEndsWhenKrosaIsNoLongerFaceUp() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+
+        harness.inMutationScope(() -> gd.planechase.faceUp.clear());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    void chaosAddsManaToTheOtherPlanarController() {
+        harness.forceActivePlayer(player2);
+        gd.planechase.controllerId = player2.getId();
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        for (ManaColor color : ManaColor.COLORS) {
+            assertThat(gd.playerManaPools.get(player2.getId()).get(color)).isEqualTo(1);
+        }
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(5);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
 }
