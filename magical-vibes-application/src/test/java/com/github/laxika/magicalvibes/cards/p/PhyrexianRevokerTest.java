@@ -1,20 +1,16 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.s.SphereOfTheSuns;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
+import com.github.laxika.magicalvibes.cards.v.VedalkenAnatomist;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -22,182 +18,147 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PhyrexianRevoker.class, VedalkenAnatomist.class, SphereOfTheSuns.class, PlagueMyr.class, TurnToFrog.class})
 class PhyrexianRevokerTest extends BaseCardTest {
 
-    // ===== Casting and card name choice =====
-
     @Test
-    @DisplayName("Casting Phyrexian Revoker puts it on the stack as creature spell")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new PhyrexianRevoker()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
+        prepareRevokerSpell();
         harness.castCreature(player1, 0);
-
         assertThat(gd.stack).hasSize(1);
-        StackEntry entry = gd.stack.getFirst();
-        assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Phyrexian Revoker");
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
     }
 
     @Test
-    @DisplayName("Resolving Phyrexian Revoker awaits card name choice before entering battlefield")
     void resolvingTriggersCardNameChoice() {
-        harness.setHand(player1, List.of(new PhyrexianRevoker()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
+        prepareRevokerSpell();
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-
-        // Permanent should NOT be on the battlefield yet — name must be chosen first (Rule 614.1c)
         harness.assertNotOnBattlefield(player1, "Phyrexian Revoker");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     @Test
-    @DisplayName("Choosing a card name sets chosenName on the permanent")
     void choosingNameSetsOnPermanent() {
-        harness.setHand(player1, List.of(new PhyrexianRevoker()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
+        prepareRevokerSpell();
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "Prodigal Pyromancer");
-
-        Permanent perm = findPermanent(player1, "Phyrexian Revoker");
-        assertThat(perm.getChosenName()).isEqualTo("Prodigal Pyromancer");
+        harness.handleListChoice(player1, "Vedalken Anatomist");
+        assertThat(findPermanent(player1, "Phyrexian Revoker").getChosenName()).isEqualTo("Vedalken Anatomist");
     }
 
-    // ===== Blocking activated abilities =====
-
     @Test
-    @DisplayName("Blocks non-mana activated abilities of the named card")
     void blocksNonManaActivatedAbilities() {
-        Permanent revoker = addReadyRevoker(player1, "Prodigal Pyromancer");
-
-        Card pyromancer = createCreatureWithTapAbility("Prodigal Pyromancer", 1, 1, CardColor.RED);
-        Permanent pyromancerPerm = new Permanent(pyromancer);
-        pyromancerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(pyromancerPerm);
-
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, player1.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("can't be activated");
+        Permanent revoker = addReadyRevoker(player1, "Vedalken Anatomist");
+        addReadyAnatomist(player2);
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, revoker.getId()))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("can't be activated");
     }
 
     @Test
-    @DisplayName("DOES block mana abilities of the named card (unlike Pithing Needle)")
     void blocksManaAbilities() {
-        Permanent revoker = addReadyRevoker(player1, "Birds of Paradise");
-
-        Card birds = createCreatureWithManaAbility("Birds of Paradise", 0, 1, CardColor.GREEN);
-        Permanent birdsPerm = new Permanent(birds);
-        birdsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(birdsPerm);
-
+        addReadyRevoker(player1, "Sphere of the Suns");
+        addReadySphere(player2);
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("can't be activated")
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("can't be activated")
                 .hasMessageContaining("Phyrexian Revoker");
     }
 
     @Test
-    @DisplayName("Does NOT block abilities of differently-named cards")
     void doesNotBlockDifferentlyNamedCards() {
-        Permanent revoker = addReadyRevoker(player1, "Some Other Card");
-
-        Card pyromancer = createCreatureWithTapAbility("Prodigal Pyromancer", 1, 1, CardColor.RED);
-        Permanent pyromancerPerm = new Permanent(pyromancer);
-        pyromancerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(pyromancerPerm);
-
-        harness.activateAbility(player2, 0, null, player1.getId());
-
+        Permanent revoker = addReadyRevoker(player1, "Plague Myr");
+        addReadyAnatomist(player2);
+        harness.activateAbility(player2, 0, null, revoker.getId());
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Prodigal Pyromancer");
     }
 
     @Test
-    @DisplayName("Blocks abilities of the controller's own named cards")
     void blocksOwnCardsAbilities() {
-        Permanent revoker = addReadyRevoker(player1, "Prodigal Pyromancer");
-
-        Card pyromancer = createCreatureWithTapAbility("Prodigal Pyromancer", 1, 1, CardColor.RED);
-        Permanent pyromancerPerm = new Permanent(pyromancer);
-        pyromancerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(pyromancerPerm);
-
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, player2.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("can't be activated");
+        Permanent revoker = addReadyRevoker(player1, "Vedalken Anatomist");
+        addReadyAnatomist(player1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, revoker.getId()))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("can't be activated");
     }
 
-    // ===== Revoker removal =====
-
     @Test
-    @DisplayName("After Phyrexian Revoker leaves the battlefield, abilities are usable again")
     void abilitiesWorkAfterRevokerRemoved() {
-        Permanent revoker = addReadyRevoker(player1, "Prodigal Pyromancer");
-
-        Card pyromancer = createCreatureWithTapAbility("Prodigal Pyromancer", 1, 1, CardColor.RED);
-        Permanent pyromancerPerm = new Permanent(pyromancer);
-        pyromancerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(pyromancerPerm);
-
-        // Verify blocked
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, player1.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("can't be activated");
-
-        // Remove Phyrexian Revoker from battlefield
+        Permanent revoker = addReadyRevoker(player1, "Vedalken Anatomist");
+        Permanent anatomist = addReadyAnatomist(player2);
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, anatomist.getId()))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("can't be activated");
         gd.playerBattlefields.get(player1.getId()).remove(revoker);
-
-        // Now the ability should work
-        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.activateAbility(player2, 0, null, anatomist.getId());
         assertThat(gd.stack).hasSize(1);
     }
 
-    // ===== Helpers =====
+    @Test
+    void cannotChooseLandName() {
+        prepareRevokerSpell();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "Forest"))
+                .isInstanceOf(IllegalArgumentException.class);
+        harness.assertNotOnBattlefield(player1, "Phyrexian Revoker");
+    }
+
+    @Test
+    void blocksIntrinsicTapManaAbilities() {
+        addReadyRevoker(player1, "Plague Myr");
+        Permanent myr = harness.addToBattlefieldAndReturn(player2, new PlagueMyr());
+        myr.setSummoningSick(false);
+        assertThatThrownBy(() -> harness.tapPermanent(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(myr.isTapped()).isFalse();
+    }
+
+    @Test
+    void losingAbilitiesEndsNonManaAbilityLock() {
+        Permanent revoker = addReadyRevoker(player1, "Vedalken Anatomist");
+        addReadyAnatomist(player2);
+        turnRevokerToFrog(revoker);
+        harness.activateAbility(player2, 0, null, revoker.getId());
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void losingAbilitiesEndsManaAbilityLock() {
+        Permanent revoker = addReadyRevoker(player1, "Sphere of the Suns");
+        Permanent sphere = addReadySphere(player2);
+        turnRevokerToFrog(revoker);
+        harness.activateAbility(player2, 0, null, null);
+        assertThat(sphere.isTapped()).isTrue();
+        assertThat(sphere.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+    }
+
+    private void prepareRevokerSpell() {
+        harness.setHand(player1, List.of(new PhyrexianRevoker()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+    }
 
     private Permanent addReadyRevoker(Player player, String chosenName) {
-        PhyrexianRevoker card = new PhyrexianRevoker();
-        Permanent perm = new Permanent(card);
-        perm.setChosenName(chosenName);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new PhyrexianRevoker());
+        permanent.setChosenName(chosenName);
+        permanent.setSummoningSick(false);
+        return permanent;
     }
 
-    private static Card createCreatureWithTapAbility(String name, int power, int toughness, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        card.addActivatedAbility(new ActivatedAbility(
-                true, null,
-                List.of(new DealDamageToAnyTargetEffect(1)),
-                "{T}: " + name + " deals 1 damage to any target."
-        ));
-        return card;
+    private Permanent addReadyAnatomist(Player player) {
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new VedalkenAnatomist());
+        permanent.setSummoningSick(false);
+        harness.addMana(player, ManaColor.BLUE, 3);
+        return permanent;
     }
 
-    private static Card createCreatureWithManaAbility(String name, int power, int toughness, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        card.addActivatedAbility(new ActivatedAbility(
-                true, null,
-                List.of(new AwardAnyColorManaEffect()),
-                "{T}: Add one mana of any color."
-        ));
-        return card;
+    private Permanent addReadySphere(Player player) {
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new SphereOfTheSuns());
+        permanent.setCounterCount(CounterType.CHARGE, 3);
+        return permanent;
+    }
+
+    private void turnRevokerToFrog(Permanent revoker) {
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, revoker.getId());
     }
 }
