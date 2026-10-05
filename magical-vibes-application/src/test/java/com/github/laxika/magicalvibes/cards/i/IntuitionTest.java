@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.a.AvenMindcensor;
 import com.github.laxika.magicalvibes.cards.o.ObNixilisUnshackled;
+import com.github.laxika.magicalvibes.cards.o.OppositionAgent;
 import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.model.Card;
@@ -18,7 +20,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Intuition.class, TrainedArmodon.class})
+@CardUsed({Intuition.class, TrainedArmodon.class, PsychogenicProbe.class,
+        ObNixilisUnshackled.class, AvenMindcensor.class, OppositionAgent.class})
 class IntuitionTest extends BaseCardTest {
 
     @Test
@@ -104,8 +107,7 @@ class IntuitionTest extends BaseCardTest {
         harness.addToBattlefield(player2, new PsychogenicProbe());
         harness.setLife(player1, 20);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
     }
@@ -139,6 +141,97 @@ class IntuitionTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId).containsExactly(only.getId());
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The caster cannot target themselves")
+    void cannotTargetController() {
+        harness.setHand(player1, List.of(new Intuition()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The same physical library card cannot be revealed more than once")
+    void cannotChooseDuplicateCardIds() {
+        setupAndCast();
+        List<Card> library = setLibrary(5);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(library.get(0).getId(), library.get(0).getId(), library.get(1).getId())))
+                .hasMessageContaining("Duplicate card ID");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(library);
+    }
+
+    @Test
+    @CardUsed(AvenMindcensor.class)
+    @DisplayName("An opponent's Aven Mindcensor prevents finding cards below the top four")
+    void mindcensorRestrictsSearchToTopFour() {
+        setupAndCast();
+        List<Card> library = setLibrary(6);
+        harness.addToBattlefield(player2, new AvenMindcensor());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(library.get(0).getId(), library.get(1).getId(), library.get(4).getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleMultipleCardsChosen(player1,
+                List.of(library.get(0).getId(), library.get(1).getId(), library.get(3).getId()));
+        harness.handleMultipleCardsChosen(player2, List.of(library.get(3).getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(library.get(3).getId());
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
+                .containsExactlyInAnyOrder(library.get(2).getId(), library.get(4).getId(), library.get(5).getId());
+    }
+
+    @Test
+    @CardUsed(OppositionAgent.class)
+    @DisplayName("Opposition Agent's controller chooses all three found cards and exiles them")
+    void oppositionAgentControlsSearchAndExilesFoundCards() {
+        setupAndCast();
+        List<Card> library = setLibrary(5);
+        harness.addToBattlefield(player2, new OppositionAgent());
+        harness.passBothPriorities();
+
+        List<UUID> found = List.of(library.get(0).getId(), library.get(1).getId(), library.get(2).getId());
+        harness.handleMultipleCardsChosen(player2, found);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getId)
+                .containsExactlyInAnyOrderElementsOf(found);
+        for (UUID cardId : found) {
+            assertThat(gd.exilePlayPermissions.get(cardId)).isEqualTo(player2.getId());
+            assertThat(gd.exilePlayAnyManaTypeWhileExiled).contains(cardId);
+        }
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
+                .doesNotContain(found.toArray(UUID[]::new));
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @CardUsed(OppositionAgent.class)
+    @DisplayName("Opposition Agent exiles even the only card found in a one-card library")
+    void oppositionAgentExilesOnlyLibraryCard() {
+        setupAndCast();
+        Card only = new TrainedArmodon();
+        harness.setLibrary(player1, List.of(only));
+        harness.addToBattlefield(player2, new OppositionAgent());
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getId)
+                .containsExactly(only.getId());
+        assertThat(gd.exilePlayPermissions.get(only.getId())).isEqualTo(player2.getId());
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void setupAndCast() {
