@@ -2,11 +2,14 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.FeastingTrollKing;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GilraenDNedainProtector;
+import com.github.laxika.magicalvibes.cards.m.MerryWardenOfIsengard;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,14 +18,16 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PippinWardenOfIsengard.class, FeastingTrollKing.class, GrizzlyBears.class})
+@CardUsed({PippinWardenOfIsengard.class, FeastingTrollKing.class, GrizzlyBears.class,
+        MerryWardenOfIsengard.class, GilraenDNedainProtector.class})
 class PippinWardenOfIsengardTest extends BaseCardTest {
 
     @Test
     @DisplayName("Partner with lets the target player search for Merry")
     void partnerWithSearchesTargetPlayersLibrary() {
-        Card merry = namedCard("Merry, Warden of Isengard");
+        Card merry = new MerryWardenOfIsengard();
         harness.setLibrary(player2, List.of(merry));
         harness.setHand(player2, List.of());
 
@@ -87,10 +92,7 @@ class PippinWardenOfIsengardTest extends BaseCardTest {
     }
 
     private void createThreeFoods() {
-        harness.setHand(player1, List.of(new FeastingTrollKing()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new FeastingTrollKing(), "{2}{G}{G}{G}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
@@ -99,9 +101,95 @@ class PippinWardenOfIsengardTest extends BaseCardTest {
         return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
     }
 
-    private Card namedCard(String name) {
-        Card card = new Card();
-        card.setName(name);
-        return card;
+    @Test
+    void targetPlayerCanDeclinePartnerSearch() {
+        Card merry = new MerryWardenOfIsengard();
+        harness.setLibrary(player2, List.of(merry));
+        harness.setHand(player2, List.of());
+        harness.enterBattlefieldAndReturn(player1, new PippinWardenOfIsengard());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(merry);
+    }
+
+    @Test
+    void cannotPayWithOnlyThreeFoods() {
+        createThreeFoods();
+        Permanent pippin = addCreatureReady(player1, new PippinWardenOfIsengard());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, pippin), 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(countPermanents(player1, "Food")).isEqualTo(3);
+        assertThat(pippin.isTapped()).isFalse();
+    }
+
+    @Test
+    void boostCannotBeActivatedOutsideMainPhase() {
+        Permanent pippin = prepareFourFoods();
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, pippin), 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(countPermanents(player1, "Food")).isEqualTo(4);
+        assertThat(pippin.isTapped()).isFalse();
+    }
+
+    @Test
+    void sacrificeIsPaidBeforeResolutionAndLaterCreaturesAreNotBoosted() {
+        Permanent pippin = prepareFourFoods();
+        Permanent gilraen = addCreatureReady(player1, new GilraenDNedainProtector());
+        harness.activateAbility(player1, indexOf(player1, pippin), 1, null, null);
+
+        assertThat(countPermanents(player1, "Food")).isZero();
+        assertThat(gqs.getEffectivePower(gd, gilraen)).isEqualTo(2);
+        harness.passBothPriorities();
+        Permanent laterCreature = addCreatureReady(player1, new MerryWardenOfIsengard());
+
+        assertThat(gqs.getEffectivePower(gd, gilraen)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, gilraen, Keyword.HASTE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.HASTE)).isFalse();
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gqs.getEffectivePower(gd, gilraen)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, gilraen)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, gilraen, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    void returnedPippinIsAnotherCreatureForItsPendingAbility() {
+        Permanent pippin = prepareFourFoods();
+        Permanent gilraen = addCreatureReady(player1, new GilraenDNedainProtector());
+        harness.activateAbility(player1, indexOf(player1, pippin), 1, null, null);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, indexOf(player1, gilraen), 0, null, pippin.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        Permanent returned = findPermanent(player1, "Pippin, Warden of Isengard");
+        assertThat(returned.getId()).isNotEqualTo(pippin.getId());
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
+    }
+
+    private Permanent prepareFourFoods() {
+        Permanent pippin = addCreatureReady(player1, new PippinWardenOfIsengard());
+        for (int i = 0; i < 4; i++) {
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            harness.activateAbility(player1, indexOf(player1, pippin), 0, null, null);
+            harness.passBothPriorities();
+            harness.performUntapStep(player1);
+        }
+        return pippin;
     }
 }
