@@ -84,6 +84,57 @@ class MysticFamiliarTest extends BaseCardTest {
                 .hasMessageContaining("protection from black");
     }
 
+    @Test
+    @DisplayName("Gains threshold abilities immediately when the seventh card enters the graveyard")
+    void gainsThresholdWhileOnBattlefield() {
+        fillGraveyard(player1, 6);
+        Permanent familiar = addFamiliar(player1);
+        assertThat(gqs.hasProtectionFrom(gd, familiar, CardColor.BLACK)).isFalse();
+
+        fillGraveyard(player1, 7);
+
+        assertThat(gqs.getEffectivePower(gd, familiar)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, familiar)).isEqualTo(3);
+        assertThat(gqs.hasProtectionFrom(gd, familiar, CardColor.BLACK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A black spell cannot resolve against Familiar after it gains threshold")
+    void gainingThresholdMakesBlackSpellTargetIllegal() {
+        fillGraveyard(player1, 6);
+        Permanent familiar = addFamiliar(player1);
+        harness.setHand(player2, List.of(new CripplingFatigue()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passPriority(player1);
+        harness.castSorcery(player2, 0, familiar.getId());
+
+        fillGraveyard(player1, 7);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Mystic Familiar");
+        assertThat(gqs.getEffectivePower(gd, familiar)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, familiar)).isEqualTo(3);
+        harness.assertInGraveyard(player2, "Crippling Fatigue");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A black spell can affect Familiar below threshold")
+    void blackSpellResolvesBelowThreshold() {
+        fillGraveyard(player1, 6);
+        Permanent familiar = addFamiliar(player1);
+        harness.setHand(player2, List.of(new CripplingFatigue()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passPriority(player1);
+
+        harness.castAndResolveSorcery(player2, 0, familiar.getId());
+
+        harness.assertNotOnBattlefield(player1, "Mystic Familiar");
+        harness.assertInGraveyard(player1, "Mystic Familiar");
+    }
+
     private Permanent addFamiliar(Player player) {
         return harness.addToBattlefieldAndReturn(player, new MysticFamiliar());
     }
