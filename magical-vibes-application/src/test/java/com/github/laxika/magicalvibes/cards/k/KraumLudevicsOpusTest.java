@@ -27,16 +27,95 @@ class KraumLudevicsOpusTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Controller spells do not trigger Kraum or count toward the opponent's second spell")
+    void countsOnlyOpponentsSpells() {
+        harness.addToBattlefield(player1, new KraumLudevicsOpus());
+        harness.setLibrary(player1, List.of(new Shock(), new Shock()));
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Counts an opponent's first spell even if Kraum enters afterward")
+    void countsSpellsCastBeforeEntering() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Shock(), new Shock()));
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.addToBattlefield(player1, new KraumLudevicsOpus());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Draw resolves before the opponent's second spell")
+    void drawsBeforeSecondSpellResolves() {
+        harness.addToBattlefield(player1, new KraumLudevicsOpus());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Shock(), new Shock()));
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        int lifeBeforeSecondSpell = gd.playerLifeTotals.get(player1.getId());
+        harness.castInstant(player2, 0, player1.getId());
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertLife(player1, lifeBeforeSecondSpell);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, lifeBeforeSecondSpell - 2);
+    }
+
+    @Test
+    @DisplayName("An opponent can trigger Kraum again on the next turn")
+    void spellCountResetsOnNextTurn() {
+        harness.addToBattlefield(player1, new KraumLudevicsOpus());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Shock(), new Shock(), new Shock()));
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.setLibrary(player2, List.of(new Shock(), new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
     }
 }
