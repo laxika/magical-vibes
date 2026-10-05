@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.a.AetherSpellbomb;
 import com.github.laxika.magicalvibes.cards.g.GrabTheReins;
+import com.github.laxika.magicalvibes.cards.p.Panharmonicon;
 import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({IsochronScepter.class, AetherSpellbomb.class, Shatter.class, GrabTheReins.class})
+@CardUsed({IsochronScepter.class, AetherSpellbomb.class, Shatter.class, GrabTheReins.class, Panharmonicon.class})
 class IsochronScepterTest extends BaseCardTest {
 
     @Test
@@ -113,8 +114,7 @@ class IsochronScepterTest extends BaseCardTest {
     @DisplayName("Activation without an imprint resolves without creating a copy")
     void activationWithoutImprintDoesNothing() {
         IsochronScepter scepterCard = new IsochronScepter();
-        harness.addToBattlefield(player1, scepterCard);
-        Permanent scepter = findPermanent(player1, "Isochron Scepter");
+        Permanent scepter = harness.addToBattlefieldAndReturn(player1, scepterCard);
         scepter.setSummoningSick(false);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -127,13 +127,128 @@ class IsochronScepterTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
+    @Test
+    @DisplayName("Accepting imprint with no eligible instant leaves the hand unchanged")
+    void imprintWithNoEligibleCardsDoesNothing() {
+        harness.setHand(player1, List.of(new IsochronScepter(), new AetherSpellbomb(), new GrabTheReins()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        harness.assertInHand(player1, "Aether Spellbomb");
+        harness.assertInHand(player1, "Grab the Reins");
+    }
+
+    @Test
+    @DisplayName("The imprint trigger can still exile a card after Scepter is destroyed")
+    void imprintResolvesAfterSourceIsDestroyed() {
+        harness.setHand(player1, List.of(new IsochronScepter(), new Shatter()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        Permanent scepter = findPermanent(player1, "Isochron Scepter");
+
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, scepter.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Isochron Scepter");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ImprintFromHandChoice.class);
+        harness.handleCardChosen(player1, 0);
+        harness.assertNotInHand(player1, "Shatter");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Shatter"));
+    }
+
+    @Test
+    @DisplayName("An activated ability still copies the imprint after Scepter is destroyed")
+    void activationResolvesAfterSourceIsDestroyed() {
+        Permanent scepter = imprintShatterOnScepter();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new AetherSpellbomb());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, scepter.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Isochron Scepter");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Aether Spellbomb");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Shatter")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An imprint that leaves exile cannot be copied")
+    void activationDoesNothingWhenImprintLeavesExile() {
+        Permanent scepter = imprintShatterOnScepter();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        var imprintedCard = gd.getImprintedCard(scepter.getCard());
+        gd.removeFromExile(imprintedCard.getId());
+        harness.setHand(player1, List.of(imprintedCard));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInHand(player1, "Shatter");
+        assertThat(scepter.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A doubled imprint trigger allows copying both exiled cards")
+    void activationCopiesEveryCardExiledByImprintTriggers() {
+        harness.addToBattlefield(player1, new Panharmonicon());
+        harness.setHand(player1, List.of(new IsochronScepter(), new Shatter(), new Shatter()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Shatter")).hasSize(2);
+
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new AetherSpellbomb());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, artifact.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, artifact.getId());
+
+        assertThat(gd.stack)
+                .filteredOn(entry -> entry.getCard().getName().equals("Shatter") && entry.isCopy())
+                .hasSize(2);
+    }
+
     private Permanent imprintShatterOnScepter() {
         IsochronScepter scepterCard = new IsochronScepter();
         Shatter shatterCard = new Shatter();
         gd.setImprintedCard(scepterCard, shatterCard);
-        harness.addToBattlefield(player1, scepterCard);
+        Permanent scepter = harness.addToBattlefieldAndReturn(player1, scepterCard);
         gd.exiledCards.add(new ExiledCardEntry(shatterCard, player1.getId(), scepterCard.getId()));
-        Permanent scepter = findPermanent(player1, "Isochron Scepter");
         scepter.setSummoningSick(false);
         return scepter;
     }
