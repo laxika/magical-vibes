@@ -66,8 +66,7 @@ class LuXunScholarGeneralTest extends BaseCardTest {
         addCreatureReady(player1, new LuXunScholarGeneral());
         addCreatureReady(player2, new ShuCavalry());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         resolveCombat();
@@ -145,8 +144,39 @@ class LuXunScholarGeneralTest extends BaseCardTest {
     }
 
     private void attachHermeticStudy(Permanent creature) {
-        Permanent aura = new Permanent(new HermeticStudy());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HermeticStudy());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
+    }
+
+    @Test
+    @DisplayName("Declining the noncombat may-draw leaves the hand unchanged")
+    void decliningNoncombatMayDoesNotDraw() {
+        harness.setLife(player2, 20);
+        Permanent luXun = addCreatureReady(player1, new LuXunScholarGeneral());
+        attachHermeticStudy(luXun);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Noncombat damage to an opponent's creature does not trigger the draw")
+    void noncombatDamageToCreatureDoesNotTriggerMayDraw() {
+        Permanent luXun = addCreatureReady(player1, new LuXunScholarGeneral());
+        attachHermeticStudy(luXun);
+        Permanent target = addCreatureReady(player2, new ShuFootSoldiers());
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        resolveAllTriggers();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
     }
 }
