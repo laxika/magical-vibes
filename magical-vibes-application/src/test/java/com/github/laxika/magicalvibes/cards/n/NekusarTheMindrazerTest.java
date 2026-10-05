@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 
 
-@CardUsed({NekusarTheMindrazer.class, CounselOfTheSoratami.class, Forest.class})
+@CardUsed({NekusarTheMindrazer.class, CounselOfTheSoratami.class, Forest.class, Humility.class})
 class NekusarTheMindrazerTest extends BaseCardTest {
 
     @Test
@@ -26,7 +27,7 @@ class NekusarTheMindrazerTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
 
         advanceToDraw(player2);
-        drainStack();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
     }
@@ -45,7 +46,7 @@ class NekusarTheMindrazerTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 3);
 
         harness.castSorcery(player2, 0, 0);
-        drainStack();
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
     }
@@ -59,7 +60,7 @@ class NekusarTheMindrazerTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
 
         advanceToDraw(player1);
-        drainStack();
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
@@ -73,12 +74,6 @@ class NekusarTheMindrazerTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private void drainStack() {
-        int guard = 0;
-        while (!gd.stack.isEmpty() && guard++ < 50) {
-            harness.passBothPriorities();
-        }
-    }
     @Test
     @DisplayName("Each opponent draws an additional card and takes damage during their draw step")
     void opponentDrawStepTriggersBothAbilities() {
@@ -112,4 +107,21 @@ class NekusarTheMindrazerTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
+
+    @Test
+    @CardUsed({NekusarTheMindrazer.class, Forest.class, Humility.class})
+    @DisplayName("Nekusar does not trigger while Humility removes its abilities")
+    void doesNotTriggerAfterLosingAllAbilities() {
+        harness.addToBattlefield(player1, new NekusarTheMindrazer());
+        harness.addToBattlefield(player1, new Humility());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLife(player2, 20);
+
+        advanceToDraw(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
 }
