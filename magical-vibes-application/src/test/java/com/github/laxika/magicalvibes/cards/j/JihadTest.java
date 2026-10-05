@@ -1,21 +1,21 @@
 package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.k.KjeldoranKnight;
+import com.github.laxika.magicalvibes.cards.b.BirdMaiden;
+import com.github.laxika.magicalvibes.cards.c.Camel;
+import com.github.laxika.magicalvibes.cards.p.PaintersServant;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Jihad.class, KjeldoranKnight.class})
+@CardUsed({Jihad.class, KjeldoranKnight.class, BirdMaiden.class, Camel.class, PaintersServant.class})
 class JihadTest extends BaseCardTest {
 
     private static Card createPermanent(String name, CardType type, CardColor color) {
@@ -35,10 +35,9 @@ class JihadTest extends BaseCardTest {
     }
 
     private Permanent addJihad(CardColor chosenColor) {
-        Permanent jihad = new Permanent(new Jihad());
+        Permanent jihad = harness.addToBattlefieldAndReturn(player1, new Jihad());
         jihad.setChosenColor(chosenColor);
         jihad.setRememberedTargetPlayerId(player2.getId());
-        gd.playerBattlefields.get(player1.getId()).add(jihad);
         return jihad;
     }
 
@@ -116,15 +115,65 @@ class JihadTest extends BaseCardTest {
     void castsAndChoosesColor() {
         harness.addToBattlefield(player2, createPermanent("Red Relic", CardType.ARTIFACT, CardColor.RED));
         Permanent knight = harness.addToBattlefieldAndReturn(player1, new KjeldoranKnight());
-        harness.setHand(player1, List.of(new Jihad()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new Jihad(), "{W}{W}{W}");
         harness.passBothPriorities();
         harness.handleListChoice(player1, "RED");
 
         harness.assertOnBattlefield(player1, "Jihad");
         assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
+    }
+
+    @Test
+    void continuesToCheckChosenPlayerAfterControlChanges() {
+        harness.addToBattlefield(player2, new BirdMaiden());
+        Permanent camel = harness.addToBattlefieldAndReturn(player1, new Camel());
+        Permanent jihad = addJihad(CardColor.RED);
+
+        gd.playerBattlefields.get(player1.getId()).remove(jihad);
+        gd.playerBattlefields.get(player2.getId()).add(jihad);
+
+        assertThat(gqs.getEffectivePower(gd, camel)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, camel)).isEqualTo(2);
+        harness.runStateBasedActions();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void staticColorGrantsPreventSacrifice() {
+        Permanent servant = harness.addToBattlefieldAndReturn(player2, new PaintersServant());
+        servant.setChosenColor(CardColor.BLUE);
+        addJihad(CardColor.BLUE);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Jihad");
+    }
+
+    @Test
+    void sacrificeTriggerStillResolvesAfterConditionBecomesTrueAgain() {
+        addJihad(CardColor.RED);
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+        harness.addToBattlefield(player2, new BirdMaiden());
+        Permanent camel = harness.addToBattlefieldAndReturn(player1, new Camel());
+
+        assertThat(gqs.getEffectivePower(gd, camel)).isEqualTo(2);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Jihad");
+        assertThat(gqs.getEffectivePower(gd, camel)).isZero();
+    }
+
+    @Test
+    void matchingPermanentControlledOnlyByControllerDoesNotCount() {
+        harness.addToBattlefield(player1, new BirdMaiden());
+        addJihad(CardColor.RED);
+
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Jihad");
     }
 }
