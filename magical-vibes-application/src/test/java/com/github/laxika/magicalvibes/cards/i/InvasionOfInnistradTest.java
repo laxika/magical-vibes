@@ -12,12 +12,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DealDividedDamageEffectHandler;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -30,11 +32,44 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({InvasionOfInnistrad.class, DelugeOfTheDead.class, GrizzlyBears.class,
+        Shock.class, ArcTrail.class, FiresongAndSunspeaker.class})
 class InvasionOfInnistradTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Front face ETB")
+    @CardUsed({InvasionOfInnistrad.class, GrizzlyBears.class})
     class FrontFaceEtb {
+
+        @Test
+        void weakeningASurvivingCreatureExpiresAtEndOfTurn() {
+            Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 12);
+
+            castInvasion(creature.getId());
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+            harness.assertOnBattlefield(player2, "Grizzly Bears");
+
+            harness.forceStep(TurnStep.END_STEP);
+            harness.clearPriorityPassed();
+            harness.passBothPriorities();
+
+            assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(14);
+            assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(14);
+        }
+
+        @Test
+        void canEnterWithoutAnOpposingCreature() {
+            castInvasion(null);
+            harness.passBothPriorities();
+
+            harness.assertOnBattlefield(player1, "Invasion of Innistrad");
+            assertThat(gd.stack).isEmpty();
+        }
 
         @Test
         @DisplayName("Enters with defense counters and gives opponent creature -13/-13")
@@ -74,7 +109,25 @@ class InvasionOfInnistradTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Siege defeat")
+    @CardUsed({InvasionOfInnistrad.class, DelugeOfTheDead.class, GrizzlyBears.class, Shock.class})
     class SiegeDefeat {
+
+        @Test
+        void mayDeclineCastingTheDefeatedSiege() {
+            Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfInnistrad());
+            battle.setCounterCount(CounterType.DEFENSE, 2);
+            harness.setHand(player1, List.of(new Shock()));
+            harness.addMana(player1, ManaColor.RED, 1);
+
+            harness.castAndResolveInstant(player1, 0, battle.getId());
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, false);
+
+            harness.assertNotOnBattlefield(player1, "Invasion of Innistrad");
+            assertThat(gd.findExiledCard(battle.getCard().getId())).isNotNull();
+            assertThat(gd.stack).isEmpty();
+            harness.assertNotOnBattlefield(player1, "Deluge of the Dead");
+        }
 
         @Test
         @DisplayName("When defeated, exiles and casts Deluge of the Dead which creates two Zombies")
@@ -107,18 +160,36 @@ class InvasionOfInnistradTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Back face ability")
+    @CardUsed({DelugeOfTheDead.class, GrizzlyBears.class, Shock.class})
     class BackFaceAbility {
+
+        @Test
+        void twoActivationsCannotCreateTwoZombiesFromTheSameCard() {
+            Permanent deluge = harness.addToBattlefieldAndReturn(player1, new DelugeOfTheDead());
+            deluge.setTransformed(true);
+            Card creature = new GrizzlyBears();
+            harness.setGraveyard(player1, List.of(creature));
+            harness.addMana(player1, ManaColor.BLACK, 2);
+            harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+            harness.activateAbility(player1, 0, 0, null, creature.getId(), Zone.GRAVEYARD);
+            harness.activateAbility(player1, 0, 0, null, creature.getId(), Zone.GRAVEYARD);
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            assertThat(gd.findExiledCard(creature.getId())).isNotNull();
+            assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+            assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                    .filter(p -> "Zombie".equals(p.getCard().getName())).count()).isEqualTo(1);
+        }
 
         @Test
         @DisplayName("Exiling a creature card creates a Zombie; exiling a noncreature does not")
         void exileCreatesZombieIfCreature() {
-            DelugeOfTheDead delugeCard = new DelugeOfTheDead();
-            Permanent deluge = new Permanent(delugeCard);
+            Permanent deluge = harness.addToBattlefieldAndReturn(player1, new DelugeOfTheDead());
             deluge.setTransformed(true);
-            gd.playerBattlefields.get(player1.getId()).add(deluge);
 
-            gd.playerGraveyards.get(player2.getId()).add(new GrizzlyBears());
-            gd.playerGraveyards.get(player2.getId()).add(new Shock());
+            harness.setGraveyard(player2, List.of(new GrizzlyBears(), new Shock()));
 
             UUID creatureGyId = gd.playerGraveyards.get(player2.getId()).stream()
                     .filter(c -> "Grizzly Bears".equals(c.getName()))
@@ -158,6 +229,7 @@ class InvasionOfInnistradTest extends BaseCardTest {
      */
     @Nested
     @DisplayName("Chosen as an \"any target\"")
+    @CardUsed({InvasionOfInnistrad.class, Shock.class})
     class ChosenAsAnyTarget {
 
         @Test
@@ -205,6 +277,8 @@ class InvasionOfInnistradTest extends BaseCardTest {
      */
     @Nested
     @DisplayName("Damage to a battle")
+    @CardUsed({InvasionOfInnistrad.class, Shock.class, GrizzlyBears.class,
+            ArcTrail.class, FiresongAndSunspeaker.class})
     class DamageToBattle {
 
         @Test
