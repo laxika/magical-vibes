@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -25,7 +24,7 @@ class MonsterMashupTest extends BaseCardTest {
         flyer.setAttacking(true);
         addCreatureReady(player2, new MonsterMashup());
 
-        prepareBlockerDeclaration();
+        prepareDeclareBlockers();
 
         assertThatCode(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
@@ -39,7 +38,7 @@ class MonsterMashupTest extends BaseCardTest {
         attacker.setAttacking(true);
         addCreatureReady(player2, new GrizzlyBears());
 
-        prepareBlockerDeclaration();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
@@ -55,7 +54,7 @@ class MonsterMashupTest extends BaseCardTest {
         addCreatureReady(player2, new GrizzlyBears());
         addCreatureReady(player2, new GrizzlyBears());
 
-        prepareBlockerDeclaration();
+        prepareDeclareBlockers();
 
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
@@ -63,10 +62,50 @@ class MonsterMashupTest extends BaseCardTest {
                 .doesNotThrowAnyException();
     }
 
-    private void prepareBlockerDeclaration() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+    @Test
+    @DisplayName("Menace permits the defender to leave Monster Mashup unblocked")
+    void menacePermitsNoBlockers() {
+        Permanent attacker = addCreatureReady(player1, new MonsterMashup());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Menace permits more than two blockers")
+    void menacePermitsThreeBlockers() {
+        Permanent attacker = addCreatureReady(player1, new MonsterMashup());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0),
+                new BlockerAssignment(2, 0))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Reach does not prevent creatures without flying from blocking Monster Mashup")
+    void reachDoesNotGrantFlying() {
+        Permanent attacker = addCreatureReady(player1, new MonsterMashup());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new MonsterMashup());
+        addCreatureReady(player2, new MonsterMashup());
+
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0))))
+                .doesNotThrowAnyException();
     }
 }
