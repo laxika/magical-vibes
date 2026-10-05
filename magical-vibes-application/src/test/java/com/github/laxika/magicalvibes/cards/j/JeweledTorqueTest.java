@@ -33,8 +33,7 @@ class JeweledTorqueTest extends BaseCardTest {
     @Test
     @DisplayName("An opponent's spell of the chosen color lets the controller pay {2} to gain 2 life")
     void opponentCastsChosenColorSpellAndControllerPays() {
-        harness.addToBattlefield(player1, new JeweledTorque());
-        Permanent torque = findPermanent(player1, "Jeweled Torque");
+        Permanent torque = harness.addToBattlefieldAndReturn(player1, new JeweledTorque());
         torque.setChosenColor(CardColor.GREEN);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -57,8 +56,7 @@ class JeweledTorqueTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the payment produces no life gain")
     void declinesPayment() {
-        harness.addToBattlefield(player1, new JeweledTorque());
-        Permanent torque = findPermanent(player1, "Jeweled Torque");
+        Permanent torque = harness.addToBattlefieldAndReturn(player1, new JeweledTorque());
         torque.setChosenColor(CardColor.GREEN);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -74,8 +72,7 @@ class JeweledTorqueTest extends BaseCardTest {
     @Test
     @DisplayName("A spell of another color does not trigger Jeweled Torque")
     void doesNotTriggerForAnotherColor() {
-        harness.addToBattlefield(player1, new JeweledTorque());
-        Permanent torque = findPermanent(player1, "Jeweled Torque");
+        Permanent torque = harness.addToBattlefieldAndReturn(player1, new JeweledTorque());
         torque.setChosenColor(CardColor.GREEN);
 
         harness.castFromHand(player1, new FlailingSoldier(), "{R}");
@@ -89,8 +86,7 @@ class JeweledTorqueTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting the trigger without {2} does not gain life")
     void cannotPayOptionalCost() {
-        harness.addToBattlefield(player1, new JeweledTorque());
-        Permanent torque = findPermanent(player1, "Jeweled Torque");
+        Permanent torque = harness.addToBattlefieldAndReturn(player1, new JeweledTorque());
         torque.setChosenColor(CardColor.GREEN);
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
@@ -101,6 +97,69 @@ class JeweledTorqueTest extends BaseCardTest {
                 .playerId()).isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
 
+        harness.assertLife(player1, lifeBefore);
+    }
+
+    @Test
+    @DisplayName("The cast trigger resolves before the spell and gains life during the payment resolution")
+    void triggerResolvesBeforeSpell() {
+        Permanent torque = harness.addToBattlefieldAndReturn(player1, new JeweledTorque());
+        torque.setChosenColor(CardColor.RED);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castFromHand(player1, new FlailingSoldier(), "{R}");
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Flailing Soldier");
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, lifeBefore + 2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Flailing Soldier");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Flailing Soldier");
+    }
+
+    @Test
+    @DisplayName("Declining payment still leaves the triggering spell unresolved")
+    void decliningPaymentDoesNotResolveSpell() {
+        Permanent torque = harness.addToBattlefieldAndReturn(player1, new JeweledTorque());
+        torque.setChosenColor(CardColor.GREEN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castFromHand(player1, new DeepwoodWolverine(), "{G}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertLife(player1, lifeBefore);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Deepwood Wolverine");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Deepwood Wolverine");
+    }
+
+    @Test
+    @DisplayName("A colorless artifact spell does not trigger Jeweled Torque")
+    void doesNotTriggerForColorlessSpell() {
+        Permanent torque = harness.addToBattlefieldAndReturn(player1, new JeweledTorque());
+        torque.setChosenColor(CardColor.GREEN);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castFromHand(player1, new JeweledTorque(), "{2}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Jeweled Torque")).hasSize(2);
         harness.assertLife(player1, lifeBefore);
     }
 }
