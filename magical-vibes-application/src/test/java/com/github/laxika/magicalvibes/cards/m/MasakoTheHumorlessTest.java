@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -79,6 +80,59 @@ class MasakoTheHumorlessTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(attacker)))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid blocker index");
+    }
+
+    @Test
+    @DisplayName("Masako can be cast during the opponent's combat")
+    void canBeCastDuringOpponentsCombat() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.castFromHand(player2, new MasakoTheHumorless(), "{2}{W}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Masako the Humorless");
+    }
+
+    @Test
+    @DisplayName("A summoning-sick tapped creature can block and remains tapped")
+    void summoningSickTappedCreatureCanBlock() {
+        harness.addToBattlefield(player2, new MasakoTheHumorless());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new IsamaruHoundOfKonda());
+        blocker.tap();
+        Permanent attacker = addAttacker(player1);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(blocker.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Tapped creatures lose the blocking permission when Masako leaves")
+    void permissionEndsWhenMasakoLeaves() {
+        Permanent masako = harness.addToBattlefieldAndReturn(player2, new MasakoTheHumorless());
+        Permanent blocker = addCreatureReady(player2, new IsamaruHoundOfKonda());
+        blocker.tap();
+        assertThat(bls.canBlock(gd, blocker)).isTrue();
+
+        harness.getPermanentRemovalService().removePermanentToHand(gd, masako);
+
+        assertThat(bls.canBlock(gd, blocker)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Masako does not override a prohibition on blocking")
+    void doesNotOverrideCantBlock() {
+        harness.addToBattlefield(player2, new MasakoTheHumorless());
+        Permanent blocker = addCreatureReady(player2, new IsamaruHoundOfKonda());
+        blocker.tap();
+        blocker.setCantBlockThisTurn(true);
+
+        assertThat(bls.canBlock(gd, blocker)).isFalse();
     }
 
     private Permanent addAttacker(Player player) {
