@@ -81,8 +81,6 @@ class NevermakerTest extends BaseCardTest {
         assertThat(deck.getFirst().getName()).isEqualTo("Indomitable Ancients");
     }
 
-    // ===== Targeting restriction =====
-
     @Test
     @DisplayName("LTB has no valid target when only a land is available (nonland restriction)")
     void leavesBattlefieldSkipsWhenOnlyLandAvailable() {
@@ -126,5 +124,77 @@ class NevermakerTest extends BaseCardTest {
         List<Card> deck = gd.playerDecks.get(player2.getId());
         assertThat(deck).hasSize(deckSizeBefore + 1);
         assertThat(deck.getFirst().getName()).isEqualTo("Cloak and Dagger");
+    }
+
+    @Test
+    @DisplayName("Returning Nevermaker to hand also triggers its ability")
+    void returningToHandTucksTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new IndomitableAncients());
+        Permanent nevermaker = harness.addToBattlefieldAndReturn(player1, new Nevermaker());
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToHand(gd, nevermaker));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Nevermaker");
+        harness.assertNotInGraveyard(player1, "Nevermaker");
+        harness.assertNotOnBattlefield(player2, "Indomitable Ancients");
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst()).isSameAs(target.getCard());
+    }
+
+    @Test
+    @DisplayName("Nevermaker can tuck a nonland permanent controlled by its own controller")
+    void canTargetOwnPermanent() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CloakAndDagger());
+        Permanent nevermaker = harness.addToBattlefieldAndReturn(player1, new Nevermaker());
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, nevermaker));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Cloak and Dagger");
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(target.getCard());
+    }
+
+    @Test
+    @DisplayName("A target that leaves before resolution is not put on top of the library")
+    void targetLeavingBeforeResolutionIsNotTucked() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new IndomitableAncients());
+        Permanent nevermaker = harness.addToBattlefieldAndReturn(player1, new Nevermaker());
+        int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, nevermaker));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToHand(gd, target));
+        resolveAllTriggers();
+
+        harness.assertInHand(player2, "Indomitable Ancients");
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Evoke still sacrifices Nevermaker when no nonland target remains")
+    void evokeWithoutValidTargetStillSacrifices() {
+        harness.addToBattlefield(player2, new Mutavault());
+        harness.setHand(player1, List.of(new Nevermaker()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithEvoke(player1, 0, null);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Nevermaker");
+        harness.assertNotOnBattlefield(player1, "Nevermaker");
+        harness.assertOnBattlefield(player2, "Mutavault");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
