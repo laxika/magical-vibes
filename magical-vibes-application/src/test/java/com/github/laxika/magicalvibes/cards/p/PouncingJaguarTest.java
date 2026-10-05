@@ -7,11 +7,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(PouncingJaguar.class)
+@CardUsed({PouncingJaguar.class})
 class PouncingJaguarTest extends BaseCardTest {
 
     @Test
@@ -57,10 +55,36 @@ class PouncingJaguarTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Pouncing Jaguar");
     }
 
+    @Test
+    @DisplayName("Entering the battlefield does not create an echo setup trigger")
+    void enteringBattlefieldDoesNotCreateEchoSetupTrigger() {
+        harness.castFromHand(player1, new PouncingJaguar(), "{G}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Pouncing Jaguar");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's upkeep does not consume the pending echo obligation")
+    void echoStillTriggersAfterOpponentsUpkeep() {
+        castAndResolvePouncingJaguar();
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Pouncing Jaguar");
+        harness.assertInGraveyard(player1, "Pouncing Jaguar");
+    }
+
     private void castAndResolvePouncingJaguar() {
-        harness.setHand(player1, List.of(new PouncingJaguar()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castCreature(player1, 0, 0);
+        harness.castFromHand(player1, new PouncingJaguar(), "{G}");
         resolveAllTriggers();
         harness.assertOnBattlefield(player1, "Pouncing Jaguar");
     }
