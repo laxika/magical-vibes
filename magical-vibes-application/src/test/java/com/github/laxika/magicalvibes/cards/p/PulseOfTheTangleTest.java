@@ -54,6 +54,31 @@ class PulseOfTheTangleTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(pulse);
     }
 
+    @Test
+    @DisplayName("Creates exactly one Beast on an empty battlefield and goes to the graveyard")
+    void createsOneBeastWithNoOpposingCreatures() {
+        PulseOfTheTangle pulse = cast();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(findBeastToken());
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(pulse);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(pulse);
+    }
+
+    @Test
+    @DisplayName("Counts your existing creatures and ignores opposing noncreature permanents")
+    void doesNotReturnWhenExistingCreaturesAndTokenMatchOpponent() {
+        harness.addToBattlefield(player1, new TangleSpider());
+        harness.addToBattlefield(player2, new TangleSpider());
+        harness.addToBattlefield(player2, new TangleSpider());
+        harness.addToBattlefield(player2, new DarksteelCitadel());
+        PulseOfTheTangle pulse = cast();
+
+        assertThat(findBeastToken()).isNotNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(pulse);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(pulse);
+    }
+
     private PulseOfTheTangle cast() {
         PulseOfTheTangle pulse = new PulseOfTheTangle();
         harness.castFromHand(player1, pulse, "{1}{G}{G}");
