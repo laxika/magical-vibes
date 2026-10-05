@@ -92,4 +92,31 @@ class NaturalSpringTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(graveyardCard -> graveyardCard.getId().equals(card.getId()));
     }
+
+    @Test
+    @DisplayName("Natural Spring requires a target player")
+    void cannotCastWithoutTarget() {
+        harness.setHand(player1, List.of(new NaturalSpring()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, (java.util.UUID) null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Natural Spring");
+    }
+
+    @Test
+    @DisplayName("Natural Spring can raise life above the starting total without affecting its controller")
+    void gainsLifeAboveStartingTotalOnlyForTarget() {
+        harness.setLife(player1, 13);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new NaturalSpring()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 28);
+        harness.assertLife(player1, 13);
+    }
 }
