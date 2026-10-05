@@ -107,4 +107,52 @@ class ProfanePrayersTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, plains.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("A Cleric dealt lethal damage still counts for the life gain")
+    void lethallyDamagedClericStillCountsForLifeGain() {
+        harness.addToBattlefield(player1, new NovaCleric());
+        var target = harness.addToBattlefieldAndReturn(player2, new NovaCleric());
+        harness.setHand(player1, List.of(new ProfanePrayers()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.setLife(player1, 20);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertLife(player1, 22);
+        harness.assertNotOnBattlefield(player2, "Nova Cleric");
+        harness.assertInGraveyard(player2, "Nova Cleric");
+    }
+
+    @Test
+    @DisplayName("Can target its controller and offset the damage with life gain")
+    void canTargetItsController() {
+        harness.addToBattlefield(player1, new NovaCleric());
+        harness.addToBattlefield(player2, new NovaCleric());
+        harness.setHand(player1, List.of(new ProfanePrayers()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.setLife(player1, 20);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Profane Prayers");
+    }
+
+    @Test
+    @DisplayName("Clerics in hands and graveyards do not contribute to X")
+    void ignoresClericsOutsideTheBattlefield() {
+        harness.addToBattlefield(player2, new GlorySeeker());
+        harness.setHand(player1, List.of(new ProfanePrayers(), new NovaCleric()));
+        harness.setGraveyard(player2, List.of(new NovaCleric()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Profane Prayers");
+    }
 }
