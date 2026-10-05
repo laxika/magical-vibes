@@ -58,7 +58,63 @@ class LivingLaserTest extends BaseCardTest {
     }
 
     @Test
+    void exilesAllCopiesWithOneDelayedTrigger() {
+        discardTwoCards();
+        Permanent livingLaser = addCreatureReady(player1, new LivingLaser());
+        harness.addToBattlefield(player2, new AvenFisher());
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(livingLaser)));
+        resolveAllTriggers();
+
+        gs.declareBlockers(gd, player2, List.of());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(findPermanents(player1, "Living Laser")).hasSize(3);
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Living Laser")).containsExactly(livingLaser);
+    }
+
+    @Test
     void createsNoCopiesWhenNoCardsHaveBeenDiscardedThisTurn() {
+        Permanent livingLaser = addCreatureReady(player1, new LivingLaser());
+        harness.addToBattlefield(player2, new AvenFisher());
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(livingLaser)));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Living Laser")).containsExactly(livingLaser);
+    }
+
+    @Test
+    void countsCardsDiscardedWhileTheAttackTriggerIsOnTheStack() {
+        harness.addToBattlefield(player1, new ZombieInfestation());
+        harness.setHand(player1, List.of(new AvenFisher(), new Mountain()));
+        Permanent livingLaser = addCreatureReady(player1, new LivingLaser());
+        harness.addToBattlefield(player2, new AvenFisher());
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(livingLaser)));
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Living Laser")).hasSize(3);
+    }
+
+    @Test
+    void doesNotCountCardsDiscardedByTheOpponent() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(player2, new ZombieInfestation());
+        harness.setHand(player2, List.of(new AvenFisher(), new Mountain()));
+        harness.activateAbility(player2, 0, null, null);
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+        resolveAllTriggers();
         Permanent livingLaser = addCreatureReady(player1, new LivingLaser());
         harness.addToBattlefield(player2, new AvenFisher());
 
