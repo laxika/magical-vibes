@@ -79,4 +79,52 @@ class MerfolkThaumaturgistTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must be a creature");
     }
+
+    @Test
+    @DisplayName("Two switches restore the original power and toughness")
+    void twoSwitchesRestoreOriginalPowerAndToughness() {
+        addThaumaturgistReady();
+        addThaumaturgistReady();
+        Permanent woodreaders = harness.addToBattlefieldAndReturn(player2, new CitanulWoodreaders());
+
+        harness.activateAbility(player1, 0, null, woodreaders.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, woodreaders)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, woodreaders)).isEqualTo(1);
+
+        harness.activateAbility(player1, 1, null, woodreaders.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, woodreaders)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, woodreaders)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new MerfolkThaumaturgist());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, source.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(source.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate again while tapped")
+    void cannotActivateAgainWhileTapped() {
+        Permanent source = addThaumaturgistReady();
+        Permanent woodreaders = harness.addToBattlefieldAndReturn(player2, new CitanulWoodreaders());
+
+        harness.activateAbility(player1, 0, null, woodreaders.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, woodreaders.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+        assertThat(source.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, woodreaders)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, woodreaders)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
 }
