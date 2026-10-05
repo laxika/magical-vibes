@@ -76,13 +76,87 @@ class LightstallInquisitorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.ExileFromHandChoice.class);
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())
                 .isEqualTo(player2.getId());
         harness.handleCardChosen(player2, 0);
+    }
+
+    @Test
+    void emptyOpponentHandDoesNotRequireAChoice() {
+        harness.setHand(player1, List.of(new LightstallInquisitor()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Lightstall Inquisitor");
+    }
+
+    @Test
+    void opponentChoosesOnlyOneCardAndControllersHandIsUnaffected() {
+        Forest forest = new Forest();
+        GrizzlyBears bears = new GrizzlyBears();
+        Forest controllersCard = new Forest();
+        harness.setHand(player1, List.of(new LightstallInquisitor(), controllersCard));
+        harness.setHand(player2, List.of(forest, bears));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(controllersCard);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(forest);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(bears);
+    }
+
+    @Test
+    void creatureCannotBeCastDuringOpponentsTurn() {
+        GrizzlyBears bears = new GrizzlyBears();
+        exileWithInquisitor(bears);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castFromExile(player2, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(bears);
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void permissionAndSurchargePersistAfterInquisitorDies() {
+        GrizzlyBears bears = new GrizzlyBears();
+        exileWithInquisitor(bears);
+        findPermanent(player1, "Lightstall Inquisitor").setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Lightstall Inquisitor");
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        assertThatThrownBy(() -> harness.castFromExile(player2, bears.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castFromExile(player2, bears.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(bears);
     }
 }
