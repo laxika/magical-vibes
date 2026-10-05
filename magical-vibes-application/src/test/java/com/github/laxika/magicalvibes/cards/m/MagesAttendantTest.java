@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -17,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MagesAttendant.class, Shock.class, CruelEdict.class, GrizzlyBears.class})
+@CardUsed({MagesAttendant.class, Shock.class, GrizzlyBears.class})
 class MagesAttendantTest extends BaseCardTest {
 
     @Test
@@ -103,12 +102,89 @@ class MagesAttendantTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Wizard token is sacrificed immediately as an activation cost")
+    void sacrificesTokenBeforeAbilityResolves() {
+        castMagesAttendant();
+
+        Shock shock = new Shock();
+        harness.setHand(player2, List.of(shock));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+
+        Permanent wizard = findPermanent(player1, "Wizard");
+        int wizardIndex = gd.playerBattlefields.get(player1.getId()).indexOf(wizard);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, wizardIndex, null, shock.getId());
+
+        harness.assertNotOnBattlefield(player1, "Wizard");
+        assertThat(gd.stack).hasSize(2);
+        harness.assertLife(player1, 20);
+
+        resolveAllTriggers();
+        harness.assertInGraveyard(player2, "Shock");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Wizard token cannot activate without paying one mana")
+    void cannotActivateWithoutMana() {
+        castMagesAttendant();
+
+        Shock shock = new Shock();
+        harness.setHand(player2, List.of(shock));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+
+        Permanent wizard = findPermanent(player1, "Wizard");
+        int wizardIndex = gd.playerBattlefields.get(player1.getId()).indexOf(wizard);
+        assertThatThrownBy(() -> harness.activateAbility(player1, wizardIndex, null, shock.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Wizard");
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Spell controller may decline payment even when they have enough mana")
+    void countersWhenControllerDeclinesPayment() {
+        castMagesAttendant();
+
+        Shock shock = new Shock();
+        harness.setHand(player2, List.of(shock));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.forceActivePlayer(player2);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+
+        Permanent wizard = findPermanent(player1, "Wizard");
+        int wizardIndex = gd.playerBattlefields.get(player1.getId()).indexOf(wizard);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, wizardIndex, null, shock.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Shock");
+        harness.assertNotOnBattlefield(player1, "Wizard");
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castMagesAttendant() {
         harness.setHand(player1, List.of(new MagesAttendant()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
