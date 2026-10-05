@@ -95,4 +95,48 @@ class LimestoneGolemTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick using colored mana")
+    void canActivateWhileTappedAndSummoningSick() {
+        LimestoneGolem card = new LimestoneGolem();
+        Permanent golem = harness.addToBattlefieldAndReturn(player1, card);
+        golem.setSummoningSick(true);
+        golem.tap();
+        Forest drawnCard = new Forest();
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(golem);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Draw happens only on resolution and takes exactly the top card")
+    void drawsExactlyOneCardOnlyOnResolution() {
+        LimestoneGolem card = new LimestoneGolem();
+        addCreatureReady(player1, card);
+        Forest topCard = new Forest();
+        Forest nextCard = new Forest();
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(topCard, nextCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerLibraries.get(player2.getId())).containsExactly(topCard, nextCard);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(topCard);
+        assertThat(gd.playerLibraries.get(player2.getId())).containsExactly(nextCard);
+    }
 }
