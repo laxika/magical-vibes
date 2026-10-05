@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.b.Bloodbriar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Humble;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,7 +21,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Leviathan.class, Island.class, GrizzlyBears.class, Bloodbriar.class})
+@CardUsed({Leviathan.class, Island.class, GrizzlyBears.class, Bloodbriar.class, Humble.class})
 class LeviathanTest extends BaseCardTest {
 
     @Test
@@ -226,6 +228,96 @@ class LeviathanTest extends BaseCardTest {
 
         assertThat(bloodbriar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
+    @Test
+    @DisplayName("Opponent's upkeep does not trigger Leviathan's untap ability")
+    void opponentsUpkeepDoesNotTrigger() {
+        Permanent leviathan = harness.addToBattlefieldAndReturn(player1, new Leviathan());
+        leviathan.tap();
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(leviathan.isTapped()).isTrue();
+        assertThat(islandCount(player1)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Upkeep sacrifice cannot use the opponent's Islands")
+    void upkeepCannotUseOpponentsIslands() {
+        Permanent leviathan = harness.addToBattlefieldAndReturn(player1, new Leviathan());
+        leviathan.tap();
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player2, new Island());
+        harness.addToBattlefield(player2, new Island());
+
+        resolveUpkeepMay(player1, true);
+
+        assertThat(leviathan.isTapped()).isTrue();
+        assertThat(islandCount(player1)).isEqualTo(1);
+        assertThat(islandCount(player2)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Upkeep sacrifice remains optional when Leviathan is already untapped")
+    void upkeepCanSacrificeWhenAlreadyUntapped() {
+        Permanent leviathan = harness.addToBattlefieldAndReturn(player1, new Leviathan());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+
+        resolveUpkeepMay(player1, true);
+
+        assertThat(leviathan.isTapped()).isFalse();
+        assertThat(islandCount(player1)).isZero();
+    }
+
+    @Test
+    @DisplayName("Tapped Islands can pay Leviathan's attack cost")
+    void tappedIslandsCanPayAttackCost() {
+        Permanent leviathan = addCreatureReady(player1, new Leviathan());
+        harness.addToBattlefieldAndReturn(player1, new Island()).tap();
+        harness.addToBattlefieldAndReturn(player1, new Island()).tap();
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(leviathan.isTapped()).isTrue();
+        assertThat(islandCount(player1)).isZero();
+    }
+
+    @Test
+    @DisplayName("Leviathan with no abilities can attack without Islands")
+    void losingAbilitiesRemovesAttackCostWithoutIslands() {
+        Permanent leviathan = addCreatureReady(player1, new Leviathan());
+        castHumble(leviathan);
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(leviathan.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Leviathan with no abilities does not sacrifice Islands to attack")
+    void losingAbilitiesPreservesIslandsWhenAttacking() {
+        Permanent leviathan = addCreatureReady(player1, new Leviathan());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+        castHumble(leviathan);
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(leviathan.isTapped()).isTrue();
+        assertThat(islandCount(player1)).isEqualTo(2);
+    }
+
+    private void castHumble(Permanent target) {
+        harness.setHand(player1, List.of(new Humble()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+    }
+
     private void resolveUpkeepMay(Player player, boolean accept) {
         advanceToUpkeep(player);
         harness.passBothPriorities();
