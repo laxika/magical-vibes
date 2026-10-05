@@ -73,4 +73,42 @@ class MagmaGiantTest extends BaseCardTest {
     private void castGiant() {
         harness.castFromHand(player1, new MagmaGiant(), "{5}{R}{R}");
     }
+
+    @Test
+    @DisplayName("Entering without being cast still damages creatures and both players")
+    void enteringWithoutCastingTriggersDamage() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new GoblinBrawler());
+        harness.addToBattlefield(player2, new GoblinBrawler());
+
+        Permanent giant = harness.enterBattlefieldAndReturn(player1, new MagmaGiant());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player1, "Goblin Brawler");
+        harness.assertInGraveyard(player2, "Goblin Brawler");
+        assertThat(giant.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Magma Giant");
+    }
+
+    @Test
+    @DisplayName("ETB damage resolves even after the Giant leaves the battlefield")
+    void triggerResolvesAfterSourceLeaves() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player2, new GoblinBrawler());
+        Permanent giant = harness.enterBattlefieldAndReturn(player1, new MagmaGiant());
+        assertThat(gd.stack).hasSize(1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, giant));
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Magma Giant");
+        harness.assertInGraveyard(player2, "Goblin Brawler");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+    }
 }
