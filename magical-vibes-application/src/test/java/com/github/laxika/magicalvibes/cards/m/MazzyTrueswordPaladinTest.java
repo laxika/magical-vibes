@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
+import com.github.laxika.magicalvibes.cards.p.PlanarCleansing;
 import com.github.laxika.magicalvibes.cards.s.ShortSword;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +21,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({MazzyTrueswordPaladin.class, GrizzlyBears.class, HolyStrength.class,
-        ChandraNalaar.class, Naturalize.class, ShortSword.class})
+        ChandraNalaar.class, Naturalize.class, ShortSword.class, PlanarCleansing.class})
 class MazzyTrueswordPaladinTest extends BaseCardTest {
 
     @Test
@@ -30,7 +31,7 @@ class MazzyTrueswordPaladinTest extends BaseCardTest {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
         aura.setAttachedTo(attacker.getId());
 
-        declareAttackers(player1, List.of(1), Map.of(1, player2.getId()));
+        declareAttackers(player1, List.of(1));
         resolveAllTriggers();
 
         assertThat(attacker.getPowerModifier()).isEqualTo(2);
@@ -83,6 +84,110 @@ class MazzyTrueswordPaladinTest extends BaseCardTest {
         assertThat(gd.exilePlayPermissions).doesNotContainKey(equipment.getCard().getId());
     }
 
+    @Test
+    void doesNotBoostAnUnenchantedAttacker() {
+        addCreatureReady(player1, new MazzyTrueswordPaladin());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(1));
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    void doesNotBoostAnEnchantedCreatureAttackingMazzysController() {
+        addCreatureReady(player1, new MazzyTrueswordPaladin());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new HolyStrength());
+        aura.setAttachedTo(attacker.getId());
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    void doesNotExileAControlledAuraThatGoesToItsOpponentsGraveyard() {
+        addCreatureReady(player1, new MazzyTrueswordPaladin());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
+        aura.setAttachedTo(creature.getId());
+        gd.stolenCreatures.put(aura.getId(), player2.getId());
+
+        destroyWithNaturalize(aura);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(aura.getCard());
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(aura.getCard());
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(aura.getCard().getId());
+    }
+
+    @Test
+    void canCastTheExiledAuraByPayingItsManaCost() {
+        addCreatureReady(player1, new MazzyTrueswordPaladin());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
+        aura.setAttachedTo(creature.getId());
+        destroyWithNaturalize(aura);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castFromExile(player1, aura.getCard().getId(), creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(aura.getCard());
+        assertThat(findPermanent(player1, "Holy Strength").getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(aura.getCard().getId());
+    }
+
+    @Test
+    void exilesAnAuraDestroyedSimultaneouslyWithMazzy() {
+        addCreatureReady(player1, new MazzyTrueswordPaladin());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
+        aura.setAttachedTo(creature.getId());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new PlanarCleansing()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(aura.getCard());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(aura.getCard());
+        assertThat(gd.exilePlayPermissions).containsEntry(aura.getCard().getId(), player1.getId());
+    }
+
+    @Test
+    void castPermissionLastsThroughTheNextTurnAndThenExpires() {
+        addCreatureReady(player1, new MazzyTrueswordPaladin());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
+        aura.setAttachedTo(creature.getId());
+        destroyWithNaturalize(aura);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gd.exilePlayPermissions).containsEntry(aura.getCard().getId(), player1.getId());
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gd.exilePlayPermissions).containsEntry(aura.getCard().getId(), player1.getId());
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(aura.getCard().getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(aura.getCard());
+    }
+
     private void destroyWithNaturalize(Permanent target) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -93,7 +198,7 @@ class MazzyTrueswordPaladinTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castInstant(player2, 0, target.getId());
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void declareAttackers(Player player, List<Integer> attackerIndices,
