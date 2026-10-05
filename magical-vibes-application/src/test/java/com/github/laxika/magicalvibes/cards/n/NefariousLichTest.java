@@ -217,4 +217,48 @@ class NefariousLichTest extends BaseCardTest {
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
+    @Test
+    @DisplayName("Controller chooses which graveyard cards to exile for replaced damage")
+    void controllerChoosesCardsToExile() {
+        harness.addToBattlefield(player1, new NefariousLich());
+        DuskImp retained = new DuskImp();
+        DuskImp firstChosen = new DuskImp();
+        DuskImp secondChosen = new DuskImp();
+        harness.setGraveyard(player1, List.of(retained, firstChosen, secondChosen));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new FlameBurst()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMultipleCardsChosen(player1, List.of(firstChosen.getId(), secondChosen.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(retained);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(firstChosen, secondChosen);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Damage to the opponent is not replaced")
+    void opponentsDamageIsNotReplaced() {
+        harness.addToBattlefield(player1, new NefariousLich());
+        harness.setLife(player2, 20);
+        harness.setGraveyard(player2, List.of(new DuskImp(), new DuskImp()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new FlameBurst()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
 }
