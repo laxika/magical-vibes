@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GarruksGorehorn;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,19 +13,19 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PeerIntoTheAbyss.class, GarruksGorehorn.class})
 class PeerIntoTheAbyssTest extends BaseCardTest {
 
     @Test
     @DisplayName("Target player draws half their library and loses half their life, rounding up")
     void drawsAndLosesRoundedUpAmounts() {
         harness.setLibrary(player2, List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears()));
-        gd.playerLifeTotals.put(player2.getId(), 19);
+                new GarruksGorehorn(), new GarruksGorehorn(), new GarruksGorehorn(),
+                new GarruksGorehorn(), new GarruksGorehorn()));
+        harness.setLife(player2, 19);
         int handBefore = gd.playerHands.get(player2.getId()).size();
 
         castPeerIntoTheAbyss(player2.getId());
-        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 3);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
@@ -35,10 +36,9 @@ class PeerIntoTheAbyssTest extends BaseCardTest {
     @DisplayName("Can target yourself")
     void canTargetSelf() {
         harness.setLibrary(player1, List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+                new GarruksGorehorn(), new GarruksGorehorn(), new GarruksGorehorn(), new GarruksGorehorn()));
 
         castPeerIntoTheAbyss(player1.getId());
-        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
@@ -48,20 +48,67 @@ class PeerIntoTheAbyssTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
-        Permanent bear = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(bear);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GarruksGorehorn());
 
         harness.setHand(player1, List.of(new PeerIntoTheAbyss()));
         addMana();
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, bear.getId()))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An empty library draws no cards but still loses half the target's life")
+    void emptyLibraryStillLosesLife() {
+        harness.setLibrary(player2, List.of());
+        harness.setLife(player2, 17);
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+
+        castPeerIntoTheAbyss(player2.getId());
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(8);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("A one-card library draws its last card without attempting an extra draw")
+    void oneCardLibraryDrawsOneCard() {
+        harness.setLibrary(player2, List.of(new GarruksGorehorn()));
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+
+        castPeerIntoTheAbyss(player2.getId());
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("Library size and life total are evaluated at resolution")
+    void evaluatesAmountsAtResolution() {
+        harness.setLibrary(player2, List.of(new GarruksGorehorn()));
+        harness.setHand(player1, List.of(new PeerIntoTheAbyss()));
+        addMana();
+        harness.castSorcery(player1, 0, player2.getId());
+
+        harness.setLibrary(player2, List.of(
+                new GarruksGorehorn(), new GarruksGorehorn(),
+                new GarruksGorehorn(), new GarruksGorehorn()));
+        harness.setLife(player2, 15);
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 2);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(7);
     }
 
     private void castPeerIntoTheAbyss(java.util.UUID targetPlayerId) {
         harness.setHand(player1, List.of(new PeerIntoTheAbyss()));
         addMana();
-        harness.castSorcery(player1, 0, targetPlayerId);
+        harness.castAndResolveSorcery(player1, 0, targetPlayerId);
     }
 
     private void addMana() {
