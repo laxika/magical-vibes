@@ -72,6 +72,76 @@ class InfectedVerminTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Threshold ability still resolves after the graveyard falls below seven cards")
+    void thresholdDoesNotRequireSevenCardsAtResolution() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new InfectedVermin());
+        harness.addToBattlefield(player2, new AvenArcher());
+        harness.setGraveyard(player1, List.of(
+                new InfectedVermin(), new InfectedVermin(), new InfectedVermin(), new InfectedVermin(),
+                new InfectedVermin(), new InfectedVermin(), new InnocentBlood()
+        ));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
+        harness.assertInGraveyard(player1, "Infected Vermin");
+        harness.assertInGraveyard(player2, "Aven Archer");
+    }
+
+    @Test
+    @DisplayName("Base ability remains available and deals only 1 damage with threshold")
+    void baseAbilityStillDealsOneDamageWithThreshold() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new InfectedVermin());
+        harness.addToBattlefield(player2, new AvenArcher());
+        harness.setGraveyard(player1, List.of(
+                new InfectedVermin(), new InfectedVermin(), new InfectedVermin(), new InfectedVermin(),
+                new InfectedVermin(), new InfectedVermin(), new InnocentBlood()
+        ));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+        harness.assertOnBattlefield(player2, "Aven Archer");
+        harness.assertInGraveyard(player1, "Infected Vermin");
+    }
+
+    @Test
+    @DisplayName("Multiple activations resolve even after the first kills their source")
+    void abilityResolvesAfterSourceDies() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new InfectedVermin());
+        harness.addToBattlefield(player2, new AvenArcher());
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player1, "Infected Vermin");
+        harness.assertOnBattlefield(player2, "Aven Archer");
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player2, "Aven Archer");
+    }
+
+    @Test
     @DisplayName("Threshold ability cannot be activated below seven graveyard cards")
     void thresholdAbilityCannotBeActivatedBelowSevenCards() {
         harness.addToBattlefield(player1, new InfectedVermin());
