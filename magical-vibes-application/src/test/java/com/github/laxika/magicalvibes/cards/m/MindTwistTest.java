@@ -20,7 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MindTwist.class, GiantGrowth.class, GrizzlyBears.class, LightningBolt.class, SerraAngel.class})
+@CardUsed({MindTwist.class, GiantGrowth.class, GrizzlyBears.class, LightningBolt.class, SerraAngel.class,
+        TamiyoCollectorOfTales.class})
 class MindTwistTest extends BaseCardTest {
 
     @Test
@@ -113,5 +114,50 @@ class MindTwistTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Tamiyo prevents an opponent's Mind Twist from causing discard")
+    void opponentCausedDiscardIsPrevented() {
+        Permanent tamiyo = harness.addToBattlefieldAndReturn(player2, new TamiyoCollectorOfTales());
+        tamiyo.setCounterCount(CounterType.LOYALTY, 5);
+        GrizzlyBears bears = new GrizzlyBears();
+        SerraAngel angel = new SerraAngel();
+        harness.setHand(player2, List.of(bears, angel));
+        harness.setHand(player1, List.of(new MindTwist()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 2, player2.getId());
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(bears, angel);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Mind Twist");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Discard uses the target's hand at resolution after a response is cast")
+    void discardsFromHandAtResolution() {
+        GrizzlyBears bears = new GrizzlyBears();
+        LightningBolt bolt = new LightningBolt();
+        harness.setHand(player2, List.of(bolt, bears));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new MindTwist()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castSorcery(player1, 0, 2, player2.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(bears);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(bolt);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(bolt, bears);
+        harness.assertInGraveyard(player1, "Mind Twist");
+        assertThat(gd.stack).isEmpty();
     }
 }
