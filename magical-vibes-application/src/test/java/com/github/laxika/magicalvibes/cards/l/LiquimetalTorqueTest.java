@@ -27,6 +27,7 @@ class LiquimetalTorqueTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
         assertThat(torque.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -73,9 +74,53 @@ class LiquimetalTorqueTest extends BaseCardTest {
     }
 
     private Permanent addReadyTorque(Player player) {
-        Permanent perm = new Permanent(new LiquimetalTorque());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new LiquimetalTorque());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
+    }
+
+    @Test
+    @DisplayName("A newly entered Torque can activate its mana ability")
+    void newlyEnteredTorqueCanAddMana() {
+        Permanent torque = harness.enterBattlefieldAndReturn(player1, new LiquimetalTorque());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(torque.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A newly entered Torque can target itself and remains an artifact after cleanup")
+    void canTargetItself() {
+        Permanent torque = harness.enterBattlefieldAndReturn(player1, new LiquimetalTorque());
+
+        harness.activateAbility(player1, 0, 1, null, torque.getId());
+
+        assertThat(torque.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gqs.isArtifact(torque)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isArtifact(torque)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Using the mana ability prevents using the other tap ability without untapping")
+    void abilitiesShareTapCost() {
+        addReadyTorque(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gqs.isArtifact(target)).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }
