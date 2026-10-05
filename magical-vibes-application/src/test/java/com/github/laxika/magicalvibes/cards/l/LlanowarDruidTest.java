@@ -38,8 +38,7 @@ class LlanowarDruidTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(druid);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Llanowar Druid"));
+        harness.assertInGraveyard(player1, "Llanowar Druid");
     }
 
     @Test
@@ -50,6 +49,39 @@ class LlanowarDruidTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, druid), null, null))
                 .hasMessageContaining("already tapped");
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(druid);
+    }
+
+    @Test
+    void sacrificeIsPaidBeforeForestsUntapAndNewForestsAreIncludedAtResolution() {
+        Permanent druid = addDruid(player1);
+        Permanent forest = addTapped(player1, new Forest());
+
+        harness.activateAbility(player1, indexOf(player1, druid), null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(druid);
+        harness.assertInGraveyard(player1, "Llanowar Druid");
+        assertThat(forest.isTapped()).isTrue();
+        Permanent newForest = addTapped(player2, new Forest());
+
+        harness.passBothPriorities();
+
+        assertThat(forest.isTapped()).isFalse();
+        assertThat(newForest.isTapped()).isFalse();
+    }
+
+    @Test
+    void cannotActivateWithSummoningSickness() {
+        Permanent druid = harness.addToBattlefieldAndReturn(player1, new LlanowarDruid());
+        druid.setSummoningSick(true);
+        Permanent forest = addTapped(player1, new Forest());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, druid), null, null))
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(druid);
+        harness.assertNotInGraveyard(player1, "Llanowar Druid");
+        assertThat(druid.isTapped()).isFalse();
+        assertThat(forest.isTapped()).isTrue();
     }
 
     private Permanent addDruid(Player player) {
