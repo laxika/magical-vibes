@@ -26,8 +26,7 @@ class MoggManiacTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         harness.castInstant(player1, 0, harness.getPermanentId(player2, "Mogg Maniac"));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertLife(player1, 18);
         harness.assertInGraveyard(player2, "Mogg Maniac");
@@ -98,6 +97,32 @@ class MoggManiacTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(ownJace.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void lethalCombatDamageCanBeDealtToAPlaneswalker() {
+        Permanent attacker = addCreatureReady(player1, new HonorGuard());
+        attacker.setAttacking(true);
+        Permanent maniac = addCreatureReady(player2, new MoggManiac());
+        maniac.setBlocking(true);
+        maniac.addBlockingTarget(0);
+        Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        jace.setCounterCount(CounterType.LOYALTY, 3);
+        harness.setLife(player1, 20);
+
+        resolveCombat();
+
+        harness.assertInGraveyard(player2, "Mogg Maniac");
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).containsExactly(jace.getId());
+        assertThat(choice.validPlayerIds()).containsExactly(player1.getId());
+
+        harness.handlePermanentChosen(player2, jace.getId());
+        resolveAllTriggers();
+
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
         harness.assertLife(player1, 20);
     }
 }
