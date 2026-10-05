@@ -93,4 +93,44 @@ class MagusOfTheTabernacleTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Urborg, Tomb of Yawgmoth");
     }
+
+    @Test
+    @DisplayName("Granted upkeep triggers still resolve after the Magus is sacrificed")
+    void pendingTriggerSurvivesMagusLeaving() {
+        harness.addToBattlefield(player1, new GossamerPhantasm());
+        harness.addToBattlefield(player1, new MagusOfTheTabernacle());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Magus of the Tabernacle");
+        harness.assertOnBattlefield(player1, "Gossamer Phantasm");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Gossamer Phantasm");
+    }
+
+    @Test
+    @DisplayName("Two Magi require two independent payments for each creature")
+    void multipleMagiGrantMultipleUpkeepAbilities() {
+        harness.addToBattlefield(player1, new MagusOfTheTabernacle());
+        harness.addToBattlefield(player2, new MagusOfTheTabernacle());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Magus of the Tabernacle");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Magus of the Tabernacle");
+        harness.assertOnBattlefield(player2, "Magus of the Tabernacle");
+    }
 }
