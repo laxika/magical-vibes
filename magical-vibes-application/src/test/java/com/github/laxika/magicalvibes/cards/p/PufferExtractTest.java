@@ -69,7 +69,7 @@ class PufferExtractTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Fresh Volunteers");
 
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(1);
@@ -78,6 +78,48 @@ class PufferExtractTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Fresh Volunteers");
         harness.assertInGraveyard(player1, "Fresh Volunteers");
+    }
+
+    @Test
+    @DisplayName("An activation during the end step waits until the following end step")
+    void activationDuringEndStepWaitsUntilFollowingEndStep() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(player1, new PufferExtract());
+        Permanent volunteers = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 3, volunteers.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, volunteers)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, volunteers)).isEqualTo(5);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.assertOnBattlefield(player1, "Fresh Volunteers");
+        assertThat(gqs.getEffectivePower(gd, volunteers)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, volunteers)).isEqualTo(2);
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Fresh Volunteers");
+        harness.assertInGraveyard(player1, "Fresh Volunteers");
+    }
+
+    @Test
+    @DisplayName("The tap cost prevents a second activation without untapping")
+    void cannotActivateAgainWhileTapped() {
+        harness.addToBattlefield(player1, new PufferExtract());
+        Permanent volunteers = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+
+        harness.activateAbility(player1, 0, 0, volunteers.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, volunteers.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
