@@ -44,19 +44,67 @@ class PiannaNomadCaptainTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Pianna boosts an opponent-controlled attacking creature")
-    void boostsOpponentControlledAttacker() {
+    @DisplayName("Pianna boosts a creature put onto the battlefield attacking before resolution")
+    void boostsCreatureEnteringAttackingBeforeResolution() {
         addCreatureReady(player1, new PiannaNomadCaptain());
-        Permanent opponentFlock = addCreatureReady(player2, new AvenFlock());
 
         declareAttackers(List.of(0));
-        // Model an effect putting an opponent-controlled creature onto the battlefield attacking.
-        opponentFlock.setAttackTarget(player1.getId());
-        opponentFlock.setAttacking(true);
+        // Model a creature entering attacking while Pianna's trigger is on the stack.
+        Permanent flock = addCreatureReady(player1, new AvenFlock());
+        flock.setAttackTarget(player2.getId());
+        flock.setAttacking(true);
         resolveAllTriggers();
 
-        assertThat(opponentFlock.getPowerModifier()).isEqualTo(1);
-        assertThat(opponentFlock.getToughnessModifier()).isEqualTo(1);
+        assertThat(flock.getPowerModifier()).isEqualTo(1);
+        assertThat(flock.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Pianna does not trigger when only another creature attacks")
+    void doesNotTriggerWhenPiannaStaysBack() {
+        Permanent pianna = addCreatureReady(player1, new PiannaNomadCaptain());
+        Permanent flock = addCreatureReady(player1, new AvenFlock());
+
+        declareAttackers(List.of(1));
+        resolveAllTriggers();
+
+        assertThat(pianna.getPowerModifier()).isZero();
+        assertThat(pianna.getToughnessModifier()).isZero();
+        assertThat(flock.getPowerModifier()).isZero();
+        assertThat(flock.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Pianna checks attacking status when its trigger resolves")
+    void doesNotBoostCreatureRemovedFromCombatBeforeResolution() {
+        Permanent pianna = addCreatureReady(player1, new PiannaNomadCaptain());
+        Permanent flock = addCreatureReady(player1, new AvenFlock());
+
+        declareAttackers(List.of(0, 1));
+        // Model removal from combat in response to the trigger.
+        flock.setAttacking(false);
+        flock.setAttackTarget(null);
+        resolveAllTriggers();
+
+        assertThat(pianna.getPowerModifier()).isEqualTo(1);
+        assertThat(pianna.getToughnessModifier()).isEqualTo(1);
+        assertThat(flock.getPowerModifier()).isZero();
+        assertThat(flock.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Pianna's resolved boost remains after a creature stops attacking")
+    void boostRemainsAfterRemovalFromCombat() {
+        addCreatureReady(player1, new PiannaNomadCaptain());
+        Permanent flock = addCreatureReady(player1, new AvenFlock());
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+        flock.setAttacking(false);
+        flock.setAttackTarget(null);
+
+        assertThat(flock.getPowerModifier()).isEqualTo(1);
+        assertThat(flock.getToughnessModifier()).isEqualTo(1);
     }
 
     @Test
