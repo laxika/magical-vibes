@@ -31,14 +31,14 @@ class InfestTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Creatures reduced to 0 toughness are destroyed")
+    @DisplayName("Creatures reduced to 0 toughness are put into the graveyard")
     void killsSmallCreatures() {
         harness.addToBattlefield(player2, new GlorySeeker()); // 2/2
 
         castInfest();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()).stream()
-                .anyMatch(p -> p.getCard().getName().equals("Glory Seeker"))).isFalse();
+        harness.assertNotOnBattlefield(player2, "Glory Seeker");
+        harness.assertInGraveyard(player2, "Glory Seeker");
     }
 
     @Test
@@ -50,7 +50,6 @@ class InfestTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Gluttonous Zombie").getEffectivePower()).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Gluttonous Zombie").getEffectivePower()).isEqualTo(3);
@@ -70,6 +69,32 @@ class InfestTest extends BaseCardTest {
         assertThat(existing.getEffectiveToughness()).isEqualTo(1);
         assertThat(later.getEffectivePower()).isEqualTo(3);
         assertThat(later.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Two Infests in the same turn combine their reductions")
+    void reductionsAccumulate() {
+        harness.addToBattlefield(player1, new GluttonousZombie());
+        harness.addToBattlefield(player2, new GluttonousZombie());
+
+        castInfest();
+        castInfest();
+
+        harness.assertNotOnBattlefield(player1, "Gluttonous Zombie");
+        harness.assertNotOnBattlefield(player2, "Gluttonous Zombie");
+        harness.assertInGraveyard(player1, "Gluttonous Zombie");
+        harness.assertInGraveyard(player2, "Gluttonous Zombie");
+    }
+
+    @Test
+    @DisplayName("Resolves without creatures on the battlefield")
+    void resolvesOnEmptyBattlefield() {
+        castInfest();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Infest");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
     private void castInfest() {
