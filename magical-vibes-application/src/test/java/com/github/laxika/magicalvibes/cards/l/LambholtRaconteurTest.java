@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.b.BleedDry;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Opt;
 import com.github.laxika.magicalvibes.model.DayNight;
@@ -85,6 +86,80 @@ class LambholtRaconteurTest extends BaseCardTest {
         advanceToNextTurn(player2);
 
         assertThat(raconteur.getCard()).isInstanceOf(LambholtRaconteur.class);
+    }
+
+    @Test
+    void backFaceDoesNotTriggerForCreatureSpell() {
+        harness.addToBattlefield(player1, new LambholtRavager());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void backFaceDoesNotTriggerForOpponentNoncreatureSpell() {
+        harness.addToBattlefield(player1, new LambholtRavager());
+        harness.setHand(player2, List.of(new Opt()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castInstant(player2, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @CardUsed(BleedDry.class)
+    void triggeredDamageStillResolvesAfterSourceIsExiled() {
+        Permanent raconteur = harness.addToBattlefieldAndReturn(player1, new LambholtRaconteur());
+        harness.setHand(player1, List.of(new Opt()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player2, List.of(new BleedDry()));
+        harness.addMana(player2, ManaColor.BLACK, 4);
+
+        harness.castInstant(player1, 0);
+        harness.castInstant(player2, 0, raconteur.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(raconteur);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void enteringBeforeDayOrNightStartsDay() {
+        gd.dayNight = DayNight.NEITHER;
+
+        Permanent raconteur = harness.enterBattlefieldAndReturn(player1, new LambholtRaconteur());
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        assertThat(raconteur.getCard()).isInstanceOf(LambholtRaconteur.class);
+    }
+
+    @Test
+    @CardUsed(BleedDry.class)
+    void enteringAtNightUsesBackFaceDamageAbility() {
+        gd.dayNight = DayNight.NIGHT;
+        Permanent raconteur = harness.enterBattlefieldAndReturn(player1, new LambholtRaconteur());
+        harness.setHand(player1, List.of(new BleedDry()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        assertThat(raconteur.getCard()).isInstanceOf(LambholtRavager.class);
+        harness.castInstant(player1, 0, raconteur.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
     }
 
     private void advanceToNextTurn(Player activePlayer) {
