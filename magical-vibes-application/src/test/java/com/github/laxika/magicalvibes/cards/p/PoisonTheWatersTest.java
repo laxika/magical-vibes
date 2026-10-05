@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
-import com.github.laxika.magicalvibes.cards.p.Peek;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -42,8 +41,7 @@ class PoisonTheWatersTest extends BaseCardTest {
 
         castMode(0);
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(creature.getEffectivePower()).isEqualTo(2);
         assertThat(creature.getEffectiveToughness()).isEqualTo(2);
@@ -74,6 +72,68 @@ class PoisonTheWatersTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The caster can choose a creature instead of an artifact")
+    void discardsChosenCreature() {
+        harness.setHand(player2, List.of(new Millstone(), new GrizzlyBears(), new Peek()));
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castMode(1, player2.getId());
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Millstone");
+        harness.assertInHand(player2, "Peek");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The discard mode can target its caster")
+    void canTargetSelf() {
+        harness.setHand(player1, List.of(new PoisonTheWaters(), new GrizzlyBears(), new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castSorcery(player1, 0, 1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices())
+                .containsExactly(0);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An empty target hand requires no choice")
+    void emptyHandNeedsNoChoice() {
+        harness.setHand(player2, List.of());
+
+        castMode(1, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Poison the Waters");
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution are not shrunk")
+    void laterCreaturesAreUnaffected() {
+        castMode(0);
+
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent creature = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
     }
 
     private void castMode(int mode, java.util.UUID... targetIds) {
