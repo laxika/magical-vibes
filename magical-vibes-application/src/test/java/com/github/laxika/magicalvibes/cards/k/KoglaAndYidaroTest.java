@@ -30,7 +30,6 @@ class KoglaAndYidaroTest extends BaseCardTest {
         assertThat(kogla.hasKeyword(Keyword.HASTE)).isTrue();
 
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(kogla.hasKeyword(Keyword.TRAMPLE)).isFalse();
@@ -104,6 +103,72 @@ class KoglaAndYidaroTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Kogla and Yidaro");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An illegal chosen target prevents both the shuffle and the draw")
+    void illegalHandAbilityTargetPreventsAllEffects() {
+        Permanent seal = harness.addToBattlefieldAndReturn(player2, new SealOfStrength());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Ornithopter()));
+        harness.setHand(player1, List.of(new KoglaAndYidaro()));
+        addAbilityMana();
+
+        harness.activateHandAbility(player1, 0, seal.getId());
+        harness.activateAbility(player2, 0, null, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Kogla and Yidaro");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Choosing no target shuffles the discarded card before drawing from an empty library")
+    void noTargetWithEmptyLibraryDrawsTheShuffledCard() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new KoglaAndYidaro()));
+        addAbilityMana();
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player1, "Kogla and Yidaro");
+        harness.assertInHand(player1, "Kogla and Yidaro");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hand ability rejects a creature that is neither an artifact nor an enchantment")
+    void handAbilityRejectsOrdinaryCreatureWithoutDiscarding() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new KoglaAndYidaro()));
+        addAbilityMana();
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Kogla and Yidaro");
+        harness.assertNotInGraveyard(player1, "Kogla and Yidaro");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Fight does not deal damage if Kogla and Yidaro leaves before the trigger resolves")
+    void fightDoesNothingWithoutSourceOnBattlefield() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castKogla(1, bears.getId());
+        harness.passBothPriorities();
+        Permanent kogla = findPermanent(player1, "Kogla and Yidaro");
+        gd.playerBattlefields.get(player1.getId()).remove(kogla);
+        harness.setExile(player1, List.of(kogla.getCard()));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+        assertThat(bears.getMarkedDamage()).isZero();
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
     private void castKogla(int mode, java.util.UUID targetId) {
