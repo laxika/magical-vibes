@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.c.CavesOfKoilos;
 import com.github.laxika.magicalvibes.cards.d.Dodecapod;
+import com.github.laxika.magicalvibes.cards.o.OrimsThunder;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ManaclesOfDecay.class, CavesOfKoilos.class, Dodecapod.class})
+@CardUsed({ManaclesOfDecay.class, CavesOfKoilos.class, Dodecapod.class, OrimsThunder.class})
 class ManaclesOfDecayTest extends BaseCardTest {
 
     @Test
@@ -68,8 +69,7 @@ class ManaclesOfDecayTest extends BaseCardTest {
         addAuraOn(blocker, player1);
         addCreatureReady(player2, new Dodecapod());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
@@ -115,6 +115,62 @@ class ManaclesOfDecayTest extends BaseCardTest {
         assertThat(creature.isCantBlockThisTurn()).isFalse();
     }
 
+    @Test
+    @DisplayName("Black ability still shrinks the creature after the Aura is destroyed")
+    void blackAbilityResolvesAfterAuraIsDestroyed() {
+        Permanent creature = addCreatureReady(player2, new Dodecapod());
+        Permanent aura = addAuraOn(creature, player1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.setHand(player2, List.of(new OrimsThunder()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        harness.castInstant(player2, 0, aura.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Manacles of Decay");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Red ability still prevents blocking after the Aura is destroyed")
+    void redAbilityResolvesAfterAuraIsDestroyed() {
+        Permanent creature = addCreatureReady(player2, new Dodecapod());
+        Permanent aura = addAuraOn(creature, player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.setHand(player2, List.of(new OrimsThunder()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        harness.castInstant(player2, 0, aura.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Manacles of Decay");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(creature.isCantBlockThisTurn()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated black activations can kill the enchanted creature and remove the Aura")
+    void repeatedBlackActivationsKillCreature() {
+        Permanent creature = addCreatureReady(player2, new Dodecapod());
+        addAuraOn(creature, player1);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        for (int i = 0; i < 3; i++) {
+            harness.activateAbility(player1, 0, 0, null, null);
+            harness.passBothPriorities();
+        }
+
+        harness.assertNotOnBattlefield(player2, "Dodecapod");
+        harness.assertInGraveyard(player2, "Dodecapod");
+        harness.assertNotOnBattlefield(player1, "Manacles of Decay");
+        harness.assertInGraveyard(player1, "Manacles of Decay");
+    }
     private Permanent addAuraOn(Permanent enchanted, com.github.laxika.magicalvibes.model.Player controller) {
         Permanent aura = harness.addToBattlefieldAndReturn(controller, new ManaclesOfDecay());
         aura.setAttachedTo(enchanted.getId());
