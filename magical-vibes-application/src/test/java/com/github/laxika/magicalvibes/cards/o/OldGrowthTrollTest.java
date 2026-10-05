@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({OldGrowthTroll.class, Forest.class, WrathOfGod.class})
 class OldGrowthTrollTest extends BaseCardTest {
 
     @Test
@@ -73,6 +75,52 @@ class OldGrowthTrollTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Old-Growth Troll");
     }
 
+    @Test
+    @DisplayName("An opponent's Forest is not a legal attachment for the returned Aura")
+    void cannotEnchantOpponentsForest() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player1, new OldGrowthTroll());
+
+        destroyTroll();
+
+        harness.assertInGraveyard(player1, "Old-Growth Troll");
+        harness.assertNotOnBattlefield(player1, "Old-Growth Troll");
+        harness.assertNotOnBattlefield(player2, "Old-Growth Troll");
+    }
+
+    @Test
+    @DisplayName("The controller chooses which of multiple Forests the returned Aura enchants")
+    void choosesBetweenControlledForests() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new OldGrowthTroll());
+
+        destroyTroll();
+        harness.handlePermanentChosen(player1, second.getId());
+
+        assertThat(findPermanent(player1, "Old-Growth Troll").getAttachedTo()).isEqualTo(second.getId());
+        harness.tapPermanent(player1, battlefieldIndex(first));
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        harness.activateAbility(player1, battlefieldIndex(second), 0, null, null);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Sacrificing the enchanted Forest does not return the noncreature Aura again")
+    void auraDoesNotReturnWhenEnchantedForestIsSacrificed() {
+        Permanent forest = returnTrollAttachedToForest();
+        harness.addToBattlefield(player1, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, battlefieldIndex(forest), 1, null, null);
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Old-Growth Troll");
+        harness.assertNotOnBattlefield(player1, "Old-Growth Troll");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent returnTrollAttachedToForest() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.addToBattlefield(player1, new OldGrowthTroll());
@@ -83,8 +131,7 @@ class OldGrowthTrollTest extends BaseCardTest {
     private void destroyTroll() {
         harness.setHand(player1, List.of(new WrathOfGod()));
         harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.passBothPriorities();
     }
 
