@@ -70,6 +70,84 @@ class OtherworldlyEscortTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Returns under its owner's control after dying while stolen")
+    void returnsToOwnerAfterDyingWhileStolen() {
+        Permanent escort = addCreatureReady(player2, new OtherworldlyEscort());
+        gd.stolenCreatures.put(escort.getId(), player1.getId());
+
+        kill(escort);
+
+        harness.assertNotOnBattlefield(player2, "Otherworldly Escort");
+        Permanent returned = findPermanent(player1, "Otherworldly Escort");
+        assertThat(returned.getCounterCount(CounterType.CHARGE)).isEqualTo(4);
+        assertThat(gqs.hasEffectiveSubtype(gd, returned, CardSubtype.SPIRIT)).isTrue();
+        assertThat(returned.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can destroy a creature that dealt noncombat damage to you")
+    void destroysCreatureThatDealtNoncombatDamage() {
+        Permanent escort = addCreatureReady(player1, new OtherworldlyEscort());
+        escort.setCounterCount(CounterType.CHARGE, 1);
+        Permanent source = addCreatureReady(player2, new OtherworldlyEscort());
+        gd.noncombatDamageToPlayersThisTurn
+                .computeIfAbsent(source.getId(), ignored -> ConcurrentHashMap.newKeySet())
+                .add(player1.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, source.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player2, "Otherworldly Escort").getId()).isNotEqualTo(source.getId());
+        assertThat(escort.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(escort.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot activate without a charge counter")
+    void cannotActivateWithoutChargeCounter() {
+        Permanent escort = addCreatureReady(player1, new OtherworldlyEscort());
+        Permanent source = addCreatureReady(player2, new OtherworldlyEscort());
+        gd.combatDamageToPlayersThisTurn
+                .computeIfAbsent(source.getId(), ignored -> ConcurrentHashMap.newKeySet())
+                .add(player1.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, source.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(escort.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature that damaged only another player")
+    void cannotTargetCreatureThatDamagedAnotherPlayer() {
+        Permanent escort = addCreatureReady(player1, new OtherworldlyEscort());
+        escort.setCounterCount(CounterType.CHARGE, 1);
+        Permanent source = addCreatureReady(player2, new OtherworldlyEscort());
+        gd.noncombatDamageToPlayersThisTurn
+                .computeIfAbsent(source.getId(), ignored -> ConcurrentHashMap.newKeySet())
+                .add(player2.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, source.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Flash permits casting during the opponent's upkeep")
+    void canBeCastDuringOpponentsUpkeep() {
+        advanceToUpkeep(player2);
+
+        harness.castFromHand(player1, new OtherworldlyEscort(), "{3}{W}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Otherworldly Escort");
+    }
+
     private void kill(Permanent creature) {
         creature.setMarkedDamage(creature.getEffectiveToughness());
         harness.runStateBasedActions();
