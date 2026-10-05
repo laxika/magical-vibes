@@ -45,13 +45,11 @@ class MarshViperTest extends BaseCardTest {
     void noncombatDamageGivesTwoPoisonCounters() {
         harness.setLife(player2, 20);
         Permanent viper = addReadyViper();
-        Permanent aura = new Permanent(new FireWhip());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FireWhip());
         aura.setAttachedTo(viper.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.activateAbility(player1, 0, null, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(2);
@@ -69,5 +67,65 @@ class MarshViperTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Poison counters are given only when the damage trigger resolves")
+    void poisonWaitsForTriggerResolution() {
+        Permanent viper = addReadyViper();
+        viper.setAttacking(true);
+
+        harness.resolveCombatDamage();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(2);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each Marsh Viper gives two poison counters independently")
+    void twoVipersGiveFourPoisonCounters() {
+        addReadyViper().setAttacking(true);
+        addReadyViper().setAttacking(true);
+
+        harness.resolveCombatDamage();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Damage to Marsh Viper's own controller poisons that controller")
+    void noncombatDamageToControllerGivesPoison() {
+        Permanent viper = addReadyViper();
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FireWhip());
+        aura.setAttachedTo(viper.getId());
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isEqualTo(2);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("Damage dealt by Fire Whip itself does not trigger Marsh Viper")
+    void auraDamageDoesNotGivePoison() {
+        Permanent viper = addReadyViper();
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FireWhip());
+        aura.setAttachedTo(viper.getId());
+
+        harness.activateAbility(player1, 1, null, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
     }
 }
