@@ -17,6 +17,41 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class IronhoofOxTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Ironhoof Ox may be left unblocked even when blockers are available")
+    void canBeLeftUnblocked() {
+        Permanent attacker = addCreatureReady(player1, new IronhoofOx());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new BearCub());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        assertThat(blocker.isBlocking()).isFalse();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("Ironhoof Ox does not restrict blockers for other attackers")
+    void otherAttackerCanBeBlockedByTwoCreatures() {
+        Permanent ox = addCreatureReady(player1, new IronhoofOx());
+        ox.setAttacking(true);
+        Permanent bear = addCreatureReady(player1, new BearCub());
+        bear.setAttacking(true);
+        Permanent firstBlocker = addCreatureReady(player2, new BearCub());
+        Permanent secondBlocker = addCreatureReady(player2, new BearCub());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 1),
+                new BlockerAssignment(1, 1)
+        ));
+
+        assertThat(firstBlocker.isBlocking()).isTrue();
+        assertThat(secondBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Ironhoof Ox can be blocked by one creature")
     void canBeBlockedByOneCreature() {
         Permanent attacker = addCreatureReady(player1, new IronhoofOx());
