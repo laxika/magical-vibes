@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.p.PouncingCheetah;
+import com.github.laxika.magicalvibes.cards.v.VizierOfManyFaces;
 import com.github.laxika.magicalvibes.cards.w.WildDogs;
 import com.github.laxika.magicalvibes.cards.w.WornPowerstone;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OpalGargoyle.class, WildDogs.class, WornPowerstone.class})
+@CardUsed({OpalGargoyle.class, PouncingCheetah.class, VizierOfManyFaces.class, WildDogs.class, WornPowerstone.class})
 class OpalGargoyleTest extends BaseCardTest {
 
     private Permanent addOpalGargoyle() {
@@ -93,7 +94,6 @@ class OpalGargoyleTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(PouncingCheetah.class)
     @DisplayName("A queued trigger does nothing once Opal Gargoyle is no longer an enchantment")
     void queuedTriggerChecksEnchantmentAgainAtResolution() {
         Permanent opal = addOpalGargoyle();
@@ -109,5 +109,77 @@ class OpalGargoyleTest extends BaseCardTest {
                 .map(entry -> entry.plainText())
                 .filter(log -> log.contains("becomes a 2/2 creature")))
                 .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A creature entering without being cast does not animate Opal Gargoyle")
+    void doesNotTriggerForCreatureEnteringWithoutBeingCast() {
+        Permanent opal = addOpalGargoyle();
+
+        harness.enterBattlefieldAndReturn(player2, new WildDogs());
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.isEnchantment(gd, opal)).isTrue();
+        assertThat(gqs.isCreature(gd, opal)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The animation resolves before the triggering creature spell")
+    void animatesBeforeCreatureSpellResolves() {
+        Permanent opal = addOpalGargoyle();
+        prepareOpponentCast();
+
+        castOpponentCreature();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotOnBattlefield(player2, "Wild Dogs");
+        assertThat(gqs.isCreature(gd, opal)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opal, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The animation persists into the next turn")
+    void animationPersistsIntoNextTurn() {
+        Permanent opal = addOpalGargoyle();
+        prepareOpponentCast();
+        castOpponentCreature();
+        resolveAllTriggers();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gqs.isCreature(gd, opal)).isTrue();
+        assertThat(gqs.isEnchantment(gd, opal)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, opal)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opal)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, opal, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Copying an animated Opal Gargoyle copies its enchantment form")
+    void copyDoesNotInheritAnimation() {
+        Permanent opal = addOpalGargoyle();
+        prepareOpponentCast();
+        castOpponentCreature();
+        resolveAllTriggers();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new VizierOfManyFaces(), "{2}{U}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, opal.getId());
+
+        Permanent copy = findPermanents(player1, "Opal Gargoyle").stream()
+                .filter(permanent -> !permanent.getId().equals(opal.getId()))
+                .findFirst().orElseThrow();
+        assertThat(gqs.isEnchantment(gd, copy)).isTrue();
+        assertThat(gqs.isCreature(gd, copy)).isFalse();
+        assertThat(gqs.hasKeyword(gd, copy, Keyword.FLYING)).isFalse();
+        assertThat(gqs.isCreature(gd, opal)).isTrue();
     }
 }
