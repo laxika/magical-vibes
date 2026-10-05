@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MonkGyatso.class, GrizzlyBears.class, Shock.class, ElaborateFirecannon.class})
+@CardUsed({MonkGyatso.class, GrizzlyBears.class, Shock.class, ElaborateFirecannon.class, MishrasFactory.class})
 class MonkGyatsoTest extends BaseCardTest {
 
     @Test
@@ -44,9 +44,7 @@ class MonkGyatsoTest extends BaseCardTest {
     void mayAirbendAnotherCreatureTargetedByAbility() {
         harness.addToBattlefield(player1, new MonkGyatso());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent firecannon = new Permanent(new ElaborateFirecannon());
-        firecannon.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(firecannon);
+        harness.addToBattlefield(player2, new ElaborateFirecannon());
         harness.addMana(player2, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player2, 0, null, target.getId());
@@ -89,5 +87,64 @@ class MonkGyatsoTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
+    }
+
+    @Test
+    @DisplayName("Triggers for an animated land that is currently a creature")
+    void airbendsAnimatedLand() {
+        harness.addToBattlefield(player1, new MonkGyatso());
+        Permanent factory = harness.addToBattlefieldAndReturn(player1, new MishrasFactory());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, factory)).isTrue();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, factory.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.findExiledCard(factory.getOriginalCard().getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Does not trigger for a creature controlled by an opponent")
+    void doesNotTriggerForOpponentsCreature() {
+        harness.addToBattlefield(player1, new MonkGyatso());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The owner can recast an airbent creature for two generic mana")
+    void ownerRecastsAirbentCreatureForGenericMana() {
+        harness.addToBattlefield(player1, new MonkGyatso());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castFromExile(player1, target.getOriginalCard().getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.findExiledCard(target.getOriginalCard().getId())).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 }
