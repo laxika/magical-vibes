@@ -31,8 +31,7 @@ class IrradiateTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 4);
 
         UUID hunterId = harness.getPermanentId(player2, "Fangren Hunter");
-        harness.castInstant(player1, 0, hunterId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, hunterId);
 
         Permanent hunter = findPermanent(player2, "Fangren Hunter");
         assertThat(hunter.getEffectivePower()).isEqualTo(2);
@@ -48,8 +47,7 @@ class IrradiateTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 4);
 
         UUID hunterId = harness.getPermanentId(player2, "Fangren Hunter");
-        harness.castInstant(player1, 0, hunterId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, hunterId);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -80,8 +78,7 @@ class IrradiateTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 4);
 
         UUID hunterId = harness.getPermanentId(player1, "Fangren Hunter");
-        harness.castInstant(player1, 0, hunterId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, hunterId);
 
         Permanent hunter = findPermanent(player1, "Fangren Hunter");
         assertThat(hunter.getEffectivePower()).isEqualTo(4);
@@ -104,5 +101,39 @@ class IrradiateTest extends BaseCardTest {
         Permanent hunter = findPermanent(player2, "Fangren Hunter");
         assertThat(hunter.getEffectivePower()).isEqualTo(2);
         assertThat(hunter.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The reduction stays fixed after resolution when more artifacts enter")
+    void reductionDoesNotChangeAfterResolution() {
+        harness.addToBattlefield(player1, new Ornithopter());
+        harness.addToBattlefield(player2, new FangrenHunter());
+        harness.setHand(player1, List.of(new Irradiate()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        UUID hunterId = harness.getPermanentId(player2, "Fangren Hunter");
+        harness.castAndResolveInstant(player1, 0, hunterId);
+        harness.addToBattlefield(player1, new Ornithopter());
+
+        Permanent hunter = findPermanent(player2, "Fangren Hunter");
+        assertThat(hunter.getEffectivePower()).isEqualTo(3);
+        assertThat(hunter.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An artifact creature target counts itself and dies at zero toughness")
+    void countsOwnArtifactTargetAndKillsIt() {
+        harness.addToBattlefield(player1, new Ornithopter());
+        harness.addToBattlefield(player1, new Ornithopter());
+        harness.setHand(player1, List.of(new Irradiate()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        UUID targetId = harness.getPermanentId(player1, "Ornithopter");
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(targetId));
+        harness.assertInGraveyard(player1, "Ornithopter");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
     }
 }
