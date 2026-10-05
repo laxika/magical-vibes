@@ -67,13 +67,58 @@ class ProwlersHelmTest extends BaseCardTest {
     }
 
     private Permanent addHelmReady(com.github.laxika.magicalvibes.model.Player player) {
-        return addReadyPermanent(player, new ProwlersHelm());
+        return addCreatureReady(player, new ProwlersHelm());
     }
 
-    private Permanent addReadyPermanent(com.github.laxika.magicalvibes.model.Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("An unattached Helm does not restrict blocking")
+    void unattachedHelmDoesNotRestrictBlocking() {
+        addAttackingCreature();
+        addHelmReady(player1);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Re-equipping moves the blocking restriction to the new creature")
+    void reEquippingMovesBlockingRestriction() {
+        Permanent helm = addHelmReady(player1);
+        Permanent original = addCreatureReady(player1, new GrizzlyBears());
+        Permanent replacement = addCreatureReady(player1, new GrizzlyBears());
+        helm.setAttachedTo(original.getId());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, replacement.getId());
+        harness.passBothPriorities();
+
+        assertThat(helm.getAttachedTo()).isEqualTo(replacement.getId());
+        original.setAttacking(true);
+        replacement.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 2))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can only be blocked by Walls");
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Equip cannot target an opponent's creature")
+    void equipCannotTargetOpponentsCreature() {
+        Permanent helm = addHelmReady(player1);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, opponentCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(helm.getAttachedTo()).isNull();
     }
 }
