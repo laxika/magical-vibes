@@ -28,8 +28,7 @@ class PhyrexianWarhorseTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castKickedCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(soldiers(player1)).hasSize(1);
     }
@@ -77,6 +76,90 @@ class PhyrexianWarhorseTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The kicked Soldier can pay the cost immediately while Warhorse has summoning sickness")
+    void sacrificeKickedSoldierPaysCostBeforeBoostResolves() {
+        harness.setHand(player1, List.of(new PhyrexianWarhorse()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castKickedCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent warhorse = findPermanent(player1, "Phyrexian Warhorse");
+        Permanent soldier = soldiers(player1).getFirst();
+        assertThat(soldier.getCard().getPower()).isEqualTo(1);
+        assertThat(soldier.getCard().getToughness()).isEqualTo(1);
+        assertThat(soldiers(player2)).isEmpty();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(soldiers(player1)).isEmpty();
+        assertThat(warhorse.getPowerModifier()).isZero();
+        assertThat(warhorse.getToughnessModifier()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(warhorse.getPowerModifier()).isEqualTo(2);
+        assertThat(warhorse.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Repeated activations add their boosts and can be used while tapped")
+    void repeatedActivationsAccumulate() {
+        Permanent warhorse = addCreatureReady(player1, new PhyrexianWarhorse());
+        Permanent firstSacrifice = addCreatureReady(player1, new PhyrexianWarhorse());
+        addCreatureReady(player1, new PhyrexianWarhorse());
+        warhorse.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, firstSacrifice.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Phyrexian Warhorse")).containsExactly(warhorse);
+        assertThat(warhorse.getPowerModifier()).isEqualTo(4);
+        assertThat(warhorse.getToughnessModifier()).isEqualTo(2);
+        assertThat(warhorse.isTapped()).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(warhorse.getPowerModifier()).isZero();
+        assertThat(warhorse.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsCreature() {
+        addCreatureReady(player1, new PhyrexianWarhorse());
+        Permanent opponentCreature = addCreatureReady(player2, new PhyrexianWarhorse());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sacrificing a creature does not replace the required mana payment")
+    void cannotActivateWithoutMana() {
+        Permanent warhorse = addCreatureReady(player1, new PhyrexianWarhorse());
+        Permanent sacrifice = addCreatureReady(player1, new PhyrexianWarhorse());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(warhorse, sacrifice);
+        assertThat(gd.stack).isEmpty();
     }
 
     private List<Permanent> soldiers(Player player) {
