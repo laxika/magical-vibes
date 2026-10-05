@@ -67,4 +67,49 @@ class PeggyCarterSecretAgentTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(e -> e.getCard().getName().equals("Peggy Carter, Secret Agent"));
         assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
     }
+
+    @Test
+    @DisplayName("An opponent's lone attacker does not receive indestructible")
+    void opponentAttackingAloneDoesNotTrigger() {
+        Permanent peggy = addCreatureReady(player1, new PeggyCarterSecretAgent());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(peggy.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The attack trigger resolves even if Peggy leaves the battlefield")
+    void triggerResolvesAfterPeggyLeaves() {
+        Permanent peggy = addCreatureReady(player1, new PeggyCarterSecretAgent());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(1));
+        assertThat(gd.stack).hasSize(1);
+        harness.getPermanentRemovalService().removePermanentToHand(gd, peggy);
+        harness.passBothPriorities();
+
+        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        harness.assertInHand(player1, "Peggy Carter, Secret Agent");
+    }
+
+    @Test
+    @DisplayName("Removing Peggy after resolution does not end the indestructible grant")
+    void indestructiblePersistsAfterPeggyLeaves() {
+        Permanent peggy = addCreatureReady(player1, new PeggyCarterSecretAgent());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(1));
+        harness.passBothPriorities();
+
+        assertThat(peggy.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        harness.getPermanentRemovalService().removePermanentToHand(gd, peggy);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Peggy Carter, Secret Agent");
+        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+    }
 }
