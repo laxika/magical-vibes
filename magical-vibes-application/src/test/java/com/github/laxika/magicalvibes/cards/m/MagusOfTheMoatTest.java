@@ -46,4 +46,39 @@ class MagusOfTheMoatTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
+
+    @Test
+    @DisplayName("A tapped Magus still prevents creatures without flying from attacking")
+    void tappedMagusStillRestrictsAttacking() {
+        var magus = harness.addToBattlefieldAndReturn(player1, new MagusOfTheMoat());
+        magus.tap();
+        addCreatureReady(player2, new NessianCourser());
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Magus of the Moat cannot attack without flying itself")
+    void magusCannotAttack() {
+        addCreatureReady(player1, new MagusOfTheMoat());
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Creatures without flying can attack after Magus dies")
+    void restrictionEndsWhenMagusDies() {
+        var magus = harness.addToBattlefieldAndReturn(player1, new MagusOfTheMoat());
+        addCreatureReady(player2, new NessianCourser());
+        magus.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player1, "Magus of the Moat");
+
+        assertThatCode(() -> declareAttackers(player2, List.of(0)))
+                .doesNotThrowAnyException();
+    }
 }
