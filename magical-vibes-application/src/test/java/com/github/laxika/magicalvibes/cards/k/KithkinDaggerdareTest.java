@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WoodlandChangeling;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,12 +9,14 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KithkinDaggerdare.class, WoodlandChangeling.class})
 class KithkinDaggerdareTest extends BaseCardTest {
 
     @Test
@@ -55,7 +57,7 @@ class KithkinDaggerdareTest extends BaseCardTest {
     @DisplayName("Cannot target a non-attacking creature")
     void cannotTargetNonAttackingCreature() {
         addDaggerdareReady(player1);
-        Permanent nonAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonAttacker = addCreatureReady(player1, new WoodlandChangeling());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, nonAttacker.getId()))
@@ -99,18 +101,86 @@ class KithkinDaggerdareTest extends BaseCardTest {
         assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
     }
 
+    @Test
+    void cannotActivateWithoutGreenMana() {
+        Permanent daggerdare = addDaggerdareReady(player1);
+        Permanent attacker = addAttackingCreature(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(daggerdare.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent daggerdare = addDaggerdareReady(player1);
+        daggerdare.setTapped(true);
+        Permanent attacker = addAttackingCreature(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWithSummoningSickness() {
+        Permanent daggerdare = addDaggerdareReady(player1);
+        daggerdare.setSummoningSick(true);
+        Permanent attacker = addAttackingCreature(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(daggerdare.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotBoostTargetThatStopsAttackingBeforeResolution() {
+        addDaggerdareReady(player1);
+        Permanent attacker = addAttackingCreature(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, attacker.getId());
+
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent daggerdare = addDaggerdareReady(player1);
+        Permanent attacker = addAttackingCreature(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, attacker.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(daggerdare);
+        gd.playerGraveyards.get(player1.getId()).add(daggerdare.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(attacker.getPowerModifier()).isEqualTo(2);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(2);
+    }
+
     private Permanent addDaggerdareReady(Player player) {
-        Permanent perm = new Permanent(new KithkinDaggerdare());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new KithkinDaggerdare());
     }
 
     private Permanent addAttackingCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(player, new WoodlandChangeling());
         perm.setAttacking(true);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
