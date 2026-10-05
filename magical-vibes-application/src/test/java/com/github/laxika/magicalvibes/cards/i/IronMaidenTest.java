@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.y.YavimayaWurm;
+import com.github.laxika.magicalvibes.cards.w.WitchbaneOrb;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,7 +13,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({IronMaiden.class, YavimayaWurm.class})
+@CardUsed({IronMaiden.class, YavimayaWurm.class, WitchbaneOrb.class})
 class IronMaidenTest extends BaseCardTest {
 
     private List<Card> cards(int count) {
@@ -83,5 +84,62 @@ class IronMaidenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 4);
+    }
+
+    @Test
+    @DisplayName("Deals no damage to an opponent with an empty hand")
+    void noDamageWithEmptyHand() {
+        harness.addToBattlefield(player1, new IronMaiden());
+        harness.setHand(player2, List.of());
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Deals no damage if the opponent's hand shrinks below four before resolution")
+    void handShrinksBeforeResolution() {
+        harness.addToBattlefield(player1, new IronMaiden());
+        harness.setHand(player2, cards(6));
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.setHand(player2, cards(2));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Each copy deals its damage independently")
+    void multipleCopies() {
+        harness.addToBattlefield(player1, new IronMaiden());
+        harness.addToBattlefield(player1, new IronMaiden());
+        harness.setHand(player2, cards(6));
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, lifeBefore - 4);
+    }
+
+    @Test
+    @CardUsed(WitchbaneOrb.class)
+    @DisplayName("The upkeep ability damages an opponent with hexproof because it does not target")
+    void damagesOpponentWithHexproof() {
+        harness.addToBattlefield(player1, new IronMaiden());
+        harness.addToBattlefield(player2, new WitchbaneOrb());
+        harness.setHand(player2, cards(6));
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, lifeBefore - 2);
     }
 }
