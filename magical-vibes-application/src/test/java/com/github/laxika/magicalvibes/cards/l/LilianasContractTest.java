@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.d.DemonOfDeathsGate;
 import com.github.laxika.magicalvibes.cards.d.DesecrationDemon;
+import com.github.laxika.magicalvibes.cards.d.Disperse;
 import com.github.laxika.magicalvibes.cards.g.Griselbrand;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HarvesterOfSouls;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LilianasContract.class, DemonOfDeathsGate.class, DesecrationDemon.class,
+        Disperse.class, Griselbrand.class, GrizzlyBears.class, HarvesterOfSouls.class})
 class LilianasContractTest extends BaseCardTest {
 
     @Test
@@ -90,6 +94,89 @@ class LilianasContractTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DemonOfDeathsGate());
         harness.addToBattlefield(player2, new Griselbrand());
         harness.addToBattlefield(player2, new HarvesterOfSouls());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    void losingFourthDemonInResponsePreventsWin() {
+        harness.addToBattlefield(player1, new LilianasContract());
+        harness.addToBattlefield(player1, new DesecrationDemon());
+        harness.addToBattlefield(player1, new DemonOfDeathsGate());
+        harness.addToBattlefield(player1, new Griselbrand());
+        var fourthDemon = harness.addToBattlefieldAndReturn(player1, new HarvesterOfSouls());
+        harness.setHand(player1, List.of(new Disperse()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, fourthDemon.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isNull();
+    }
+
+    @Test
+    void removingContractInResponseDoesNotPreventWin() {
+        var contract = harness.addToBattlefieldAndReturn(player1, new LilianasContract());
+        harness.addToBattlefield(player1, new DesecrationDemon());
+        harness.addToBattlefield(player1, new DemonOfDeathsGate());
+        harness.addToBattlefield(player1, new Griselbrand());
+        harness.addToBattlefield(player1, new HarvesterOfSouls());
+        harness.setHand(player1, List.of(new Disperse()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, contract.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    void extraDuplicateDemonDoesNotPreventWin() {
+        harness.addToBattlefield(player1, new LilianasContract());
+        harness.addToBattlefield(player1, new DesecrationDemon());
+        harness.addToBattlefield(player1, new DesecrationDemon());
+        harness.addToBattlefield(player1, new DemonOfDeathsGate());
+        harness.addToBattlefield(player1, new Griselbrand());
+        harness.addToBattlefield(player1, new HarvesterOfSouls());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new LilianasContract());
+        harness.addToBattlefield(player1, new DesecrationDemon());
+        harness.addToBattlefield(player1, new DemonOfDeathsGate());
+        harness.addToBattlefield(player1, new Griselbrand());
+        harness.addToBattlefield(player1, new HarvesterOfSouls());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    void differentlyNamedNonDemonDoesNotCount() {
+        harness.addToBattlefield(player1, new LilianasContract());
+        harness.addToBattlefield(player1, new DesecrationDemon());
+        harness.addToBattlefield(player1, new DemonOfDeathsGate());
+        harness.addToBattlefield(player1, new Griselbrand());
+        harness.addToBattlefield(player1, new GrizzlyBears());
 
         advanceToUpkeep(player1);
 
