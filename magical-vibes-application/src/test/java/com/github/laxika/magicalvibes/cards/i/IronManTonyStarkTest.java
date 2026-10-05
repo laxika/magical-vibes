@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -40,8 +39,7 @@ class IronManTonyStarkTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent token = findPermanent(player1, "Robot");
         assertThat(token.getCard().getColors()).isEmpty();
@@ -60,9 +58,67 @@ class IronManTonyStarkTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Robot")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Iron Man boosts himself only while attacking")
+    void boostsSelfOnlyWhileAttacking() {
+        Permanent ironMan = addCreatureReady(player1, new IronManTonyStark());
+        ironMan.setAttacking(true);
+
+        assertThat(gqs.getEffectivePower(gd, ironMan)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ironMan)).isEqualTo(3);
+
+        ironMan.setAttacking(false);
+
+        assertThat(gqs.getEffectivePower(gd, ironMan)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The boost excludes nonattacking allies and opposing attackers")
+    void excludesNonattackingAndOpposingCreatures() {
+        harness.addToBattlefield(player1, new IronManTonyStark());
+        Permanent ownBears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingBears = addCreatureReady(player2, new GrizzlyBears());
+        opposingBears.setAttacking(true);
+
+        assertThat(gqs.getEffectivePower(gd, ownBears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingBears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An opponent's red spell does not trigger Iron Man")
+    void opposingRedSpellDoesNotCreateToken() {
+        harness.addToBattlefield(player2, new IronManTonyStark());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Robot")).isEmpty();
+        assertThat(findPermanents(player2, "Robot")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The Robot is created before the red spell resolves")
+    void tokenTriggerResolvesBeforeSpell() {
+        harness.addToBattlefield(player1, new IronManTonyStark());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Robot")).hasSize(1);
+        harness.assertLife(player2, 20);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+        assertThat(findPermanents(player1, "Robot")).hasSize(1);
     }
 }
