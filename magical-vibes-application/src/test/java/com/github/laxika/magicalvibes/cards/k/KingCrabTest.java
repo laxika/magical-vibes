@@ -19,6 +19,95 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class KingCrabTest extends BaseCardTest {
 
     @Test
+    void canTargetOwnGreenCreature() {
+        Permanent crab = addCreatureReady(player1, new KingCrab());
+        Permanent wurm = addCreatureReady(player1, new YavimayaWurm());
+        harness.setLibrary(player1, List.of(new HiddenGibbons()));
+        Card previousTop = gd.playerDecks.get(player1.getId()).getFirst();
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, wurm.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(wurm.getCard(), previousTop);
+        harness.assertNotOnBattlefield(player1, "Yavimaya Wurm");
+        assertThat(crab.isTapped()).isTrue();
+    }
+
+    @Test
+    void abilityResolvesAfterCrabLeavesBattlefield() {
+        Permanent crab = addCreatureReady(player1, new KingCrab());
+        Permanent wurm = addCreatureReady(player2, new YavimayaWurm());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, wurm.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(crab);
+        gd.playerGraveyards.get(player1.getId()).add(crab.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst()).isSameAs(wurm.getCard());
+        harness.assertNotOnBattlefield(player2, "Yavimaya Wurm");
+    }
+
+    @Test
+    void putsCreatureInOwnersLibraryWhenControlledByOpponent() {
+        addCreatureReady(player1, new KingCrab());
+        YavimayaWurm card = new YavimayaWurm();
+        card.setOwnerId(player1.getId());
+        Permanent wurm = addCreatureReady(player2, card);
+        int opponentLibrarySize = gd.playerDecks.get(player2.getId()).size();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, wurm.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(card);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(opponentLibrarySize);
+        harness.assertNotOnBattlefield(player2, "Yavimaya Wurm");
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent crab = addCreatureReady(player1, new KingCrab());
+        crab.setSummoningSick(true);
+        Permanent wurm = addCreatureReady(player2, new YavimayaWurm());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, wurm.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(crab.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent crab = addCreatureReady(player1, new KingCrab());
+        crab.setTapped(true);
+        Permanent wurm = addCreatureReady(player2, new YavimayaWurm());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, wurm.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWithoutBlueMana() {
+        Permanent crab = addCreatureReady(player1, new KingCrab());
+        Permanent wurm = addCreatureReady(player2, new YavimayaWurm());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, wurm.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(crab.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Puts a target green creature on top of its owner's library")
     void putsTargetGreenCreatureOnTopOfOwnersLibrary() {
         Permanent crab = addCreatureReady(player1, new KingCrab());
