@@ -95,6 +95,62 @@ class KrakilinTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Krakilin");
     }
 
+    @Test
+    @DisplayName("A tapped, summoning-sick Krakilin can activate regeneration")
+    void canRegenerateWhileTappedAndSummoningSick() {
+        Permanent krakilin = addKrakilinReady(player1, 2);
+        krakilin.setTapped(true);
+        krakilin.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(krakilin.getRegenerationShield()).isEqualTo(1);
+        assertThat(krakilin.isTapped()).isTrue();
+        assertThat(krakilin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The activated regeneration ability saves Krakilin in combat and preserves counters")
+    void activatedShieldSavesFromCombat() {
+        Permanent krakilin = addKrakilinReady(player1, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(krakilin.isTapped()).isFalse();
+        krakilin.setBlocking(true);
+        krakilin.addBlockingTarget(0);
+        Permanent attacker = addAttackerReady(player2);
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Krakilin");
+        assertThat(krakilin.isTapped()).isTrue();
+        assertThat(krakilin.getRegenerationShield()).isZero();
+        assertThat(krakilin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(krakilin.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A regeneration shield cannot save Krakilin when its toughness becomes zero")
+    void regenerationDoesNotPreventZeroToughnessDeath() {
+        Permanent krakilin = addKrakilinReady(player1, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        krakilin.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Krakilin");
+        harness.assertInGraveyard(player1, "Krakilin");
+    }
     private Permanent addKrakilinReady(Player player, int counters) {
         Permanent perm = addCreatureReady(player, new Krakilin());
         perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, counters);
