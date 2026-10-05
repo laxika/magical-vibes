@@ -22,8 +22,7 @@ class MindPeelTest extends BaseCardTest {
         harness.setHand(player2, List.of(new SkyshroudFalcon()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
@@ -58,8 +57,7 @@ class MindPeelTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindPeel(), new SkyshroudFalcon()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -112,5 +110,58 @@ class MindPeelTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(
                 player1, 0, harness.getPermanentId(player2, "Skyshroud Falcon")))
                 .isInstanceOf(IllegalStateException.class);
+    }
+    @Test
+    @DisplayName("The targeted player chooses exactly one card to discard")
+    void targetedPlayerChoosesOneCard() {
+        MindPeel spell = new MindPeel();
+        SkyshroudFalcon kept = new SkyshroudFalcon();
+        ManaLeak discarded = new ManaLeak();
+        harness.setHand(player1, List.of(spell));
+        harness.setHand(player2, List.of(kept, discarded));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(kept);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discarded);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+    }
+
+    @Test
+    @DisplayName("Buyback returns Mind Peel even when the targeted player has no cards")
+    void buybackWithEmptyTargetHand() {
+        MindPeel spell = new MindPeel();
+        harness.setHand(player1, List.of(spell));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorceryWithBuyback(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(spell);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Self-targeted buyback does not return Mind Peel before the discard")
+    void selfTargetedBuybackDiscardsBeforeReturning() {
+        MindPeel spell = new MindPeel();
+        SkyshroudFalcon discarded = new SkyshroudFalcon();
+        harness.setHand(player1, List.of(spell, discarded));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorceryWithBuyback(player1, 0, player1.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(discarded);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(spell);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
     }
 }
