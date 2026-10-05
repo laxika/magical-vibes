@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HERBIELovableRobot;
+import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -18,7 +19,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({IronManBleedingEdge.class, GrizzlyBears.class})
+@CardUsed({IronManBleedingEdge.class, GrizzlyBears.class, HERBIELovableRobot.class, SolRing.class})
 class IronManBleedingEdgeTest extends BaseCardTest {
 
     @Test
@@ -33,9 +34,7 @@ class IronManBleedingEdgeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         List<Permanent> copies = findPermanents(player1, "Test Artifact");
         assertThat(copies).hasSize(2);
@@ -73,13 +72,83 @@ class IronManBleedingEdgeTest extends BaseCardTest {
     void doesNotTriggerForNonartifactSpell() {
         prepareMainPhase();
         harness.addToBattlefield(player1, new IronManBleedingEdge());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The copy choice is made when the triggered ability resolves")
+    void copyChoiceIsMadeOnResolution() {
+        prepareMainPhase();
+        harness.addToBattlefield(player1, new IronManBleedingEdge());
+
+        harness.castFromHand(player1, new SolRing(), "{1}");
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Sol Ring")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A real legendary artifact creature is copied as a nonlegendary token")
+    void copiesLegendaryArtifactCreature() {
+        prepareMainPhase();
+        harness.addToBattlefield(player1, new IronManBleedingEdge());
+        harness.castFromHand(player1, new HERBIELovableRobot(), "{2}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "H.E.R.B.I.E., Lovable Robot")).hasSize(2)
+                .filteredOn(permanent -> permanent.getCard().isToken()).singleElement()
+                .satisfies(permanent -> assertThat(permanent.getCard().getSupertypes())
+                        .doesNotContain(CardSupertype.LEGENDARY));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An opponent's artifact spell is not copied")
+    void doesNotCopyOpponentsArtifact() {
+        prepareMainPhase();
+        harness.addToBattlefield(player1, new IronManBleedingEdge());
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new SolRing(), "{1}");
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(findPermanents(player2, "Sol Ring")).hasSize(1);
+        assertThat(findPermanents(player1, "Sol Ring")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The copy allowance resets on the next turn")
+    void copyAllowanceResetsNextTurn() {
+        prepareMainPhase();
+        harness.addToBattlefield(player1, new IronManBleedingEdge());
+        harness.setLibrary(player1, List.of(new SolRing(), new SolRing()));
+        harness.setLibrary(player2, List.of(new SolRing(), new SolRing()));
+        harness.castFromHand(player1, new SolRing(), "{1}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Sol Ring")).hasSize(2);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new SolRing(), "{1}");
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Sol Ring")).hasSize(4);
     }
 
     private void prepareMainPhase() {
