@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RaptorCompanion;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,16 +15,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PiousInterdiction.class, RaptorCompanion.class, PryingBlade.class})
 class PiousInterdictionTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Casting Pious Interdiction puts it on the stack")
     void castingPutsOnStack() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new PiousInterdiction()));
         harness.addMana(player1, ManaColor.WHITE, 4);
@@ -33,15 +31,14 @@ class PiousInterdictionTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Pious Interdiction");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(PiousInterdiction.class);
     }
 
     @Test
     @DisplayName("Resolving Pious Interdiction attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new PiousInterdiction()));
         harness.addMana(player1, ManaColor.WHITE, 4);
@@ -55,14 +52,11 @@ class PiousInterdictionTest extends BaseCardTest {
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
 
-    // ===== ETB life gain =====
-
     @Test
     @DisplayName("ETB trigger causes controller to gain 2 life")
     void etbGainsLife() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new PiousInterdiction()));
         harness.addMana(player1, ManaColor.WHITE, 4);
@@ -80,9 +74,8 @@ class PiousInterdictionTest extends BaseCardTest {
     void etbGainsLifeWithCustomTotals() {
         harness.setLife(player1, 5);
 
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new PiousInterdiction()));
         harness.addMana(player1, ManaColor.WHITE, 4);
@@ -94,18 +87,14 @@ class PiousInterdictionTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(7);
     }
 
-    // ===== Prevents attacking =====
-
     @Test
     @DisplayName("Enchanted creature cannot attack")
     void enchantedCreatureCannotAttack() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player1, new RaptorCompanion());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
-        Permanent auraPerm = new Permanent(new PiousInterdiction());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player2, new PiousInterdiction());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(auraPerm);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -117,23 +106,18 @@ class PiousInterdictionTest extends BaseCardTest {
                 .hasMessageContaining("Invalid attacker index");
     }
 
-    // ===== Prevents blocking =====
-
     @Test
     @DisplayName("Enchanted creature cannot block")
     void enchantedCreatureCannotBlock() {
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
+        Permanent blockerPerm = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
         blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
 
-        Permanent auraPerm = new Permanent(new PiousInterdiction());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new PiousInterdiction());
         auraPerm.setAttachedTo(blockerPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
-        Permanent atkPerm = new Permanent(new GrizzlyBears());
+        Permanent atkPerm = harness.addToBattlefieldAndReturn(player1, new RaptorCompanion());
         atkPerm.setSummoningSick(false);
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -145,31 +129,26 @@ class PiousInterdictionTest extends BaseCardTest {
                 .hasMessageContaining("Invalid blocker index");
     }
 
-    // ===== Targeting restriction =====
-
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.addToBattlefield(player2, new RaptorCompanion());
+        harness.addToBattlefield(player1, new PryingBlade());
         harness.setHand(player1, List.of(new PiousInterdiction()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
+        Permanent artifact = findPermanent(player1, "Prying Blade");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
 
-    // ===== Fizzles if target removed =====
-
     @Test
     @DisplayName("Fizzles to graveyard if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new PiousInterdiction()));
         harness.addMana(player1, ManaColor.WHITE, 4);
@@ -183,5 +162,45 @@ class PiousInterdictionTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Pious Interdiction");
         harness.assertNotOnBattlefield(player1, "Pious Interdiction");
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Life gain uses the stack and survives the Aura leaving")
+    void lifeGainSurvivesAuraLeaving() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
+        harness.setHand(player1, List.of(new PiousInterdiction()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+        Permanent aura = findPermanent(player1, "Pious Interdiction");
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        gd.playerGraveyards.get(player1.getId()).add(aura.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can enchant its controller's creature and gain life")
+    void canEnchantOwnCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RaptorCompanion());
+        harness.setHand(player1, List.of(new PiousInterdiction()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Pious Interdiction").getAttachedTo()).isEqualTo(creature.getId());
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
     }
 }
