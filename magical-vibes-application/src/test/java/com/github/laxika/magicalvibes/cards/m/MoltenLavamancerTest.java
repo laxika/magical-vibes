@@ -24,7 +24,7 @@ class MoltenLavamancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
-        resolveStack();
+        resolveAllTriggers();
 
         Permanent lavamancer = findPermanent(player1, "Molten Lavamancer");
         assertThat(lavamancer.getPowerModifier()).isEqualTo(1);
@@ -39,10 +39,10 @@ class MoltenLavamancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, player2.getId());
-        resolveStack();
+        resolveAllTriggers();
 
         harness.castInstant(player1, 0, player2.getId());
-        resolveStack();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().getName().equals("Elemental"))
@@ -60,15 +60,95 @@ class MoltenLavamancerTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.castInstant(player2, 0, player1.getId());
-        resolveStack();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getName().equals("Elemental"));
     }
 
-    private void resolveStack() {
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+    @Test
+    void prowessStacksOnceForEachNoncreatureSpell() {
+        harness.addToBattlefield(player1, new MoltenLavamancer());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        Permanent lavamancer = findPermanent(player1, "Molten Lavamancer");
+        assertThat(lavamancer.getPowerModifier()).isEqualTo(2);
+        assertThat(lavamancer.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    void creatureSpellDoesNotTriggerProwess() {
+        harness.addToBattlefield(player1, new MoltenLavamancer());
+        harness.setHand(player1, List.of(new MoltenLavamancer()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2)
+                .allSatisfy(permanent -> {
+                    assertThat(permanent.getPowerModifier()).isZero();
+                    assertThat(permanent.getToughnessModifier()).isZero();
+                });
+    }
+
+    @Test
+    void ownDamageDuringOpponentsTurnDoesNotCreateToken() {
+        harness.addToBattlefield(player1, new MoltenLavamancer());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void damageToSelfDoesNotConsumeTokenTrigger() {
+        harness.addToBattlefield(player1, new MoltenLavamancer());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player1.getId());
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Elemental"))
+                .hasSize(1)
+                .allSatisfy(token -> {
+                    assertThat(token.getCard().isToken()).isTrue();
+                    assertThat(token.getEffectivePower()).isEqualTo(1);
+                    assertThat(token.getEffectiveToughness()).isEqualTo(1);
+                });
+    }
+
+    @Test
+    void eachLavamancerCreatesItsOwnToken() {
+        harness.addToBattlefield(player1, new MoltenLavamancer());
+        harness.addToBattlefield(player1, new MoltenLavamancer());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Elemental"))
+                .hasSize(2);
     }
 }
