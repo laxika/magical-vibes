@@ -34,4 +34,43 @@ class IronMyrTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("Iron Myr's mana ability resolves immediately without using the stack")
+    void manaAbilityResolvesImmediately() {
+        addCreatureReady(player1, new IronMyr());
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @DisplayName("An already tapped Iron Myr cannot produce more mana")
+    void alreadyTappedCannotTapAgain() {
+        addCreatureReady(player1, new IronMyr());
+        harness.tapPermanent(player1, 0);
+
+        assertThatThrownBy(() -> harness.tapPermanent(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Iron Myr can produce mana again after its controller's untap step")
+    void canTapAgainAfterUntapping() {
+        harness.addToBattlefield(player1, new IronMyr());
+        harness.performUntapStep(player1);
+        harness.tapPermanent(player1, 0);
+
+        harness.performUntapStep(player1);
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+    }
 }
