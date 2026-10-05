@@ -109,4 +109,56 @@ class PrimitiveEtchingsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("A creature drawn after a noncreature first draw does not trigger")
+    void creatureAfterNoncreatureFirstDrawDoesNotTrigger() {
+        harness.addToBattlefield(player1, new PrimitiveEtchings());
+        harness.setLibrary(player1, List.of(new LongTermPlans(), new ScornfulEgotist()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
+        assertThat(gameLogContains("reveals Long-Term Plans")).isTrue();
+        assertThat(gameLogContains("reveals Scornful Egotist")).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's draw is not revealed by your Primitive Etchings")
+    void opponentsDrawDoesNotTrigger() {
+        harness.addToBattlefield(player1, new PrimitiveEtchings());
+        harness.setLibrary(player2, List.of(new ScornfulEgotist(), new LongTermPlans()));
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player2.getId()));
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 1);
+        assertThat(gameLogContains("reveals Scornful Egotist")).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each Primitive Etchings triggers once for the first creature card drawn")
+    void multipleCopiesEachDrawAnAdditionalCard() {
+        harness.addToBattlefield(player1, new PrimitiveEtchings());
+        harness.addToBattlefield(player1, new PrimitiveEtchings());
+        harness.setLibrary(player1, List.of(
+                new ScornfulEgotist(), new ScornfulEgotist(), new ScornfulEgotist(), new LongTermPlans()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 3);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
 }
