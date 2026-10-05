@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.b.BladeSplicer;
+import com.github.laxika.magicalvibes.cards.m.MidnightHaunting;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ParallelLives.class, BladeSplicer.class, MidnightHaunting.class, QueenAllenalOfRuadach.class})
 class ParallelLivesTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -28,7 +32,7 @@ class ParallelLivesTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Parallel Lives");
+        assertThat(entry.getCard()).isInstanceOf(ParallelLives.class);
     }
 
     @Test
@@ -174,5 +178,68 @@ class ParallelLivesTest extends BaseCardTest {
 
         List<Permanent> myTokens = findPermanents(player1, "Phyrexian Golem");
         assertThat(myTokens).hasSize(1);
+    }
+    @Test
+    @DisplayName("The controller chooses the order of Parallel Lives and Queen Allenal replacements")
+    void offersChoiceWhenReplacementOrderChangesTokenCount() {
+        harness.addToBattlefield(player1, new ParallelLives());
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.setHand(player1, List.of(new MidnightHaunting()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Parallel Lives doubles all tokens in a multi-token creation event")
+    void doublesMultipleTokensFromOneEffect() {
+        harness.addToBattlefield(player1, new ParallelLives());
+        harness.setHand(player1, List.of(new MidnightHaunting()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(findPermanents(player1, "Spirit")).hasSize(4)
+                .allSatisfy(token -> {
+                    assertThat(token.getCard().isToken()).isTrue();
+                    assertThat(token.isTapped()).isFalse();
+                    assertThat(token.getCard().getPower()).isEqualTo(1);
+                    assertThat(token.getCard().getToughness()).isEqualTo(1);
+                });
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Two Parallel Lives multiply a two-token creation event to eight tokens")
+    void multipliesMultipleTokenEventWithTwoCopies() {
+        harness.addToBattlefield(player1, new ParallelLives());
+        harness.addToBattlefield(player1, new ParallelLives());
+        harness.setHand(player1, List.of(new MidnightHaunting()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(findPermanents(player1, "Spirit")).hasSize(8);
+    }
+
+    @Test
+    @DisplayName("A token spell cast in response to Parallel Lives resolves before its replacement is active")
+    void doesNotDoubleBeforeParallelLivesResolves() {
+        harness.setHand(player1, List.of(new ParallelLives(), new MidnightHaunting()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castEnchantment(player1, 0);
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(findPermanents(player1, "Spirit")).hasSize(2);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Parallel Lives");
+        assertThat(findPermanents(player1, "Spirit")).hasSize(2);
     }
 }
