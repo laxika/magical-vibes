@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.a.ArrogantOutlaw;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.Frogify;
 import com.github.laxika.magicalvibes.cards.o.OrmendahlTheCorrupter;
 import com.github.laxika.magicalvibes.cards.u.UnrulyMob;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -20,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Jerren.class, OrmendahlTheCorrupter.class, ArrogantOutlaw.class, GrizzlyBears.class, UnrulyMob.class})
+@CardUsed({Jerren.class, OrmendahlTheCorrupter.class, ArrogantOutlaw.class, UnrulyMob.class, Frogify.class})
 class JerrenTest extends BaseCardTest {
 
     @Test
@@ -47,7 +47,7 @@ class JerrenTest extends BaseCardTest {
 
         human.setMarkedDamage(10);
         harness.runStateBasedActions();
-        resolveAllStack();
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(19);
         assertThat(humanTokenCount(player1)).isOne();
@@ -58,11 +58,11 @@ class JerrenTest extends BaseCardTest {
     void nonHumanAndTokenDeathsDoNotTrigger() {
         harness.setLife(player1, 20);
         harness.addToBattlefield(player1, new Jerren());
-        Permanent nonHuman = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent nonHuman = harness.addToBattlefieldAndReturn(player1, new ArrogantOutlaw());
 
         nonHuman.setMarkedDamage(10);
         harness.runStateBasedActions();
-        resolveAllStack();
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(humanTokenCount(player1)).isZero();
@@ -70,7 +70,7 @@ class JerrenTest extends BaseCardTest {
         Permanent human = harness.addToBattlefieldAndReturn(player1, new UnrulyMob());
         human.setMarkedDamage(10);
         harness.runStateBasedActions();
-        resolveAllStack();
+        resolveAllTriggers();
 
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -79,7 +79,7 @@ class JerrenTest extends BaseCardTest {
         harness.setLife(player1, 20);
         token.setMarkedDamage(1);
         harness.runStateBasedActions();
-        resolveAllStack();
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(humanTokenCount(player1)).isZero();
@@ -103,7 +103,7 @@ class JerrenTest extends BaseCardTest {
     @DisplayName("Ormendahl sacrifices another creature to draw a card")
     void ormendahlSacrificesAnotherCreatureToDraw() {
         Permanent ormendahl = addTransformedOrmendahl();
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ArrogantOutlaw());
         harness.setLibrary(player1, List.of(new ArrogantOutlaw()));
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -119,33 +119,170 @@ class JerrenTest extends BaseCardTest {
     void lifelinkAbilityRequiresHumanYouControl() {
         Permanent jerren = harness.addToBattlefieldAndReturn(player1, new Jerren());
         Permanent human = harness.addToBattlefieldAndReturn(player1, new UnrulyMob());
-        Permanent nonHuman = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent nonHuman = harness.addToBattlefieldAndReturn(player1, new ArrogantOutlaw());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, indexOf(player1, jerren), null, human.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, human, Keyword.LIFELINK)).isTrue();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, indexOf(player1, jerren), null, nonHuman.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void formerHumanDeathDoesNotTrigger() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new Jerren());
+        Permanent human = harness.addToBattlefieldAndReturn(player1, new UnrulyMob());
+        harness.setHand(player1, List.of(new Frogify()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, human.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, human)).containsExactly(CardSubtype.FROG);
+
+        human.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(human.getOriginalCard());
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(humanTokenCount(player1)).isZero();
+    }
+
+    @Test
+    void ownDeathDoesNotTrigger() {
+        harness.setLife(player1, 20);
+        Permanent jerren = addReadyJerren();
+        jerren.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(humanTokenCount(player1)).isZero();
+    }
+
+    @Test
+    void simultaneousDeathWithAnotherHumanStillTriggers() {
+        harness.setLife(player1, 20);
+        Permanent jerren = addReadyJerren();
+        Permanent human = harness.addToBattlefieldAndReturn(player1, new UnrulyMob());
+        jerren.setMarkedDamage(3);
+        human.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(jerren.getOriginalCard(), human.getOriginalCard());
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        assertThat(humanTokenCount(player1)).isOne();
+    }
+
+    @Test
+    void opponentsHumanDeathDoesNotTrigger() {
+        harness.setLife(player1, 20);
+        addReadyJerren();
+        Permanent human = harness.addToBattlefieldAndReturn(player2, new UnrulyMob());
+        human.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(humanTokenCount(player1)).isZero();
+    }
+
+    @Test
+    void mayDeclineTransformation() {
+        Permanent jerren = addReadyJerren();
+        harness.setLife(player1, 13);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(jerren.isTransformed()).isFalse();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(13);
+    }
+
+    @Test
+    void lifeBelowThirteenDoesNotTriggerTransformation() {
+        Permanent jerren = addReadyJerren();
+        harness.setLife(player1, 12);
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(jerren.isTransformed()).isFalse();
+    }
+
+    @Test
+    void lifeAboveThirteenDoesNotTriggerTransformation() {
+        Permanent jerren = addReadyJerren();
+        harness.setLife(player1, 14);
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(jerren.isTransformed()).isFalse();
+    }
+
+    @Test
+    void transformationRechecksLifeOnResolution() {
+        Permanent jerren = addReadyJerren();
+        harness.setLife(player1, 13);
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.setLife(player1, 14);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(jerren.isTransformed()).isFalse();
+    }
+
+    @Test
+    void opponentsEndStepDoesNotTriggerTransformation() {
+        Permanent jerren = addReadyJerren();
+        harness.setLife(player1, 13);
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(jerren.isTransformed()).isFalse();
+    }
+
+    @Test
+    void lifelinkCannotTargetOpponentsHuman() {
+        Permanent jerren = addReadyJerren();
+        Permanent human = harness.addToBattlefieldAndReturn(player2, new UnrulyMob());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, indexOf(player1, jerren), null, human.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void ormendahlCannotSacrificeItself() {
+        Permanent ormendahl = addTransformedOrmendahl();
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, indexOf(player1, ormendahl), null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ormendahl);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyJerren() {
-        Jerren card = new Jerren();
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player1, new Jerren());
     }
 
     private Permanent addTransformedOrmendahl() {
-        Jerren card = new Jerren();
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        permanent.setCard(card.getBackFaceCard());
+        Permanent permanent = addReadyJerren();
+        permanent.setCard(permanent.getCard().getBackFaceCard());
         permanent.setTransformed(true);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
         return permanent;
     }
 
@@ -154,12 +291,6 @@ class JerrenTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.HUMAN))
                 .count();
-    }
-
-    private void resolveAllStack() {
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
     }
 
     private void advanceToEndStep(Player activePlayer) {
