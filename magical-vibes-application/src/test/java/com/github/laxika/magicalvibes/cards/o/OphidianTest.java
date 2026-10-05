@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
 import com.github.laxika.magicalvibes.cards.b.BenalishMissionary;
+import com.github.laxika.magicalvibes.cards.f.FlaringPain;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +16,7 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({Ophidian.class, BenalishInfantry.class, BenalishMissionary.class})
+@CardUsed({Ophidian.class, BenalishInfantry.class, BenalishMissionary.class, FlaringPain.class})
 class OphidianTest extends BaseCardTest {
 
     private Permanent addAttacker() {
@@ -51,8 +52,7 @@ class OphidianTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
         harness.assertLife(player2, 20);
     }
 
@@ -72,8 +72,7 @@ class OphidianTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
         harness.assertLife(player2, 19);
     }
 
@@ -94,9 +93,30 @@ class OphidianTest extends BaseCardTest {
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(ophidian.getId())
                 .doesNotContain(otherAttacker.getId());
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
         harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Accepting assigns no combat damage even when damage cannot be prevented")
+    void acceptingAssignsNoDamageUnderFlaringPain() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new FlaringPain(), "{1}{R}");
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new BenalishInfantry()));
+        addAttacker();
+
+        attackUnblocked();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertInHand(player1, "Benalish Infantry");
+
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        harness.assertLife(player2, 20);
     }
 
     @Test
