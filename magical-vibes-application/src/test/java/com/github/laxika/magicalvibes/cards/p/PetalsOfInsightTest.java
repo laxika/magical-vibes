@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.SakuraTribeElder;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -90,6 +91,67 @@ class PetalsOfInsightTest extends BaseCardTest {
         harness.assertInHand(player1, "Petals of Insight");
         assertThat(harness.getGameData().playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Accepting with one card leaves it in the library and returns the spell without a reorder prompt")
+    void acceptingWithOneCard() {
+        LanternKami remainingCard = new LanternKami();
+        castPetals(List.of(remainingCard));
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Petals of Insight");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Declining with two cards draws both and loses for the missing third draw")
+    void decliningWithShortLibraryLoses() {
+        SakuraTribeElder firstCard = new SakuraTribeElder();
+        LanternKami secondCard = new LanternKami();
+        castPetals(List.of(firstCard, secondCard));
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstCard, secondCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Petals of Insight");
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Declining with an empty library attempts to draw and loses")
+    void decliningWithEmptyLibraryLoses() {
+        castPetals(List.of());
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Petals of Insight");
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("The spell does not enter the graveyard while its resolution choices are pending")
+    void spellStaysOutOfGraveyardDuringChoices() {
+        castPetals();
+
+        harness.assertNotInGraveyard(player1, "Petals of Insight");
+        harness.assertNotInHand(player1, "Petals of Insight");
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotInGraveyard(player1, "Petals of Insight");
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
+
+        harness.assertInHand(player1, "Petals of Insight");
+        harness.assertNotInGraveyard(player1, "Petals of Insight");
+        assertThat(gd.stack).isEmpty();
     }
 
     /** Sets a known five-card library and resolves Petals of Insight up to its may-choice. */
