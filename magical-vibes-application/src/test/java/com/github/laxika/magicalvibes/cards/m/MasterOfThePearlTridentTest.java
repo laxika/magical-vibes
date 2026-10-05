@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -117,10 +116,7 @@ class MasterOfThePearlTridentTest extends BaseCardTest {
 
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
@@ -128,5 +124,44 @@ class MasterOfThePearlTridentTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("An Island controlled only by the attacker does not prevent blocking")
+    void attackersIslandDoesNotEnableIslandwalk() {
+        harness.addToBattlefield(player1, new MasterOfThePearlTrident());
+        harness.addToBattlefield(player1, new Island());
+        Permanent attacker = addCreatureReady(player1, new MasterOfThePearlTrident());
+        Permanent blocker = addCreatureReady(player2, new MasterOfThePearlTrident());
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.ISLANDWALK)).isTrue();
+        assertThat(bls.canBlockAttacker(gd, blocker, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
+
+        harness.addToBattlefield(player2, new Island());
+
+        assertThat(bls.canBlockAttacker(gd, blocker, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+    }
+
+    @Test
+    @DisplayName("The bonus follows the Master's current controller")
+    void bonusFollowsCurrentController() {
+        Permanent source = addCreatureReady(player1, new MasterOfThePearlTrident());
+        Permanent formerAlly = addCreatureReady(player1, new MasterOfThePearlTrident());
+        Permanent newAlly = addCreatureReady(player2, new MasterOfThePearlTrident());
+
+        assertThat(gqs.getEffectivePower(gd, formerAlly)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, newAlly)).isEqualTo(2);
+
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerBattlefields.get(player2.getId()).add(source);
+
+        assertThat(gqs.getEffectivePower(gd, formerAlly)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, formerAlly)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, formerAlly, Keyword.ISLANDWALK)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, newAlly)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, newAlly)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, newAlly, Keyword.ISLANDWALK)).isTrue();
     }
 }
