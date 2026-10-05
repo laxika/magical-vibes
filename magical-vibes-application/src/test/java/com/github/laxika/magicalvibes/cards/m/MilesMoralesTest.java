@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({MilesMorales.class, UltimateSpiderMan.class, GrizzlyBears.class, PeterParker.class, WoollySpider.class})
 class MilesMoralesTest extends BaseCardTest {
@@ -104,6 +105,85 @@ class MilesMoralesTest extends BaseCardTest {
         assertThat(opponentLegendary.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
     }
 
+    @Test
+    void entersWithoutChoosingAnyTargets() {
+        prepareMainPhase();
+        harness.setHand(player1, List.of(new MilesMorales()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0, List.of());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Miles Morales").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canPutOneCounterOnAnOpponentsCreature() {
+        Permanent target = addCreatureReady(player2, new PeterParker());
+        prepareMainPhase();
+        harness.setHand(player1, List.of(new MilesMorales()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0, List.of(target.getId()));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void canCastBackFaceAndActivateCamouflageWithoutFrontFaceTrigger() {
+        prepareMainPhase();
+        harness.setHand(player1, List.of(new MilesMorales()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0, 1);
+        harness.passBothPriorities();
+
+        Permanent ultimate = findPermanent(player1, "Ultimate Spider-Man");
+        assertThat(ultimate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(ultimate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, ultimate, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.getEffectiveColors(gd, ultimate)).isEmpty();
+    }
+
+    @Test
+    void doublesOnlyOnceWhenMultipleOtherCreaturesAttack() {
+        Permanent ultimate = addBackReady(player1);
+        ultimate.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(1, 2));
+        resolveAllTriggers();
+
+        assertThat(ultimate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(ultimate.isTapped()).isFalse();
+    }
+    @Test
+    void cannotCastBackFaceForFrontFacesManaCost() {
+        prepareMainPhase();
+        harness.setHand(player1, List.of(new MilesMorales()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
     private Permanent addBackReady(Player player) {
         MilesMorales card = new MilesMorales();
         Permanent permanent = addCreatureReady(player, card);
