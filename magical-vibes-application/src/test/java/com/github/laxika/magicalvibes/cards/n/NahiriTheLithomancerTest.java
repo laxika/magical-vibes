@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.b.Bonesplitter;
+import com.github.laxika.magicalvibes.cards.e.EnormousEnergyBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -18,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NahiriTheLithomancer.class, Bonesplitter.class, GrizzlyBears.class, LeoninScimitar.class})
+@CardUsed({NahiriTheLithomancer.class, Bonesplitter.class, GrizzlyBears.class, LeoninScimitar.class,
+        EnormousEnergyBlade.class})
 class NahiriTheLithomancerTest extends BaseCardTest {
 
     @Test
@@ -88,12 +90,89 @@ class NahiriTheLithomancerTest extends BaseCardTest {
     }
 
     private Permanent addReadyNahiri(Player player, int loyalty) {
-        Permanent permanent = new Permanent(new NahiriTheLithomancer());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new NahiriTheLithomancer());
         permanent.setCounterCount(CounterType.LOYALTY, loyalty);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return permanent;
+    }
+
+    @Test
+    void mayDeclineAttachingEquipment() {
+        addReadyNahiri(player1, 3);
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+
+        assertThat(equipment.getAttachedTo()).isNull();
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Kor Soldier"))).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void createsTokenWithoutOfferingOpponentsEquipment() {
+        addReadyNahiri(player1, 3);
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new Bonesplitter());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Kor Soldier");
+        assertThat(equipment.getAttachedTo()).isNull();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void mayPutEquipmentFromHandWithoutPayingItsCost() {
+        addReadyNahiri(player1, 3);
+        Bonesplitter equipment = new Bonesplitter();
+        GrizzlyBears nonEquipment = new GrizzlyBears();
+        harness.setHand(player1, List.of(equipment, nonEquipment));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PutCardFromHandOrGraveyardChoice.class)
+                .validCardIds()).containsExactly(equipment.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(equipment.getId()));
+
+        harness.assertOnBattlefield(player1, "Bonesplitter");
+        harness.assertNotInHand(player1, "Bonesplitter");
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(findPermanent(player1, "Bonesplitter").getAttachedTo()).isNull();
+    }
+
+    @Test
+    void mayDeclinePuttingEquipmentOntoBattlefield() {
+        Permanent nahiri = addReadyNahiri(player1, 3);
+        harness.setHand(player1, List.of(new Bonesplitter()));
+        harness.setGraveyard(player1, List.of(new LeoninScimitar()));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        harness.assertInHand(player1, "Bonesplitter");
+        harness.assertInGraveyard(player1, "Leonin Scimitar");
+        assertThat(nahiri.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void attachingEquipmentTriggersItsAttachmentAbility() {
+        addReadyNahiri(player1, 3);
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new EnormousEnergyBlade());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        Permanent token = findPermanent(player1, "Kor Soldier");
+        harness.handlePermanentChosen(player1, blade.getId());
+        resolveAllTriggers();
+
+        assertThat(blade.getAttachedTo()).isEqualTo(token.getId());
+        assertThat(token.isTapped()).isTrue();
     }
 }
