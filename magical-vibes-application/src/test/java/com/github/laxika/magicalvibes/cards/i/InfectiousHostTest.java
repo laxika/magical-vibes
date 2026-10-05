@@ -48,4 +48,47 @@ class InfectiousHostTest extends BaseCardTest {
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 20);
     }
+
+    @Test
+    void opponentControlledHostUsesItsControllersTargetChoiceAndWaitsForResolution() {
+        Permanent host = harness.addToBattlefieldAndReturn(player2, new InfectiousHost());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        host.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Infectious Host");
+        harness.assertInGraveyard(player2, "Infectious Host");
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void eachHostDyingSimultaneouslyTriggersSeparately() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new InfectiousHost());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new InfectiousHost());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        first.setMarkedDamage(1);
+        second.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 16);
+    }
 }
