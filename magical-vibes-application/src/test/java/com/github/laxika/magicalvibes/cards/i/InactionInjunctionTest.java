@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.a.AxebaneGuardian;
+import com.github.laxika.magicalvibes.cards.d.DrudgeBeetle;
+import com.github.laxika.magicalvibes.cards.g.GolgariGuildgate;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,13 +19,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({InactionInjunction.class, DrudgeBeetle.class, AxebaneGuardian.class, GolgariGuildgate.class})
 class InactionInjunctionTest extends BaseCardTest {
 
     @Test
     @DisplayName("Detained creature can't attack")
     void detainedCreatureCannotAttack() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = detain("Grizzly Bears");
+        harness.addToBattlefield(player2, new DrudgeBeetle());
+        Permanent bears = detain("Drudge Beetle");
 
         assertThatThrownBy(() -> declareAttack(bears))
                 .isInstanceOf(IllegalStateException.class)
@@ -33,10 +36,10 @@ class InactionInjunctionTest extends BaseCardTest {
     @Test
     @DisplayName("Detained creature can't block")
     void detainedCreatureCannotBlock() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        detain("Grizzly Bears");
+        harness.addToBattlefield(player2, new DrudgeBeetle());
+        detain("Drudge Beetle");
 
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new DrudgeBeetle());
         attacker.setAttacking(true);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -51,10 +54,10 @@ class InactionInjunctionTest extends BaseCardTest {
     @Test
     @DisplayName("Detained creature can't activate its abilities")
     void detainedCreatureCannotActivateAbilities() {
-        addCreatureReady(player2, new LlanowarElves());
-        detain("Llanowar Elves");
+        addCreatureReady(player2, new AxebaneGuardian());
+        detain("Axebane Guardian");
 
-        assertThatThrownBy(() -> harness.tapPermanent(player2, 0))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be activated");
     }
@@ -62,8 +65,8 @@ class InactionInjunctionTest extends BaseCardTest {
     @Test
     @DisplayName("Detain wears off at the caster's next turn")
     void detainWearsOffAtControllersNextTurn() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = detain("Grizzly Bears");
+        harness.addToBattlefield(player2, new DrudgeBeetle());
+        Permanent bears = detain("Drudge Beetle");
 
         gd.expireFloatingEffectsAtTurnStart(player1.getId());
 
@@ -73,8 +76,8 @@ class InactionInjunctionTest extends BaseCardTest {
     @Test
     @DisplayName("Controller draws a card")
     void controllerDrawsACard() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        detain("Grizzly Bears");
+        harness.addToBattlefield(player2, new DrudgeBeetle());
+        detain("Drudge Beetle");
 
         // setHand replaced the hand with the single Injunction, which left it on cast; the
         // resolved draw is therefore the only card in hand.
@@ -84,13 +87,84 @@ class InactionInjunctionTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature you control")
     void cannotTargetOwnCreature() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID ownBearId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.addToBattlefield(player1, new DrudgeBeetle());
+        UUID ownBearId = harness.getPermanentId(player1, "Drudge Beetle");
         harness.setHand(player1, List.of(new InactionInjunction()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, ownBearId, null))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, ownBearId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target an opponent's noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new GolgariGuildgate());
+        harness.setHand(player1, List.of(new InactionInjunction()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, land.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature");
+    }
+
+    @Test
+    @DisplayName("Detain does not tap the creature")
+    void detainDoesNotTapCreature() {
+        harness.addToBattlefield(player2, new DrudgeBeetle());
+
+        Permanent creature = detain("Drudge Beetle");
+
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Detain survives the opponent's turn starting")
+    void detainSurvivesOpponentsTurnStart() {
+        harness.addToBattlefield(player2, new DrudgeBeetle());
+        Permanent creature = detain("Drudge Beetle");
+
+        gd.expireFloatingEffectsAtTurnStart(player2.getId());
+
+        assertThatThrownBy(() -> declareAttack(creature))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("No card is drawn if the target leaves before resolution")
+    void noDrawWhenTargetLeavesBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DrudgeBeetle());
+        harness.setHand(player1, List.of(new InactionInjunction()));
+        harness.setLibrary(player1, List.of(new DrudgeBeetle()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castSorcery(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Inaction Injunction");
+    }
+
+    @Test
+    @DisplayName("No card is drawn if the caster gains control of the target before resolution")
+    void noDrawWhenTargetBecomesControlledByCaster() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DrudgeBeetle());
+        harness.setHand(player1, List.of(new InactionInjunction()));
+        harness.setLibrary(player1, List.of(new DrudgeBeetle()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castSorcery(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerBattlefields.get(player1.getId()).add(target);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Inaction Injunction");
     }
 
     /** Casts Inaction Injunction at the named player2 creature and resolves it. */
@@ -98,12 +172,8 @@ class InactionInjunctionTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, targetName);
         harness.setHand(player1, List.of(new InactionInjunction()));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        gs.playCard(gd, player1, 0, 0, targetId, null);
-        harness.passBothPriorities();
-        return gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals(targetName))
-                .findFirst()
-                .orElseThrow();
+        harness.castAndResolveSorcery(player1, 0, targetId);
+        return gqs.findPermanentById(gd, targetId);
     }
 
     /** Attempts to declare the given player2 creature as an attacker. */
