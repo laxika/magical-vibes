@@ -66,4 +66,46 @@ class NecrogenMistsTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
+
+    @Test
+    @DisplayName("Copies controlled by different players each make the active player discard")
+    void multipleCopiesEachCauseOneDiscard() {
+        harness.addToBattlefield(player1, new NecrogenMists());
+        harness.addToBattlefield(player2, new NecrogenMists());
+        harness.setHand(player1, List.of(new AlphaMyr(), new Ornithopter()));
+        harness.setHand(player2, List.of(new AlphaMyr()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInHand(player1, "Alpha Myr");
+        harness.assertInGraveyard(player1, "Ornithopter");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Alpha Myr");
+        harness.assertInHand(player2, "Alpha Myr");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An upkeep trigger still resolves after Necrogen Mists leaves the battlefield")
+    void triggerResolvesWithoutItsSource() {
+        harness.addToBattlefield(player1, new NecrogenMists());
+        harness.setHand(player2, List.of(new AlphaMyr(), new Ornithopter()));
+
+        advanceToUpkeep(player2);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertInGraveyard(player2, "Alpha Myr");
+        harness.assertInHand(player2, "Ornithopter");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 }
