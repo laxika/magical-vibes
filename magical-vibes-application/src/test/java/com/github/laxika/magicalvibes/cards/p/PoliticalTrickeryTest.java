@@ -104,4 +104,40 @@ class PoliticalTrickeryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("First target must be a land you control");
     }
+
+    @Test
+    @DisplayName("Neither land changes control when the caster's target leaves before resolution")
+    void noExchangeWhenOwnTargetGone() {
+        prepare();
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent opponents = harness.addToBattlefieldAndReturn(player2, new Island());
+
+        harness.castSorcery(player1, 0, List.of(own.getId(), opponents.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(own);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Island");
+        harness.assertNotOnBattlefield(player1, "Island");
+        harness.assertInGraveyard(player1, "Political Trickery");
+    }
+
+    @Test
+    @DisplayName("No exchange occurs when the opponent's target becomes controlled by the caster")
+    void noExchangeWhenOpponentTargetChangesController() {
+        prepare();
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent opponents = harness.addToBattlefieldAndReturn(player2, new Island());
+
+        harness.castSorcery(player1, 0, List.of(own.getId(), opponents.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(opponents);
+        gd.playerBattlefields.get(player1.getId()).add(opponents);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Island");
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertNotOnBattlefield(player2, "Island");
+        harness.assertInGraveyard(player1, "Political Trickery");
+    }
+
 }
