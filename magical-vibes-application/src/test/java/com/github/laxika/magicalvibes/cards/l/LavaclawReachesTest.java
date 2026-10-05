@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LavaclawReaches.class})
 class LavaclawReachesTest extends BaseCardTest {
 
     @Test
@@ -94,10 +96,83 @@ class LavaclawReachesTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Lavaclaw Reaches can add black mana without using the stack")
+    void addsBlackMana() {
+        Permanent reaches = addReadyReaches(player1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThat(reaches.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Zero and repeated X activations work while Lavaclaw Reaches is tapped")
+    void repeatedBoostsAccumulateWhileTapped() {
+        Permanent reaches = addReadyReaches(player1);
+        reaches.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, 2, 0, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, reaches)).isEqualTo(2);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.activateAbility(player1, 0, 2, 2, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 2, 3, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, reaches)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, reaches)).isEqualTo(2);
+        assertThat(reaches.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Reanimating Lavaclaw Reaches preserves boosts and boosts expire next turn")
+    void reanimationPreservesBoostUntilEndOfTurn() {
+        Permanent reaches = addReadyReaches(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 2, 3, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, reaches)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, reaches)).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, reaches)).isFalse();
+        assertThat(gqs.getEffectiveColors(gd, reaches)).isEmpty();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, reaches)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, reaches)).isEqualTo(2);
+    }
+
     private Permanent addReadyReaches(Player player) {
-        Permanent permanent = new Permanent(new LavaclawReaches());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new LavaclawReaches());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
