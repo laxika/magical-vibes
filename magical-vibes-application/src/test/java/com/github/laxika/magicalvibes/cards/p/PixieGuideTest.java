@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.c.ContactOtherPlane;
 import com.github.laxika.magicalvibes.cards.f.FeywildTrickster;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MinimusContainment;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.service.effect.normalfx.D20RollService;
@@ -20,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PixieGuide.class, ContactOtherPlane.class, FeywildTrickster.class, GrizzlyBears.class})
+@CardUsed({PixieGuide.class, ContactOtherPlane.class, FeywildTrickster.class, MinimusContainment.class})
 class PixieGuideTest extends BaseCardTest {
 
     private RollD20EffectHandler rollD20EffectHandler;
@@ -42,13 +42,12 @@ class PixieGuideTest extends BaseCardTest {
     void rollsAnAdditionalDieAndUsesTheHighestResult() {
         setRolls(9, 10);
         harness.addToBattlefield(player1, new PixieGuide());
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new PixieGuide(), new PixieGuide(), new PixieGuide()));
         harness.setHand(player1, List.of(new ContactOtherPlane()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
         assertThat(scry).isNotNull();
@@ -61,13 +60,12 @@ class PixieGuideTest extends BaseCardTest {
         setRolls(9, 10);
         harness.addToBattlefield(player1, new PixieGuide());
         harness.addToBattlefield(player1, new FeywildTrickster());
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new PixieGuide(), new PixieGuide(), new PixieGuide()));
         harness.setHand(player1, List.of(new ContactOtherPlane()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
         assertThat(scry).isNotNull();
@@ -78,6 +76,55 @@ class PixieGuideTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().getName().equals("Faerie Dragon"))
                 .hasSize(1);
+    }
+
+    @Test
+    void multipleGuidesEachAddADie() {
+        setRolls(1, 9, 20);
+        harness.addToBattlefield(player1, new PixieGuide());
+        harness.addToBattlefield(player1, new PixieGuide());
+        harness.setLibrary(player1, List.of(new PixieGuide(), new PixieGuide(), new PixieGuide()));
+        harness.setHand(player1, List.of(new ContactOtherPlane()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry).isNotNull();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0, 1, 2), List.of()));
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    void opponentsGuideDoesNotModifyYourRoll() {
+        setRolls(9, 20);
+        harness.addToBattlefield(player2, new PixieGuide());
+        harness.setLibrary(player1, List.of(new PixieGuide(), new PixieGuide(), new PixieGuide()));
+        harness.setHand(player1, List.of(new ContactOtherPlane()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void guideThatLostItsAbilitiesDoesNotAddADie() {
+        setRolls(9, 20);
+        var guide = harness.addToBattlefieldAndReturn(player1, new PixieGuide());
+        harness.setHand(player1, List.of(new MinimusContainment(), new ContactOtherPlane()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castEnchantment(player1, 0, guide.getId());
+        harness.passBothPriorities();
+        harness.setLibrary(player1, List.of(new PixieGuide(), new PixieGuide(), new PixieGuide()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
 
     private void setRolls(int... results) {
