@@ -277,8 +277,8 @@ class MantisEngineTest extends BaseCardTest {
     // ===== Fizzle =====
 
     @Test
-    @DisplayName("Ability fizzles if Mantis Engine is removed before resolution")
-    void abilityFizzlesIfSourceRemoved() {
+    @DisplayName("Ability resolves without granting flying if its source has left the battlefield")
+    void abilityDoesNotGrantFlyingToReplacement() {
         addCreatureReady(player1, new MantisEngine());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -346,6 +346,48 @@ class MantisEngineTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gameLogContains("Mantis Engine gains First strike")).isTrue();
+    }
+    @Test
+    @DisplayName("First strike ability affects only its source, including across controllers")
+    void firstStrikeAffectsOnlySource() {
+        Permanent mantis = addCreatureReady(player1, new MantisEngine());
+        Permanent otherMantis = addCreatureReady(player1, new MantisEngine());
+        Permanent opposingMantis = addCreatureReady(player2, new MantisEngine());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, mantis, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherMantis, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingMantis, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Both abilities can be pending and grant their keywords only on resolution")
+    void bothAbilitiesCanBePending() {
+        Permanent mantis = addCreatureReady(player1, new MantisEngine());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gqs.hasKeyword(gd, mantis, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, mantis, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.hasKeyword(gd, mantis, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mantis, Keyword.FLYING)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, mantis, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mantis, Keyword.FIRST_STRIKE)).isTrue();
     }
 }
 
