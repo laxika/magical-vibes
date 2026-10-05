@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.g.GideonChampionOfJustice;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -20,7 +19,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NilsDisciplineEnforcer.class, GrizzlyBears.class})
+@CardUsed({NilsDisciplineEnforcer.class, GrizzlyBears.class, GideonChampionOfJustice.class})
 class NilsDisciplineEnforcerTest extends BaseCardTest {
 
     @Test
@@ -30,11 +29,7 @@ class NilsDisciplineEnforcerTest extends BaseCardTest {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        beginEndStep(player1);
 
         PendingInteraction.PermanentChoice firstChoice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -70,7 +65,7 @@ class NilsDisciplineEnforcerTest extends BaseCardTest {
     @DisplayName("The counter tax also applies when attacking a planeswalker")
     void countersOnAttackerRequirePaymentToAttackPlaneswalker() {
         harness.addToBattlefield(player2, new NilsDisciplineEnforcer());
-        Permanent planeswalker = addPlaneswalker(player2, 4);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new GideonChampionOfJustice());
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setCounterCount(CounterType.CHARGE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -102,14 +97,132 @@ class NilsDisciplineEnforcerTest extends BaseCardTest {
         harness.beginAttackerDeclarationInput();
     }
 
-    private Permanent addPlaneswalker(Player player, int loyalty) {
-        Card card = new Card();
-        card.setName("Test Planeswalker");
-        card.setType(CardType.PLANESWALKER);
-        card.setLoyalty(loyalty);
-        Permanent permanent = new Permanent(card);
-        permanent.setCounterCount(CounterType.LOYALTY, loyalty);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void mayChooseNoCreaturesAtEndStep() {
+        Permanent nils = harness.addToBattlefieldAndReturn(player1, new NilsDisciplineEnforcer());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        beginEndStep(player1);
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(nils.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opposingCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void mayChooseOnlyOwnCreatureAndCannotChooseAnotherWithSameController() {
+        Permanent nils = harness.addToBattlefieldAndReturn(player1, new NilsDisciplineEnforcer());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        beginEndStep(player1);
+        harness.handlePermanentChosen(player1, nils.getId());
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).contains(opposingCreature.getId())
+                .doesNotContain(nils.getId(), ownCreature.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(nils.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opposingCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void doesNotTriggerOnOpponentsEndStep() {
+        Permanent nils = harness.addToBattlefieldAndReturn(player1, new NilsDisciplineEnforcer());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        beginEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(nils.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opposingCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void taxCountsCountersOfDifferentTypesTogether() {
+        harness.addToBattlefield(player2, new NilsDisciplineEnforcer());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setCounterCount(CounterType.CHARGE, 2);
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void eachAttackerPaysForItsOwnCounters() {
+        harness.addToBattlefield(player2, new NilsDisciplineEnforcer());
+        Permanent firstAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondAttacker = addCreatureReady(player1, new GrizzlyBears());
+        firstAttacker.setCounterCount(CounterType.CHARGE, 1);
+        secondAttacker.setCounterCount(CounterType.CHARGE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        declareAttackers(List.of(0, 1));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void counterTaxEndsWhenNilsLeavesBattlefield() {
+        Permanent nils = harness.addToBattlefieldAndReturn(player2, new NilsDisciplineEnforcer());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setCounterCount(CounterType.CHARGE, 2);
+        gd.playerBattlefields.get(player2.getId()).remove(nils);
+        gd.playerGraveyards.get(player2.getId()).add(nils.getCard());
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void creaturesWithoutCountersMayAttackWithoutPayment() {
+        harness.addToBattlefield(player2, new NilsDisciplineEnforcer());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void ownNilsDoesNotTaxAttacksAgainstOpponent() {
+        Permanent attacker = addCreatureReady(player1, new NilsDisciplineEnforcer());
+        attacker.setCounterCount(CounterType.CHARGE, 2);
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void remainingLegalTargetReceivesCounterWhenOtherTargetLeavesBattlefield() {
+        harness.addToBattlefield(player1, new NilsDisciplineEnforcer());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        beginEndStep(player1);
+        harness.handlePermanentChosen(player1, ownCreature.getId());
+        harness.handlePermanentChosen(player1, opposingCreature.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(opposingCreature);
+        gd.playerGraveyards.get(player2.getId()).add(opposingCreature.getCard());
+        resolveAllTriggers();
+
+        assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    private void beginEndStep(Player activePlayer) {
+        harness.forceActivePlayer(activePlayer);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
     }
 }
