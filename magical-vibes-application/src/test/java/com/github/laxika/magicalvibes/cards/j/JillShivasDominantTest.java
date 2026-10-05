@@ -50,7 +50,7 @@ class JillShivasDominantTest extends BaseCardTest {
     @Test
     void transformsAndResolvesChapterI() {
         castJill();
-        Permanent jill = findPermanent(player1, JillShivasDominant.class);
+        Permanent jill = findPermanent(player1, "Jill, Shiva's Dominant");
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         jill.setSummoningSick(false);
 
@@ -64,7 +64,7 @@ class JillShivasDominantTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        Permanent shiva = findPermanent(player1, ShivaWardenOfIce.class);
+        Permanent shiva = findPermanent(player1, "Shiva, Warden of Ice");
         assertThat(shiva.isTransformed()).isTrue();
         assertThat(target.isCantBeBlocked()).isTrue();
     }
@@ -95,11 +95,79 @@ class JillShivasDominantTest extends BaseCardTest {
         advanceToNextChapter();
         harness.passBothPriorities();
 
-        Permanent jill = findPermanent(player1, JillShivasDominant.class);
+        Permanent jill = findPermanent(player1, "Jill, Shiva's Dominant");
         assertThat(jill.isTransformed()).isFalse();
         assertThat(opponentLand.isTapped()).isTrue();
         assertThat(ownLand.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(shiva);
+    }
+
+    @Test
+    void mayDeclineToReturnAPermanentEvenWhenTargetsExist() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+
+        castJill();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        harness.assertOnBattlefield(player1, "Jill, Shiva's Dominant");
+    }
+
+    @Test
+    void canReturnYourOwnOtherNonlandPermanent() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+
+        castJill(target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Fountain of Youth");
+        harness.assertInHand(player1, "Fountain of Youth");
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent jill = harness.addToBattlefieldAndReturn(player1, new JillShivasDominant());
+        jill.setSummoningSick(true);
+        addTransformMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, jill), 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(jill.isTapped()).isFalse();
+    }
+
+    @Test
+    void cannotActivateOutsideAMainPhase() {
+        Permanent jill = addCreatureReady(player1, new JillShivasDominant());
+        harness.forceStep(TurnStep.UPKEEP);
+        addTransformMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, jill), 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(jill.isTapped()).isFalse();
+    }
+
+    @Test
+    void cannotActivateWithASpellOnTheStack() {
+        Permanent jill = addCreatureReady(player1, new JillShivasDominant());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        addTransformMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, jill), 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(jill.isTapped()).isFalse();
+    }
+
+    @Test
+    void chapterIICanTargetShivaAndExpiresAtEndOfTurn() {
+        Permanent shiva = addShivaWithLore(1);
+
+        advanceToNextChapter();
+        harness.handlePermanentChosen(player1, shiva.getId());
+        harness.passBothPriorities();
+
+        assertThat(shiva.isCantBeBlocked()).isTrue();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        assertThat(shiva.isCantBeBlocked()).isFalse();
     }
 
     private void castJill() {
@@ -144,13 +212,6 @@ class JillShivasDominantTest extends BaseCardTest {
         harness.forceStep(TurnStep.DRAW);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-    }
-
-    private Permanent findPermanent(Player player, Class<?> cardClass) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> cardClass.isInstance(permanent.getCard()))
-                .findFirst()
-                .orElseThrow();
     }
 
     private int indexOf(Player player, Permanent permanent) {
