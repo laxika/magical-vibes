@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(MagaTraitorToMortals.class)
+@CardUsed({MagaTraitorToMortals.class, MirenTheMoaningWell.class})
 class MagaTraitorToMortalsTest extends BaseCardTest {
 
     @Test
@@ -55,8 +55,7 @@ class MagaTraitorToMortalsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 5);
 
         harness.castCreature(player1, 0, 2, player1.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 20);
@@ -69,11 +68,37 @@ class MagaTraitorToMortalsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.castCreature(player1, 0, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertLife(player2, 20);
         harness.assertNotOnBattlefield(player1, "Maga, Traitor to Mortals");
         harness.assertInGraveyard(player1, "Maga, Traitor to Mortals");
+    }
+
+    @Test
+    @DisplayName("Maga's trigger uses the counters it had immediately before being sacrificed")
+    void sacrificedMagaUsesLastKnownCounters() {
+        Permanent miren = harness.addToBattlefieldAndReturn(player1, new MirenTheMoaningWell());
+        miren.setSummoningSick(false);
+        harness.setHand(player1, List.of(new MagaTraitorToMortals()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castCreature(player1, 0, 3, player2.getId());
+        harness.passBothPriorities();
+
+        Permanent maga = findPermanent(player1, "Maga, Traitor to Mortals");
+        maga.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, 1, null, null);
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, maga.getId());
+        }
+        harness.assertNotOnBattlefield(player1, "Maga, Traitor to Mortals");
+        harness.assertInGraveyard(player1, "Maga, Traitor to Mortals");
+
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 15);
+        harness.assertLife(player1, 25);
     }
 }
