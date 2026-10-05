@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.a.AnchovyBananaPizza;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -80,14 +79,67 @@ class RagamuffinRaptorTest extends BaseCardTest {
         harness.assertNotInHand(player1, "Grizzly Bears");
     }
 
+    @Test
+    void offersOnlyOwnCreatureAndFoodCardsAndReturnsOnlyTheChosenCard() {
+        Card creature = new RagamuffinRaptor();
+        Card food = new AnchovyBananaPizza();
+        Card nonMatching = new Shock();
+        Card opposingCreature = new RagamuffinRaptor();
+        harness.setGraveyard(player1, List.of(creature, food, nonMatching));
+        harness.setGraveyard(player2, List.of(opposingCreature));
+
+        castRaptor();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(creature.getId(), food.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(food.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Anchovy & Banana Pizza");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(creature, nonMatching);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingCreature);
+    }
+
+    @Test
+    void entersWithAnEmptyGraveyardWithoutRequestingATarget() {
+        harness.setGraveyard(player1, List.of());
+
+        castRaptor();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Ragamuffin Raptor");
+        harness.assertNotInHand(player1, "Ragamuffin Raptor");
+    }
+
+    @Test
+    void doesNotChooseAnotherCardWhenTheTargetLeavesTheGraveyard() {
+        Card target = new RagamuffinRaptor();
+        Card other = new AnchovyBananaPizza();
+        harness.setGraveyard(player1, List.of(target, other));
+
+        castRaptor();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        assertThat(gd.stack).hasSize(1);
+        harness.setGraveyard(player1, List.of(other));
+        harness.setLibrary(player1, List.of(target));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotInHand(player1, "Ragamuffin Raptor");
+        harness.assertNotInHand(player1, "Anchovy & Banana Pizza");
+        harness.assertInGraveyard(player1, "Anchovy & Banana Pizza");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(target);
+    }
+
     private void castRaptor() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new RagamuffinRaptor()));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RagamuffinRaptor(), "{4}{G}");
         harness.passBothPriorities();
     }
 }
