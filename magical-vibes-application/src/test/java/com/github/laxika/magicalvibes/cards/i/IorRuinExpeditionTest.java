@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({IorRuinExpedition.class, Forest.class, GrizzlyBears.class})
 class IorRuinExpeditionTest extends BaseCardTest {
 
     @Test
@@ -70,6 +72,51 @@ class IorRuinExpeditionTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An opponent's land does not trigger the expedition")
+    void opponentLandDoesNotTrigger() {
+        Permanent expedition = addExpedition();
+
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(expedition.getCounterCount(CounterType.QUEST)).isZero();
+    }
+
+    @Test
+    @DisplayName("A land entering without being played still triggers landfall")
+    void landEnteringWithoutBeingPlayedTriggers() {
+        Permanent expedition = addExpedition();
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(expedition.getCounterCount(CounterType.QUEST)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Costs are paid immediately and excess counters do not prevent activation")
+    void paysCostsBeforeDrawingWithMoreThanThreeCounters() {
+        Permanent expedition = addExpedition();
+        expedition.setCounterCount(CounterType.QUEST, 4);
+        Forest firstCard = new Forest();
+        Forest secondCard = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(firstCard, secondCard));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(expedition);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(expedition.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstCard, secondCard);
     }
 
     private Permanent addExpedition() {
