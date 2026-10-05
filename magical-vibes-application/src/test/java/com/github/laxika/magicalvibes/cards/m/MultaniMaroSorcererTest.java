@@ -53,8 +53,69 @@ class MultaniMaroSorcererTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, multani.getId(), null))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, multani.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("shroud");
+    }
+
+    @Test
+    @DisplayName("Shroud also prevents an opponent from targeting Multani")
+    void opponentCannotTargetMultani() {
+        harness.setHand(player1, List.of(new GiantCockroach()));
+        harness.setHand(player2, List.of(new Swat()));
+        Permanent multani = addCreatureReady(player1, new MultaniMaroSorcerer());
+        harness.addMana(player2, ManaColor.BLACK, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, multani.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+    }
+
+    @Test
+    @DisplayName("Casting Multani removes it from the hand count")
+    void castingUsesRemainingCardsInHands() {
+        harness.setHand(player1, List.of(new MultaniMaroSorcerer(), new GiantCockroach()));
+        harness.setHand(player2, List.of(new GiantCockroach(), new GiantCockroach()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Multani, Maro-Sorcerer");
+        Permanent multani = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(gqs.getEffectivePower(gd, multani)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, multani)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Multani dies on resolution when all hands are empty")
+    void diesWhenCastingLeavesAllHandsEmpty() {
+        harness.setHand(player1, List.of(new MultaniMaroSorcerer()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Multani, Maro-Sorcerer");
+        harness.assertInGraveyard(player1, "Multani, Maro-Sorcerer");
+    }
+
+    @Test
+    @DisplayName("Multani's characteristic power and toughness update in the graveyard")
+    void characteristicPowerToughnessWorksInGraveyard() {
+        MultaniMaroSorcerer multani = new MultaniMaroSorcerer();
+        harness.setGraveyard(player1, List.of(multani));
+        harness.setHand(player1, List.of(new GiantCockroach()));
+        harness.setHand(player2, List.of(new GiantCockroach(), new GiantCockroach()));
+
+        assertThat(gqs.getEffectiveCardPower(gd, multani)).isEqualTo(3);
+        assertThat(gqs.getEffectiveCardToughness(gd, multani)).isEqualTo(3);
+
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+
+        assertThat(gqs.getEffectiveCardPower(gd, multani)).isZero();
+        assertThat(gqs.getEffectiveCardToughness(gd, multani)).isZero();
     }
 }
