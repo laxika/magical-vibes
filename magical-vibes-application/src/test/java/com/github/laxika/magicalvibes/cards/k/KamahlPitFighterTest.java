@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -16,10 +17,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KamahlPitFighter.class, GrizzlyBears.class, ChandraNalaar.class})
+@CardUsed({KamahlPitFighter.class, GrizzlyBears.class, ChandraNalaar.class, Shock.class})
 class KamahlPitFighterTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -193,6 +196,52 @@ class KamahlPitFighterTest extends BaseCardTest {
 
     private Permanent addReadyKamahl(Player player) {
         return addCreatureReady(player, new KamahlPitFighter());
+    }
+
+    @Test
+    @DisplayName("Ability still deals damage after Kamahl dies in response")
+    void dealsDamageAfterSourceDies() {
+        Permanent kamahl = harness.addToBattlefieldAndReturn(player1, new KamahlPitFighter());
+        harness.setLife(player2, 20);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.castInstant(player2, 0, kamahl.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Kamahl, Pit Fighter");
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Kamahl can target himself and dies from the damage")
+    void canTargetHimself() {
+        Permanent kamahl = harness.addToBattlefieldAndReturn(player1, new KamahlPitFighter());
+
+        harness.activateAbility(player1, 0, null, kamahl.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Kamahl, Pit Fighter");
+        harness.assertInGraveyard(player1, "Kamahl, Pit Fighter");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Kamahl can deal damage to his controller")
+    void canTargetController() {
+        harness.addToBattlefield(player1, new KamahlPitFighter());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
     }
 }
 
