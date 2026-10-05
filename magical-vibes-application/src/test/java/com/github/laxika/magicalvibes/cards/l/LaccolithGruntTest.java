@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.s.SilkenfistFighter;
+import com.github.laxika.magicalvibes.cards.f.FlaringPain;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LaccolithGrunt.class, SilkenfistFighter.class})
+@CardUsed({LaccolithGrunt.class, SilkenfistFighter.class, FlaringPain.class})
 class LaccolithGruntTest extends BaseCardTest {
 
     private Permanent addAttacker() {
@@ -140,6 +141,51 @@ class LaccolithGruntTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The ability can target a friendly creature outside combat")
+    void canTargetFriendlyCreatureOutsideCombat() {
+        Permanent attacker = addAttacker();
+        Permanent blocker = addBlocker();
+        Permanent target = addCreatureReady(player1, new SilkenfistFighter());
+
+        declareBlock(attacker, blocker);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        assertThat(blocker.getMarkedDamage()).isZero();
+
+        resolveCombat();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Accepting assigns no combat damage even when damage cannot be prevented")
+    void unpreventableDamageDoesNotOverrideNoCombatDamageAssignment() {
+        harness.castFromHand(player1, new FlaringPain(), "{1}{R}");
+        harness.passBothPriorities();
+
+        Permanent attacker = addAttacker();
+        Permanent blocker = addBlocker();
+        Permanent target = addCreatureReady(player1, new SilkenfistFighter());
+
+        declareBlock(attacker, blocker);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+
+        resolveCombat();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+        assertThat(blocker.getMarkedDamage()).isZero();
     }
 
     @Test
