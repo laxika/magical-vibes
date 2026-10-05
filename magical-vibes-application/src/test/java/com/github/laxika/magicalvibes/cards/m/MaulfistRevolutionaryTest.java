@@ -8,12 +8,14 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MaulfistRevolutionary.class, Forest.class, DoomBlade.class})
 class MaulfistRevolutionaryTest extends BaseCardTest {
 
     @Test
@@ -22,10 +24,7 @@ class MaulfistRevolutionaryTest extends BaseCardTest {
         target.setCounterCount(CounterType.CHARGE, 2);
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
-        harness.setHand(player1, List.of(new MaulfistRevolutionary()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MaulfistRevolutionary(), "{1}{G}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -57,5 +56,71 @@ class MaulfistRevolutionaryTest extends BaseCardTest {
 
         assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(3);
         assertThat(gd.playerEnergyCounters.get(player2.getId())).isEqualTo(4);
+    }
+
+    @Test
+    void entersAndAddsRadiationCounterToTargetPlayer() {
+        gd.playerRadCounters.put(player2.getId(), 2);
+
+        harness.castFromHand(player1, new MaulfistRevolutionary(), "{1}{G}{G}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerRadCounters.get(player2.getId())).isEqualTo(3);
+    }
+
+    @Test
+    void entersAndAddsExperienceCounterToTargetPlayer() {
+        gd.playerExperienceCounters.put(player1.getId(), 2);
+
+        harness.castFromHand(player1, new MaulfistRevolutionary(), "{1}{G}{G}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerExperienceCounters.get(player1.getId())).isEqualTo(3);
+    }
+
+    @Test
+    void entersAndAddsSparkCounterToTargetPlayer() {
+        gd.playerSparkCounters.put(player1.getId(), 2);
+
+        harness.castFromHand(player1, new MaulfistRevolutionary(), "{1}{G}{G}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerSparkCounters.get(player1.getId())).isEqualTo(3);
+    }
+
+    @Test
+    void counterlessPermanentCanBeTargetedWithoutReceivingCounters() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        harness.castFromHand(player1, new MaulfistRevolutionary(), "{1}{G}{G}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void usesCounterKindsPresentAtResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
+        target.setCounterCount(CounterType.CHARGE, 2);
+
+        harness.castFromHand(player1, new MaulfistRevolutionary(), "{1}{G}{G}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        target.setCounterCount(CounterType.CHARGE, 0);
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 }
