@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.d.Desert;
 import com.github.laxika.magicalvibes.cards.g.GemstoneMine;
 import com.github.laxika.magicalvibes.cards.s.Squire;
+import com.github.laxika.magicalvibes.cards.s.SongOfTheDryads;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({JolraelEmpressOfBeasts.class, Desert.class, GemstoneMine.class, Squire.class})
+@CardUsed({JolraelEmpressOfBeasts.class, Desert.class, GemstoneMine.class, Squire.class, SongOfTheDryads.class})
 class JolraelEmpressOfBeastsTest extends BaseCardTest {
 
     @Test
@@ -88,6 +89,77 @@ class JolraelEmpressOfBeastsTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A permanent made into a land by Song of the Dryads is animated")
+    void animatesLandCreatedByTypeChangingEffect() {
+        addCreatureReady(player1, new JolraelEmpressOfBeasts());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Squire());
+        harness.setHand(player1, List.of(new SongOfTheDryads()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.isLand(gd, target)).isTrue();
+        assertThat(gqs.isCreature(gd, target)).isFalse();
+
+        harness.setHand(player1, List.of(new Squire(), new Squire()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        activateAgainst(player2);
+
+        assertThat(gqs.isLand(gd, target)).isTrue();
+        assertThat(gqs.isCreature(gd, target)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Only lands present when the ability resolves are animated")
+    void determinesAffectedLandsAtResolution() {
+        readyJolrael();
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player2, new Desert());
+        assertThat(gqs.isCreature(gd, beforeResolution)).isFalse();
+
+        harness.passBothPriorities();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player2, new GemstoneMine());
+
+        assertThat(gqs.isCreature(gd, beforeResolution)).isTrue();
+        assertThat(gqs.isCreature(gd, afterResolution)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability resolves even if Jolrael leaves the battlefield")
+    void resolvesWithoutSource() {
+        readyJolrael();
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Desert());
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Jolrael cannot pay the tap cost while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new JolraelEmpressOfBeasts());
+        harness.setHand(player1, List.of(new Squire(), new Squire()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
 
     private void readyJolrael() {
