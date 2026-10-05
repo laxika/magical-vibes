@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -106,11 +108,43 @@ class PendelhavenTest extends BaseCardTest {
         harness.activateAbility(player2,
                 gd.playerBattlefields.get(player2.getId()).indexOf(secondPendelhaven),
                 1, null, flyingMen.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, flyingMen)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, flyingMen)).isEqualTo(3);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"1, 0", "0, 1", "-1, 0"})
+    @DisplayName("Target restriction checks current power and toughness independently")
+    void cannotTargetCreatureWithOnlyOneStatEqualToOne(int powerModifier, int toughnessModifier) {
+        Permanent pendelhaven = addPendelhavenReady(player1);
+        Permanent flyingMen = addCreatureReady(player1, new FlyingMen());
+        flyingMen.setPowerModifier(powerModifier);
+        flyingMen.setToughnessModifier(toughnessModifier);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, flyingMen.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a 1/1 creature");
+
+        assertThat(pendelhaven.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Boost resolves after Pendelhaven leaves the battlefield")
+    void boostResolvesWithoutSource() {
+        Permanent pendelhaven = addPendelhavenReady(player1);
+        Permanent flyingMen = addCreatureReady(player1, new FlyingMen());
+
+        harness.activateAbility(player1, 0, 1, null, flyingMen.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(pendelhaven);
+        gd.playerGraveyards.get(player1.getId()).add(pendelhaven.getCard());
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, flyingMen)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, flyingMen)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addPendelhavenReady(Player player) {
