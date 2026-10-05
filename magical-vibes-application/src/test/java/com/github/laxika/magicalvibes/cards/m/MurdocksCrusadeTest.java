@@ -72,6 +72,90 @@ class MurdocksCrusadeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void bothModesCannotBeChosenWithoutTeamwork() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CrawWurm());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new DemonicPact());
+
+        assertThatThrownBy(() -> cast(new int[]{0, 1},
+                List.of(creature.getId(), enchantment.getId()), List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void teamworkAcceptsSummoningSickCreaturesWithExactlyFourTotalPower() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CrawWurm());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new DemonicPact());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        first.setSummoningSick(true);
+        second.setSummoningSick(true);
+
+        cast(new int[]{0, 1}, List.of(creature.getId(), enchantment.getId()),
+                List.of(first.getId(), second.getId()));
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Craw Wurm", "Demonic Pact");
+    }
+
+    @Test
+    void teamworkRejectsInsufficientTotalPower() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CrawWurm());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new DemonicPact());
+        Permanent teammate = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThatThrownBy(() -> cast(new int[]{0, 1},
+                List.of(creature.getId(), enchantment.getId()), List.of(teammate.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(teammate.isTapped()).isFalse();
+    }
+
+    @Test
+    void teamworkRejectsAlreadyTappedCreatures() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CrawWurm());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new DemonicPact());
+        Permanent teammate = harness.addToBattlefieldAndReturn(player1, new CrawWurm());
+        teammate.setTapped(true);
+
+        assertThatThrownBy(() -> cast(new int[]{0, 1},
+                List.of(creature.getId(), enchantment.getId()), List.of(teammate.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void teamworkRejectsAnOpponentsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CrawWurm());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new DemonicPact());
+
+        assertThatThrownBy(() -> cast(new int[]{0, 1},
+                List.of(creature.getId(), enchantment.getId()), List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(creature.isTapped()).isFalse();
+    }
+    @Test
+    void remainingLegalModeResolvesWhenTheCreatureTargetLeaves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CrawWurm());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new DemonicPact());
+        Permanent teammate = harness.addToBattlefieldAndReturn(player1, new CrawWurm());
+
+        harness.setHand(player1, List.of(new MurdocksCrusade()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castModalSorceryWithModesAndTaps(player1, 0, 1, 2, new int[]{0, 1},
+                List.of(creature.getId(), enchantment.getId()), List.of(teammate.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        gd.playerGraveyards.get(player2.getId()).add(creature.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).extracting(Card::getName)
+                .containsExactly("Demonic Pact");
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(creature.getCard());
+        assertThat(teammate.isTapped()).isTrue();
+    }
     private void cast(int[] modes, List<java.util.UUID> targetIds, List<java.util.UUID> teamworkIds) {
         harness.setHand(player1, List.of(new MurdocksCrusade()));
         harness.addMana(player1, ManaColor.WHITE, 1);
