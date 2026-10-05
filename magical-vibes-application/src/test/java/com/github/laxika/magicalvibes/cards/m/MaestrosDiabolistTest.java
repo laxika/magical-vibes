@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.d.DanceWithDevils;
+import com.github.laxika.magicalvibes.cards.d.DevilishValet;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -18,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MaestrosDiabolist.class, DanceWithDevils.class, DoomBlade.class, GrizzlyBears.class})
+@CardUsed({MaestrosDiabolist.class, DanceWithDevils.class, DevilishValet.class,
+        DoomBlade.class, GrizzlyBears.class})
 class MaestrosDiabolistTest extends BaseCardTest {
 
     @Test
@@ -45,10 +47,7 @@ class MaestrosDiabolistTest extends BaseCardTest {
     @DisplayName("Controlling a Devil token stops the attack trigger")
     void existingDevilTokenStopsTrigger() {
         addCreatureReady(player1, new MaestrosDiabolist());
-        harness.setHand(player1, List.of(new DanceWithDevils()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new DanceWithDevils(), "{3}{R}");
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Devil")).hasSize(2);
@@ -78,13 +77,95 @@ class MaestrosDiabolistTest extends BaseCardTest {
         harness.setHand(player2, List.of(new DoomBlade()));
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, devil.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, devil.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
         assertThat(bears.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed({MaestrosDiabolist.class})
+    @DisplayName("Two Diabolists attacking together create only one Devil")
+    void simultaneousAttackTriggersRecheckDevilCondition() {
+        addCreatureReady(player1, new MaestrosDiabolist());
+        addCreatureReady(player1, new MaestrosDiabolist());
+
+        declareAttackers(List.of(0, 1));
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Devil")).hasSize(1);
+    }
+
+    @Test
+    @CardUsed({MaestrosDiabolist.class, DevilishValet.class})
+    @DisplayName("A nontoken Devil does not prevent creating a Devil token")
+    void nontokenDevilDoesNotPreventTrigger() {
+        addCreatureReady(player1, new MaestrosDiabolist());
+        addCreatureReady(player1, new DevilishValet());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Devil")).hasSize(1);
+    }
+
+    @Test
+    @CardUsed({MaestrosDiabolist.class})
+    @DisplayName("An opponent's Devil token does not prevent the attack trigger")
+    void opponentsDevilDoesNotPreventTrigger() {
+        addCreatureReady(player1, new MaestrosDiabolist());
+        addCreatureReady(player2, new MaestrosDiabolist());
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+        assertThat(findPermanents(player2, "Devil")).hasSize(1);
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Devil")).hasSize(1);
+        assertThat(findPermanents(player2, "Devil")).hasSize(1);
+    }
+
+    @Test
+    @CardUsed({MaestrosDiabolist.class, DanceWithDevils.class})
+    @DisplayName("Gaining Devil tokens in response prevents the attack ability from creating another")
+    void devilArrivingBeforeResolutionStopsCreation() {
+        addCreatureReady(player1, new MaestrosDiabolist());
+        declareAttackers(List.of(0));
+        assertThat(gd.stack).hasSize(1);
+
+        harness.castFromHand(player1, new DanceWithDevils(), "{3}{R}");
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Devil")).hasSize(2);
+    }
+
+    @Test
+    @CardUsed({MaestrosDiabolist.class, DoomBlade.class})
+    @DisplayName("The Devil's death ability can deal damage to a player")
+    void devilDeathAbilityCanTargetPlayer() {
+        addCreatureReady(player1, new MaestrosDiabolist());
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        Permanent devil = findPermanent(player1, "Devil");
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new DoomBlade()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, devil.getId());
+
+        harness.setLife(player2, 20);
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 19);
+        assertThat(findPermanents(player1, "Devil")).isEmpty();
     }
 }
