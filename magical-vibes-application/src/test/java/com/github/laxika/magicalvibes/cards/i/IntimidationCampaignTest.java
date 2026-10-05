@@ -43,8 +43,7 @@ class IntimidationCampaignTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -60,12 +59,65 @@ class IntimidationCampaignTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(campaign);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(campaign.getCard());
+    }
+
+    @Test
+    @DisplayName("Targeting yourself does not trigger the campaign")
+    void targetingYourselfIsNotACrime() {
+        Permanent campaign = harness.addToBattlefieldAndReturn(player1, new IntimidationCampaign());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(campaign);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(campaign.getCard());
+    }
+
+    @Test
+    @DisplayName("An opponent's crime does not trigger your campaign")
+    void opponentsCrimeDoesNotTriggerCampaign() {
+        Permanent campaign = harness.addToBattlefieldAndReturn(player1, new IntimidationCampaign());
+        harness.setLife(player1, 20);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(campaign);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(campaign.getCard());
+    }
+
+    @Test
+    @DisplayName("Declining one crime does not prevent returning the campaign for a later crime")
+    void triggersForEachCrimeInTheSameTurn() {
+        Permanent campaign = harness.addToBattlefieldAndReturn(player1, new IntimidationCampaign());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(campaign);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(campaign.getCard());
+        harness.assertLife(player2, 18);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 16);
     }
 }
