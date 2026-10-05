@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,10 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MysticRemora.class, IcyManipulator.class, BalduvianBears.class})
+@CardUsed({MysticRemora.class, IcyManipulator.class, BalduvianBears.class, Island.class})
 class MysticRemoraTest extends BaseCardTest {
-
-    // ===== Cumulative upkeep =====
 
     @Test
     @DisplayName("Paying cumulative upkeep keeps Mystic Remora")
@@ -72,8 +71,6 @@ class MysticRemoraTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(remora.getCard());
     }
 
-    // ===== Trigger filter =====
-
     @Test
     @DisplayName("Triggers when opponent casts a noncreature spell")
     void triggersOnOpponentNoncreatureSpell() {
@@ -83,10 +80,7 @@ class MysticRemoraTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new IcyManipulator()));
-        harness.addMana(player2, ManaColor.COLORLESS, 4);
-
-        harness.castArtifact(player2, 0);
+        harness.castFromHand(player2, new IcyManipulator(), "{4}");
 
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -102,11 +96,7 @@ class MysticRemoraTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new BalduvianBears()));
-        harness.addMana(player2, ManaColor.GREEN, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new BalduvianBears(), "{1}{G}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
@@ -117,10 +107,7 @@ class MysticRemoraTest extends BaseCardTest {
     void doesNotTriggerOnControllerSpell() {
         harness.addToBattlefield(player1, new MysticRemora());
         IcyManipulator spell = new IcyManipulator();
-        harness.setHand(player1, List.of(spell));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, spell, "{4}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard()).isSameAs(spell);
@@ -151,8 +138,6 @@ class MysticRemoraTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
-
-    // ===== Pay / draw resolution =====
 
     @Test
     @DisplayName("Opponent with mana is prompted to pay")
@@ -236,7 +221,79 @@ class MysticRemoraTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Opponent can generate mana while resolving Remora's payment choice")
+    void opponentCanPayUsingUntappedLands() {
+        harness.addToBattlefield(player1, new MysticRemora());
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player2, new Island());
+        }
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.castFromHand(player2, new IcyManipulator(), "{4}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        for (int i = 0; i < 4; i++) {
+            harness.tapPermanent(player2, i);
+        }
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep does not trigger during the opponent's upkeep")
+    void opponentUpkeepDoesNotAddAgeCounter() {
+        Permanent remora = harness.addToBattlefieldAndReturn(player1, new MysticRemora());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(remora.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(remora);
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep counts existing age counters and spends the full payment")
+    void upkeepCountsExistingAgeCounters() {
+        Permanent remora = harness.addToBattlefieldAndReturn(player1, new MysticRemora());
+        remora.setCounterCount(CounterType.AGE, 2);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(remora.getCounterCount(CounterType.AGE)).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(remora);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each Remora requires a separate payment for the same spell")
+    void multipleRemorasRequireSeparatePayments() {
+        harness.addToBattlefield(player1, new MysticRemora());
+        setupOpponentCastsNoncreatureWithMana();
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
 
     private void setupOpponentCastsNoncreatureWithMana() {
         harness.addToBattlefield(player1, new MysticRemora());
