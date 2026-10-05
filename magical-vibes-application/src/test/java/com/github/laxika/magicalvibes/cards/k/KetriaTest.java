@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -27,7 +28,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Ketria.class, GrizzlyBears.class, Forest.class, Shock.class})
+@CardUsed({Ketria.class, GrizzlyBears.class, Forest.class, Shock.class, Pacifism.class})
 class KetriaTest extends BaseCardTest {
 
     private PlanechaseService planar;
@@ -127,6 +128,100 @@ class KetriaTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard().getId())
                 .doesNotContain(creature.getId());
+    }
+
+    @Test
+    void counterTriggerDoesNotChooseACounterAfterTargetLeavesBattlefield() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        PlanarObject plane = gd.planechase.faceUp.getFirst();
+        harness.inMutationScope(() -> planar.trigger(gd, plane,
+                EffectSlot.PLANESWALK_TO_TRIGGERED, player1.getId()));
+        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        harness.setGraveyard(player1, List.of(target.getCard()));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(target.getCounterCount(CounterType.VIGILANCE)).isZero();
+        assertThat(target.getCounterCount(CounterType.MENACE)).isZero();
+        assertThat(target.getCounterCount(CounterType.TRAMPLE)).isZero();
+    }
+
+    @Test
+    void chaosStopsAtFirstNonlandPermanent() {
+        Card first = new GrizzlyBears();
+        Card remaining = new Forest();
+        harness.setLibrary(player1, List.of(first, remaining));
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void chaosExilesEntireLibraryWhenNoNonlandPermanentExists() {
+        Card shock = new Shock();
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(shock, forest));
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(shock, forest);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void chaosWithEmptyLibraryDoesNotRequestADestination() {
+        harness.setLibrary(player1, List.of());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void chaosAuraEntersAttachedToChosenCreature() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Card aura = new Pacifism();
+        harness.setLibrary(player1, List.of(aura));
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(creature.getId());
+        harness.handlePermanentChosen(player1, creature.getId());
+
+        assertThat(findPermanent(player1, "Pacifism").getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void chaosAuraStaysExiledWhenThereIsNothingItCanEnchant() {
+        Card aura = new Pacifism();
+        harness.setLibrary(player1, List.of(aura));
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(aura);
+        harness.assertNotOnBattlefield(player1, "Pacifism");
+        harness.assertNotInGraveyard(player1, "Pacifism");
+        harness.assertNotInHand(player1, "Pacifism");
     }
 
     private void triggerAndChooseTarget(EffectSlot slot, Permanent target) {
