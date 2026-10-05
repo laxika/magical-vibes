@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MilitantMonk.class, GrizzlyBears.class, Shock.class, Forest.class})
+@CardUsed({MilitantMonk.class, GrizzlyBears.class, Shock.class, Forest.class, ChandraNalaar.class})
 class MilitantMonkTest extends BaseCardTest {
 
     @Test
@@ -51,7 +51,6 @@ class MilitantMonkTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(ChandraNalaar.class)
     @DisplayName("Prevents the next damage dealt to a target planeswalker")
     void preventsNextDamageToPlaneswalker() {
         addCreatureReady(player1, new MilitantMonk());
@@ -94,6 +93,62 @@ class MilitantMonkTest extends BaseCardTest {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A consumed shield does not prevent later damage")
+    void shieldIsConsumedByFirstDamage() {
+        addCreatureReady(player1, new MilitantMonk());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        castShockAt(player2.getId());
+        castShockAt(player2.getId());
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Two monks can prevent two damage to the same player")
+    void preventionShieldsAccumulate() {
+        addCreatureReady(player1, new MilitantMonk());
+        addCreatureReady(player1, new MilitantMonk());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, player2.getId());
+        harness.passBothPriorities();
+
+        castShockAt(player2.getId());
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        castShockAt(player2.getId());
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Activating taps the monk and prevents another activation")
+    void activationPaysTapCost() {
+        Permanent monk = addCreatureReady(player1, new MilitantMonk());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(monk.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick monk cannot pay the tap cost")
+    void summoningSicknessPreventsActivation() {
+        Permanent monk = harness.addToBattlefieldAndReturn(player1, new MilitantMonk());
+        monk.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
