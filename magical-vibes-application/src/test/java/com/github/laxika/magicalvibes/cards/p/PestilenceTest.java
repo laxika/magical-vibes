@@ -171,4 +171,40 @@ class PestilenceTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Pestilence");
         harness.assertNotInGraveyard(player1, "Pestilence");
     }
+
+    @Test
+    @DisplayName("Can deal damage to players when no creatures are on the battlefield")
+    void canActivateWithoutCreatures() {
+        harness.addToBattlefield(player1, new Pestilence());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+        harness.assertOnBattlefield(player1, "Pestilence");
+        harness.assertNotInGraveyard(player1, "Pestilence");
+    }
+
+    @Test
+    @DisplayName("Killing the last creature during the end step does not trigger a sacrifice retroactively")
+    void killingLastCreatureAfterEndStepBeginsDoesNotTriggerSacrifice() {
+        harness.addToBattlefield(player1, new Pestilence());
+        harness.addToBattlefield(player2, new MerfolkOfThePearlTrident());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).isEmpty();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Merfolk of the Pearl Trident");
+        harness.assertOnBattlefield(player1, "Pestilence");
+        harness.assertNotInGraveyard(player1, "Pestilence");
+        assertThat(gd.stack).isEmpty();
+    }
 }
