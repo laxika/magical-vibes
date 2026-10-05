@@ -117,8 +117,8 @@ class KiyomaroFirstToStandTest extends BaseCardTest {
         Permanent kiyomaro = addCreatureReady(player1, new KiyomaroFirstToStand());
         Permanent attacker = addCreatureReady(player2, new KitsuneLoreweaver());
 
-        declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(attacker)));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2,
+                List.of(gd.playerBattlefields.get(player2.getId()).indexOf(attacker)));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player1.getId()).indexOf(kiyomaro),
                 gd.playerBattlefields.get(player2.getId()).indexOf(attacker))));
@@ -127,5 +127,59 @@ class KiyomaroFirstToStandTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(kiyomaro.getCard());
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(attacker.getCard());
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty hand gives zero toughness and puts Kiyomaro into the graveyard")
+    void diesWithAnEmptyHandRegardlessOfOpponentsHand() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new KitsuneLoreweaver(), new KitsuneLoreweaver(),
+                new KitsuneLoreweaver(), new KitsuneLoreweaver()));
+        Permanent kiyomaro = addCreatureReady(player1, new KiyomaroFirstToStand());
+
+        assertThat(gqs.getEffectivePower(gd, kiyomaro)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, kiyomaro)).isZero();
+        assertThat(gqs.hasKeyword(gd, kiyomaro, Keyword.VIGILANCE)).isFalse();
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(kiyomaro);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(kiyomaro.getCard());
+    }
+
+    @Test
+    @DisplayName("Attacking with four cards in hand does not tap Kiyomaro")
+    void vigilancePreventsTappingWhenAttacking() {
+        harness.setHand(player1, List.of(new KitsuneLoreweaver(), new KitsuneLoreweaver(),
+                new KitsuneLoreweaver(), new KitsuneLoreweaver()));
+        Permanent kiyomaro = addCreatureReady(player1, new KiyomaroFirstToStand());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(kiyomaro))));
+
+        assertThat(kiyomaro.isAttacking()).isTrue();
+        assertThat(kiyomaro.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Dealing damage to a creature gains seven life even when Kiyomaro is blocking")
+    void gainsLifeWhenDealingDamageToAnAttackingCreature() {
+        harness.setHand(player1, List.of(new KitsuneLoreweaver(), new KitsuneLoreweaver(),
+                new KitsuneLoreweaver(), new KitsuneLoreweaver(), new KitsuneLoreweaver(),
+                new KitsuneLoreweaver(), new KitsuneLoreweaver()));
+        Permanent kiyomaro = addCreatureReady(player1, new KiyomaroFirstToStand());
+        Permanent attacker = addCreatureReady(player2, new KitsuneLoreweaver());
+        harness.setLife(player1, 10);
+
+        declareAttackersAndPrepareBlockers(player2,
+                List.of(gd.playerBattlefields.get(player2.getId()).indexOf(attacker)));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player1.getId()).indexOf(kiyomaro),
+                gd.playerBattlefields.get(player2.getId()).indexOf(attacker))));
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(17);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(attacker.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(kiyomaro);
     }
 }
