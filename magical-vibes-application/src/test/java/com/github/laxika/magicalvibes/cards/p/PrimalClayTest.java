@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.cards.c.Clone;
+import com.github.laxika.magicalvibes.cards.g.GarruksPackleader;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PrimalClay.class, Unsummon.class})
+@CardUsed({PrimalClay.class, Unsummon.class, Clone.class, GarruksPackleader.class})
 class PrimalClayTest extends BaseCardTest {
 
     private Permanent castAndReturn(String chosenForm) {
@@ -108,7 +110,8 @@ class PrimalClayTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Primal Clay");
         harness.assertInHand(player1, "Primal Clay");
 
-        harness.castFromHand(player1, new PrimalClay(), "{4}");
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
@@ -127,5 +130,64 @@ class PrimalClayTest extends BaseCardTest {
         clay.setSummoningSick(false);
 
         assertThat(als.canAttack(gd, clay, player1.getId())).isFalse();
+    }
+
+    @Test
+    void threeThreeShapeTriggersPackleaderAfterChoice() {
+        harness.addToBattlefield(player1, new GarruksPackleader());
+        harness.setLibrary(player1, List.of(new Unsummon()));
+
+        castAndReturn("THREE_THREE");
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertInHand(player1, "Unsummon");
+    }
+
+    @Test
+    void flyingShapeDoesNotTriggerPackleader() {
+        harness.addToBattlefield(player1, new GarruksPackleader());
+
+        castAndReturn("TWO_TWO_FLYING");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void cloneRetainsCopiedFlyingWhenChoosingThreeThreeForm() {
+        Permanent clay = castAndReturn("TWO_TWO_FLYING");
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, clay.getId());
+        harness.handleListChoice(player1, "THREE_THREE");
+
+        Permanent copy = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> !permanent.getId().equals(clay.getId()))
+                .findFirst().orElseThrow();
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, copy, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void cloneRetainsCopiedWallAndDefenderWhenChoosingFlyingForm() {
+        Permanent clay = castAndReturn("ONE_SIX_WALL");
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, clay.getId());
+        harness.handleListChoice(player1, "TWO_TWO_FLYING");
+
+        Permanent copy = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> !permanent.getId().equals(clay.getId()))
+                .findFirst().orElseThrow();
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, copy, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, copy, Keyword.DEFENDER)).isTrue();
+        assertThat(GameQueryService.permanentHasSubtype(copy, CardSubtype.WALL)).isTrue();
     }
 }
