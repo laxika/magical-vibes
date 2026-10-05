@@ -163,6 +163,93 @@ class LinSivviDefiantHeroTest extends BaseCardTest {
                 .containsExactly(rebel.getId());
     }
 
+    @Test
+    @DisplayName("Increasing X includes Rebels both below and at the chosen mana value")
+    void largerXIncludesLowerAndEqualManaValues() {
+        int linIndex = addReadyLin();
+        harness.setLibrary(player1, List.of(new DefiantFalcon(), new DefiantVanguard(), new Mossdog()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, linIndex, 0, 3, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).extracting(Card::getName)
+                .containsExactly("Defiant Falcon", "Defiant Vanguard");
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .containsExactly("Lin Sivvi, Defiant Hero", "Defiant Vanguard");
+        assertThat(findPermanent(player1, "Defiant Vanguard").isTapped()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Defiant Falcon", "Mossdog");
+    }
+
+    @Test
+    @DisplayName("The X ability cannot be activated while Lin Sivvi has summoning sickness")
+    void searchRequiresLinToBeReady() {
+        harness.addToBattlefield(player1, new LinSivviDefiantHero());
+        harness.setLibrary(player1, List.of(new DefiantFalcon()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, 2, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The X ability requires enough mana to pay the chosen X")
+    void searchRequiresPaymentOfChosenX() {
+        int linIndex = addReadyLin();
+        harness.setLibrary(player1, List.of(new DefiantVanguard()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, linIndex, 0, 3, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The graveyard ability works while Lin Sivvi is tapped and summoning sick")
+    void graveyardAbilityDoesNotRequireLinToBeReady() {
+        Permanent lin = harness.addToBattlefieldAndReturn(player1, new LinSivviDefiantHero());
+        lin.tap();
+        Card rebel = new DefiantFalcon();
+        harness.setGraveyard(player1, List.of(rebel));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 1, List.of(rebel.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(rebel.getId());
+        assertThat(lin.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A graveyard ability whose target was already returned does nothing")
+    void targetLeavingGraveyardMakesEarlierActivationDoNothing() {
+        int linIndex = addReadyLin();
+        Card rebel = new DefiantFalcon();
+        Card filler = new Daze();
+        harness.setGraveyard(player1, List.of(rebel));
+        harness.setLibrary(player1, List.of(filler));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbilityWithGraveyardTargets(player1, linIndex, 1, List.of(rebel.getId()));
+        harness.activateAbilityWithGraveyardTargets(player1, linIndex, 1, List.of(rebel.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(filler.getId(), rebel.getId());
+        assertThat(gd.stack).isEmpty();
+    }
+
     private int addReadyLin() {
         Permanent lin = addCreatureReady(player1, new LinSivviDefiantHero());
         return gd.playerBattlefields.get(player1.getId()).indexOf(lin);
