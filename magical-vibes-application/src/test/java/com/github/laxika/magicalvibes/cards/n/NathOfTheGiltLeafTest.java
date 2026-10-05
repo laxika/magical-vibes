@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.ManaColor;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WoodlandChangeling;
+import com.github.laxika.magicalvibes.cards.m.Mournwhelk;
+import com.github.laxika.magicalvibes.cards.l.Lignify;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({NathOfTheGiltLeaf.class, WoodlandChangeling.class, Mournwhelk.class, Lignify.class})
 class NathOfTheGiltLeafTest extends BaseCardTest {
 
     private long elfWarriorTokens(Player owner) {
@@ -23,13 +27,11 @@ class NathOfTheGiltLeafTest extends BaseCardTest {
                 .count();
     }
 
-    // ===== Upkeep trigger targeting =====
-
     @Test
     @DisplayName("Upkeep trigger only offers opponents as valid targets")
     void upkeepTargetFilterExcludesController() {
         harness.addToBattlefield(player1, new NathOfTheGiltLeaf());
-        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new WoodlandChangeling()));
 
         advanceToUpkeep(player1);
 
@@ -39,27 +41,23 @@ class NathOfTheGiltLeafTest extends BaseCardTest {
                 .containsExactly(player2.getId());
     }
 
-    // ===== Full combo: discard triggers the token =====
-
     @Test
     @DisplayName("Accepting the discard makes the opponent discard at random and creates an Elf Warrior token")
     void discardTriggersTokenCreation() {
         harness.addToBattlefield(player1, new NathOfTheGiltLeaf());
-        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new WoodlandChangeling(), new WoodlandChangeling()));
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, player2.getId()); // target opponent
-        harness.passBothPriorities(); // resolve upkeep trigger → may prompt for discard
-        harness.handleMayAbilityChosen(player1, true); // opponent discards at random → token trigger on stack
-        harness.passBothPriorities(); // resolve token trigger → may prompt for token
+        harness.passBothPriorities(); // resolve upkeep trigger â†’ may prompt for discard
+        harness.handleMayAbilityChosen(player1, true); // opponent discards at random â†’ token trigger on stack
+        harness.passBothPriorities(); // resolve token trigger â†’ may prompt for token
         harness.handleMayAbilityChosen(player1, true); // create the Elf Warrior token
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("at random"));
+        assertThat(gameLogContains("at random")).isTrue();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(p -> p.getCard().isToken())
@@ -69,55 +67,135 @@ class NathOfTheGiltLeafTest extends BaseCardTest {
                         && p.getCard().getSubtypes().contains(CardSubtype.WARRIOR));
     }
 
-    // ===== Declining the token after the discard =====
-
     @Test
     @DisplayName("Declining the token trigger leaves the discard in place but no token")
     void discardWithoutTokenWhenDeclined() {
         harness.addToBattlefield(player1, new NathOfTheGiltLeaf());
-        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new WoodlandChangeling(), new WoodlandChangeling()));
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true); // discard → token trigger on stack
-        harness.passBothPriorities(); // resolve token trigger → may prompt
+        harness.handleMayAbilityChosen(player1, true); // discard â†’ token trigger on stack
+        harness.passBothPriorities(); // resolve token trigger â†’ may prompt
         harness.handleMayAbilityChosen(player1, false); // decline token
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(elfWarriorTokens(player1)).isZero();
     }
 
-    // ===== Declining the discard =====
-
     @Test
     @DisplayName("Declining the discard leaves the opponent's hand intact and makes no token")
     void decliningDiscardDoesNothing() {
         harness.addToBattlefield(player1, new NathOfTheGiltLeaf());
-        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new WoodlandChangeling(), new WoodlandChangeling()));
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false); // decline discard
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(elfWarriorTokens(player1)).isZero();
     }
 
-    // ===== Only fires on controller's upkeep =====
+    @Test
+    @DisplayName("An empty opposing hand produces no discard trigger or token")
+    void emptyHandProducesNoToken() {
+        harness.addToBattlefield(player1, new NathOfTheGiltLeaf());
+        harness.setHand(player2, List.of());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(elfWarriorTokens(player1)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Another card causing two opposing discards creates two independently optional tokens")
+    void otherCardDiscardTriggersOncePerCard() {
+        harness.addToBattlefield(player1, new NathOfTheGiltLeaf());
+        harness.setHand(player2, List.of(new WoodlandChangeling(), new WoodlandChangeling()));
+        harness.setHand(player1, List.of(new Mournwhelk()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castCreature(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(elfWarriorTokens(player1)).isEqualTo(1);
+        assertThat(elfWarriorTokens(player2)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The controller discarding cards does not trigger Nath")
+    void controllerDiscardDoesNotTrigger() {
+        harness.addToBattlefield(player1, new NathOfTheGiltLeaf());
+        harness.setHand(player1, List.of(new Mournwhelk(), new WoodlandChangeling(), new WoodlandChangeling()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castCreature(player1, 0, player1.getId());
+        resolveAllTriggers();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(elfWarriorTokens(player1)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Nath enchanted by Lignify does not trigger when an opponent discards")
+    void losingAbilitiesStopsDiscardTrigger() {
+        var nath = harness.addToBattlefieldAndReturn(player1, new NathOfTheGiltLeaf());
+        harness.setHand(player1, List.of(new Lignify()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castEnchantment(player1, 0, nath.getId());
+        resolveAllTriggers();
+
+        harness.setHand(player1, List.of(new Mournwhelk()));
+        harness.setHand(player2, List.of(new WoodlandChangeling(), new WoodlandChangeling()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castCreature(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(elfWarriorTokens(player1)).isZero();
+    }
 
     @Test
     @DisplayName("Does not trigger during the opponent's upkeep")
     void doesNotTriggerDuringOpponentsUpkeep() {
         harness.addToBattlefield(player1, new NathOfTheGiltLeaf());
-        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new WoodlandChangeling(), new WoodlandChangeling()));
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
