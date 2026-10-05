@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -15,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 
 
-@CardUsed(QueenMarchesa.class)
+@CardUsed({QueenMarchesa.class, GrizzlyBears.class})
 class QueenMarchesaTest extends BaseCardTest {
 
     @Test
@@ -95,7 +94,7 @@ class QueenMarchesaTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.addToBattlefield(player1, new QueenMarchesa());
 
-        advanceToQueenUpkeep(player1);
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
 
         Permanent assassin = findPermanent(player1, "Assassin");
@@ -108,7 +107,7 @@ class QueenMarchesaTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new QueenMarchesa());
         harness.passBothPriorities();
 
-        advanceToQueenUpkeep(player1);
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Assassin")).isEmpty();
@@ -125,15 +124,45 @@ class QueenMarchesaTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(player2, List.of(bearIndex));
         gs.declareBlockers(gd, player1, List.of());
         resolveCombat(player2);
+        resolveAllTriggers();
 
         assertThat(gd.monarchPlayerId).isEqualTo(player2.getId());
     }
 
-    private void advanceToQueenUpkeep(com.github.laxika.magicalvibes.model.Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passUntil(activePlayer, TurnStep.UPKEEP);
+    @Test
+    void doesNotCreateAssassinIfOpponentBecomesMonarchAfterUpkeepBegins() {
+        harness.addToBattlefield(player1, new QueenMarchesa());
+        gd.monarchPlayerId = player1.getId();
+
+        advanceToUpkeep(player1);
+        gd.monarchPlayerId = player2.getId();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Assassin")).isEmpty();
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new QueenMarchesa());
+        gd.monarchPlayerId = player2.getId();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Assassin")).isEmpty();
+    }
+
+    @Test
+    void createsAssassinEvenIfMarchesaLeavesBeforeResolution() {
+        Permanent marchesa = harness.addToBattlefieldAndReturn(player1, new QueenMarchesa());
+        gd.monarchPlayerId = player2.getId();
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(marchesa);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Assassin")).hasSize(1);
     }
 
 }
