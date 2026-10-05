@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -44,8 +45,7 @@ class MerrowWitsniperTest extends BaseCardTest {
         }
 
         castWitsniper(player2.getId());
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(9);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
@@ -60,8 +60,7 @@ class MerrowWitsniperTest extends BaseCardTest {
         }
 
         castWitsniper(player1.getId());
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(9);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
@@ -73,9 +72,59 @@ class MerrowWitsniperTest extends BaseCardTest {
         gd.playerDecks.get(player2.getId()).clear();
 
         castWitsniper(player2.getId());
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the top card is milled, leaving the other player's library untouched")
+    void millsOnlyTopCardOfTargetLibrary() {
+        Card top = new MerrowWitsniper();
+        Card next = new MerrowWitsniper();
+        Card ownTop = new MerrowWitsniper();
+        harness.setLibrary(player2, List.of(top, next));
+        harness.setLibrary(player1, List.of(ownTop));
+
+        castWitsniper(player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(top);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(next);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownTop);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Milling the last card does not cause a player to lose")
+    void millingLastCardDoesNotCauseLoss() {
+        Card last = new MerrowWitsniper();
+        harness.setLibrary(player2, List.of(last));
+
+        castWitsniper(player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(last);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("The mill trigger resolves even after its source leaves the battlefield")
+    void triggerResolvesWithoutSource() {
+        Card top = new MerrowWitsniper();
+        harness.setLibrary(player2, List.of(top));
+
+        castWitsniper(player2.getId());
+        harness.passBothPriorities();
+
+        var source = findPermanent(player1, "Merrow Witsniper");
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        harness.setHand(player1, List.of(source.getCard()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(top);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
 }
