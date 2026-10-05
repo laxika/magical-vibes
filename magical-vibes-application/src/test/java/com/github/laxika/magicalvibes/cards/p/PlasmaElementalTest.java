@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({PlasmaElemental.class, DrossCrocodile.class})
@@ -39,5 +40,42 @@ class PlasmaElementalTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("Plasma Elemental can block an attacking creature")
+    void canBlock() {
+        addCreatureReady(player1, new DrossCrocodile());
+        addCreatureReady(player2, new PlasmaElemental());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Plasma Elemental does not stop another attacker from being blocked")
+    void otherAttackerCanBeBlocked() {
+        addCreatureReady(player1, new PlasmaElemental());
+        addCreatureReady(player1, new DrossCrocodile());
+        addCreatureReady(player2, new DrossCrocodile());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1))))
+                .doesNotThrowAnyException();
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getClass())
+                .containsExactly(PlasmaElemental.class);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 }
