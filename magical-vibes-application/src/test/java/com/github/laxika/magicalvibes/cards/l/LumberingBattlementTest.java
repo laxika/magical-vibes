@@ -3,20 +3,23 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.i.ImpassionedOrator;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LumberingBattlement.class, GrizzlyBears.class, HillGiant.class, Forest.class, ImpassionedOrator.class})
 class LumberingBattlementTest extends BaseCardTest {
 
     @Test
@@ -29,11 +32,9 @@ class LumberingBattlementTest extends BaseCardTest {
         Card tokenCard = tokenCreature();
         Permanent token = harness.addToBattlefieldAndReturn(player1, tokenCard);
 
-        LumberingBattlement card = castBattlement();
+        castBattlement();
         harness.passBothPriorities();
-        Permanent battlement = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() == card)
-                .findFirst().orElseThrow();
+        Permanent battlement = findPermanent(player1, "Lumbering Battlement");
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -58,7 +59,7 @@ class LumberingBattlementTest extends BaseCardTest {
         GrizzlyBears bearsCard = new GrizzlyBears();
         bearsCard.setOwnerId(player2.getId());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, bearsCard);
-        LumberingBattlement card = castBattlement();
+        castBattlement();
         harness.passBothPriorities();
 
         PendingInteraction.MultiPermanentChoice choice =
@@ -66,9 +67,7 @@ class LumberingBattlementTest extends BaseCardTest {
         assertThat(choice.validIds()).containsExactly(bears.getId());
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
-        Permanent battlement = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() == card)
-                .findFirst().orElseThrow();
+        Permanent battlement = findPermanent(player1, "Lumbering Battlement");
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, battlement));
 
@@ -81,14 +80,12 @@ class LumberingBattlementTest extends BaseCardTest {
     @DisplayName("Choosing no creatures is legal")
     void mayChooseNoCreatures() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        LumberingBattlement battlementCard = castBattlement();
+        castBattlement();
         harness.passBothPriorities();
 
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
-        Permanent battlement = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() == battlementCard)
-                .findFirst().orElseThrow();
+        Permanent battlement = findPermanent(player1, "Lumbering Battlement");
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears, battlement);
         assertThat(harness.getGameQueryService().getEffectivePower(gd, battlement)).isEqualTo(4);
         assertThat(harness.getGameQueryService().getEffectiveToughness(gd, battlement)).isEqualTo(5);
@@ -98,10 +95,8 @@ class LumberingBattlementTest extends BaseCardTest {
     @DisplayName("Does nothing if it leaves before its ETB ability resolves")
     void doesNothingIfSourceLeavesBeforeResolution() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        LumberingBattlement battlementCard = castBattlement();
-        Permanent battlement = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() == battlementCard)
-                .findFirst().orElseThrow();
+        castBattlement();
+        Permanent battlement = findPermanent(player1, "Lumbering Battlement");
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, battlement));
@@ -112,16 +107,84 @@ class LumberingBattlementTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
-    private LumberingBattlement castBattlement() {
+    @Test
+    @DisplayName("All exiled creatures return simultaneously and see each other enter")
+    void returningCreaturesSeeEachOtherEnter() {
+        castBattlement();
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ImpassionedOrator());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new ImpassionedOrator());
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
+        Permanent battlement = findPermanent(player1, "Lumbering Battlement");
+        int lifeBeforeReturn = gd.playerLifeTotals.get(player1.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, battlement));
+
+        assertThat(countPermanents(player1, "Impassioned Orator")).isEqualTo(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertLife(player1, lifeBeforeReturn + 2);
+    }
+
+    @Test
+    @DisplayName("Choosing only some eligible creatures boosts only for the chosen cards")
+    void mayChooseSubsetOfCreatures() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        castBattlement();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
+
+        Permanent battlement = findPermanent(player1, "Lumbering Battlement");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(giant, battlement).doesNotContain(bears);
+        assertThat(gd.getCardsExiledByPermanent(battlement.getId())).containsExactly(bears.getCard());
+        assertThat(harness.getGameQueryService().getEffectivePower(gd, battlement)).isEqualTo(6);
+        assertThat(harness.getGameQueryService().getEffectiveToughness(gd, battlement)).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("No choice is needed when there are no other eligible creatures")
+    void resolvesWithoutEligibleCreatures() {
+        castBattlement();
+        harness.passBothPriorities();
+
+        Permanent battlement = findPermanent(player1, "Lumbering Battlement");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.getCardsExiledByPermanent(battlement.getId())).isEmpty();
+        assertThat(harness.getGameQueryService().getEffectivePower(gd, battlement)).isEqualTo(4);
+        assertThat(harness.getGameQueryService().getEffectiveToughness(gd, battlement)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Exiled creatures return as new untapped permanents without their old counters")
+    void returningCreatureLosesCountersAndTappedState() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        bears.tap();
+        castBattlement();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
+        Permanent battlement = findPermanent(player1, "Lumbering Battlement");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, battlement));
+
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
+        assertThat(returned.getId()).isNotEqualTo(bears.getId());
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(returned.isTapped()).isFalse();
+        assertThat(returned.isSummoningSick()).isTrue();
+        harness.assertInHand(player1, "Lumbering Battlement");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    private void castBattlement() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         LumberingBattlement card = new LumberingBattlement();
-        harness.setHand(player1, List.of(card));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, card, "{4}{W}");
         harness.passBothPriorities();
-        return card;
     }
 
     private Card tokenCreature() {
