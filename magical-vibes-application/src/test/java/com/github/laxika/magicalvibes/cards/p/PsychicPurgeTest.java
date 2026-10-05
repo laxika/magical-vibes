@@ -90,11 +90,54 @@ class PsychicPurgeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castSorcery(player1, 0, (UUID) null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, (UUID) null);
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         harness.assertInGraveyard(player1, "Psychic Purge");
+    }
+
+    @Test
+    @DisplayName("Can deal damage to its own controller")
+    void dealsDamageToOwnController() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new PsychicPurge()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 19);
+        harness.assertInGraveyard(player1, "Psychic Purge");
+    }
+
+    @Test
+    @DisplayName("Lethal damage destroys the target creature")
+    void lethalDamageDestroysCreature() {
+        var target = addCreatureReady(player2, new GrizzlyBears());
+        target.setMarkedDamage(1);
+        harness.setHand(player1, List.of(new PsychicPurge()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Own Distress discarding Psychic Purge does not trigger life loss")
+    void ownTargetedDiscardDoesNotTrigger() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Distress(), new PsychicPurge()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Psychic Purge");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }
