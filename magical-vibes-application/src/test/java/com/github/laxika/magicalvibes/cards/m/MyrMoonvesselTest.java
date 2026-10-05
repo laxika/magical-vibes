@@ -37,4 +37,31 @@ class MyrMoonvesselTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
     }
+
+    @Test
+    @DisplayName("Simultaneous Moonvessel deaths each give mana to their own controller")
+    void simultaneousDeathsAwardManaToEachController() {
+        Permanent moonvessel = harness.addToBattlefieldAndReturn(player1, new MyrMoonvessel());
+        harness.addToBattlefield(player2, new MyrMoonvessel());
+        harness.setHand(player1, List.of(new EchoingRuin()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castAndResolveSorcery(player1, 0, moonvessel.getId());
+
+        harness.assertInGraveyard(player1, "Myr Moonvessel");
+        harness.assertInGraveyard(player2, "Myr Moonvessel");
+        harness.assertNotOnBattlefield(player1, "Myr Moonvessel");
+        harness.assertNotOnBattlefield(player2, "Myr Moonvessel");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
 }
