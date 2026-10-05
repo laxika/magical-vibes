@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.List;
 
@@ -108,6 +110,56 @@ class PulsemageAdvocateTest extends BaseCardTest {
 
     private Permanent addReadyAdvocate() {
         return addCreatureReady(player1, new PulsemageAdvocate());
+    }
+
+    @ParameterizedTest
+    @CsvSource({"1, true", "3, true", "0, false", "3, false"})
+    @DisplayName("Resolves only the remaining legal graveyard targets")
+    void resolvesRemainingLegalTargets(int missingOpponentTargets, boolean creatureStillLegal) {
+        Permanent advocate = addReadyAdvocate();
+        Card first = new AvenWarcraft();
+        Card second = new BattleScreech();
+        Card third = new BenevolentBodyguard();
+        Card creature = new BattlewiseAven();
+        List<Card> opponentCards = List.of(first, second, third);
+        harness.setGraveyard(player2, opponentCards);
+        harness.setGraveyard(player1, List.of(creature));
+
+        harness.activateAbilityWithGraveyardTargets(player1, index(advocate), 0,
+                List.of(first.getId(), second.getId(), third.getId(), creature.getId()));
+        harness.setGraveyard(player2, opponentCards.subList(missingOpponentTargets, 3));
+        harness.setExile(player2, opponentCards.subList(0, missingOpponentTargets));
+        if (!creatureStillLegal) {
+            harness.setGraveyard(player1, List.of());
+            harness.setExile(player1, List.of(creature));
+        }
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getId)
+                .containsAll(opponentCards.subList(missingOpponentTargets, 3).stream().map(Card::getId).toList())
+                .doesNotContainAnyElementsOf(opponentCards.subList(0, missingOpponentTargets).stream().map(Card::getId).toList());
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .anyMatch(permanent -> permanent.getCard().getId().equals(creature.getId())))
+                .isEqualTo(creatureStillLegal);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(advocate.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Requires three distinct opponent cards and an own creature")
+    void rejectsRepeatedOpponentTarget() {
+        Permanent advocate = addReadyAdvocate();
+        Card first = new AvenWarcraft();
+        Card second = new BattleScreech();
+        Card creature = new BattlewiseAven();
+        harness.setGraveyard(player2, List.of(first, second));
+        harness.setGraveyard(player1, List.of(creature));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, index(advocate), 0,
+                List.of(first.getId(), second.getId(), first.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(advocate.isTapped()).isFalse();
     }
 
     private int index(Permanent advocate) {
