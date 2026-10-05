@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.IronTuskElephant;
+import com.github.laxika.magicalvibes.cards.l.LeylineOfPunishment;
 import com.github.laxika.magicalvibes.cards.m.ManaPrism;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KukemssaPirates.class, Forest.class, IronTuskElephant.class, ManaPrism.class})
+@CardUsed({KukemssaPirates.class, Forest.class, IronTuskElephant.class, ManaPrism.class,
+        LeylineOfPunishment.class})
 class KukemssaPiratesTest extends BaseCardTest {
 
     private Permanent addAttacker() {
@@ -135,8 +137,7 @@ class KukemssaPiratesTest extends BaseCardTest {
     @Test
     @DisplayName("A blocked attacker does not trigger the ability")
     void blockedNoTrigger() {
-        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new IronTuskElephant());
-        blocker.setSummoningSick(false);
+        addCreatureReady(player2, new IronTuskElephant());
         addAttacker();
 
         prepareDeclareBlockers();
@@ -179,5 +180,64 @@ class KukemssaPiratesTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Taking an artifact assigns no combat damage even when damage cannot be prevented")
+    void takingArtifactDoesNotAssignUnpreventableDamage() {
+        harness.addToBattlefield(player1, new LeylineOfPunishment());
+        Permanent artifact = addDefenderArtifact();
+        addAttacker();
+        int defenderLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToMayChoice(artifact);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
+        resolveCombat();
+        harness.assertLife(player2, defenderLifeBefore);
+    }
+
+    @Test
+    @DisplayName("The ability can take its target after the Pirates leave the battlefield")
+    void sourceLeavingDoesNotStopControlChange() {
+        Permanent artifact = addDefenderArtifact();
+        Permanent attacker = addAttacker();
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, artifact.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(artifact);
+    }
+
+    @Test
+    @DisplayName("Target selection excludes friendly artifacts and defending nonartifacts")
+    void onlyDefendingArtifactsAreLegalTargets() {
+        Permanent artifact = addDefenderArtifact();
+        harness.addToBattlefield(player1, new ManaPrism());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new IronTuskElephant());
+        addAttacker();
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).containsExactly(artifact.getId());
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
     }
 }
