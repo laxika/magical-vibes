@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
@@ -72,8 +74,43 @@ class PentadPrismTest extends BaseCardTest {
     }
 
     @Test
+    void sunburstCountsColoredManaAlongsideColorlessMana() {
+        harness.setHand(player1, List.of(new PentadPrism()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Pentad Prism").getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    void tappedPrismCanProduceEachColorRepeatedlyUntilCountersRunOut(ManaColor color) {
+        Permanent prism = harness.addToBattlefieldAndReturn(player1, new PentadPrism());
+        prism.setCounterCount(CounterType.CHARGE, 2);
+        prism.setTapped(true);
+        ManaPool pool = harness.getGameData().playerManaPools.get(player1.getId());
+        int before = pool.get(color);
+
+        for (int i = 0; i < 2; i++) {
+            harness.activateAbility(player1, 0, null, null);
+            assertThat(prism.getCounterCount(CounterType.CHARGE)).isEqualTo(1 - i);
+            assertThat(harness.getGameData().stack).isEmpty();
+            harness.handleListChoice(player1, color.name());
+            assertThat(pool.get(color)).isEqualTo(before + i + 1);
+        }
+
+        assertThat(prism.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Pentad Prism");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     void cannotActivateWithoutChargeCounter() {
-        harness.addToBattlefieldAndReturn(player1, new PentadPrism());
+        harness.addToBattlefield(player1, new PentadPrism());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
