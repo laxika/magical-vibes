@@ -111,4 +111,56 @@ class PlanarDespairTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
     }
+
+    @Test
+    @DisplayName("Domain is determined at resolution and stays fixed afterward")
+    void locksDomainAtResolution() {
+        harness.addToBattlefield(player1, new Forest());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+
+        harness.castFromHand(player1, new PlanarDespair(), "{3}{B}{B}");
+        harness.addToBattlefield(player1, new Island());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(1);
+
+        harness.addToBattlefield(player1, new Mountain());
+
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution do not receive the debuff")
+    void doesNotAffectLaterCreatures() {
+        harness.addToBattlefield(player1, new Forest());
+        Permanent original = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+
+        castPlanarDespair();
+        Permanent newcomer = harness.enterBattlefieldAndReturn(player2, new HillGiant());
+
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, newcomer)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Creatures on both sides die when their toughness becomes zero")
+    void killsCreaturesWithZeroToughness() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new HillGiant());
+        harness.addToBattlefield(player2, new HillGiant());
+
+        castPlanarDespair();
+
+        harness.assertNotOnBattlefield(player1, "Hill Giant");
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        harness.assertInGraveyard(player1, "Hill Giant");
+        harness.assertInGraveyard(player2, "Hill Giant");
+    }
 }
