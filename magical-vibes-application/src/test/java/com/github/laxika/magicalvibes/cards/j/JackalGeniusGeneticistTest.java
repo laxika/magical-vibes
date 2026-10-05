@@ -89,4 +89,74 @@ class JackalGeniusGeneticistTest extends BaseCardTest {
                 .orElseThrow();
         assertThat(token.getCard().getSupertypes()).doesNotContain(CardSupertype.LEGENDARY);
     }
+
+    @Test
+    void doesNotCopyCreatureWithDifferentManaValue() {
+        Permanent jackal = addCreatureReady(player1, new JackalGeniusGeneticist());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(jackal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void doesNotCopyOpponentsMatchingCreatureSpell() {
+        Permanent jackal = addCreatureReady(player1, new JackalGeniusGeneticist());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new SavannahLions()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.castCreature(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(jackal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+        harness.assertOnBattlefield(player2, "Savannah Lions");
+    }
+
+    @Test
+    void stillCopiesWhenJackalsPowerChangesBeforeTriggerResolves() {
+        Permanent jackal = addCreatureReady(player1, new JackalGeniusGeneticist());
+        harness.setHand(player1, List.of(new SavannahLions()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castCreature(player1, 0);
+
+        jackal.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        resolveAllTriggers();
+
+        assertThat(jackal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getName().equals("Savannah Lions"))).hasSize(2);
+    }
+
+    @Test
+    void stillCopiesAfterJackalDiesInResponse() {
+        Permanent jackal = addCreatureReady(player1, new JackalGeniusGeneticist());
+        harness.setHand(player1, List.of(new SavannahLions()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castCreature(player1, 0);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, jackal.getId());
+
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Jackal, Genius Geneticist");
+        harness.assertNotOnBattlefield(player1, "Jackal, Genius Geneticist");
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getName().equals("Savannah Lions"))).hasSize(2);
+    }
 }
