@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CivilServant;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({JetmirNexusOfRevels.class, GrizzlyBears.class})
+@CardUsed({JetmirNexusOfRevels.class, CivilServant.class})
 class JetmirNexusOfRevelsTest extends BaseCardTest {
 
     @Test
@@ -75,12 +75,64 @@ class JetmirNexusOfRevelsTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, jetmir, Keyword.DOUBLE_STRIKE)).isTrue();
 
         gd.playerBattlefields.get(player1.getId())
-                .removeIf(permanent -> permanent.getCard().getName().equals("Grizzly Bears"));
+                .removeIf(permanent -> permanent.getCard().getName().equals("Civil Servant"));
 
         assertThat(gqs.getEffectivePower(gd, jetmir)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, jetmir, Keyword.VIGILANCE)).isFalse();
         assertThat(gqs.hasKeyword(gd, jetmir, Keyword.TRAMPLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, jetmir, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    @Test
+    void bonusesApplyToOtherOwnCreaturesButNotOpponents() {
+        addJetmir();
+        Permanent friendly = harness.addToBattlefieldAndReturn(player1, new CivilServant());
+        addCreatures(player1, 7);
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new CivilServant());
+
+        assertBonuses(friendly, 5, true, true, true);
+        assertThat(gqs.getEffectiveToughness(gd, friendly)).isEqualTo(3);
+        assertBonuses(opponent, 2, false, false, false);
+    }
+
+    @Test
+    void bonusesDisappearSeparatelyWhenDroppingBelowEachThreshold() {
+        Permanent jetmir = addJetmir();
+        addCreatures(player1, 8);
+        assertBonuses(jetmir, 8, true, true, true);
+
+        gd.playerBattlefields.get(player1.getId()).removeLast();
+        assertBonuses(jetmir, 7, true, true, false);
+
+        for (int i = 0; i < 3; i++) {
+            gd.playerBattlefields.get(player1.getId()).removeLast();
+        }
+        assertBonuses(jetmir, 6, true, false, false);
+
+        for (int i = 0; i < 3; i++) {
+            gd.playerBattlefields.get(player1.getId()).removeLast();
+        }
+        assertBonuses(jetmir, 5, false, false, false);
+    }
+
+    @Test
+    void bonusesDisappearWhenJetmirLeavesEvenWithNineCreaturesRemaining() {
+        Permanent jetmir = addJetmir();
+        Permanent friendly = harness.addToBattlefieldAndReturn(player1, new CivilServant());
+        addCreatures(player1, 8);
+        assertBonuses(friendly, 5, true, true, true);
+
+        gd.playerBattlefields.get(player1.getId()).remove(jetmir);
+
+        assertBonuses(friendly, 2, false, false, false);
+    }
+
+    private void assertBonuses(Permanent creature, int power, boolean vigilance,
+                               boolean trample, boolean doubleStrike) {
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(power);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isEqualTo(vigilance);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isEqualTo(trample);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isEqualTo(doubleStrike);
     }
 
     private Permanent addJetmir() {
@@ -89,7 +141,7 @@ class JetmirNexusOfRevelsTest extends BaseCardTest {
 
     private void addCreatures(Player player, int count) {
         for (int i = 0; i < count; i++) {
-            harness.addToBattlefield(player, new GrizzlyBears());
+            harness.addToBattlefield(player, new CivilServant());
         }
     }
 }
