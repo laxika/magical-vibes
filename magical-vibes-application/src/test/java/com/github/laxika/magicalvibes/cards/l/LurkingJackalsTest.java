@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.i.ImprisonedInTheMoon;
+import com.github.laxika.magicalvibes.cards.s.SongOfTheDryads;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(LurkingJackals.class)
+@CardUsed({LurkingJackals.class, SongOfTheDryads.class})
 class LurkingJackalsTest extends BaseCardTest {
 
     @Test
@@ -78,14 +78,13 @@ class LurkingJackalsTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(ImprisonedInTheMoon.class)
     @DisplayName("Does not transform if it is no longer an enchantment when the trigger resolves")
     void doesNotTransformWhenNoLongerEnchantmentAtResolution() {
         Permanent jackals = harness.addToBattlefieldAndReturn(player1, new LurkingJackals());
         harness.setLife(player2, 10);
         harness.runStateBasedActions();
 
-        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ImprisonedInTheMoon());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SongOfTheDryads());
         aura.setAttachedTo(jackals.getId());
         assertThat(gqs.isEnchantment(gd, jackals)).isFalse();
 
@@ -94,5 +93,38 @@ class LurkingJackalsTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, jackals)).isFalse();
         assertThat(gqs.isEnchantment(gd, jackals)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Triggers after entering when an opponent already has less than 10 life")
+    void triggersWhenEnteringBelowThreshold() {
+        harness.setLife(player2, 9);
+        harness.castFromHand(player1, new LurkingJackals(), "{B}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent jackals = gqs.findPermanentById(gd, harness.getPermanentId(player1, "Lurking Jackals"));
+        assertThat(gqs.isCreature(gd, jackals)).isTrue();
+        assertThat(gqs.isEnchantment(gd, jackals)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Each copy triggers once and transforms independently")
+    void multipleCopiesTransformIndependently() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new LurkingJackals());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new LurkingJackals());
+        harness.setLife(player2, 10);
+        harness.runStateBasedActions();
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, first)).isTrue();
+        assertThat(gqs.isCreature(gd, second)).isTrue();
+        assertThat(gqs.isEnchantment(gd, first)).isFalse();
+        assertThat(gqs.isEnchantment(gd, second)).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }
