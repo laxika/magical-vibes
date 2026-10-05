@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.c.CultOfTheWaxingMoon;
 import com.github.laxika.magicalvibes.cards.s.SiftThroughSands;
 import com.github.laxika.magicalvibes.cards.w.WanderingOnes;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,8 +18,80 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({NezumiGraverobber.class, NighteyesTheDesecrator.class,
-        WanderingOnes.class, SiftThroughSands.class})
+        WanderingOnes.class, SiftThroughSands.class, CultOfTheWaxingMoon.class})
 class NezumiGraverobberTest extends BaseCardTest {
+    @Test
+    @DisplayName("Flipping does not trigger abilities that watch a permanent transform")
+    void flippingDoesNotTriggerTransformAbilities() {
+        harness.addToBattlefield(player1, new CultOfTheWaxingMoon());
+        Permanent graverobber = addCreatureReady(player1, new NezumiGraverobber());
+        Card targetCard = new WanderingOnes();
+        harness.setGraveyard(player2, List.of(targetCard));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(graverobber);
+        harness.activateAbilityWithGraveyardTargets(player1, index, 0, List.of(targetCard.getId()));
+        resolveAllTriggers();
+
+        assertThat(graverobber.isTransformed()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Does not flip if its only target leaves the graveyard before resolution")
+    void doesNotFlipWhenTargetLeavesGraveyard() {
+        Permanent graverobber = addCreatureReady(player1, new NezumiGraverobber());
+        Card targetCard = new WanderingOnes();
+        harness.setGraveyard(player2, List.of(targetCard));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(graverobber);
+        harness.activateAbilityWithGraveyardTargets(player1, index, 0, List.of(targetCard.getId()));
+        harness.setGraveyard(player2, List.of());
+        harness.setExile(player2, List.of(targetCard));
+        harness.passBothPriorities();
+
+        assertThat(graverobber.isTransformed()).isFalse();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can exile a noncreature card and flip")
+    void exilesNoncreatureCardAndFlips() {
+        Permanent graverobber = addCreatureReady(player1, new NezumiGraverobber());
+        Card targetCard = new SiftThroughSands();
+        harness.setGraveyard(player2, List.of(targetCard));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(graverobber);
+        harness.activateAbilityWithGraveyardTargets(player1, index, 0, List.of(targetCard.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(Card::getId).contains(targetCard.getId());
+        assertThat(graverobber.isTransformed()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick, and flipping preserves those states")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent graverobber = harness.addToBattlefieldAndReturn(player1, new NezumiGraverobber());
+        graverobber.setSummoningSick(true);
+        graverobber.setTapped(true);
+        Card targetCard = new WanderingOnes();
+        harness.setGraveyard(player2, List.of(targetCard));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(graverobber);
+        harness.activateAbilityWithGraveyardTargets(player1, index, 0, List.of(targetCard.getId()));
+        harness.passBothPriorities();
+
+        assertThat(graverobber.isTransformed()).isTrue();
+        assertThat(graverobber.isTapped()).isTrue();
+        assertThat(graverobber.isSummoningSick()).isTrue();
+    }
+
 
     @Test
     @DisplayName("Exiles the targeted card and flips when that graveyard is left empty")
