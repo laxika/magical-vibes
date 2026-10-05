@@ -26,8 +26,7 @@ class PutridCyclopsTest extends BaseCardTest {
         Card topCard = new Tarmogoyf();
         harness.setLibrary(player1, List.of(topCard, new DryadArbor()));
         harness.castFromHand(player1, cyclopsCard, "{2}{B}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
                 .containsExactly(topCard);
@@ -50,8 +49,7 @@ class PutridCyclopsTest extends BaseCardTest {
         Card revealedCard = new Tarmogoyf();
         harness.setLibrary(player1, List.of(scriedCard, revealedCard));
         harness.castFromHand(player1, cyclopsCard, "{2}{B}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.getGameService().handleInteractionAnswer(
                 gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
 
@@ -60,6 +58,7 @@ class PutridCyclopsTest extends BaseCardTest {
         assertThat(cyclops.getEffectiveToughness()).isEqualTo(1);
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(revealedCard);
         assertThat(gd.playerDecks.get(player1.getId()).getLast()).isSameAs(scriedCard);
+        assertThat(gameLogContains("reveals Tarmogoyf from the top of their library.")).isTrue();
     }
 
     @Test
@@ -68,8 +67,7 @@ class PutridCyclopsTest extends BaseCardTest {
         Card cyclopsCard = new PutridCyclops();
         harness.setLibrary(player1, List.of(new Tarmogoyf()));
         harness.castFromHand(player1, cyclopsCard, "{2}{B}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.getGameService().handleInteractionAnswer(
                 gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
@@ -92,8 +90,7 @@ class PutridCyclopsTest extends BaseCardTest {
         Card topCard = new DryadArbor();
         harness.setLibrary(player1, List.of(topCard));
         harness.castFromHand(player1, cyclopsCard, "{2}{B}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.getGameService().handleInteractionAnswer(
                 gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
@@ -104,4 +101,34 @@ class PutridCyclopsTest extends BaseCardTest {
         assertThat(cyclops.getToughnessModifier()).isZero();
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(topCard);
     }
+
+    @Test
+    @DisplayName("An empty library leaves Putrid Cyclops unchanged")
+    void emptyLibraryGivesNoPenalty() {
+        harness.setLibrary(player1, List.of());
+        harness.castFromHand(player1, new PutridCyclops(), "{2}{B}");
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        Permanent cyclops = findPermanent(player1, "Putrid Cyclops");
+        assertThat(cyclops.getEffectivePower()).isEqualTo(3);
+        assertThat(cyclops.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Revealing a card with mana value three puts Putrid Cyclops into the graveyard")
+    void lethalPenaltyPutsCyclopsIntoGraveyard() {
+        Card topCard = new PutridCyclops();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.castFromHand(player1, new PutridCyclops(), "{2}{B}");
+        resolveAllTriggers();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        harness.assertNotOnBattlefield(player1, "Putrid Cyclops");
+        harness.assertInGraveyard(player1, "Putrid Cyclops");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
 }
