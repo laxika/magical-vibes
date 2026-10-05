@@ -39,10 +39,7 @@ class MinamoTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player2, List.of(new DarkRitual()));
-        harness.addMana(player2, com.github.laxika.magicalvibes.model.ManaColor.BLACK, 1);
-
-        harness.castInstant(player2, 0);
+        harness.castFromHand(player2, new DarkRitual(), "{B}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -101,5 +98,40 @@ class MinamoTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void spellCasterCanDeclineToDraw() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.castFromHand(player1, new DarkRitual(), "{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void chaosSkipsPlayerWithoutBlueCardsAndReturnsOpponentsCard() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setGraveyard(player1, List.of(new Forest(), new DarkRitual()));
+        harness.setGraveyard(player2, List.of(new Opt(), new Forest()));
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).singleElement().isInstanceOf(Opt.class);
+        assertThat(gd.playerGraveyards.get(player2.getId())).singleElement().isInstanceOf(Forest.class);
     }
 }
