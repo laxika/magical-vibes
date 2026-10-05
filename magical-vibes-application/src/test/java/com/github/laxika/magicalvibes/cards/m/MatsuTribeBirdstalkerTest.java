@@ -91,6 +91,45 @@ class MatsuTribeBirdstalkerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, birdstalker, Keyword.REACH)).isFalse();
     }
 
+    @Test
+    @DisplayName("Combat damage creates one ability that taps and locks the damaged creature together")
+    void combatDamageCreatesOneCombinedTrigger() {
+        addBirdstalkerReady(player1);
+        Permanent blocker = addCreatureReady(player2, new FiddleheadKami());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
+            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+            resolveCombat();
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(blocker.isTapped()).isFalse();
+            harness.passBothPriorities();
+            assertThat(blocker.isTapped()).isTrue();
+            assertThat(blocker.getSkipUntapCount()).isEqualTo(1);
+            assertThat(gd.stack).isEmpty();
+        });
+    }
+
+    @Test
+    @DisplayName("Reach activation works while tapped and summoning sick and affects only its source")
+    void activationWorksWhileTappedAndSummoningSick() {
+        Permanent birdstalker = harness.enterBattlefieldAndReturn(player1, new MatsuTribeBirdstalker());
+        birdstalker.setTapped(true);
+        birdstalker.setSummoningSick(true);
+        Permanent otherBirdstalker = addBirdstalkerReady(player1);
+        Permanent opposingBirdstalker = addBirdstalkerReady(player2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, birdstalker, Keyword.REACH)).isTrue();
+        assertThat(birdstalker.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherBirdstalker, Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingBirdstalker, Keyword.REACH)).isFalse();
+    }
+
     private Permanent addBirdstalkerReady(com.github.laxika.magicalvibes.model.Player player) {
         return addCreatureReady(player, new MatsuTribeBirdstalker());
     }
