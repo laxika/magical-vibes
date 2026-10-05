@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.a.Allay;
 import com.github.laxika.magicalvibes.cards.c.CityOfTraitors;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Paroxysm.class, CityOfTraitors.class, RagingGoblin.class})
+@CardUsed({Paroxysm.class, CityOfTraitors.class, RagingGoblin.class, Allay.class})
 class ParoxysmTest extends BaseCardTest {
 
     @Test
@@ -34,8 +35,7 @@ class ParoxysmTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot enchant a noncreature permanent with Paroxysm")
     void cannotEnchantNoncreature() {
-        harness.addToBattlefield(player2, new CityOfTraitors());
-        Permanent land = findPermanent(player2, "City of Traitors");
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new CityOfTraitors());
 
         harness.setHand(player1, List.of(new Paroxysm()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -114,10 +114,57 @@ class ParoxysmTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
 
-    private void attachParoxysm(Permanent creature) {
-        Permanent aura = new Permanent(new Paroxysm());
+    @Test
+    void doesNotTriggerDuringAuraControllersUpkeep() {
+        Permanent creature = addCreatureReady(player2, new RagingGoblin());
+        attachParoxysm(creature);
+        harness.setLibrary(player2, List.of(new CityOfTraitors()));
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+    }
+
+    @Test
+    void landRevealStillDestroysCreatureAfterAuraIsDestroyed() {
+        Permanent creature = addCreatureReady(player2, new RagingGoblin());
+        Permanent aura = attachParoxysm(creature);
+        harness.setLibrary(player2, List.of(new CityOfTraitors()));
+        harness.setHand(player2, List.of(new Allay()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        advanceToUpkeep(player2);
+        harness.castAndResolveInstant(player2, 0, aura.getId());
+        harness.assertInGraveyard(player1, "Paroxysm");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Raging Goblin");
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    void nonlandRevealStillBoostsCreatureAfterAuraIsDestroyed() {
+        Permanent creature = addCreatureReady(player2, new RagingGoblin());
+        Permanent aura = attachParoxysm(creature);
+        harness.setLibrary(player2, List.of(new RagingGoblin()));
+        harness.setHand(player2, List.of(new Allay()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        advanceToUpkeep(player2);
+        harness.castAndResolveInstant(player2, 0, aura.getId());
+        harness.assertInGraveyard(player1, "Paroxysm");
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+    }
+
+    private Permanent attachParoxysm(Permanent creature) {
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Paroxysm());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
+        return aura;
     }
 
 }
