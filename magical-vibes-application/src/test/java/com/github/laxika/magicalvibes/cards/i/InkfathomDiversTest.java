@@ -75,12 +75,10 @@ class InkfathomDiversTest extends BaseCardTest {
     void libraryWithFewerThanFourCards() {
         harness.castFromHand(player1, new InkfathomDivers(), "{3}{U}{U}");
 
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
         Card cardA = new InkfathomDivers();
         Card cardB = new InkfathomDivers();
-        deck.add(cardA);
-        deck.add(cardB);
+        harness.setLibrary(player1, List.of(cardA, cardB));
+        List<Card> deck = gd.playerDecks.get(player1.getId());
 
         resolveAllTriggers();
 
@@ -98,12 +96,52 @@ class InkfathomDiversTest extends BaseCardTest {
     void emptyLibrarySkipsReorder() {
         harness.castFromHand(player1, new InkfathomDivers(), "{3}{U}{U}");
 
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("library is empty"));
+    }
+
+    @Test
+    @DisplayName("A one-card library keeps its only card after the look")
+    void oneCardLibraryKeepsItsCard() {
+        Card onlyCard = new InkfathomDivers();
+        harness.setLibrary(player1, List.of(onlyCard));
+        harness.castFromHand(player1, new InkfathomDivers(), "{3}{U}{U}");
+
+        resolveAllTriggers();
+
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.LibraryReorder) {
+            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0)));
+        }
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The opponent's Divers reorders its controller's library only")
+    void opponentDiversReordersItsControllersLibrary() {
+        Card cardA = new InkfathomDivers();
+        Card cardB = new Island();
+        Card otherLibraryCard = new Island();
+        harness.setLibrary(player2, List.of(cardA, cardB));
+        harness.setLibrary(player1, List.of(otherLibraryCard));
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new InkfathomDivers(), "{3}{U}{U}");
+
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).playerId())
+                .isEqualTo(player2.getId());
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(cardB, cardA);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(otherLibraryCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
