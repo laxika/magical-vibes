@@ -53,6 +53,36 @@ class InsurrectionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not grant haste to your creatures entering after resolution")
+    void doesNotGrantHasteToOwnCreaturesEnteringAfterResolution() {
+        castInsurrection();
+
+        Permanent laterCreature = harness.enterBattlefieldAndReturn(player1, new ElvishWarrior());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(laterCreature);
+        assertThat(laterCreature.hasKeyword(Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Resolves without creatures and leaves noncreature permanents unchanged")
+    void resolvesWithoutCreatures() {
+        Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent opponentLand = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        ownLand.tap();
+        opponentLand.tap();
+
+        castInsurrection();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(ownLand);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(opponentLand);
+        assertThat(ownLand.isTapped()).isTrue();
+        assertThat(opponentLand.isTapped()).isTrue();
+        assertThat(ownLand.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(opponentLand.hasKeyword(Keyword.HASTE)).isFalse();
+        harness.assertInGraveyard(player1, "Insurrection");
+    }
+
+    @Test
     @DisplayName("Temporary control and haste expire at end of turn")
     void controlAndHasteExpireAtEndOfTurn() {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
