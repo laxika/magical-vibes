@@ -38,4 +38,33 @@ class NightguardPatrolTest extends BaseCardTest {
 
         assertThat(patrol.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("First strike destroys a 2/2 attacker before it can deal combat damage")
+    void firstStrikeWorksWhileBlocking() {
+        addCreatureReady(player1, new BorosGuildmage());
+        addCreatureReady(player2, new NightguardPatrol());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Boros Guildmage");
+        harness.assertOnBattlefield(player2, "Nightguard Patrol");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An unblocked first striker deals damage only once and remains untapped")
+    void unblockedFirstStrikerDealsDamageOnlyOnce() {
+        harness.setLife(player2, 20);
+        Permanent patrol = addCreatureReady(player1, new NightguardPatrol());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+        assertThat(patrol.isTapped()).isFalse();
+    }
 }
