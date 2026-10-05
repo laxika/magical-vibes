@@ -33,16 +33,18 @@ class OverloadTest extends BaseCardTest {
     }
 
     @Test
-    void cannotTargetArtifactWithManaValueAboveTwoWithoutKicker() {
+    void canTargetArtifactWithManaValueAboveTwoWithoutKickerButDoesNotDestroyIt() {
         harness.forceActivePlayer(player1);
         harness.addToBattlefield(player2, new DrakeSkullCameo());
         harness.setHand(player1, List.of(new Overload()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0,
-                harness.getPermanentId(player2, "Drake-Skull Cameo")))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("mana value 2 or less");
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player2, "Drake-Skull Cameo"));
+
+        harness.assertOnBattlefield(player2, "Drake-Skull Cameo");
+        harness.assertNotInGraveyard(player2, "Drake-Skull Cameo");
+        harness.assertInGraveyard(player1, "Overload");
     }
 
     @Test
@@ -73,14 +75,47 @@ class OverloadTest extends BaseCardTest {
     }
 
     @Test
-    void kickedOverloadCannotTargetArtifactWithManaValueAboveFive() {
+    void kickedOverloadCanTargetArtifactWithManaValueAboveFiveButDoesNotDestroyIt() {
         harness.forceActivePlayer(player1);
         harness.addToBattlefield(player2, new PlanarPortal());
         harness.setHand(player1, List.of(new Overload()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        assertThatThrownBy(() -> harness.castKickedInstant(player1, 0,
-                harness.getPermanentId(player2, "Planar Portal")))
-                .isInstanceOf(IllegalStateException.class);
+        harness.castKickedInstant(player1, 0,
+                harness.getPermanentId(player2, "Planar Portal"));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Planar Portal");
+        harness.assertNotInGraveyard(player2, "Planar Portal");
+        harness.assertInGraveyard(player1, "Overload");
+    }
+
+    @Test
+    void kickedOverloadStillDestroysCheapArtifact() {
+        harness.forceActivePlayer(player1);
+        harness.addToBattlefield(player2, new ChromaticSphere());
+        harness.setHand(player1, List.of(new Overload()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castKickedInstant(player1, 0,
+                harness.getPermanentId(player2, "Chromatic Sphere"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Chromatic Sphere");
+        harness.assertInGraveyard(player2, "Chromatic Sphere");
+    }
+
+    @Test
+    void canDestroyArtifactControlledByCaster() {
+        harness.forceActivePlayer(player1);
+        harness.addToBattlefield(player1, new ChromaticSphere());
+        harness.setHand(player1, List.of(new Overload()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player1, "Chromatic Sphere"));
+
+        harness.assertNotOnBattlefield(player1, "Chromatic Sphere");
+        harness.assertInGraveyard(player1, "Chromatic Sphere");
     }
 }
