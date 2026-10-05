@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({InvasionOfTheGiants.class, ChandraNalaar.class, Forest.class, HillGiant.class, Shock.class})
 class InvasionOfTheGiantsTest extends BaseCardTest {
@@ -41,11 +42,13 @@ class InvasionOfTheGiantsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HillGiant()));
 
         advanceToNextChapter();
-        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -63,9 +66,10 @@ class InvasionOfTheGiantsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HillGiant()));
 
         advanceToNextChapter();
-        harness.handlePermanentChosen(player1, planeswalker.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, planeswalker.getId());
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
         harness.passBothPriorities();
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
@@ -88,6 +92,77 @@ class InvasionOfTheGiantsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(
                 permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.GIANT));
         assertThat(gd.floatingEffects).isEmpty();
+    }
+
+    @Test
+    void chapterIIDrawsWithoutAGiantOrDamageTargetChoice() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new InvasionOfTheGiants());
+        saga.setCounterCount(CounterType.LORE, 1);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        advanceToNextChapter();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void chapterIICanDeclineToRevealTheGiantItJustDrew() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new InvasionOfTheGiants());
+        saga.setCounterCount(CounterType.LORE, 1);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new HillGiant()));
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Hill Giant");
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void chapterIIIDiscountSurvivesANonGiantSpell() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new InvasionOfTheGiants());
+        saga.setCounterCount(CounterType.LORE, 2);
+        harness.setHand(player1, List.of(new Shock(), new HillGiant()));
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void chapterIIIDoesNotDiscountTheSecondGiant() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new InvasionOfTheGiants());
+        saga.setCounterCount(CounterType.LORE, 2);
+        harness.setHand(player1, List.of(new HillGiant(), new HillGiant()));
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Invasion of the Giants");
+
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Hill Giant");
     }
 
     private void advanceToNextChapter() {
