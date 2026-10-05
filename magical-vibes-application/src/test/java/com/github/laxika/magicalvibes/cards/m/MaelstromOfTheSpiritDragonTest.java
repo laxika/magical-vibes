@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.d.DirgurIslandDragon;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SkimmingStrike;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -24,7 +23,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MaelstromOfTheSpiritDragon.class, DirgurIslandDragon.class, GrizzlyBears.class})
+@CardUsed({MaelstromOfTheSpiritDragon.class, DirgurIslandDragon.class, SkimmingStrike.class})
 class MaelstromOfTheSpiritDragonTest extends BaseCardTest {
 
     @Test
@@ -96,12 +95,11 @@ class MaelstromOfTheSpiritDragonTest extends BaseCardTest {
     @DisplayName("Third ability sacrifices the land and searches a revealed Dragon into hand")
     void searchesForDragon() {
         MaelstromOfTheSpiritDragon land = new MaelstromOfTheSpiritDragon();
-        Card nonDragon = new GrizzlyBears();
+        Card nonDragon = new MaelstromOfTheSpiritDragon();
         Card dragon = new DirgurIslandDragon();
         Permanent landPermanent = harness.addToBattlefieldAndReturn(player1, land);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(nonDragon, dragon));
+        harness.setLibrary(player1, List.of(nonDragon, dragon));
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
@@ -114,10 +112,101 @@ class MaelstromOfTheSpiritDragonTest extends BaseCardTest {
         assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.HAND);
         assertThat(search.params().cards()).containsExactly(dragon);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(dragon);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonDragon);
+    }
+
+    @Test
+    void restrictedManaPaysForRealDragonWithExactlyEnoughMana() {
+        harness.addToBattlefield(player1, new MaelstromOfTheSpiritDragon());
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "BLUE");
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.setHand(player1, List.of(new DirgurIslandDragon()));
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getSubtypeSpellOnlyManaTotal(Set.of(CardSubtype.DRAGON, CardSubtype.OMEN))).isZero();
+    }
+
+    @Test
+    void restrictedManaPaysForOmenWithExactlyEnoughMana() {
+        harness.addToBattlefield(player1, new MaelstromOfTheSpiritDragon());
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "BLUE");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new DirgurIslandDragon()));
+
+        harness.castWithAlternateCost(player1, 0, List.of());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().isCastWithOmen()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getSubtypeSpellOnlyManaTotal(Set.of(CardSubtype.DRAGON, CardSubtype.OMEN))).isZero();
+    }
+
+    @Test
+    void mayFindNoDragonEvenWhenOneIsAvailable() {
+        Card land = new MaelstromOfTheSpiritDragon();
+        Card dragon = new DirgurIslandDragon();
+        harness.addToBattlefield(player1, land);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(dragon));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(land);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(dragon);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void searchResolvesWhenLibraryHasNoDragons() {
+        Card land = new MaelstromOfTheSpiritDragon();
+        Card nonDragon = new MaelstromOfTheSpiritDragon();
+        harness.addToBattlefield(player1, land);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(nonDragon));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonDragon);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(land);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotSacrificeLandForSearchWithoutPayingFourMana() {
+        Card land = new MaelstromOfTheSpiritDragon();
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, land);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(permanent);
+        assertThat(permanent.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(land);
+        assertThat(gd.stack).isEmpty();
     }
 
     private static Card createCreature(String name, String manaCost, CardSubtype subtype) {
