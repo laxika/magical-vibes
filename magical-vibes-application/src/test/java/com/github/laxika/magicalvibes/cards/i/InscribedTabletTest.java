@@ -66,6 +66,41 @@ class InscribedTabletTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(tablet);
     }
 
+    @Test
+    @DisplayName("A short library with one land puts that land into hand without drawing")
+    void findsOnlyLandInShortLibraryWithoutDrawing() {
+        Permanent tablet = addTablet();
+        Card land = new Forest();
+        Card nonland = new InscribedTablet();
+        harness.setLibrary(player1, List.of(nonland, land));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int handSize = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, battlefieldIndex(tablet), 0, null, null);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(tablet.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize + 1).contains(land);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonland);
+    }
+
+    @Test
+    @DisplayName("With one nonland in the library, bottoming precedes the fallback draw")
+    void drawsRevealedNonlandFromOneCardLibrary() {
+        Permanent tablet = addTablet();
+        Card nonland = new InscribedTablet();
+        harness.setLibrary(player1, List.of(nonland));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int handSize = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, battlefieldIndex(tablet), 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize + 1).contains(nonland);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
     private Permanent addTablet() {
         return harness.addToBattlefieldAndReturn(player1, new InscribedTablet());
     }
