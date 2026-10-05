@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.f.FinalVengeance;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -15,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PopularEgotist.class, GloriousAnthem.class, GrizzlyBears.class})
+@CardUsed({PopularEgotist.class, FinalVengeance.class, GloriousAnthem.class, GrizzlyBears.class})
 class PopularEgotistTest extends BaseCardTest {
 
     @Test
@@ -59,8 +60,7 @@ class PopularEgotistTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.hasKeyword(gd, egotist, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(egotist.isTapped()).isTrue();
@@ -89,8 +89,7 @@ class PopularEgotistTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(gqs.hasKeyword(gd, egotist, Keyword.INDESTRUCTIBLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -98,6 +97,58 @@ class PopularEgotistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, egotist, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent egotist = harness.addToBattlefieldAndReturn(player1, new PopularEgotist());
+        egotist.setSummoningSick(true);
+        egotist.setTapped(true);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, egotist, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(egotist.isTapped()).isTrue();
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void triggersWhenItIsSacrificedToAnotherSpell() {
+        Permanent egotist = addEgotistReady();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PopularEgotist());
+        harness.setHand(player1, java.util.List.of(new FinalVengeance()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorceryWithSacrifice(player1, 0, target.getId(), egotist.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player1, "Popular Egotist");
+        harness.assertNotOnBattlefield(player2, "Popular Egotist");
+    }
+
+    @Test
+    void opponentsPermanentsCannotPayTheCost() {
+        addEgotistReady();
+        harness.addToBattlefield(player2, new PopularEgotist());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
     private Permanent addEgotistReady() {
