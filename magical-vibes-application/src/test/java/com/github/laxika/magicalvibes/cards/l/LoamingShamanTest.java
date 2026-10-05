@@ -103,4 +103,62 @@ class LoamingShamanTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Loaming Shaman");
     }
+
+    @Test
+    @DisplayName("Can shuffle every card in the targeted graveyard")
+    void canSelectEveryGraveyardCard() {
+        Card spider = new AquastrandSpider();
+        Card eidolon = new AuroraEidolon();
+        harness.setGraveyard(player2, List.of(spider, eidolon));
+        int librarySizeBefore = gd.playerDecks.get(player2.getId()).size();
+
+        castShaman();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(spider.getId(), eidolon.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .hasSize(librarySizeBefore + 2).contains(spider, eidolon);
+    }
+
+    @Test
+    @DisplayName("Still shuffles remaining legal cards when another selected card leaves")
+    void selectedCardLeavingDoesNotPreventOtherCardsMoving() {
+        Card spider = new AquastrandSpider();
+        Card eidolon = new AuroraEidolon();
+        harness.setGraveyard(player2, List.of(spider, eidolon));
+        int librarySizeBefore = gd.playerDecks.get(player2.getId()).size();
+
+        castShaman();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(spider.getId(), eidolon.getId()));
+        harness.setGraveyard(player2, List.of(eidolon));
+        harness.setExile(player2, List.of(spider));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .hasSize(librarySizeBefore + 1).contains(eidolon).doesNotContain(spider);
+        assertThat(gd.findExiledCard(spider.getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Does not shuffle cards that enter the graveyard after targets are chosen")
+    void laterGraveyardCardsAreNotSelectedAutomatically() {
+        Card spider = new AquastrandSpider();
+        Card eidolon = new AuroraEidolon();
+        harness.setGraveyard(player2, List.of(spider));
+        int librarySizeBefore = gd.playerDecks.get(player2.getId()).size();
+
+        castShaman();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(spider.getId()));
+        harness.setGraveyard(player2, List.of(spider, eidolon));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(eidolon);
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .hasSize(librarySizeBefore + 1).contains(spider).doesNotContain(eidolon);
+    }
 }
