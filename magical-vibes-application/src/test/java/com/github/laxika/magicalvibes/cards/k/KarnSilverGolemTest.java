@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.b.BullHippo;
+import com.github.laxika.magicalvibes.cards.c.ClawsOfGix;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HoppingAutomaton;
 import com.github.laxika.magicalvibes.cards.w.WornPowerstone;
@@ -21,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KarnSilverGolem.class, BullHippo.class, Forest.class, HoppingAutomaton.class,
+@CardUsed({KarnSilverGolem.class, BullHippo.class, ClawsOfGix.class, Forest.class, HoppingAutomaton.class,
         WornPowerstone.class})
 class KarnSilverGolemTest extends BaseCardTest {
 
@@ -72,8 +73,7 @@ class KarnSilverGolemTest extends BaseCardTest {
     @DisplayName("Animates a target noncreature artifact with P/T equal to its mana value")
     void animatesNoncreatureArtifact() {
         addKarnReady(player1);
-        harness.addToBattlefield(player1, new WornPowerstone());
-        Permanent powerstone = findPermanent(player1, "Worn Powerstone");
+        Permanent powerstone = harness.addToBattlefieldAndReturn(player1, new WornPowerstone());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, powerstone.getId());
@@ -90,8 +90,7 @@ class KarnSilverGolemTest extends BaseCardTest {
     @DisplayName("Animates an opponent's target noncreature artifact")
     void animatesOpponentsNoncreatureArtifact() {
         addKarnReady(player1);
-        harness.addToBattlefield(player2, new WornPowerstone());
-        Permanent powerstone = findPermanent(player2, "Worn Powerstone");
+        Permanent powerstone = harness.addToBattlefieldAndReturn(player2, new WornPowerstone());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, powerstone.getId());
@@ -131,8 +130,7 @@ class KarnSilverGolemTest extends BaseCardTest {
     @DisplayName("Animation is cleared at end of turn")
     void animationClearedAtEndOfTurn() {
         addKarnReady(player1);
-        harness.addToBattlefield(player1, new WornPowerstone());
-        Permanent powerstone = findPermanent(player1, "Worn Powerstone");
+        Permanent powerstone = harness.addToBattlefieldAndReturn(player1, new WornPowerstone());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, powerstone.getId());
@@ -206,6 +204,55 @@ class KarnSilverGolemTest extends BaseCardTest {
 
         assertThat(karn.getEffectiveToughness()).isEqualTo(8);
         assertThat(karn.getEffectivePower()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Animating a zero-mana-value artifact puts it into the graveyard")
+    void zeroManaValueArtifactDiesAfterAnimation() {
+        addKarnReady(player1);
+        Permanent claws = harness.addToBattlefieldAndReturn(player2, new ClawsOfGix());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, claws.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Claws of Gix");
+        harness.assertInGraveyard(player2, "Claws of Gix");
+    }
+
+    @Test
+    @DisplayName("An earlier activation cannot resolve after its target becomes a creature")
+    void earlierActivationFizzlesWhenTargetBecomesCreature() {
+        addKarnReady(player1);
+        Permanent powerstone = harness.addToBattlefieldAndReturn(player1, new WornPowerstone());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, powerstone.getId());
+        harness.activateAbility(player1, 0, null, powerstone.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.isCreature(gd, powerstone)).isTrue();
+        assertThat(powerstone.getEffectivePower()).isEqualTo(3);
+        assertThat(powerstone.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gameLogContains("fizzles (illegal target)")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Karn can animate an artifact while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent karn = harness.addToBattlefieldAndReturn(player1, new KarnSilverGolem());
+        karn.setSummoningSick(true);
+        karn.setTapped(true);
+        Permanent powerstone = harness.addToBattlefieldAndReturn(player1, new WornPowerstone());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, powerstone.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, powerstone)).isTrue();
+        assertThat(powerstone.getEffectivePower()).isEqualTo(3);
+        assertThat(powerstone.getEffectiveToughness()).isEqualTo(3);
+        assertThat(karn.isTapped()).isTrue();
     }
 
     private Permanent addKarnReady(Player player) {
