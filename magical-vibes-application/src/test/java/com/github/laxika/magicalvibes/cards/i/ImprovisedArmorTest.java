@@ -90,4 +90,45 @@ class ImprovisedArmorTest extends BaseCardTest {
         harness.assertInHand(player1, "Improvised Armor");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("Multiple Improvised Armors stack only on the enchanted creature")
+    void multipleArmorsStackOnEnchantedCreature() {
+        Permanent warrior = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
+        Permanent otherWarrior = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
+        harness.setHand(player1, List.of(new ImprovisedArmor(), new ImprovisedArmor()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castEnchantment(player1, 0, warrior.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, warrior.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(13);
+        assertThat(gqs.getEffectivePower(gd, otherWarrior)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherWarrior)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Cycling pays the discard and mana costs before drawing on resolution")
+    void cyclingPaysCostsBeforeDrawing() {
+        harness.setHand(player1, List.of(new ImprovisedArmor()));
+        harness.setLibrary(player1, List.of(new ElvishWarrior()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Improvised Armor");
+        harness.assertNotInHand(player1, "Improvised Armor");
+        harness.assertNotInHand(player1, "Elvish Warrior");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Elvish Warrior");
+        assertThat(gd.stack).isEmpty();
+    }
 }
