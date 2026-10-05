@@ -55,4 +55,44 @@ class PalladiaMorsTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Palladia-Mors")).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
+
+    @Test
+    @DisplayName("Palladia-Mors does not trigger during its opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        addCreatureReady(player1, new PalladiaMors());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Palladia-Mors");
+    }
+
+    @Test
+    @DisplayName("Three mana of the wrong colors cannot pay the upkeep cost")
+    void wrongColorsCannotPayUpkeepCost() {
+        addCreatureReady(player1, new PalladiaMors());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Palladia-Mors");
+        harness.assertInGraveyard(player1, "Palladia-Mors");
+    }
+
+    @Test
+    @DisplayName("An unpaid upkeep sacrifices Palladia-Mors controlled by the second player")
+    void secondPlayersUnpaidUpkeepSacrificesPalladiaMors() {
+        addCreatureReady(player2, new PalladiaMors());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertNotOnBattlefield(player2, "Palladia-Mors");
+        harness.assertInGraveyard(player2, "Palladia-Mors");
+        harness.assertNotInGraveyard(player1, "Palladia-Mors");
+    }
 }
