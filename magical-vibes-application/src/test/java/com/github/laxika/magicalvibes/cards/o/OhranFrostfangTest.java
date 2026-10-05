@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -55,7 +57,7 @@ class OhranFrostfangTest extends BaseCardTest {
         harness.addToBattlefield(player1, new OhranFrostfang());
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        setLibrary(List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         resolveCombat();
@@ -64,9 +66,103 @@ class OhranFrostfangTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
     }
 
-    private void setLibrary(List<Card> cards) {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(cards);
+    @Test
+    void onlyControlledAttackersGainDeathtouchAndOnlyWhileAttacking() {
+        Permanent frostfang = addCreatureReady(player1, new OhranFrostfang());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponent = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        opponent.setAttacking(true);
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.DEATHTOUCH)).isFalse();
+
+        attacker.setAttacking(false);
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DEATHTOUCH)).isFalse();
+
+        attacker.setAttacking(true);
+        gd.playerBattlefields.get(player1.getId()).remove(frostfang);
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DEATHTOUCH)).isFalse();
+    }
+
+    @Test
+    void drawsOnceForEachCreatureIncludingFrostfang() {
+        Permanent frostfang = addCreatureReady(player1, new OhranFrostfang());
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        frostfang.setAttacking(true);
+        first.setAttacking(true);
+        second.setAttacking(true);
+        Card firstDraw = new Forest();
+        Card secondDraw = new Forest();
+        Card thirdDraw = new Forest();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw, thirdDraw));
+        harness.setHand(player1, List.of());
+        int opponentHandSize = gd.playerHands.get(player2.getId()).size();
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactlyInAnyOrder(firstDraw, secondDraw, thirdDraw);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize);
+    }
+
+    @Test
+    void opponentsCombatDamageDoesNotTriggerDraw() {
+        addCreatureReady(player1, new OhranFrostfang());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        Card undrawn = new Forest();
+        harness.setLibrary(player1, List.of(undrawn));
+        harness.setHand(player1, List.of());
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);
+    }
+
+    @Test
+    void combatDamageToABlockerKillsWithDeathtouchButDoesNotDraw() {
+        addCreatureReady(player1, new OhranFrostfang());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new OhranFrostfang());
+        Card undrawn = new Forest();
+        harness.setLibrary(player1, List.of(undrawn));
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.setHand(player2, List.of());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertInGraveyard(player2, "Ohran Frostfang");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);
+    }
+
+    @Test
+    void queuedDrawResolvesAfterFrostfangLeavesTheBattlefield() {
+        Permanent frostfang = addCreatureReady(player1, new OhranFrostfang());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        Card drawn = new Forest();
+        harness.setLibrary(player1, List.of(drawn));
+        harness.setHand(player1, List.of());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+
+        harness.resolveCombatDamage();
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(frostfang);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
     }
 
 }
