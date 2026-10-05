@@ -1,18 +1,11 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -22,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ObNixilisOfTheBlackOath.class, GrizzlyBears.class})
+@CardUsed({ObNixilisOfTheBlackOath.class})
 class ObNixilisOfTheBlackOathTest extends BaseCardTest {
 
     @Test
@@ -63,28 +56,61 @@ class ObNixilisOfTheBlackOathTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.emblems).singleElement().satisfies(this::assertEmblemAbility);
+        assertThat(gd.emblems).singleElement().satisfies(emblem -> assertThat(emblem.controllerId()).isEqualTo(player1.getId()));
     }
 
-    private void assertEmblemAbility(Emblem emblem) {
-        assertThat(emblem.controllerId()).isEqualTo(player1.getId());
-        EmblemActivatedAbilityEffect payload = (EmblemActivatedAbilityEffect) emblem.staticEffects().getFirst();
-        ActivatedAbility ability = payload.ability();
-        assertThat(ability.getManaCost()).isEqualTo("{1}{B}");
-        assertThat(ability.getEffects()).containsExactly(
-                new SacrificeCreatureCost(false, true),
-                new GainLifeEffect(new XValue()),
-                new DrawCardEffect(new XValue())
-        );
+    @Test
+    @DisplayName("Emblem sacrifices a Demon and uses its power")
+    void emblemSacrificesDemonAndUsesItsPower() {
+        assertEmblemSacrifice(0);
     }
 
-    private Permanent addReadyObNixilis(Player player, int loyalty) {
-        Permanent permanent = new Permanent(new ObNixilisOfTheBlackOath());
+    @Test
+    @DisplayName("Emblem uses power including counters")
+    void emblemUsesModifiedPower() {
+        assertEmblemSacrifice(2);
+    }
+
+    private void assertEmblemSacrifice(int counters) {
+        addReadyObNixilis(player1, 8);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Ob Nixilis of the Black Oath");
+
+        addReadyObNixilis(player1, 2);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        Permanent demon = findPermanent(player1, "Demon");
+        demon.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, counters);
+        int power = 5 + counters;
+        harness.setLibrary(player1, java.util.stream.IntStream.range(0, power + 1)
+                .mapToObj(i -> new ObNixilisOfTheBlackOath()).toList());
+        harness.setHand(player1, List.of());
+        harness.setLife(player1, 10);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.ensurePriority(player1);
+
+        harness.activateEmblemAbility(player1, 0, 0, null, null);
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, demon.getId());
+        }
+        harness.assertNotOnBattlefield(player1, "Demon");
+        harness.assertLife(player1, 10);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10 + power);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(power);
+    }
+
+    private void addReadyObNixilis(Player player, int loyalty) {
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new ObNixilisOfTheBlackOath());
         permanent.setCounterCount(CounterType.LOYALTY, loyalty);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        return permanent;
     }
 }
