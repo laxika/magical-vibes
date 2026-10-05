@@ -22,8 +22,7 @@ class PiratesLandingTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(drawnCard));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -46,10 +45,45 @@ class PiratesLandingTest extends BaseCardTest {
         harness.activateAbility(player1, treasureIndex, null, null);
         harness.handleListChoice(player1, "RED");
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(soughtPirate);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonPirate);
+    }
+
+    @Test
+    void doesNotDrawWhenTreasureWasSpentButNoPirateCanBeSought() {
+        Card nonPirate = new PiratesLanding();
+        harness.setHand(player1, List.of(new PiratesLanding()));
+        harness.setLibrary(player1, List.of(nonPirate));
+        harness.enterBattlefieldAndReturn(player1, new WilyGoblin());
+        harness.passBothPriorities();
+
+        int treasureIndex = gd.playerBattlefields.get(player1.getId()).indexOf(findPermanent(player1, "Treasure"));
+        harness.activateAbility(player1, treasureIndex, null, null);
+        harness.handleListChoice(player1, "RED");
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonPirate);
+    }
+
+    @Test
+    void drawsWhenTreasureManaWasProducedButNotSpentOnTheSpell() {
+        Card drawnCard = new PiratesLanding();
+        Card pirate = new WilyGoblin();
+        harness.setHand(player1, List.of(new PiratesLanding()));
+        harness.setLibrary(player1, List.of(drawnCard, pirate));
+        harness.enterBattlefieldAndReturn(player1, new WilyGoblin());
+        harness.passBothPriorities();
+
+        int treasureIndex = gd.playerBattlefields.get(player1.getId()).indexOf(findPermanent(player1, "Treasure"));
+        harness.activateAbility(player1, treasureIndex, null, null);
+        harness.handleListChoice(player1, "BLUE");
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(pirate);
     }
 }
