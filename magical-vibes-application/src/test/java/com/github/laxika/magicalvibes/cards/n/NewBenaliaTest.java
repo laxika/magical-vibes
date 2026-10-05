@@ -64,6 +64,62 @@ class NewBenaliaTest extends BaseCardTest {
     }
 
     @Test
+    void enteringWithoutBeingPlayedStillEntersTappedAndScries() {
+        Card topCard = new Tarmogoyf();
+        harness.setLibrary(player1, List.of(topCard));
+
+        Permanent newBenalia = harness.enterBattlefieldAndReturn(player1, new NewBenalia());
+
+        assertThat(newBenalia.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry).isNotNull();
+        assertThat(scry.cards()).containsExactly(topCard);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void scryUsesTheTopCardWhenTheTriggerResolves() {
+        Card originalTopCard = new Tarmogoyf();
+        Card newTopCard = new Tarmogoyf();
+        harness.setLibrary(player1, List.of(originalTopCard));
+        harness.setHand(player1, List.of(new NewBenalia()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(originalTopCard);
+        harness.setLibrary(player1, List.of(newTopCard, originalTopCard));
+        harness.passBothPriorities();
+
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry).isNotNull();
+        assertThat(scry.cards()).containsExactly(newTopCard);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(newTopCard, originalTopCard);
+    }
+
+    @Test
+    void scryWithAnEmptyLibraryCompletesWithoutAChoice() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new NewBenalia()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+    }
+
+    @Test
     void tappingAddsWhiteMana() {
         Permanent newBenalia = harness.addToBattlefieldAndReturn(player1, new NewBenalia());
         newBenalia.setSummoningSick(false);
