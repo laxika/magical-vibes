@@ -27,11 +27,8 @@ class MorgueTheftTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, creature.getId());
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card.getId().equals(creature.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(card -> card.getId().equals(creature.getId()));
+        harness.assertInHand(player1, "Wild Mongrel");
+        harness.assertNotInGraveyard(player1, "Wild Mongrel");
         harness.assertInGraveyard(player1, "Morgue Theft");
     }
 
@@ -69,12 +66,10 @@ class MorgueTheftTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.castSorcery(player1, 0, creature.getId());
-        harness.getGameData().playerGraveyards.get(player1.getId()).clear();
+        harness.setGraveyard(player1, List.of());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(card -> card.getId().equals(creature.getId()));
+        harness.assertNotInHand(player1, "Wild Mongrel");
     }
 
     @Test
@@ -88,10 +83,64 @@ class MorgueTheftTest extends BaseCardTest {
         harness.castAndResolveFlashback(player1, 0, creature.getId());
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card.getId().equals(creature.getId()));
+        harness.assertInHand(player1, "Wild Mongrel");
         harness.assertNotInGraveyard(player1, "Morgue Theft");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(theft.getId()));
+    }
+
+    @Test
+    @DisplayName("Flashback still exiles Morgue Theft when its target becomes illegal")
+    void flashbackExilesSpellIfTargetLeavesGraveyard() {
+        Card theft = new MorgueTheft();
+        Card creature = new WildMongrel();
+        harness.setGraveyard(player1, List.of(theft, creature));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castFlashback(player1, 0, creature.getId());
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertNotInGraveyard(player1, "Morgue Theft");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(theft.getId()));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flashback cannot be paid with the normal casting cost")
+    void flashbackRequiresFullFiveManaCost() {
+        Card theft = new MorgueTheft();
+        Card creature = new WildMongrel();
+        harness.setGraveyard(player1, List.of(theft, creature));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Morgue Theft");
+        harness.assertInGraveyard(player1, "Wild Mongrel");
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Returns only the chosen creature when several creatures are in the graveyard")
+    void returnsOnlyTargetedCreature() {
+        Card target = new WildMongrel();
+        Card other = new WildMongrel();
+        harness.setGraveyard(player1, List.of(target, other));
+        harness.setHand(player1, List.of(new MorgueTheft()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getId).containsExactly(target.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(other.getId()))
+                .noneMatch(card -> card.getId().equals(target.getId()));
     }
 }
