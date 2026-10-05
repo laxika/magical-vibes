@@ -87,4 +87,33 @@ class KilnspireDistrictTest extends BaseCardTest {
         assertThat(target.getMarkedDamage()).isZero();
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
+
+    @Test
+    void firstMainPhaseGivesManaToTheNewActivePlayerUsingExistingCounters() {
+        source.getCounters().put(CounterType.CHARGE, 3);
+        harness.forceActivePlayer(player2);
+
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
+                .handlePrecombatMainTriggers(gd));
+        harness.passBothPriorities();
+
+        assertThat(source.getCounters()).containsEntry(CounterType.CHARGE, 4);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(4);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    void chaosCanDamageAPlayerAndAcceptsNonRedManaForPayment() {
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 3);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
 }
