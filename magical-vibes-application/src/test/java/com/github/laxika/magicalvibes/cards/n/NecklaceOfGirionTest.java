@@ -39,6 +39,7 @@ class NecklaceOfGirionTest extends BaseCardTest {
     @Test
     void greenSpellCannotTargetCreatureControlledByOpponent() {
         harness.addToBattlefield(player1, new NecklaceOfGirion());
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new GrizzlyBears()));
@@ -47,6 +48,11 @@ class NecklaceOfGirionTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+
+        harness.handlePermanentChosen(player1, ownCreature.getId());
+        harness.passBothPriorities();
+        assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -87,5 +93,92 @@ class NecklaceOfGirionTest extends BaseCardTest {
         harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    void opponentsGreenSpellAndForestDoNotTrigger() {
+        harness.addToBattlefield(player1, new NecklaceOfGirion());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castCreature(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Forest()));
+        harness.playLand(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void forestTriggerCannotTargetNoncreaturePermanent() {
+        Permanent necklace = harness.addToBattlefieldAndReturn(player1, new NecklaceOfGirion());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, necklace.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(necklace.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void greenCreatureSpellCannotTargetItselfBeforeItResolves() {
+        harness.addToBattlefield(player1, new NecklaceOfGirion());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(findPermanent(player1, "Grizzly Bears").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isZero();
+    }
+
+    @Test
+    void necklaceDoesNotTriggerOnItsOwnCastingOrEntry() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new NecklaceOfGirion()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castArtifact(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Necklace of Girion");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void greenNoncreatureSpellTriggersBeforeResolving() {
+        harness.addToBattlefield(player1, new NecklaceOfGirion());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new NecklaceOfGirion()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castArtifact(player1, 0);
+        harness.handlePermanentChosen(player1, creature.getId());
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(countPermanents(player1, "Necklace of Girion")).isEqualTo(1);
     }
 }
