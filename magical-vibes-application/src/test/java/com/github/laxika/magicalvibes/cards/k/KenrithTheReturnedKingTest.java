@@ -65,7 +65,7 @@ class KenrithTheReturnedKingTest extends BaseCardTest {
     @DisplayName("Green ability rejects a noncreature target")
     void rejectsNoncreatureTarget() {
         addReadyKenrith(player1);
-        Permanent forest = addReadyPermanent(player2, new Forest());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -197,12 +197,97 @@ class KenrithTheReturnedKingTest extends BaseCardTest {
         return addCreatureReady(player, new KenrithTheReturnedKing());
     }
 
-    private Permanent addReadyPermanent(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Red ability affects creatures present at resolution even after Kenrith leaves")
+    void redAbilityUsesCreaturesPresentAtResolution() {
+        Permanent kenrith = addReadyKenrith(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        gd.playerBattlefields.get(player1.getId()).remove(kenrith);
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.passBothPriorities();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.HASTE)).isFalse();
     }
+
+    @Test
+    @DisplayName("White ability can target its controller while Kenrith is tapped and summoning sick")
+    void gainsLifeForControllerWithoutTapOrSummoningRestriction() {
+        Permanent kenrith = harness.addToBattlefieldAndReturn(player1, new KenrithTheReturnedKing());
+        kenrith.setSummoningSick(true);
+        kenrith.setTapped(true);
+        int lifeBefore = gd.getLife(player1.getId());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 2, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 5);
+    }
+
+    @Test
+    @DisplayName("Blue ability draws exactly one card for its controller")
+    void drawsForController() {
+        addReadyKenrith(player1);
+        Card first = new GrizzlyBears();
+        Card second = new HolyDay();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(first, second));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 3, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second);
+    }
+
+    @Test
+    @DisplayName("Black ability does not return a target that leaves the graveyard before resolution")
+    void doesNotReturnMissingGraveyardTarget() {
+        addReadyKenrith(player1);
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 4, List.of(creature.getId()));
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player2, List.of(creature));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(creature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() == creature);
+    }
+
+    @Test
+    @DisplayName("Black ability returns a creature from its controller's graveyard untapped")
+    void returnsCreatureFromOwnGraveyard() {
+        addReadyKenrith(player1);
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 4, List.of(creature.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() == creature).findFirst().orElseThrow();
+        assertThat(returned.isTapped()).isFalse();
+        assertThat(returned.isSummoningSick()).isTrue();
+    }
+
     private void prepareMainPhase() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
