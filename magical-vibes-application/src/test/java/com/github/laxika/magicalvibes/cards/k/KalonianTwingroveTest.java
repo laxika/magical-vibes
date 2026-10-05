@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KalonianTwingrove.class, Forest.class, Plains.class})
 class KalonianTwingroveTest extends BaseCardTest {
 
     @Test
@@ -63,12 +64,45 @@ class KalonianTwingroveTest extends BaseCardTest {
     }
 
     private void castTwingrove() {
-        harness.setHand(player1, List.of(new KalonianTwingrove()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new KalonianTwingrove(), "{5}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("The enter trigger survives the source dying and counts Forests when its token enters")
+    void tokenEntersAfterSourceDies() {
+        harness.castFromHand(player1, new KalonianTwingrove(), "{5}{G}");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Kalonian Twingrove");
+        harness.addToBattlefield(player1, new Forest());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Kalonian Twingrove");
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken())).hasSize(1);
+        Permanent token = findToken();
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The characteristic ability works in hand and graveyard using the owner's Forests")
+    void characteristicAbilityWorksOutsideBattlefield() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        KalonianTwingrove card = new KalonianTwingrove();
+        harness.setHand(player1, List.of(card));
+
+        assertThat(gqs.getEffectiveCardPower(gd, card)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, card)).isEqualTo(2);
+
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(card));
+        harness.addToBattlefield(player1, new Forest());
+        assertThat(gqs.getEffectiveCardPower(gd, card)).isEqualTo(3);
+        assertThat(gqs.getEffectiveCardToughness(gd, card)).isEqualTo(3);
     }
 
     private Permanent findByName(String name) {
