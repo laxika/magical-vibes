@@ -80,8 +80,7 @@ class KaraisTechniqueTest extends BaseCardTest {
     @Test
     @DisplayName("Sneak returns an unblocked attacker and resolves the chosen mode")
     void sneakReturnsAnUnblockedAttacker() {
-        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
         attacker.setAttackTarget(player2.getId());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
@@ -101,6 +100,93 @@ class KaraisTechniqueTest extends BaseCardTest {
         harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("Both modes affect only their respective targets")
+    void bothModesAffectDistinctTargets() {
+        Permanent boosted = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent reduced = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
+
+        cast(new int[]{0, 1}, List.of(boosted.getId(), reduced.getId()));
+
+        assertThat(gqs.getEffectivePower(gd, boosted)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, boosted)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, reduced)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, reduced)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The debuff puts a creature with zero or less toughness into the graveyard")
+    void debuffKillsSmallCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        cast(new int[]{1}, List.of(target.getId()));
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The debuff wears off at end of turn")
+    void debuffWearsOffAtEndOfTurn() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
+
+        cast(new int[]{1}, List.of(target.getId()));
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Normal mana payment does not grant sneak timing")
+    void cannotCastForNormalCostDuringDeclareBlockers() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        harness.setHand(player1, List.of(new KaraisTechnique()));
+        addNormalMana();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castModalSorceryWithModes(
+                player1, 0, 1, 2, new int[]{0}, List.of(target.getId()), List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Karai's Technique");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A blocked attacker cannot pay the sneak cost")
+    void cannotReturnBlockedAttackerForSneak() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        attacker.setBlockedThisCombat(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
+        target.setBlocking(true);
+        target.addBlockingTargetId(attacker.getId());
+        harness.setHand(player1, List.of(new KaraisTechnique()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0,
+                ChooseOneEffect.encodeModeSelection(1, 2, new int[]{0}),
+                null, null, List.of(target.getId()), List.of(), false, null, null,
+                List.of(attacker.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Karai's Technique");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     private void cast(int[] modes, List<java.util.UUID> targets) {
