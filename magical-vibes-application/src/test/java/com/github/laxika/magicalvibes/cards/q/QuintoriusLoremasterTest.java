@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({QuintoriusLoremaster.class, Shock.class, GrizzlyBears.class, Forest.class})
 class QuintoriusLoremasterTest extends BaseCardTest {
@@ -86,6 +87,130 @@ class QuintoriusLoremasterTest extends BaseCardTest {
         assertThat(quintorius.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Does not create a Spirit when there is no legal graveyard target")
+    void noSpiritWithoutLegalTarget() {
+        addReadyQuintorius();
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Forest()));
+        harness.setGraveyard(player2, List.of(new Shock()));
+
+        advanceToEndStep();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not create a Spirit when the graveyard target leaves before resolution")
+    void noSpiritWhenTargetLeavesGraveyard() {
+        addReadyQuintorius();
+        Card shock = new Shock();
+        harness.setGraveyard(player1, List.of(shock));
+        advanceToEndStep();
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(shock));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Does not trigger during an opponent's end step")
+    void doesNotTriggerDuringOpponentsEndStep() {
+        addReadyQuintorius();
+        Card shock = new Shock();
+        harness.setGraveyard(player1, List.of(shock));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(shock);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Rejects an exiled card not exiled with Quintorius before paying costs")
+    void rejectsUnlinkedExileTarget() {
+        Permanent quintorius = addReadyQuintorius();
+        Card linked = new Shock();
+        harness.setGraveyard(player1, List.of(linked));
+        advanceToEndStep();
+        harness.handleMultipleCardsChosen(player1, List.of(linked.getId()));
+        harness.passBothPriorities();
+        Card unrelated = new Shock();
+        harness.setExile(player1, List.of(unrelated));
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, 0, unrelated.getId(), Zone.EXILE))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(quintorius.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Casting permission survives Quintorius leaving before the ability resolves")
+    void castingPermissionSurvivesSourceLeaving() {
+        Permanent quintorius = addReadyQuintorius();
+        Card shock = new Shock();
+        harness.setGraveyard(player1, List.of(shock));
+        advanceToEndStep();
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+        harness.passBothPriorities();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, shock.getId(), Zone.EXILE);
+        gd.playerBattlefields.get(player1.getId()).remove(quintorius);
+        harness.setGraveyard(player1, List.of(quintorius.getCard()));
+        harness.passBothPriorities();
+
+        harness.castFromExile(player1, shock.getId(), player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerDecks.get(player1.getId())).contains(shock);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(shock);
+    }
+
+    @Test
+    @DisplayName("Declining to cast leaves the card exiled and permission expires at end of turn")
+    void unusedCastingPermissionExpires() {
+        addReadyQuintorius();
+        Card shock = new Shock();
+        harness.setGraveyard(player1, List.of(shock));
+        advanceToEndStep();
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, shock.getId(), Zone.EXILE);
+        harness.passBothPriorities();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(shock);
+        assertThatThrownBy(() -> harness.castFromExile(player1, shock.getId(), player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player2, 20);
+    }
+
     private Permanent addReadyQuintorius() {
         return addCreatureReady(player1, new QuintoriusLoremaster());
     }
@@ -94,7 +219,6 @@ class QuintoriusLoremasterTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
     }
 }
