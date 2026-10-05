@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.b.BoggartShenanigans;
 import com.github.laxika.magicalvibes.cards.g.GoblinRockSled;
 import com.github.laxika.magicalvibes.cards.s.Squire;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -75,7 +76,67 @@ class OrcGeneralTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @CardUsed({OrcGeneral.class, BoggartShenanigans.class})
+    void canSacrificeNoncreatureGoblin() {
+        Permanent general = addCreatureReady(player1, new OrcGeneral());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new BoggartShenanigans());
+        Permanent otherOrc = addCreatureReady(player2, new OrcGeneral());
+
+        harness.activateAbility(player1, battlefieldIndex(general), null, null);
+        harness.handlePermanentChosen(player1, goblin.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(goblin.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(goblin);
+        assertThat(general.isTapped()).isTrue();
+        assertThat(otherOrc.getPowerModifier()).isEqualTo(1);
+        assertThat(otherOrc.getToughnessModifier()).isEqualTo(1);
+        assertThat(general.getPowerModifier()).isZero();
+    }
+
+    @Test
+    void canSacrificeAnotherOrcAndDoesNotBoostLaterEntrants() {
+        Permanent general = addCreatureReady(player1, new OrcGeneral());
+        Permanent sacrificed = addCreatureReady(player1, new OrcGeneral());
+        Permanent otherOrc = addCreatureReady(player2, new OrcGeneral());
+
+        harness.activateAbility(player1, battlefieldIndex(general), null, null);
+        harness.handlePermanentChosen(player1, sacrificed.getId());
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrificed.getCard());
+        assertThat(otherOrc.getPowerModifier()).isZero();
+
+        harness.passBothPriorities();
+        Permanent laterOrc = addCreatureReady(player1, new OrcGeneral());
+
+        assertThat(otherOrc.getPowerModifier()).isEqualTo(1);
+        assertThat(otherOrc.getToughnessModifier()).isEqualTo(1);
+        assertThat(laterOrc.getPowerModifier()).isZero();
+        assertThat(laterOrc.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void cannotSacrificeOpponentsGoblin() {
+        Permanent general = addCreatureReady(player1, new OrcGeneral());
+        addCreatureReady(player2, new GoblinRockSled());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(general), null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sacrifice");
+    }
+
+    @Test
+    void activationRequiresSourceWithoutSummoningSickness() {
+        Permanent general = harness.addToBattlefieldAndReturn(player1, new OrcGeneral());
+        addCreatureReady(player1, new GoblinRockSled());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(general), null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private int battlefieldIndex(Permanent permanent) {
         return gd.playerBattlefields.get(player1.getId()).indexOf(permanent);
     }
 }
+
