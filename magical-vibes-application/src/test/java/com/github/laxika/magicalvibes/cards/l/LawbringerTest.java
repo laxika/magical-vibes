@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.m.ManaCache;
 import com.github.laxika.magicalvibes.cards.m.MoggToady;
 import com.github.laxika.magicalvibes.cards.m.Mossdog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Lawbringer.class, ChandraNalaar.class, MoggToady.class, Mossdog.class})
+@CardUsed({Lawbringer.class, ManaCache.class, MoggToady.class, Mossdog.class})
 class LawbringerTest extends BaseCardTest {
 
     @Test
@@ -49,7 +49,7 @@ class LawbringerTest extends BaseCardTest {
     @DisplayName("Cannot target a red noncreature permanent")
     void cannotTargetRedNonCreaturePermanent() {
         addLawbringer(player1);
-        Permanent target = addCreatureReady(player2, new ChandraNalaar());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ManaCache());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -82,6 +82,40 @@ class LawbringerTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Lawbringer");
+    }
+
+    @Test
+    @DisplayName("Cannot activate Lawbringer while it is summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new Lawbringer());
+        Permanent target = addCreatureReady(player2, new MoggToady());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Lawbringer");
+        harness.assertOnBattlefield(player2, "Mogg Toady");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Lawbringer can exile its controller's red creature")
+    void canExileOwnRedCreature() {
+        addLawbringer(player1);
+        Permanent target = addCreatureReady(player1, new MoggToady());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.assertInGraveyard(player1, "Lawbringer");
+        harness.assertOnBattlefield(player1, "Mogg Toady");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Mogg Toady");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Mogg Toady"));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getName().equals("Mogg Toady"));
     }
 
     private Permanent addLawbringer(Player player) {
