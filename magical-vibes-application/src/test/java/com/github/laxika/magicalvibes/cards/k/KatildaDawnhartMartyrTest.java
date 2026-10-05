@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MoldgrafMillipede;
+import com.github.laxika.magicalvibes.cards.t.TravelingMinister;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -19,7 +20,8 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KatildaDawnhartMartyr.class, KatildasRisingDawn.class, GrizzlyBears.class})
+@CardUsed({KatildaDawnhartMartyr.class, KatildasRisingDawn.class, MoldgrafMillipede.class,
+        KindlyAncestor.class, TravelingMinister.class})
 class KatildaDawnhartMartyrTest extends BaseCardTest {
 
     @Test
@@ -41,33 +43,33 @@ class KatildaDawnhartMartyrTest extends BaseCardTest {
     @Test
     @DisplayName("Disturb casts Katilda transformed as an Aura with dynamic granted abilities")
     void disturbCreatesDynamicAura() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new MoldgrafMillipede());
         harness.addToBattlefield(player1, card("Spirit", CardType.CREATURE, CardSubtype.SPIRIT));
-        Permanent aura = castDisturb(bears);
+        Permanent aura = castDisturb(creature);
 
         assertThat(aura.isTransformed()).isTrue();
-        assertThat(aura.getAttachedTo()).isEqualTo(bears.getId());
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isTrue();
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isTrue();
 
         Card vampire = card("Vampire", CardType.CREATURE, CardSubtype.VAMPIRE);
         Card human = card("Human", CardType.CREATURE, CardSubtype.HUMAN);
-        assertThat(gqs.hasProtectionFromSourceSubtypes(gd, bears, new Permanent(vampire))).isTrue();
-        assertThat(gqs.hasProtectionFromSourceSubtypes(gd, bears, new Permanent(human))).isFalse();
+        assertThat(gqs.hasProtectionFromSourceSubtypes(gd, creature, new Permanent(vampire))).isTrue();
+        assertThat(gqs.hasProtectionFromSourceSubtypes(gd, creature, new Permanent(human))).isFalse();
     }
 
     @Test
     @DisplayName("The transformed Aura is exiled instead of going to the graveyard")
     void transformedAuraIsExiledInsteadOfGraveyard() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent aura = castDisturb(bears);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new MoldgrafMillipede());
+        Permanent aura = castDisturb(creature);
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, aura));
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(bears);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(creature);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.exiledCards.stream().map(exiled -> exiled.card().getId()))
                 .contains(aura.getOriginalCard().getId());
@@ -87,6 +89,74 @@ class KatildaDawnhartMartyrTest extends BaseCardTest {
                 .hasMessageContaining("target");
     }
 
+    @Test
+    void frontFaceCountsOnlyItsControllersPermanentsAndUpdatesWhenSpiritDies() {
+        Permanent katilda = harness.addToBattlefieldAndReturn(player1, new KatildaDawnhartMartyr());
+        Permanent spirit = harness.addToBattlefieldAndReturn(player1, new KindlyAncestor());
+        harness.addToBattlefield(player2, new KindlyAncestor());
+        harness.addToBattlefield(player1, new TravelingMinister());
+
+        assertThat(gqs.getEffectivePower(gd, katilda)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, katilda)).isEqualTo(2);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, spirit));
+
+        assertThat(gqs.getEffectivePower(gd, katilda)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, katilda)).isEqualTo(1);
+    }
+
+    @Test
+    void auraOnOpponentsCreatureCountsAuraControllersPermanentsDynamically() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new TravelingMinister());
+        harness.addToBattlefield(player2, new KindlyAncestor());
+        castDisturb(creature);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+
+        Permanent spirit = harness.addToBattlefieldAndReturn(player1, new KindlyAncestor());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, spirit));
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    void disturbAuraIsExiledWhenTargetLeavesBeforeResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new TravelingMinister());
+        KatildaDawnhartMartyr katilda = new KatildaDawnhartMartyr();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setGraveyard(player1, List.of(katilda));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castFlashback(player1, 0, creature.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(katilda);
+        assertThat(gd.exiledCards.stream().map(exiled -> exiled.card().getId()))
+                .contains(katilda.getId());
+    }
+
+    @Test
+    void frontFaceGoesToGraveyardRatherThanExile() {
+        Permanent katilda = harness.addToBattlefieldAndReturn(player1, new KatildaDawnhartMartyr());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, katilda));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(katilda.getOriginalCard());
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
     private Permanent castDisturb(Permanent target) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -94,8 +164,7 @@ class KatildaDawnhartMartyrTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castFlashback(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, target.getId());
         return gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(Permanent::isTransformed)
                 .findFirst()
