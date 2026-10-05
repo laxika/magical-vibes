@@ -113,6 +113,63 @@ class NetterEnDalTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Summoning sickness prevents paying the tap cost")
+    void summoningSicknessPreventsActivation() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new NetterEnDal());
+        source.setSummoningSick(true);
+        Permanent target = addReadyNetter(player2);
+        harness.setHand(player1, List.of(new SealOfCleansing()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(source.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Seal of Cleansing");
+    }
+
+    @Test
+    @DisplayName("Can prevent a creature you control from attacking")
+    void canTargetOwnCreature() {
+        addReadyNetter(player1);
+        Permanent target = addReadyNetter(player1);
+        harness.setHand(player1, List.of(new SealOfCleansing()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The attack restriction does not prevent activating the target's ability")
+    void targetCanStillActivateAbilities() {
+        Permanent source = addReadyNetter(player1);
+        Permanent target = addReadyNetter(player2);
+        harness.setHand(player1, List.of(new SealOfCleansing()));
+        harness.setHand(player2, List.of(new SealOfCleansing()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player2, 0, null, source.getId());
+        harness.handleCardChosen(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        harness.assertInGraveyard(player2, "Seal of Cleansing");
+        assertThat(gd.stack).isEmpty();
+    }
     private Permanent addReadyNetter(Player player) {
         return addCreatureReady(player, new NetterEnDal());
     }
