@@ -75,6 +75,49 @@ class PeatBogTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
+    @Test
+    @DisplayName("Peat Bog can produce mana the turn it enters after being untapped")
+    void canActivateOnEntryTurnAfterUntapping() {
+        harness.setHand(player1, List.of(new PeatBog()));
+        harness.playLand(player1, 0);
+        Permanent bog = findPermanent(player1, "Peat Bog");
+        bog.setTapped(false);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
+        assertThat(bog.getCounterCount(CounterType.DEPLETION)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Other counters do not prevent sacrifice when the last depletion counter is removed")
+    void otherCountersDoNotPreventSacrifice() {
+        Permanent bog = addReadyBog(1);
+        bog.setCounterCount(CounterType.CHARGE, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
+        harness.assertNotOnBattlefield(player1, "Peat Bog");
+        harness.assertInGraveyard(player1, "Peat Bog");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Depleting one Peat Bog does not sacrifice another Peat Bog")
+    void sacrificesOnlyTheActivatedBog() {
+        Permanent depletedBog = addReadyBog(1);
+        Permanent otherBog = addReadyBog(2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(otherBog);
+        assertThat(otherBog.getCounterCount(CounterType.DEPLETION)).isEqualTo(2);
+        assertThat(otherBog.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(depletedBog.getCard());
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
+    }
     private Permanent addReadyBog(int counters) {
         Permanent bog = harness.addToBattlefieldAndReturn(player1, new PeatBog());
         bog.setSummoningSick(false);
