@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KhalniGarden.class})
 class KhalniGardenTest extends BaseCardTest {
 
     @Test
@@ -51,5 +53,39 @@ class KhalniGardenTest extends BaseCardTest {
 
         assertThat(garden.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The Plant is created only when the enters trigger resolves, and enters untapped")
+    void plantCreationUsesTheStack() {
+        harness.setHand(player1, List.of(new KhalniGarden()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(countPermanents(player1, "Khalni Garden")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Plant")).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Plant")).isEqualTo(1);
+        assertThat(findPermanent(player1, "Plant").isTapped()).isFalse();
+        assertThat(countPermanents(player2, "Plant")).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entering without being played still creates a Plant for the land's controller")
+    void enteringUnderOpponentsControlCreatesTheirPlant() {
+        Permanent garden = harness.enterBattlefieldAndReturn(player2, new KhalniGarden());
+
+        assertThat(garden.isTapped()).isTrue();
+        assertThat(countPermanents(player2, "Plant")).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player2, "Plant")).isEqualTo(1);
+        assertThat(findPermanent(player2, "Plant").isTapped()).isFalse();
+        assertThat(countPermanents(player1, "Plant")).isZero();
     }
 }
