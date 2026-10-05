@@ -65,4 +65,54 @@ class MudholeTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Aven Fisher");
         harness.assertInGraveyard(player2, "Island");
     }
+
+    @Test
+    @DisplayName("Can target a player with an empty graveyard")
+    void resolvesWithEmptyGraveyard() {
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player1, List.of(new Mudhole()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Mudhole");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Leaves a graveyard containing only nonland cards unchanged")
+    void resolvesWithoutMatchingLandCards() {
+        AvenFisher fisher = new AvenFisher();
+        Peek peek = new Peek();
+        harness.setGraveyard(player2, List.of(fisher, peek));
+        harness.setHand(player1, List.of(new Mudhole()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(fisher, peek);
+        harness.assertInGraveyard(player1, "Mudhole");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exiles land cards that entered the graveyard after casting")
+    void checksGraveyardAtResolution() {
+        AvenFisher fisher = new AvenFisher();
+        Island island = new Island();
+        harness.setGraveyard(player2, List.of(fisher));
+        harness.setHand(player1, List.of(new Mudhole()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.setGraveyard(player2, List.of(fisher, island));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(island);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(fisher);
+        harness.assertInGraveyard(player1, "Mudhole");
+    }
 }
