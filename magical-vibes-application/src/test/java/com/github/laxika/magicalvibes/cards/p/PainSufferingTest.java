@@ -25,8 +25,7 @@ class PainSufferingTest extends BaseCardTest {
         harness.setHand(player2, List.of(new HoodedKavu()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player2, 0);
@@ -42,8 +41,7 @@ class PainSufferingTest extends BaseCardTest {
         harness.setHand(player2, List.of(new HoodedKavu()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, player2.getId());
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
@@ -58,11 +56,68 @@ class PainSufferingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         UUID targetId = harness.getPermanentId(player2, "Mountain");
-        harness.castSorcery(player1, 0, 1, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1, targetId);
 
         harness.assertNotOnBattlefield(player2, "Mountain");
         harness.assertInGraveyard(player2, "Mountain");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Pain allows its controller to target themselves and choose a discard")
+    void painCanTargetItsController() {
+        harness.setHand(player1, List.of(new PainSuffering(), new HoodedKavu(), new Mountain()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0, player1.getId());
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInHand(player1, "Hooded Kavu");
+        harness.assertNotInHand(player1, "Mountain");
+        harness.assertInGraveyard(player1, "Mountain");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Pain resolves without a discard prompt when the target has an empty hand")
+    void painCanTargetEmptyHand() {
+        harness.setHand(player1, List.of(new PainSuffering()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0, player2.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Suffering can destroy its controller's land")
+    void sufferingCanTargetOwnLand() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.setHand(player1, List.of(new PainSuffering()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 1, harness.getPermanentId(player1, "Mountain"));
+
+        harness.assertNotOnBattlefield(player1, "Mountain");
+        harness.assertInGraveyard(player1, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Suffering cannot be cast by paying only Pain's mana cost")
+    void sufferingRequiresItsOwnManaCost() {
+        harness.addToBattlefield(player2, new Mountain());
+        harness.setHand(player1, List.of(new PainSuffering()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        UUID targetId = harness.getPermanentId(player2, "Mountain");
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, targetId))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Mountain");
     }
 
     @Test
