@@ -38,9 +38,9 @@ class MonksFistTest extends BaseCardTest {
     @Test
     @DisplayName("Equip {2} moves Monk's Fist and its bonus to another creature")
     void equipMovesFist() {
-        Permanent fist = addFistReady(player1);
-        Permanent first = addCreatureReady(player1);
-        Permanent second = addCreatureReady(player1);
+        Permanent fist = addCreatureReady(player1, new MonksFist());
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
         fist.setAttachedTo(first.getId());
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -54,17 +54,52 @@ class MonksFistTest extends BaseCardTest {
         assertThat(gqs.effectiveCreatureSubtypes(gd, second)).contains(CardSubtype.MONK);
     }
 
-    private Permanent addFistReady(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent permanent = new Permanent(new MonksFist());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Job select still creates a Hero if the Equipment leaves before resolution")
+    void createsHeroWhenEquipmentLeavesBeforeTriggerResolves() {
+        harness.setHand(player1, List.of(new MonksFist()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent fist = findPermanent(player1, "Monk's Fist");
+        assertThat(countPermanents(player1, "Hero")).isZero();
+        gd.playerBattlefields.get(player1.getId()).remove(fist);
+        gd.playerGraveyards.get(player1.getId()).add(fist.getCard());
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Hero")).isEqualTo(1);
+        Permanent hero = findPermanent(player1, "Hero");
+        assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, hero)).isEqualTo(1);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, hero)).contains(CardSubtype.HERO)
+                .doesNotContain(CardSubtype.MONK);
     }
 
-    private Permanent addCreatureReady(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Each Monk's Fist attaches to its own newly created Hero")
+    void multipleCopiesAttachToTheirOwnHeroes() {
+        harness.setHand(player1, List.of(new MonksFist(), new MonksFist()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        Permanent firstFist = findPermanent(player1, "Monk's Fist");
+        Permanent firstHero = findPermanent(player1, "Hero");
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Hero")).isEqualTo(2);
+        Permanent secondFist = findPermanents(player1, "Monk's Fist").get(1);
+        Permanent secondHero = findPermanents(player1, "Hero").get(1);
+        assertThat(firstFist.getAttachedTo()).isEqualTo(firstHero.getId());
+        assertThat(secondFist.getAttachedTo()).isEqualTo(secondHero.getId());
+        for (Permanent hero : findPermanents(player1, "Hero")) {
+            assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, hero)).isEqualTo(1);
+            assertThat(gqs.effectiveCreatureSubtypes(gd, hero)).contains(CardSubtype.HERO, CardSubtype.MONK);
+        }
     }
 }
