@@ -10,7 +10,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-@CardUsed({JackalopeHerd.class, ElvishBerserker.class})
+import static org.assertj.core.api.Assertions.assertThat;
+
+@CardUsed({JackalopeHerd.class, ElvishBerserker.class, Convalescence.class, CityOfTraitors.class})
 class JackalopeHerdTest extends BaseCardTest {
 
     @Test
@@ -76,5 +78,49 @@ class JackalopeHerdTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Jackalope Herd");
         harness.assertNotInHand(player2, "Jackalope Herd");
+    }
+
+    @Test
+    @DisplayName("Casting Jackalope Herd does not trigger its own ability")
+    void castingHerdDoesNotReturnItself() {
+        harness.castFromHand(player1, new JackalopeHerd(), "{3}{G}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Jackalope Herd");
+        harness.assertNotInHand(player1, "Jackalope Herd");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each Jackalope Herd returns itself when its controller casts a spell")
+    void multipleHerdsEachReturnToHand() {
+        JackalopeHerd first = new JackalopeHerd();
+        JackalopeHerd second = new JackalopeHerd();
+        harness.addToBattlefield(player1, first);
+        harness.addToBattlefield(player1, second);
+        harness.castFromHand(player1, new ElvishBerserker(), "{G}");
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(first, second);
+        harness.assertNotOnBattlefield(player1, "Jackalope Herd");
+        harness.assertNotOnBattlefield(player1, "Elvish Berserker");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Elvish Berserker");
+    }
+
+    @CardUsed({CityOfTraitors.class})
+    @Test
+    @DisplayName("Activating a mana ability does not return Jackalope Herd")
+    void activatingManaAbilityDoesNotReturnHerd() {
+        harness.addToBattlefield(player1, new JackalopeHerd());
+        harness.addToBattlefield(player1, new CityOfTraitors());
+
+        harness.tapPermanent(player1, 1);
+
+        harness.assertOnBattlefield(player1, "Jackalope Herd");
+        harness.assertNotInHand(player1, "Jackalope Herd");
+        assertThat(gd.stack).isEmpty();
     }
 }
