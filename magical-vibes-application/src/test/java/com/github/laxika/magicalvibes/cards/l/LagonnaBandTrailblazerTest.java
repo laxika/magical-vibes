@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LagonnaBandTrailblazer.class, GiantGrowth.class, Shock.class})
 class LagonnaBandTrailblazerTest extends BaseCardTest {
 
     @Test
@@ -24,8 +26,7 @@ class LagonnaBandTrailblazerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         UUID trailblazerId = harness.getPermanentId(player1, "Lagonna-Band Trailblazer");
-        harness.castInstant(player1, 0, trailblazerId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, trailblazerId);
         harness.passBothPriorities();
 
         Permanent trailblazer = findPermanent(player1, "Lagonna-Band Trailblazer");
@@ -39,10 +40,64 @@ class LagonnaBandTrailblazerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         Permanent trailblazer = findPermanent(player1, "Lagonna-Band Trailblazer");
         assertThat(trailblazer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void heroicResolvesBeforeTheTargetingSpell() {
+        harness.addToBattlefield(player1, new LagonnaBandTrailblazer());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        UUID trailblazerId = harness.getPermanentId(player1, "Lagonna-Band Trailblazer");
+
+        harness.castInstant(player1, 0, trailblazerId);
+        assertThat(findPermanent(player1, "Lagonna-Band Trailblazer")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Lagonna-Band Trailblazer")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(findPermanent(player1, "Lagonna-Band Trailblazer")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void opponentsTargetingSpellDoesNotTriggerHeroic() {
+        harness.addToBattlefield(player1, new LagonnaBandTrailblazer());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Lagonna-Band Trailblazer"));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanent(player1, "Lagonna-Band Trailblazer")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void eachTargetingSpellAddsAnotherCounterOnlyToItsTarget() {
+        harness.addToBattlefield(player1, new LagonnaBandTrailblazer());
+        UUID firstId = harness.getPermanentId(player1, "Lagonna-Band Trailblazer");
+        harness.addToBattlefield(player1, new LagonnaBandTrailblazer());
+        Permanent first = gd.playerBattlefields.get(player1.getId()).get(0);
+        Permanent second = gd.playerBattlefields.get(player1.getId()).get(1);
+        harness.setHand(player1, List.of(new GiantGrowth(), new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player1, 0, firstId);
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, firstId);
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }
