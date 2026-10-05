@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -23,14 +22,11 @@ class PhyrexianDelverTest extends BaseCardTest {
     void returnsTargetCreatureAndLosesLife() {
         Card creature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(creature));
-        harness.setHand(player1, List.of(new PhyrexianDelver()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.addMana(player1, ManaColor.BLACK, 2);
         harness.setLife(player1, 20);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PhyrexianDelver(), "{3}{B}{B}");
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities();
@@ -46,13 +42,10 @@ class PhyrexianDelverTest extends BaseCardTest {
         Card instant = new HolyDay();
         Card creature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(instant, creature));
-        harness.setHand(player1, List.of(new PhyrexianDelver()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.addMana(player1, ManaColor.BLACK, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PhyrexianDelver(), "{3}{B}{B}");
         harness.passBothPriorities();
 
         PendingInteraction.MultiGraveyardChoice choice =
@@ -67,13 +60,10 @@ class PhyrexianDelverTest extends BaseCardTest {
         Card opponentsCreature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(yourCreature));
         harness.setGraveyard(player2, List.of(opponentsCreature));
-        harness.setHand(player1, List.of(new PhyrexianDelver()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.addMana(player1, ManaColor.BLACK, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PhyrexianDelver(), "{3}{B}{B}");
         harness.passBothPriorities();
 
         PendingInteraction.MultiGraveyardChoice choice =
@@ -86,14 +76,11 @@ class PhyrexianDelverTest extends BaseCardTest {
     void fizzlesWhenTargetLeavesGraveyard() {
         Card creature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(creature));
-        harness.setHand(player1, List.of(new PhyrexianDelver()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.addMana(player1, ManaColor.BLACK, 2);
         harness.setLife(player1, 20);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PhyrexianDelver(), "{3}{B}{B}");
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         harness.setGraveyard(player1, List.of());
@@ -102,5 +89,46 @@ class PhyrexianDelverTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getId().equals(creature.getId()));
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Enters without losing life when there are no creature cards to target")
+    void entersWithNoLegalGraveyardTarget() {
+        harness.setGraveyard(player1, List.of(new HolyDay()));
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player1, new PhyrexianDelver(), "{3}{B}{B}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Phyrexian Delver");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("The trigger resolves after its source leaves and uses the returned card's mana value")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Card creature = new PhyrexianDelver();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player1, new PhyrexianDelver(), "{3}{B}{B}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .singleElement().satisfies(p -> {
+                    assertThat(p.getCard().getId()).isEqualTo(creature.getId());
+                    assertThat(p.isTapped()).isFalse();
+                });
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 15);
     }
 }
