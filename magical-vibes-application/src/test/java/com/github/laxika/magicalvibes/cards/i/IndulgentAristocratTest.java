@@ -1,16 +1,21 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.c.CaptivatingVampire;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.EpitaphGolem;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({IndulgentAristocrat.class, CaptivatingVampire.class, EpitaphGolem.class})
 class IndulgentAristocratTest extends BaseCardTest {
 
     @Test
@@ -18,15 +23,14 @@ class IndulgentAristocratTest extends BaseCardTest {
     void abilityPutsCounterOnEachVampire() {
         Permanent aristocrat = addCreatureReady(player1, new IndulgentAristocrat());
         Permanent vampire = addCreatureReady(player1, new CaptivatingVampire());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent golem = addCreatureReady(player1, new EpitaphGolem());
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handlePermanentChosen(player1, golem.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getId().equals(bears.getId()));
+        harness.assertNotOnBattlefield(player1, "Epitaph Golem");
         assertThat(aristocrat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(vampire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -35,8 +39,8 @@ class IndulgentAristocratTest extends BaseCardTest {
     @DisplayName("Non-Vampire creatures you control do not get a counter")
     void nonVampireDoesNotGetCounter() {
         Permanent aristocrat = addCreatureReady(player1, new IndulgentAristocrat());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent fodder = addCreatureReady(player1, new GrizzlyBears());
+        Permanent golem = addCreatureReady(player1, new EpitaphGolem());
+        Permanent fodder = addCreatureReady(player1, new EpitaphGolem());
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, null, null);
@@ -44,7 +48,7 @@ class IndulgentAristocratTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(aristocrat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(golem.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -58,8 +62,54 @@ class IndulgentAristocratTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, aristocrat.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getId().equals(aristocrat.getId()));
+        harness.assertNotOnBattlefield(player1, "Indulgent Aristocrat");
         assertThat(vampire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Opposing Vampires do not receive counters")
+    void opposingVampiresDoNotGetCounters() {
+        Permanent aristocrat = addCreatureReady(player1, new IndulgentAristocrat());
+        Permanent opponent = addCreatureReady(player2, new IndulgentAristocrat());
+        Permanent fodder = addCreatureReady(player1, new EpitaphGolem());
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.assertNotOnBattlefield(player1, "Epitaph Golem");
+        harness.assertInGraveyard(player1, "Epitaph Golem");
+        assertThat(aristocrat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(aristocrat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Tapped, summoning-sick Aristocrat can activate its ability")
+    void abilityDoesNotRequireTappingOrHaste() {
+        Permanent aristocrat = addCreatureReady(player1, new IndulgentAristocrat());
+        aristocrat.setSummoningSick(true);
+        aristocrat.setTapped(true);
+        Permanent fodder = addCreatureReady(player1, new EpitaphGolem());
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.passBothPriorities();
+
+        assertThat(aristocrat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Combat damage gains life through lifelink")
+    void combatDamageGainsLife() {
+        addCreatureReady(player1, new IndulgentAristocrat());
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
     }
 }
