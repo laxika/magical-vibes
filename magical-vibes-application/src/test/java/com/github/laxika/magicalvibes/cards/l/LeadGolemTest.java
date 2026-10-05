@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(LeadGolem.class)
+@CardUsed({LeadGolem.class})
 class LeadGolemTest extends BaseCardTest {
 
     // ===== Attack trigger pushes onto stack =====
@@ -89,5 +89,60 @@ class LeadGolemTest extends BaseCardTest {
         harness.performUntapStep(player1);
 
         assertThat(golem.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's untap step does not consume Lead Golem's restriction")
+    void opponentUntapDoesNotConsumeRestriction() {
+        Permanent golem = addCreatureReady(player1, new LeadGolem());
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+
+        harness.performUntapStep(player2);
+        assertThat(golem.isTapped()).isTrue();
+
+        harness.performUntapStep(player1);
+        assertThat(golem.isTapped()).isTrue();
+
+        harness.performUntapStep(player1);
+        assertThat(golem.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The restriction expires at the next untap step even if Lead Golem is untapped")
+    void restrictionExpiresWhileAlreadyUntapped() {
+        Permanent golem = addCreatureReady(player1, new LeadGolem());
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        golem.untap();
+
+        harness.performUntapStep(player1);
+        assertThat(golem.isTapped()).isFalse();
+
+        golem.tap();
+        harness.performUntapStep(player1);
+        assertThat(golem.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Each attacking Lead Golem skips its own next untap step")
+    void bothAttackingGolemsSkipUntap() {
+        Permanent first = addCreatureReady(player1, new LeadGolem());
+        Permanent second = addCreatureReady(player1, new LeadGolem());
+
+        declareAttackers(player1, List.of(0, 1));
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.performUntapStep(player1);
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+
+        harness.performUntapStep(player1);
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isFalse();
     }
 }
