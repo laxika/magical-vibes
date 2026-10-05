@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.a.AncientTomb;
+import com.github.laxika.magicalvibes.cards.c.CityOfBrass;
 import com.github.laxika.magicalvibes.cards.c.CudgelTroll;
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Piracy.class, AncientTomb.class, CudgelTroll.class, Forest.class, GrizzlyBears.class})
+@CardUsed({Piracy.class, AncientTomb.class, CityOfBrass.class, CudgelTroll.class, DryadArbor.class, Forest.class, GrizzlyBears.class})
 class PiracyTest extends BaseCardTest {
 
     private void castPiracy() {
@@ -143,5 +145,46 @@ class PiracyTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.tapForeignLandForMana(player1, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+    @Test
+    @DisplayName("Mana chosen from an opponent's City of Brass remains spell-only")
+    void chosenColorManaCannotPayActivatedAbility() {
+        Permanent troll = addCreatureReady(player1, new CudgelTroll());
+        Permanent city = harness.addToBattlefieldAndReturn(player2, new CityOfBrass());
+        castPiracy();
+
+        harness.tapForeignLandForMana(player1, city.getId());
+        harness.handleListChoice(player1, "GREEN");
+        resolveAllTriggers();
+
+        int trollIndex = gd.playerBattlefields.get(player1.getId()).indexOf(troll);
+        assertThatThrownBy(() -> harness.activateAbility(player1, trollIndex, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getSpellOnlyMana(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Piracy cannot bypass a land creature's summoning sickness")
+    void cannotTapSummoningSickLandCreature() {
+        Permanent arbor = harness.addToBattlefieldAndReturn(player2, new DryadArbor());
+        castPiracy();
+
+        assertThatThrownBy(() -> harness.tapForeignLandForMana(player1, arbor.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(arbor.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Piracy cannot tap an already tapped opposing land again")
+    void cannotTapOpponentLandTwice() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        castPiracy();
+        harness.tapForeignLandForMana(player1, forest.getId());
+
+        assertThatThrownBy(() -> harness.tapForeignLandForMana(player1, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 }
