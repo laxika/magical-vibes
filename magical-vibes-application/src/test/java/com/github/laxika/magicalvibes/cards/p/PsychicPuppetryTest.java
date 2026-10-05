@@ -70,14 +70,55 @@ class PsychicPuppetryTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(puppetry);
     }
 
+    @Test
+    @DisplayName("Splicing onto Glacial Ray requires only one additional blue mana")
+    void splicesWithExactOracleCost() {
+        Permanent konda = addCreatureReady(player2, new KondaLordOfEiganjo());
+        GlacialRay ray = new GlacialRay();
+        PsychicPuppetry puppetry = new PsychicPuppetry();
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(ray, puppetry));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castWithSplice(player1, 0, konda.getId(), List.of(1));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(konda.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(puppetry);
+        harness.assertInGraveyard(player1, "Glacial Ray");
+    }
+
+    @Test
+    @DisplayName("Declining the spliced effect still resolves the host spell")
+    void decliningSplicedEffectStillDealsHostDamage() {
+        Permanent konda = addCreatureReady(player2, new KondaLordOfEiganjo());
+        PsychicPuppetry puppetry = new PsychicPuppetry();
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new GlacialRay(), puppetry));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castWithSplice(player1, 0, konda.getId(), List.of(1));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(konda.isTapped()).isFalse();
+        assertThat(konda.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(puppetry);
+        harness.assertInGraveyard(player1, "Glacial Ray");
+    }
+
     private void castPuppetry(Permanent target) {
         harness.forceActivePlayer(player1);
         harness.setHand(player1, List.of(new PsychicPuppetry()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private Permanent addReadyLand(Player player) {
