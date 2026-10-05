@@ -86,6 +86,70 @@ class LaurineTheDiversionTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The targeted player may decline the partner search")
+    void targetPlayerMayDeclineSearch() {
+        Card partner = new KamberThePlunderer();
+        harness.setLibrary(player2, List.of(partner));
+
+        harness.enterBattlefieldAndReturn(player1, new LaurineTheDiversion());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(partner);
+        harness.assertNotInHand(player2, "Kamber, the Plunderer");
+    }
+
+    @Test
+    @DisplayName("Partner with can search Laurine's controller's library")
+    void partnerWithCanTargetController() {
+        Card partner = new KamberThePlunderer();
+        harness.setLibrary(player1, List.of(partner));
+
+        harness.enterBattlefieldAndReturn(player1, new LaurineTheDiversion());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Kamber, the Plunderer");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Tapped summoning-sick Laurine can activate and sacrifice herself")
+    void tappedSummoningSickSourceCanActivate() {
+        Permanent laurine = harness.addToBattlefieldAndReturn(player1, new LaurineTheDiversion());
+        laurine.setSummoningSick(true);
+        laurine.setTapped(true);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Laurine, the Diversion");
+        assertThat(als.getMustAttackRequirementCount(gd, target)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Laurine can goad a creature her controller controls")
+    void canGoadOwnCreature() {
+        Permanent laurine = addReadyLaurine();
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handlePermanentChosen(player1, laurine.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Laurine, the Diversion");
+        assertThat(als.getMustAttackRequirementCount(gd, target)).isEqualTo(1);
+    }
+
     private Permanent addReadyLaurine() {
         return addCreatureReady(player1, new LaurineTheDiversion());
     }
