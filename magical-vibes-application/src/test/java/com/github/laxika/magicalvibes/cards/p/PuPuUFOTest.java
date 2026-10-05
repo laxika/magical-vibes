@@ -1,14 +1,12 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.cards.g.GongagaReactorTown;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.TestCards;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PuPuUFO.class, Forest.class})
+@CardUsed({PuPuUFO.class, Forest.class, GongagaReactorTown.class})
 class PuPuUFOTest extends BaseCardTest {
 
     @Test
@@ -60,11 +58,102 @@ class PuPuUFOTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.getEffectivePower(gd, ufo)).isEqualTo(3);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(gqs.getEffectivePower(gd, ufo)).isNotEqualTo(3);
+    }
+
+    @Test
+    void putsLandOntoBattlefieldAfterNormalLandPlay() {
+        addReadyUfo();
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+        harness.playLand(player1, 0);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard() instanceof Forest).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void cannotPutNonlandCardOntoBattlefield() {
+        Permanent ufo = addReadyUfo();
+        PuPuUFO cardInHand = new PuPuUFO();
+        harness.setHand(player1, List.of(cardInHand));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(cardInHand);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(ufo);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void mayDeclinePuttingLandOntoBattlefield() {
+        Permanent ufo = addReadyUfo();
+        Forest forest = new Forest();
+        harness.setHand(player1, List.of(forest));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(ufo);
+        assertThat(ufo.isTapped()).isTrue();
+    }
+
+    @Test
+    void townPutOntoBattlefieldStillEntersTapped() {
+        addReadyUfo();
+        harness.setHand(player1, List.of(new GongagaReactorTown()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Gongaga, Reactor Town");
+        Permanent town = gd.playerBattlefields.get(player1.getId()).get(1);
+        assertThat(town.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void townCountIsFixedAfterResolutionAndIgnoresOpponentsTowns() {
+        Permanent ufo = addReadyUfo();
+        addTowns(player1, 1);
+        addTowns(player2, 3);
+        harness.addToBattlefield(player1, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, ufo)).isEqualTo(1);
+
+        addTowns(player1, 2);
+        assertThat(gqs.getEffectivePower(gd, ufo)).isEqualTo(1);
+    }
+
+    @Test
+    void manaAbilityCanBeActivatedWhileSummoningSickAndTappedWithNoTowns() {
+        Permanent ufo = harness.addToBattlefieldAndReturn(player1, new PuPuUFO());
+        ufo.setTapped(true);
+        ufo.setPlusOnePlusOneCounters(1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, ufo)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ufo)).isEqualTo(5);
+        assertThat(ufo.isTapped()).isTrue();
     }
 
     private Permanent addReadyUfo() {
@@ -75,9 +164,7 @@ class PuPuUFOTest extends BaseCardTest {
 
     private void addTowns(com.github.laxika.magicalvibes.model.Player player, int count) {
         for (int i = 0; i < count; i++) {
-            Card town = TestCards.mutableCard(new Permanent(new Forest()));
-            town.setSubtypes(List.of(CardSubtype.TOWN));
-            harness.addToBattlefield(player, town);
+            harness.addToBattlefield(player, new GongagaReactorTown());
         }
     }
 }
