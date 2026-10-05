@@ -82,4 +82,61 @@ class NobleTemplarTest extends BaseCardTest {
 
         assertThat(templar.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("Plainscycling can decline to find an available Plains")
+    void plainscyclingCanDeclineAvailablePlains() {
+        Card plains = new Plains();
+        harness.setHand(player1, List.of(new NobleTemplar()));
+        harness.setLibrary(player1, List.of(plains));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(plains);
+        harness.assertInGraveyard(player1, "Noble Templar");
+    }
+
+    @Test
+    @DisplayName("Plainscycling discards as a cost and does not draw a card")
+    void plainscyclingDiscardsBeforeResolvingWithoutDrawing() {
+        Card templar = new NobleTemplar();
+        Card forest = new Forest();
+        harness.setHand(player1, List.of(templar));
+        harness.setLibrary(player1, List.of(forest));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(templar);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+    }
+
+    @Test
+    @DisplayName("Plainscycling resolves with an empty library")
+    void plainscyclingWithEmptyLibrary() {
+        harness.setHand(player1, List.of(new NobleTemplar()));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Noble Templar");
+    }
 }
