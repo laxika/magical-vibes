@@ -2,10 +2,13 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.f.FrenziedRaptor;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RaptorHatchling;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,15 +18,12 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({OtepecHuntmaster.class, FrenziedRaptor.class, GrizzlyBears.class, RaptorHatchling.class})
 class OtepecHuntmasterTest extends BaseCardTest {
 
     private void addHuntmasterReady() {
-        harness.addToBattlefield(player1, new OtepecHuntmaster());
-        Permanent huntmaster = findPermanent(player1, "Otepec Huntmaster");
-        huntmaster.setSummoningSick(false);
+        harness.addToBattlefieldAndReturn(player1, new OtepecHuntmaster()).setSummoningSick(false);
     }
-
-    // ===== Cost reduction =====
 
     @Test
     @DisplayName("Dinosaur spells cost {1} less to cast")
@@ -67,6 +67,7 @@ class OtepecHuntmasterTest extends BaseCardTest {
     @Test
     @DisplayName("Cost reduction does not apply to opponent's Dinosaur spells")
     void doesNotReduceOpponentDinosaurCosts() {
+        harness.forceActivePlayer(player2);
         harness.addToBattlefield(player1, new OtepecHuntmaster());
         // Opponent's Frenzied Raptor should still cost {2}{R}
         harness.setHand(player2, List.of(new FrenziedRaptor()));
@@ -91,8 +92,6 @@ class OtepecHuntmasterTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Frenzied Raptor");
     }
-
-    // ===== Tap ability: grant haste =====
 
     @Test
     @DisplayName("Tap ability grants haste to target Dinosaur until end of turn")
@@ -159,5 +158,41 @@ class OtepecHuntmasterTest extends BaseCardTest {
 
         Permanent raptor = findPermanent(player2, "Frenzied Raptor");
         assertThat(raptor.getGrantedKeywords()).contains(Keyword.HASTE);
+    }
+
+    @Test
+    @DisplayName("Excess generic cost reduction does not remove the colored mana requirement")
+    void excessReductionStillRequiresRedMana() {
+        harness.addToBattlefield(player1, new OtepecHuntmaster());
+        harness.addToBattlefield(player1, new OtepecHuntmaster());
+        harness.setHand(player1, List.of(new RaptorHatchling()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Raptor Hatchling");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Granted haste expires after the turn ends")
+    void hasteExpiresAfterTurnEnds() {
+        addHuntmasterReady();
+        Permanent raptor = harness.addToBattlefieldAndReturn(player1, new FrenziedRaptor());
+
+        harness.activateAbility(player1, 0, null, raptor.getId());
+        assertThat(findPermanent(player1, "Otepec Huntmaster").isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, raptor, Keyword.HASTE)).isFalse();
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, raptor, Keyword.HASTE)).isTrue();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gqs.hasKeyword(gd, raptor, Keyword.HASTE)).isFalse();
     }
 }
