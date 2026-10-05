@@ -130,4 +130,85 @@ class LifeMatrixTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("upkeep");
     }
+
+    @Test
+    @DisplayName("Life Matrix cannot be activated during an opponent's upkeep")
+    void cannotActivateDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new LifeMatrix());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new PsionicEntity());
+        advanceToUpkeep(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("upkeep");
+        assertThat(creature.getCounterCount(CounterType.MATRIX)).isZero();
+    }
+
+    @Test
+    @DisplayName("Removing a matrix counter is an activation cost, not a resolution effect")
+    void removesCounterImmediatelyAndCannotReuseIt() {
+        harness.addToBattlefield(player1, new LifeMatrix());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new PsionicEntity());
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 1, 1, null, null);
+
+        assertThat(creature.getCounterCount(CounterType.MATRIX)).isZero();
+        assertThat(creature.getRegenerationShield()).isZero();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough counters");
+        harness.passBothPriorities();
+        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The granted ability survives Life Matrix leaving and works outside upkeep")
+    void grantedAbilitySurvivesSourceLeaving() {
+        Permanent matrix = harness.addToBattlefieldAndReturn(player1, new LifeMatrix());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new PsionicEntity());
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, matrix));
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Life Matrix");
+        assertThat(creature.getCounterCount(CounterType.MATRIX)).isZero();
+        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Multiple matrix counters allow multiple regeneration activations")
+    void multipleCountersCanBeSpentIndependently() {
+        harness.addToBattlefield(player1, new LifeMatrix());
+        harness.addToBattlefield(player1, new LifeMatrix());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new PsionicEntity());
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, creature.getId());
+        harness.passBothPriorities();
+        assertThat(creature.getCounterCount(CounterType.MATRIX)).isEqualTo(2);
+
+        harness.activateAbility(player1, 2, 1, null, null);
+        harness.passBothPriorities();
+        assertThat(creature.getCounterCount(CounterType.MATRIX)).isEqualTo(1);
+        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        harness.activateAbility(player1, 2, 1, null, null);
+        harness.passBothPriorities();
+        assertThat(creature.getCounterCount(CounterType.MATRIX)).isZero();
+        assertThat(creature.getRegenerationShield()).isEqualTo(2);
+    }
 }
