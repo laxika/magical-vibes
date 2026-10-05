@@ -49,6 +49,47 @@ class MageIlVecTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Random discard and tapping are paid before damage resolves")
+    void paysCostsBeforeResolutionWithMultipleCardsInHand() {
+        Permanent mage = addCreatureReady(player1, new MageIlVec());
+        FurnaceBrood brood = new FurnaceBrood();
+        RabidWolverines wolverines = new RabidWolverines();
+        harness.setHand(player1, List.of(brood, wolverines));
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(mage.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId()).getFirst()).isIn(brood, wolverines);
+        assertThat(gd.playerHands.get(player1.getId()).getFirst())
+                .isNotSameAs(gd.playerGraveyards.get(player1.getId()).getFirst());
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Mage il-Vec can target itself")
+    void canTargetItself() {
+        Permanent mage = addCreatureReady(player1, new MageIlVec());
+        harness.setHand(player1, List.of(new RabidWolverines()));
+
+        harness.activateAbility(player1, 0, null, mage.getId());
+        harness.passBothPriorities();
+
+        assertThat(mage.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Mage il-Vec");
+        harness.assertInGraveyard(player1, "Rabid Wolverines");
+    }
+
+    @Test
     @DisplayName("Cannot activate with an empty hand")
     void cannotActivateWithEmptyHand() {
         Permanent mage = addCreatureReady(player1, new MageIlVec());
