@@ -3,55 +3,43 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({NightwingShade.class})
 class NightwingShadeTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Nightwing Shade puts it on the stack")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new NightwingShade()));
-        harness.addMana(player1, ManaColor.BLACK, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new NightwingShade(), "{4}{B}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Nightwing Shade");
     }
 
     @Test
     @DisplayName("Resolving Nightwing Shade puts it on the battlefield")
     void resolvingPutsItOnBattlefield() {
-        harness.setHand(player1, List.of(new NightwingShade()));
-        harness.addMana(player1, ManaColor.BLACK, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new NightwingShade(), "{4}{B}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Nightwing Shade");
     }
 
-    // ===== Activate ability =====
-
     @Test
-    @DisplayName("Activating ability puts BoostSelf on the stack with self as target")
+    @DisplayName("Activating ability puts the boost on the stack and tracks its source")
     void activatingAbilityPutsOnStack() {
-        Permanent shadePerm = addNightwingShadeReady(player1);
+        Permanent shadePerm = addCreatureReady(player1, new NightwingShade());
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -60,14 +48,13 @@ class NightwingShadeTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Nightwing Shade");
         assertThat(entry.getTargetId()).isEqualTo(shadePerm.getId());
     }
 
     @Test
     @DisplayName("Resolving ability gives +1/+1 to Nightwing Shade")
     void resolvingAbilityBoostsPowerAndToughness() {
-        addNightwingShadeReady(player1);
+        addCreatureReady(player1, new NightwingShade());
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -85,7 +72,7 @@ class NightwingShadeTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate ability multiple times if mana allows")
     void canActivateMultipleTimes() {
-        addNightwingShadeReady(player1);
+        addCreatureReady(player1, new NightwingShade());
         harness.addMana(player1, ManaColor.BLACK, 6);
 
         harness.activateAbility(player1, 0, null, null);
@@ -105,7 +92,7 @@ class NightwingShadeTest extends BaseCardTest {
     @Test
     @DisplayName("Boost resets at end of turn cleanup")
     void boostResetsAtEndOfTurn() {
-        addNightwingShadeReady(player1);
+        addCreatureReady(player1, new NightwingShade());
         harness.addMana(player1, ManaColor.BLACK, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -131,8 +118,8 @@ class NightwingShadeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutEnoughMana() {
-        addNightwingShadeReady(player1);
-        // Only 1 black mana — needs {1}{B} (2 total with 1 black)
+        addCreatureReady(player1, new NightwingShade());
+        // One black mana cannot pay the full {1}{B} cost.
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -140,13 +127,53 @@ class NightwingShadeTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent shade = harness.addToBattlefieldAndReturn(player1, new NightwingShade());
+        shade.setSummoningSick(true);
+        shade.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
-    private Permanent addNightwingShadeReady(Player player) {
-        NightwingShade card = new NightwingShade();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(shade.getEffectivePower()).isEqualTo(3);
+        assertThat(shade.getEffectiveToughness()).isEqualTo(3);
+        assertThat(shade.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Two colorless mana cannot pay the black requirement")
+    void cannotActivateWithoutBlackMana() {
+        addCreatureReady(player1, new NightwingShade());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Pending activations boost only their source Shade")
+    void pendingActivationsBoostOnlyTheirSource() {
+        Permanent source = addCreatureReady(player1, new NightwingShade());
+        Permanent other = addCreatureReady(player1, new NightwingShade());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(source.getEffectivePower()).isEqualTo(2);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(source.getEffectivePower()).isEqualTo(4);
+        assertThat(source.getEffectiveToughness()).isEqualTo(4);
+        assertThat(other.getEffectivePower()).isEqualTo(2);
+        assertThat(other.getEffectiveToughness()).isEqualTo(2);
     }
 }
