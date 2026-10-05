@@ -70,6 +70,47 @@ class PromiseOfPowerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The Demon uses the hand size at resolution and keeps that size afterward")
+    void tokenSizeIsFixedAtResolution() {
+        harness.setHand(player1, List.of(new PromiseOfPower(), new YotianSoldier()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{1}, List.of(), null);
+        harness.setHand(player1, List.of(new YotianSoldier(), new YotianSoldier(), new YotianSoldier()));
+        harness.setHand(player2, List.of(new YotianSoldier()));
+        harness.passBothPriorities();
+
+        Permanent demon = findPermanent(player1, "Demon");
+        assertThat(demon.getEffectivePower()).isEqualTo(3);
+        assertThat(demon.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.setHand(player1, List.of());
+        assertThat(demon.getEffectivePower()).isEqualTo(3);
+        assertThat(demon.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("With an empty hand the zero-toughness Demon dies")
+    void emptyHandTokenDies() {
+        cast(new int[]{1}, false, List.of(new PromiseOfPower()), List.of());
+
+        assertThat(findPermanents(player1, "Demon")).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Entwine draws before creating the Demon even when modes are selected in reverse order")
+    void entwinedModesResolveInPrintedOrder() {
+        cast(new int[]{1, 0}, true, List.of(new PromiseOfPower()),
+                List.of(new YotianSoldier(), new YotianSoldier(), new YotianSoldier(), new YotianSoldier(), new YotianSoldier()));
+
+        Permanent demon = findPermanent(player1, "Demon");
+        assertThat(demon.getEffectivePower()).isEqualTo(5);
+        assertThat(demon.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(15);
+    }
     private void cast(int[] modes, boolean entwined, List<Card> hand, List<Card> library) {
         harness.setHand(player1, hand);
         harness.setLibrary(player1, library);
