@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.b.BrotherhoodVertibird;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LegateLaniusCaesarsAce.class, GrizzlyBears.class})
+@CardUsed({LegateLaniusCaesarsAce.class, GrizzlyBears.class, BrotherhoodVertibird.class})
 class LegateLaniusCaesarsAceTest extends BaseCardTest {
 
     @Test
@@ -60,6 +61,54 @@ class LegateLaniusCaesarsAceTest extends BaseCardTest {
         assertThat(legate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
+    @Test
+    void noOpponentCreaturesMeansNoSacrificeOrCounters() {
+        harness.addToBattlefield(player2, new BrotherhoodVertibird());
+
+        Permanent legate = castLegate();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+        assertThat(legate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void exactlyTenCreaturesRequiresOnlyOneSacrifice() {
+        for (int i = 0; i < 10; i++) {
+            harness.addToBattlefield(player2, new GrizzlyBears());
+        }
+        harness.addToBattlefield(player2, new BrotherhoodVertibird());
+        Permanent legate = castLegate();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxCount()).isEqualTo(1);
+        Permanent chosen = findPermanent(player2, "Grizzly Bears");
+        harness.handleMultiplePermanentsChosen(player2, List.of(chosen.getId()));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player2, "Grizzly Bears")).isEqualTo(9);
+        harness.assertOnBattlefield(player2, "Brotherhood Vertibird");
+        assertThat(legate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void sacrificingCrewedVehicleTriggersCounterUsingItsBattlefieldType() {
+        Permanent vehicle = harness.addToBattlefieldAndReturn(player2, new BrotherhoodVertibird());
+        harness.addToBattlefield(player2, new LegateLaniusCaesarsAce());
+        harness.activateAbility(player2, 0, null, null);
+        resolveAllTriggers();
+        assertThat(gqs.isCreature(gd, vehicle)).isTrue();
+
+        Permanent legate = castLegate();
+        harness.handleMultiplePermanentsChosen(player2, List.of(vehicle.getId()));
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Brotherhood Vertibird");
+        assertThat(legate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private Permanent castLegate() {
         harness.setHand(player1, List.of(new LegateLaniusCaesarsAce()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -68,9 +117,6 @@ class LegateLaniusCaesarsAceTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         resolveAllTriggers();
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof LegateLaniusCaesarsAce)
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Legate Lanius, Caesar's Ace");
     }
 }
