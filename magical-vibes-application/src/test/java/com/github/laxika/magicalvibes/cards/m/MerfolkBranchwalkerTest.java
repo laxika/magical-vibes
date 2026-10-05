@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JungleDelver;
+import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,9 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({MerfolkBranchwalker.class, Forest.class, JungleDelver.class, RayOfCommand.class})
 class MerfolkBranchwalkerTest extends BaseCardTest {
-
-    // ===== Explore reveals a land — put into hand =====
 
     @Test
     @DisplayName("Explore with land on top puts land into hand")
@@ -57,12 +58,10 @@ class MerfolkBranchwalkerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
-    // ===== Explore reveals a non-land — +1/+1 counter and may graveyard =====
-
     @Test
     @DisplayName("Explore with non-land on top puts +1/+1 counter on creature")
     void exploreNonLandAddsCounter() {
-        gd.playerDecks.get(player1.getId()).addFirst(new GrizzlyBears());
+        gd.playerDecks.get(player1.getId()).addFirst(new JungleDelver());
 
         castBranchwalker();
 
@@ -74,7 +73,7 @@ class MerfolkBranchwalkerTest extends BaseCardTest {
     @Test
     @DisplayName("Explore with non-land on top prompts may ability")
     void exploreNonLandPromptsMayAbility() {
-        gd.playerDecks.get(player1.getId()).addFirst(new GrizzlyBears());
+        gd.playerDecks.get(player1.getId()).addFirst(new JungleDelver());
 
         castBranchwalker();
 
@@ -85,7 +84,7 @@ class MerfolkBranchwalkerTest extends BaseCardTest {
     @Test
     @DisplayName("Explore non-land — accept puts card into graveyard")
     void exploreNonLandAcceptPutsInGraveyard() {
-        Card creature = new GrizzlyBears();
+        Card creature = new JungleDelver();
         gd.playerDecks.get(player1.getId()).addFirst(creature);
 
         castBranchwalker();
@@ -100,7 +99,7 @@ class MerfolkBranchwalkerTest extends BaseCardTest {
     @Test
     @DisplayName("Explore non-land — decline leaves card on top of library")
     void exploreNonLandDeclineLeavesOnTop() {
-        Card creature = new GrizzlyBears();
+        Card creature = new JungleDelver();
         gd.playerDecks.get(player1.getId()).addFirst(creature);
 
         castBranchwalker();
@@ -112,10 +111,8 @@ class MerfolkBranchwalkerTest extends BaseCardTest {
                 .noneMatch(c -> c.getId().equals(creature.getId()));
     }
 
-    // ===== Explore with empty library =====
-
     @Test
-    @DisplayName("Explore with empty library does nothing")
+    @DisplayName("Explore with empty library still adds a counter")
     void exploreEmptyLibrary() {
         gd.playerDecks.get(player1.getId()).clear();
 
@@ -123,31 +120,48 @@ class MerfolkBranchwalkerTest extends BaseCardTest {
 
         Permanent branchwalker = findBranchwalker();
         assertThat(branchwalker).isNotNull();
-        assertThat(branchwalker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
+        assertThat(branchwalker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
-
-    // ===== Reveal is logged =====
 
     @Test
     @DisplayName("Explore logs the reveal")
     void exploreLogsReveal() {
-        gd.playerDecks.get(player1.getId()).addFirst(new GrizzlyBears());
+        gd.playerDecks.get(player1.getId()).addFirst(new JungleDelver());
 
         castBranchwalker();
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
-                log.contains("explores") && log.contains("Grizzly Bears"));
+                log.contains("explores") && log.contains("Jungle Delver"));
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Explore uses the creature's current controller after control changes")
+    void exploreUsesCurrentControllersLibrary() {
+        Card originalTop = new JungleDelver();
+        Card newControllerTop = new Forest();
+        harness.setLibrary(player1, List.of(originalTop));
+        harness.setLibrary(player2, List.of(newControllerTop));
+        harness.castFromHand(player1, new MerfolkBranchwalker(), "{1}{G}");
+        harness.passBothPriorities();
+        Permanent branchwalker = findBranchwalker();
+
+        harness.setHand(player2, List.of(new RayOfCommand()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castInstant(player2, 0, branchwalker.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(newControllerTop);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(originalTop);
+        assertThat(branchwalker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 
     private void castBranchwalker() {
-        harness.setHand(player1, List.of(new MerfolkBranchwalker()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MerfolkBranchwalker(), "{1}{G}");
         harness.passBothPriorities(); // resolve creature spell — ETB trigger goes on stack
         harness.passBothPriorities(); // resolve ETB explore trigger
     }
