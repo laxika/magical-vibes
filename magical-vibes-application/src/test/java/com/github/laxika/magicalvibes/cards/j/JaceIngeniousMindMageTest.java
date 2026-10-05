@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.j;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AncientBrontodon;
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,24 +21,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({JaceIngeniousMindMage.class, AncientBrontodon.class, Island.class})
 class JaceIngeniousMindMageTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has three loyalty abilities")
-    void hasThreeLoyaltyAbilities() {
-        JaceIngeniousMindMage card = new JaceIngeniousMindMage();
-        assertThat(card.getActivatedAbilities()).hasSize(3);
-    }
-
-    
-
-    
-
-    
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting puts planeswalker spell on the stack")
@@ -50,7 +36,7 @@ class JaceIngeniousMindMageTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.PLANESWALKER_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Jace, Ingenious Mind-Mage");
+        assertThat(entry.getCard()).isInstanceOf(JaceIngeniousMindMage.class);
     }
 
     @Test
@@ -69,8 +55,6 @@ class JaceIngeniousMindMageTest extends BaseCardTest {
         assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
         assertThat(jace.isSummoningSick()).isFalse();
     }
-
-    // ===== +1 ability: Draw a card =====
 
     @Test
     @DisplayName("+1 draw ability makes controller draw a card and increases loyalty")
@@ -100,18 +84,16 @@ class JaceIngeniousMindMageTest extends BaseCardTest {
         assertThat(harness.getGameData().playerHands.get(player2.getId())).hasSize(p2HandBefore);
     }
 
-    // ===== +1 ability: Untap all creatures you control =====
-
     @Test
     @DisplayName("+1 untap ability untaps all tapped creatures and increases loyalty")
     void plusOneUntapsCreatures() {
         Permanent jace = addReadyJace(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new AncientBrontodon());
+        harness.addToBattlefield(player1, new AncientBrontodon());
 
         List<Permanent> bf = harness.getGameData().playerBattlefields.get(player1.getId());
         List<Permanent> bears = bf.stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
+                .filter(p -> p.getCard().getName().equals("Ancient Brontodon"))
                 .toList();
 
         // Tap both creatures
@@ -129,9 +111,9 @@ class JaceIngeniousMindMageTest extends BaseCardTest {
     @DisplayName("+1 untap ability does not untap opponent's creatures")
     void plusOneDoesNotUntapOpponentCreatures() {
         addReadyJace(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AncientBrontodon());
 
-        Permanent opponentBear = findPermanent(player2, "Grizzly Bears");
+        Permanent opponentBear = findPermanent(player2, "Ancient Brontodon");
         opponentBear.tap();
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -140,20 +122,18 @@ class JaceIngeniousMindMageTest extends BaseCardTest {
         assertThat(opponentBear.isTapped()).isTrue();
     }
 
-    // ===== −9 ability: Gain control of up to three target creatures =====
-
     @Test
     @DisplayName("-9 ability gains control of three target creatures")
     void minusNineGainsControlOfThreeCreatures() {
         Permanent jace = addReadyJace(player1);
         jace.setCounterCount(CounterType.LOYALTY, 9);
 
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AncientBrontodon());
+        harness.addToBattlefield(player2, new AncientBrontodon());
+        harness.addToBattlefield(player2, new AncientBrontodon());
 
         List<UUID> targetIds = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
+                .filter(p -> p.getCard().getName().equals("Ancient Brontodon"))
                 .map(Permanent::getId)
                 .toList();
         assertThat(targetIds).hasSize(3);
@@ -163,6 +143,9 @@ class JaceIngeniousMindMageTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(0); // 9 - 9
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(jace);
+        harness.assertInGraveyard(player1, "Jace, Ingenious Mind-Mage");
 
         // All three creatures should now be under player1's control
         for (UUID targetId : targetIds) {
@@ -180,9 +163,9 @@ class JaceIngeniousMindMageTest extends BaseCardTest {
         Permanent jace = addReadyJace(player1);
         jace.setCounterCount(CounterType.LOYALTY, 9);
 
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AncientBrontodon());
 
-        UUID bearsId = findPermanent(player2, "Grizzly Bears").getId();
+        UUID bearsId = findPermanent(player2, "Ancient Brontodon").getId();
 
         harness.activateAbilityWithMultiTargets(player1, 0, 2, List.of(bearsId));
         harness.passBothPriorities();
@@ -217,8 +200,6 @@ class JaceIngeniousMindMageTest extends BaseCardTest {
                 .hasMessageContaining("Not enough loyalty");
     }
 
-    // ===== Loyalty ability restrictions =====
-
     @Test
     @DisplayName("Cannot activate loyalty ability during opponent's turn")
     void cannotActivateOnOpponentsTurn() {
@@ -243,14 +224,103 @@ class JaceIngeniousMindMageTest extends BaseCardTest {
                 .hasMessageContaining("one loyalty ability");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Untap ability leaves noncreature permanents tapped")
+    void untapLeavesNoncreaturesTapped() {
+        Permanent jace = addReadyJace(player1);
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        jace.tap();
+        island.tap();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(jace.isTapped()).isTrue();
+        assertThat(island.isTapped()).isTrue();
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Untap ability includes creatures that enter before resolution")
+    void untapChecksBattlefieldAtResolution() {
+        addReadyJace(player1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AncientBrontodon());
+        creature.tap();
+
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Ultimate can target your own creature and does not untap or grant haste")
+    void ultimateCanTargetOwnCreatureWithoutUntapping() {
+        Permanent jace = addReadyJace(player1);
+        jace.setCounterCount(CounterType.LOYALTY, 10);
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new AncientBrontodon());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new AncientBrontodon());
+        opponentCreature.tap();
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 2,
+                List.of(ownCreature.getId(), opponentCreature.getId()));
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().playerBattlefields.get(player1.getId()))
+                .contains(ownCreature, opponentCreature);
+        assertThat(opponentCreature.isTapped()).isTrue();
+        assertThat(opponentCreature.isSummoningSick()).isTrue();
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Ultimate rejects a noncreature target")
+    void ultimateCannotTargetLand() {
+        Permanent jace = addReadyJace(player1);
+        jace.setCounterCount(CounterType.LOYALTY, 10);
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 2,
+                List.of(island.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Ultimate rejects more than three targets")
+    void ultimateCannotTargetFourCreatures() {
+        Permanent jace = addReadyJace(player1);
+        jace.setCounterCount(CounterType.LOYALTY, 10);
+        List<UUID> targets = java.util.stream.IntStream.range(0, 4)
+                .mapToObj(i -> harness.addToBattlefieldAndReturn(player2, new AncientBrontodon()).getId())
+                .toList();
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 2, targets))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Ultimate still gains control of remaining targets when one leaves the battlefield")
+    void ultimateResolvesForRemainingLegalTargets() {
+        Permanent jace = addReadyJace(player1);
+        jace.setCounterCount(CounterType.LOYALTY, 10);
+        Permanent departing = harness.addToBattlefieldAndReturn(player2, new AncientBrontodon());
+        Permanent remaining = harness.addToBattlefieldAndReturn(player2, new AncientBrontodon());
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 2,
+                List.of(departing.getId(), remaining.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(departing);
+        harness.setGraveyard(player2, List.of(departing.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(remaining).doesNotContain(departing);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(remaining);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(departing.getCard());
+    }
 
     private Permanent addReadyJace(Player player) {
-        JaceIngeniousMindMage card = new JaceIngeniousMindMage();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new JaceIngeniousMindMage());
         perm.setCounterCount(CounterType.LOYALTY, 5);
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
