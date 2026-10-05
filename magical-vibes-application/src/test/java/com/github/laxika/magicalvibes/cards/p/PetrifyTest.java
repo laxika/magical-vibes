@@ -100,6 +100,46 @@ class PetrifyTest extends BaseCardTest {
                 .hasMessageContaining("can't be activated");
     }
 
+    @Test
+    @DisplayName("Petrify prevents non-mana activated abilities without paying their costs")
+    void enchantedArtifactCannotActivateNonManaAbility() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        attachPetrify(artifact, player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
+
+        assertThat(artifact.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("An ability activated before Petrify attaches still resolves")
+    void previouslyActivatedAbilityStillResolves() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+
+        attachPetrify(artifact, player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Petrified mana sources are unavailable to mana planning")
+    void enchantedManaSourceIsUnavailable() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new CharcoalDiamond());
+        artifact.untap();
+        attachPetrify(artifact, player2);
+
+        assertThat(harness.getGameQueryService().canActivateManaAbility(gd, artifact)).isFalse();
+    }
+
     private Permanent addReadyCreature(Player player) {
         Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
         creature.setSummoningSick(false);
