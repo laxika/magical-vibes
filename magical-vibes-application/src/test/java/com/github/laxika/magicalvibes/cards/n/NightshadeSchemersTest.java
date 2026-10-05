@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.b.BallyrushBanneret;
+import com.github.laxika.magicalvibes.cards.d.Disperse;
 import com.github.laxika.magicalvibes.cards.s.StonybrookBanneret;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NightshadeSchemers.class, BallyrushBanneret.class, StonybrookBanneret.class})
+@CardUsed({NightshadeSchemers.class, BallyrushBanneret.class, StonybrookBanneret.class, Disperse.class})
 class NightshadeSchemersTest extends BaseCardTest {
 
     @Test
@@ -99,5 +101,43 @@ class NightshadeSchemersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Kinship does not trigger during an opponent's upkeep")
+    void opponentUpkeepDoesNotTrigger() {
+        addCreatureReady(player1, new NightshadeSchemers());
+        harness.setLibrary(player1, List.of(new NightshadeSchemers()));
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Kinship uses last known creature types after its source is returned to hand")
+    void kinshipResolvesAfterSourceLeavesBattlefield() {
+        var source = addCreatureReady(player1, new NightshadeSchemers());
+        StonybrookBanneret topCard = new StonybrookBanneret();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player2, List.of(new Disperse()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        advanceToUpkeep(player1);
+        harness.castInstant(player2, 0, source.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Nightshade Schemers");
+        harness.assertInHand(player1, "Nightshade Schemers");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
     }
 }
