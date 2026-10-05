@@ -63,4 +63,68 @@ class KamiOfTwistedReflectionTest extends BaseCardTest {
         harness.assertNotInHand(player1, "Wandering Ones");
         assertThat(gameLogContains("fizzles")).isTrue();
     }
+
+    @Test
+    @DisplayName("Can target itself, but remains sacrificed when the ability resolves")
+    void canTargetItself() {
+        Permanent kami = harness.addToBattlefieldAndReturn(player1, new KamiOfTwistedReflection());
+
+        harness.activateAbility(player1, 0, null, kami.getId());
+        harness.assertInGraveyard(player1, "Kami of Twisted Reflection");
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Kami of Twisted Reflection");
+        harness.assertInGraveyard(player1, "Kami of Twisted Reflection");
+        assertThat(gameLogContains("fizzles")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick without paying mana")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent kami = harness.addToBattlefieldAndReturn(player1, new KamiOfTwistedReflection());
+        kami.setTapped(true);
+        kami.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new WanderingOnes());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Kami of Twisted Reflection");
+        harness.assertInHand(player1, "Wandering Ones");
+    }
+
+    @Test
+    @DisplayName("Returns a controlled creature to its opponent owner's hand")
+    void returnsStolenCreatureToOwner() {
+        harness.addToBattlefield(player1, new KamiOfTwistedReflection());
+        WanderingOnes stolenCard = new WanderingOnes();
+        stolenCard.setOwnerId(player2.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, stolenCard);
+        gd.stolenCreatures.put(target.getId(), player2.getId());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Wandering Ones");
+        harness.assertNotInHand(player1, "Wandering Ones");
+        harness.assertInHand(player2, "Wandering Ones");
+    }
+
+    @Test
+    @DisplayName("Does not return a target that an opponent gains control of before resolution")
+    void fizzlesIfTargetChangesController() {
+        harness.addToBattlefield(player1, new KamiOfTwistedReflection());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new WanderingOnes());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerBattlefields.get(player2.getId()).add(target);
+        gd.stolenCreatures.put(target.getId(), player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Wandering Ones");
+        harness.assertNotInHand(player1, "Wandering Ones");
+        harness.assertNotInHand(player2, "Wandering Ones");
+        assertThat(gameLogContains("fizzles")).isTrue();
+    }
 }
