@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.b.BatheInGold;
 import com.github.laxika.magicalvibes.cards.d.DragonEgg;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.y.YoungRedDragon;
@@ -16,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LozhanDragonsLegacy.class, DragonEgg.class, YoungRedDragon.class, BatheInGold.class,
+@CardUsed({LozhanDragonsLegacy.class, DragonEgg.class, YoungRedDragon.class,
         GrizzlyBears.class})
 class LozhanDragonsLegacyTest extends BaseCardTest {
 
@@ -78,6 +77,57 @@ class LozhanDragonsLegacyTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Casting the creature half of an Adventure Dragon triggers only once")
+    void adventureDragonCreatureTriggersOnce() {
+        addLozhan();
+        harness.setHand(player1, List.of(new YoungRedDragon()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castCreature(player1, 0);
+        chooseTriggerTarget(player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Young Red Dragon");
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Lozhan can damage a noncommander creature")
+    void damagesNonCommanderCreature() {
+        addLozhan();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new YoungRedDragon());
+        harness.setHand(player1, List.of(new DragonEgg()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castCreature(player1, 0);
+        chooseTriggerTarget(target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Young Red Dragon");
+        harness.assertInGraveyard(player2, "Young Red Dragon");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An opponent casting an Adventure does not trigger Lozhan")
+    void opponentAdventureDoesNotTrigger() {
+        addLozhan();
+        harness.setHand(player2, List.of(new YoungRedDragon()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.ensurePriority(player2);
+
+        harness.castAdventure(player2, 0, List.of());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
     private void addLozhan() {
