@@ -330,6 +330,43 @@ class IronStarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A single mana cannot pay for both Iron Star triggers")
+    void eachTriggerRequiresItsOwnPayment() {
+        harness.addToBattlefield(player1, new IronStar());
+        harness.addToBattlefield(player1, new IronStar());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromHand(player1, new RagingGoblin(), "{R}");
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, lifeBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Declining one trigger preserves mana for the other Iron Star")
+    void decliningPreservesManaForAnotherTrigger() {
+        harness.addToBattlefield(player1, new IronStar());
+        harness.addToBattlefield(player1, new IronStar());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castFromHand(player1, new RagingGoblin(), "{R}");
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, lifeBefore + 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
     @DisplayName("Each Iron Star triggers independently for one red spell")
     void eachIronStarTriggersIndependently() {
         harness.addToBattlefield(player1, new IronStar());
