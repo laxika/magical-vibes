@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LlanowarReborn;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MichelangeloImproviser.class, GrizzlyBears.class, Forest.class})
+@CardUsed({MichelangeloImproviser.class, GrizzlyBears.class, Forest.class, MouserMarkIII.class,
+        LlanowarReborn.class})
 class MichelangeloImproviserTest extends BaseCardTest {
 
     @Test
@@ -83,6 +86,93 @@ class MichelangeloImproviserTest extends BaseCardTest {
         assertThat(michelangelo.isTapped()).isTrue();
         assertThat(michelangelo.isAttacking()).isTrue();
         assertThat(michelangelo.getAttackTarget()).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("The creature choice may be declined while still putting a land onto the battlefield")
+    void canPutOnlyLand() {
+        Permanent michelangelo = addReadyMichelangelo();
+        michelangelo.setAttacking(true);
+        Card creature = new MouserMarkIII();
+        Card land = new Forest();
+        harness.setHand(player1, List.of(creature, land));
+
+        resolveCombat();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Mouser Mark III");
+    }
+
+    @Test
+    @DisplayName("The land choice may be declined after putting a creature onto the battlefield")
+    void canPutOnlyCreature() {
+        Permanent michelangelo = addReadyMichelangelo();
+        michelangelo.setAttacking(true);
+        Card creature = new MouserMarkIII();
+        Card land = new Forest();
+        harness.setHand(player1, List.of(creature, land));
+
+        resolveCombat();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
+        Permanent entered = findPermanent(player1, "Mouser Mark III");
+        assertThat(entered.isTapped()).isFalse();
+        assertThat(entered.isAttacking()).isFalse();
+        assertThat(entered.isSummoningSick()).isTrue();
+        harness.assertNotOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Accepting both choices with an empty hand completes the ability")
+    void emptyHandDoesNotPreventCompletion() {
+        Permanent michelangelo = addReadyMichelangelo();
+        michelangelo.setAttacking(true);
+        harness.setHand(player1, List.of());
+
+        resolveCombat();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(michelangelo);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A graft land entering with the chosen creature sees that creature enter")
+    void creatureAndLandEnterSimultaneously() {
+        Permanent michelangelo = addReadyMichelangelo();
+        michelangelo.setAttacking(true);
+        Card creature = new MouserMarkIII();
+        Card land = new LlanowarReborn();
+        harness.setHand(player1, List.of(creature, land));
+
+        resolveCombat();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Llanowar Reborn")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(findPermanent(player1, "Mouser Mark III")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     private Permanent addReadyMichelangelo() {
