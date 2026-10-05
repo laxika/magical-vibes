@@ -115,4 +115,63 @@ class OpalGuardianTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, opal)).isTrue();
         assertThat(gqs.isEnchantment(gd, opal)).isFalse();
     }
+
+    @Test
+    @DisplayName("Pending triggers recheck whether Opal Guardian is still an enchantment")
+    void pendingTriggersDoNotTransformItAgain() {
+        Permanent opal = addOpalGuardian();
+        prepareOpponentCast();
+
+        castOpponentCreature();
+        castOpponentCreature();
+
+        assertThat(gd.stack).hasSize(4);
+        resolveAllTriggers();
+
+        assertThat(gqs.isCreature(gd, opal)).isTrue();
+        assertThat(gqs.isEnchantment(gd, opal)).isFalse();
+        assertThat(gd.gameLog.stream()
+                .filter(entry -> entry.plainText().contains("Opal Guardian becomes a 3/4 creature.")))
+                .hasSize(1);
+        assertThat(countPermanents(player2, "Ashcoat Bear")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each Opal Guardian transforms independently for the same creature spell")
+    void transformsEachGuardianIndependently() {
+        Permanent first = addOpalGuardian();
+        Permanent second = addOpalGuardian();
+        prepareOpponentCast();
+
+        castOpponentCreature();
+        assertThat(gd.stack).hasSize(3);
+        resolveAllTriggers();
+
+        for (Permanent opal : List.of(first, second)) {
+            assertThat(gqs.isCreature(gd, opal)).isTrue();
+            assertThat(gqs.isEnchantment(gd, opal)).isFalse();
+            assertThat(gqs.getEffectivePower(gd, opal)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, opal)).isEqualTo(4);
+            assertThat(gqs.hasKeyword(gd, opal, Keyword.FLYING)).isTrue();
+            assertThat(gqs.hasProtectionFrom(gd, opal, CardColor.RED)).isTrue();
+        }
+    }
+
+    @Test
+    @DisplayName("The transformation and granted abilities persist into the next turn")
+    void transformationHasNoEndOfTurnDuration() {
+        Permanent opal = addOpalGuardian();
+        prepareOpponentCast();
+        castOpponentCreature();
+        resolveAllTriggers();
+
+        advanceToUpkeep(player1);
+
+        assertThat(gqs.isCreature(gd, opal)).isTrue();
+        assertThat(gqs.isEnchantment(gd, opal)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, opal)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opal)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, opal, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, opal, CardColor.RED)).isTrue();
+    }
 }
