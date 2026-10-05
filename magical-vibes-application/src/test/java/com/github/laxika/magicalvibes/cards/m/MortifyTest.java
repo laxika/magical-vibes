@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Mortify.class, GhorClanSavage.class, HissingMiasma.class, IzzetSignet.class})
@@ -46,6 +47,51 @@ class MortifyTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature or enchantment");
+    }
+
+    @Test
+    @DisplayName("Can destroy its controller's creature")
+    void destroysOwnCreature() {
+        harness.addToBattlefield(player1, new GhorClanSavage());
+        castMortifyAt(harness.getPermanentId(player1, "Ghor-Clan Savage"));
+
+        harness.assertNotOnBattlefield(player1, "Ghor-Clan Savage");
+        harness.assertInGraveyard(player1, "Ghor-Clan Savage");
+        harness.assertInGraveyard(player1, "Mortify");
+    }
+
+    @Test
+    @DisplayName("Can destroy its controller's enchantment")
+    void destroysOwnEnchantment() {
+        harness.addToBattlefield(player1, new HissingMiasma());
+        castMortifyAt(harness.getPermanentId(player1, "Hissing Miasma"));
+
+        harness.assertNotOnBattlefield(player1, "Hissing Miasma");
+        harness.assertInGraveyard(player1, "Hissing Miasma");
+    }
+
+    @Test
+    @DisplayName("Does not resolve when its only target leaves the battlefield")
+    void doesNotResolveWhenTargetLeavesBattlefield() {
+        harness.addToBattlefield(player2, new GhorClanSavage());
+        harness.addToBattlefield(player2, new HissingMiasma());
+        UUID targetId = harness.getPermanentId(player2, "Ghor-Clan Savage");
+        harness.setHand(player1, List.of(new Mortify(), new Mortify()));
+        addMortifyMana();
+        addMortifyMana();
+        harness.castInstant(player1, 0, targetId);
+        harness.castInstant(player1, 0, targetId);
+
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Ghor-Clan Savage");
+        harness.assertInGraveyard(player2, "Ghor-Clan Savage");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof Mortify)
+                .hasSize(2);
+        harness.assertOnBattlefield(player2, "Hissing Miasma");
     }
 
     private void castMortifyAt(UUID targetId) {
