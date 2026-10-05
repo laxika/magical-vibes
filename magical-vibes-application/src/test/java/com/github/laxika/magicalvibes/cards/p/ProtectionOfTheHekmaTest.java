@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ProtectionOfTheHekma.class, Shock.class, GrizzlyBears.class, ProdigalPyromancer.class, RayOfCommand.class})
 class ProtectionOfTheHekmaTest extends BaseCardTest {
 
     @Test
@@ -25,8 +28,7 @@ class ProtectionOfTheHekmaTest extends BaseCardTest {
         // Opponent casts Shock (2 damage) targeting player1
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         // 2 damage - 1 prevented = 1 damage taken
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
@@ -41,8 +43,7 @@ class ProtectionOfTheHekmaTest extends BaseCardTest {
         // Player1 casts Shock targeting self
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         // Full 2 damage — no prevention for own sources
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
@@ -76,22 +77,104 @@ class ProtectionOfTheHekmaTest extends BaseCardTest {
         // Player1 casts Shock targeting opponent
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         // Opponent takes full 2 damage — only protects its controller
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
+    @Test
+    void multipleCopiesPreventDamageCumulatively() {
+        addProtectionOfTheHekma(player1);
+        addProtectionOfTheHekma(player1);
+        harness.setLife(player1, 20);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void preventsDamageAgainOnEachSeparateEvent() {
+        addProtectionOfTheHekma(player1);
+        harness.setLife(player1, 20);
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    void doesNotProtectControllersCreatures() {
+        addProtectionOfTheHekma(player1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void preventsAllOfOneDamageFromAnOpponentAbility() {
+        addProtectionOfTheHekma(player1);
+        harness.setLife(player1, 20);
+        Permanent pyromancer = harness.addToBattlefieldAndReturn(player2, new ProdigalPyromancer());
+        pyromancer.setSummoningSick(false);
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void doesNotPreventDamageAfterTakingControlOfTheAbilitySource() {
+        addProtectionOfTheHekma(player1);
+        harness.setLife(player1, 20);
+        Permanent pyromancer = harness.addToBattlefieldAndReturn(player2, new ProdigalPyromancer());
+        pyromancer.setSummoningSick(false);
+        harness.setHand(player1, List.of(new RayOfCommand()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.castAndResolveInstant(player1, 0, pyromancer.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(pyromancer);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    void preventsDamageAfterOpponentTakesControlOfTheAbilitySource() {
+        addProtectionOfTheHekma(player1);
+        harness.setLife(player1, 20);
+        Permanent pyromancer = harness.addToBattlefieldAndReturn(player1, new ProdigalPyromancer());
+        pyromancer.setSummoningSick(false);
+        harness.setHand(player2, List.of(new RayOfCommand()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, 1, null, player1.getId());
+        harness.castAndResolveInstant(player2, 0, pyromancer.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(pyromancer);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
     private void addProtectionOfTheHekma(Player player) {
-        Permanent perm = new Permanent(new ProtectionOfTheHekma());
-        gd.playerBattlefields.get(player.getId()).add(perm);
+        harness.addToBattlefield(player, new ProtectionOfTheHekma());
     }
 
     private void addReadyAttacker(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.setSummoningSick(false);
         perm.setAttacking(true);
-        gd.playerBattlefields.get(player.getId()).add(perm);
     }
 }
