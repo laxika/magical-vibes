@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -9,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,19 +17,19 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KioraTheRisingTide.class, Forest.class})
 class KioraTheRisingTideTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB draws two cards, then discards two cards")
     void entersAndLoots() {
-        harness.setHand(player1, List.of(new KioraTheRisingTide(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new KioraTheRisingTide(), new Forest(), new Forest()));
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
@@ -87,11 +87,74 @@ class KioraTheRisingTideTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard().isToken() && p.getCard().getName().equals("Scion of the Deep"));
     }
 
+    @Test
+    @DisplayName("Threshold is checked again when the attack trigger resolves")
+    void losingThresholdBeforeResolutionDoesNothing() {
+        addKioraWithGraveyard(7);
+        declareAttackers(List.of(0));
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setGraveyard(player1, List.of(new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getCard().isToken());
+    }
+
+    @Test
+    @DisplayName("Cards in the opponent's graveyard do not count toward threshold")
+    void opponentsGraveyardDoesNotEnableThreshold() {
+        addKioraWithGraveyard(6);
+        harness.setGraveyard(player2, List.of(new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest(), new Forest()));
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Gaining threshold after attacking does not retroactively trigger Kiora")
+    void gainingThresholdAfterAttackDoesNotTrigger() {
+        addKioraWithGraveyard(6);
+        declareAttackers(List.of(0));
+        assertThat(gd.stack).isEmpty();
+
+        harness.setGraveyard(player1, List.of(new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getCard().isToken());
+    }
+
+    @Test
+    @DisplayName("Kiora discards the two cards she draws when her controller has no other cards")
+    void entersAndDiscardsTheDrawnCards() {
+        harness.setHand(player1, List.of(new KioraTheRisingTide()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
     private Permanent addKioraWithGraveyard(int graveyardSize) {
         Permanent kiora = addCreatureReady(player1, new KioraTheRisingTide());
         List<com.github.laxika.magicalvibes.model.Card> graveyard = new ArrayList<>();
         for (int i = 0; i < graveyardSize; i++) {
-            graveyard.add(new GrizzlyBears());
+            graveyard.add(new Forest());
         }
         harness.setGraveyard(player1, graveyard);
         return kiora;
