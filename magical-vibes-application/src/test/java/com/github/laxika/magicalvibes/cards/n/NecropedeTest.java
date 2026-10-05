@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.cards.m.MoriokReaver;
+import com.github.laxika.magicalvibes.cards.c.ContagionClasp;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,16 +16,17 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({Necropede.class, GrizzlyBears.class, LlanowarElves.class, WrathOfGod.class,
+        MoriokReaver.class, ContagionClasp.class})
 class NecropedeTest extends BaseCardTest {
 
     /**
-     * Sets up combat where Necropede (player1, 1/1) attacks and is blocked by a 3/3 creature (player2).
+     * Sets up combat where Necropede (player1, 1/1) attacks and is blocked by a 3/2 creature (player2).
      * Necropede will die from combat damage.
      */
     private void setupCombatWhereNecropedeDies() {
@@ -31,36 +34,25 @@ class NecropedeTest extends BaseCardTest {
         necropedePerm.setSummoningSick(false);
         necropedePerm.setAttacking(true);
 
-        GrizzlyBears bigBear = new GrizzlyBears();
-        bigBear.setPower(3);
-        bigBear.setToughness(3);
-        Permanent blockerPerm = new Permanent(bigBear);
+        Permanent blockerPerm = harness.addToBattlefieldAndReturn(player2, new MoriokReaver());
         blockerPerm.setSummoningSick(false);
         blockerPerm.setBlocking(true);
         blockerPerm.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
     }
 
-    // ===== Casting =====
-
     @Test
     @DisplayName("Casting Necropede puts it on the battlefield")
     void castingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new Necropede()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Necropede(), "{2}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Necropede");
     }
-
-    // ===== Death trigger: target selection then may =====
 
     @Test
     @DisplayName("When Necropede dies, controller is prompted to choose a target creature (CR 603.3d)")
@@ -114,15 +106,11 @@ class NecropedeTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // Accept may -> effect resolves
 
         // Grizzly Bears should have a -1/-1 counter
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getId().equals(bearsId))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
     }
-
-    // ===== Death trigger: kills 1/1 creature =====
 
     @Test
     @DisplayName("Death trigger kills a 1/1 creature with -1/-1 counter")
@@ -145,8 +133,6 @@ class NecropedeTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Llanowar Elves");
     }
 
-    // ===== Decline may =====
-
     @Test
     @DisplayName("Declining may ability does not put counter on any creature")
     void decliningMayDoesNotPutCounter() {
@@ -168,13 +154,9 @@ class NecropedeTest extends BaseCardTest {
                 && e.getCard().getName().equals("Necropede"));
 
         // The targeted creature (regular 2/2 Grizzly Bears) should have 0 counters since the may was declined
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getId().equals(bearsId))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
     }
-
-    // ===== Can target own creature =====
 
     @Test
     @DisplayName("Death trigger can target own creature")
@@ -193,23 +175,16 @@ class NecropedeTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // Accept may -> effect resolves
 
         // Own Grizzly Bears should have a -1/-1 counter
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getId().equals(ownBearsId))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
-
-    // ===== No creatures on battlefield (Wrath scenario) =====
 
     @Test
     @DisplayName("Death trigger from Wrath of God: no valid creature targets, trigger is skipped")
     void deathTriggerFromWrathNoValidTargets() {
         harness.addToBattlefield(player1, new Necropede());
 
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities(); // Resolve Wrath — all creatures die
 
         // Necropede should be dead
@@ -220,22 +195,17 @@ class NecropedeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Death trigger from Wrath of God: decline path (no valid targets, trigger skipped)")
+    @DisplayName("Death trigger from Wrath of God leaves no triggered ability when no targets exist")
     void deathTriggerFromWrathDeclineMay() {
         harness.addToBattlefield(player1, new Necropede());
 
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities(); // Resolve Wrath — Necropede dies
 
         // No triggered ability placed (no valid targets for the targeted trigger)
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getCard().getName().equals("Necropede"));
     }
-
-    // ===== Fizzle =====
 
     @Test
     @DisplayName("Triggered ability fizzles when target creature is removed before resolution")
@@ -256,5 +226,69 @@ class NecropedeTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve — target gone, fizzles
 
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Unblocked Necropede gives poison counters without reducing life")
+    void infectDealsPoisonToPlayer() {
+        Permanent necropede = harness.addToBattlefieldAndReturn(player1, new Necropede());
+        necropede.setSummoningSick(false);
+        necropede.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Necropede combat damage puts a counter on its blocker before its death ability resolves")
+    void infectPutsCounterOnBlocker() {
+        harness.addToBattlefield(player1, new Necropede());
+        setupCombatWhereNecropedeDies();
+
+        harness.passBothPriorities();
+
+        Permanent blocker = findPermanent(player2, "Moriok Reaver");
+        assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Necropede");
+    }
+
+    @Test
+    @DisplayName("Death ability cannot target a noncreature artifact")
+    void deathTriggerExcludesNoncreatures() {
+        harness.addToBattlefield(player1, new Necropede());
+        Permanent clasp = harness.addToBattlefieldAndReturn(player2, new ContagionClasp());
+        setupCombatWhereNecropedeDies();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+                .doesNotContain(clasp.getId());
+    }
+
+    @Test
+    @DisplayName("Death ability does not resolve when its target stops being a creature")
+    void deathTriggerFizzlesWhenTargetStopsBeingCreature() {
+        harness.addToBattlefield(player1, new Necropede());
+        Permanent clasp = harness.addToBattlefieldAndReturn(player2, new ContagionClasp());
+        clasp.setAnimatedUntilEndOfTurn(true);
+        clasp.setAnimatedPower(2);
+        clasp.setAnimatedToughness(2);
+        setupCombatWhereNecropedeDies();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, clasp.getId());
+
+        clasp.setAnimatedUntilEndOfTurn(false);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(clasp.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
     }
 }
