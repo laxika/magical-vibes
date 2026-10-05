@@ -127,6 +127,25 @@ class InsidiousBookwormsTest extends BaseCardTest {
                 .isEmpty();
     }
 
+    @Test
+    @DisplayName("Two colorless mana cannot pay the black component of the cost")
+    void paymentRequiresBlackMana() {
+        harness.addToBattlefield(player1, new InsidiousBookworms());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        killBookworms();
+
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .filteredOn(c -> !c.getName().equals("Death Spark"))
+                .isEmpty();
+    }
+
     /** Player2 casts Death Spark on the Bookworms on their own turn. */
     private void killBookworms() {
         killBookworms(new DeathSpark(), new FyndhornDruid(), new KjeldoranHomeGuard());
