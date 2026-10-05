@@ -33,6 +33,46 @@ class PrimocEscapeeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cycling discards immediately but draws only when the ability resolves")
+    void cyclingPaysDiscardCostBeforeDrawing() {
+        harness.setHand(player1, List.of(new PrimocEscapee()));
+        harness.setLibrary(player1, List.of(new FugitiveWizard(), new PrimocEscapee()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Primoc Escapee");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Fugitive Wizard");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cycling accepts colored mana during the opponent's turn")
+    void cyclingCanUseColoredManaDuringOpponentsTurn() {
+        harness.setHand(player2, List.of(new PrimocEscapee()));
+        harness.setLibrary(player2, List.of(new FugitiveWizard()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player1);
+        harness.passPriority(player1);
+
+        harness.activateHandAbility(player2, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Primoc Escapee");
+        harness.assertInHand(player2, "Fugitive Wizard");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Cycling cannot be activated without paying {2}")
     void cyclingRequiresTwoGenericMana() {
         harness.setHand(player1, List.of(new PrimocEscapee()));
