@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({QuaketuskBoar.class, GrizzlyBears.class, SuntailHawk.class})
 class QuaketuskBoarTest extends BaseCardTest {
@@ -39,8 +40,7 @@ class QuaketuskBoarTest extends BaseCardTest {
         Permanent flyer = addReadyPermanent(player1, new SuntailHawk());
         Permanent boar = addReadyPermanent(player2, new QuaketuskBoar());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(boar),
@@ -55,8 +55,7 @@ class QuaketuskBoarTest extends BaseCardTest {
         Permanent boar = addReadyPermanent(player1, new QuaketuskBoar());
         Permanent blocker = addReadyPermanent(player2, new GrizzlyBears());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
@@ -69,11 +68,49 @@ class QuaketuskBoarTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
 
+    @Test
+    @DisplayName("Trample requires lethal damage to the blocker before assigning excess damage")
+    void trampleRequiresLethalDamageBeforeOverflow() {
+        addReadyPermanent(player1, new QuaketuskBoar());
+        Permanent blocker = addReadyPermanent(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 1,
+                player2.getId(), 4)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 2,
+                player2.getId(), 3));
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @CardUsed({QuaketuskBoar.class})
+    @DisplayName("Trample deals no damage to the defending player when the blocker absorbs all damage")
+    void noOverflowWhenBlockerRequiresAllDamage() {
+        addReadyPermanent(player1, new QuaketuskBoar());
+        Permanent blocker = addReadyPermanent(player2, new QuaketuskBoar());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 5));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
     private Permanent addReadyPermanent(com.github.laxika.magicalvibes.model.Player player,
                                          com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
