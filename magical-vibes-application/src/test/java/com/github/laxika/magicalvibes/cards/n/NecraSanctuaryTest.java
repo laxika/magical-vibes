@@ -152,6 +152,34 @@ class NecraSanctuaryTest extends BaseCardTest {
         assertThat(choice.validIds()).containsExactlyInAnyOrder(player1.getId(), player2.getId());
     }
 
+    @Test
+    @DisplayName("Can make its controller lose life")
+    void canMakeControllerLoseLife() {
+        harness.addToBattlefield(player1, new NecraSanctuary());
+        harness.addToBattlefield(player1, new Cromat());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(17);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("The upkeep ability resolves even if Sanctuary leaves the battlefield")
+    void resolvesAfterSanctuaryLeavesBattlefield() {
+        Permanent sanctuary = harness.addToBattlefieldAndReturn(player1, new NecraSanctuary());
+        harness.addToBattlefield(player1, new Cromat());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(sanctuary);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+    }
+
     private void resolveUpkeepTargetingPlayer2() {
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, player2.getId());
