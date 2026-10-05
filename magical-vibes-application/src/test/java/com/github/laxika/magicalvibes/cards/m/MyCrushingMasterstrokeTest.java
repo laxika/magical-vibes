@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.c.ChimericMass;
 import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,8 +19,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MyCrushingMasterstroke.class, DarksteelIngot.class, GrizzlyBears.class, Forest.class})
+@CardUsed({MyCrushingMasterstroke.class, DarksteelIngot.class, GrizzlyBears.class, Forest.class, ChimericMass.class})
 class MyCrushingMasterstrokeTest extends BaseCardTest {
 
     @Test
@@ -61,6 +65,44 @@ class MyCrushingMasterstrokeTest extends BaseCardTest {
         assertThat(opponentCreature.getMustAttackTargetId()).isNull();
     }
 
+    @Test
+    void stolenArtifactAnimatedAfterResolutionMustAttackItsOwner() {
+        Permanent mass = harness.addToBattlefieldAndReturn(player2, new ChimericMass());
+        mass.setCounterCount(CounterType.CHARGE, 3);
+        resolveScheme();
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, mass)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mass, Keyword.HASTE)).isTrue();
+        assertThatThrownBy(() -> declareAttackers(List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void stolenCreatureOwnedBySchemeControllerDoesNotHaveToAttack() {
+        GrizzlyBears bears = new GrizzlyBears();
+        bears.setOwnerId(player1.getId());
+        Permanent creature = addCreatureReady(player2, bears);
+        resolveScheme();
+
+        declareAttackers(List.of());
+
+        assertThat(creature.isAttacking()).isFalse();
+    }
+
+    @Test
+    void tappedStolenCreatureDoesNotHaveToAttack() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        resolveScheme();
+        creature.tap();
+
+        declareAttackers(List.of());
+
+        assertThat(creature.isAttacking()).isFalse();
+    }
     private void resolveScheme() {
         MyCrushingMasterstroke scheme = new MyCrushingMasterstroke();
         gd.stack.add(new StackEntry(
