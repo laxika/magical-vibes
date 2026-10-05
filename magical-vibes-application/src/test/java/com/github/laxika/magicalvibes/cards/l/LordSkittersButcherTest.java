@@ -83,6 +83,54 @@ class LordSkittersButcherTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bears, Keyword.MENACE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Declining the sacrifice does not scry or draw")
+    void decliningSacrificeDoesNotScryOrDraw() {
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new LordSkittersButcher());
+        Card topCard = new Island();
+        harness.setLibrary(player1, List.of(topCard, new Forest()));
+        castButcher(1);
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(other);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(2).first().isSameAs(topCard);
+    }
+
+    @Test
+    @DisplayName("Without another controlled creature the sacrifice mode does not scry or draw")
+    void cannotSacrificeOpponentsCreatureOrOwnLand() {
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new LordSkittersButcher());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Card topCard = new Island();
+        harness.setLibrary(player1, List.of(topCard));
+        castButcher(1);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponent);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(land);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerLibraries.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @DisplayName("Menace affects only controlled creatures present when the ability resolves")
+    void menaceExcludesOpponentsLandsAndLaterCreatures() {
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new LordSkittersButcher());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        castButcher(2);
+        Permanent later = harness.addToBattlefieldAndReturn(player1, new LordSkittersButcher());
+
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Lord Skitter's Butcher"), Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, land, Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, later, Keyword.MENACE)).isFalse();
+    }
+
     private void castButcher(int mode) {
         harness.setHand(player1, List.of(new LordSkittersButcher()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -90,7 +138,6 @@ class LordSkittersButcherTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castCreature(player1, 0, mode);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
