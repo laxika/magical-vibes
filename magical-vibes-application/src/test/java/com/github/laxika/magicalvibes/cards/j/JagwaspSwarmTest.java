@@ -1,35 +1,61 @@
 package com.github.laxika.magicalvibes.cards.j;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.g.GrapplerSpider;
+import com.github.laxika.magicalvibes.cards.l.LeatherbackBaloth;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
+@CardUsed({JagwaspSwarm.class, LeatherbackBaloth.class, GrapplerSpider.class})
 class JagwaspSwarmTest extends BaseCardTest {
 
     @Test
     void flyingPreventsGroundCreatureFromBlocking() {
-        Permanent attacker = new Permanent(new JagwaspSwarm());
-        attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
+        addCreatureReady(player1, new JagwaspSwarm()).setAttacking(true);
+        addCreatureReady(player2, new LeatherbackBaloth());
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void flyingCreatureCanBlockSwarm() {
+        addCreatureReady(player1, new JagwaspSwarm()).setAttacking(true);
+        addCreatureReady(player2, new JagwaspSwarm());
+
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void reachCreatureCanBlockSwarm() {
+        addCreatureReady(player1, new JagwaspSwarm()).setAttacking(true);
+        addCreatureReady(player2, new GrapplerSpider());
+
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void swarmCanBlockGroundCreature() {
+        addCreatureReady(player1, new LeatherbackBaloth()).setAttacking(true);
+        addCreatureReady(player2, new JagwaspSwarm());
+
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
     }
 }
