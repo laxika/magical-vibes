@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.q;
 
 import com.github.laxika.magicalvibes.cards.a.AmoeboidChangeling;
+import com.github.laxika.magicalvibes.cards.c.Conspiracy;
 import com.github.laxika.magicalvibes.cards.m.MetallicSliver;
 import com.github.laxika.magicalvibes.cards.w.WildPair;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -11,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({QuickSliver.class, MetallicSliver.class, AmoeboidChangeling.class, WildPair.class})
+@CardUsed({QuickSliver.class, MetallicSliver.class, AmoeboidChangeling.class, WildPair.class, Conspiracy.class})
 class QuickSliverTest extends BaseCardTest {
 
     @Test
@@ -69,5 +71,44 @@ class QuickSliverTest extends BaseCardTest {
         harness.castFromHand(player1, new AmoeboidChangeling(), "{1}{U}");
 
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void quickSliverHasFlashButOnlyGrantsPermissionAfterResolving() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player1, new QuickSliver(), "{1}{G}");
+        assertThat(gd.stack).hasSize(1);
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new MetallicSliver(), "{1}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Quick Sliver");
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player1, new MetallicSliver(), "{1}");
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Metallic Sliver");
+    }
+
+    @Test
+    void creatureThatConspiracyMakesNonSliverDoesNotGetFlash() {
+        harness.addToBattlefield(player1, new QuickSliver());
+        harness.addToBattlefieldAndReturn(player2, new Conspiracy())
+                .setChosenSubtype(CardSubtype.GOBLIN);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castFromHand(player2, new MetallicSliver(), "{1}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
     }
 }
