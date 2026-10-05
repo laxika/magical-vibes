@@ -16,14 +16,11 @@ class MarshGasTest extends BaseCardTest {
     @Test
     @DisplayName("Gives -2/-0 to every creature on both battlefields")
     void debuffsAllCreaturesPowerOnly() {
-        harness.addToBattlefield(player1, new GrizzlyBears()); // 2/2
-        harness.addToBattlefield(player2, new GrizzlyBears()); // 2/2
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent theirs = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.castFromHand(player1, new MarshGas(), "{B}");
         harness.passBothPriorities();
-
-        Permanent own = findPermanent(player1, "Grizzly Bears");
-        Permanent theirs = findPermanent(player2, "Grizzly Bears");
 
         assertThat(own.getEffectivePower()).isEqualTo(0);
         assertThat(own.getEffectiveToughness()).isEqualTo(2);
@@ -34,12 +31,11 @@ class MarshGasTest extends BaseCardTest {
     @Test
     @DisplayName("Effect wears off at end of turn")
     void wearsOffAtEndOfTurn() {
-        harness.addToBattlefield(player2, new GrizzlyBears()); // 2/2
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.castFromHand(player1, new MarshGas(), "{B}");
         harness.passBothPriorities();
 
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getEffectivePower()).isEqualTo(0);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -60,5 +56,39 @@ class MarshGasTest extends BaseCardTest {
 
         assertThat(lateCreature.getEffectivePower()).isEqualTo(2);
         assertThat(lateCreature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Affects creatures that enter while the spell is on the stack")
+    void affectsCreaturesEnteringBeforeResolution() {
+        harness.castFromHand(player1, new MarshGas(), "{B}");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.passBothPriorities();
+
+        assertThat(bears.getEffectivePower()).isEqualTo(0);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Multiple copies cumulatively reduce power below zero without reducing toughness")
+    void multipleCopiesStackAndExpireTogether() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.castFromHand(player1, new MarshGas(), "{B}");
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new MarshGas(), "{B}");
+        harness.passBothPriorities();
+
+        assertThat(bears.getEffectivePower()).isEqualTo(-2);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
     }
 }
