@@ -68,6 +68,76 @@ class JunjiTheMidnightSkyTest extends BaseCardTest {
         harness.assertLife(player1, 18);
     }
 
+    @Test
+    @DisplayName("The discard mode still loses life when the opponent has no cards")
+    void discardModeWithEmptyHandStillLosesLife() {
+        harness.setHand(player2, List.of());
+        harness.addToBattlefield(player1, new JunjiTheMidnightSky());
+
+        killJunji();
+        harness.handleListChoice(player1, DISCARD_MODE);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("The discard mode discards the only card in a short hand and still loses life")
+    void discardModeWithOneCardDiscardsItAndLosesLife() {
+        harness.setHand(player2, List.of(new Forest()));
+        harness.addToBattlefield(player1, new JunjiTheMidnightSky());
+
+        killJunji();
+        harness.handleListChoice(player1, DISCARD_MODE);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("The reanimation mode can return a creature from its controller's graveyard")
+    void reanimationModeReturnsOwnCreature() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.addToBattlefield(player1, new JunjiTheMidnightSky());
+
+        killJunji();
+        harness.handleListChoice(player1, REANIMATE_MODE);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Junji, the Midnight Sky");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The reanimation mode does not lose life when its sole target leaves the graveyard")
+    void reanimationModeWithRemovedTargetDoesNotLoseLife() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.addToBattlefield(player1, new JunjiTheMidnightSky());
+
+        killJunji();
+        harness.handleListChoice(player1, REANIMATE_MODE);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.setGraveyard(player2, List.of());
+        harness.setExile(player2, List.of(creature));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
     private void killJunji() {
         Permanent junji = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard() instanceof JunjiTheMidnightSky)
