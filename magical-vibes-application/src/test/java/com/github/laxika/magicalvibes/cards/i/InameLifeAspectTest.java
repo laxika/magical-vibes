@@ -143,4 +143,43 @@ class InameLifeAspectTest extends BaseCardTest {
         assertThat(choice.validCardIds()).contains(lanternKami.getId(), inameCard.getId());
         assertThat(choice.validCardIds()).doesNotContain(nonSpirit.getId(), opponentSpirit.getId());
     }
+
+    @Test
+    @DisplayName("When all selected targets leave the graveyard, the ability does not exile Iname")
+    void allTargetsMissingPreventsExile() {
+        Card spirit = new LanternKami();
+        harness.setGraveyard(player1, List.of(spirit));
+        Card inameCard = killIname();
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
+        harness.setGraveyard(player1, List.of(inameCard, new RendSpirit()));
+        harness.setHand(player1, List.of(spirit));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId).contains(inameCard.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(inameCard.getId()));
+    }
+
+    @Test
+    @DisplayName("A remaining legal target is returned when another selected Spirit has left the graveyard")
+    void remainingLegalTargetIsReturned() {
+        Card spirit = new LanternKami();
+        Card otherSpirit = new HundredTalonKami();
+        harness.setGraveyard(player1, List.of(spirit, otherSpirit));
+        Card inameCard = killIname();
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId(), otherSpirit.getId()));
+        harness.setGraveyard(player1, List.of(inameCard, spirit, new RendSpirit()));
+        harness.setExile(player1, List.of(otherSpirit));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getId).contains(spirit.getId()).doesNotContain(otherSpirit.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getId).contains(inameCard.getId(), otherSpirit.getId());
+    }
 }
