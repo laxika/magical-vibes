@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WoodlandChangeling;
+import com.github.laxika.magicalvibes.cards.l.Lignify;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,41 +16,40 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({NettlevineBlight.class, WoodlandChangeling.class, Forest.class, Lignify.class})
 class NettlevineBlightTest extends BaseCardTest {
 
     /** Attaches Nettlevine Blight (controlled by {@code auraController}) to {@code host}. */
     private Permanent attachBlight(Player auraController, Permanent host) {
-        Permanent blight = new Permanent(new NettlevineBlight());
+        Permanent blight = harness.addToBattlefieldAndReturn(auraController, new NettlevineBlight());
+        blight.setTimestamp(gd.nextTimestamp());
         blight.setAttachedTo(host.getId());
-        gd.playerBattlefields.get(auraController.getId()).add(blight);
         return blight;
     }
 
     private Permanent addCreature(Player owner) {
-        Permanent perm = new Permanent(new GrizzlyBears());
+        Permanent perm = harness.addToBattlefieldAndReturn(owner, new WoodlandChangeling());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(owner.getId()).add(perm);
         return perm;
     }
 
     private Permanent addLand(Player owner) {
-        Permanent perm = new Permanent(new Forest());
-        gd.playerBattlefields.get(owner.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(owner, new Forest());
     }
 
-    /** Runs {@code player} through their end step so the enchanted-controller trigger resolves. */
-    private void runEndStep(Player player) {
+    /** Enters the end step with triggered abilities waiting on the stack. */
+    private void beginEndStep(Player player) {
         harness.forceActivePlayer(player);
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        gs.advanceStep(gd); // POSTCOMBAT_MAIN -> END_STEP, trigger onto stack
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player, TurnStep.END_STEP);
     }
 
-    // ===== Auto-attach when exactly one other destination =====
+    private void runEndStep(Player player) {
+        beginEndStep(player);
+        harness.passBothPriorities();
+    }
 
     @Test
     @DisplayName("Sacrifices the enchanted permanent and moves onto the only other creature/land")
@@ -64,8 +66,6 @@ class NettlevineBlightTest extends BaseCardTest {
         assertThat(blight.getAttachedTo()).isEqualTo(land.getId());
     }
 
-    // ===== No legal destination — Aura dies as a state-based action =====
-
     @Test
     @DisplayName("With no other creature or land, the permanent is sacrificed and the Aura is put into the graveyard")
     void noDestinationSacrificesAndAuraDies() {
@@ -79,8 +79,6 @@ class NettlevineBlightTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals(host.getCard().getName()))
                 .anyMatch(c -> c.getName().equals(blight.getCard().getName()));
     }
-
-    // ===== Multiple destinations — controller chooses =====
 
     @Test
     @DisplayName("With multiple destinations, the enchanted permanent's controller chooses where to move it")
@@ -100,8 +98,6 @@ class NettlevineBlightTest extends BaseCardTest {
         assertThat(blight.getAttachedTo()).isEqualTo(land.getId());
     }
 
-    // ===== Fires on the enchanted permanent's controller's end step, not the Aura controller's =====
-
     @Test
     @DisplayName("Triggers only on the enchanted permanent's controller's end step")
     void triggersOnEnchantedControllerEndStepOnly() {
@@ -119,5 +115,76 @@ class NettlevineBlightTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(host);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(blight); // Aura keeps its controller
         assertThat(blight.getAttachedTo()).isEqualTo(land.getId());
+    }
+
+    @Test
+    @DisplayName("The enchanted permanent is the source of the trigger and its controller controls it")
+    void enchantedPermanentControlsGrantedTrigger() {
+        Permanent host = addCreature(player2);
+        addLand(player2);
+        attachBlight(player1, host);
+
+        beginEndStep(player2);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2.getId());
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(host.getId());
+    }
+
+    @Test
+    @DisplayName("A later Lignify removes the granted end-step ability")
+    void laterAbilityRemovalPreventsTrigger() {
+        Permanent host = addCreature(player1);
+        Permanent land = addLand(player1);
+        Permanent blight = attachBlight(player1, host);
+        harness.setHand(player1, List.of(new Lignify()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castEnchantment(player1, 0, host.getId());
+        harness.passBothPriorities();
+
+        runEndStep(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(host, land, blight);
+        assertThat(blight.getAttachedTo()).isEqualTo(host.getId());
+    }
+
+    @Test
+    @DisplayName("Changing control after triggering prevents sacrifice but still moves Blight to the trigger controller's land")
+    void controlChangeDoesNotChangeWhoResolvesInstruction() {
+        Permanent host = addCreature(player1);
+        Permanent originalControllersLand = addLand(player1);
+        addLand(player2);
+        Permanent blight = attachBlight(player1, host);
+        beginEndStep(player1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(host);
+        gd.playerBattlefields.get(player2.getId()).add(host);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(host);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(blight, originalControllersLand);
+        assertThat(blight.getAttachedTo()).isEqualTo(originalControllersLand.getId());
+    }
+
+    @Test
+    @DisplayName("Blight can be cast on a land and continues sacrificing on subsequent end steps")
+    void castOnLandAndTriggerAgainAfterMoving() {
+        Permanent land = addLand(player1);
+        Permanent creature = addCreature(player1);
+        harness.setHand(player1, List.of(new NettlevineBlight()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+        harness.castEnchantment(player1, 0, land.getId());
+        harness.passBothPriorities();
+        Permanent blight = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() instanceof NettlevineBlight).findFirst().orElseThrow();
+        assertThat(blight.getAttachedTo()).isEqualTo(land.getId());
+
+        runEndStep(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(land);
+        assertThat(blight.getAttachedTo()).isEqualTo(creature.getId());
+        runEndStep(player1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature, blight);
+        harness.assertInGraveyard(player1, "Nettlevine Blight");
     }
 }
