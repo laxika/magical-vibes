@@ -50,9 +50,7 @@ class MinaAndDennWildbornTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(forest.getCard());
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        gs.advanceStep(gd);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
@@ -66,6 +64,60 @@ class MinaAndDennWildbornTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Pays the land cost before resolution and can target itself")
+    void returnsLandBeforeGrantingTrample() {
+        harness.setHand(player1, List.of());
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new MinaAndDennWildborn());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, source.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(forest);
+        assertThat(gd.playerHands.get(player1.getId())).contains(forest.getCard());
+        assertThat(gqs.hasKeyword(gd, source, Keyword.TRAMPLE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, source, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot return an opponent's land to pay the cost")
+    void cannotPayWithOpponentsLand() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new MinaAndDennWildborn());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, source.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(forest);
+        assertThat(gqs.hasKeyword(gd, source, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Replaying the returned land uses the additional land play")
+    void replayingReturnedLandDoesNotResetLandPlayCount() {
+        harness.addToBattlefield(player1, new MinaAndDennWildborn());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+        Permanent source = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, source.getId());
+        harness.passBothPriorities();
+        harness.playLand(player1, 0);
+        harness.setHand(player1, List.of(new Forest()));
+
+        assertThatThrownBy(() -> harness.playLand(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
 }
