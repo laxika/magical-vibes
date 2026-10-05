@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({NightmareSower.class, GrizzlyBears.class, Shock.class, Forest.class})
 class NightmareSowerTest extends BaseCardTest {
 
     private void setOpponentTurn() {
@@ -47,9 +49,7 @@ class NightmareSowerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
 
-        Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(permanent -> permanent.getId().equals(targetId))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player2, "Grizzly Bears");
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
@@ -66,9 +66,7 @@ class NightmareSowerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
-        Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(permanent -> permanent.getId().equals(targetId))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player2, "Grizzly Bears");
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
     }
 
@@ -115,7 +113,7 @@ class NightmareSowerTest extends BaseCardTest {
     @DisplayName("Casting during your own turn does not trigger the ability")
     void ownTurnDoesNotTrigger() {
         harness.addToBattlefield(player1, new NightmareSower());
-        UUID targetId = addTargetCreature();
+        addTargetCreature();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -126,9 +124,50 @@ class NightmareSowerTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         harness.passBothPriorities();
-        Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(permanent -> permanent.getId().equals(targetId))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player2, "Grizzly Bears");
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's spell does not trigger Nightmare Sower")
+    void opponentsSpellDoesNotTrigger() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new NightmareSower());
+        setOpponentTurn();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(source.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Each spell during an opponent's turn triggers and can target the source")
+    void eachSpellCanPutACounterOnSource() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new NightmareSower());
+        setOpponentTurn();
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player1, source.getId());
+        harness.passBothPriorities();
+        assertThat(source.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player1, source.getId());
+        harness.passBothPriorities();
+        assertThat(source.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Nightmare Sower");
+        harness.passBothPriorities();
+        harness.assertLife(player2, 16);
+        assertThat(gd.stack).isEmpty();
     }
 }
