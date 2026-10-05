@@ -72,4 +72,65 @@ class OphiomancerTest extends BaseCardTest {
 
         assertThat(snakeTokens(player1)).isEmpty();
     }
+
+    @Test
+    @DisplayName("An opponent's Snake does not prevent token creation")
+    void ignoresOpponentsSnakes() {
+        harness.addToBattlefield(player1, new Ophiomancer());
+        harness.addToBattlefield(player2, new SkeletalSnake());
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(snakeTokens(player1)).hasSize(1);
+        assertThat(snakeTokens(player2)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Two Ophiomancers trigger but create only one Snake without responses")
+    void multipleOphiomancersRecheckConditionIndependently() {
+        harness.addToBattlefield(player1, new Ophiomancer());
+        harness.addToBattlefield(player1, new Ophiomancer());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(snakeTokens(player1)).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The upkeep trigger resolves after Ophiomancer leaves the battlefield")
+    void triggerResolvesWithoutSource() {
+        harness.addToBattlefield(player1, new Ophiomancer());
+        Permanent source = findPermanent(player1, "Ophiomancer");
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        resolveAllTriggers();
+
+        assertThat(snakeTokens(player1)).hasSize(1);
+        assertThat(snakeTokens(player2)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Creates another Snake on the next upkeep after the previous Snake leaves")
+    void createsReplacementSnakeOnControllersUpkeep() {
+        harness.addToBattlefield(player1, new Ophiomancer());
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        Permanent firstSnake = snakeTokens(player1).getFirst();
+        gd.playerBattlefields.get(player1.getId()).remove(firstSnake);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(snakeTokens(player1)).hasSize(1);
+        assertThat(snakeTokens(player1).getFirst().getId()).isNotEqualTo(firstSnake.getId());
+    }
 }
