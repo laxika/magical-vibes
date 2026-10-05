@@ -101,4 +101,43 @@ class PlanarCollapseTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Giant Cockroach");
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("Triggers with more than four creatures even when only the opponent controls creatures")
+    void destroysCreaturesWhenOnlyOpponentControlsFive() {
+        harness.addToBattlefield(player1, new PlanarCollapse());
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player2, new GiantCockroach());
+        }
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Planar Collapse");
+        harness.assertNotOnBattlefield(player2, "Giant Cockroach");
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(5);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("With two copies, the second trigger does nothing after the first destroys all creatures")
+    void secondCopyRemainsAfterFirstCopyDestroysCreatures() {
+        harness.addToBattlefield(player1, new PlanarCollapse());
+        harness.addToBattlefield(player1, new PlanarCollapse());
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player2, new GiantCockroach());
+        }
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Planar Collapse")).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Planar Collapse");
+        harness.assertNotOnBattlefield(player2, "Giant Cockroach");
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(4);
+        assertThat(gd.stack).isEmpty();
+    }
 }
