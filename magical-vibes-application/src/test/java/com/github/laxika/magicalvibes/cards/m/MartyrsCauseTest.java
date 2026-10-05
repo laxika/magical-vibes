@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -24,7 +26,7 @@ class MartyrsCauseTest extends BaseCardTest {
         Permanent fodder = addCreatureReady(player1, new GiantCockroach());
         addCreatureReady(player1, new ThornwindFaeries());
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, player2.getId());
         harness.handlePermanentChosen(player1, fodder.getId());
 
         harness.assertNotOnBattlefield(player1, "Giant Cockroach");
@@ -41,7 +43,7 @@ class MartyrsCauseTest extends BaseCardTest {
         Permanent fodder = addCreatureReady(player1, new GiantCockroach());
         Permanent source = addCreatureReady(player1, new ThornwindFaeries());
 
-        harness.activateAbility(player1, indexOf(player1, cause), null, null);
+        harness.activateAbility(player1, indexOf(player1, cause), null, player2.getId());
         harness.handlePermanentChosen(player1, fodder.getId());
         harness.passBothPriorities();
 
@@ -60,7 +62,7 @@ class MartyrsCauseTest extends BaseCardTest {
     void cannotActivateWithoutCreature() {
         addCause();
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).isEmpty();
         assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
@@ -74,7 +76,7 @@ class MartyrsCauseTest extends BaseCardTest {
         Permanent source = addCreatureReady(player1, new ThornwindFaeries());
         Permanent victim = addCreatureReady(player2, new GiantCockroach());
 
-        activateCauseAndChooseSource(cause, fodder, source);
+        activateCauseAndChooseSource(cause, fodder, source, victim.getId());
 
         harness.activateAbility(player1, indexOf(player1, source), null, victim.getId());
         harness.passBothPriorities();
@@ -92,7 +94,7 @@ class MartyrsCauseTest extends BaseCardTest {
         Permanent otherSource = addCreatureReady(player1, new ThornwindFaeries());
         Permanent victim = addCreatureReady(player2, new GiantCockroach());
 
-        activateCauseAndChooseSource(cause, fodder, chosenSource);
+        activateCauseAndChooseSource(cause, fodder, chosenSource, victim.getId());
 
         harness.activateAbility(player1, indexOf(player1, otherSource), null, victim.getId());
         harness.passBothPriorities();
@@ -103,12 +105,48 @@ class MartyrsCauseTest extends BaseCardTest {
                 .containsExactly(chosenSource.getId());
     }
 
+    @Test
+    @DisplayName("Requires a damage recipient target when activated")
+    void cannotActivateWithoutTarget() {
+        addCause();
+        addCreatureReady(player1, new GiantCockroach());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Giant Cockroach");
+    }
+
+    @Test
+    @DisplayName("Damage to another recipient does not consume the protection")
+    void onlyProtectsTargetedRecipient() {
+        Permanent cause = addCause();
+        Permanent fodder = addCreatureReady(player1, new GiantCockroach());
+        Permanent source = addCreatureReady(player1, new ThornwindFaeries());
+
+        activateCauseAndChooseSource(cause, fodder, source, player2.getId());
+
+        harness.activateAbility(player1, indexOf(player1, source), null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 19);
+
+        harness.performUntapStep(player1);
+        harness.activateAbility(player1, indexOf(player1, source), null, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 20);
+
+        harness.performUntapStep(player1);
+        harness.activateAbility(player1, indexOf(player1, source), null, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+    }
+
     private Permanent addCause() {
         return harness.addToBattlefieldAndReturn(player1, new MartyrsCause());
     }
 
-    private void activateCauseAndChooseSource(Permanent cause, Permanent fodder, Permanent source) {
-        harness.activateAbility(player1, indexOf(player1, cause), null, null);
+    private void activateCauseAndChooseSource(Permanent cause, Permanent fodder, Permanent source, UUID targetId) {
+        harness.activateAbility(player1, indexOf(player1, cause), null, targetId);
         harness.handlePermanentChosen(player1, fodder.getId());
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, source.getId());
