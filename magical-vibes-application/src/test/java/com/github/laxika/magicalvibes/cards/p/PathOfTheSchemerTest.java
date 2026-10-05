@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RecklessFireweaver;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -14,12 +15,16 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PathOfTheSchemer.class, Panopticon.class, Forest.class, GrizzlyBears.class})
+@CardUsed({PathOfTheSchemer.class, Panopticon.class, Forest.class, GrizzlyBears.class,
+        RecklessFireweaver.class})
 class PathOfTheSchemerTest extends BaseCardTest {
 
     private PlanarObject startingPlane;
@@ -86,11 +91,88 @@ class PathOfTheSchemerTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Grizzly Bears")).isNotNull();
     }
 
+    @Test
+    void cannotDeclineReanimationWhenACreatureIsAvailable() {
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+
+        cast();
+
+        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void canReanimateACreatureMilledByTheSameSpell() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(creature, new Forest(), new Forest()));
+
+        cast();
+        harness.handleGraveyardCardChosen(player1, 0);
+        var returned = findPermanent(player1, "Grizzly Bears");
+        assertThat(returned.getCard().getId()).isEqualTo(creature.getId());
+        assertThat(gqs.isArtifact(gd, returned)).isTrue();
+        assertThat(gqs.isCreature(gd, returned)).isTrue();
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.passBothPriorities();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void chaosOrTiedVoteStillTriggersThePlaneWhenNoCreatureCanBeReturned(boolean tiedVote) {
+        Card drawnCard = new Forest();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), drawnCard));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+
+        cast();
+        harness.handleListChoice(player1, tiedVote
+                ? ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK
+                : ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.passBothPriorities();
+
+        assertThat(gd.planechase.faceUp).containsExactly(startingPlane);
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(drawnCard.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Path of the Schemer");
+    }
+
+    @Test
+    void reanimatedCreatureEntersAsAnArtifactForEntryTriggers() {
+        harness.addToBattlefield(player1, new RecklessFireweaver());
+        harness.setLife(player2, 20);
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+
+        cast();
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
+
     private void cast() {
         harness.setHand(player1, List.of(new PathOfTheSchemer()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 }
