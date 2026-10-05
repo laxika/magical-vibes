@@ -18,6 +18,57 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PlaxmantaTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Both enters abilities trigger separately even when green mana was spent")
+    void entersAbilitiesAreSeparateTriggers() {
+        harness.setHand(player1, List.of(new Plaxmanta()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Plaxmanta");
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player1, "Plaxmanta");
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Plaxmanta");
+    }
+
+    @Test
+    @DisplayName("Entering without being cast still grants shroud and requires sacrifice")
+    void enteringWithoutCastingRequiresSacrifice() {
+        Permanent charger = addCreatureReady(player1, new MistralCharger());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.enterBattlefieldAndReturn(player1, new Plaxmanta());
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, charger, Keyword.SHROUD)).isTrue();
+        harness.assertNotOnBattlefield(player1, "Plaxmanta");
+        harness.assertInGraveyard(player1, "Plaxmanta");
+    }
+
+    @Test
+    @DisplayName("Creatures entering after the shroud ability resolves do not gain shroud")
+    void laterCreaturesDoNotGainShroud() {
+        Permanent charger = addCreatureReady(player1, new MistralCharger());
+        harness.setHand(player1, List.of(new Plaxmanta()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        Permanent laterCharger = harness.enterBattlefieldAndReturn(player1, new MistralCharger());
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, charger, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, laterCharger, Keyword.SHROUD)).isFalse();
+    }
+
+    @Test
     @DisplayName("Gives your creatures, but not an opponent's creatures, shroud until end of turn when green mana was spent")
     void givesYourCreaturesShroudWhenGreenManaWasSpent() {
         Permanent charger = addCreatureReady(player1, new MistralCharger());
