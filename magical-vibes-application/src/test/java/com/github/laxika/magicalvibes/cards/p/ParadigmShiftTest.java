@@ -91,4 +91,49 @@ class ParadigmShiftTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(opponentDeckBefore);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCard);
     }
+
+    @Test
+    @DisplayName("With both zones empty, the resolving spell stays out of its own shuffle")
+    void emptyLibraryAndGraveyardResolveNormally() {
+        ParadigmShift paradigmShift = new ParadigmShift();
+        harness.setLibrary(player1, List.of());
+        harness.setGraveyard(player1, List.of());
+        harness.castFromHand(player1, paradigmShift, "{1}{U}");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(paradigmShift);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Previously exiled cards stay exiled and the opponent's zones stay unchanged")
+    void preservesExistingExileAndOpponentZones() {
+        BenalishInfantry libraryCard = new BenalishInfantry();
+        Disrupt graveyardCard = new Disrupt();
+        Disrupt previouslyExiledCard = new Disrupt();
+        BenalishInfantry opponentLibraryCard = new BenalishInfantry();
+        Disrupt opponentGraveyardCard = new Disrupt();
+        BenalishInfantry opponentExiledCard = new BenalishInfantry();
+        ParadigmShift paradigmShift = new ParadigmShift();
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setGraveyard(player1, List.of(graveyardCard));
+        harness.setExile(player1, List.of(previouslyExiledCard));
+        harness.setLibrary(player2, List.of(opponentLibraryCard));
+        harness.setGraveyard(player2, List.of(opponentGraveyardCard));
+        harness.setExile(player2, List.of(opponentExiledCard));
+        harness.castFromHand(player1, paradigmShift, "{1}{U}");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(graveyardCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(paradigmShift);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .containsExactlyInAnyOrder(previouslyExiledCard, libraryCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentLibraryCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentGraveyardCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(opponentExiledCard);
+    }
 }
