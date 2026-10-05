@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -18,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OldFatSpider.class, GrizzlyBears.class, HillGiant.class, ProdigalPyromancer.class, Shock.class})
+@CardUsed({OldFatSpider.class, AirElemental.class, GrizzlyBears.class, HillGiant.class,
+        ProdigalPyromancer.class, Shock.class})
 class OldFatSpiderTest extends BaseCardTest {
 
     @Test
@@ -67,8 +70,7 @@ class OldFatSpiderTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, spider.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, spider.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
@@ -97,5 +99,84 @@ class OldFatSpiderTest extends BaseCardTest {
         harness.castInstant(player1, 0, spider.getId());
 
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A power-two creature with a +1/+1 counter can block")
+    void boostedSmallCreatureCanBlock() {
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent spider = addCreatureReady(player1, new OldFatSpider());
+        spider.setAttacking(true);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A power-three creature with a -1/-1 counter cannot block")
+    void reducedLargeCreatureCannotBlock() {
+        Permanent blocker = addCreatureReady(player2, new HillGiant());
+        blocker.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        Permanent spider = addCreatureReady(player1, new OldFatSpider());
+        spider.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Does not draw when its controller's ability targets it")
+    void doesNotDrawOnOwnAbilityTargetingIt() {
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new OldFatSpider());
+        addCreatureReady(player1, new ProdigalPyromancer());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 1, null, spider.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    @DisplayName("The draw trigger resolves before the opponent's targeting spell")
+    void drawsBeforeTargetingSpellResolves() {
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new OldFatSpider());
+        GrizzlyBears drawnCard = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, spider.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    @DisplayName("Reach allows Old Fat Spider to block a flying creature")
+    void canBlockFlyingCreature() {
+        Permanent attacker = addCreatureReady(player1, new AirElemental());
+        attacker.setAttacking(true);
+        Permanent spider = addCreatureReady(player2, new OldFatSpider());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(spider.isBlocking()).isTrue();
     }
 }
