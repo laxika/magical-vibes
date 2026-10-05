@@ -33,6 +33,32 @@ class JaggedBarrensTest extends BaseCardTest {
     }
 
     @Test
+    void enteringWithoutBeingPlayedStillTriggersDamage() {
+        Permanent land = harness.enterBattlefieldAndReturn(player1, new JaggedBarrens());
+
+        assertThat(land.isTapped()).isTrue();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void entryTriggerResolvesAfterSourceLeavesBattlefield() {
+        harness.setHand(player1, List.of(new JaggedBarrens()));
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        Permanent land = gd.playerBattlefields.get(player1.getId()).removeFirst();
+        harness.setGraveyard(player1, List.of(land.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
     void tappingProducesBlackMana() {
         Permanent land = addReadyLand();
 
@@ -53,9 +79,8 @@ class JaggedBarrensTest extends BaseCardTest {
     }
 
     private Permanent addReadyLand() {
-        Permanent land = new Permanent(new JaggedBarrens());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new JaggedBarrens());
         land.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(land);
         return land;
     }
 }
