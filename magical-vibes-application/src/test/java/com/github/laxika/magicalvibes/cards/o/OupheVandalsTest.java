@@ -19,6 +19,47 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class OupheVandalsTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Can counter its controller's equip ability and destroy the Equipment")
+    void countersOwnEquipAbility() {
+        harness.addToBattlefield(player1, new OupheVandals());
+        var mantle = harness.addToBattlefieldAndReturn(player1, new ParadiseMantle());
+        var creature = harness.addToBattlefieldAndReturn(player1, new CompositeGolem());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 1, null, creature.getId());
+        harness.activateAbility(player1, 0, null, mantle.getId());
+
+        harness.assertInGraveyard(player1, "Ouphe Vandals");
+        harness.assertOnBattlefield(player1, "Paradise Mantle");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Paradise Mantle");
+        harness.assertOnBattlefield(player1, "Composite Golem");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate without paying green mana and does not sacrifice on rejection")
+    void requiresGreenMana() {
+        harness.addToBattlefield(player1, new OupheVandals());
+        var barrier = harness.addToBattlefieldAndReturn(player2, new RelicBarrier());
+        var artifact = harness.addToBattlefieldAndReturn(player2, new CompositeGolem());
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player2, 0, null, artifact.getId());
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, barrier.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Ouphe Vandals");
+        harness.assertNotInGraveyard(player1, "Ouphe Vandals");
+        harness.passBothPriorities();
+        assertThat(artifact.isTapped()).isTrue();
+        harness.assertOnBattlefield(player2, "Relic Barrier");
+    }
+
+    @Test
     @DisplayName("Counters an artifact activated ability, destroys its source, and sacrifices itself")
     void countersArtifactActivatedAbilityAndDestroysSource() {
         harness.addToBattlefield(player1, new OupheVandals());
