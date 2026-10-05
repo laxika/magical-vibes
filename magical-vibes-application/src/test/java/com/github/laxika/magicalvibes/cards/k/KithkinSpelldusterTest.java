@@ -113,6 +113,65 @@ class KithkinSpelldusterTest extends BaseCardTest {
         assertThat(gameLogContains("fizzles")).isTrue();
     }
 
+    @Test
+    @DisplayName("A tapped, summoning-sick Spellduster can activate and is sacrificed immediately")
+    void tappedSummoningSickSpelldusterCanActivate() {
+        Permanent duster = harness.addToBattlefieldAndReturn(player1, new KithkinSpellduster());
+        duster.setSummoningSick(true);
+        duster.tap();
+        Permanent target = addEnchantment(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Kithkin Spellduster");
+        harness.assertInGraveyard(player1, "Kithkin Spellduster");
+        harness.assertOnBattlefield(player2, "Light from Within");
+
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Kithkin Spellduster");
+        harness.assertInGraveyard(player2, "Light from Within");
+    }
+
+    @Test
+    @DisplayName("Persist's returned creature can be sacrificed again but does not return a second time")
+    void returnedSpelldusterCanActivateAgain() {
+        addReadyDuster(player1);
+        Permanent firstTarget = addEnchantment(player2);
+        Permanent secondTarget = addEnchantment(player2);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, firstTarget.getId());
+        resolveAllTriggers();
+        assertThat(findPermanent(player1, "Kithkin Spellduster")
+                .getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+
+        harness.activateAbility(player1, 0, null, secondTarget.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Kithkin Spellduster");
+        harness.assertInGraveyard(player1, "Kithkin Spellduster");
+        harness.assertNotOnBattlefield(player2, "Light from Within");
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Two generic mana cannot pay the required white mana")
+    void cannotActivateWithoutWhiteMana() {
+        addReadyDuster(player1);
+        Permanent target = addEnchantment(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Kithkin Spellduster");
+        harness.assertNotInGraveyard(player1, "Kithkin Spellduster");
+        harness.assertOnBattlefield(player2, "Light from Within");
+    }
+
     private Permanent addReadyDuster(Player player) {
         return addCreatureReady(player, new KithkinSpellduster());
     }
