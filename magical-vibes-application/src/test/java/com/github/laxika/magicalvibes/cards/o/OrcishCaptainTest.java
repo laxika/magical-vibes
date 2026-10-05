@@ -53,7 +53,6 @@ class OrcishCaptainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isZero();
@@ -108,5 +107,65 @@ class OrcishCaptainTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, nonOrc.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Orc creature");
+    }
+
+    @Test
+    @DisplayName("Can target itself while tapped, and a lost flip kills an unboosted Captain")
+    void canTargetItselfWhileTapped() {
+        Permanent captain = harness.addToBattlefieldAndReturn(player1, new OrcishCaptain());
+        captain.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, captain.getId());
+        harness.passBothPriorities();
+
+        if (gameLogContains("wins the coin flip")) {
+            assertThat(gd.playerBattlefields.get(player1.getId())).contains(captain);
+            assertThat(captain.getPowerModifier()).isEqualTo(2);
+            assertThat(captain.getToughnessModifier()).isZero();
+        } else {
+            assertThat(gameLogContains("loses the coin flip")).isTrue();
+            assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(captain);
+            assertThat(gd.playerGraveyards.get(player1.getId())).contains(captain.getCard());
+        }
+    }
+
+    @Test
+    @DisplayName("Does not flip a coin if its only target leaves before resolution")
+    void removedTargetPreventsCoinFlip() {
+        harness.addToBattlefield(player1, new OrcishCaptain());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new OrcishCaptain());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        target.setToughnessModifier(-1);
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        harness.passBothPriorities();
+
+        assertThat(gameLogContains("wins the coin flip")).isFalse();
+        assertThat(gameLogContains("loses the coin flip")).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("The ability still resolves after its source leaves the battlefield")
+    void resolvesAfterSourceLeaves() {
+        Permanent captain = harness.addToBattlefieldAndReturn(player1, new OrcishCaptain());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new OrcishCaptain());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        captain.setToughnessModifier(-1);
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(captain);
+        harness.passBothPriorities();
+
+        boolean won = target.getPowerModifier() == 2 && target.getToughnessModifier() == 0;
+        boolean lost = target.getPowerModifier() == 0 && target.getToughnessModifier() == -2;
+        assertThat(won != lost).isTrue();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
     }
 }
