@@ -294,6 +294,47 @@ class PacifismTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard() == pacifism);
     }
 
+    @Test
+    @DisplayName("Resolved Pacifism prevents both attacking and blocking without tapping the creature")
+    void resolvedPacifismPreventsCombat() {
+        Permanent creature = addCreatureReady(player2, new HornedTurtle());
+        harness.setHand(player1, List.of(new Pacifism()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(harness.getCombatAttackService().getAttackableCreatureIndices(gd, player2.getId()))
+                .isEmpty();
+        assertThat(harness.getCombatBlockService().getBlockableCreatureIndices(gd, player2.getId()))
+                .isEmpty();
+    }
+
+    @Test
+    @DisplayName("Removing one of two Pacifisms leaves the creature unable to attack or block")
+    void remainingPacifismStillPreventsCombat() {
+        Permanent creature = addCreatureReady(player1, new HornedTurtle());
+        Permanent firstPacifism = attachPacifism(player2, creature);
+        Permanent secondPacifism = attachPacifism(player2, creature);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, firstPacifism));
+
+        assertThat(harness.getCombatAttackService().getAttackableCreatureIndices(gd, player1.getId()))
+                .isEmpty();
+        assertThat(harness.getCombatBlockService().getBlockableCreatureIndices(gd, player1.getId()))
+                .isEmpty();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, secondPacifism));
+
+        assertThat(harness.getCombatAttackService().getAttackableCreatureIndices(gd, player1.getId()))
+                .containsExactly(0);
+        assertThat(harness.getCombatBlockService().getBlockableCreatureIndices(gd, player1.getId()))
+                .containsExactly(0);
+    }
+
     private Permanent attachPacifism(com.github.laxika.magicalvibes.model.Player controller,
                                      Permanent creature) {
         Permanent pacifism = harness.addToBattlefieldAndReturn(controller, new Pacifism());
