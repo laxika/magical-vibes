@@ -9,8 +9,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -44,11 +42,8 @@ class LifeforceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         DarkRitual ritual = new DarkRitual();
-        harness.setHand(player2, List.of(ritual));
-        harness.addMana(player2, ManaColor.BLACK, 1);
-
         harness.forceActivePlayer(player2);
-        harness.castInstant(player2, 0);
+        harness.castFromHand(player2, ritual, "{B}");
         harness.passPriority(player2);
 
         harness.activateAbility(player1, 0, null, ritual.getId());
@@ -92,6 +87,49 @@ class LifeforceTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Dark Ritual");
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can counter its controller's black spell and spends two green mana")
+    void countersOwnBlackSpell() {
+        harness.addToBattlefield(player1, new Lifeforce());
+        harness.forceActivePlayer(player1);
+        ScatheZombies zombies = new ScatheZombies();
+        harness.castFromHand(player1, zombies, "{2}{B}");
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, zombies.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Scathe Zombies");
+        harness.assertNotOnBattlefield(player1, "Scathe Zombies");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can activate twice without tapping, and a missing target has no effect")
+    void canActivateTwiceForSameSpell() {
+        harness.addToBattlefield(player1, new Lifeforce());
+        harness.forceActivePlayer(player2);
+        ScatheZombies zombies = new ScatheZombies();
+        harness.castFromHand(player2, zombies, "{2}{B}");
+        harness.passPriority(player2);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, null, zombies.getId());
+        harness.activateAbility(player1, 0, null, zombies.getId());
+        assertThat(gd.stack).hasSize(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Scathe Zombies");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(zombies);
+        harness.assertOnBattlefield(player1, "Lifeforce");
     }
 
     @Test
