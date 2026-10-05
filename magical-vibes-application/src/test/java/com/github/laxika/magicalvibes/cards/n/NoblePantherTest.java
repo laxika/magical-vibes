@@ -66,4 +66,41 @@ class NoblePantherTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(panther.isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("A summoning-sick panther can pay colored mana to gain first strike")
+    void canActivateWhileSummoningSick() {
+        Permanent panther = harness.addToBattlefieldAndReturn(player1, new NoblePanther());
+        panther.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gqs.hasKeyword(gd, panther, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(panther.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, panther, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(panther.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Repeated activations grant first strike only to the source panther")
+    void repeatedActivationsAffectOnlySource() {
+        Permanent panther = addCreatureReady(player1, new NoblePanther());
+        Permanent otherPanther = addCreatureReady(player1, new NoblePanther());
+        Permanent opposingPanther = addCreatureReady(player2, new NoblePanther());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, panther, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherPanther, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingPanther, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(panther.isTapped()).isFalse();
+    }
 }
