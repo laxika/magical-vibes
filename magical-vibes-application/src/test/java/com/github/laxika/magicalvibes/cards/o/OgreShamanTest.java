@@ -93,6 +93,53 @@ class OgreShamanTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Cinder Crawler");
     }
 
+    @Test
+    @DisplayName("A tapped, summoning-sick Ogre Shaman can activate repeatedly")
+    void canActivateRepeatedlyWhileTappedAndSummoningSick() {
+        var shaman = harness.addToBattlefieldAndReturn(player1, new OgreShaman());
+        shaman.setSummoningSick(true);
+        shaman.tap();
+        harness.setHand(player1, List.of(new CinderCrawler(), new CinderCrawler()));
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        assertThat(harness.getGameData().playerHands.get(player1.getId())).isEmpty();
+        assertThat(harness.getGameData().playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(shaman.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Activated damage resolves after Ogre Shaman dies")
+    void damageResolvesAfterSourceDies() {
+        var shaman = harness.addToBattlefieldAndReturn(player1, new OgreShaman());
+        harness.setHand(player1, List.of(new CinderCrawler(), new CinderCrawler(), new CinderCrawler()));
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, shaman.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Ogre Shaman");
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.activateAbility(player1, 0, null, shaman.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ogre Shaman");
+        harness.assertInGraveyard(player1, "Ogre Shaman");
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(harness.getGameData().playerHands.get(player1.getId())).isEmpty();
+    }
+
     private void addOgreShaman() {
         harness.addToBattlefield(player1, new OgreShaman());
     }
