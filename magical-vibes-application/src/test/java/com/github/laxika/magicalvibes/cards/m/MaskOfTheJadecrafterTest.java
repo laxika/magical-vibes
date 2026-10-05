@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MaskOfTheJadecrafter.class})
 class MaskOfTheJadecrafterTest extends BaseCardTest {
 
     @Test
@@ -22,12 +24,14 @@ class MaskOfTheJadecrafterTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.addToBattlefield(player1, new MaskOfTheJadecrafter());
-        Permanent mask = findPermanent(player1, "Mask of the Jadecrafter");
+        Permanent mask = harness.addToBattlefieldAndReturn(player1, new MaskOfTheJadecrafter());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         int maskIndex = gd.playerBattlefields.get(player1.getId()).indexOf(mask);
         harness.activateAbility(player1, maskIndex, 0, 3, null);
+        harness.assertNotOnBattlefield(player1, "Mask of the Jadecrafter");
+        harness.assertInGraveyard(player1, "Mask of the Jadecrafter");
+        harness.assertNotOnBattlefield(player1, "Golem");
         harness.passBothPriorities();
 
         Permanent golem = findPermanent(player1, "Golem");
@@ -56,8 +60,7 @@ class MaskOfTheJadecrafterTest extends BaseCardTest {
         assertThat(mask.getGrantedKeywords()).contains(Keyword.HASTE);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
 
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Mask of the Jadecrafter");
@@ -76,5 +79,69 @@ class MaskOfTheJadecrafterTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, 3, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void sacrificingUnearthedMaskExilesItButGolemRemainsAtEndStep() {
+        harness.setGraveyard(player1, List.of(new MaskOfTheJadecrafter()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, 0, 4, null);
+        harness.assertNotOnBattlefield(player1, "Mask of the Jadecrafter");
+        harness.assertNotInGraveyard(player1, "Mask of the Jadecrafter");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Mask of the Jadecrafter"));
+        harness.passBothPriorities();
+
+        Permanent golem = findPermanent(player1, "Golem");
+        assertThat(golem.getEffectivePower()).isEqualTo(4);
+        assertThat(golem.getEffectiveToughness()).isEqualTo(4);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Golem");
+        harness.assertNotInGraveyard(player1, "Mask of the Jadecrafter");
+    }
+
+    @Test
+    void zeroXIsLegalAndZeroToughnessGolemDies() {
+        harness.addToBattlefield(player1, new MaskOfTheJadecrafter());
+
+        harness.activateAbility(player1, 0, 0, 0, null);
+        harness.assertInGraveyard(player1, "Mask of the Jadecrafter");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Golem");
+        harness.assertNotOnBattlefield(player1, "Mask of the Jadecrafter");
+    }
+
+    @Test
+    void tappedMaskCannotPayTapCost() {
+        Permanent mask = harness.addToBattlefieldAndReturn(player1, new MaskOfTheJadecrafter());
+        mask.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, 3, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Mask of the Jadecrafter");
+        harness.assertNotInGraveyard(player1, "Mask of the Jadecrafter");
+    }
+
+    @Test
+    void cannotUnearthDuringOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setGraveyard(player1, List.of(new MaskOfTheJadecrafter()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Mask of the Jadecrafter");
+        harness.assertNotOnBattlefield(player1, "Mask of the Jadecrafter");
     }
 }
