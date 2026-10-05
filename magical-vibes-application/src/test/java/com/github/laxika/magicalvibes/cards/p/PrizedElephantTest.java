@@ -6,20 +6,21 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PrizedElephant.class, Forest.class, Plains.class})
 class PrizedElephantTest extends BaseCardTest {
 
     @Test
     @DisplayName("Base 3/3 with no Forest")
     void noBoostWithoutForest() {
-        harness.addToBattlefield(player1, new PrizedElephant());
+        Permanent elephant = harness.addToBattlefieldAndReturn(player1, new PrizedElephant());
 
-        Permanent elephant = findPermanent(player1, "Prized Elephant");
         assertThat(gqs.getEffectivePower(gd, elephant)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, elephant)).isEqualTo(3);
     }
@@ -27,10 +28,9 @@ class PrizedElephantTest extends BaseCardTest {
     @Test
     @DisplayName("Non-Forest land does not grant the boost")
     void noBoostWithNonForestLand() {
-        harness.addToBattlefield(player1, new PrizedElephant());
+        Permanent elephant = harness.addToBattlefieldAndReturn(player1, new PrizedElephant());
         harness.addToBattlefield(player1, new Plains());
 
-        Permanent elephant = findPermanent(player1, "Prized Elephant");
         assertThat(gqs.getEffectivePower(gd, elephant)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, elephant)).isEqualTo(3);
     }
@@ -38,10 +38,9 @@ class PrizedElephantTest extends BaseCardTest {
     @Test
     @DisplayName("Gets +1/+1 while controlling a Forest")
     void boostWithForest() {
-        harness.addToBattlefield(player1, new PrizedElephant());
+        Permanent elephant = harness.addToBattlefieldAndReturn(player1, new PrizedElephant());
         harness.addToBattlefield(player1, new Forest());
 
-        Permanent elephant = findPermanent(player1, "Prized Elephant");
         assertThat(gqs.getEffectivePower(gd, elephant)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, elephant)).isEqualTo(4);
     }
@@ -49,10 +48,9 @@ class PrizedElephantTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent's Forest does not grant the boost")
     void opponentForestDoesNotCount() {
-        harness.addToBattlefield(player1, new PrizedElephant());
+        Permanent elephant = harness.addToBattlefieldAndReturn(player1, new PrizedElephant());
         harness.addToBattlefield(player2, new Forest());
 
-        Permanent elephant = findPermanent(player1, "Prized Elephant");
         assertThat(gqs.getEffectivePower(gd, elephant)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, elephant)).isEqualTo(3);
     }
@@ -60,10 +58,9 @@ class PrizedElephantTest extends BaseCardTest {
     @Test
     @DisplayName("Loses the boost when the Forest leaves")
     void losesBoostWhenForestLeaves() {
-        harness.addToBattlefield(player1, new PrizedElephant());
+        Permanent elephant = harness.addToBattlefieldAndReturn(player1, new PrizedElephant());
         harness.addToBattlefield(player1, new Forest());
 
-        Permanent elephant = findPermanent(player1, "Prized Elephant");
         assertThat(gqs.getEffectivePower(gd, elephant)).isEqualTo(4);
 
         gd.playerBattlefields.get(player1.getId())
@@ -99,7 +96,6 @@ class PrizedElephantTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, elephant, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, elephant, Keyword.TRAMPLE)).isFalse();
@@ -113,5 +109,35 @@ class PrizedElephantTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Multiple Forests grant only one +1/+1 bonus")
+    void multipleForestsDoNotMultiplyBoost() {
+        Permanent elephant = harness.addToBattlefieldAndReturn(player1, new PrizedElephant());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+
+        assertThat(gqs.getEffectivePower(gd, elephant)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, elephant)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Trample is granted only on resolution and only to the activating Elephant")
+    void trampleRequiresResolutionAndOnlyAffectsSource() {
+        Permanent elephant = harness.addToBattlefieldAndReturn(player1, new PrizedElephant());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new PrizedElephant());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.hasKeyword(gd, elephant, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.TRAMPLE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, elephant, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.TRAMPLE)).isFalse();
+        assertThat(elephant.isTapped()).isFalse();
     }
 }
