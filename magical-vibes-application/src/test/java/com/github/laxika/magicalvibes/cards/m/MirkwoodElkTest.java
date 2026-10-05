@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishArchdruid;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DroveOfElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,13 +13,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MirkwoodElk.class, ElvishArchdruid.class, GrizzlyBears.class})
+@CardUsed({MirkwoodElk.class, ElvishArchdruid.class, DroveOfElves.class})
 class MirkwoodElkTest extends BaseCardTest {
 
     @Test
     void entersAndReturnsAnElfThenGainsItsPower() {
         ElvishArchdruid elf = new ElvishArchdruid();
-        GrizzlyBears nonElf = new GrizzlyBears();
+        MirkwoodElk nonElf = new MirkwoodElk();
         harness.setGraveyard(player1, List.of(elf, nonElf));
         harness.setLife(player1, 10);
         harness.setHand(player1, List.of(new MirkwoodElk()));
@@ -36,7 +36,7 @@ class MirkwoodElkTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Elvish Archdruid");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Mirkwood Elk");
         harness.assertLife(player1, 12);
     }
 
@@ -47,11 +47,7 @@ class MirkwoodElkTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(elf));
         harness.setLife(player1, 10);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(player1, List.of(0));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class))
                 .isNotNull();
@@ -61,6 +57,60 @@ class MirkwoodElkTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Elvish Archdruid");
+        harness.assertLife(player1, 12);
+    }
+
+    @Test
+    void cannotReturnAnOpponentsElfWhenOwnGraveyardHasNoElf() {
+        harness.setGraveyard(player1, List.of(new MirkwoodElk()));
+        harness.setGraveyard(player2, List.of(new ElvishArchdruid()));
+        harness.setLife(player1, 10);
+        harness.setHand(player1, List.of(new MirkwoodElk()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        harness.assertInGraveyard(player2, "Elvish Archdruid");
+        harness.assertLife(player1, 10);
+    }
+
+    @Test
+    void gainsNoLifeWhenTargetLeavesGraveyardBeforeResolution() {
+        ElvishArchdruid elf = new ElvishArchdruid();
+        harness.setGraveyard(player1, List.of(elf));
+        harness.setLife(player1, 10);
+        harness.setHand(player1, List.of(new MirkwoodElk()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(elf.getId()));
+
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(elf));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Elvish Archdruid");
+        harness.assertLife(player1, 10);
+    }
+
+    @Test
+    @CardUsed(DroveOfElves.class)
+    void gainsLifeEqualToCharacteristicDefinedPowerOfReturnedElf() {
+        DroveOfElves elf = new DroveOfElves();
+        harness.addToBattlefield(player1, new ElvishArchdruid());
+        harness.setGraveyard(player1, List.of(elf));
+        harness.setLife(player1, 10);
+        harness.setHand(player1, List.of(new MirkwoodElk()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(elf.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Drove of Elves");
         harness.assertLife(player1, 12);
     }
 }
