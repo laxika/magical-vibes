@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +22,10 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KitesailFreebooter.class, Forest.class, GrizzlyBears.class, LightningBolt.class,
+        Peek.class, Unsummon.class})
 class KitesailFreebooterTest extends BaseCardTest {
 
     /**
@@ -147,8 +151,7 @@ class KitesailFreebooterTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         UUID freebooterId = harness.getPermanentId(player1, "Kitesail Freebooter");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, freebooterId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, freebooterId);
 
         // Freebooter is dead
         harness.assertNotOnBattlefield(player1, "Kitesail Freebooter");
@@ -177,8 +180,7 @@ class KitesailFreebooterTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 1);
         UUID freebooterId = harness.getPermanentId(player1, "Kitesail Freebooter");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, freebooterId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, freebooterId);
 
         // Card returns to opponent's hand
         harness.assertInHand(player2, "Peek");
@@ -204,8 +206,7 @@ class KitesailFreebooterTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         UUID freebooterId = harness.getPermanentId(player1, "Kitesail Freebooter");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, freebooterId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, freebooterId);
 
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
     }
@@ -262,9 +263,58 @@ class KitesailFreebooterTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         UUID freebooterId = harness.getPermanentId(player1, "Kitesail Freebooter");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, freebooterId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, freebooterId);
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("returns to") && log.contains("hand"));
+    }
+
+    @Test
+    @DisplayName("Freebooter leaving before its trigger resolves still reveals the hand without exiling")
+    void leavingBeforeTriggerResolvesDoesNotExile() {
+        Card instant = new Peek();
+        harness.setHand(player2, List.of(new Unsummon(), instant));
+        harness.setHand(player1, List.of(new KitesailFreebooter()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0, 0, player2.getId());
+        harness.passBothPriorities();
+        UUID freebooterId = harness.getPermanentId(player1, "Kitesail Freebooter");
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, freebooterId);
+        harness.assertInHand(player1, "Kitesail Freebooter");
+
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.RevealedHandChoice) {
+            harness.handleCardChosen(player1, 0);
+        }
+
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(log -> log.contains("reveals their hand"));
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(instant);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exactly one eligible card must be chosen by Freebooter's controller")
+    void choiceIsMandatoryAndExilesOnlyOneCard() {
+        Card first = new Peek();
+        Card second = new Unsummon();
+        harness.setHand(player2, List.of(first, second));
+
+        castAndResolveETB();
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCardChosen(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(first);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(second);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
