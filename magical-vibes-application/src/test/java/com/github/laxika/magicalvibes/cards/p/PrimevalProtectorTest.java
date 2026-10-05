@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PrimevalProtector.class, GrizzlyBears.class})
+@CardUsed({PrimevalProtector.class, GrizzlyBears.class, SolRing.class})
 class PrimevalProtectorTest extends BaseCardTest {
 
     @Test
@@ -56,15 +57,82 @@ class PrimevalProtectorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 10);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
-        Permanent protector = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof PrimevalProtector)
-                .findFirst()
-                .orElseThrow();
+        Permanent protector = findPermanent(player1, "Primeval Protector");
         assertThat(ownBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(protector.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(opponentBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void excessOpponentCreaturesReduceCostToOneGreen() {
+        for (int i = 0; i < 12; i++) {
+            harness.addToBattlefield(player2, new PrimevalProtector());
+        }
+        harness.setHand(player1, List.of(new PrimevalProtector()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void costReductionDoesNotRemoveGreenRequirement() {
+        for (int i = 0; i < 12; i++) {
+            harness.addToBattlefield(player2, new PrimevalProtector());
+        }
+        harness.setHand(player1, List.of(new PrimevalProtector()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    void opponentNoncreaturesDoNotReduceCost() {
+        harness.addToBattlefield(player2, new SolRing());
+        harness.setHand(player1, List.of(new PrimevalProtector()));
+        harness.addMana(player1, ManaColor.GREEN, 10);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    void triggerUsesCreaturesPresentAtResolutionAndExcludesOnlyItsSource() {
+        Permanent earlierProtector = harness.addToBattlefieldAndReturn(player1, new PrimevalProtector());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new SolRing());
+        harness.setHand(player1, List.of(new PrimevalProtector()));
+        harness.addMana(player1, ManaColor.GREEN, 11);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(earlierProtector.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        Permanent lateCreature = harness.addToBattlefieldAndReturn(player1, new PrimevalProtector());
+        resolveAllTriggers();
+
+        assertThat(earlierProtector.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(lateCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(artifact.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        Permanent source = findPermanents(player1, "Primeval Protector").get(1);
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void enteringWithoutOtherCreaturesDoesNotCounterItself() {
+        harness.setHand(player1, List.of(new PrimevalProtector()));
+        harness.addMana(player1, ManaColor.GREEN, 11);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Primeval Protector")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 }
