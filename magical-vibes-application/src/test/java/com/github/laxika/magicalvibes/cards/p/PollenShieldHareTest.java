@@ -18,19 +18,17 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PollenShieldHare.class, HareRaising.class, GrizzlyBears.class})
+@CardUsed({PollenShieldHare.class, HareRaising.class, GrizzlyBears.class, Card.class})
 class PollenShieldHareTest extends BaseCardTest {
 
     @Test
     void creatureTokensYouControlGetPlusOnePlusOne() {
         harness.addToBattlefield(player1, new PollenShieldHare());
-        harness.addToBattlefield(player1, createTokenCreature("Rabbit Token", 1, 1));
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, createTokenCreature("Opponent Token", 1, 1));
-
-        Permanent ownToken = findPermanent(player1, "Rabbit Token");
-        Permanent ownCreature = findPermanent(player1, "Grizzly Bears");
-        Permanent opponentToken = findPermanent(player2, "Opponent Token");
+        Permanent ownToken = harness.addToBattlefieldAndReturn(player1,
+                createTokenCreature("Rabbit Token", 1, 1));
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentToken = harness.addToBattlefieldAndReturn(player2,
+                createTokenCreature("Opponent Token", 1, 1));
 
         assertThat(gqs.getEffectivePower(gd, ownToken)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, ownToken)).isEqualTo(2);
@@ -88,5 +86,80 @@ class PollenShieldHareTest extends BaseCardTest {
         card.setToughness(toughness);
         card.setToken(true);
         return card;
+    }
+
+    @Test
+    void adventureCountsCreaturesAtResolutionAndKeepsThatBoost() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new PollenShieldHare());
+        harness.addToBattlefield(player2, new PollenShieldHare());
+        harness.setHand(player1, List.of(new PollenShieldHare()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAdventure(player1, 0, target.getId());
+
+        Permanent token = harness.addToBattlefieldAndReturn(player1,
+                createTokenCreature("Rabbit Token", 1, 1));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(token);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+    }
+
+    @Test
+    void adventureWithRemovedTargetGoesToGraveyardInsteadOfExile() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new PollenShieldHare());
+        PollenShieldHare card = new PollenShieldHare();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAdventure(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+    }
+
+    @Test
+    void creatureCanBeCastFromExileAfterAdventureResolves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new PollenShieldHare());
+        PollenShieldHare card = new PollenShieldHare();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAdventure(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castFromExile(player1, card.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anySatisfy(permanent -> assertThat(permanent.getCard().getId()).isEqualTo(card.getId()));
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        Permanent token = harness.addToBattlefieldAndReturn(player1,
+                createTokenCreature("Rabbit Token", 1, 1));
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
+    }
+
+    @Test
+    void tokenHareBoostsItselfAndLosesBonusWhenOtherHareLeaves() {
+        Permanent hare = harness.addToBattlefieldAndReturn(player1, new PollenShieldHare());
+        PollenShieldHare tokenCard = new PollenShieldHare();
+        tokenCard.setToken(true);
+        Permanent token = harness.addToBattlefieldAndReturn(player1, tokenCard);
+
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, hare)).isEqualTo(2);
+
+        gd.playerBattlefields.get(player1.getId()).remove(hare);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
     }
 }
