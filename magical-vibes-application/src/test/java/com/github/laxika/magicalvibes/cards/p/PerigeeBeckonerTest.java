@@ -71,9 +71,9 @@ class PerigeeBeckonerTest extends BaseCardTest {
         Card bearsCard = bears.getCard();
         castBeckonerTargeting(bears);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
 
         destroy(player2, bears);
 
@@ -83,13 +83,62 @@ class PerigeeBeckonerTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getCard().getId().equals(bearsCard.getId()));
     }
 
+    @Test
+    @DisplayName("A returned creature loses the boost and cannot return a second time")
+    void returnedCreatureDoesNotRetainTemporaryEffects() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Card bearsCard = bears.getCard();
+        castBeckonerTargeting(bears);
+
+        destroy(player2, bears);
+        harness.passBothPriorities();
+
+        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(bearsCard.getId()))
+                .findFirst().orElseThrow();
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(2);
+
+        destroy(player2, returned);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bearsCard);
+    }
+
+    @Test
+    @DisplayName("Warp exiles Beckoner at the next end step and permits a later normal cast")
+    void warpExilesAndAllowsCastingOnALaterTurn() {
+        PerigeeBeckoner beckoner = new PerigeeBeckoner();
+        harness.setHand(player1, List.of(beckoner));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Perigee Beckoner");
+
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Perigee Beckoner");
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(beckoner.getId()));
+        assertThatThrownBy(() -> harness.castFromExile(player1, beckoner.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        addBeckonerMana();
+        harness.castFromExile(player1, beckoner.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Perigee Beckoner");
+        assertThat(gd.exiledCards).noneMatch(entry -> entry.card().getId().equals(beckoner.getId()));
+
+        harness.passUntil(TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Perigee Beckoner");
+    }
+
     private void castBeckonerTargeting(Permanent target) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new PerigeeBeckoner()));
         addBeckonerMana();
-        harness.getGameService().playCard(gd, player1, 0, 0, target.getId(), null);
+        harness.castCreature(player1, 0, target.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
@@ -105,7 +154,6 @@ class PerigeeBeckonerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(caster, List.of(new DoomBlade()));
         harness.addMana(caster, ManaColor.BLACK, 2);
-        harness.castInstant(caster, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, target.getId());
     }
 }
