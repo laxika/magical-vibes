@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PerimeterCaptain.class, GrizzlyBears.class, WallOfWood.class})
 class PerimeterCaptainTest extends BaseCardTest {
 
     @Test
@@ -25,8 +27,7 @@ class PerimeterCaptainTest extends BaseCardTest {
         prepareDeclareBlockers(player2);
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -45,8 +46,7 @@ class PerimeterCaptainTest extends BaseCardTest {
         prepareDeclareBlockers(player2);
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertLife(player1, 20);
@@ -80,5 +80,90 @@ class PerimeterCaptainTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Another controlled defender blocking triggers the Captain")
+    void triggersForAnotherControlledDefender() {
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        addCreatureReady(player1, new PerimeterCaptain());
+        addCreatureReady(player1, new WallOfWood());
+
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0)));
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Each controlled defender blocking creates a separate optional life gain")
+    void triggersSeparatelyForEachDefender() {
+        Permanent firstAttacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent secondAttacker = addCreatureReady(player2, new GrizzlyBears());
+        firstAttacker.setAttacking(true);
+        secondAttacker.setAttacking(true);
+        addCreatureReady(player1, new PerimeterCaptain());
+        addCreatureReady(player1, new WallOfWood());
+
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 1)));
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertLife(player1, 22);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertLife(player1, 22);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each Captain triggers when one controlled defender blocks")
+    void eachCaptainTriggersForOneBlocker() {
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        addCreatureReady(player1, new PerimeterCaptain());
+        addCreatureReady(player1, new PerimeterCaptain());
+
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 24);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Life gain still resolves after the blocking Captain leaves the battlefield")
+    void triggerResolvesAfterBlockingCaptainLeaves() {
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        Permanent captain = addCreatureReady(player1, new PerimeterCaptain());
+
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(captain);
+        gd.playerGraveyards.get(player1.getId()).add(captain.getCard());
+
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 22);
+        assertThat(gd.stack).isEmpty();
     }
 }
