@@ -72,4 +72,68 @@ class JhoirasToolboxTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an artifact creature");
     }
+
+    @Test
+    void canTargetItselfWhileTappedAndSummoningSick() {
+        Permanent toolbox = harness.addToBattlefieldAndReturn(player1, new JhoirasToolbox());
+        toolbox.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, toolbox.getId());
+        harness.passBothPriorities();
+
+        assertThat(toolbox.getRegenerationShield()).isEqualTo(1);
+        assertThat(toolbox.isTapped()).isTrue();
+    }
+
+    @Test
+    void canActivateRepeatedlyWithoutTappingOrImmediatelyRegenerating() {
+        Permanent toolbox = harness.addToBattlefieldAndReturn(player1, new JhoirasToolbox());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, toolbox.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, toolbox.getId());
+        harness.passBothPriorities();
+
+        assertThat(toolbox.getRegenerationShield()).isEqualTo(2);
+        assertThat(toolbox.isTapped()).isFalse();
+        assertThat(toolbox.getTimesRegeneratedThisTurn()).isZero();
+    }
+
+    @Test
+    void abilityDoesNothingWhenTargetIsSacrificedInResponse() {
+        Permanent toolbox = harness.addToBattlefieldAndReturn(player1, new JhoirasToolbox());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TickingGnomes());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Ticking Gnomes");
+        harness.assertNotOnBattlefield(player2, "Ticking Gnomes");
+        harness.assertLife(player1, 19);
+        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(toolbox.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    void abilityStillResolvesAfterToolboxIsDestroyed() {
+        Permanent toolbox = harness.addToBattlefieldAndReturn(player1, new JhoirasToolbox());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new TickingGnomes());
+        harness.addToBattlefield(player2, new TickingGnomes());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player2, 0, null, toolbox.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Jhoira's Toolbox");
+        harness.assertNotOnBattlefield(player1, "Jhoira's Toolbox");
+        harness.assertOnBattlefield(player1, "Ticking Gnomes");
+        assertThat(target.getRegenerationShield()).isEqualTo(1);
+    }
 }
