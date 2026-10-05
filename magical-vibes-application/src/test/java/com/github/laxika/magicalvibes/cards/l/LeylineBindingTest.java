@@ -74,8 +74,7 @@ class LeylineBindingTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Naturalize()));
         harness.addMana(player2, ManaColor.GREEN, 2);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, source.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, source.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(permanent -> permanent.getCard() instanceof GrizzlyBears);
@@ -95,6 +94,84 @@ class LeylineBindingTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LeylineBinding()));
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, ownPermanent.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Opponents' lands do not contribute to domain")
+    void domainCountsOnlyControlledLands() {
+        harness.addToBattlefield(player2, new Plains());
+        harness.addToBattlefield(player2, new Island());
+        harness.addToBattlefield(player2, new Swamp());
+        harness.addToBattlefield(player2, new Mountain());
+        harness.addToBattlefield(player2, new Forest());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareCast(5);
+
+        harness.castEnchantment(player1, 0, target.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Can be cast without any legal enter-trigger target")
+    void canCastWithoutLegalTarget() {
+        prepareCast(5);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Leyline Binding");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Domain cannot reduce the white mana requirement")
+    void domainDoesNotReduceColoredCost() {
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new LeylineBinding()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Removing Leyline Binding before its enter trigger resolves prevents exile")
+    void sourceLeavesBeforeTriggerResolves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareCast(5);
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        Permanent source = findPermanent(player1, "Leyline Binding");
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player2, 0, source.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Leyline Binding");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can exile an opposing enchantment as well as a creature")
+    void exilesOpposingEnchantment() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LeylineBinding());
+
+        castAndResolve(target.getId(), 5);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target.getCard());
     }
 
     private void castAndResolve(UUID targetId, int colorlessMana) {

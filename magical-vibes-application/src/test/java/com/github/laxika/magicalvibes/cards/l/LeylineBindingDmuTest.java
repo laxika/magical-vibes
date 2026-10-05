@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -28,8 +29,8 @@ class LeylineBindingDmuTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player1, new Mountain());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        UUID targetId = target.getId();
 
         harness.setHand(player1, List.of(new LeylineBinding()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -44,8 +45,8 @@ class LeylineBindingDmuTest extends BaseCardTest {
     @Test
     @DisplayName("Leyline Binding can be cast during an opponent's turn")
     void hasFlash() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        UUID targetId = target.getId();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -63,8 +64,8 @@ class LeylineBindingDmuTest extends BaseCardTest {
     @Test
     @DisplayName("ETB exiles the target until Leyline Binding leaves the battlefield")
     void exilesUntilSourceLeaves() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        UUID targetId = target.getId();
         harness.setHand(player1, List.of(new LeylineBinding()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
@@ -84,8 +85,7 @@ class LeylineBindingDmuTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 2);
         UUID bindingId = harness.getPermanentId(player1, "Leyline Binding");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bindingId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bindingId);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
@@ -97,13 +97,11 @@ class LeylineBindingDmuTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
-        harness.addToBattlefield(player2, new Forest());
-        UUID forestId = harness.getPermanentId(player2, "Forest");
+        UUID forestId = harness.addToBattlefieldAndReturn(player2, new Forest()).getId();
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, forestId))
                 .isInstanceOf(IllegalStateException.class);
 
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID ownBearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID ownBearsId = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, ownBearsId))
                 .isInstanceOf(IllegalStateException.class);
     }
