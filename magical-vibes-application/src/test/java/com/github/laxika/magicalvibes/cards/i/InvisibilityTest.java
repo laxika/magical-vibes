@@ -133,6 +133,51 @@ class InvisibilityTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("A Wall without flying cannot block an enchanted flying creature")
+    void wallMustAlsoSatisfyFlyingRestriction() {
+        Permanent attacker = addCreatureReady(player1, new AvenFisher());
+        attacker.setAttacking(true);
+        attachInvisibility(attacker);
+        addCreatureReady(player2, new WallOfStone());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("flying");
+    }
+
+    @Test
+    @DisplayName("Multiple Walls may block the enchanted creature")
+    void multipleWallsCanBlock() {
+        attackingEnchantedCreature();
+        Permanent firstWall = addCreatureReady(player2, new WallOfStone());
+        Permanent secondWall = addCreatureReady(player2, new WallOfStone());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+
+        assertThat(firstWall.isBlocking()).isTrue();
+        assertThat(secondWall.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Invisibility restricts an opponent's creature even when the defending player controls the Aura")
+    void restrictionDoesNotDependOnAuraController() {
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        attachInvisibility(attacker);
+        addCreatureReady(player1, new GrizzlyBears());
+
+        prepareDeclareBlockers(player2);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can only be blocked by Walls");
+    }
+
     private Permanent attackingEnchantedCreature() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
