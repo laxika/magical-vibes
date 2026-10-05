@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiantMantis;
+import com.github.laxika.magicalvibes.cards.s.StoneHavenMedic;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,14 +14,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KitesailScout.class, GrizzlyBears.class})
+@CardUsed({KitesailScout.class, StoneHavenMedic.class, GiantMantis.class})
 class KitesailScoutTest extends BaseCardTest {
 
     @Test
     @DisplayName("Flying prevents a nonflying creature from blocking Kitesail Scout")
     void flyingPreventsNonFlyingCreatureFromBlocking() {
         addCreatureReady(player1, new KitesailScout());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new StoneHavenMedic());
 
         declareAttackersAndPrepareBlockers(List.of(0));
 
@@ -34,6 +35,30 @@ class KitesailScoutTest extends BaseCardTest {
     @DisplayName("A creature with flying can block Kitesail Scout")
     void flyingCreatureCanBlockKitesailScout() {
         addCreatureReady(player1, new KitesailScout());
+        Permanent blocker = addCreatureReady(player2, new KitesailScout());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A creature with reach can block Kitesail Scout")
+    void reachCreatureCanBlockKitesailScout() {
+        addCreatureReady(player1, new KitesailScout());
+        Permanent blocker = addCreatureReady(player2, new GiantMantis());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Kitesail Scout can block a creature without flying")
+    void kitesailScoutCanBlockNonFlyingCreature() {
+        addCreatureReady(player1, new StoneHavenMedic());
         Permanent blocker = addCreatureReady(player2, new KitesailScout());
 
         declareAttackersAndPrepareBlockers(List.of(0));
