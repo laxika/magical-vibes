@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.i.InfernalDarkness;
 import com.github.laxika.magicalvibes.cards.k.KeldonNecropolis;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -10,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PulseOfLlanowar.class, Forest.class, KeldonNecropolis.class})
+@CardUsed({PulseOfLlanowar.class, Forest.class, KeldonNecropolis.class, InfernalDarkness.class})
 class PulseOfLlanowarTest extends BaseCardTest {
 
     @Test
@@ -49,5 +50,48 @@ class PulseOfLlanowarTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    void canChooseDifferentColorsForSeparateLandActivations() {
+        harness.addToBattlefield(player1, new PulseOfLlanowar());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.tapPermanent(player1, 1);
+        harness.handleListChoice(player1, "RED");
+        harness.tapPermanent(player1, 2);
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void multipleCopiesDoNotIncreaseManaProduced() {
+        harness.addToBattlefield(player1, new PulseOfLlanowar());
+        harness.addToBattlefield(player1, new PulseOfLlanowar());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.tapPermanent(player1, 2);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void controllerChoosesReplacementOrderWithInfernalDarkness() {
+        harness.addToBattlefield(player1, new PulseOfLlanowar());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new InfernalDarkness());
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
     }
 }
