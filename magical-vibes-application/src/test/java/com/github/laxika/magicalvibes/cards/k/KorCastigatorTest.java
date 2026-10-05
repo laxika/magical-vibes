@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CliffsideLookout;
+import com.github.laxika.magicalvibes.cards.e.EldraziDevastator;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KorCastigator.class, GrizzlyBears.class})
+@CardUsed({KorCastigator.class, CliffsideLookout.class, EldraziDevastator.class})
 class KorCastigatorTest extends BaseCardTest {
 
     @Test
@@ -38,7 +39,7 @@ class KorCastigatorTest extends BaseCardTest {
     @DisplayName("Kor Castigator can be blocked by a creature that is not an Eldrazi Scion")
     void canBeBlockedByNonEldraziCreature() {
         Permanent attacker = addAttacker();
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new CliffsideLookout());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
@@ -56,6 +57,35 @@ class KorCastigatorTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 indexOf(player2, blocker), indexOf(player1, attacker))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Kor Castigator can be blocked by an Eldrazi that is not a Scion")
+    void canBeBlockedByNonScionEldrazi() {
+        Permanent attacker = addAttacker();
+        Permanent blocker = addCreatureReady(player2, new EldraziDevastator());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                indexOf(player2, blocker), indexOf(player1, attacker))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Kor Castigator does not prevent an Eldrazi Scion from blocking another attacker")
+    void restrictionOnlyAppliesToKorCastigator() {
+        addAttacker();
+        Permanent otherAttacker = addCreatureReady(player1, new CliffsideLookout());
+        otherAttacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, creatureToken("Eldrazi Scion", CardSubtype.ELDRAZI,
+                CardSubtype.SCION));
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                indexOf(player2, blocker), indexOf(player1, otherAttacker))));
 
         assertThat(blocker.isBlocking()).isTrue();
     }
