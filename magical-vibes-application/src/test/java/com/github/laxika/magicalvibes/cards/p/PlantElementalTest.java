@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +14,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PlantElemental.class, Forest.class})
+@CardUsed({PlantElemental.class, Forest.class, Island.class})
 class PlantElementalTest extends BaseCardTest {
 
     private void castPlantElemental() {
@@ -87,11 +88,7 @@ class PlantElementalTest extends BaseCardTest {
         // More Forests than needed — a multi-permanent choice is required.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
 
-        List<UUID> forestIds = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .map(p -> p.getId())
-                .limit(1)
-                .toList();
+        List<UUID> forestIds = List.of(findPermanent(player1, "Forest").getId());
         harness.handleMultiplePermanentsChosen(player1, forestIds);
 
         // One Forest sacrificed, one remains; Plant Elemental stays.
@@ -122,5 +119,34 @@ class PlantElementalTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Plant Elemental");
         harness.assertInGraveyard(player1, "Plant Elemental");
         assertThat(countPermanents(player2, "Forest")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A land without the Forest subtype cannot pay the sacrifice cost")
+    void otherLandDoesNotCount() {
+        harness.addToBattlefield(player1, new Island());
+        castPlantElemental();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Plant Elemental");
+        harness.assertInGraveyard(player1, "Plant Elemental");
+        harness.assertOnBattlefield(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("Plant Elemental remains on the battlefield until its entry trigger resolves")
+    void sacrificeWaitsForEntryTrigger() {
+        harness.setHand(player1, List.of(new PlantElemental()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Plant Elemental");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Plant Elemental");
+        harness.assertInGraveyard(player1, "Plant Elemental");
     }
 }
