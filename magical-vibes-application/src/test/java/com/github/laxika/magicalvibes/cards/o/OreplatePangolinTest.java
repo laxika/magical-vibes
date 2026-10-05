@@ -79,4 +79,47 @@ class OreplatePangolinTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.pendingMayAbilities).isEmpty();
     }
+
+    @Test
+    @DisplayName("An opponent's artifact entering does not trigger Oreplate Pangolin")
+    void opponentArtifactEntryDoesNotTrigger() {
+        Permanent pangolin = harness.addToBattlefieldAndReturn(player1, new OreplatePangolin());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new OreplatePangolin()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(pangolin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Another Pangolin entering triggers only the existing Pangolin")
+    void anotherPangolinEntryPutsCounterOnlyOnExistingSource() {
+        Permanent existing = harness.addToBattlefieldAndReturn(player1, new OreplatePangolin());
+        harness.setHand(player1, List.of(new OreplatePangolin()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent entering = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> !permanent.getId().equals(existing.getId()))
+                .findFirst().orElseThrow();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(existing.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(entering.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
 }
