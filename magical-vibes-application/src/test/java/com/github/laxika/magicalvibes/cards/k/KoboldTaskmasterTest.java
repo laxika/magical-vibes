@@ -83,4 +83,27 @@ class KoboldTaskmasterTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, kobold)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, kobold)).isEqualTo(1);
     }
+    @Test
+    @DisplayName("Removing a Taskmaster removes only its own bonus")
+    void removingTaskmasterRemovesOnlyItsBonus() {
+        Permanent firstTaskmaster = harness.addToBattlefieldAndReturn(player1, new KoboldTaskmaster());
+        Permanent secondTaskmaster = harness.addToBattlefieldAndReturn(player1, new KoboldTaskmaster());
+        Permanent kobold = harness.addToBattlefieldAndReturn(player1, new KoboldsOfKherKeep());
+
+        assertThat(gqs.getEffectivePower(gd, kobold)).isEqualTo(2);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, firstTaskmaster));
+
+        assertThat(gqs.getEffectivePower(gd, kobold)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, kobold)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, secondTaskmaster)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, secondTaskmaster)).isEqualTo(2);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, secondTaskmaster));
+
+        assertThat(gqs.getEffectivePower(gd, kobold)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, kobold)).isEqualTo(1);
+    }
 }
