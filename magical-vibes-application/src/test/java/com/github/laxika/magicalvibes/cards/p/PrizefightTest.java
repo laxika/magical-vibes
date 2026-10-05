@@ -27,10 +27,10 @@ class PrizefightTest extends BaseCardTest {
 
         UUID ownCreatureId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID opposingCreatureId = harness.getPermanentId(player2, "Llanowar Elves");
-        harness.castInstant(player1, 0, List.of(ownCreatureId, opposingCreatureId));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(ownCreatureId, opposingCreatureId));
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getMarkedDamage()).isEqualTo(1);
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
         assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
     }
@@ -70,5 +70,54 @@ class PrizefightTest extends BaseCardTest {
                 List.of(opposingCreatureId, ownCreatureId)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature you control");
+    }
+
+    @Test
+    void createsTreasureWhenControlledFightTargetIsRemovedBeforeResolution() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new Prizefight()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, List.of(ownCreature.getId(), opposingCreature.getId()));
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(opposingCreature.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Llanowar Elves");
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Prizefight");
+    }
+
+    @Test
+    void doesNotCreateTreasureWhenBothTargetsAreRemovedBeforeResolution() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new Prizefight()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, List.of(ownCreature.getId(), opposingCreature.getId()));
+        gd.playerBattlefields.get(player1.getId()).clear();
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Treasure")).isZero();
+        harness.assertInGraveyard(player1, "Prizefight");
+    }
+
+    @Test
+    void bothCreaturesDealLethalFightDamageAndTreasureIsStillCreated() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Prizefight()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player1, 0, List.of(ownCreature.getId(), opposingCreature.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
     }
 }
