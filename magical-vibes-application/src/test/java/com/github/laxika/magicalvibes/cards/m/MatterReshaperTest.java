@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GraspOfDarkness;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.u.UntamedHunger;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MatterReshaper.class, WrathOfGod.class, Forest.class, SerraAngel.class})
+@CardUsed({MatterReshaper.class, WrathOfGod.class, Forest.class, SerraAngel.class,
+        GraspOfDarkness.class, UntamedHunger.class})
 class MatterReshaperTest extends BaseCardTest {
 
     @Test
@@ -83,13 +86,101 @@ class MatterReshaperTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WrathOfGod()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        gs.playCard(gd, player1, 0, 0, null, null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     private void setLibrary(Card... cards) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(cards));
+        harness.setLibrary(player1, List.of(cards));
+    }
+
+    @Test
+    @DisplayName("A permanent with mana value exactly three can enter without being cast")
+    void acceptsPermanentAtLimit() {
+        MatterReshaper revealed = new MatterReshaper();
+        harness.setLibrary(player1, List.of(revealed));
+        killWithGraspOfDarkness();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anySatisfy(permanent -> assertThat(permanent.getCard()).isSameAs(revealed));
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(revealed);
+    }
+
+    @Test
+    @DisplayName("An empty library causes no choice and does not cause a failed draw")
+    void emptyLibraryDoesNothing() {
+        harness.setLibrary(player1, List.of());
+        killWithGraspOfDarkness();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Matter Reshaper");
+    }
+
+    @Test
+    @DisplayName("A nonpermanent with mana value below three goes to hand without revealing further cards")
+    void onlyTopCardMovesToHand() {
+        GraspOfDarkness top = new GraspOfDarkness();
+        MatterReshaper second = new MatterReshaper();
+        harness.setLibrary(player1, List.of(top, second));
+        killWithGraspOfDarkness();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(top);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A revealed Aura enters attached to a chosen legal creature")
+    void choosesAttachmentForRevealedAura() {
+        UntamedHunger aura = new UntamedHunger();
+        harness.setLibrary(player1, List.of(aura));
+        harness.addToBattlefield(player2, new MatterReshaper());
+        var creatureId = harness.getPermanentId(player2, "Matter Reshaper");
+        killWithGraspOfDarkness();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, creatureId);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anySatisfy(permanent -> {
+                    assertThat(permanent.getCard()).isSameAs(aura);
+                    assertThat(permanent.getAttachedTo()).isEqualTo(creatureId);
+                });
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An Aura accepted with no legal creature to enchant remains on top of the library")
+    void auraWithoutLegalAttachmentRemainsInLibrary() {
+        UntamedHunger aura = new UntamedHunger();
+        harness.setLibrary(player1, List.of(aura));
+        killWithGraspOfDarkness();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(aura);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(aura);
+        harness.assertNotOnBattlefield(player1, "Untamed Hunger");
+        harness.assertNotInGraveyard(player1, "Untamed Hunger");
+    }
+
+    private void killWithGraspOfDarkness() {
+        harness.addToBattlefield(player1, new MatterReshaper());
+        var creatureId = harness.getPermanentId(player1, "Matter Reshaper");
+        harness.setHand(player1, List.of(new GraspOfDarkness()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, creatureId);
     }
 }
