@@ -87,11 +87,70 @@ class KamiOfTatteredShojiTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, kami, Keyword.FLYING)).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         Permanent afterCleanup = findPermanent(player1, "Kami of Tattered Shoji");
         assertThat(gqs.hasKeyword(gd, afterCleanup, Keyword.FLYING)).isFalse();
+    }
+    @Test
+    @DisplayName("Flying is granted only when the trigger resolves, before the Spirit spell resolves")
+    void flyingWaitsForTriggerResolution() {
+        Permanent kami = addKami();
+
+        harness.castFromHand(player1, new KamiOfFalseHope(), "{W}");
+
+        assertThat(gqs.hasKeyword(gd, kami, Keyword.FLYING)).isFalse();
+        harness.assertNotOnBattlefield(player1, "Kami of False Hope");
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, kami, Keyword.FLYING)).isTrue();
+        harness.assertNotOnBattlefield(player1, "Kami of False Hope");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Kami of False Hope");
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Kami of False Hope"), Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Casting Kami itself does not grant it flying")
+    void doesNotTriggerOnItsOwnCast() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player1, new KamiOfTatteredShoji(), "{4}{W}");
+        harness.passBothPriorities();
+
+        Permanent kami = findPermanent(player1, "Kami of Tattered Shoji");
+        assertThat(kami).isNotNull();
+        assertThat(gqs.hasKeyword(gd, kami, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not trigger when a Spirit enters without being cast")
+    void noTriggerOnSpiritEnteringWithoutCast() {
+        Permanent kami = addKami();
+
+        harness.enterBattlefieldAndReturn(player1, new KamiOfFalseHope());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, kami, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Your Arcane spell triggers flying during an opponent's turn")
+    void gainsFlyingDuringOpponentsTurn() {
+        Permanent kami = addKami();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new HundredTalonStrike()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, kami.getId());
+
+        assertThat(gqs.hasKeyword(gd, kami, Keyword.FLYING)).isTrue();
     }
 }
