@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -101,6 +103,7 @@ class NovijenSagesTest extends BaseCardTest {
     @DisplayName("Ability cannot use +1/+1 counters on an opponent's creature")
     void abilityRequiresCountersOnControlledCreatures() {
         Permanent sages = addCreatureReady(player1, new NovijenSages());
+        sages.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         Permanent opponentCharger = addCreatureReady(player2, new MistralCharger());
         opponentCharger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
@@ -111,7 +114,7 @@ class NovijenSagesTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("counter");
-        assertThat(sages.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(sages.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -127,6 +130,62 @@ class NovijenSagesTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("counter");
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Sages can pay both counters from itself")
+    void tappedSummoningSickSagesCanDraw() {
+        Permanent sages = castSages();
+        sages.setTapped(true);
+        harness.setLibrary(player1, List.of(new MistralCharger()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(sages.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(sages.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Draw resolves after removing Sages' last two counters kills it")
+    void drawResolvesAfterSourceDiesToCost() {
+        Permanent sages = castSages();
+        sages.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setLibrary(player1, List.of(new MistralCharger()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Novijen Sages");
+        harness.assertInGraveyard(player1, "Novijen Sages");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Sages can draw using counters exclusively from another creature")
+    void removesBothCountersFromAnotherCreature() {
+        Permanent sages = castSages();
+        Permanent charger = addCreatureReady(player1, new MistralCharger());
+        charger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setLibrary(player1, List.of(new MistralCharger()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handlePermanentChosen(player1, charger.getId());
+        harness.handlePermanentChosen(player1, charger.getId());
+        harness.passBothPriorities();
+
+        assertThat(sages.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
 
     private Permanent castSages() {
