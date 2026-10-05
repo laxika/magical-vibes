@@ -1,26 +1,28 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.d.DarkthicketWolf;
+import com.github.laxika.magicalvibes.cards.a.AbbeyGriffin;
+import com.github.laxika.magicalvibes.cards.d.DevilsPlay;
+import com.github.laxika.magicalvibes.cards.g.Geistflame;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.b.BruvacTheGrandiloquent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Mindshrieker.class, Forest.class, DarkthicketWolf.class, AbbeyGriffin.class, DevilsPlay.class, Geistflame.class, BruvacTheGrandiloquent.class})
 class MindshriekerTest extends BaseCardTest {
-
-    // ===== Activation =====
 
     @Test
     @DisplayName("Activating ability targeting a player puts it on the stack")
@@ -33,7 +35,7 @@ class MindshriekerTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Mindshrieker");
+        assertThat(entry.getCard()).isInstanceOf(Mindshrieker.class);
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
@@ -49,16 +51,14 @@ class MindshriekerTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 
-    // ===== Mill + boost =====
-
     @Test
     @DisplayName("Mills one card and boosts by milled card's mana value")
     void millsOneCardAndBoosts() {
         Permanent mindshrieker = addMindshrieker(player1);
         addActivationMana(player1);
 
-        // Set up opponent library with a known card: HillGiant (MV 4)
-        gd.playerDecks.put(player2.getId(), new ArrayList<>(List.of(new HillGiant())));
+        // Set up opponent library with a known card: AbbeyGriffin (MV 4)
+        harness.setLibrary(player2, List.of(new AbbeyGriffin()));
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -79,7 +79,7 @@ class MindshriekerTest extends BaseCardTest {
         addActivationMana(player1);
 
         // Forest has MV 0
-        gd.playerDecks.put(player2.getId(), new ArrayList<>(List.of(new Forest())));
+        harness.setLibrary(player2, List.of(new Forest()));
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -95,8 +95,8 @@ class MindshriekerTest extends BaseCardTest {
         Permanent mindshrieker = addMindshrieker(player1);
         addActivationMana(player1);
 
-        // GrizzlyBears has MV 2
-        gd.playerDecks.put(player2.getId(), new ArrayList<>(List.of(new GrizzlyBears())));
+        // DarkthicketWolf has MV 2
+        harness.setLibrary(player2, List.of(new DarkthicketWolf()));
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -105,16 +105,14 @@ class MindshriekerTest extends BaseCardTest {
         assertThat(mindshrieker.getToughnessModifier()).isEqualTo(2);
     }
 
-    // ===== Can target self =====
-
     @Test
     @DisplayName("Can target yourself to mill your own library")
     void canTargetSelf() {
         Permanent mindshrieker = addMindshrieker(player1);
         addActivationMana(player1);
 
-        // Set up own library with Shock (MV 1)
-        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new Shock())));
+        // Set up own library with DevilsPlay (MV 1)
+        harness.setLibrary(player1, List.of(new DevilsPlay()));
 
         harness.activateAbility(player1, 0, null, player1.getId());
         harness.passBothPriorities();
@@ -125,8 +123,6 @@ class MindshriekerTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
     }
 
-    // ===== Multiple activations =====
-
     @Test
     @DisplayName("Multiple activations stack boosts")
     void multipleActivationsStackBoosts() {
@@ -134,16 +130,16 @@ class MindshriekerTest extends BaseCardTest {
         addActivationMana(player1);
         addActivationMana(player1);
 
-        // GrizzlyBears (MV 2) + Shock (MV 1)
-        gd.playerDecks.put(player2.getId(), new ArrayList<>(List.of(
-                new GrizzlyBears(), new Shock()
-        )));
+        // DarkthicketWolf (MV 2) + DevilsPlay (MV 1)
+        harness.setLibrary(player2, List.of(
+                new DarkthicketWolf(), new DevilsPlay()
+        ));
 
-        // First activation — mills GrizzlyBears (MV 2)
+        // First activation mills DarkthicketWolf (MV 2)
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        // Second activation — mills Shock (MV 1)
+        // Second activation mills DevilsPlay (MV 1)
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
@@ -153,15 +149,13 @@ class MindshriekerTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
 
-    // ===== Edge cases =====
-
     @Test
     @DisplayName("Does nothing when target player's library is empty")
     void doesNothingWhenLibraryEmpty() {
         Permanent mindshrieker = addMindshrieker(player1);
         addActivationMana(player1);
 
-        gd.playerDecks.put(player2.getId(), new ArrayList<>());
+        harness.setLibrary(player2, List.of());
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -176,9 +170,9 @@ class MindshriekerTest extends BaseCardTest {
         addMindshrieker(player1);
         addActivationMana(player1);
 
-        gd.playerDecks.put(player2.getId(), new ArrayList<>(List.of(
-                new Shock(), new GrizzlyBears(), new HillGiant()
-        )));
+        harness.setLibrary(player2, List.of(
+                new DevilsPlay(), new DarkthicketWolf(), new AbbeyGriffin()
+        ));
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -188,13 +182,60 @@ class MindshriekerTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
     }
 
-    // ===== Helpers =====
+    @Test
+    void doubledMillUsesTotalManaValue() {
+        Permanent mindshrieker = addMindshrieker(player1);
+        harness.addToBattlefield(player1, new BruvacTheGrandiloquent());
+        addActivationMana(player1);
+        harness.setLibrary(player2, List.of(new DarkthicketWolf(), new AbbeyGriffin()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(mindshrieker.getPowerModifier()).isEqualTo(6);
+        assertThat(mindshrieker.getToughnessModifier()).isEqualTo(6);
+    }
+
+    @Test
+    void boostExpiresAtEndOfTurn() {
+        Permanent mindshrieker = addMindshrieker(player1);
+        addActivationMana(player1);
+        harness.setLibrary(player2, List.of(new AbbeyGriffin()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        assertThat(mindshrieker.getPowerModifier()).isEqualTo(4);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(mindshrieker.getPowerModifier()).isZero();
+        assertThat(mindshrieker.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void millsEvenWhenSourceIsDestroyedInResponse() {
+        Permanent mindshrieker = addMindshrieker(player1);
+        addActivationMana(player1);
+        harness.setLibrary(player2, List.of(new AbbeyGriffin()));
+        harness.setHand(player2, List.of(new Geistflame()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.castInstant(player2, 0, mindshrieker.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Mindshrieker");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Abbey Griffin");
+    }
 
     private Permanent addMindshrieker(Player player) {
-        Mindshrieker card = new Mindshrieker();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new Mindshrieker());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
