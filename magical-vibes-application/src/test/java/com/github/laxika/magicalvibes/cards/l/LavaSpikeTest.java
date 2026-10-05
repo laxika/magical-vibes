@@ -70,4 +70,36 @@ class LavaSpikeTest extends BaseCardTest {
                 harness.getPermanentId(player2, "Errant Ephemeron")))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Can deal lethal damage to its controller's planeswalker")
+    void lethalDamageToOwnPlaneswalker() {
+        Permanent elspeth = harness.addToBattlefieldAndReturn(player1, new ElspethKnightErrant());
+        elspeth.setCounterCount(CounterType.LOYALTY, 3);
+        giveLavaSpike();
+
+        harness.castAndResolveSorcery(player1, 0, elspeth.getId());
+
+        harness.assertNotOnBattlefield(player1, "Elspeth, Knight-Errant");
+        harness.assertInGraveyard(player1, "Elspeth, Knight-Errant");
+        harness.assertInGraveyard(player1, "Lava Spike");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Does not damage a player when the targeted planeswalker leaves before resolution")
+    void noDamageWhenPlaneswalkerTargetLeaves() {
+        Permanent elspeth = harness.addToBattlefieldAndReturn(player2, new ElspethKnightErrant());
+        giveLavaSpike();
+
+        harness.castSorcery(player1, 0, elspeth.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(elspeth);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Lava Spike");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
 }
