@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MistformMask.class, MistformMutant.class, Swamp.class})
+@CardUsed({MistformMask.class, MistformMutant.class, Swamp.class, Naturalize.class})
 class MistformMaskTest extends BaseCardTest {
 
     @Test
@@ -100,6 +101,51 @@ class MistformMaskTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, swamp.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("A later activation replaces the previously chosen creature type")
+    void laterActivationReplacesChosenType() {
+        Permanent creature = addAttachedMask();
+
+        activateMask(CardSubtype.GOBLIN);
+        activateMask(CardSubtype.ELF);
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, creature)).containsExactly(CardSubtype.ELF);
+    }
+
+    @Test
+    @DisplayName("The ability still changes the enchanted creature after the Aura is destroyed in response")
+    void abilityResolvesAfterAuraIsDestroyed() {
+        Permanent creature = addAttachedMask();
+        Permanent mask = findPermanent(player1, "Mistform Mask");
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.castAndResolveInstant(player1, 0, mask.getId());
+        harness.assertInGraveyard(player1, "Mistform Mask");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, creature)).containsExactly(CardSubtype.GOBLIN);
+    }
+
+    @Test
+    @DisplayName("Destroying the Aura does not end an already resolved type-changing effect")
+    void resolvedEffectSurvivesAuraDestruction() {
+        Permanent creature = addAttachedMask();
+        Permanent mask = findPermanent(player1, "Mistform Mask");
+        activateMask(CardSubtype.GOBLIN);
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, mask.getId());
+
+        harness.assertInGraveyard(player1, "Mistform Mask");
+        assertThat(gqs.effectiveCreatureSubtypes(gd, creature)).containsExactly(CardSubtype.GOBLIN);
     }
 
     private Permanent addAttachedMask() {
