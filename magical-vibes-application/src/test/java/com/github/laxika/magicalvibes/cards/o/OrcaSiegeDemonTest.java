@@ -58,12 +58,38 @@ class OrcaSiegeDemonTest extends BaseCardTest {
         assertThat(bears.getMarkedDamage()).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("Orca's death asks for targets and damage division before players can respond")
+    void deathRequestsTargetsAndDivision() {
+        Permanent orca = addCreatureReady(player1, new OrcaSiegeDemon());
+        harness.setHand(player1, List.of(new Murder()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, orca.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.assertInGraveyard(player1, "Orca, Siege Demon");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A creature controlled by Orca's controller dying also adds a counter")
+    void ownCreatureDiesPutsCounterOnOrca() {
+        Permanent orca = addCreatureReady(player1, new OrcaSiegeDemon());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        destroyWithMurder(player1, bears.getId());
+
+        assertThat(orca.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private void destroyWithMurder(Player caster, UUID targetId) {
         harness.setHand(caster, List.of(new Murder()));
         harness.addMana(caster, ManaColor.COLORLESS, 1);
         harness.addMana(caster, ManaColor.BLACK, 2);
-        harness.castInstant(caster, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, targetId);
         harness.passBothPriorities();
     }
 }
