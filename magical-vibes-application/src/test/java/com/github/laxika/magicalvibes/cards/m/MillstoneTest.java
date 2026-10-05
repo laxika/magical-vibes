@@ -218,15 +218,52 @@ class MillstoneTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate ability the turn it enters the battlefield (no summoning sickness for artifacts)")
     void noSummoningSicknessForArtifact() {
-        Millstone card = new Millstone();
-        Permanent millstone = new Permanent(card);
+        Permanent millstone = harness.addToBattlefieldAndReturn(player1, new Millstone());
         millstone.setSummoningSick(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(millstone);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
         assertThat(millstone.isTapped()).isTrue();
+    }
+    @Test
+    @DisplayName("Ability mills the target's cards even after Millstone leaves the battlefield")
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent millstone = addReadyMillstone(player1);
+        Card first = new Millstone();
+        Card second = new Millstone();
+        Card third = new Millstone();
+        harness.setLibrary(player2, List.of(first, second, third));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, millstone));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(millstone.getCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(third);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Milling the last cards does not cause a player to lose")
+    void millingLastCardsDoesNotCauseLoss() {
+        addReadyMillstone(player1);
+        Card first = new Millstone();
+        Card second = new Millstone();
+        harness.setLibrary(player2, List.of(first, second));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.status).isNotEqualTo(com.github.laxika.magicalvibes.model.GameStatus.FINISHED);
     }
     private Permanent addReadyMillstone(Player player) {
         Permanent perm = harness.addToBattlefieldAndReturn(player, new Millstone());
