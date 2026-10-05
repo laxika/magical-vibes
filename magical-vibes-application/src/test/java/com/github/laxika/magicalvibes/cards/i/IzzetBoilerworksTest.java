@@ -67,6 +67,27 @@ class IzzetBoilerworksTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's land cannot satisfy the return trigger")
+    void cannotReturnOpponentsLand() {
+        Permanent opposingLand = harness.addToBattlefieldAndReturn(player2, new GruulTurf());
+        harness.setHand(player1, List.of(new IzzetBoilerworks()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent boilerworks = findPermanent(player1, "Izzet Boilerworks");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+                .containsExactly(boilerworks.getId())
+                .doesNotContain(opposingLand.getId());
+        harness.handlePermanentChosen(player1, boilerworks.getId());
+
+        harness.assertInHand(player1, "Izzet Boilerworks");
+        harness.assertNotOnBattlefield(player1, "Izzet Boilerworks");
+        harness.assertOnBattlefield(player2, "Gruul Turf");
+        harness.assertNotInHand(player2, "Gruul Turf");
+    }
+
+    @Test
     @DisplayName("Only offers controlled lands and returns the chosen land to its owner's hand")
     void onlyOffersControlledLandsAndReturnsChosenLandToItsOwner() {
         IzzetBoilerworks borrowedLandCard = new IzzetBoilerworks();
