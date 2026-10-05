@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
+import com.github.laxika.magicalvibes.cards.s.SpiritLink;
 import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,7 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({JadeMonolith.class, GrizzlyBears.class, ProdigalSorcerer.class, LightningBolt.class})
+@CardUsed({JadeMonolith.class, GrizzlyBears.class, ProdigalSorcerer.class, LightningBolt.class,
+        SpiritLink.class})
 class JadeMonolithTest extends BaseCardTest {
 
     // ===== Activation / source choice =====
@@ -218,16 +220,87 @@ class JadeMonolithTest extends BaseCardTest {
         assertThat(gd.deferPlayerLossCheck).isFalse();
     }
 
-    // ===== Helpers =====
+    @Test
+    void redirectsOnlyTheFirstDamageEventFromChosenSource() {
+        Permanent monolith = addCreatureReady(player1, new JadeMonolith());
+        Permanent sorcerer = addCreatureReady(player1, new ProdigalSorcerer());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, indexOf(player1, monolith), null, creature.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, sorcerer.getId());
+
+        harness.activateAbility(player1, indexOf(player1, sorcerer), null, creature.getId());
+        harness.passBothPriorities();
+        assertThat(creature.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 19);
+
+        sorcerer.setTapped(false);
+        harness.activateAbility(player1, indexOf(player1, sorcerer), null, creature.getId());
+        harness.passBothPriorities();
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    void redirectedNoncombatDamageStillTriggersSpiritLink() {
+        Permanent monolith = addCreatureReady(player1, new JadeMonolith());
+        Permanent sorcerer = addCreatureReady(player1, new ProdigalSorcerer());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new SpiritLink()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castEnchantment(player2, 0, sorcerer.getId());
+        harness.passBothPriorities();
+        harness.forceActivePlayer(player1);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, indexOf(player1, monolith), null, creature.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, sorcerer.getId());
+        harness.activateAbility(player1, indexOf(player1, sorcerer), null, creature.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(creature.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 21);
+    }
+
+    @Test
+    void canChooseDepartedSourceReferredToByWaitingRedirectEffect() {
+        Permanent monolith = addCreatureReady(player1, new JadeMonolith());
+        Permanent source = addCreatureReady(player1, new ProdigalSorcerer());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, indexOf(player1, monolith), null, creature.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, source.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+
+        harness.activateAbility(player1, indexOf(player1, monolith), null, creature.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(source.getId());
+        harness.handlePermanentChosen(player1, source.getId());
+    }
 
     private Permanent addReadyStats(Player player, int power, int toughness) {
         GrizzlyBears card = new GrizzlyBears();
         card.setPower(power);
         card.setToughness(toughness);
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, card);
     }
 
     private int indexOf(Player player, Permanent perm) {
