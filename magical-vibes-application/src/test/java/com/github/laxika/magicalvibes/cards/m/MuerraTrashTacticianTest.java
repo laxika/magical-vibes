@@ -74,6 +74,146 @@ class MuerraTrashTacticianTest extends BaseCardTest {
         harness.assertLife(player1, 23);
     }
 
+    @Test
+    void countsOnlyControlledRaccoonsWhenManaTriggerResolves() {
+        harness.addToBattlefield(player1, new MuerraTrashTactician());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new RaccoonRallier());
+        advanceToPrecombatMain(player1);
+        harness.addToBattlefield(player1, new RaccoonRallier());
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GREEN");
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+    }
+
+    @Test
+    void gainsLifeWhenOneSpellCrossesFourAndDoesNotTriggerAgain() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new MuerraTrashTactician());
+        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock(), new RaccoonRallier(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        castShocks(3);
+        harness.assertLife(player1, 20);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 23);
+        while (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+        castShocks(1);
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    void opponentsManaSpendingDoesNotTriggerMuerra() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new MuerraTrashTactician());
+        harness.setHand(player2, List.of(new Shock(), new Shock(), new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 4);
+
+        for (int i = 0; i < 4; i++) {
+            harness.castInstant(player2, 0, player1.getId());
+            harness.passBothPriorities();
+        }
+
+        harness.assertLife(player1, 12);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void canPlayExiledLandAndCastExiledCreatureByPayingItsCost() {
+        Forest forest = new Forest();
+        RaccoonRallier rallier = new RaccoonRallier();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new MuerraTrashTactician());
+        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock(), new Shock(),
+                new Shock(), new Shock(), new Shock(), new Shock()));
+        harness.setLibrary(player1, List.of(forest, rallier));
+        harness.addMana(player1, ManaColor.RED, 8);
+        castShocks(8);
+        while (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+
+        harness.castFromExile(player1, forest.getId());
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castFromExile(player1, rallier.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Raccoon Rallier");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    void exilesOnlyAvailableCardFromShortLibrary() {
+        Forest forest = new Forest();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new MuerraTrashTactician());
+        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock(), new Shock(),
+                new Shock(), new Shock(), new Shock(), new Shock()));
+        harness.setLibrary(player1, List.of(forest));
+        harness.addMana(player1, ManaColor.RED, 8);
+
+        castShocks(8);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void exilePermissionLastsThroughNextTurnAndThenExpires() {
+        Forest first = new Forest();
+        Forest second = new Forest();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new MuerraTrashTactician());
+        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock(), new Shock(),
+                new Shock(), new Shock(), new Shock(), new Shock()));
+        harness.setLibrary(player1, List.of(first, second, new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 8);
+        castShocks(8);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gd.exilePlayPermissions).containsKeys(first.getId(), second.getId());
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GREEN");
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        assertThat(gd.exilePlayPermissions).containsKeys(first.getId(), second.getId());
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(gd.exilePlayPermissions).doesNotContainKeys(first.getId(), second.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first, second);
+    }
+
+    @Test
+    void spendingBeforeMuerraEntersStillCountsButDoesNotTriggerRetroactively() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock(), new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        castShocks(4);
+        harness.addToBattlefield(player1, new MuerraTrashTactician());
+
+        castShocks(1);
+
+        harness.assertLife(player1, 20);
+    }
+
     private void castShocks(int count) {
         for (int i = 0; i < count; i++) {
             harness.castInstant(player1, 0, player2.getId());
@@ -84,7 +224,6 @@ class MuerraTrashTacticianTest extends BaseCardTest {
     private void advanceToPrecombatMain(com.github.laxika.magicalvibes.model.Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.DRAW);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player, TurnStep.PRECOMBAT_MAIN);
     }
 }
