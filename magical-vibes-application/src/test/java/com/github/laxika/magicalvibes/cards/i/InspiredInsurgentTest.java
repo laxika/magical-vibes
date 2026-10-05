@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -66,9 +65,69 @@ class InspiredInsurgentTest extends BaseCardTest {
     }
 
     private Permanent addReady(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
+    }
+
+    @Test
+    void sacrificeIsPaidBeforeTheTargetIsDestroyed() {
+        Permanent insurgent = addReady(player1, new InspiredInsurgent());
+        Permanent target = addReady(player2, new LeoninScimitar());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(insurgent);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(insurgent.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(target.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(target.getCard());
+    }
+
+    @Test
+    void canActivateWhileTappedAndSummoningSickToDestroyOwnArtifact() {
+        Permanent insurgent = harness.addToBattlefieldAndReturn(player1, new InspiredInsurgent());
+        insurgent.setSummoningSick(true);
+        insurgent.setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(insurgent, target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(insurgent.getCard(), target.getCard());
+    }
+
+    @Test
+    void cannotActivateWithoutManaAndDoesNotSacrificeSource() {
+        Permanent insurgent = addReady(player1, new InspiredInsurgent());
+        Permanent target = addReady(player2, new LeoninScimitar());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(insurgent);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(insurgent.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWithoutATargetAndDoesNotSacrificeSource() {
+        Permanent insurgent = addReady(player1, new InspiredInsurgent());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(insurgent);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(insurgent.getCard());
+        assertThat(gd.stack).isEmpty();
     }
 }
