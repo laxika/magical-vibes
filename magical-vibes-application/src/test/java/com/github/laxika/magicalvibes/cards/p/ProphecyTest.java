@@ -24,13 +24,11 @@ class ProphecyTest extends BaseCardTest {
     void gainsLifeWhenTopCardIsLand() {
         harness.setHand(player1, List.of(new Prophecy()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        gd.playerDecks.put(player2.getId(),
-                new ArrayList<>(List.of(new AysenAbbey(), new AbbeyGargoyles(), new AbbeyGargoyles())));
+        harness.setLibrary(player2, List.of(new AysenAbbey(), new AbbeyGargoyles(), new AbbeyGargoyles()));
 
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
     }
@@ -40,13 +38,11 @@ class ProphecyTest extends BaseCardTest {
     void noLifeWhenTopCardIsNonland() {
         harness.setHand(player1, List.of(new Prophecy()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        gd.playerDecks.put(player2.getId(),
-                new ArrayList<>(List.of(new AbbeyGargoyles(), new AysenAbbey(), new AysenAbbey())));
+        harness.setLibrary(player2, List.of(new AbbeyGargoyles(), new AysenAbbey(), new AysenAbbey()));
 
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
@@ -60,10 +56,9 @@ class ProphecyTest extends BaseCardTest {
         for (int i = 0; i < 40; i++) {
             deck.add(i % 2 == 0 ? new AysenAbbey() : new AbbeyGargoyles());
         }
-        gd.playerDecks.put(player2.getId(), new ArrayList<>(deck));
+        harness.setLibrary(player2, deck);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         List<Card> after = gd.playerDecks.get(player2.getId());
         assertThat(after).hasSize(40);
@@ -77,8 +72,7 @@ class ProphecyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Prophecy()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         List<DrawCardsAtNextUpkeep> scheduled = gd.getDelayedActions(DrawCardsAtNextUpkeep.class);
         assertThat(scheduled).hasSize(1);
@@ -92,8 +86,7 @@ class ProphecyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Prophecy()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
@@ -106,6 +99,50 @@ class ProphecyTest extends BaseCardTest {
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
     }
 
+    @Test
+    @DisplayName("An empty opposing library still shuffles and schedules the delayed draw")
+    void emptyLibraryStillSchedulesDraw() {
+        harness.setHand(player1, List.of(new Prophecy()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setLibrary(player2, List.of());
+        AbbeyGargoyles drawnCard = new AbbeyGargoyles();
+        harness.setLibrary(player1, List.of(drawnCard, new AysenAbbey()));
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gameLogContains(player2.getUsername() + " shuffles their library.")).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The revealed card remains in the opponent's library and only the caster gains life")
+    void revealDoesNotMoveCardOrGainLifeForOpponent() {
+        AysenAbbey revealedCard = new AysenAbbey();
+        harness.setLibrary(player2, List.of(revealedCard));
+        harness.setHand(player1, List.of(new Prophecy()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        int casterLife = gd.playerLifeTotals.get(player1.getId());
+        int opponentLife = gd.playerLifeTotals.get(player2.getId());
+        List<Card> opponentHand = List.copyOf(gd.playerHands.get(player2.getId()));
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(revealedCard);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyElementsOf(opponentHand);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(casterLife + 1);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLife);
+        assertThat(gameLogContains(player2.getUsername() + " reveals ")).isTrue();
+        harness.assertInGraveyard(player1, "Prophecy");
+    }
     @Test
     @DisplayName("Cannot target the caster themselves")
     void cannotTargetSelf() {
