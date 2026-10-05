@@ -99,6 +99,50 @@ class RabidRatsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Summoning-sick Rabid Rats cannot pay the tap cost")
+    void rejectsActivationWhileSummoningSick() {
+        Permanent rats = readyRats();
+        rats.setSummoningSick(true);
+        Permanent blocker = addCreatureReady(player2, new VenerableMonk());
+        markAsBlocking(blocker);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, blocker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(rats.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Tapped Rabid Rats cannot pay the tap cost again")
+    void rejectsActivationWhileTapped() {
+        Permanent rats = readyRats();
+        rats.tap();
+        Permanent blocker = addCreatureReady(player2, new VenerableMonk());
+        markAsBlocking(blocker);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, blocker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A resolved shrink persists after the creature stops blocking")
+    void resolvedShrinkDoesNotRequireContinuedBlocking() {
+        readyRats();
+        Permanent blocker = addCreatureReady(player2, new VenerableMonk());
+        markAsBlocking(blocker);
+
+        harness.activateAbility(player1, 0, 0, null, blocker.getId());
+        harness.passBothPriorities();
+        blocker.setBlocking(false);
+
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("The -1/-1 effect can kill a 1/1 blocking creature")
     void shrinksOneToughnessBlockerToDeath() {
         readyRats();
