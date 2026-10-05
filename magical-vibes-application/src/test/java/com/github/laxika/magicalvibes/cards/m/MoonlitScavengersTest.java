@@ -82,6 +82,70 @@ class MoonlitScavengersTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
+    @Test
+    void doesNotTriggerForOpponentsArtifactOrEnchantment() {
+        harness.addToBattlefield(player2, new Spellbook());
+        harness.addToBattlefield(player2, new MysticRemora());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        castMoonlitScavengers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void cannotReturnOwnCreatureWhenOpponentHasNoCreature() {
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Spellbook());
+
+        castMoonlitScavengers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Moonlit Scavengers");
+        harness.assertOnBattlefield(player2, "Spellbook");
+    }
+
+    @Test
+    void returnsCreatureIfDifferentQualifyingPermanentExistsAtResolution() {
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        castMoonlitScavengers();
+
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.handlePermanentChosen(player1, targetId);
+        gd.playerBattlefields.get(player1.getId()).removeIf(
+                permanent -> permanent.getCard().getName().equals("Spellbook"));
+        harness.addToBattlefield(player1, new MysticRemora());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void doesNotReturnCreatureThatLeftBattlefieldBeforeResolution() {
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        castMoonlitScavengers();
+
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.handlePermanentChosen(player1, targetId);
+        gd.playerBattlefields.get(player2.getId()).removeIf(
+                permanent -> permanent.getId().equals(targetId));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Moonlit Scavengers");
+    }
+
     private void castMoonlitScavengers() {
         harness.setHand(player1, List.of(new MoonlitScavengers()));
         harness.addMana(player1, ManaColor.BLUE, 1);
