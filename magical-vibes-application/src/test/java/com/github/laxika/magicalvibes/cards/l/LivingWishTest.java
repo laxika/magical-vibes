@@ -84,6 +84,48 @@ class LivingWishTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
     }
 
+    @Test
+    @DisplayName("Choosing a creature moves only that card to hand and leaves the library unchanged")
+    void choosesCreatureWithoutSearchingOrShufflingLibrary() {
+        Card creature = new IronshellBeetle();
+        Card land = new KrosanVerge();
+        Card libraryCreature = new BattlewiseAven();
+        Card librarySpell = new MentalNote();
+        setSideboard(creature, land);
+        harness.setLibrary(player1, List.of(libraryCreature, librarySpell));
+
+        LivingWish wish = castLivingWish();
+        choose(creature);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCreature, librarySpell);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(wish);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
+        assertThat(pendingSearch()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Matching cards in exile, the graveyard, and the library are not outside the game")
+    void excludesMatchingCardsAlreadyInGame() {
+        Card exiledCreature = new IronshellBeetle();
+        Card graveyardLand = new KrosanVerge();
+        Card libraryCreature = new BattlewiseAven();
+        setSideboard();
+        harness.setExile(player1, List.of(exiledCreature));
+        harness.setGraveyard(player1, List.of(graveyardLand));
+        harness.setLibrary(player1, List.of(libraryCreature));
+
+        LivingWish wish = castLivingWish();
+
+        assertThat(pendingSearch()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(exiledCreature, wish);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyardLand);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCreature);
+    }
+
     private LivingWish castLivingWish() {
         LivingWish wish = new LivingWish();
         harness.castFromHand(player1, wish, "{1}{G}");
