@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MagneticWeb.class, MetallicSliver.class})
+@CardUsed({MagneticWeb.class, MetallicSliver.class, MasterOfCruelties.class})
 class MagneticWebTest extends BaseCardTest {
 
     @Test
@@ -186,7 +188,6 @@ class MagneticWebTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(MasterOfCruelties.class)
     @DisplayName("A magnet-counter creature that can only attack alone is not forced to join")
     void canOnlyAttackAloneBearerIsNotForced() {
         harness.addToBattlefield(player1, new MagneticWeb());
@@ -196,5 +197,101 @@ class MagneticWebTest extends BaseCardTest {
         attacker.setCounterCount(CounterType.MAGNET, 1);
 
         assertThatCode(() -> declareAttackers(player1, List.of(2))).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("A creature gaining a magnet counter after the attack trigger resolves must block")
+    void newlyCounteredCreatureMustBlock() {
+        harness.addToBattlefield(player1, new MagneticWeb());
+        Permanent attacker = addCreatureReady(player1, new MetallicSliver());
+        Permanent blocker = addCreatureReady(player2, new MetallicSliver());
+        attacker.setCounterCount(CounterType.MAGNET, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(1));
+            resolveAllTriggers();
+            harness.activateAbility(player1, 0, null, blocker.getId());
+            harness.passBothPriorities();
+        });
+
+        assertThat(blocker.getCounterCount(CounterType.MAGNET)).isEqualTo(1);
+        prepareDeclareBlockers(player1);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+    }
+
+    @Test
+    @DisplayName("A creature losing its last magnet counter after the trigger resolves need not block")
+    void creatureLosingMagnetCounterNeedNotBlock() {
+        harness.addToBattlefield(player1, new MagneticWeb());
+        Permanent attacker = addCreatureReady(player1, new MetallicSliver());
+        Permanent blocker = addCreatureReady(player2, new MetallicSliver());
+        attacker.setCounterCount(CounterType.MAGNET, 1);
+        blocker.setCounterCount(CounterType.MAGNET, 1);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(1));
+            resolveAllTriggers();
+        });
+        blocker.setCounterCount(CounterType.MAGNET, 0);
+
+        prepareDeclareBlockers(player1);
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of())).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("With two magnet-counter attackers, a normal blocker may block either attacker")
+    void blockerMayChooseBetweenMagnetAttackers() {
+        harness.addToBattlefield(player1, new MagneticWeb());
+        Permanent first = addCreatureReady(player1, new MetallicSliver());
+        Permanent second = addCreatureReady(player1, new MetallicSliver());
+        Permanent blocker = addCreatureReady(player2, new MetallicSliver());
+        first.setCounterCount(CounterType.MAGNET, 1);
+        second.setCounterCount(CounterType.MAGNET, 1);
+        blocker.setCounterCount(CounterType.MAGNET, 1);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(1, 2));
+            resolveAllTriggers();
+        });
+
+        prepareDeclareBlockers(player1);
+        assertThatCode(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 2)))).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Magnetic Web also requires its controller's creatures to block an opponent's attacker")
+    void opponentsAttackRequiresControllersBearerToBlock() {
+        harness.addToBattlefield(player1, new MagneticWeb());
+        Permanent blocker = addCreatureReady(player1, new MetallicSliver());
+        Permanent attacker = addCreatureReady(player2, new MetallicSliver());
+        blocker.setCounterCount(CounterType.MAGNET, 1);
+        attacker.setCounterCount(CounterType.MAGNET, 1);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player2, List.of(0));
+            resolveAllTriggers();
+        });
+
+        prepareDeclareBlockers(player2);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+    }
+
+    @Test
+    @DisplayName("A summoning-sick magnet-counter creature is not required to attack")
+    void summoningSickBearerIsNotForced() {
+        harness.addToBattlefield(player1, new MagneticWeb());
+        Permanent attacker = addCreatureReady(player1, new MetallicSliver());
+        Permanent sick = harness.addToBattlefieldAndReturn(player1, new MetallicSliver());
+        sick.setSummoningSick(true);
+        attacker.setCounterCount(CounterType.MAGNET, 1);
+        sick.setCounterCount(CounterType.MAGNET, 1);
+
+        assertThatCode(() -> declareAttackers(player1, List.of(1))).doesNotThrowAnyException();
     }
 }
