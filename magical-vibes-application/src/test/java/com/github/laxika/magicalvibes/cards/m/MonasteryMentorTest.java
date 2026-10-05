@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -26,8 +27,7 @@ class MonasteryMentorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent mentor = findPermanent(player1, "Monastery Mentor");
         Permanent token = findPermanent(player1, "Monk");
@@ -47,13 +47,11 @@ class MonasteryMentorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         Permanent token = findPermanent(player1, "Monk");
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
@@ -67,10 +65,85 @@ class MonasteryMentorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
+        resolveAllTriggers();
 
         Permanent mentor = findPermanent(player1, "Monastery Mentor");
         assertThat(countPermanents(player1, "Monk")).isZero();
         assertThat(gqs.getEffectivePower(gd, mentor)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, mentor)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each noncreature spell gives Mentor exactly one prowess bonus")
+    void successiveSpellsBoostMentorOnceEach() {
+        harness.addToBattlefield(player1, new MonasteryMentor());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        Permanent mentor = findPermanent(player1, "Monastery Mentor");
+        assertThat(gqs.getEffectivePower(gd, mentor)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, mentor)).isEqualTo(4);
+        assertThat(countPermanents(player1, "Monk")).isEqualTo(2);
+        assertThat(findPermanents(player1, "Monk"))
+                .extracting(p -> gqs.getEffectivePower(gd, p)).containsExactlyInAnyOrder(2, 1);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, mentor)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mentor)).isEqualTo(2);
+        assertThat(findPermanents(player1, "Monk"))
+                .allSatisfy(p -> {
+                    assertThat(gqs.getEffectivePower(gd, p)).isEqualTo(1);
+                    assertThat(gqs.getEffectiveToughness(gd, p)).isEqualTo(1);
+                });
+    }
+
+    @Test
+    @DisplayName("An opponent's spell does not trigger Mentor or its Monk tokens")
+    void opponentSpellDoesNotTrigger() {
+        harness.addToBattlefield(player1, new MonasteryMentor());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        Permanent mentor = findPermanent(player1, "Monastery Mentor");
+        Permanent token = findPermanent(player1, "Monk");
+        int mentorPower = gqs.getEffectivePower(gd, mentor);
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Monk")).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, mentor)).isEqualTo(mentorPower);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The Monk creation trigger survives Mentor leaving the battlefield")
+    void createsMonkAfterMentorDiesInResponse() {
+        harness.addToBattlefield(player1, new MonasteryMentor());
+        Permanent mentor = findPermanent(player1, "Monastery Mentor");
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castInstant(player2, 0, mentor.getId());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Monastery Mentor")).isZero();
+        assertThat(countPermanents(player1, "Monk")).isEqualTo(1);
+        Permanent token = findPermanent(player1, "Monk");
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
     }
 }
