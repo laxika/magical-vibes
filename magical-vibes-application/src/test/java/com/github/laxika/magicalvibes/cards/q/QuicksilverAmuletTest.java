@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.q;
 
-import com.github.laxika.magicalvibes.cards.d.DefenseGrid;
-import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
+import com.github.laxika.magicalvibes.cards.m.Manalith;
+import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.r.RuneScarredDemon;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({QuicksilverAmulet.class, DefenseGrid.class, GiantCockroach.class})
+@CardUsed({QuicksilverAmulet.class, Manalith.class, GiantSpider.class, RuneScarredDemon.class})
 class QuicksilverAmuletTest extends BaseCardTest {
 
     @Test
@@ -43,7 +45,7 @@ class QuicksilverAmuletTest extends BaseCardTest {
     @DisplayName("Accepting the may choice offers only creature cards in hand")
     void resolvingPromptsOnlyCreatureChoices() {
         addCreatureReady(player1, new QuicksilverAmulet());
-        harness.setHand(player1, List.of(new DefenseGrid(), new GiantCockroach(), new DefenseGrid()));
+        harness.setHand(player1, List.of(new Manalith(), new GiantSpider(), new Manalith()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -62,7 +64,7 @@ class QuicksilverAmuletTest extends BaseCardTest {
     @DisplayName("Choosing a creature puts it onto the battlefield untapped")
     void choosingCreaturePutsItOntoBattlefield() {
         addCreatureReady(player1, new QuicksilverAmulet());
-        GiantCockroach creature = new GiantCockroach();
+        GiantSpider creature = new GiantSpider();
         harness.setHand(player1, List.of(creature));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
@@ -82,7 +84,7 @@ class QuicksilverAmuletTest extends BaseCardTest {
     @DisplayName("Declining the may choice leaves hand and battlefield unchanged")
     void decliningMayLeavesHandUnchanged() {
         addCreatureReady(player1, new QuicksilverAmulet());
-        harness.setHand(player1, List.of(new GiantCockroach()));
+        harness.setHand(player1, List.of(new GiantSpider()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -101,7 +103,7 @@ class QuicksilverAmuletTest extends BaseCardTest {
     @DisplayName("Ability resolves after the Amulet leaves the battlefield")
     void abilityResolvesAfterSourceLeavesBattlefield() {
         Permanent amulet = addCreatureReady(player1, new QuicksilverAmulet());
-        GiantCockroach creature = new GiantCockroach();
+        GiantSpider creature = new GiantSpider();
         harness.setHand(player1, List.of(creature));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
@@ -120,7 +122,7 @@ class QuicksilverAmuletTest extends BaseCardTest {
     @DisplayName("Ability does not prompt when controller has no creature cards in hand")
     void noCreaturesInHandSkipsChoice() {
         addCreatureReady(player1, new QuicksilverAmulet());
-        harness.setHand(player1, List.of(new DefenseGrid(), new DefenseGrid()));
+        harness.setHand(player1, List.of(new Manalith(), new Manalith()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -157,4 +159,55 @@ class QuicksilverAmuletTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
+    @Test
+    @DisplayName("A newly entered Amulet can activate during the opponent's turn")
+    void newlyEnteredAmuletCanActivateOnOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        Permanent amulet = harness.enterBattlefieldAndReturn(player1, new QuicksilverAmulet());
+        GiantSpider creature = new GiantSpider();
+        harness.setHand(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(amulet.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == creature && !permanent.isTapped());
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard() == creature);
+    }
+
+    @Test
+    @DisplayName("Puts only one creature into play without paying its mana cost and triggers its entry ability")
+    void costlyCreatureEntersAndTriggersAbility() {
+        harness.addToBattlefield(player1, new QuicksilverAmulet());
+        RuneScarredDemon demon = new RuneScarredDemon();
+        GiantSpider otherCreature = new GiantSpider();
+        Manalith libraryCard = new Manalith();
+        harness.setHand(player1, List.of(demon, otherCreature));
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(otherCreature);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == demon
+                        && !permanent.isTapped() && permanent.isSummoningSick());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(otherCreature, libraryCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
 }
