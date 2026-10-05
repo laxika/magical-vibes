@@ -98,6 +98,75 @@ class MindOverMatterTest extends BaseCardTest {
         return harness.addToBattlefieldAndReturn(player1, new MindOverMatter());
     }
 
+    @Test
+    void discardIsPaidBeforeResolution() {
+        Permanent source = addMindOverMatter();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+        harness.setHand(player1, List.of(new MemoryCrystal()));
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Memory Crystal");
+        harness.assertNotInHand(player1, "Memory Crystal");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(source.isTapped()).isFalse();
+        assertThat(target.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent source = addMindOverMatter();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+        harness.setHand(player1, List.of(new CityOfTraitors()));
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, source));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Mind Over Matter");
+        harness.assertInGraveyard(player1, "City of Traitors");
+    }
+
+    @Test
+    void removedTargetDoesNotRefundDiscardCost() {
+        addMindOverMatter();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+        harness.setHand(player1, List.of(new CityOfTraitors()));
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "City of Traitors");
+        harness.assertNotInHand(player1, "City of Traitors");
+    }
+
+    @Test
+    void canUntapOwnPermanentWhileSourceIsTapped() {
+        Permanent source = addMindOverMatter();
+        source.tap();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new MemoryCrystal());
+        target.tap();
+        harness.setHand(player1, List.of(new MindOverMatter()));
+
+        activate(target);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(source.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Mind Over Matter");
+    }
+
     private void activate(Permanent target) {
         activate(target, true);
     }
