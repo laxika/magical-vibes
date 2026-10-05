@@ -131,6 +131,49 @@ class LotusValeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Entry waits for two distinct untapped lands and preserves unchosen lands")
+    void entryRejectsTappedAndDuplicateLands() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new WindingCanyons());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new WindingCanyons());
+        Permanent tapped = harness.addToBattlefieldAndReturn(player1, new WindingCanyons());
+        tapped.tap();
+        harness.setHand(player1, List.of(new LotusVale()));
+
+        harness.playLand(player1, 0);
+
+        harness.assertNotOnBattlefield(player1, "Lotus Vale");
+        assertThat(gd.stack).isEmpty();
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1,
+                List.of(first.getId(), tapped.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1,
+                List.of(first.getId(), first.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(first, second, tapped);
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
+
+        harness.assertOnBattlefield(player1, "Lotus Vale");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(tapped).doesNotContain(first, second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first.getCard(), second.getCard());
+        assertThat(findPermanent(player1, "Lotus Vale").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A failed entry still consumes the turn's land play")
+    void failedEntryConsumesLandPlay() {
+        harness.setHand(player1, List.of(new LotusVale(), new WindingCanyons()));
+
+        harness.playLand(player1, 0);
+
+        harness.assertInGraveyard(player1, "Lotus Vale");
+        assertThatThrownBy(() -> harness.playLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Winding Canyons");
+        harness.assertNotOnBattlefield(player1, "Winding Canyons");
+    }
+
+    @Test
     @DisplayName("Tapping Lotus Vale adds three mana of the chosen color")
     void manaAbilityAddsThreeManaOfChosenColor() {
         harness.addToBattlefield(player1, new LotusVale());
