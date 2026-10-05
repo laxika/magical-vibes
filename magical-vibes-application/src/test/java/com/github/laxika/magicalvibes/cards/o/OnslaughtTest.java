@@ -94,4 +94,67 @@ class OnslaughtTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("The trigger resolves before the creature spell")
+    void triggerResolvesBeforeCreatureSpell() {
+        harness.addToBattlefield(player1, new Onslaught());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+
+        harness.castFromHand(player1, new RagingGoblin(), "{R}");
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An already tapped creature is a legal target")
+    void canTargetTappedCreature() {
+        harness.addToBattlefield(player1, new Onslaught());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+        target.setTapped(true);
+
+        harness.castFromHand(player1, new RagingGoblin(), "{R}");
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A creature entering without being cast does not trigger Onslaught")
+    void creatureEnteringWithoutCastDoesNotTrigger() {
+        harness.addToBattlefield(player1, new Onslaught());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+
+        harness.enterBattlefieldAndReturn(player1, new RagingGoblin());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The trigger still resolves after Onslaught leaves the battlefield")
+    void triggerResolvesAfterSourceLeaves() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new Onslaught());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+
+        harness.castFromHand(player1, new RagingGoblin(), "{R}");
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
 }
