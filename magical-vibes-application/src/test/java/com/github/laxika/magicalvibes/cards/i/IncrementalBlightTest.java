@@ -34,8 +34,7 @@ class IncrementalBlightTest extends BaseCardTest {
         harness.setHand(player1, List.of(new IncrementalBlight()));
         addMana(5);
 
-        harness.castSorcery(player1, 0, List.of(first.getId(), second.getId(), third.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(first.getId(), second.getId(), third.getId()));
 
         assertThat(first.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(second.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
@@ -52,8 +51,7 @@ class IncrementalBlightTest extends BaseCardTest {
         addMana(5);
 
         // 2 counters on the Serra Angel (survives), 3 counters on the 2/2 Grizzly Bears (dies).
-        harness.castSorcery(player1, 0, List.of(first.getId(), angel.getId(), bear.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(first.getId(), angel.getId(), bear.getId()));
 
         harness.assertOnBattlefield(player2, "Serra Angel");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -104,5 +102,60 @@ class IncrementalBlightTest extends BaseCardTest {
 
         assertThat(first.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(third.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Cannot cast with fewer than three targets")
+    void requiresThreeTargets() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new MossbridgeTroll());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new MossbridgeTroll());
+        harness.setHand(player1, List.of(new IncrementalBlight()));
+        addMana(5);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
+                List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("3 targets");
+    }
+
+    @Test
+    @DisplayName("The third target still gets three counters when the first two leave")
+    void preservesThirdTargetCounterCountWhenOtherTargetsLeave() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new MossbridgeTroll());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new MossbridgeTroll());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new MossbridgeTroll());
+        harness.setHand(player1, List.of(new IncrementalBlight()));
+        addMana(5);
+
+        harness.castSorcery(player1, 0, List.of(first.getId(), second.getId(), third.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        gd.playerBattlefields.get(player2.getId()).remove(second);
+        harness.passBothPriorities();
+
+        assertThat(third.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
+        assertThat(first.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(second.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Incremental Blight");
+    }
+
+    @Test
+    @DisplayName("Does not resolve when all three targets leave")
+    void doesNotResolveWhenAllTargetsLeave() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new MossbridgeTroll());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new MossbridgeTroll());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new MossbridgeTroll());
+        harness.setHand(player1, List.of(new IncrementalBlight()));
+        addMana(5);
+
+        harness.castSorcery(player1, 0, List.of(first.getId(), second.getId(), third.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        gd.playerBattlefields.get(player2.getId()).removeAll(List.of(second, third));
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(second.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(third.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Incremental Blight");
     }
 }
