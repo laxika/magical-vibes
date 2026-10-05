@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -48,12 +47,9 @@ class OriginOfThorTest extends BaseCardTest {
         addSaga(1);
 
         triggerChapter();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
         PendingInteraction.PermanentChoice choice =
@@ -84,6 +80,84 @@ class OriginOfThorTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(source).doesNotContain(saga);
+    }
+
+    @Test
+    void chapterIMayBeDeclined() {
+        Card kept = new GrizzlyBears();
+        Card undrawn = new Forest();
+        harness.setHand(player1, List.of(kept));
+        harness.setLibrary(player1, List.of(undrawn));
+        addSaga(0);
+
+        triggerChapter();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void chapterICannotDrawWithoutDiscarding() {
+        Card undrawn = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(undrawn));
+        addSaga(0);
+
+        triggerChapter();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);
+    }
+
+    @Test
+    void chapterIITriggersForMultipleSpellsEvenAfterSagaLeaves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent saga = addSaga(1);
+        triggerChapter();
+        gd.playerBattlefields.get(player1.getId()).remove(saga);
+        gd.playerGraveyards.get(player1.getId()).add(saga.getCard());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        for (int i = 0; i < 2; i++) {
+            harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+            harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, creature.getId());
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+        }
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void chapterIIIUsesPowerAtResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        addSaga(2);
+        triggerChapter();
+        harness.handlePermanentChosen(player1, creature.getId());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(15);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void chapterIIIDoesNotDealDamageWhenTargetLeaves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent saga = addSaga(2);
+        triggerChapter();
+        harness.handlePermanentChosen(player1, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerGraveyards.get(player1.getId()).add(creature.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
     }
 
     private Permanent addSaga(int loreCounters) {
