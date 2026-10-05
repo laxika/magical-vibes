@@ -2,16 +2,16 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SavannahLions;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({IvyLaneDenizen.class, GrizzlyBears.class, SavannahLions.class})
 class IvyLaneDenizenTest extends BaseCardTest {
 
     @Test
@@ -20,9 +20,7 @@ class IvyLaneDenizenTest extends BaseCardTest {
         harness.addToBattlefield(player1, new IvyLaneDenizen());
         Permanent recipient = harness.addToBattlefieldAndReturn(player1, new SavannahLions());
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, recipient.getId());
@@ -38,9 +36,7 @@ class IvyLaneDenizenTest extends BaseCardTest {
         harness.addToBattlefield(player1, new IvyLaneDenizen());
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, opponentCreature.getId());
@@ -56,12 +52,75 @@ class IvyLaneDenizenTest extends BaseCardTest {
         harness.addToBattlefield(player1, new IvyLaneDenizen());
         Permanent recipient = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        harness.setHand(player1, List.of(new SavannahLions()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SavannahLions(), "{W}");
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, recipient)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ivy Lane Denizen does not trigger for its own entry")
+    void ownEntryDoesNotTrigger() {
+        Permanent recipient = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.castFromHand(player1, new IvyLaneDenizen(), "{3}{G}");
+        harness.passBothPriorities();
+
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's green creature entering does not trigger")
+    void opponentGreenCreatureDoesNotTrigger() {
+        Permanent denizen = harness.addToBattlefieldAndReturn(player1, new IvyLaneDenizen());
+
+        harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(denizen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The counter can be put on Ivy Lane Denizen itself")
+    void counterCanGoOnDenizen() {
+        Permanent denizen = harness.addToBattlefieldAndReturn(player1, new IvyLaneDenizen());
+
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, denizen.getId());
+        harness.passBothPriorities();
+
+        assertThat(denizen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The entering creature can receive the counter")
+    void enteringCreatureCanReceiveCounter() {
+        harness.addToBattlefield(player1, new IvyLaneDenizen());
+        Permanent entering = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.handlePermanentChosen(player1, entering.getId());
+        harness.passBothPriorities();
+
+        assertThat(entering.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A second Denizen triggers the first but does not trigger itself")
+    void secondDenizenTriggersOnlyTheFirst() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new IvyLaneDenizen());
+        Permanent second = harness.enterBattlefieldAndReturn(player1, new IvyLaneDenizen());
+
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
