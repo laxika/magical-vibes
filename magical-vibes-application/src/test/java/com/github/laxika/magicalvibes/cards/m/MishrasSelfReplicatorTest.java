@@ -4,13 +4,13 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AdelizTheCinderWind;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.cards.h.HistoryOfBenalia;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,9 +19,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MishrasSelfReplicator.class, AdelizTheCinderWind.class, GrizzlyBears.class,
+        Spellbook.class, HistoryOfBenalia.class})
 class MishrasSelfReplicatorTest extends BaseCardTest {
-
-    // ===== Trigger: casting historic spells =====
 
     @Test
     @DisplayName("Casting an artifact triggers may ability prompt")
@@ -30,6 +30,9 @@ class MishrasSelfReplicatorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Spellbook()));
 
         harness.castArtifact(player1, 0);
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
@@ -44,6 +47,7 @@ class MishrasSelfReplicatorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
@@ -80,8 +84,6 @@ class MishrasSelfReplicatorTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
     }
 
-    // ===== Token creation =====
-
     @Test
     @DisplayName("Accepting and paying {1} creates a token copy of Self-Replicator")
     void acceptingMayCreatesTokenCopy() {
@@ -90,14 +92,8 @@ class MishrasSelfReplicatorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castArtifact(player1, 0);
-        harness.handleMayAbilityChosen(player1, true);
-
-        // Triggered ability should be on the stack
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getCard().getName().equals("Mishra's Self-Replicator"));
-
-        // Resolve triggered ability
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         Permanent token = findToken(player1);
         assertThat(token).isNotNull();
@@ -114,6 +110,7 @@ class MishrasSelfReplicatorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Spellbook()));
 
         harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         // No triggered ability on the stack
@@ -132,17 +129,23 @@ class MishrasSelfReplicatorTest extends BaseCardTest {
 
         // Cast first artifact and accept may to create a token
         harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // resolve triggered ability (creates token)
         harness.passBothPriorities(); // resolve Spellbook
 
         Permanent token = findToken(player1);
         assertThat(token).isNotNull();
 
-        // Token should have the same triggered ability
-        assertThat(token.getCard().getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(token.getCard().getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(MayEffect.class);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castArtifact(player1, 0);
+        assertThat(gd.stack).filteredOn(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
+                .hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().isToken()).hasSize(3);
     }
 
     @Test
@@ -153,20 +156,80 @@ class MishrasSelfReplicatorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castArtifact(player1, 0);
-        harness.handleMayAbilityChosen(player1, true);
 
         // Remove the source before ability resolves
         gd.playerBattlefields.get(player1.getId())
                 .removeIf(p -> p.getCard().getName().equals("Mishra's Self-Replicator") && !p.getCard().isToken());
 
         harness.passBothPriorities(); // resolve triggered ability
+        harness.handleMayAbilityChosen(player1, true);
 
-        // Per CR 608.2b, abilities resolve even if the source left the zone;
-        // the token copy uses last-known information of the source.
+        // The token uses the source's last-known copiable values.
         assertThat(findToken(player1)).isNotNull();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Casting a Saga triggers replication")
+    void castingSagaTriggersReplication() {
+        harness.addToBattlefield(player1, new MishrasSelfReplicator());
+        harness.setHand(player1, List.of(new HistoryOfBenalia()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findToken(player1)).isNotNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Payment is chosen only when the triggered ability resolves")
+    void paymentWaitsForResolution() {
+        harness.addToBattlefield(player1, new MishrasSelfReplicator());
+        harness.setHand(player1, List.of(new Spellbook()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castArtifact(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(findToken(player1)).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Accepting without mana cannot create a token")
+    void cannotReplicateWithoutPayment() {
+        harness.addToBattlefield(player1, new MishrasSelfReplicator());
+        harness.setHand(player1, List.of(new Spellbook()));
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findToken(player1)).isNull();
+    }
+
+    @Test
+    @DisplayName("A single trigger spends only one mana and creates only one copy")
+    void singleTriggerCreatesOnlyOneCopy() {
+        harness.addToBattlefield(player1, new MishrasSelfReplicator());
+        harness.setHand(player1, List.of(new Spellbook()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().isToken()).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
 
     private Permanent findToken(Player player) {
         return gd.playerBattlefields.get(player.getId()).stream()
