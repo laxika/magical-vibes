@@ -97,6 +97,68 @@ class PilloryOfTheSleeplessTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("The Aura controller's upkeep does not trigger the enchanted opponent's ability")
+    void doesNotTriggerOnAuraControllersUpkeep() {
+        Permanent creature = addCreatureReady(player2, new Gristleback());
+        attachAura(player1, creature);
+        int player1Life = gd.getLife(player1.getId());
+        int player2Life = gd.getLife(player2.getId());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(player1Life);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(player2Life);
+    }
+
+    @Test
+    @DisplayName("Two Pillories grant two independent upkeep abilities")
+    void multiplePilloriesEachCauseLifeLoss() {
+        Permanent creature = addCreatureReady(player2, new Gristleback());
+        attachAura(player1, creature);
+        attachAura(player1, creature);
+        int lifeBefore = gd.getLife(player2.getId());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("Removing Pillory after the upkeep trigger does not stop life loss")
+    void triggerResolvesAfterAuraLeavesBattlefield() {
+        Permanent creature = addCreatureReady(player2, new Gristleback());
+        Permanent aura = attachAura(player1, creature);
+        int lifeBefore = gd.getLife(player2.getId());
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        gd.playerGraveyards.get(player1.getId()).add(aura.getCard());
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("Removing Pillory before upkeep removes the granted ability and combat restrictions")
+    void removingAuraEndsItsEffects() {
+        Permanent creature = addCreatureReady(player2, new Gristleback());
+        Permanent aura = attachAura(player1, creature);
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        gd.playerGraveyards.get(player1.getId()).add(aura.getCard());
+        int lifeBefore = gd.getLife(player2.getId());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        assertThat(creature.isAttacking()).isTrue();
+    }
+
     private Permanent attachAura(Player auraController, Permanent creature) {
         Permanent aura = harness.addToBattlefieldAndReturn(auraController, new PilloryOfTheSleepless());
         aura.setAttachedTo(creature.getId());
