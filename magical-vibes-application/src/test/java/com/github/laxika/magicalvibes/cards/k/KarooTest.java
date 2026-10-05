@@ -33,8 +33,7 @@ class KarooTest extends BaseCardTest {
     @Test
     @DisplayName("Auto-sacrifices when controller has no untapped Plains")
     void autoSacrificesWithoutUntappedPlains() {
-        harness.addToBattlefield(player1, new Plains());
-        findPermanent(player1, "Plains").tap();
+        harness.addToBattlefieldAndReturn(player1, new Plains()).tap();
         harness.addToBattlefield(player1, new Island());
         playAndResolveEtb();
 
@@ -95,7 +94,7 @@ class KarooTest extends BaseCardTest {
     void returnsControlledPlainsToOwnersHand() {
         Plains plains = new Plains();
         plains.setOwnerId(player2.getId());
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(plains));
+        harness.addToBattlefield(player1, plains);
 
         playAndResolveEtb();
         harness.handleMayAbilityChosen(player1, true);
@@ -129,6 +128,43 @@ class KarooTest extends BaseCardTest {
         assertThat(land.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Only the untapped Plains is returned when another Plains is tapped")
+    void returnsOnlyUntappedPlains() {
+        Permanent tappedPlains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        tappedPlains.tap();
+        Plains untappedPlains = new Plains();
+        harness.addToBattlefield(player1, untappedPlains);
+
+        playAndResolveEtb();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Karoo");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(tappedPlains);
+        assertThat(countPermanents(player1, "Plains")).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).contains(untappedPlains);
+    }
+
+    @Test
+    @DisplayName("A Plains tapped for mana before the entry trigger resolves cannot be returned")
+    void plainsTappedBeforeResolutionCannotPay() {
+        harness.addToBattlefield(player1, new Plains());
+        harness.setHand(player1, List.of(new Karoo()));
+        harness.playLand(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(findPermanent(player1, "Karoo").isTapped()).isTrue();
+        harness.tapPermanent(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Karoo");
+        harness.assertNotOnBattlefield(player1, "Karoo");
+        harness.assertOnBattlefield(player1, "Plains");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
     }
 
