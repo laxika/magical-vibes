@@ -89,7 +89,7 @@ class InfiniteAuthorityTest extends BaseCardTest {
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
 
         resolveAllTriggers();
-        resolveCombat();
+        resolveCombat(player2);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(attacker);
         harness.passUntil(player2, TurnStep.END_STEP);
@@ -164,9 +164,96 @@ class InfiniteAuthorityTest extends BaseCardTest {
         assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("End-of-combat destruction uses the stack before the other creature is destroyed")
+    void endOfCombatDestructionAllowsResponses() {
+        Permanent attacker = addCreatureReady(player1, new KeepersOfTheFaith());
+        addAuthorityAttachedTo(player1, attacker);
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new KeepersOfTheFaith());
+
+        prepareDeclareBlockers();
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+            harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+        });
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        resolveAllTriggers();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(blocker.getCard());
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A creature killed by combat damage does not grant a counter")
+    void combatDamageDeathDoesNotGrantCounter() {
+        Permanent attacker = addCreatureReady(player1, new DurkwoodBoars());
+        addAuthorityAttachedTo(player1, attacker);
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new KeepersOfTheFaith());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+        resolveCombat();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(blocker.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Increasing toughness after blocking does not prevent the scheduled destruction")
+    void toughnessIsCheckedWhenBlockingOccurs() {
+        Permanent blocker = addCreatureReady(player1, new WallOfEarth());
+        addAuthorityAttachedTo(player1, blocker);
+        Permanent attacker = addCreatureReady(player2, new KeepersOfTheFaith());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers(player2);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+            attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+            resolveAllTriggers();
+        });
+        resolveCombat(player2);
+        harness.passUntil(player2, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(attacker.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(blocker);
+        assertThat(blocker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An Aura controlled by the opponent rewards the enchanted creature, not its controller's creature")
+    void opponentControlledAuraRewardsEnchantedCreature() {
+        Permanent attacker = addCreatureReady(player1, new KeepersOfTheFaith());
+        addAuthorityAttachedTo(player2, attacker);
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new KeepersOfTheFaith());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+        resolveCombat();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(blocker.getCard());
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(blocker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private void addAuthorityAttachedTo(Player player, Permanent creature) {
-        Permanent aura = new Permanent(new InfiniteAuthority());
-        gd.playerBattlefields.get(player.getId()).add(aura);
+        Permanent aura = harness.addToBattlefieldAndReturn(player, new InfiniteAuthority());
         aura.setAttachedTo(creature.getId());
     }
 }
