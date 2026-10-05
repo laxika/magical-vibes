@@ -17,6 +17,65 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class NomadDecoyTest extends BaseCardTest {
 
     @Test
+    @DisplayName("The basic ability can target Nomad Decoy itself")
+    void basicAbilityCanTargetItself() {
+        Permanent source = addCreatureReady(player1, new NomadDecoy());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, source.getId());
+        harness.passBothPriorities();
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The threshold ability cannot be activated with just one target")
+    void thresholdAbilityRequiresTwoTargets() {
+        Permanent source = addCreatureReady(player1, new NomadDecoy());
+        Permanent target = addCreatureReady(player2, new DwarvenGrunt());
+        harness.setGraveyard(player1, List.of(
+                new DwarvenGrunt(), new DwarvenGrunt(), new DwarvenGrunt(), new DwarvenGrunt(),
+                new DwarvenGrunt(), new DwarvenGrunt(), new DwarvenGrunt()
+        ));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 1, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(source.isTapped()).isFalse();
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An opponent's graveyard does not enable the threshold ability")
+    void thresholdDoesNotCountOpponentsGraveyard() {
+        Permanent source = addCreatureReady(player1, new NomadDecoy());
+        Permanent firstTarget = addCreatureReady(player2, new DwarvenGrunt());
+        Permanent secondTarget = addCreatureReady(player2, new DwarvenGrunt());
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(
+                new DwarvenGrunt(), new DwarvenGrunt(), new DwarvenGrunt(), new DwarvenGrunt(),
+                new DwarvenGrunt(), new DwarvenGrunt(), new DwarvenGrunt()
+        ));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of(
+                firstTarget.getId(), secondTarget.getId()
+        )))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("seven or more cards");
+
+        assertThat(source.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("The basic ability taps a target creature")
     void basicAbilityTapsTargetCreature() {
         Permanent source = addCreatureReady(player1, new NomadDecoy());
