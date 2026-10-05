@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Paralyze.class, GrizzlyBears.class, SolRing.class})
+@CardUsed({Paralyze.class, GrizzlyBears.class, SolRing.class, Disenchant.class})
 class ParalyzeTest extends BaseCardTest {
 
     // ===== ETB tap =====
@@ -29,8 +30,7 @@ class ParalyzeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.castEnchantment(player1, 0, creature.getId());
-        harness.passBothPriorities(); // resolve enchantment spell
-        harness.passBothPriorities(); // resolve ETB tap trigger
+        resolveAllTriggers();
 
         assertThat(creature.isTapped()).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -62,10 +62,7 @@ class ParalyzeTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, originalTarget.getId());
         harness.passBothPriorities(); // resolve the Aura spell
 
-        Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Paralyze"))
-                .findFirst()
-                .orElseThrow();
+        Permanent aura = findPermanent(player1, "Paralyze");
         aura.setAttachedTo(currentEnchantedCreature.getId());
 
         harness.passBothPriorities(); // resolve the ETB trigger
@@ -157,9 +154,66 @@ class ParalyzeTest extends BaseCardTest {
 
     // ===== Helpers =====
 
+    @Test
+    @DisplayName("Destroying the Aura in response does not prevent the upkeep payment from untapping its former creature")
+    void upkeepPaymentStillUntapsAfterAuraIsDestroyed() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        creature.tap();
+        attachParalyze(creature);
+        Permanent aura = findPermanent(player1, "Paralyze");
+
+        advanceToUpkeep(player2);
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.castInstant(player2, 0, aura.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Paralyze");
+        assertThat(creature.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("The Aura controller's mana cannot pay the enchanted creature controller's upkeep cost")
+    void auraControllerManaCannotPayForOpponent() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        creature.tap();
+        attachParalyze(creature);
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Removing Paralyze before untap lets the creature untap normally without a payment")
+    void removingAuraRestoresNormalUntap() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        creature.tap();
+        attachParalyze(creature);
+        Permanent aura = findPermanent(player1, "Paralyze");
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castInstant(player1, 0, aura.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Paralyze");
+
+        harness.performUntapStep(player2);
+
+        assertThat(creature.isTapped()).isFalse();
+    }
+
     private void attachParalyze(Permanent creature) {
-        Permanent aura = new Permanent(new Paralyze());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Paralyze());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
     }
 }
