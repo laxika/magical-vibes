@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.j.JukaiMessenger;
 import com.github.laxika.magicalvibes.cards.p.PullUnder;
 import com.github.laxika.magicalvibes.cards.s.SamuraiEnforcers;
+import com.github.laxika.magicalvibes.cards.s.SenseiGoldenTail;
 import com.github.laxika.magicalvibes.cards.w.WearAway;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({OathkeeperTakenosDaisho.class, SamuraiEnforcers.class, JukaiMessenger.class,
-        PullUnder.class, WearAway.class})
+        PullUnder.class, WearAway.class, SenseiGoldenTail.class})
 class OathkeeperTakenosDaishoTest extends BaseCardTest {
 
     @Test
@@ -133,6 +134,39 @@ class OathkeeperTakenosDaishoTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Jukai Messenger");
     }
 
+    @Test
+    @DisplayName("A creature trained as a Samurai stays in the graveyard if its card is not a Samurai")
+    void trainedNonSamuraiStaysInGraveyard() {
+        Permanent sensei = addCreatureReady(player1, new SenseiGoldenTail());
+        Permanent creature = addCreatureReady(player1, new JukaiMessenger());
+        Permanent oathkeeper = harness.addToBattlefieldAndReturn(player1, new OathkeeperTakenosDaisho());
+        oathkeeper.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, indexOf(sensei), null, creature.getId());
+        harness.passBothPriorities();
+        killCreature(creature);
+
+        harness.assertNotOnBattlefield(player1, "Jukai Messenger");
+        harness.assertInGraveyard(player1, "Jukai Messenger");
+    }
+
+    @Test
+    @DisplayName("Exiling the equipped Samurai does not trigger its return")
+    void exiledSamuraiDoesNotReturn() {
+        Permanent creature = addCreatureReady(player1, new SamuraiEnforcers());
+        Permanent oathkeeper = harness.addToBattlefieldAndReturn(player1, new OathkeeperTakenosDaisho());
+        oathkeeper.setAttachedTo(creature.getId());
+
+        destroyOathkeeper(oathkeeper);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Samurai Enforcers");
+        harness.assertNotInGraveyard(player1, "Samurai Enforcers");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Samurai Enforcers"));
+    }
+
     private void destroyOathkeeper(Permanent oathkeeper) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -149,8 +183,7 @@ class OathkeeperTakenosDaishoTest extends BaseCardTest {
         harness.setHand(player2, List.of(new PullUnder()));
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 5);
-        harness.castInstant(player2, 0, creature.getId());
-        harness.passBothPriorities(); // resolve Pull Under — creature dies, trigger goes on stack
+        harness.castAndResolveInstant(player2, 0, creature.getId());
         harness.passBothPriorities(); // resolve death trigger (if any)
     }
 }
