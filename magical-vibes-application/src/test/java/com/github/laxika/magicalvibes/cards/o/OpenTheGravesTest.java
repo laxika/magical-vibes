@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({OpenTheGraves.class, GrizzlyBears.class, WrathOfGod.class, Card.class})
 class OpenTheGravesTest extends BaseCardTest {
 
     @Test
@@ -74,22 +75,59 @@ class OpenTheGravesTest extends BaseCardTest {
         tokenCard.setPower(2);
         tokenCard.setToughness(2);
         tokenCard.setSubtypes(List.of(CardSubtype.BEAR));
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(tokenCard));
+        harness.addToBattlefield(player1, tokenCard);
 
         wrathFromOpponent();
 
         assertThat(findPermanents(player1, "Zombie")).isEmpty();
     }
 
+    @Test
+    @DisplayName("Multiple copies each trigger for the same creature death")
+    void multipleCopiesEachCreateZombie() {
+        harness.addToBattlefield(player1, new OpenTheGraves());
+        harness.addToBattlefield(player1, new OpenTheGraves());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        wrathFromOpponent();
+
+        assertThat(findPermanents(player1, "Zombie")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A Zombie created by the ability does not replace itself when it dies")
+    void createdZombieDeathDoesNotTrigger() {
+        harness.addToBattlefield(player1, new OpenTheGraves());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        wrathFromOpponent();
+        assertThat(findPermanents(player1, "Zombie")).hasSize(1);
+
+        wrathFromOpponent();
+
+        assertThat(findPermanents(player1, "Zombie")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each player gets tokens only for their own nontoken creatures")
+    void eachControllerGetsTheirOwnZombies() {
+        harness.addToBattlefield(player1, new OpenTheGraves());
+        harness.addToBattlefield(player2, new OpenTheGraves());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        wrathFromOpponent();
+
+        assertThat(findPermanents(player1, "Zombie")).hasSize(1);
+        assertThat(findPermanents(player2, "Zombie")).hasSize(2);
+    }
+
     private void wrathFromOpponent() {
-        harness.setHand(player2, List.of(new WrathOfGod()));
-        harness.addMana(player2, ManaColor.WHITE, 4);
         harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new WrathOfGod(), "{2}{W}{W}");
 
-        harness.getGameService().playCard(harness.getGameData(), player2, 0, 0, null, null);
-        harness.passBothPriorities();
-
-        while (!harness.getGameData().stack.isEmpty()) {
+        while (!gd.stack.isEmpty()) {
             harness.passBothPriorities();
         }
     }
