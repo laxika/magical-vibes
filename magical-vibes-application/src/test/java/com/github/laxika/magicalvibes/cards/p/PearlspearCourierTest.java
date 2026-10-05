@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.w.WirewoodElf;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,10 +12,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PearlspearCourier.class, WirewoodElf.class})
+@CardUsed({PearlspearCourier.class, WirewoodElf.class, Shock.class})
 class PearlspearCourierTest extends BaseCardTest {
 
     @Test
@@ -97,6 +100,69 @@ class PearlspearCourierTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, elf.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a Soldier creature");
+    }
+
+
+    @Test
+    @DisplayName("The ability can boost an opponent's Soldier")
+    void canTargetOpponentsSoldier() {
+        Permanent courier = addReadyCourier(player1);
+        Permanent target = addReadyCourier(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(courier.isTapped()).isTrue();
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, courier)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("No boost is created if the courier leaves before its ability resolves")
+    void sourceLeavingBeforeResolutionPreventsBoost() {
+        Permanent courier = addReadyCourier(player1);
+        Permanent target = addReadyCourier(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.castAndResolveInstant(player2, 0, courier.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Pearlspear Courier");
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The boost ends when the courier leaves the battlefield")
+    void sourceLeavingEndsBoost() {
+        Permanent courier = addReadyCourier(player1);
+        Permanent target = addReadyCourier(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isTrue();
+
+        harness.castAndResolveInstant(player2, 0, courier.getId());
+
+        harness.assertInGraveyard(player1, "Pearlspear Courier");
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isFalse();
     }
 
     private Permanent addReadyCourier(Player player) {
