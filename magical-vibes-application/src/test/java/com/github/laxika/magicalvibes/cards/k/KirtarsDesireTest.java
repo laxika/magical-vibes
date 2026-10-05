@@ -96,10 +96,67 @@ class KirtarsDesireTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Resolving the Aura attaches it and prevents the targeted creature attacking")
+    void resolvesOntoCreature() {
+        Permanent creature = addCreatureReady(player1, new DuskImp());
+        harness.setHand(player1, List.of(new KirtarsDesire()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Kirtar's Desire").getAttachedTo()).isEqualTo(creature.getId());
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(indexOf(player1, creature))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Reaching threshold after attachment prevents blocking")
+    void gainingThresholdPreventsBlocking() {
+        harness.setGraveyard(player1, List.of(
+                new Plains(), new Plains(), new Plains(), new Plains(), new Plains(), new Plains()));
+        Permanent attacker = addCreatureReady(player1, new DuskImp());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new DuskImp());
+        attachAura(blocker);
+        harness.setGraveyard(player1, List.of(
+                new Plains(), new Plains(), new Plains(), new Plains(),
+                new Plains(), new Plains(), new Plains()));
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                indexOf(player2, blocker), indexOf(player1, attacker)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid blocker index");
+    }
+
+    @Test
+    @DisplayName("Dropping below threshold after attachment allows blocking")
+    void losingThresholdAllowsBlocking() {
+        harness.setGraveyard(player1, List.of(
+                new Plains(), new Plains(), new Plains(), new Plains(),
+                new Plains(), new Plains(), new Plains()));
+        Permanent attacker = addCreatureReady(player1, new DuskImp());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new DuskImp());
+        attachAura(blocker);
+        harness.setGraveyard(player1, List.of(
+                new Plains(), new Plains(), new Plains(), new Plains(), new Plains(), new Plains()));
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                indexOf(player2, blocker), indexOf(player1, attacker))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
     private void attachAura(Permanent host) {
-        Permanent aura = new Permanent(new KirtarsDesire());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new KirtarsDesire());
         aura.setAttachedTo(host.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
     }
 
     private int indexOf(Player player, Permanent permanent) {
