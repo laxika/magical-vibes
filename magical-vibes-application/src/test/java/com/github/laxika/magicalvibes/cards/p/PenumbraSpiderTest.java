@@ -61,6 +61,36 @@ class PenumbraSpiderTest extends BaseCardTest {
     }
 
     private void destroyWithSulfurousBlast() {
+        castAndResolveSulfurousBlast();
+        castAndResolveSulfurousBlast();
+    }
+
+    @Test
+    @DisplayName("Nonlethal damage does not create a Spider token")
+    void nonlethalDamageDoesNotCreateToken() {
+        harness.addToBattlefield(player1, new PenumbraSpider());
+
+        castAndResolveSulfurousBlast();
+
+        assertThat(findPermanents(player1, "Penumbra Spider")).hasSize(1);
+        assertThat(findPermanents(player1, "Spider")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The Spider token does not create another token when it dies")
+    void tokenDoesNotInheritDeathTrigger() {
+        harness.addToBattlefield(player1, new PenumbraSpider());
+        destroyWithSulfurousBlast();
+        assertThat(findPermanents(player1, "Spider")).hasSize(1);
+        assertThat(findPermanents(player1, "Penumbra Spider")).isEmpty();
+
+        destroyWithSulfurousBlast();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void castAndResolveSulfurousBlast() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
