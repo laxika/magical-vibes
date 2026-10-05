@@ -33,8 +33,7 @@ class KeigaTheTideStarTest extends BaseCardTest {
         UUID keigaId = harness.getPermanentId(player1, "Keiga, the Tide Star");
         UUID mossKamiId = harness.getPermanentId(player2, "Moss Kami");
 
-        harness.castInstant(player2, 0, keigaId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, keigaId);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
@@ -65,8 +64,7 @@ class KeigaTheTideStarTest extends BaseCardTest {
         UUID mossKamiId = harness.getPermanentId(player2, "Moss Kami");
         UUID castleId = harness.getPermanentId(player2, "Eiganjo Castle");
 
-        harness.castInstant(player2, 0, keigaId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, keigaId);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(mossKamiId)
@@ -88,8 +86,7 @@ class KeigaTheTideStarTest extends BaseCardTest {
         UUID keigaId = harness.getPermanentId(player1, "Keiga, the Tide Star");
         UUID mossKamiId = harness.getPermanentId(player2, "Moss Kami");
 
-        harness.castInstant(player2, 0, keigaId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, keigaId);
         harness.handlePermanentChosen(player1, mossKamiId);
 
         var aura = harness.addToBattlefieldAndReturn(player2, new ImprisonedInTheMoon());
@@ -99,6 +96,96 @@ class KeigaTheTideStarTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Moss Kami");
         harness.assertNotOnBattlefield(player1, "Moss Kami");
+    }
+
+    @Test
+    @DisplayName("Death trigger can target a creature its controller already controls")
+    void deathTriggerCanTargetOwnCreature() {
+        harness.addToBattlefield(player1, new KeigaTheTideStar());
+        var mossKami = harness.addToBattlefieldAndReturn(player1, new MossKami());
+        mossKami.setTapped(true);
+        setupPlayer2Active();
+        harness.setHand(player2, List.of(new RendSpirit()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Keiga, the Tide Star"));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(mossKami.getId());
+        harness.handlePermanentChosen(player1, mossKami.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Moss Kami");
+        assertThat(mossKami.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Keiga, the Tide Star");
+    }
+
+    @Test
+    @DisplayName("Death trigger does not wait for a target when no creatures remain")
+    void deathWithNoLegalTargets() {
+        harness.addToBattlefield(player1, new KeigaTheTideStar());
+        harness.addToBattlefield(player2, new EiganjoCastle());
+        setupPlayer2Active();
+        harness.setHand(player2, List.of(new RendSpirit()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Keiga, the Tide Star"));
+
+        harness.assertInGraveyard(player1, "Keiga, the Tide Star");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Eiganjo Castle");
+    }
+
+    @Test
+    @DisplayName("Death trigger has no effect if its target dies in response")
+    void targetDiesBeforeResolution() {
+        harness.addToBattlefield(player1, new KeigaTheTideStar());
+        harness.addToBattlefield(player2, new MossKami());
+        setupPlayer2Active();
+        harness.setHand(player2, List.of(new RendSpirit(), new RendSpirit()));
+        harness.addMana(player2, ManaColor.BLACK, 6);
+        UUID mossKamiId = harness.getPermanentId(player2, "Moss Kami");
+
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Keiga, the Tide Star"));
+        harness.handlePermanentChosen(player1, mossKamiId);
+        harness.castAndResolveInstant(player2, 0, mossKamiId);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Moss Kami");
+        harness.assertNotOnBattlefield(player1, "Moss Kami");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A stolen Keiga's death trigger belongs to its controller, not its owner")
+    void stolenKeigaTriggersForItsController() {
+        harness.addToBattlefield(player1, new KeigaTheTideStar());
+        harness.addToBattlefield(player2, new KeigaTheTideStar());
+        harness.addToBattlefield(player2, new MossKami());
+        UUID firstKeigaId = harness.getPermanentId(player1, "Keiga, the Tide Star");
+        UUID secondKeigaId = harness.getPermanentId(player2, "Keiga, the Tide Star");
+        UUID mossKamiId = harness.getPermanentId(player2, "Moss Kami");
+        setupPlayer2Active();
+        harness.setHand(player2, List.of(new RendSpirit(), new RendSpirit()));
+        harness.addMana(player2, ManaColor.BLACK, 6);
+
+        harness.castAndResolveInstant(player2, 0, firstKeigaId);
+        harness.handlePermanentChosen(player1, secondKeigaId);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Keiga, the Tide Star");
+        harness.assertNotOnBattlefield(player2, "Keiga, the Tide Star");
+
+        harness.castAndResolveInstant(player2, 0, secondKeigaId);
+        harness.handlePermanentChosen(player1, mossKamiId);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Moss Kami");
+        harness.assertNotOnBattlefield(player2, "Moss Kami");
+        harness.assertInGraveyard(player2, "Keiga, the Tide Star");
     }
 
     private void setupPlayer2Active() {
