@@ -100,7 +100,7 @@ class ManaBreachTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Triggers for every player — the opponent bounces their own land")
+    @DisplayName("Triggers for every player â€” the opponent bounces their own land")
     void opponentCastingBouncesOpponentsLand() {
         harness.addToBattlefield(player1, new ManaBreach());
         UUID landId = harness.addToBattlefieldAndReturn(player2, new CityOfTraitors()).getId();
@@ -150,5 +150,64 @@ class ManaBreachTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "City of Traitors");
         harness.assertInHand(player1, "City of Traitors");
         harness.assertNotInHand(player2, "City of Traitors");
+    }
+
+    @Test
+    @DisplayName("Mana Breach does not trigger for its own casting")
+    void doesNotTriggerForItsOwnCasting() {
+        harness.addToBattlefield(player1, new CityOfTraitors());
+
+        harness.castFromHand(player1, new ManaBreach(), "{2}{U}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Mana Breach");
+        harness.assertOnBattlefield(player1, "City of Traitors");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The land is returned before the spell resolves")
+    void landReturnsBeforeSpellResolves() {
+        harness.addToBattlefield(player1, new ManaBreach());
+        UUID landId = harness.addToBattlefieldAndReturn(player1, new CityOfTraitors()).getId();
+
+        harness.castFromHand(player1, new PygmyTroll(), "{1}{G}");
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Pygmy Troll");
+
+        harness.handlePermanentChosen(player1, landId);
+        harness.assertInHand(player1, "City of Traitors");
+        harness.assertNotOnBattlefield(player1, "Pygmy Troll");
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Pygmy Troll");
+    }
+
+    @Test
+    @DisplayName("Two Mana Breaches each require a land return")
+    void multipleCopiesEachReturnALand() {
+        harness.addToBattlefield(player1, new ManaBreach());
+        harness.addToBattlefield(player2, new ManaBreach());
+        UUID firstLandId = harness.addToBattlefieldAndReturn(player1, new CityOfTraitors()).getId();
+        UUID secondLandId = harness.addToBattlefieldAndReturn(player1, new CityOfTraitors()).getId();
+
+        harness.castFromHand(player1, new PygmyTroll(), "{1}{G}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, firstLandId);
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(secondLandId);
+        harness.handlePermanentChosen(player1, secondLandId);
+
+        harness.assertNotOnBattlefield(player1, "City of Traitors");
+        assertThat(gd.playerHands.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("City of Traitors"))
+                .hasSize(2);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Pygmy Troll");
     }
 }
