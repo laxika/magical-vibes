@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Levitation.class, GiantCockroach.class, Opalescence.class})
+@CardUsed({Levitation.class, RuneclawBear.class, Opalescence.class})
 class LevitationTest extends BaseCardTest {
 
     @Test
@@ -29,19 +29,19 @@ class LevitationTest extends BaseCardTest {
     @Test
     @DisplayName("Creatures you control gain flying")
     void ownCreaturesGainFlying() {
-        Permanent cockroach = addCreatureReady(player1, new GiantCockroach());
+        Permanent bear = addCreatureReady(player1, new RuneclawBear());
         harness.addToBattlefield(player1, new Levitation());
 
-        assertThat(gqs.hasKeyword(gd, cockroach, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isTrue();
     }
 
     @Test
     @DisplayName("Creatures entering under your control gain flying")
     void laterCreaturesGainFlying() {
         harness.addToBattlefield(player1, new Levitation());
-        Permanent cockroach = harness.enterBattlefieldAndReturn(player1, new GiantCockroach());
+        Permanent bear = harness.enterBattlefieldAndReturn(player1, new RuneclawBear());
 
-        assertThat(gqs.hasKeyword(gd, cockroach, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -57,10 +57,10 @@ class LevitationTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent creatures do not gain flying")
     void opponentCreaturesDoNotGainFlying() {
-        Permanent opponentCockroach = addCreatureReady(player2, new GiantCockroach());
+        Permanent opponentBear = addCreatureReady(player2, new RuneclawBear());
         harness.addToBattlefield(player1, new Levitation());
 
-        assertThat(gqs.hasKeyword(gd, opponentCockroach, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentBear, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -75,13 +75,33 @@ class LevitationTest extends BaseCardTest {
     @Test
     @DisplayName("Flying bonus is removed when Levitation leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {
-        Permanent cockroach = addCreatureReady(player1, new GiantCockroach());
+        Permanent bear = addCreatureReady(player1, new RuneclawBear());
         Permanent levitation = harness.addToBattlefieldAndReturn(player1, new Levitation());
-        assertThat(gqs.hasKeyword(gd, cockroach, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isTrue();
 
         harness.inMutationScope(
                 () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, levitation));
 
-        assertThat(gqs.hasKeyword(gd, cockroach, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Flying remains until the last Levitation leaves the battlefield")
+    void flyingRemainsWhileAnotherLevitationIsPresent() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Levitation());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new Levitation());
+
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isTrue();
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, first));
+
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isTrue();
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, second));
+
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isFalse();
     }
 }
