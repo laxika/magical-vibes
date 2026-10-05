@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.v.VirulentSliver;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -83,6 +84,9 @@ class MesmericSliverTest extends BaseCardTest {
         addCreatureReady(player1, new MesmericSliver());
 
         harness.castFromHand(player1, new MistmeadowSkulk(), "{1}{W}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Mistmeadow Skulk");
 
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
@@ -122,6 +126,56 @@ class MesmericSliverTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Two Mesmeric Slivers grant two independent optional fateseals")
+    void multipleCopiesGrantIndependentAbilities() {
+        addCreatureReady(player1, new MesmericSliver());
+        addCreatureReady(player2, new MesmericSliver());
+        Card topCard = new MistmeadowSkulk();
+        Card nextCard = new MistmeadowSkulk();
+        harness.setLibrary(player2, List.of(topCard, nextCard));
+
+        harness.enterBattlefieldAndReturn(player1, new VirulentSliver());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        if (gd.interaction.activeInteraction() == null) {
+            harness.passBothPriorities();
+        }
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.Scry fateseal = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(fateseal.cards()).containsExactly(topCard);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(nextCard, topCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An already triggered fateseal survives both Slivers leaving")
+    void triggeredAbilitySurvivesSourceAndGrantLeaving() {
+        Permanent grantingSliver = addCreatureReady(player1, new MesmericSliver());
+        Card topCard = new MistmeadowSkulk();
+        Card nextCard = new MistmeadowSkulk();
+        harness.setLibrary(player2, List.of(topCard, nextCard));
+        Permanent enteringSliver = harness.enterBattlefieldAndReturn(player1, new VirulentSliver());
+
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, grantingSliver);
+            harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, enteringSliver);
+        });
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.Scry fateseal = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(fateseal.playerId()).isEqualTo(player1.getId());
+        assertThat(fateseal.cards()).containsExactly(topCard);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard, nextCard);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
