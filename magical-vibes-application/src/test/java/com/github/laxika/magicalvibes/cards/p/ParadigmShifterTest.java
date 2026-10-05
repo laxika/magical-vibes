@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.d.DecorumDissertation;
 import com.github.laxika.magicalvibes.cards.e.EchocastingSymposium;
+import com.github.laxika.magicalvibes.cards.f.FalseDawn;
 import com.github.laxika.magicalvibes.cards.g.GerminationPracticum;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.ImprovisationCapstone;
 import com.github.laxika.magicalvibes.cards.o.Opt;
 import com.github.laxika.magicalvibes.cards.r.RestorationSeminar;
@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ParadigmShifter.class, RestorationSeminar.class, EchocastingSymposium.class,
         DecorumDissertation.class, GerminationPracticum.class, ImprovisationCapstone.class,
-        Opt.class, GrizzlyBears.class})
+        Opt.class})
 class ParadigmShifterTest extends BaseCardTest {
 
     @Test
@@ -59,13 +59,92 @@ class ParadigmShifterTest extends BaseCardTest {
         assertThat(manaPool.getInstantSorceryOnlyColored(ManaColor.BLUE)).isEqualTo(1);
         assertThat(manaPool.getInstantSorceryOnlyColored(ManaColor.RED)).isEqualTo(1);
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player1, List.of(new ParadigmShifter()));
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+
+        gd.playerManaPools.get(player1.getId()).clear();
+        findPermanent(player1, "Paradigm Shifter").setTapped(false);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.BLUE.name());
+        harness.handleListChoice(player1, ManaColor.RED.name());
 
         harness.setHand(player1, List.of(new Opt()));
         harness.castInstant(player1, 0);
         assertThat(manaPool.getInstantSorceryOnlyColored(ManaColor.BLUE)).isZero();
         assertThat(manaPool.getInstantSorceryOnlyColored(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    void sameColorManaPaysColoredSorceryCostWithoutUsingTheStack() {
+        var shifter = addCreatureReady(player1, new ParadigmShifter());
+        harness.setHand(player1, List.of(new GerminationPracticum()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+
+        assertThat(shifter.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getInstantSorceryOnlyColored(ManaColor.GREEN)).isEqualTo(2);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(shifter.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getInstantSorceryOnlyColored(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    void summoningSickCreatureCannotActivateTapAbility() {
+        harness.addToBattlefield(player1, new ParadigmShifter());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @CardUsed({FalseDawn.class})
+    void falseDawnReplacesBothChosenColorsWithRestrictedWhiteMana() {
+        addCreatureReady(player1, new ParadigmShifter());
+        harness.setHand(player1, List.of(new FalseDawn()));
+        harness.setLibrary(player1, List.of(new Opt()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+        harness.handleListChoice(player1, ManaColor.RED.name());
+
+        var manaPool = gd.playerManaPools.get(player1.getId());
+        assertThat(manaPool.getInstantSorceryOnlyColored(ManaColor.WHITE)).isEqualTo(2);
+        assertThat(manaPool.getInstantSorceryOnlyColored(ManaColor.GREEN)).isZero();
+        assertThat(manaPool.getInstantSorceryOnlyColored(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    void triggerConjuresForItsControllerAfterSourceLeaves() {
+        var shifter = harness.enterBattlefieldAndReturn(player2, new ParadigmShifter());
+        gd.playerBattlefields.get(player2.getId()).remove(shifter);
+        gd.playerGraveyards.get(player2.getId()).add(shifter.getCard());
+        harness.passBothPriorities();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.SpellbookCardChoice.class);
+        Card selected = choice.cards().getFirst();
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(selected.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player2, List.of(selected.getId()));
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(selected);
+        assertThat(selected.getOwnerId()).isEqualTo(player2.getId());
+        harness.assertNotInHand(player1, selected.getName());
     }
 }
