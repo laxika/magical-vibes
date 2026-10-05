@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NorwoodPriestess.class, BearCub.class, GoblinPiker.class, Forest.class})
+@CardUsed({NorwoodPriestess.class, BearCub.class, GoblinPiker.class, Forest.class, NaturalSpring.class})
 class NorwoodPriestessTest extends BaseCardTest {
 
     @Test
@@ -135,6 +135,76 @@ class NorwoodPriestessTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent priestess = setupPriestessOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        priestess.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(priestess.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Activating with an empty hand still pays the tap cost")
+    void emptyHandStillPaysTapCost() {
+        Permanent priestess = setupPriestessOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(priestess.isTapped()).isTrue();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(priestess);
+    }
+
+    @Test
+    @DisplayName("The ability resolves after its source leaves and puts only one creature onto the battlefield")
+    void resolvesWithoutSourceAndPutsOnlyOneCreature() {
+        Permanent priestess = setupPriestessOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new BearCub(), new BearCub()));
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(priestess);
+        gd.playerGraveyards.get(player1.getId()).add(priestess.getCard());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(countPermanents(player1, "Bear Cub")).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(findPermanent(player1, "Bear Cub").isTapped()).isFalse();
+        assertThat(findPermanent(player1, "Bear Cub").isSummoningSick()).isTrue();
+        harness.assertInGraveyard(player1, "Norwood Priestess");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A green noncreature card cannot be put onto the battlefield")
+    void greenNoncreatureIsNotAValidChoice() {
+        setupPriestessOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new NaturalSpring(), new BearCub()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class).validIndices())
+                .containsExactly(1);
+        harness.handleCardChosen(player1, 1);
+        harness.assertInHand(player1, "Natural Spring");
+        harness.assertOnBattlefield(player1, "Bear Cub");
     }
 
     private Permanent setupPriestessOnMyTurn(TurnStep step) {
