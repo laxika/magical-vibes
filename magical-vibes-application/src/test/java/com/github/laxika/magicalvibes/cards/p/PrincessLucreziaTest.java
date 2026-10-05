@@ -25,6 +25,19 @@ class PrincessLucreziaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Mana ability resolves immediately into its controller's pool")
+    void manaAbilityResolvesImmediatelyForController() {
+        Permanent princess = addCreatureReady(player2, new PrincessLucrezia());
+
+        harness.activateAbility(player2, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(princess.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Princess Lucrezia cannot tap for mana while summoning sick")
     void summoningSickCannotActivate() {
         harness.addToBattlefield(player1, new PrincessLucrezia());
