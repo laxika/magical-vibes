@@ -127,7 +127,7 @@ class LiltingRefrainTest extends BaseCardTest {
     @Test
     @DisplayName("A zero-counter Refrain can be paid for zero mana")
     void zeroVerseCountersCanBePaid() {
-        Permanent refrain = harness.addToBattlefieldAndReturn(player1, new LiltingRefrain());
+        harness.addToBattlefield(player1, new LiltingRefrain());
 
         CoralMerfolk merfolk = new CoralMerfolk();
         harness.setHand(player2, List.of(merfolk));
@@ -145,6 +145,44 @@ class LiltingRefrainTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Coral Merfolk");
         harness.assertInGraveyard(player1, "Lilting Refrain");
+    }
+
+    @Test
+    @DisplayName("A spell's controller may decline a zero-mana payment")
+    void zeroVerseCountersCanStillCounterWhenPaymentDeclined() {
+        harness.addToBattlefield(player1, new LiltingRefrain());
+
+        CoralMerfolk merfolk = new CoralMerfolk();
+        harness.setHand(player2, List.of(merfolk));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.forceActivePlayer(player2);
+        harness.castCreature(player2, 0);
+        harness.passPriority(player2);
+        harness.activateAbility(player1, 0, null, merfolk.getId());
+
+        harness.assertInGraveyard(player1, "Lilting Refrain");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player2, "Coral Merfolk");
+    }
+
+    @Test
+    @DisplayName("Lilting Refrain can counter its controller's own spell")
+    void canTargetOwnSpell() {
+        Permanent refrain = harness.addToBattlefieldAndReturn(player1, new LiltingRefrain());
+        refrain.setCounterCount(CounterType.VERSE, 1);
+
+        CoralMerfolk merfolk = new CoralMerfolk();
+        harness.setHand(player1, List.of(merfolk));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castCreature(player1, 0);
+        harness.activateAbility(player1, 0, null, merfolk.getId());
+
+        harness.assertInGraveyard(player1, "Lilting Refrain");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Coral Merfolk");
     }
 
     @Test
