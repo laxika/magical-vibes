@@ -23,12 +23,10 @@ class MonologueTaxTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 2);
         prepareOpponentMainPhase();
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
     }
@@ -40,10 +38,8 @@ class MonologueTaxTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
     }
@@ -55,17 +51,58 @@ class MonologueTaxTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 3);
         prepareOpponentMainPhase();
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+    }
+
+    @Test
+    void triggersDuringControllersTurnAndCountsEachPlayersSpellsSeparately() {
+        harness.addToBattlefield(player1, new MonologueTax());
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.setHand(player2, List.of(new LightningBolt(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        assertThat(findPermanents(player2, "Treasure")).isEmpty();
+    }
+
+    @Test
+    void countsFirstSpellCastBeforeMonologueTaxEntered() {
+        harness.setHand(player2, List.of(new LightningBolt(), new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        prepareOpponentMainPhase();
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.addToBattlefield(player1, new MonologueTax());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+    }
+
+    @Test
+    void eachCopyTriggersIndependently() {
+        harness.addToBattlefield(player1, new MonologueTax());
+        harness.addToBattlefield(player1, new MonologueTax());
+        harness.setHand(player2, List.of(new LightningBolt(), new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        prepareOpponentMainPhase();
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(2);
     }
 
     private void prepareOpponentMainPhase() {
