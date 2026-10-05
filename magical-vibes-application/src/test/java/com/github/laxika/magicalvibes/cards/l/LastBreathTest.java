@@ -23,8 +23,7 @@ class LastBreathTest extends BaseCardTest {
 
     private void giveLastBreath() {
         harness.setHand(player1, List.of(new LastBreath()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
     }
 
     @Test
@@ -34,8 +33,7 @@ class LastBreathTest extends BaseCardTest {
         harness.setLife(player2, 20);
         giveLastBreath();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         // Target removed from battlefield and moved to exile (not graveyard)
         harness.assertNotOnBattlefield(player2, "Ballynock Cohort");
@@ -53,8 +51,7 @@ class LastBreathTest extends BaseCardTest {
         harness.setLife(player1, 20);
         giveLastBreath();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertNotOnBattlefield(player1, "Ballynock Cohort");
         harness.assertLife(player1, 24);
@@ -67,8 +64,7 @@ class LastBreathTest extends BaseCardTest {
         harness.setLife(player2, 20);
         giveLastBreath();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Goldenglow Moth");
         assertThat(gd.exiledCards).anyMatch(e -> e.card().getName().equals("Goldenglow Moth"));
@@ -108,13 +104,43 @@ class LastBreathTest extends BaseCardTest {
         harness.setLife(player2, 20);
         giveLastBreath();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Ballynock Cohort");
         harness.assertOnBattlefield(player2, "Boon Reflection");
         harness.assertLife(player2, 28);
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature whose static bonus raises its power above 2")
+    void cannotTargetCreatureWithBoostedPower() {
+        Permanent target = addCreatureReady(player2, new BallynockCohort());
+        addCreatureReady(player2, new GoldenglowMoth());
+        giveLastBreath();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("power 2 or less");
+    }
+
+    @Test
+    @DisplayName("No exile or life gain if the target's power rises above 2 before resolution")
+    void targetBecomesIllegalWhenPowerIncreases() {
+        Permanent target = addCreatureReady(player2, new BallynockCohort());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        giveLastBreath();
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.addToBattlefield(player2, new GoldenglowMoth());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Ballynock Cohort");
+        assertThat(gd.exiledCards).noneMatch(e -> e.card().getName().equals("Ballynock Cohort"));
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Last Breath");
     }
 
     @Test
