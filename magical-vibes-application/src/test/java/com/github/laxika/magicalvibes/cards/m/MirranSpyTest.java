@@ -1,166 +1,184 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianDigester;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MirranSpy.class, GrizzlyBears.class, Spellbook.class, PhyrexianDigester.class})
 class MirranSpyTest extends BaseCardTest {
 
-    // ===== Trigger fires on artifact cast =====
-
     @Test
-    @DisplayName("Casting an artifact spell triggers may ability prompt")
-    void artifactCastTriggersMayPrompt() {
-        harness.addToBattlefield(player1, new MirranSpy());
-        harness.setHand(player1, List.of(new Spellbook()));
+    @DisplayName("Artifact cast chooses a target before the optional resolution decision")
+    void artifactCastChoosesTargetBeforeMayPrompt() {
+        Permanent spy = harness.addToBattlefieldAndReturn(player1, new MirranSpy());
 
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new Spellbook(), "{0}");
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, spy.getId());
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(gd.stack.getLast().getTargetId()).isEqualTo(spy.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
     }
 
-    // ===== Accept: untap target creature =====
-
     @Test
-    @DisplayName("Accepting prompts for target creature and untaps it")
+    @DisplayName("Accepting at resolution untaps the chosen creature before the artifact resolves")
     void acceptUntapsTargetCreature() {
         harness.addToBattlefield(player1, new MirranSpy());
-        GrizzlyBears bears = new GrizzlyBears();
-        harness.addToBattlefield(player1, bears);
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.tap();
 
-        // Tap the bears manually
-        Permanent bearsPerm = findPermanent(player1, "Grizzly Bears");
-        bearsPerm.tap();
-        assertThat(bearsPerm.isTapped()).isTrue();
-
-        harness.setHand(player1, List.of(new Spellbook()));
-
-        harness.castArtifact(player1, 0);
-
-        // Accept the may ability
+        harness.castFromHand(player1, new Spellbook(), "{0}");
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        // Should be prompting for target selection
-        GameData gd = harness.getGameData();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-
-        // Choose the tapped creature
-        harness.handlePermanentChosen(player1, bearsId);
-
-        // Triggered ability should be on the stack
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getCard().getName().equals("Mirran Spy"));
-
-        // Resolve triggered ability
-        harness.passBothPriorities();
-
-        // Bears should now be untapped
-        assertThat(bearsPerm.isTapped()).isFalse();
+        assertThat(bears.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
+        harness.assertNotOnBattlefield(player1, "Spellbook");
     }
 
     @Test
-    @DisplayName("Can target opponent's creature")
+    @DisplayName("Can target and untap an opponent's creature")
     void canTargetOpponentsCreature() {
         harness.addToBattlefield(player1, new MirranSpy());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        bears.tap();
 
-        // Tap opponent's creature
-        Permanent bearsPerm = findPermanent(player2, "Grizzly Bears");
-        bearsPerm.tap();
-
-        harness.setHand(player1, List.of(new Spellbook()));
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new Spellbook(), "{0}");
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        // Choose opponent's creature
-        harness.handlePermanentChosen(player1, bearsId);
-
-        // Resolve triggered ability
-        harness.passBothPriorities();
-
-        // Opponent's creature should be untapped
-        assertThat(bearsPerm.isTapped()).isFalse();
+        assertThat(bears.isTapped()).isFalse();
     }
-
-    // ===== Decline =====
 
     @Test
-    @DisplayName("Declining may ability does not untap anything")
+    @DisplayName("Declining at resolution leaves the targeted creature tapped")
     void declineDoesNothing() {
         harness.addToBattlefield(player1, new MirranSpy());
-        GrizzlyBears bears = new GrizzlyBears();
-        harness.addToBattlefield(player1, bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.tap();
 
-        Permanent bearsPerm = findPermanent(player1, "Grizzly Bears");
-        bearsPerm.tap();
-
-        harness.setHand(player1, List.of(new Spellbook()));
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new Spellbook(), "{0}");
+        harness.handlePermanentChosen(player1, bears.getId());
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        GameData gd = harness.getGameData();
-        // No triggered ability on stack
-        assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getCard().getName().equals("Mirran Spy"));
-
-        // Creature still tapped
-        assertThat(bearsPerm.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
+        assertThat(bears.isTapped()).isTrue();
     }
-
-    // ===== Non-artifact does not trigger =====
 
     @Test
     @DisplayName("Non-artifact spell does not trigger Mirran Spy")
     void nonArtifactDoesNotTrigger() {
         harness.addToBattlefield(player1, new MirranSpy());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
     }
 
-    // ===== Opponent's artifact does not trigger =====
-
     @Test
-    @DisplayName("Opponent casting artifact does not trigger Mirran Spy")
+    @DisplayName("Opponent casting an artifact does not trigger Mirran Spy")
     void opponentArtifactDoesNotTrigger() {
         harness.addToBattlefield(player1, new MirranSpy());
-
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new Spellbook()));
+        harness.castFromHand(player2, new Spellbook(), "{0}");
 
-        harness.castArtifact(player2, 0);
-
-        GameData gd = harness.getGameData();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
     }
 
+    @Test
+    @DisplayName("Noncreature artifacts are excluded from the trigger's legal targets")
+    void cannotTargetNoncreatureArtifact() {
+        Permanent spy = harness.addToBattlefieldAndReturn(player1, new MirranSpy());
+        Permanent book = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        book.tap();
+
+        harness.castFromHand(player1, new Spellbook(), "{0}");
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).containsExactly(spy.getId());
+        assertThat(choice.validPlayerIds()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An artifact creature cast triggers before that creature enters")
+    void artifactCreatureCastTriggers() {
+        Permanent spy = harness.addToBattlefieldAndReturn(player1, new MirranSpy());
+        spy.tap();
+
+        harness.castFromHand(player1, new PhyrexianDigester(), "{3}");
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+                .containsExactly(spy.getId());
+        harness.handlePermanentChosen(player1, spy.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(spy.isTapped()).isFalse();
+        harness.assertNotOnBattlefield(player1, "Phyrexian Digester");
+        assertThat(gd.stack).hasSize(1);
+    }
+    @Test
+    @DisplayName("Mirran Spy can untap itself")
+    void canUntapItself() {
+        Permanent spy = harness.addToBattlefieldAndReturn(player1, new MirranSpy());
+        spy.tap();
+
+        harness.castFromHand(player1, new Spellbook(), "{0}");
+        harness.handlePermanentChosen(player1, spy.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(spy.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An already untapped creature is a legal target")
+    void canTargetUntappedCreature() {
+        harness.addToBattlefield(player1, new MirranSpy());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.castFromHand(player1, new Spellbook(), "{0}");
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+                .contains(bears.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bears.isTapped()).isFalse();
+    }
 }
