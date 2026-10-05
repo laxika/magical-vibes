@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MetallicMimic.class, FugitiveWizard.class, GrizzlyBears.class})
 class MetallicMimicTest extends BaseCardTest {
 
     @Test
@@ -117,10 +119,58 @@ class MetallicMimicTest extends BaseCardTest {
                 .isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("A Mimic does not give itself a counter when choosing Shapeshifter")
+    void doesNotGiveItselfCounter() {
+        harness.setHand(player1, List.of(new MetallicMimic()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "SHAPESHIFTER");
+
+        assertThat(findPermanent(player1, "Metallic Mimic").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isZero();
+    }
+
+    @Test
+    @DisplayName("An entering Mimic receives a counter from an existing Mimic naming its chosen type")
+    void enteringMimicReceivesCounterForChosenType() {
+        Permanent first = addMimic(player1, CardSubtype.WIZARD);
+        harness.setHand(player1, List.of(new MetallicMimic()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WIZARD");
+
+        Permanent second = findPermanents(player1, "Metallic Mimic").stream()
+                .filter(permanent -> !permanent.getId().equals(first.getId()))
+                .findFirst().orElseThrow();
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Being a Shapeshifter does not make Mimic grant counters to Shapeshifters when naming Wizard")
+    void naturalSourceTypeDoesNotDetermineCounterRecipients() {
+        Permanent first = addMimic(player1, CardSubtype.WIZARD);
+        harness.setHand(player1, List.of(new MetallicMimic()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BEAR");
+
+        Permanent second = findPermanents(player1, "Metallic Mimic").stream()
+                .filter(permanent -> !permanent.getId().equals(first.getId()))
+                .findFirst().orElseThrow();
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private Permanent addMimic(Player player, CardSubtype chosen) {
-        Permanent perm = new Permanent(new MetallicMimic());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new MetallicMimic());
         perm.setChosenSubtype(chosen);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
