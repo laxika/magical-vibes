@@ -2,8 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
-import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.SeasClaim;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,10 +19,11 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PietyCharm.class, ElvishWarrior.class, GlorySeeker.class, Pacifism.class, Plains.class})
+@CardUsed({PietyCharm.class, ElvishWarrior.class, GlorySeeker.class, Pacifism.class, Plains.class, SeasClaim.class})
 class PietyCharmTest extends BaseCardTest {
 
     @Nested
+    @CardUsed({PietyCharm.class, ElvishWarrior.class, Pacifism.class, Plains.class, SeasClaim.class})
     @DisplayName("Mode 0: Destroy target Aura attached to a creature")
     class DestroyAuraMode {
 
@@ -42,9 +42,20 @@ class PietyCharmTest extends BaseCardTest {
         @DisplayName("Cannot target an Aura attached to a noncreature")
         void rejectsAuraAttachedToNoncreature() {
             Permanent host = harness.addToBattlefieldAndReturn(player2, new Plains());
-            Permanent aura = addAuraAttachedTo(host);
+            Permanent aura = harness.addToBattlefieldAndReturn(player2, new SeasClaim());
+            aura.setAttachedTo(host.getId());
 
             assertThatThrownBy(() -> castCharm(0, aura.getId()))
+                    .isInstanceOf(IllegalStateException.class);
+        }
+
+        @Test
+        @DisplayName("Cannot target a creature instead of its Aura")
+        void rejectsCreatureTarget() {
+            Permanent host = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
+            addAuraAttachedTo(host);
+
+            assertThatThrownBy(() -> castCharm(0, host.getId()))
                     .isInstanceOf(IllegalStateException.class);
         }
 
@@ -61,6 +72,7 @@ class PietyCharmTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({PietyCharm.class, GlorySeeker.class, ElvishWarrior.class, Plains.class})
     @DisplayName("Mode 1: Target Soldier creature gets +2/+2 until end of turn")
     class SoldierBoostMode {
 
@@ -80,6 +92,15 @@ class PietyCharmTest extends BaseCardTest {
             Permanent creature = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
 
             assertThatThrownBy(() -> castCharm(1, creature.getId()))
+                    .isInstanceOf(IllegalStateException.class);
+        }
+
+        @Test
+        @DisplayName("Cannot target a noncreature permanent")
+        void rejectsNoncreature() {
+            Permanent land = harness.addToBattlefieldAndReturn(player1, new Plains());
+
+            assertThatThrownBy(() -> castCharm(1, land.getId()))
                     .isInstanceOf(IllegalStateException.class);
         }
 
@@ -109,8 +130,33 @@ class PietyCharmTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({PietyCharm.class, ElvishWarrior.class})
     @DisplayName("Mode 2: Creatures you control gain vigilance until end of turn")
     class VigilanceMode {
+
+        @Test
+        @DisplayName("Vigilance mode needs no creatures or targets")
+        void resolvesWithNoCreatures() {
+            castCharm(2, null);
+
+            assertThat(gd.stack).isEmpty();
+            harness.assertInGraveyard(player1, "Piety Charm");
+        }
+
+        @Test
+        @DisplayName("Grants vigilance to all creatures present when the spell resolves")
+        void includesCreaturesEnteringBeforeResolution() {
+            Permanent existingCreature = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
+            harness.setHand(player1, List.of(new PietyCharm()));
+            harness.addMana(player1, ManaColor.WHITE, 1);
+            harness.castModalInstant(player1, 0, 2, List.of());
+
+            Permanent newCreature = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
+            harness.passBothPriorities();
+
+            assertThat(gqs.hasKeyword(gd, existingCreature, Keyword.VIGILANCE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, newCreature, Keyword.VIGILANCE)).isTrue();
+        }
 
         @Test
         @DisplayName("Grants vigilance to your creatures only")
@@ -155,9 +201,8 @@ class PietyCharmTest extends BaseCardTest {
 
     private Permanent addAuraAttachedTo(com.github.laxika.magicalvibes.model.Player controller,
                                         Permanent host) {
-        Permanent aura = new Permanent(new Pacifism());
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new Pacifism());
         aura.setAttachedTo(host.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
         return aura;
     }
 
