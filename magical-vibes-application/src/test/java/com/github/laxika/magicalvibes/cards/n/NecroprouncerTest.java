@@ -1,49 +1,46 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
+import com.github.laxika.magicalvibes.cards.b.BlindZealot;
+import com.github.laxika.magicalvibes.cards.b.BeastWithin;
+import com.github.laxika.magicalvibes.cards.v.VaporSnag;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Necropouncer.class, BlindZealot.class, BeastWithin.class, VaporSnag.class})
 class NecroprouncerTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    
-
-    
-
     @Test
-    @DisplayName("Necropouncer has equip {2} ability")
-    void hasEquipAbility() {
-        Necropouncer card = new Necropouncer();
+    @DisplayName("Equip costs two mana and does not tap Necropouncer")
+    void equipCostsTwoManaWithoutTapping() {
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new Necropouncer());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BlindZealot());
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{2}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getTargetFilter())
-                .isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
-        assertThat(card.getActivatedAbilities().get(0).getTimingRestriction())
-                .isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(EquipEffect.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(equipment.getAttachedTo()).isNull();
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(equipment.isTapped()).isFalse();
     }
-
-    // ===== Living weapon ETB =====
 
     @Test
     @DisplayName("Casting Necropouncer triggers living weapon ETB on the stack")
@@ -69,14 +66,8 @@ class NecroprouncerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
-
-        Permanent necropouncer = battlefield.stream()
-                .filter(p -> p.getCard().getName().equals("Necropouncer"))
-                .findFirst().orElseThrow();
-        Permanent germ = battlefield.stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Germ"))
-                .findFirst().orElseThrow();
+        Permanent necropouncer = findPermanent(player1, "Necropouncer");
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
 
         assertThat(necropouncer.getAttachedTo()).isEqualTo(germ.getId());
     }
@@ -101,8 +92,6 @@ class NecroprouncerTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(CardSubtype.PHYREXIAN, CardSubtype.GERM);
     }
 
-    // ===== Germ gets equipment bonuses =====
-
     @Test
     @DisplayName("Germ token gets +3/+1 and haste from Necropouncer")
     void germGetsEquipmentBonuses() {
@@ -121,8 +110,6 @@ class NecroprouncerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, germ, Keyword.HASTE)).isTrue();
     }
 
-    // ===== Equip to another creature =====
-
     @Test
     @DisplayName("Equipping Necropouncer to another creature moves it from the Germ")
     void equipToAnotherCreature() {
@@ -133,25 +120,21 @@ class NecroprouncerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent zealot = harness.addToBattlefieldAndReturn(player1, new BlindZealot());
 
         harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, null, zealot.getId());
         harness.passBothPriorities();
 
         Permanent necropouncer = findPermanent(player1, "Necropouncer");
 
-        assertThat(necropouncer.getAttachedTo()).isEqualTo(bears.getId());
+        assertThat(necropouncer.getAttachedTo()).isEqualTo(zealot.getId());
 
-        // Bears should get +3/+1 and haste
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);  // 2 + 3
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);  // 2 + 1
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
+        // Zealot should get +3/+1 and haste
+        assertThat(gqs.getEffectivePower(gd, zealot)).isEqualTo(5);  // 2 + 3
+        assertThat(gqs.getEffectiveToughness(gd, zealot)).isEqualTo(3);  // 2 + 1
+        assertThat(gqs.hasKeyword(gd, zealot, Keyword.HASTE)).isTrue();
     }
-
-    // ===== Germ dies when equipment is moved =====
 
     @Test
     @DisplayName("Germ token dies (0 toughness) when Necropouncer is moved to another creature")
@@ -163,14 +146,122 @@ class NecroprouncerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent zealot = harness.addToBattlefieldAndReturn(player1, new BlindZealot());
 
         harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, null, zealot.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Phyrexian Germ");
+    }
+
+    @Test
+    @DisplayName("Equip cannot target an opponent's creature")
+    void equipRejectsOpponentCreature() {
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new Necropouncer());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BlindZealot());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(equipment.getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("Equip cannot target a noncreature permanent")
+    void equipRejectsNoncreature() {
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new Necropouncer());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, equipment.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(equipment.getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("Equip cannot be activated while living weapon is on the stack")
+    void equipRequiresEmptyStack() {
+        harness.setHand(player1, List.of(new Necropouncer()));
+        harness.addMana(player1, ManaColor.WHITE, 8);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BlindZealot());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(findPermanent(player1, "Necropouncer").getAttachedTo())
+                .isEqualTo(findPermanent(player1, "Phyrexian Germ").getId());
+    }
+
+    @Test
+    @DisplayName("Equip cannot be activated during an opponent's turn")
+    void equipRequiresControllersTurn() {
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new Necropouncer());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BlindZealot());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.forceActivePlayer(player2);
+        harness.ensurePriority(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(equipment.getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("Destroying the Equipment before living weapon resolves leaves no surviving Germ")
+    void equipmentRemovedBeforeLivingWeaponResolves() {
+        harness.setHand(player1, List.of(new Necropouncer()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        Permanent equipment = findPermanent(player1, "Necropouncer");
+        harness.setHand(player2, List.of(new BeastWithin()));
+        harness.addMana(player2, ManaColor.GREEN, 3);
+
+        harness.castAndResolveInstant(player2, 0, equipment.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Necropouncer");
+        harness.assertNotOnBattlefield(player1, "Phyrexian Germ");
+        harness.assertNotOnBattlefield(player2, "Phyrexian Germ");
+    }
+
+    @Test
+    @DisplayName("Removing an equip target in response keeps the Equipment on its Germ")
+    void equipTargetRemovedInResponse() {
+        harness.setHand(player1, List.of(new Necropouncer()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        Permanent equipment = findPermanent(player1, "Necropouncer");
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BlindZealot());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.setHand(player2, List.of(new VaporSnag()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Blind Zealot");
+        assertThat(equipment.getAttachedTo()).isEqualTo(germ.getId());
+        assertThat(gqs.getEffectivePower(gd, germ)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, germ)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, germ, Keyword.HASTE)).isTrue();
     }
 }
