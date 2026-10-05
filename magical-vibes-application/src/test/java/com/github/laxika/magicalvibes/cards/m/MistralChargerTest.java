@@ -47,4 +47,19 @@ class MistralChargerTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Mistral Charger can block a creature without flying")
+    void flyingCreatureCanBlockGroundCreature() {
+        Permanent attacker = addCreatureReady(player1, new SimicRagworm());
+        Permanent charger = addCreatureReady(player2, new MistralCharger());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(charger),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+
+        assertThat(charger.isBlocking()).isTrue();
+    }
 }
