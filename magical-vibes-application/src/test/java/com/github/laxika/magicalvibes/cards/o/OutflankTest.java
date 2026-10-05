@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BarteredCow;
+import com.github.laxika.magicalvibes.cards.k.KnightOfTheKeep;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,16 +15,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Outflank.class, AirElemental.class, GrizzlyBears.class})
+@CardUsed({Outflank.class, BarteredCow.class, KnightOfTheKeep.class})
 class OutflankTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals damage equal to the number of creatures its controller controls")
     void dealsDamageEqualToControlledCreatures() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent target = addAttacker(new AirElemental());
+        harness.addToBattlefield(player1, new KnightOfTheKeep());
+        harness.addToBattlefield(player1, new KnightOfTheKeep());
+        harness.addToBattlefield(player2, new KnightOfTheKeep());
+        Permanent target = addAttacker(new BarteredCow());
 
         castAndResolve(target);
 
@@ -34,8 +34,12 @@ class OutflankTest extends BaseCardTest {
     @Test
     @DisplayName("Deals damage to a blocking creature")
     void dealsDamageToBlockingCreature() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent target = addBlocker(new AirElemental());
+        Permanent attacker = addCreatureReady(player1, new KnightOfTheKeep());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        Permanent target = addCreatureReady(player2, new BarteredCow());
+        target.setBlocking(true);
+        target.addBlockingTargetId(attacker.getId());
 
         castAndResolve(target);
 
@@ -45,14 +49,81 @@ class OutflankTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature that is not attacking or blocking")
     void cannotTargetNonCombatCreature() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent target = findPermanent(player2, "Grizzly Bears");
+        harness.addToBattlefield(player1, new KnightOfTheKeep());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new KnightOfTheKeep());
         prepareCast();
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("attacking or blocking creature");
+    }
+
+    @Test
+    @DisplayName("Counts creatures at resolution rather than when cast")
+    void countsCreaturesAtResolution() {
+        harness.addToBattlefield(player1, new KnightOfTheKeep());
+        Permanent target = addAttacker(new BarteredCow());
+        prepareCast();
+        harness.castInstant(player1, 0, target.getId());
+
+        harness.addToBattlefield(player1, new KnightOfTheKeep());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Deals no damage when its controller controls no creatures")
+    void dealsZeroDamageWithNoCreatures() {
+        Permanent target = addAttacker(new BarteredCow());
+
+        castAndResolve(target);
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Bartered Cow");
+        harness.assertInGraveyard(player1, "Outflank");
+    }
+
+    @Test
+    @DisplayName("Can target its controller's attacking creature and counts it")
+    void canTargetOwnAttacker() {
+        Permanent target = addCreatureReady(player1, new BarteredCow());
+        target.setAttacking(true);
+        target.setAttackTarget(player2.getId());
+
+        castAndResolve(target);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Does not damage a target that has stopped attacking before resolution")
+    void targetMustRemainAttackingOrBlocking() {
+        harness.addToBattlefield(player1, new KnightOfTheKeep());
+        Permanent target = addAttacker(new BarteredCow());
+        prepareCast();
+        harness.castInstant(player1, 0, target.getId());
+
+        target.setAttacking(false);
+        target.setAttackTarget(null);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Outflank");
+    }
+
+    @Test
+    @DisplayName("Lethal damage sends the targeted creature to the graveyard")
+    void lethalDamageKillsTarget() {
+        harness.addToBattlefield(player1, new KnightOfTheKeep());
+        harness.addToBattlefield(player1, new KnightOfTheKeep());
+        harness.addToBattlefield(player1, new KnightOfTheKeep());
+        Permanent target = addAttacker(new BarteredCow());
+
+        castAndResolve(target);
+
+        harness.assertNotOnBattlefield(player2, "Bartered Cow");
+        harness.assertInGraveyard(player2, "Bartered Cow");
     }
 
     private void castAndResolve(Permanent target) {
@@ -67,20 +138,10 @@ class OutflankTest extends BaseCardTest {
     }
 
     private Permanent addAttacker(Card card) {
-        harness.addToBattlefield(player2, card);
-        Permanent target = findPermanent(player2, "Air Elemental");
-        target.setSummoningSick(false);
+        Permanent target = addCreatureReady(player2, card);
         target.setAttacking(true);
         target.setAttackTarget(player1.getId());
         return target;
     }
 
-    private Permanent addBlocker(Card card) {
-        harness.addToBattlefield(player2, card);
-        Permanent target = findPermanent(player2, "Air Elemental");
-        target.setSummoningSick(false);
-        target.setBlocking(true);
-        target.addBlockingTargetId(player1.getId());
-        return target;
-    }
 }
