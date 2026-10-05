@@ -47,8 +47,7 @@ class OltecMatterweaverTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, COPY_MODE);
         harness.handlePermanentChosen(player1, gnome.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Gnome")).hasSize(2);
         assertThat(findPermanents(player1, "Oltec Matterweaver")).containsExactly(matterweaver);
@@ -88,6 +87,107 @@ class OltecMatterweaverTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Gnome")).isEmpty();
     }
 
+    @Test
+    @DisplayName("An opponent casting a creature does not trigger Matterweaver")
+    void doesNotTriggerForOpponentCreature() {
+        addMatterweaver();
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(findPermanents(player2, "Grizzly Bears")).hasSize(1);
+        assertThat(findPermanents(player1, "Gnome")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A creature entering without being cast does not trigger Matterweaver")
+    void doesNotTriggerForCreatureEnteringWithoutCast() {
+        addMatterweaver();
+
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(findPermanents(player1, "Gnome")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The copy mode creates no token if its target leaves before resolution")
+    void doesNotCopyTargetThatLeftBattlefield() {
+        addMatterweaver();
+        castCreatureAndChooseGnome();
+        Permanent gnome = findPermanent(player1, "Gnome");
+        castCreatureSpell();
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, COPY_MODE);
+        harness.handlePermanentChosen(player1, gnome.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(gnome);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Gnome")).isEmpty();
+        assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The Gnome trigger still resolves after Matterweaver leaves the battlefield")
+    void triggerResolvesWithoutSource() {
+        Permanent matterweaver = addMatterweaver();
+        castCreatureSpell();
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, GNOME_MODE);
+
+        gd.playerBattlefields.get(player1.getId()).remove(matterweaver);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Gnome")).hasSize(1);
+        assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A nontoken artifact is not a legal copy target")
+    void cannotCopyNontokenArtifact() {
+        addMatterweaver();
+        castCreatureAndChooseGnome();
+        Permanent spellbook = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        castCreatureSpell();
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, COPY_MODE);
+
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice.validIds()).doesNotContain(spellbook.getId());
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, spellbook.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An artifact token controlled by an opponent is not a legal copy target")
+    void cannotCopyOpponentArtifactToken() {
+        addMatterweaver();
+        castCreatureAndChooseGnome();
+        Permanent opponentGnome = findPermanent(player1, "Gnome");
+        gd.playerBattlefields.get(player1.getId()).remove(opponentGnome);
+        gd.playerBattlefields.get(player2.getId()).add(opponentGnome);
+        castCreatureAndChooseGnome();
+        Permanent ownGnome = findPermanent(player1, "Gnome");
+        castCreatureSpell();
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, COPY_MODE);
+
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice.validIds()).contains(ownGnome.getId())
+                .doesNotContain(opponentGnome.getId());
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentGnome.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private Permanent addMatterweaver() {
         return addCreatureReady(player1, new OltecMatterweaver());
     }
@@ -96,8 +196,7 @@ class OltecMatterweaverTest extends BaseCardTest {
         castCreatureSpell();
         harness.passBothPriorities();
         harness.handleListChoice(player1, GNOME_MODE);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void castCreatureSpell() {
