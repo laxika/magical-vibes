@@ -72,4 +72,59 @@ class MetathranZombieTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Metathran Zombie");
         harness.assertInGraveyard(player1, "Metathran Zombie");
     }
+
+    @Test
+    @DisplayName("Regeneration can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new MetathranZombie());
+        zombie.setSummoningSick(true);
+        zombie.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(zombie.getRegenerationShield()).isEqualTo(1);
+        assertThat(zombie.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated activations create separate regeneration shields")
+    void repeatedActivationsCreateSeparateShields() {
+        Permanent zombie = addCreatureReady(player1, new MetathranZombie());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(zombie.getRegenerationShield()).isEqualTo(2);
+        assertThat(zombie.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Activated regeneration saves the blocker, taps it, and removes damage and combat status")
+    void activatedRegenerationReplacesLethalCombatDestruction() {
+        Permanent zombie = addCreatureReady(player1, new MetathranZombie());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        zombie.setBlocking(true);
+        zombie.addBlockingTarget(0);
+        Permanent attacker = addCreatureReady(player2, new KavuTitan());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Metathran Zombie");
+        harness.assertNotInGraveyard(player1, "Metathran Zombie");
+        assertThat(zombie.getRegenerationShield()).isZero();
+        assertThat(zombie.isTapped()).isTrue();
+        assertThat(zombie.getMarkedDamage()).isZero();
+        assertThat(zombie.isBlocking()).isFalse();
+        assertThat(zombie.getBlockingTargets()).isEmpty();
+        harness.assertLife(player1, 20);
+    }
 }
