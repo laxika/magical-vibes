@@ -79,6 +79,51 @@ class LeadenFistsTest extends BaseCardTest {
     }
 
     @Test
+    void doesNotTapEnchantedCreatureOrAffectOtherCreatures() {
+        Permanent enchanted = addCreatureReady(player1, new FomoriNomad());
+        Permanent other = addCreatureReady(player1, new FomoriNomad());
+        other.tap();
+        harness.setHand(player1, List.of(new LeadenFists()));
+        addLeadenFistsMana(player1);
+
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+
+        assertThat(enchanted.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(4);
+
+        harness.performUntapStep(player1);
+
+        assertThat(enchanted.isTapped()).isFalse();
+        assertThat(other.isTapped()).isFalse();
+    }
+
+    @Test
+    void boostAndUntapRestrictionEndWhenAuraLeavesBattlefield() {
+        Permanent creature = addCreatureReady(player2, new FomoriNomad());
+        creature.tap();
+        harness.setHand(player1, List.of(new LeadenFists()));
+        addLeadenFistsMana(player1);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(7);
+        harness.performUntapStep(player2);
+        assertThat(creature.isTapped()).isTrue();
+
+        Permanent aura = findPermanent(player1, "Leaden Fists");
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        gd.playerGraveyards.get(player1.getId()).add(aura.getCard());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        harness.performUntapStep(player2);
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
     void cannotTargetNonCreaturePermanent() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new HorizonCanopy());
         harness.setHand(player1, List.of(new LeadenFists()));
