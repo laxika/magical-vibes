@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Plagiarize.class, DeepAnalysis.class, PossessedAven.class})
+@CardUsed({Plagiarize.class, DeepAnalysis.class, PossessedAven.class, ThoughtReflection.class})
 class PlagiarizeTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -163,7 +163,6 @@ class PlagiarizeTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(ThoughtReflection.class)
     @DisplayName("Plagiarize's replacement draw can be modified by the controller's draw replacements")
     void replacementDrawUsesControllersDrawReplacements() {
         harness.addToBattlefield(player1, new ThoughtReflection());
@@ -191,6 +190,58 @@ class PlagiarizeTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(player2DeckBefore);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(player1HandBefore + 4);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(player1DeckBefore - 4);
+    }
+
+    @Test
+    @DisplayName("Opposing Plagiarizes redirect a draw twice without reapplying either effect")
+    void opposingPlagiarizesApplyOnceEach() {
+        harness.setHand(player1, List.of(new Plagiarize()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Plagiarize()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.setHand(player2, List.of(new DeepAnalysis()));
+        harness.setLibrary(player1, List.of(new DeepAnalysis(), new DeepAnalysis()));
+        harness.setLibrary(player2, List.of(new DeepAnalysis(), new DeepAnalysis()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        int player1HandBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.castAndResolveSorcery(player2, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(player1HandBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Plagiarize does not replace draws by the untargeted player")
+    void untargetedPlayersDrawsAreUnaffected() {
+        harness.setHand(player1, List.of(new Plagiarize()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new DeepAnalysis()));
+        harness.setLibrary(player1, List.of(new DeepAnalysis(), new DeepAnalysis()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        int player2HandBefore = gd.playerHands.get(player2.getId()).size();
+        int player2DeckBefore = gd.playerDecks.get(player2.getId()).size();
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(player2HandBefore);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(player2DeckBefore);
     }
 
     // ===== End of turn cleanup =====
