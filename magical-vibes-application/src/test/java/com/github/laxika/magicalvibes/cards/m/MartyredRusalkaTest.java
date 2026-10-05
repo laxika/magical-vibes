@@ -97,6 +97,61 @@ class MartyredRusalkaTest extends BaseCardTest {
                 .hasMessageContaining("Invalid attacker index");
     }
 
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent rusalka = harness.addToBattlefieldAndReturn(player1, new MartyredRusalka());
+        rusalka.setSummoningSick(true);
+        rusalka.setTapped(true);
+        Permanent target = addCreatureReady(player2, new GhostWarden());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(rusalka);
+        harness.assertInGraveyard(player1, "Martyred Rusalka");
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttack(target))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Can target a creature you control")
+    void canTargetOwnCreature() {
+        addReadyRusalka(player1);
+        Permanent target = addCreatureReady(player1, new GhostWarden());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handlePermanentChosen(player1, findPermanent(player1, "Martyred Rusalka").getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("The affected creature can still block and activate abilities")
+    void restrictionDoesNotPreventBlockingOrActivatedAbilities() {
+        addReadyRusalka(player1);
+        Permanent target = addCreatureReady(player2, new GhostWarden());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(bls.canBlock(gd, target)).isTrue();
+        harness.activateAbility(player2, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
     private Permanent addReadyRusalka(Player player) {
         return addCreatureReady(player, new MartyredRusalka());
     }
