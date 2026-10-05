@@ -99,4 +99,40 @@ class OverabundanceTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
+
+    @Test
+    @DisplayName("Overabundance itself deals the damage when an opponent taps a land")
+    void enchantmentIsDamageSourceForOpponentLandTap() {
+        var enchantment = harness.addToBattlefieldAndReturn(player1, new Overabundance());
+        var land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setLife(player2, 20);
+
+        harness.tapPermanent(player2, 0);
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.damageDealtThisTurnBySource.getOrDefault(enchantment.getId(), 0)).isEqualTo(1);
+        assertThat(gd.damageDealtThisTurnBySource.getOrDefault(land.getId(), 0)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingManaAbilityTriggers).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Multiple Overabundances each add mana and deal damage immediately")
+    void multipleCopiesEachAddManaAndDealDamage() {
+        var first = harness.addToBattlefieldAndReturn(player1, new Overabundance());
+        var second = harness.addToBattlefieldAndReturn(player2, new Overabundance());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        assertThat(gd.damageDealtThisTurnBySource.getOrDefault(first.getId(), 0)).isEqualTo(1);
+        assertThat(gd.damageDealtThisTurnBySource.getOrDefault(second.getId(), 0)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingManaAbilityTriggers).isEmpty();
+    }
 }
