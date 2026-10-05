@@ -53,10 +53,64 @@ class LeapingLizardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, lizard, Keyword.FLYING)).isFalse();
         assertThat(gqs.getEffectiveToughness(gd, lizard)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Lizard can activate its ability")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent lizard = harness.addToBattlefieldAndReturn(player1, new LeapingLizard());
+        lizard.setSummoningSick(true);
+        lizard.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.hasKeyword(gd, lizard, Keyword.FLYING)).isFalse();
+        assertThat(gqs.getEffectiveToughness(gd, lizard)).isEqualTo(3);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, lizard, Keyword.FLYING)).isTrue();
+        assertThat(gqs.getEffectiveToughness(gd, lizard)).isEqualTo(2);
+        assertThat(lizard.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Activating one Lizard does not affect other copies")
+    void affectsOnlyItsSource() {
+        Permanent source = addCreatureReady(player1, new LeapingLizard());
+        Permanent friendly = addCreatureReady(player1, new LeapingLizard());
+        Permanent opposing = addCreatureReady(player2, new LeapingLizard());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, source, Keyword.FLYING)).isTrue();
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, friendly, Keyword.FLYING)).isFalse();
+        assertThat(gqs.getEffectiveToughness(gd, friendly)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, opposing, Keyword.FLYING)).isFalse();
+        assertThat(gqs.getEffectiveToughness(gd, opposing)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Three activations put the Lizard into the graveyard for zero toughness")
+    void diesAtZeroToughness() {
+        addCreatureReady(player1, new LeapingLizard());
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        for (int activation = 0; activation < 3; activation++) {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+        }
+
+        harness.assertNotOnBattlefield(player1, "Leaping Lizard");
+        harness.assertInGraveyard(player1, "Leaping Lizard");
     }
 }
