@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AshesOfTheAbhorrent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +15,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LegionConquistador.class, AshesOfTheAbhorrent.class})
 class LegionConquistadorTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Resolving Legion Conquistador creates may prompt")
@@ -73,7 +72,7 @@ class LegionConquistadorTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
         harness.assertInHand(player1, "Legion Conquistador");
@@ -92,13 +91,13 @@ class LegionConquistadorTest extends BaseCardTest {
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         // Pick all three copies
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 3);
         long conquistadorsInHand = gd.playerHands.get(player1.getId()).stream()
@@ -120,10 +119,10 @@ class LegionConquistadorTest extends BaseCardTest {
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         // Pick first copy
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         // Fail to find (pass on second pick)
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
@@ -133,9 +132,7 @@ class LegionConquistadorTest extends BaseCardTest {
     @DisplayName("No copies in library results in no search prompt")
     void noCopiesInLibrary() {
         setupAndCast();
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new AshesOfTheAbhorrent(), new AshesOfTheAbhorrent()));
 
         harness.passBothPriorities(); // Resolve creature → ETB MayEffect on stack
         harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
@@ -158,6 +155,44 @@ class LegionConquistadorTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().reveals()).isTrue();
     }
 
+    @Test
+    @DisplayName("May choose zero copies even when matching cards are available")
+    void canChooseZeroCopies() {
+        setupAndCast();
+        setupLibraryWithConquistadors(2);
+        List<Card> libraryBefore = List.copyOf(gd.playerDecks.get(player1.getId()));
+        List<Card> handBefore = List.copyOf(gd.playerHands.get(player1.getId()));
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(handBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrderElementsOf(libraryBefore);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("Library is shuffled"));
+    }
+
+    @Test
+    @DisplayName("Accepting the search with an empty library completes the ability")
+    void emptyLibraryCompletesSearch() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+        List<Card> handBefore = List.copyOf(gd.playerHands.get(player1.getId()));
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(handBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("Library is shuffled"));
+    }
+
     private void setupAndCast() {
         harness.setHand(player1, List.of(new LegionConquistador()));
         harness.addMana(player1, ManaColor.WHITE, 3);
@@ -165,12 +200,12 @@ class LegionConquistadorTest extends BaseCardTest {
     }
 
     private void setupLibraryWithConquistadors(int count) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
+        List<Card> deck = new java.util.ArrayList<>();
         for (int i = 0; i < count; i++) {
             deck.add(new LegionConquistador());
         }
-        deck.add(new GrizzlyBears());
-        deck.add(new GrizzlyBears());
+        deck.add(new AshesOfTheAbhorrent());
+        deck.add(new AshesOfTheAbhorrent());
+        harness.setLibrary(player1, deck);
     }
 }
