@@ -6,8 +6,10 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.t.TheHive;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
+import com.github.laxika.magicalvibes.cards.c.CrystalBall;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,19 +20,18 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ManicVandal.class, CrystalBall.class, RuneclawBear.class, Ornithopter.class})
 class ManicVandalTest extends BaseCardTest {
 
-    // ===== Casting and resolving =====
-
     @Test
-    @DisplayName("Casting Manic Vandal puts it on the stack with target")
-    void castingPutsItOnStackWithTarget() {
-        harness.addToBattlefield(player2, new TheHive());
+    @DisplayName("Casting Manic Vandal can preselect its ETB target")
+    void castingCanPreselectEtbTarget() {
+        harness.addToBattlefield(player2, new CrystalBall());
         harness.setHand(player1, List.of(new ManicVandal()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        UUID targetId = harness.getPermanentId(player2, "The Hive");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player2, "Crystal Ball");
+        harness.castCreature(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -44,12 +45,12 @@ class ManicVandalTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Manic Vandal enters battlefield and triggers ETB destroy")
     void resolvingEntersBattlefieldAndTriggersEtb() {
-        harness.addToBattlefield(player2, new TheHive());
+        harness.addToBattlefield(player2, new CrystalBall());
         harness.setHand(player1, List.of(new ManicVandal()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        UUID targetId = harness.getPermanentId(player2, "The Hive");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player2, "Crystal Ball");
+        harness.castCreature(player1, 0, targetId);
 
         // Resolve creature spell → enters battlefield, ETB triggers
         harness.passBothPriorities();
@@ -68,12 +69,12 @@ class ManicVandalTest extends BaseCardTest {
     @Test
     @DisplayName("ETB resolves and destroys target artifact")
     void etbDestroysTargetArtifact() {
-        harness.addToBattlefield(player2, new TheHive());
+        harness.addToBattlefield(player2, new CrystalBall());
         harness.setHand(player1, List.of(new ManicVandal()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        UUID targetId = harness.getPermanentId(player2, "The Hive");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player2, "Crystal Ball");
+        harness.castCreature(player1, 0, targetId);
 
         // Resolve creature spell
         harness.passBothPriorities();
@@ -82,38 +83,38 @@ class ManicVandalTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        harness.assertNotOnBattlefield(player2, "The Hive");
-        harness.assertInGraveyard(player2, "The Hive");
+        harness.assertNotOnBattlefield(player2, "Crystal Ball");
+        harness.assertInGraveyard(player2, "Crystal Ball");
     }
 
     @Test
     @DisplayName("Can destroy own artifact with ETB")
     void canDestroyOwnArtifact() {
-        harness.addToBattlefield(player1, new TheHive());
+        harness.addToBattlefield(player1, new CrystalBall());
         harness.setHand(player1, List.of(new ManicVandal()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        UUID targetId = harness.getPermanentId(player1, "The Hive");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player1, "Crystal Ball");
+        harness.castCreature(player1, 0, targetId);
 
         // Resolve creature spell
         harness.passBothPriorities();
         // Resolve ETB triggered ability
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "The Hive");
-        harness.assertInGraveyard(player1, "The Hive");
+        harness.assertNotOnBattlefield(player1, "Crystal Ball");
+        harness.assertInGraveyard(player1, "Crystal Ball");
     }
 
     @Test
     @DisplayName("ETB fizzles if target artifact is removed before resolution")
     void etbFizzlesIfTargetRemoved() {
-        harness.addToBattlefield(player2, new TheHive());
+        harness.addToBattlefield(player2, new CrystalBall());
         harness.setHand(player1, List.of(new ManicVandal()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        UUID targetId = harness.getPermanentId(player2, "The Hive");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player2, "Crystal Ball");
+        harness.castCreature(player1, 0, targetId);
 
         // Resolve creature spell → ETB on stack
         harness.passBothPriorities();
@@ -129,22 +130,18 @@ class ManicVandalTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
-    // ===== Target restriction =====
-
     @Test
     @DisplayName("Cannot target a non-artifact creature")
     void cannotTargetNonArtifactCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new RuneclawBear());
         harness.setHand(player1, List.of(new ManicVandal()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Runeclaw Bear");
 
-        assertThatThrownBy(() -> harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== No target scenarios =====
 
     @Test
     @DisplayName("Can cast without a target when no artifacts on battlefield")
@@ -160,8 +157,8 @@ class ManicVandalTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("ETB does not trigger when cast without a target")
-    void etbDoesNotTriggerWithoutTarget() {
+    @DisplayName("No ETB ability remains on the stack when no legal artifact target exists")
+    void noEtbOnStackWhenNoLegalTargets() {
         harness.setHand(player1, List.of(new ManicVandal()));
         harness.addMana(player1, ManaColor.RED, 3);
 
@@ -173,21 +170,71 @@ class ManicVandalTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         // Creature should be on battlefield
         harness.assertOnBattlefield(player1, "Manic Vandal");
-        // No triggered ability on stack
+        // No legal targets, so the triggered ability is removed from the stack.
         assertThat(gd.stack).isEmpty();
     }
 
     @Test
     @DisplayName("Cannot cast without enough mana")
     void cannotCastWithoutEnoughMana() {
-        harness.addToBattlefield(player2, new TheHive());
+        harness.addToBattlefield(player2, new CrystalBall());
         harness.setHand(player1, List.of(new ManicVandal()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "The Hive");
+        UUID targetId = harness.getPermanentId(player2, "Crystal Ball");
 
-        assertThatThrownBy(() -> harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+    @Test
+    @DisplayName("Can cast without preselecting a target and choose an artifact after entry")
+    void choosesArtifactAfterEntering() {
+        harness.addToBattlefield(player2, new Ornithopter());
+        harness.setHand(player1, List.of(new ManicVandal()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Manic Vandal");
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Ornithopter"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
+        harness.assertInGraveyard(player2, "Ornithopter");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An artifact appearing while the creature spell is on the stack can be targeted")
+    void targetsArtifactThatAppearsBeforeEntry() {
+        harness.setHand(player1, List.of(new ManicVandal()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castCreature(player1, 0);
+
+        harness.addToBattlefield(player2, new CrystalBall());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Crystal Ball"));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Crystal Ball");
+        harness.assertOnBattlefield(player1, "Manic Vandal");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB ability still destroys its target after Manic Vandal leaves")
+    void etbResolvesAfterSourceLeaves() {
+        harness.addToBattlefield(player2, new CrystalBall());
+        harness.setHand(player1, List.of(new ManicVandal()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castCreature(player1, 0, harness.getPermanentId(player2, "Crystal Ball"));
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Crystal Ball");
+        assertThat(gd.stack).isEmpty();
     }
 }
