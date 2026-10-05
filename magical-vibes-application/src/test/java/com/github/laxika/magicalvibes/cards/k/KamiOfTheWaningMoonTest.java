@@ -18,6 +18,31 @@ import static org.assertj.core.api.Assertions.assertThat;
 class KamiOfTheWaningMoonTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Kami does not trigger from its own casting before entering the battlefield")
+    void ownCastingDoesNotTrigger() {
+        harness.addToBattlefield(player1, new KondasHatamoto());
+        harness.castFromHand(player1, new KamiOfTheWaningMoon(), "{2}{B}");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Kami of the Waning Moon");
+    }
+
+    @Test
+    @DisplayName("An opponent's Spirit spell does not trigger Kami of the Waning Moon")
+    void opponentSpiritSpellDoesNotTrigger() {
+        harness.addToBattlefield(player1, new KamiOfTheWaningMoon());
+        harness.castFromHand(player2, new KamiOfTheWaningMoon(), "{2}{B}");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
     @DisplayName("Casting a Spirit spell gives target creature fear")
     void spiritCastGrantsFear() {
         harness.addToBattlefield(player1, new KamiOfTheWaningMoon());
