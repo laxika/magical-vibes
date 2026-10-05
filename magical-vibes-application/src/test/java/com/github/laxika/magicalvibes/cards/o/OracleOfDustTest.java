@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.PathToExile;
+import com.github.laxika.magicalvibes.cards.e.EldraziDevastator;
+import com.github.laxika.magicalvibes.cards.s.ScourFromExistence;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,17 +15,17 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OracleOfDust.class, Forest.class, GrizzlyBears.class, PathToExile.class})
+@CardUsed({OracleOfDust.class, EldraziDevastator.class, ScourFromExistence.class})
 class OracleOfDustTest extends BaseCardTest {
 
     @Test
     void processesAnOpponentOwnedExiledCardThenDrawsAndDiscards() {
         Permanent oracle = addReadyOracle();
-        GrizzlyBears bears = new GrizzlyBears();
-        Forest drawnCard = new Forest();
-        PathToExile exiledCard = new PathToExile();
-        harness.setHand(player1, List.of(bears));
-        setDeck(player1, List.of(drawnCard));
+        EldraziDevastator heldCard = new EldraziDevastator();
+        OracleOfDust drawnCard = new OracleOfDust();
+        ScourFromExistence exiledCard = new ScourFromExistence();
+        harness.setHand(player1, List.of(heldCard));
+        harness.setLibrary(player1, List.of(drawnCard));
         harness.setExile(player2, List.of(exiledCard));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -34,29 +33,29 @@ class OracleOfDustTest extends BaseCardTest {
 
         assertThat(oracle.isTapped()).isFalse();
         assertThat(gd.findExiledCard(exiledCard.getId())).isNull();
-        harness.assertInGraveyard(player2, "Path to Exile");
+        harness.assertInGraveyard(player2, "Scour from Existence");
 
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(Card::getId)
-                .containsExactly(bears.getId(), drawnCard.getId());
+                .containsExactly(heldCard.getId(), drawnCard.getId());
 
         harness.handleCardChosen(player1, 0);
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.assertInHand(player1, "Forest");
+        harness.assertInGraveyard(player1, "Eldrazi Devastator");
+        harness.assertInHand(player1, "Oracle of Dust");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
     void promptsToChooseAmongMultipleOpponentOwnedExiledCards() {
         addReadyOracle();
-        PathToExile first = new PathToExile();
-        PathToExile second = new PathToExile();
+        ScourFromExistence first = new ScourFromExistence();
+        ScourFromExistence second = new ScourFromExistence();
         harness.setExile(player2, List.of(first, second));
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new EldraziDevastator()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -69,7 +68,7 @@ class OracleOfDustTest extends BaseCardTest {
 
         assertThat(gd.findExiledCard(first.getId())).isNotNull();
         assertThat(gd.findExiledCard(second.getId())).isNull();
-        harness.assertInGraveyard(player2, "Path to Exile");
+        harness.assertInGraveyard(player2, "Scour from Existence");
     }
 
     @Test
@@ -83,15 +82,78 @@ class OracleOfDustTest extends BaseCardTest {
     }
 
     private Permanent addReadyOracle() {
-        OracleOfDust card = new OracleOfDust();
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, new OracleOfDust());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
         return permanent;
     }
 
-    private void setDeck(com.github.laxika.magicalvibes.model.Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+    @Test
+    void processingChoiceDoesNotRevealOpponentFaceDownExiledCards() {
+        addReadyOracle();
+        gd.addToExile(player2.getId(), new ScourFromExistence(), null, true, player2.getId());
+        gd.addToExile(player2.getId(), new EldraziDevastator(), null, true, player2.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.clearMessages();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        List<String> prompts = harness.getConn1().getMessagesContaining("INTERACTION_PROMPT");
+        assertThat(prompts).isNotEmpty();
+        assertThat(prompts).allSatisfy(prompt -> assertThat(prompt)
+                .doesNotContain("Scour from Existence", "Eldrazi Devastator"));
     }
+
+    @Test
+    void cannotProcessItsControllersOwnExiledCard() {
+        addReadyOracle();
+        ScourFromExistence ownCard = new ScourFromExistence();
+        harness.setExile(player1, List.of(ownCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("opponent");
+        assertThat(gd.findExiledCard(ownCard.getId())).isNotNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void insufficientManaDoesNotProcessTheExiledCard() {
+        addReadyOracle();
+        ScourFromExistence exiledCard = new ScourFromExistence();
+        harness.setExile(player2, List.of(exiledCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.findExiledCard(exiledCard.getId())).isNotNull();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canActivateWhileTappedAndSummoningSickAndDiscardTheDrawnCard() {
+        Permanent oracle = harness.addToBattlefieldAndReturn(player1, new OracleOfDust());
+        oracle.setSummoningSick(true);
+        oracle.setTapped(true);
+        EldraziDevastator drawnCard = new EldraziDevastator();
+        ScourFromExistence exiledCard = new ScourFromExistence();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawnCard, new OracleOfDust()));
+        harness.setExile(player2, List.of(exiledCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.DiscardChoice) {
+            harness.handleCardChosen(player1, 0);
+        }
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Eldrazi Devastator");
+        harness.assertInGraveyard(player2, "Scour from Existence");
+        assertThat(oracle.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
 }
