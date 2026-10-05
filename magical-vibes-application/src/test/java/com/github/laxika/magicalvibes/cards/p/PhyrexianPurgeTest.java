@@ -18,8 +18,66 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PhyrexianPurge.class, FeralShadow.class, IronTuskElephant.class, Deathgreeter.class, Forest.class})
+@CardUsed({PhyrexianPurge.class, FeralShadow.class, IronTuskElephant.class, Deathgreeter.class, Forest.class,
+        PlatinumEmperion.class})
 class PhyrexianPurgeTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Any number of targets includes more than 99 creatures")
+    void canTargetOneHundredCreatures() {
+        for (int i = 0; i < 100; i++) {
+            harness.addToBattlefield(player2, new FeralShadow());
+        }
+        harness.setHand(player1, List.of(new PhyrexianPurge()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player1, 400);
+        List<UUID> targets = findPermanents(player2, "Feral Shadow").stream()
+                .map(Permanent::getId).toList();
+
+        harness.castSorcery(player1, 0, targets);
+        harness.assertLife(player1, 100);
+        harness.assertOnBattlefield(player2, "Feral Shadow");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Feral Shadow");
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(100);
+    }
+
+    @Test
+    @DisplayName("Cannot pay the additional life cost when the caster's life total cannot change")
+    void cannotCastWithTargetsWhileLifeTotalCannotChange() {
+        harness.addToBattlefield(player1, new PlatinumEmperion());
+        harness.addToBattlefield(player2, new FeralShadow());
+        harness.setHand(player1, List.of(new PhyrexianPurge()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+        UUID target = harness.getPermanentId(player2, "Feral Shadow");
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(target)))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Phyrexian Purge");
+        harness.assertLife(player1, 20);
+        harness.assertOnBattlefield(player2, "Feral Shadow");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The same creature cannot be selected twice")
+    void cannotChooseDuplicateTargets() {
+        harness.addToBattlefield(player2, new FeralShadow());
+        harness.setHand(player1, List.of(new PhyrexianPurge()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+        UUID target = harness.getPermanentId(player2, "Feral Shadow");
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(target, target)))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player1, 20);
+        harness.assertInHand(player1, "Phyrexian Purge");
+    }
 
     @Test
     @DisplayName("Destroys two target creatures and costs 6 life")
