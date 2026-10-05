@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.r.ResoundingWave;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("In the Trenches")
+@CardUsed({InTheTrenches.class, GrizzlyBears.class, ResoundingWave.class, Disenchant.class, Plains.class})
 class InTheTrenchesTest extends BaseCardTest {
 
     @Test
@@ -54,8 +58,7 @@ class InTheTrenchesTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, source.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, source.getId());
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -81,7 +84,8 @@ class InTheTrenchesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         addAbilityMana();
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+        Permanent secondTarget = addCreatureReady(player2, new GrizzlyBears());
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, secondTarget.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once");
     }
@@ -98,10 +102,101 @@ class InTheTrenchesTest extends BaseCardTest {
                 .hasMessageContaining("opponent controls");
     }
 
+    @Test
+    @DisplayName("Does not exile a noncreature target if the source leaves before resolution")
+    void sourceLeavesBeforeResolution() {
+        Permanent source = addSource();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new InTheTrenches());
+        addAbilityMana();
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, source.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "In the Trenches");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exiles an opposing enchantment and returns it when the source is destroyed")
+    void exilesNoncreatureAndReturnsOnDestruction() {
+        Permanent source = addSource();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new InTheTrenches());
+        addAbilityMana();
+        activate(target);
+
+        harness.assertNotOnBattlefield(player2, "In the Trenches");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target.getCard());
+
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, source.getId());
+
+        harness.assertOnBattlefield(player2, "In the Trenches");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate during combat on your own turn")
+    void cannotActivateDuringCombat() {
+        addSource();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new InTheTrenches());
+        addAbilityMana();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+    }
+
+    @Test
+    @DisplayName("Cannot target an opposing land")
+    void cannotTargetLand() {
+        addSource();
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Plains());
+        addAbilityMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("nonland");
+    }
+
+    @Test
+    @DisplayName("Activation remains used when its target leaves before resolution")
+    void unsuccessfulResolutionStillUsesActivation() {
+        addSource();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new InTheTrenches());
+        addAbilityMana();
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "In the Trenches");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new InTheTrenches());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        addAbilityMana();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, secondTarget.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once");
+    }
+
     private Permanent addSource() {
-        Permanent source = new Permanent(new InTheTrenches());
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new InTheTrenches());
         source.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(source);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
