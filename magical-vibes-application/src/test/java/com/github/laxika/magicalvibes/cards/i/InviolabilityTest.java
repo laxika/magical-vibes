@@ -64,6 +64,50 @@ class InviolabilityTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Inviolability protects an opponent's creature")
+    void protectsOpponentsCreature() {
+        Permanent creature = addCreatureReady(player2, new FreshVolunteers());
+        castInviolability(creature);
+
+        harness.setHand(player1, List.of(new Thunderclap()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(creature.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Fresh Volunteers");
+    }
+
+    @Test
+    @DisplayName("Inviolability continues preventing damage from successive spells")
+    void preventsRepeatedDamage() {
+        Permanent creature = addCreatureReady(player1, new FreshVolunteers());
+        castInviolability(creature);
+
+        harness.setHand(player2, List.of(new Thunderclap(), new Thunderclap()));
+        harness.addMana(player2, ManaColor.RED, 6);
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+
+        assertThat(creature.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Fresh Volunteers");
+    }
+
+    @Test
+    @DisplayName("Inviolability does not prevent damage to another creature")
+    void doesNotProtectOtherCreatures() {
+        Permanent enchanted = addCreatureReady(player1, new FreshVolunteers());
+        Permanent other = addCreatureReady(player1, new JhovallQueen());
+        castInviolability(enchanted);
+
+        harness.setHand(player2, List.of(new Thunderclap()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player2, 0, other.getId());
+
+        assertThat(other.getMarkedDamage()).isEqualTo(3);
+        assertThat(enchanted.getMarkedDamage()).isZero();
+    }
+
     private void castInviolability(Permanent creature) {
         harness.setHand(player1, List.of(new Inviolability()));
         harness.addMana(player1, ManaColor.WHITE, 1);
