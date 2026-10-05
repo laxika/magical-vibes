@@ -3,12 +3,14 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.l.LordOfExtinction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MorbidBloom.class, GrizzlyBears.class, HillGiant.class, Cancel.class, LordOfExtinction.class})
 class MorbidBloomTest extends BaseCardTest {
 
     private void giveMana() {
@@ -38,8 +41,7 @@ class MorbidBloomTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MorbidBloom()));
         giveMana();
 
-        harness.castSorcery(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
 
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -62,8 +64,7 @@ class MorbidBloomTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MorbidBloom()));
         giveMana();
 
-        harness.castSorcery(player1, 0, giant.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, giant.getId());
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Hill Giant"));
@@ -96,5 +97,38 @@ class MorbidBloomTest extends BaseCardTest {
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         assertThat(saprolingCount()).isZero();
+    }
+
+    @Test
+    @DisplayName("Uses Lord of Extinction's characteristic-defined toughness as it last existed in the graveyard")
+    void usesLordOfExtinctionsCharacteristicDefinedToughness() {
+        Card lord = new LordOfExtinction();
+        harness.setGraveyard(player2, List.of(lord));
+        harness.setGraveyard(player1, List.of(new MorbidBloom(), new MorbidBloom()));
+        harness.setHand(player1, List.of(new MorbidBloom()));
+        giveMana();
+
+        harness.castAndResolveSorcery(player1, 0, lord.getId());
+
+        harness.assertNotInGraveyard(player2, "Lord of Extinction");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(lord);
+        assertThat(saprolingCount()).isEqualTo(3);
+        assertThat(countPermanents(player2, "Saproling")).isZero();
+    }
+
+    @Test
+    @DisplayName("Lord of Extinction counts itself but not the resolving Morbid Bloom")
+    void lordOfExtinctionCountsItselfInGraveyard() {
+        Card lord = new LordOfExtinction();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(lord));
+        harness.setHand(player1, List.of(new MorbidBloom()));
+        giveMana();
+
+        harness.castAndResolveSorcery(player1, 0, lord.getId());
+
+        harness.assertNotInGraveyard(player2, "Lord of Extinction");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(lord);
+        assertThat(saprolingCount()).isEqualTo(1);
     }
 }
