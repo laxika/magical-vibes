@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.d.DressDown;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({IrohDragonOfTheWest.class, FugitiveWizard.class, GrizzlyBears.class})
+@CardUsed({IrohDragonOfTheWest.class, FugitiveWizard.class, GrizzlyBears.class, DressDown.class})
 class IrohDragonOfTheWestTest extends BaseCardTest {
 
     @Test
@@ -29,7 +30,7 @@ class IrohDragonOfTheWestTest extends BaseCardTest {
         equalPower.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         Permanent nonAttacking = addCreatureReady(player1, new GrizzlyBears());
 
-        declareIrohAttackers(List.of(
+        declareAttackers(List.of(
                 gd.playerBattlefields.get(player1.getId()).indexOf(iroh),
                 gd.playerBattlefields.get(player1.getId()).indexOf(lowerPower),
                 gd.playerBattlefields.get(player1.getId()).indexOf(equalPower)));
@@ -59,7 +60,7 @@ class IrohDragonOfTheWestTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, countered, Keyword.FIREBENDING)).isTrue();
         assertThat(gqs.hasKeyword(gd, withoutCounter, Keyword.FIREBENDING)).isFalse();
 
-        declareIrohAttackers(List.of(
+        declareAttackers(List.of(
                 gd.playerBattlefields.get(player1.getId()).indexOf(countered),
                 gd.playerBattlefields.get(player1.getId()).indexOf(withoutCounter)));
         harness.passUntil(TurnStep.END_OF_COMBAT);
@@ -78,11 +79,114 @@ class IrohDragonOfTheWestTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private void declareIrohAttackers(List<Integer> attackers) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, attackers);
+    @Test
+    void mentorDoesNotCounterTargetWhosePowerBecomesEqualBeforeResolution() {
+        addCreatureReady(player1, new IrohDragonOfTheWest());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1));
+        harness.handlePermanentChosen(player1, creature.getId());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void mentorCounterDoesNotGrantFirebendingDuringSameCombat() {
+        addCreatureReady(player1, new IrohDragonOfTheWest());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+
+        advanceToBeginningOfCombat();
+        declareAttackers(List.of(0, 1));
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isOne();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIREBENDING)).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    void nonPowerCounterQualifiesAndOpponentCreaturesAreExcluded() {
+        Permanent iroh = addCreatureReady(player1, new IrohDragonOfTheWest());
+        iroh.setCounterCount(CounterType.CHARGE, 1);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        opponentCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        advanceToBeginningOfCombat();
+
+        assertThat(gqs.hasKeyword(gd, iroh, Keyword.FIREBENDING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.FIREBENDING)).isFalse();
+        declareAttackers(List.of(0));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+    }
+
+    @Test
+    void gainingCounterAfterCombatTriggerResolvesDoesNotGrantFirebending() {
+        addCreatureReady(player1, new IrohDragonOfTheWest());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+
+        advanceToBeginningOfCombat();
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIREBENDING)).isFalse();
+        declareAttackers(List.of(1));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    void losingLastCounterAfterGrantDoesNotRemoveFirebending() {
+        addCreatureReady(player1, new IrohDragonOfTheWest());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        advanceToBeginningOfCombat();
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIREBENDING)).isTrue();
+        declareAttackers(List.of(1));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+    }
+
+    @Test
+    void grantedFirebendingExpiresAtEndOfTurn() {
+        addCreatureReady(player1, new IrohDragonOfTheWest());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        advanceToBeginningOfCombat();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIREBENDING)).isTrue();
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIREBENDING)).isFalse();
+
+        declareAttackers(List.of(1));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @CardUsed(DressDown.class)
+    void losingAbilitiesAfterGrantPreventsFirebendingTrigger() {
+        addCreatureReady(player1, new IrohDragonOfTheWest());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        advanceToBeginningOfCombat();
+        harness.setHand(player1, List.of(new DressDown()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIREBENDING)).isFalse();
+        declareAttackers(List.of(1));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
     }
 }
