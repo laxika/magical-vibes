@@ -110,4 +110,46 @@ class OgreArsonistTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gameLogContains("fizzles")).isTrue();
     }
+
+    @Test
+    @DisplayName("ETB must destroy your own land when it is the only land")
+    void etbDestroysOwnLand() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of(new OgreArsonist()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        UUID landId = harness.getPermanentId(player1, "Forest");
+        harness.castCreature(player1, 0, landId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Ogre Arsonist");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("ETB destroys the land even after Ogre Arsonist leaves")
+    void etbResolvesAfterSourceLeaves() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new OgreArsonist()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        UUID landId = harness.getPermanentId(player2, "Forest");
+        harness.castCreature(player1, 0, landId);
+        harness.passBothPriorities();
+
+        UUID ogreId = harness.getPermanentId(player1, "Ogre Arsonist");
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd,
+                gd.playerBattlefields.get(player1.getId()).stream()
+                        .filter(permanent -> permanent.getId().equals(ogreId))
+                        .findFirst().orElseThrow());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Ogre Arsonist");
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
+    }
 }
