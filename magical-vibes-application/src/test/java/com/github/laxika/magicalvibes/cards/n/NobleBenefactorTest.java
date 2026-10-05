@@ -76,8 +76,8 @@ class NobleBenefactorTest extends BaseCardTest {
     @Test
     @DisplayName("A player may decline the search; the next player is still prompted")
     void playerMayDecline() {
-        setupLibrary(player1);
-        setupLibrary(player2);
+        List<Card> player1Library = setupLibrary(player1);
+        List<Card> player2Library = setupLibrary(player2);
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
 
@@ -93,6 +93,10 @@ class NobleBenefactorTest extends BaseCardTest {
 
         assertThat(activeSearch()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(player1Library);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(player2Library);
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).doesNotContain(player1.getId(), player2.getId());
+        assertThat(gameLogContains("Library is shuffled.")).isFalse();
     }
 
     @Test
@@ -114,8 +118,8 @@ class NobleBenefactorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A player with an empty library is skipped")
-    void emptyLibraryPlayerIsSkipped() {
+    @DisplayName("An empty library must not be searched automatically without the player's choice")
+    void emptyLibraryIsNotAutomaticallySearched() {
         List<Card> player1Library = setupLibrary(player1);
         harness.setLibrary(player2, List.of());
         harness.setHand(player1, List.of());
@@ -123,6 +127,7 @@ class NobleBenefactorTest extends BaseCardTest {
 
         killBenefactor();
 
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).doesNotContain(player2.getId());
         assertThat(activeSearch()).isNotNull();
         assertThat(activeSearch().params().playerId()).isEqualTo(player1.getId());
 
@@ -131,6 +136,26 @@ class NobleBenefactorTest extends BaseCardTest {
         assertThat(activeSearch()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(player1Library.get(1));
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Declining the first search does not prevent the other player from taking a card")
+    void firstPlayerDeclinesAndSecondPlayerSearches() {
+        List<Card> player1Library = setupLibrary(player1);
+        List<Card> player2Library = setupLibrary(player2);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+
+        killBenefactor();
+        harness.handleCardChosen(player2, -1);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(activeSearch()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(player1Library.get(1));
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(player2Library);
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).contains(player1.getId()).doesNotContain(player2.getId());
+        assertThat(gameLogContains("reveals")).isFalse();
     }
 
     @Test
