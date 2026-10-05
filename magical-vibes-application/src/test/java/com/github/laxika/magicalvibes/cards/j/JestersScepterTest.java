@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
+import com.github.laxika.magicalvibes.service.JacksonConfig;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,6 +20,61 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({JestersScepter.class, GiantGrowth.class, GrizzlyBears.class, Shock.class})
 class JestersScepterTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("The player who exiled the cards can still look at them after the Scepter leaves")
+    void retainsLookPermissionAfterSourceLeaves() throws Exception {
+        Shock exiledCard = new Shock();
+        harness.setHand(player1, List.of(new JestersScepter()));
+        harness.setLibrary(player2, List.of(exiledCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castArtifact(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        Permanent scepter = findPermanent(player1, "Jester's Scepter");
+        gd.playerBattlefields.get(player1.getId()).remove(scepter);
+        harness.publishState();
+
+        var mapper = new JacksonConfig().objectMapper();
+        GameStateMessage controllerState = mapper.readValue(harness.getConn1()
+                .getMessagesContaining("\"type\":\"GAME_STATE\"").getLast(), GameStateMessage.class);
+        GameStateMessage opponentState = mapper.readValue(harness.getConn2()
+                .getMessagesContaining("\"type\":\"GAME_STATE\"").getLast(), GameStateMessage.class);
+        assertThat(controllerState.lookedAtExileCards()).extracting(card -> card.id())
+                .contains(exiledCard.getId());
+        assertThat(opponentState.lookedAtExileCards()).extracting(card -> card.id())
+                .doesNotContain(exiledCard.getId());
+    }
+
+    @Test
+    @DisplayName("Changing the Scepter's controller does not transfer permission to look at the exiled cards")
+    void retainsLookPermissionAfterControlChanges() throws Exception {
+        Shock exiledCard = new Shock();
+        harness.setHand(player1, List.of(new JestersScepter()));
+        harness.setLibrary(player2, List.of(exiledCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castArtifact(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        Permanent scepter = findPermanent(player1, "Jester's Scepter");
+        gd.playerBattlefields.get(player1.getId()).remove(scepter);
+        gd.playerBattlefields.get(player2.getId()).add(scepter);
+        harness.publishState();
+
+        var mapper = new JacksonConfig().objectMapper();
+        GameStateMessage originalControllerState = mapper.readValue(harness.getConn1()
+                .getMessagesContaining("\"type\":\"GAME_STATE\"").getLast(), GameStateMessage.class);
+        GameStateMessage newControllerState = mapper.readValue(harness.getConn2()
+                .getMessagesContaining("\"type\":\"GAME_STATE\"").getLast(), GameStateMessage.class);
+        var originalView = originalControllerState.battlefields().stream().flatMap(List::stream)
+                .filter(permanent -> permanent.id().equals(scepter.getId())).findFirst().orElseThrow();
+        var newView = newControllerState.battlefields().stream().flatMap(List::stream)
+                .filter(permanent -> permanent.id().equals(scepter.getId())).findFirst().orElseThrow();
+        assertThat(originalView.faceDownExiledCards()).extracting(card -> card.id())
+                .containsExactly(exiledCard.getId());
+        assertThat(newView.faceDownExiledCards()).isEmpty();
+        assertThat(newView.faceDownExiledCount()).isEqualTo(1);
+    }
 
     @Test
     @DisplayName("Enters by exiling the top five cards of the chosen player's library face down")
