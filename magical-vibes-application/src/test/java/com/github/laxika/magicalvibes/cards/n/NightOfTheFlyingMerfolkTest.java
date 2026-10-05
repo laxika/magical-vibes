@@ -68,11 +68,79 @@ class NightOfTheFlyingMerfolkTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getCard().getName().equals("Night of the Flying Merfolk"));
     }
 
+    @Test
+    @DisplayName("Chapter II excludes opposing creatures and tapped noncreatures")
+    void chapterIIExcludesOpposingCreaturesAndNoncreatures() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new NightOfTheFlyingMerfolk());
+        saga.setCounterCount(CounterType.LORE, 1);
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        ownCreature.tap();
+        opposingCreature.tap();
+        land.tap();
+
+        triggerEndStep();
+
+        assertThat(ownCreature.getCounterCount(CounterType.FLYING)).isEqualTo(1);
+        assertThat(opposingCreature.getCounterCount(CounterType.FLYING)).isZero();
+        assertThat(land.getCounterCount(CounterType.FLYING)).isZero();
+    }
+
+    @Test
+    @DisplayName("Chapter III draws nothing without qualifying combat damage and still sacrifices the Saga")
+    void chapterIIIDrawsNothingWithoutCombatDamage() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new NightOfTheFlyingMerfolk());
+        saga.setCounterCount(CounterType.LORE, 2);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        creature.tap();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        triggerEndStep();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Night of the Flying Merfolk");
+    }
+
+    @Test
+    @DisplayName("Chapter III counts creatures rather than damage and excludes creatures that did not attack")
+    void chapterIIICountsEachQualifyingCreatureOnce() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new NightOfTheFlyingMerfolk());
+        saga.setCounterCount(CounterType.LORE, 2);
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+
+        declareAttackers(List.of(1, 2));
+        resolveCombat();
+        triggerEndStep();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The opponent's end step does not advance bedtime story")
+    void opponentsEndStepDoesNotAddLore() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new NightOfTheFlyingMerfolk());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(saga.getCounterCount(CounterType.LORE)).isZero();
+        assertThat(countPermanents(player1, "Merfolk")).isZero();
+    }
+
     private void triggerEndStep() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
     }
 }
