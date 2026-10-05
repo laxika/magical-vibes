@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.d.Divination;
+import com.github.laxika.magicalvibes.cards.d.DigThroughTime;
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.f.Fireball;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.TimeWarp;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LeitmotifComposer.class, Divination.class, GrizzlyBears.class, TimeWarp.class})
+@CardUsed({LeitmotifComposer.class, Divination.class, GrizzlyBears.class, TimeWarp.class,
+        Fireball.class, AirElemental.class, DigThroughTime.class})
 class LeitmotifComposerTest extends BaseCardTest {
 
     @Test
@@ -70,7 +73,7 @@ class LeitmotifComposerTest extends BaseCardTest {
         Permanent source = addReadyComposer(player1);
         Permanent otherComposer = addReadyComposer(player1);
         Permanent opponentComposer = addReadyComposer(player2);
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -83,13 +86,107 @@ class LeitmotifComposerTest extends BaseCardTest {
         assertThat(gqs.hasCantBeBlocked(gd, bears)).isFalse();
     }
 
-    private Permanent addReadyComposer(com.github.laxika.magicalvibes.model.Player player) {
-        return addReadyCreature(player, new LeitmotifComposer());
+    @Test
+    @DisplayName("An instant paid for with delve still uses its full mana value")
+    void highManaValueInstantWithDelveCreatesCopy() {
+        addReadyComposer(player1);
+        harness.setHand(player1, List.of(new DigThroughTime()));
+        harness.setGraveyard(player1, List.of(new LeitmotifComposer(), new LeitmotifComposer(),
+                new LeitmotifComposer(), new LeitmotifComposer(), new LeitmotifComposer(),
+                new LeitmotifComposer()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstantWithMultipleGraveyardExile(player1, 0, null, List.of(0, 1, 2, 3, 4, 5));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
     }
 
-    private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player, Card card) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
-        permanent.setSummoningSick(false);
-        return permanent;
+    @Test
+    @DisplayName("An opponent casting a qualifying spell does not trigger the Composer")
+    void opponentSpellDoesNotCreateCopy() {
+        addReadyComposer(player2);
+        harness.setHand(player1, List.of(new TimeWarp()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castSorcery(player1, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("X counts toward the mana value of a spell on the stack")
+    void xSpellAtThresholdCreatesCopy() {
+        addReadyComposer(player1);
+        harness.setHand(player1, List.of(new Fireball()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castSorcery(player1, 0, 4, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("An X spell with mana value four does not create a copy")
+    void xSpellBelowThresholdDoesNotCreateCopy() {
+        addReadyComposer(player1);
+        harness.setHand(player1, List.of(new Fireball()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castSorcery(player1, 0, 3, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A creature spell with mana value five does not create a copy")
+    void highManaValueCreatureDoesNotCreateCopy() {
+        addReadyComposer(player1);
+        harness.setHand(player1, List.of(new AirElemental()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Leitmotif Composer")).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Air Elemental");
+    }
+
+    @Test
+    @DisplayName("Token copies retain the spell cast trigger")
+    void tokenCopiesAlsoCreateCopiesOnLaterCasts() {
+        addReadyComposer(player1);
+        harness.setHand(player1, List.of(new TimeWarp(), new TimeWarp()));
+        harness.addMana(player1, ManaColor.BLUE, 10);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("The blocking restriction also applies to Composers entering later that turn")
+    void activatedAbilityAffectsLaterEntrants() {
+        addReadyComposer(player1);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        Permanent laterComposer = harness.addToBattlefieldAndReturn(player2, new LeitmotifComposer());
+
+        assertThat(gqs.hasCantBeBlocked(gd, laterComposer)).isTrue();
+    }
+
+    private Permanent addReadyComposer(com.github.laxika.magicalvibes.model.Player player) {
+        return addCreatureReady(player, new LeitmotifComposer());
     }
 }
