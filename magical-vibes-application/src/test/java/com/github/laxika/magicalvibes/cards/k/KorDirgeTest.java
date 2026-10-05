@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -134,6 +135,85 @@ class KorDirgeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(
                 player1, 0, List.of(opponentCreature.getId(), ownCreature.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Redirected damage is redirected again by another Kor Dirge")
+    void chainsRedirectionThroughAnotherProtectedCreature() {
+        Permanent firstCreature = addCreatureReady(player1, new NeedlepeakSpider());
+        Permanent secondCreature = addCreatureReady(player1, new NeedlepeakSpider());
+        Permanent finalCreature = addCreatureReady(player2, new NeedlepeakSpider());
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+        castKorDirge(firstCreature, secondCreature);
+        harness.handlePermanentChosen(player1, pyromancer.getId());
+        castKorDirge(secondCreature, finalCreature);
+        harness.handlePermanentChosen(player1, pyromancer.getId());
+
+        harness.activateAbility(player1, indexOf(player1, pyromancer), null, firstCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(firstCreature.getMarkedDamage()).isZero();
+        assertThat(secondCreature.getMarkedDamage()).isZero();
+        assertThat(finalCreature.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Redirects damage from a chosen spell on the stack")
+    void redirectsDamageFromSpellOnStack() {
+        Permanent protectedCreature = addCreatureReady(player1, new NeedlepeakSpider());
+        Permanent redirectCreature = addCreatureReady(player2, new NeedlepeakSpider());
+        ShivanMeteor meteor = new ShivanMeteor();
+        harness.setHand(player1, List.of(meteor));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castSorcery(player1, 0, protectedCreature.getId());
+        castKorDirge(protectedCreature, redirectCreature);
+
+        harness.handlePermanentChosen(player1, meteor.getId());
+        harness.passBothPriorities();
+
+        assertThat(protectedCreature.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(protectedCreature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(redirectCreature);
+        harness.assertInGraveyard(player2, "Needlepeak Spider");
+    }
+
+    @Test
+    @DisplayName("Does not redirect damage after the destination leaves the battlefield")
+    void damageReachesProtectedCreatureWhenDestinationHasLeft() {
+        Permanent protectedCreature = addCreatureReady(player1, new NeedlepeakSpider());
+        Permanent redirectCreature = addCreatureReady(player2, new ProdigalPyromancer());
+        Permanent chosenSource = addCreatureReady(player1, new ProdigalPyromancer());
+        Permanent otherSource = addCreatureReady(player1, new ProdigalPyromancer());
+        castKorDirge(protectedCreature, redirectCreature);
+        harness.handlePermanentChosen(player1, chosenSource.getId());
+
+        harness.activateAbility(player1, indexOf(player1, otherSource), null, redirectCreature.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(redirectCreature);
+        harness.activateAbility(player1, indexOf(player1, chosenSource), null, protectedCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(protectedCreature.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Redirection expires when the turn ends")
+    void redirectionExpiresAtEndOfTurn() {
+        Permanent protectedCreature = addCreatureReady(player1, new NeedlepeakSpider());
+        Permanent redirectCreature = addCreatureReady(player2, new NeedlepeakSpider());
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+        castKorDirge(protectedCreature, redirectCreature);
+        harness.handlePermanentChosen(player1, pyromancer.getId());
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.UPKEEP);
+
+        harness.activateAbility(player1, indexOf(player1, pyromancer), null, protectedCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(protectedCreature.getMarkedDamage()).isEqualTo(1);
+        assertThat(redirectCreature.getMarkedDamage()).isZero();
     }
 
     private void castKorDirge(Permanent protectedCreature, Permanent redirectCreature) {
