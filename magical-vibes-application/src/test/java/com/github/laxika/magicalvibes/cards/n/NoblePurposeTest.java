@@ -3,16 +3,19 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.c.CurseOfBloodletting;
 import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.s.SongOfTheDryads;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NoblePurpose.class, GrizzlyBears.class, FreshVolunteers.class})
+@CardUsed({NoblePurpose.class, GrizzlyBears.class, FreshVolunteers.class,
+        CurseOfBloodletting.class, HolyDay.class, SongOfTheDryads.class})
 class NoblePurposeTest extends BaseCardTest {
 
     @Test
@@ -87,9 +90,7 @@ class NoblePurposeTest extends BaseCardTest {
         Permanent enemy = addCreatureReady(player2, new GrizzlyBears());
         enemy.setAttacking(true);
 
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertLife(player1, 18);
         // Player2 controls no Noble Purpose, so no life gain.
@@ -176,6 +177,61 @@ class NoblePurposeTest extends BaseCardTest {
 
     private void addNoblePurpose(Player controller) {
         harness.addToBattlefield(controller, new NoblePurpose());
+    }
+
+    @Test
+    @DisplayName("Prevented combat damage does not trigger life gain")
+    void preventedCombatDamageDoesNotGainLife() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addNoblePurpose(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        harness.castFromHand(player1, new HolyDay(), "{W}");
+        harness.passBothPriorities();
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A creature with zero power does not trigger life gain")
+    void zeroCombatDamageDoesNotGainLife() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addNoblePurpose(player1);
+        GrizzlyBears bears = new GrizzlyBears();
+        bears.setPower(0);
+        Permanent attacker = addCreatureReady(player1, bears);
+        attacker.setAttacking(true);
+
+        resolveCombat();
+        assertThat(gd.stack).isEmpty();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Noble Purpose loses its triggered ability when it becomes a Forest")
+    void noblePurposeTurnedIntoForestDoesNotGainLife() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent purpose = harness.addToBattlefieldAndReturn(player1, new NoblePurpose());
+        Permanent song = harness.addToBattlefieldAndReturn(player2, new SongOfTheDryads());
+        song.setAttachedTo(purpose.getId());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
     }
 
     @Test
