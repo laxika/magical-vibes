@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.StarfieldShepherd;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,13 +14,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({InsatiableSkittermaw.class, Forest.class, GrizzlyBears.class, StarfieldShepherd.class})
+@CardUsed({InsatiableSkittermaw.class, Forest.class, StarfieldShepherd.class})
 class InsatiableSkittermawTest extends BaseCardTest {
 
     @Test
     void putsCounterAtEndStepAfterNonlandPermanentLeaves() {
         Permanent skittermaw = addReadySkittermaw();
-        Permanent departed = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent departed = harness.addToBattlefieldAndReturn(player2, new InsatiableSkittermaw());
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, departed));
 
@@ -68,17 +67,72 @@ class InsatiableSkittermawTest extends BaseCardTest {
         assertThat(skittermaw.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
+    @Test
+    void multipleDeparturesStillGiveOnlyOneCounter() {
+        Permanent skittermaw = addReadySkittermaw();
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new InsatiableSkittermaw());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new InsatiableSkittermaw());
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, first);
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, second);
+        });
+
+        advanceToEndStep();
+
+        assertThat(skittermaw.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsEndStep() {
+        Permanent skittermaw = addReadySkittermaw();
+        Permanent departed = harness.addToBattlefieldAndReturn(player2, new InsatiableSkittermaw());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, departed));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(skittermaw.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void departureAfterEndStepBeginsDoesNotTriggerRetroactively() {
+        Permanent skittermaw = addReadySkittermaw();
+        Permanent departed = harness.addToBattlefieldAndReturn(player2, new InsatiableSkittermaw());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).isEmpty();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, departed));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(skittermaw.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void departureBeforeSkittermawEntersStillEnablesVoid() {
+        Permanent departed = harness.addToBattlefieldAndReturn(player2, new InsatiableSkittermaw());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, departed));
+        Permanent skittermaw = addReadySkittermaw();
+
+        advanceToEndStep();
+
+        assertThat(skittermaw.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private Permanent addReadySkittermaw() {
-        Permanent skittermaw = harness.addToBattlefieldAndReturn(player1, new InsatiableSkittermaw());
-        skittermaw.setSummoningSick(false);
-        return skittermaw;
+        return harness.addToBattlefieldAndReturn(player1, new InsatiableSkittermaw());
     }
 
     private void advanceToEndStep() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 }
