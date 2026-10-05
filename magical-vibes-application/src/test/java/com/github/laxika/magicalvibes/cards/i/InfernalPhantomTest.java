@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.d.DazzlingTheaterPropRoom;
-import com.github.laxika.magicalvibes.cards.d.DoomBlade;
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.m.Murder;
+import com.github.laxika.magicalvibes.cards.p.PatchedPlaything;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({InfernalPhantom.class, DazzlingTheaterPropRoom.class, DoomBlade.class, GloriousAnthem.class})
+@CardUsed({InfernalPhantom.class, DazzlingTheaterPropRoom.class, Murder.class, PatchedPlaything.class})
 class InfernalPhantomTest extends BaseCardTest {
 
     @Test
@@ -45,12 +43,8 @@ class InfernalPhantomTest extends BaseCardTest {
     @Test
     void doesNotTriggerForAnOpponentsEnchantment() {
         Permanent phantom = harness.addToBattlefieldAndReturn(player1, new InfernalPhantom());
-        harness.setHand(player2, List.of(new GloriousAnthem()));
-        harness.addMana(player2, ManaColor.WHITE, 3);
         harness.forceActivePlayer(player2);
-
-        harness.castEnchantment(player2, 0);
-        harness.passBothPriorities();
+        castSimpleEnchantment(player2);
 
         assertThat(gqs.getEffectivePower(gd, phantom)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
@@ -62,7 +56,7 @@ class InfernalPhantomTest extends BaseCardTest {
         harness.setLife(player2, 20);
         castSimpleEnchantment(player1);
 
-        destroyWithDoomBlade(phantom);
+        destroyWithMurder(phantom);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
@@ -84,37 +78,116 @@ class InfernalPhantomTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, phantom)).isEqualTo(3);
     }
 
-    private void castSimpleEnchantment(com.github.laxika.magicalvibes.model.Player caster) {
-        harness.setHand(caster, List.of(simpleEnchantment()));
-        harness.addMana(caster, ManaColor.COLORLESS, 1);
-        harness.castEnchantment(caster, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+    @Test
+    void boostsAccumulateForMultipleEnchantmentEntries() {
+        Permanent phantom = harness.addToBattlefieldAndReturn(player1, new InfernalPhantom());
+        castSimpleEnchantment(player1);
+        castSimpleEnchantment(player1);
+
+        assertThat(gqs.getEffectivePower(gd, phantom)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, phantom)).isEqualTo(3);
     }
 
-    private Permanent castRoom() {
+    @Test
+    void triggersForAnEnchantmentEnteringWithoutBeingCast() {
+        Permanent phantom = harness.addToBattlefieldAndReturn(player1, new InfernalPhantom());
+
+        harness.enterBattlefieldAndReturn(player1, new DazzlingTheaterPropRoom());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, phantom)).isEqualTo(4);
+    }
+
+    @Test
+    void unlockingOnlyTheFirstDoorDoesNotTrigger() {
+        Permanent room = harness.addToBattlefieldAndReturn(player1, new DazzlingTheaterPropRoom());
+        Permanent phantom = harness.addToBattlefieldAndReturn(player1, new InfernalPhantom());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.unlockRoomDoor(player1, 0, 0);
+        resolveAllTriggers();
+
+        assertThat(room.isRoomFullyUnlocked()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, phantom)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void roomEntryAndFullyUnlockingItEachGiveABoost() {
+        Permanent phantom = harness.addToBattlefieldAndReturn(player1, new InfernalPhantom());
+        castSimpleEnchantment(player1);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.unlockRoomDoor(player1, 1, 1);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, phantom)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, phantom)).isEqualTo(3);
+    }
+
+    @Test
+    void doesNotTriggerWhenAnOpponentFullyUnlocksARoom() {
+        Permanent phantom = harness.addToBattlefieldAndReturn(player1, new InfernalPhantom());
+        harness.forceActivePlayer(player2);
+        castSimpleEnchantment(player2);
+        harness.addMana(player2, ManaColor.WHITE, 3);
+
+        harness.unlockRoomDoor(player2, 0, 1);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, phantom)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void deathTriggerCanDealDamageToACreature() {
+        Permanent phantom = harness.addToBattlefieldAndReturn(player1, new InfernalPhantom());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PatchedPlaything());
+
+        destroyWithMurder(phantom);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    void dyingBeforeTheEerieTriggerResolvesUsesUnboostedPower() {
+        Permanent phantom = harness.addToBattlefieldAndReturn(player1, new InfernalPhantom());
         harness.setHand(player1, List.of(new DazzlingTheaterPropRoom()));
         harness.addMana(player1, ManaColor.WHITE, 4);
         harness.castModalSorcery(player1, 0, 0, List.of());
         harness.passBothPriorities();
+
+        destroyWithMurder(phantom);
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(phantom);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void castSimpleEnchantment(com.github.laxika.magicalvibes.model.Player caster) {
+        harness.setHand(caster, List.of(new DazzlingTheaterPropRoom()));
+        harness.addMana(caster, ManaColor.WHITE, 4);
+        harness.castModalSorcery(caster, 0, 0, List.of());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+    }
+
+    private Permanent castRoom() {
+        castSimpleEnchantment(player1);
         return gd.playerBattlefields.get(player1.getId()).getFirst();
     }
 
-    private void destroyWithDoomBlade(Permanent target) {
-        harness.setHand(player2, List.of(new DoomBlade()));
-        harness.addMana(player2, ManaColor.BLACK, 2);
+    private void destroyWithMurder(Permanent target) {
+        harness.setHand(player2, List.of(new Murder()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
-    }
-
-    private Card simpleEnchantment() {
-        Card card = new Card();
-        card.setName("Test Enchantment");
-        card.setType(CardType.ENCHANTMENT);
-        card.setManaCost("{1}");
-        return card;
+        harness.castAndResolveInstant(player2, 0, target.getId());
     }
 }
