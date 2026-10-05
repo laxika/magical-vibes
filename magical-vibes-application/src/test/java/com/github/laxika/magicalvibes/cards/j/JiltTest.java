@@ -80,6 +80,63 @@ class JiltTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void kickedDamageKillsCreatureWithTwoToughness() {
+        Permanent returnTarget = addCreatureReady(player2, new FungalShambler());
+        Permanent damageTarget = addCreatureReady(player2, new GaeasSkyfolk());
+        harness.setHand(player1, List.of(new Jilt()));
+        addJiltMana();
+
+        harness.castKickedInstantWithSacrifices(player1, 0, returnTarget.getId(),
+                List.of(damageTarget.getId()), List.of());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Fungal Shambler");
+        harness.assertNotOnBattlefield(player2, "Gaea's Skyfolk");
+        harness.assertInGraveyard(player2, "Gaea's Skyfolk");
+    }
+
+    @Test
+    void stillDealsDamageWhenReturnTargetLeavesInResponse() {
+        Permanent returnTarget = addCreatureReady(player2, new GaeasSkyfolk());
+        Permanent damageTarget = addCreatureReady(player2, new FungalShambler());
+        harness.setHand(player1, List.of(new Jilt()));
+        harness.setHand(player2, List.of(new Jilt()));
+        addJiltMana();
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castKickedInstantWithSacrifices(player1, 0, returnTarget.getId(),
+                List.of(damageTarget.getId()), List.of());
+        harness.castAndResolveInstant(player2, 0, returnTarget.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Gaea's Skyfolk");
+        assertThat(damageTarget.getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Jilt");
+    }
+
+    @Test
+    void stillReturnsCreatureWhenDamageTargetLeavesInResponse() {
+        Permanent returnTarget = addCreatureReady(player2, new GaeasSkyfolk());
+        Permanent damageTarget = addCreatureReady(player2, new FungalShambler());
+        harness.setHand(player1, List.of(new Jilt()));
+        harness.setHand(player2, List.of(new Jilt()));
+        addJiltMana();
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castKickedInstantWithSacrifices(player1, 0, returnTarget.getId(),
+                List.of(damageTarget.getId()), List.of());
+        harness.castAndResolveInstant(player2, 0, damageTarget.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Gaea's Skyfolk");
+        harness.assertInHand(player2, "Gaea's Skyfolk");
+        harness.assertInHand(player2, "Fungal Shambler");
+        harness.assertInGraveyard(player1, "Jilt");
+    }
+
     private void addJiltMana() {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.RED, 1);
