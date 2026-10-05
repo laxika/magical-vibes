@@ -52,6 +52,55 @@ class OrdruunCommandoTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A consumed shield does not prevent a later damage event")
+    void consumedShieldDoesNotPreventLaterDamage() {
+        Permanent commando = addCreatureReady(player1, new OrdruunCommando());
+        addCreatureReady(player2, new ViashinoFangtail());
+        addCreatureReady(player2, new ViashinoFangtail());
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player2, 0, null, commando.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Ordruun Commando");
+
+        harness.activateAbility(player2, 1, null, commando.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ordruun Commando");
+        harness.assertInGraveyard(player1, "Ordruun Commando");
+    }
+
+    @Test
+    @DisplayName("Repeated activations protect against separate damage events without tapping")
+    void repeatedActivationsAccumulatePrevention() {
+        Permanent commando = addCreatureReady(player1, new OrdruunCommando());
+        commando.setSummoningSick(true);
+        commando.setTapped(true);
+        addCreatureReady(player2, new ViashinoFangtail());
+        addCreatureReady(player2, new ViashinoFangtail());
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player2, 0, null, commando.getId());
+        harness.passBothPriorities();
+        assertThat(commando.getDamagePreventionShield()).isEqualTo(1);
+
+        harness.activateAbility(player2, 1, null, commando.getId());
+        harness.passBothPriorities();
+
+        assertThat(commando.getMarkedDamage()).isZero();
+        assertThat(commando.getDamagePreventionShield()).isZero();
+        harness.assertOnBattlefield(player1, "Ordruun Commando");
+    }
+
+    @Test
     @DisplayName("The prevention shield expires at end of turn")
     void shieldExpiresAtEndOfTurn() {
         Permanent commando = addCreatureReady(player1, new OrdruunCommando());
