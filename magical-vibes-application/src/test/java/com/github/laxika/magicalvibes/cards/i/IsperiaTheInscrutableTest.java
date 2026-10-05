@@ -62,6 +62,74 @@ class IsperiaTheInscrutableTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(damagedPlayerHandCard);
     }
 
+    @Test
+    @DisplayName("A real card name can be chosen even when that card is absent from the game")
+    void canNameCardAbsentFromGame() {
+        Card flyingCreature = new MistralCharger();
+        harness.setLibrary(player1, List.of(flyingCreature));
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new SimicInitiate()));
+        dealCombatDamageWithIsperia();
+
+        harness.handleListChoice(player1, "Azorius First-Wing");
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(flyingCreature);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty revealed hand does not cause a library search")
+    void emptyHandDoesNotSearch() {
+        Card flyingCreature = new MistralCharger();
+        harness.setLibrary(player1, List.of(flyingCreature));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        dealCombatDamageWithIsperia();
+
+        harness.handleListChoice(player1, "Mistral Charger");
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(flyingCreature);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A matching name permits failing to find even with a flying creature in the library")
+    void mayFailToFindFlyingCreature() {
+        Card flyingCreature = new MistralCharger();
+        harness.setLibrary(player1, List.of(flyingCreature));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new SimicInitiate()));
+        dealCombatDamageWithIsperia();
+
+        harness.handleListChoice(player1, "Simic Initiate");
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(flyingCreature);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gameLogContains("shuffled")).isTrue();
+    }
+
+    @Test
+    @DisplayName("A matching name with no flying creature still completes the search and shuffles")
+    void noEligibleCreatureStillShuffles() {
+        Card nonFlyingCreature = new SimicInitiate();
+        harness.setLibrary(player1, List.of(nonFlyingCreature));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new SimicInitiate()));
+        dealCombatDamageWithIsperia();
+
+        harness.handleListChoice(player1, "Simic Initiate");
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonFlyingCreature);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gameLogContains("shuffled")).isTrue();
+    }
+
     private void dealCombatDamageWithIsperia() {
         addCreatureReady(player1, new IsperiaTheInscrutable());
         declareAttackers(List.of(0));
