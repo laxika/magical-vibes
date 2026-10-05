@@ -45,18 +45,15 @@ class KnightOfStromgaldTest extends BaseCardTest {
     @Test
     @DisplayName("White creatures cannot block Knight of Stromgald")
     void whiteCreatureCannotBlock() {
-        Permanent knight = addCreatureReady(player1, new KnightOfStromgald());
-        knight.setAttacking(true);
+        addCreatureReady(player1, new KnightOfStromgald());
         addCreatureReady(player2, new KjeldoranWarrior());
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection");
     }
-
-    // ===== First strike ability =====
 
     @Test
     @DisplayName("Resolving first ability grants first strike until end of turn")
@@ -98,8 +95,6 @@ class KnightOfStromgaldTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
-
-    // ===== +1/+0 ability =====
 
     @Test
     @DisplayName("Resolving second ability gives +1/+0 until end of turn")
@@ -159,5 +154,74 @@ class KnightOfStromgaldTest extends BaseCardTest {
         assertThat(knight.isTapped()).isTrue();
         assertThat(gqs.hasKeyword(gd, knight, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(knight.getPowerModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Repeated power boosts accumulate only on their source")
+    void repeatedBoostsAccumulateOnSource() {
+        Permanent knight = addCreatureReady(player1, new KnightOfStromgald());
+        Permanent otherKnight = addCreatureReady(player1, new KnightOfStromgald());
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, otherKnight)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Both abilities can be activated while summoning sick")
+    void abilitiesCanBeActivatedWhileSummoningSick() {
+        Permanent knight = harness.addToBattlefieldAndReturn(player1, new KnightOfStromgald());
+        knight.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(3);
+        assertThat(knight.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Granted first strike kills a blocker before it can deal damage")
+    void firstStrikeWinsCombatAgainstNonwhiteCreature() {
+        Permanent knight = addCreatureReady(player1, new KnightOfStromgald());
+        Permanent blocker = addCreatureReady(player2, new KnightOfStromgald());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(knight);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(blocker.getCard());
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Protection prevents white combat damage when Knight blocks")
+    void protectionPreventsWhiteCombatDamage() {
+        Permanent attacker = addCreatureReady(player1, new KjeldoranWarrior());
+        Permanent knight = addCreatureReady(player2, new KnightOfStromgald());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(knight);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(attacker.getCard());
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 }
