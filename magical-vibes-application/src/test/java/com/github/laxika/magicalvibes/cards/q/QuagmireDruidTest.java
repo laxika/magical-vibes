@@ -15,6 +15,54 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class QuagmireDruidTest extends BaseCardTest {
 
     @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent druid = harness.addToBattlefieldAndReturn(player1, new QuagmireDruid());
+        druid.setSummoningSick(true);
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new PhyrexianArena());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, enchantment.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(druid.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Quagmire Druid");
+        harness.assertOnBattlefield(player2, "Phyrexian Arena");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent druid = harness.addToBattlefieldAndReturn(player1, new QuagmireDruid());
+        druid.setSummoningSick(false);
+        druid.tap();
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new PhyrexianArena());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, enchantment.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Quagmire Druid");
+        harness.assertOnBattlefield(player2, "Phyrexian Arena");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotPayGreenCostWithBlackMana() {
+        Permanent druid = harness.addToBattlefieldAndReturn(player1, new QuagmireDruid());
+        druid.setSummoningSick(false);
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new PhyrexianArena());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, enchantment.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(druid.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Quagmire Druid");
+        harness.assertOnBattlefield(player2, "Phyrexian Arena");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     void sacrificesCreatureTapsAndDestroysTargetEnchantment() {
         Permanent druid = harness.addToBattlefieldAndReturn(player1, new QuagmireDruid());
         druid.setSummoningSick(false);
