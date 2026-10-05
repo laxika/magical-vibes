@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.a.AngelicWall;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -21,19 +20,12 @@ class NoggleBanditTest extends BaseCardTest {
     @Test
     @DisplayName("Noggle Bandit cannot be blocked by a creature without defender")
     void cannotBeBlockedByNonDefender() {
-        Permanent bandit = new Permanent(new NoggleBandit());
-        bandit.setSummoningSick(false);
+        Permanent bandit = addCreatureReady(player1, new NoggleBandit());
         bandit.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(bandit);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        addCreatureReady(player2, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -43,22 +35,49 @@ class NoggleBanditTest extends BaseCardTest {
     @Test
     @DisplayName("Noggle Bandit can be blocked by a creature with defender")
     void canBeBlockedByDefender() {
-        Permanent bandit = new Permanent(new NoggleBandit());
-        bandit.setSummoningSick(false);
+        Permanent bandit = addCreatureReady(player1, new NoggleBandit());
         bandit.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(bandit);
 
-        Permanent wall = new Permanent(new AngelicWall());
-        wall.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(wall);
+        Permanent wall = addCreatureReady(player2, new AngelicWall());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(wall.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Multiple creatures with defender can block Noggle Bandit")
+    void canBeBlockedByMultipleDefenders() {
+        Permanent bandit = addCreatureReady(player1, new NoggleBandit());
+        bandit.setAttacking(true);
+        Permanent firstWall = addCreatureReady(player2, new AngelicWall());
+        Permanent secondWall = addCreatureReady(player2, new AngelicWall());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+
+        assertThat(firstWall.isBlocking()).isTrue();
+        assertThat(secondWall.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Noggle Bandit's restriction does not affect another attacker")
+    void nonDefenderCanBlockAnotherAttacker() {
+        Permanent bandit = addCreatureReady(player1, new NoggleBandit());
+        bandit.setAttacking(true);
+        Permanent attackingBears = addCreatureReady(player1, new GrizzlyBears());
+        attackingBears.setAttacking(true);
+        Permanent wall = addCreatureReady(player2, new AngelicWall());
+        Permanent blockingBears = addCreatureReady(player2, new GrizzlyBears());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 1)));
+
+        assertThat(wall.isBlocking()).isTrue();
+        assertThat(blockingBears.isBlocking()).isTrue();
     }
 }
