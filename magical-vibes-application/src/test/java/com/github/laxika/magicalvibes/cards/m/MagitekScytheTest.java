@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MagitekScythe.class, GrizzlyBears.class})
+@CardUsed({MagitekScythe.class, GrizzlyBears.class, Naturalize.class})
 class MagitekScytheTest extends BaseCardTest {
 
     @Test
@@ -93,6 +95,62 @@ class MagitekScytheTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("No temporary effects are granted if the Scythe leaves before attachment")
+    void destroyedScytheDoesNotGrantTemporaryEffects() {
+        Permanent creature = addReadyCreature(player1);
+        castScytheTargeting(creature.getId());
+        harness.passBothPriorities();
+        Permanent scythe = findPermanent(player1, "Magitek Scythe");
+
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player1, 0, scythe.getId());
+        harness.assertInGraveyard(player1, "Magitek Scythe");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(creature.isMustBeBlockedThisTurn()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Equip attaches and boosts without granting the ETB-only effects")
+    void equipDoesNotGrantTemporaryEffects() {
+        Permanent scythe = addReadyScythe(player1);
+        Permanent creature = addReadyCreature(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(scythe.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(creature.isMustBeBlockedThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("ETB effects expire at end of turn while the equipped boost remains")
+    void temporaryEffectsExpireAtEndOfTurn() {
+        Permanent creature = addReadyCreature(player1);
+        castScytheTargeting(creature.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(creature.isMustBeBlockedThisTurn()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
+
     private void castScytheTargeting(UUID creatureId) {
         harness.setHand(player1, List.of(new MagitekScythe()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -108,9 +166,8 @@ class MagitekScytheTest extends BaseCardTest {
     }
 
     private Permanent addReady(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
