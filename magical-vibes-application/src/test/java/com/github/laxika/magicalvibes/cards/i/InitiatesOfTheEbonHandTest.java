@@ -28,6 +28,44 @@ class InitiatesOfTheEbonHandTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A tapped, summoning-sick Initiates can activate its mana ability")
+    void tappedSummoningSickCreatureCanActivate() {
+        Permanent initiates = harness.addToBattlefieldAndReturn(player1, new InitiatesOfTheEbonHand());
+        initiates.setSummoningSick(true);
+        initiates.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(initiates.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Each Initiates tracks its own activations")
+    void activationCountsAreIndependentForEachPermanent() {
+        Permanent first = addCreatureReady(player1, new InitiatesOfTheEbonHand());
+        Permanent second = addCreatureReady(player1, new InitiatesOfTheEbonHand());
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        for (int i = 0; i < 3; i++) {
+            harness.activateAbility(player1, 0, null, null);
+            harness.activateAbility(player1, 1, null, null);
+        }
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Initiates of the Ebon Hand")).containsExactly(second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first.getCard());
+    }
+
+    @Test
     @DisplayName("No sacrifice at end step when activated fewer than four times")
     void noSacrificeWhenActivatedFewerThanFourTimes() {
         addReadyInitiates(player1);
