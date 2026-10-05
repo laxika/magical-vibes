@@ -29,8 +29,7 @@ class OverrideTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.setHand(player2, List.of(new Override()));
         harness.addMana(player2, ManaColor.BLUE, 3); // {2}{U}
-        harness.castInstant(player2, 0, alphaMyr.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, alphaMyr.getId());
 
         harness.assertInGraveyard(player1, "Alpha Myr");
         assertThat(harness.getGameData().stack).isEmpty();
@@ -49,8 +48,7 @@ class OverrideTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.setHand(player2, List.of(new Override()));
         harness.addMana(player2, ManaColor.BLUE, 3); // {2}{U}
-        harness.castInstant(player2, 0, alphaMyr.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, alphaMyr.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
@@ -73,8 +71,7 @@ class OverrideTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.setHand(player2, List.of(new Override()));
         harness.addMana(player2, ManaColor.BLUE, 3); // {2}{U}
-        harness.castInstant(player2, 0, alphaMyr.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, alphaMyr.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
@@ -95,5 +92,59 @@ class OverrideTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, permanent.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The controller may decline payment even when they can afford it")
+    void countersWhenAffordablePaymentIsDeclined() {
+        harness.addToBattlefield(player2, new AlphaMyr());
+        AlphaMyr spell = new AlphaMyr();
+        harness.castFromHand(player1, spell, "{2}");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passPriority(player1);
+        harness.setHand(player2, List.of(new Override()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.castAndResolveInstant(player2, 0, spell.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Alpha Myr");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The controller may decline a zero-mana payment")
+    void countersWhenZeroPaymentIsDeclined() {
+        AlphaMyr spell = new AlphaMyr();
+        harness.castFromHand(player1, spell, "{2}");
+        harness.passPriority(player1);
+        harness.setHand(player2, List.of(new Override()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.castAndResolveInstant(player2, 0, spell.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Alpha Myr");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Counts artifacts at resolution rather than when Override is cast")
+    void countsArtifactsAtResolution() {
+        AlphaMyr spell = new AlphaMyr();
+        harness.castFromHand(player1, spell, "{2}");
+        harness.passPriority(player1);
+        harness.setHand(player2, List.of(new Override()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.castInstant(player2, 0, spell.getId());
+
+        harness.addToBattlefield(player2, new AlphaMyr());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Alpha Myr");
+        assertThat(gd.stack).isEmpty();
     }
 }
