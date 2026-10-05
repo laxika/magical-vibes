@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.b.BlindHunter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.p.PullFromEternity;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KayaGhostHaunter.class, BlindHunter.class, GrizzlyBears.class, LightningBolt.class})
+@CardUsed({KayaGhostHaunter.class, BlindHunter.class, GrizzlyBears.class, LightningBolt.class, PullFromEternity.class})
 class KayaGhostHaunterTest extends BaseCardTest {
 
     @Test
@@ -84,8 +85,67 @@ class KayaGhostHaunterTest extends BaseCardTest {
         assertThat(gd.controlEffectsFor(bears.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("Kaya cannot haunt from the graveyard after leaving before her ability resolves")
+    void cannotHauntAfterLeavingBattlefield() {
+        Permanent kaya = addReadyKaya(player1);
+        Permanent bears = addReadyCreature(player2);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, kaya), 0, bears.getId());
+        harness.setHand(player2, java.util.List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, kaya.getId());
+        resolveStack();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(kaya.getCard());
+        assertThat(gd.hauntingCardToPermanentId).doesNotContainKey(kaya.getCard().getId());
+        assertThat(gd.findExiledCard(kaya.getCard().getId())).isNull();
+    }
+
+    @Test
+    @DisplayName("Control ends when the last haunting card leaves exile")
+    void controlEndsWhenHauntingEnds() {
+        Permanent bears = addReadyCreature(player2);
+        hauntWithBlindHunter(bears);
+        com.github.laxika.magicalvibes.model.Card hunter = gd.exiledCards.stream()
+                .map(entry -> entry.card())
+                .filter(card -> card instanceof BlindHunter)
+                .findFirst().orElseThrow();
+        Permanent kaya = addReadyKaya(player1);
+        harness.activateAbility(player1, battlefieldIndex(player1, kaya), 2, null, null);
+        resolveStack();
+
+        advanceToNextUpkeep();
+        harness.handlePermanentChosen(player1, bears.getId());
+        resolveStack();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
+
+        harness.setHand(player1, java.util.List.of(new PullFromEternity()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, hunter.getId());
+        resolveStack();
+
+        assertThat(gd.hauntingCardToPermanentId).doesNotContainValue(bears.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
+    }
+
+    @Test
+    @DisplayName("An illegal target leaves Kaya on the battlefield")
+    void illegalTargetDoesNotExileKaya() {
+        Permanent kaya = addReadyKaya(player1);
+        Permanent bears = addReadyCreature(player2);
+        harness.activateAbility(player1, battlefieldIndex(player1, kaya), 0, bears.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, bears));
+        resolveStack();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(kaya);
+        assertThat(gd.hauntingCardToPermanentId).doesNotContainKey(kaya.getCard().getId());
+    }
+
     private void hauntWithBlindHunter(Permanent target) {
-        Permanent hunter = addReadyPermanent(player1, new BlindHunter());
+        Permanent hunter = addCreatureReady(player1, new BlindHunter());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -113,24 +173,15 @@ class KayaGhostHaunterTest extends BaseCardTest {
     }
 
     private Permanent addReadyKaya(Player player) {
-        Permanent kaya = new Permanent(new KayaGhostHaunter());
+        Permanent kaya = addCreatureReady(player, new KayaGhostHaunter());
         kaya.setCounterCount(CounterType.LOYALTY, 3);
-        kaya.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(kaya);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return kaya;
     }
 
     private Permanent addReadyCreature(Player player) {
-        return addReadyPermanent(player, new GrizzlyBears());
-    }
-
-    private Permanent addReadyPermanent(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent creature = new Permanent(card);
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
+        return addCreatureReady(player, new GrizzlyBears());
     }
 
     private int battlefieldIndex(Player player, Permanent permanent) {
