@@ -36,7 +36,7 @@ class LurkingSkirgeTest extends BaseCardTest {
     @Test
     @DisplayName("Does not trigger again once Lurking Skirge has become a creature")
     void doesNotTriggerAgainAfterBecomingCreature() {
-        Permanent skirge = harness.addToBattlefieldAndReturn(player1, new LurkingSkirge());
+        harness.addToBattlefield(player1, new LurkingSkirge());
         Permanent firstBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, firstBears));
@@ -102,5 +102,47 @@ class LurkingSkirgeTest extends BaseCardTest {
 
         assertThat(gqs.isEnchantment(gd, skirge)).isTrue();
         assertThat(gqs.isCreature(gd, skirge)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Each death triggers before animation, but queued triggers stop applying after animation")
+    void handlesMultipleDeathsBeforeFirstTriggerResolves() {
+        Permanent skirge = harness.addToBattlefieldAndReturn(player1, new LurkingSkirge());
+        Permanent firstBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent secondBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, firstBears));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, secondBears));
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gqs.isEnchantment(gd, skirge)).isTrue();
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.isCreature(gd, skirge)).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.isEnchantment(gd, skirge)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, skirge)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, skirge)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, skirge, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A pending animation cannot affect a new Lurking Skirge after its source leaves")
+    void pendingTriggerDoesNotAnimateAnotherSkirge() {
+        Permanent originalSkirge = harness.addToBattlefieldAndReturn(player1, new LurkingSkirge());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bears));
+        assertThat(gd.stack).hasSize(1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, originalSkirge));
+        Permanent newSkirge = harness.addToBattlefieldAndReturn(player1, new LurkingSkirge());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.isEnchantment(gd, newSkirge)).isTrue();
+        assertThat(gqs.isCreature(gd, newSkirge)).isFalse();
+        harness.assertInGraveyard(player1, "Lurking Skirge");
     }
 }
