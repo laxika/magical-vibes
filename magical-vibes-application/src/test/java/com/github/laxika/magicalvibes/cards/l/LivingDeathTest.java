@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.a.AjanisWelcome;
+import com.github.laxika.magicalvibes.cards.a.AlexiosDeimosOfKosmos;
 import com.github.laxika.magicalvibes.cards.c.CanopySpider;
 import com.github.laxika.magicalvibes.cards.d.DesecratedTomb;
-import com.github.laxika.magicalvibes.cards.l.LowlandGiant;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.p.PoisonTipArcher;
 import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +21,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({LivingDeath.class, CanopySpider.class, DesecratedTomb.class, LowlandGiant.class,
-        Mountain.class, TrainedArmodon.class, WindDrake.class})
+        Mountain.class, TrainedArmodon.class, WindDrake.class, AjanisWelcome.class, PoisonTipArcher.class,
+        AlexiosDeimosOfKosmos.class})
 class LivingDeathTest extends BaseCardTest {
 
     @Test
@@ -33,8 +36,7 @@ class LivingDeathTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new LowlandGiant()));
         harness.setGraveyard(player2, List.of(new CanopySpider()));
 
-        harness.castSorcery(player1, 0, (UUID) null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, (UUID) null);
 
         harness.assertOnBattlefield(player1, "Lowland Giant");
         harness.assertOnBattlefield(player2, "Canopy Spider");
@@ -53,8 +55,7 @@ class LivingDeathTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         Permanent armodon = addCreatureReady(player1, new TrainedArmodon());
 
-        harness.castSorcery(player1, 0, (UUID) null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, (UUID) null);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(armodon.getId()));
@@ -70,8 +71,7 @@ class LivingDeathTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.setGraveyard(player1, List.of(new Mountain(), new LowlandGiant()));
 
-        harness.castSorcery(player1, 0, (UUID) null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, (UUID) null);
 
         harness.assertOnBattlefield(player1, "Lowland Giant");
         harness.assertInGraveyard(player1, "Mountain");
@@ -85,8 +85,7 @@ class LivingDeathTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castSorcery(player1, 0, (UUID) null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, (UUID) null);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.exiledCards).isEmpty();
@@ -102,10 +101,80 @@ class LivingDeathTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.setGraveyard(player1, List.of(new TrainedArmodon(), new LowlandGiant()));
 
-        harness.castSorcery(player1, 0, (UUID) null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, (UUID) null);
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Bat")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A surviving enchantment triggers for each returned creature its controller receives")
+    void survivingEntryWatcherSeesEachReturnedCreature() {
+        harness.addToBattlefield(player1, new AjanisWelcome());
+        harness.setGraveyard(player1, List.of(new LowlandGiant(), new TrainedArmodon()));
+        harness.setGraveyard(player2, List.of(new CanopySpider()));
+
+        harness.castFromHand(player1, new LivingDeath(), "{3}{B}{B}");
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player1, "Ajani's Welcome");
+    }
+
+    @Test
+    @DisplayName("A sacrificed death watcher sees other creatures dying simultaneously on both sides")
+    void sacrificedWatcherSeesAllOtherSimultaneousDeaths() {
+        addCreatureReady(player1, new PoisonTipArcher());
+        addCreatureReady(player1, new TrainedArmodon());
+        addCreatureReady(player2, new WindDrake());
+
+        harness.castFromHand(player1, new LivingDeath(), "{3}{B}{B}");
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player1, "Poison-Tip Archer");
+        harness.assertInGraveyard(player1, "Trained Armodon");
+        harness.assertInGraveyard(player2, "Wind Drake");
+    }
+
+    @Test
+    @DisplayName("A returning death watcher does not see the earlier sacrifice step")
+    void returningWatcherDoesNotSeeEarlierDeaths() {
+        harness.setGraveyard(player1, List.of(new PoisonTipArcher()));
+        addCreatureReady(player1, new TrainedArmodon());
+        addCreatureReady(player2, new WindDrake());
+
+        harness.castFromHand(player1, new LivingDeath(), "{3}{B}{B}");
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player1, "Poison-Tip Archer");
+        harness.assertInGraveyard(player1, "Trained Armodon");
+        harness.assertInGraveyard(player2, "Wind Drake");
+    }
+
+    @Test
+    @CardUsed({AlexiosDeimosOfKosmos.class})
+    @DisplayName("Creatures that cannot be sacrificed survive while the rest of the spell resolves")
+    void cannotBeSacrificedCreatureSurvives() {
+        harness.addToBattlefield(player2, new AlexiosDeimosOfKosmos());
+        addCreatureReady(player2, new WindDrake());
+        harness.setGraveyard(player1, List.of(new LowlandGiant()));
+        harness.setGraveyard(player2, List.of(new CanopySpider()));
+
+        harness.castFromHand(player1, new LivingDeath(), "{3}{B}{B}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Alexios, Deimos of Kosmos");
+        harness.assertNotInGraveyard(player2, "Alexios, Deimos of Kosmos");
+        harness.assertInGraveyard(player2, "Wind Drake");
+        harness.assertOnBattlefield(player1, "Lowland Giant");
+        harness.assertOnBattlefield(player2, "Canopy Spider");
     }
 }
