@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.b.BlasphemousAct;
+import com.github.laxika.magicalvibes.cards.g.GuardDuty;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ManorGargoyle.class, WrathOfGod.class, BlasphemousAct.class, GuardDuty.class})
 class ManorGargoyleTest extends BaseCardTest {
-
-    // ===== Indestructible while having defender =====
 
     @Test
     @DisplayName("Manor Gargoyle has indestructible while it has defender")
@@ -65,8 +66,6 @@ class ManorGargoyleTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, gargoyle, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
-    // ===== Indestructible survives destruction =====
-
     @Test
     @DisplayName("Indestructible Manor Gargoyle survives Wrath of God")
     void indestructibleSurvivesWrathOfGod() {
@@ -80,8 +79,7 @@ class ManorGargoyleTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castSorcery(player2, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, 0);
 
         // Both gargoyles should survive (both have defender → indestructible)
         harness.assertOnBattlefield(player1, "Manor Gargoyle");
@@ -107,15 +105,12 @@ class ManorGargoyleTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castSorcery(player2, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, 0);
 
         // Gargoyle should be destroyed
         harness.assertNotOnBattlefield(player1, "Manor Gargoyle");
         harness.assertInGraveyard(player1, "Manor Gargoyle");
     }
-
-    // ===== Activated ability =====
 
     @Test
     @DisplayName("Activating ability puts it on the stack")
@@ -162,8 +157,6 @@ class ManorGargoyleTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, gargoyle, Keyword.FLYING)).isFalse();
     }
 
-    // ===== Combat interaction =====
-
     @Test
     @DisplayName("Cannot attack without activating ability (has defender)")
     void cannotAttackWithDefender() {
@@ -173,7 +166,7 @@ class ManorGargoyleTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
+        harness.beginAttackerDeclarationInput();
 
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
@@ -193,15 +186,13 @@ class ManorGargoyleTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
+        harness.beginAttackerDeclarationInput();
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> gs.declareAttackers(gd, player1, List.of(0)));
 
         assertThat(gargoyle.isAttacking()).isTrue();
     }
-
-    // ===== Activation constraints =====
 
     @Test
     @DisplayName("Activating ability does NOT tap Manor Gargoyle")
@@ -224,8 +215,6 @@ class ManorGargoyleTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
-    // ===== Static bonus survives end-of-turn reset =====
-
     @Test
     @DisplayName("Static indestructible survives end-of-turn modifier reset")
     void staticIndestructibleSurvivesEndOfTurnReset() {
@@ -240,12 +229,65 @@ class ManorGargoyleTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, gargoyle, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
-    // ===== Helper methods =====
-
     private Permanent addGargoyleReady(Player player) {
-        Permanent perm = new Permanent(new ManorGargoyle());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ManorGargoyle());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
+    }
+
+    @Test
+    @DisplayName("A later defender grant restores conditional indestructible")
+    void regainsIndestructibleWhenGuardDutyGrantsDefender() {
+        Permanent gargoyle = addGargoyleReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new GuardDuty()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castEnchantment(player1, 0, gargoyle.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, gargoyle, Keyword.DEFENDER)).isTrue();
+        assertThat(gqs.hasKeyword(gd, gargoyle, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, gargoyle, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Lethal marked damage destroys Gargoyle when its ability removes indestructible")
+    void diesWhenActivatedAfterSurvivingLethalDamage() {
+        addGargoyleReady(player1);
+        harness.setHand(player1, List.of(new BlasphemousAct()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.assertOnBattlefield(player1, "Manor Gargoyle");
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Manor Gargoyle");
+        harness.assertInGraveyard(player1, "Manor Gargoyle");
+    }
+
+    @Test
+    @DisplayName("The ability can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent gargoyle = harness.addToBattlefieldAndReturn(player1, new ManorGargoyle());
+        gargoyle.setSummoningSick(true);
+        gargoyle.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gargoyle.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, gargoyle, Keyword.DEFENDER)).isFalse();
+        assertThat(gqs.hasKeyword(gd, gargoyle, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, gargoyle, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 }
