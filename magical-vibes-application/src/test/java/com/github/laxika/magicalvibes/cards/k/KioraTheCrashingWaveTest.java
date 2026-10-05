@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KioraTheCrashingWave.class, Forest.class, GrizzlyBears.class, HillGiant.class, Shock.class})
 class KioraTheCrashingWaveTest extends BaseCardTest {
 
     @Test
@@ -36,8 +38,7 @@ class KioraTheCrashingWaveTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.RED, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isZero();
 
@@ -110,19 +111,98 @@ class KioraTheCrashingWaveTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Kraken")).isEmpty();
     }
 
+    @Test
+    @DisplayName("+1 can protect an opposing planeswalker from damage")
+    void plusOneCanTargetOpposingPlaneswalker() {
+        addReadyKiora(player1, 3);
+        Permanent opposingKiora = harness.addToBattlefieldAndReturn(player2, new KioraTheCrashingWave());
+        opposingKiora.setCounterCount(CounterType.LOYALTY, 3);
+
+        harness.activateAbility(player1, 0, 0, null, opposingKiora.getId());
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, opposingKiora.getId());
+
+        assertThat(opposingKiora.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("+1 persists through the opponent's turn and expires on your next turn")
+    void preventionExpiresOnControllersNextTurn() {
+        addReadyKiora(player1, 3);
+        Permanent target = addCreatureReady(player2, new HillGiant());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, com.github.laxika.magicalvibes.model.ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        assertThat(target.getMarkedDamage()).isZero();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("-1 permits exactly two land plays and the extra permission expires this turn")
+    void additionalLandPlayIsUsableAndExpires() {
+        addReadyKiora(player1, 3);
+        harness.setHand(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.playLand(player1, 0);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.playLand(player1, 0);
+        assertThatThrownBy(() -> harness.playLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.playLand(player1, 0);
+        assertThatThrownBy(() -> harness.playLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The emblem keeps creating Krakens after Kiora leaves the battlefield")
+    void emblemContinuesOnLaterTurnsWithoutKiora() {
+        addReadyKiora(player1, 5);
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Kiora, the Crashing Wave");
+        harness.assertInGraveyard(player1, "Kiora, the Crashing Wave");
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Kraken")).hasSize(1);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Kraken")).hasSize(2);
+    }
+
     private void advanceIntoEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
+        resolveAllTriggers();
     }
 
     private Permanent addReadyKiora(Player player, int loyalty) {
-        Permanent perm = new Permanent(new KioraTheCrashingWave());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new KioraTheCrashingWave());
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
