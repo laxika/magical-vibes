@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({QuandrixCultivator.class, Forest.class, Island.class, Plains.class, BreedingPool.class, GrizzlyBears.class})
 class QuandrixCultivatorTest extends BaseCardTest {
 
     @Test
@@ -86,11 +87,63 @@ class QuandrixCultivatorTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("A searched Forest enters untapped and leaves the library")
+    void mayChooseForest() {
+        Forest forest = new Forest();
+        Island island = new Island();
+        setUpLibrary(forest, island);
+        castCultivator();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == forest && !permanent.isTapped());
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(island);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Accepting a search with no eligible lands completes without moving a card")
+    void noEligibleLands() {
+        Plains plains = new Plains();
+        BreedingPool pool = new BreedingPool();
+        setUpLibrary(plains, pool);
+        castCultivator();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(plains, pool);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() == plains || permanent.getCard() == pool);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Accepting a search of an empty library completes the trigger")
+    void emptyLibrary() {
+        setUpLibrary();
+        castCultivator();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castCultivator() {
-        harness.setHand(player1, List.of(new QuandrixCultivator()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new QuandrixCultivator(), "{1}{G}{G}{U}");
     }
 
     private void setUpLibrary(Card... cards) {
