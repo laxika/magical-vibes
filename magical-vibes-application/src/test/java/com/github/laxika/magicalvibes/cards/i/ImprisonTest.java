@@ -118,7 +118,7 @@ class ImprisonTest extends BaseCardTest {
     }
 
     @Test
-    void payingToRemoveSoleBlockerLeavesAttackerBlocked() {
+    void payingToRemoveSoleBlockerMakesAttackerUnblocked() {
         Permanent blocker = addCreatureReady(player2, new BarbaryApes());
         Permanent attacker = addCreatureReady(player1, new BarbaryApes());
         attacker.setAttacking(true);
@@ -132,7 +132,7 @@ class ImprisonTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         resolveCombat(player1);
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
     @Test
@@ -147,6 +147,93 @@ class ImprisonTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aura);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(aura.getCard());
+    }
+
+    @Test
+    void payingToRemoveOneOfTwoBlockersKeepsAttackerBlocked() {
+        Permanent blocker = addCreatureReady(player2, new BarbaryApes());
+        addCreatureReady(player2, new BarbaryApes());
+        Permanent attacker = addCreatureReady(player1, new BarbaryApes());
+        attacker.setAttacking(true);
+        Permanent aura = addAura(player1, blocker);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveCombat(player1);
+
+        assertThat(blocker.isTapped()).isTrue();
+        assertThat(blocker.isBlocking()).isFalse();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
+    }
+
+    @Test
+    void decliningToRemoveBlockingCreatureDestroysAuraAndKeepsBlockerInCombat() {
+        Permanent blocker = addCreatureReady(player2, new BarbaryApes());
+        Permanent attacker = addCreatureReady(player1, new SunastianFalconer());
+        attacker.setAttacking(true);
+        Permanent aura = addAura(player1, blocker);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveCombat(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aura);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(aura.getCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(blocker.getCard());
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void doesNotTriggerForAnotherCreaturesTapAbility() {
+        Permanent enchanted = addCreatureReady(player2, new BarbaryApes());
+        addCreatureReady(player2, new PsionicEntity());
+        Permanent aura = addAura(player1, enchanted);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player2, 1, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
+    }
+
+    @Test
+    void castsAndEnchantsOpponentsCreature() {
+        Permanent creature = addCreatureReady(player2, new BarbaryApes());
+        harness.setHand(player1, List.of(new Imprison()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Imprison");
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    void unableToPayForTapAbilityDestroysAuraAndLetsAbilityResolve() {
+        Permanent creature = addCreatureReady(player2, new PsionicEntity());
+        Permanent aura = addAura(player1, creature);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aura);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(aura.getCard());
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
 
     private Permanent addAura(com.github.laxika.magicalvibes.model.Player controller, Permanent creature) {
