@@ -46,6 +46,36 @@ class KentaroTheSmilingCatTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Kentaro's alternative cost can be used for multiple Samurai spells in one turn")
+    void alternativeCostCanBeUsedRepeatedly() {
+        harness.addToBattlefield(player1, new KentaroTheSmilingCat());
+        harness.setHand(player1, List.of(new IndebtedSamurai(), new IndebtedSamurai()));
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Indebted Samurai")).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Colored mana can pay Kentaro's generic alternative cost")
+    void coloredManaPaysAlternativeCost() {
+        harness.addToBattlefield(player1, new KentaroTheSmilingCat());
+        harness.setHand(player1, List.of(new IndebtedSamurai()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Indebted Samurai");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
     @DisplayName("A non-Samurai spell gets no alternative cost")
     void nonSamuraiSpellUnaffected() {
         harness.addToBattlefield(player1, new KentaroTheSmilingCat());
@@ -89,6 +119,22 @@ class KentaroTheSmilingCatTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, kentaro)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, kentaro)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Bushido triggers only once when multiple creatures block Kentaro")
+    void multipleBlockersGiveOnlyOneBushidoBonus() {
+        Permanent kentaro = addCreatureReady(player1, new KentaroTheSmilingCat());
+        kentaro.setAttacking(true);
+        addCreatureReady(player2, new GoblinCohort());
+        addCreatureReady(player2, new GoblinCohort());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, kentaro)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, kentaro)).isEqualTo(2);
