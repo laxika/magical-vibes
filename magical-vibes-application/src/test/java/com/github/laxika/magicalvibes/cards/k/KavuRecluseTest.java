@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.t.TerminalMoraine;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -72,6 +73,63 @@ class KavuRecluseTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, otherKavu.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
+    }
+
+    @Test
+    void convertedLandProducesGreenInsteadOfColorlessMana() {
+        Permanent land = addKavuAndTerminalMoraine();
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void convertedLandCannotActivateItsPrintedSearchAbility() {
+        Permanent land = addKavuAndTerminalMoraine();
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid ability index");
+
+        assertThat(land.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Terminal Moraine");
+    }
+
+    @Test
+    void printedManaAbilityReturnsAfterCleanup() {
+        Permanent land = addKavuAndTerminalMoraine();
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    void summoningSickKavuCannotActivateTapAbility() {
+        harness.addToBattlefield(player1, new KavuRecluse());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.effectiveBasicLandTypes(gd, land)).isEmpty();
     }
 
     private Permanent addKavuAndTerminalMoraine() {
