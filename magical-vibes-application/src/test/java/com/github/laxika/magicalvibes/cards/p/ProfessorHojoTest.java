@@ -57,10 +57,71 @@ class ProfessorHojoTest extends BaseCardTest {
         addCreatureReady(player1, new IcatianPriest());
         Permanent target = addCreatureReady(player1, new IcatianInfantry());
         harness.addMana(player1, ManaColor.WHITE, 2);
-        gd.activePlayerId = player2.getId();
+        harness.forceActivePlayer(player2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    void enteringAfterFirstQualifyingActivationDoesNotDiscountTheSecond() {
+        addCreatureReady(player1, new IcatianPriest());
+        Permanent target = addCreatureReady(player1, new IcatianInfantry());
+        harness.addMana(player1, ManaColor.WHITE, 6);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        addCreatureReady(player1, new ProfessorHojo());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void nontargetedActivationDoesNotDrawOrConsumeTheDiscount() {
+        addCreatureReady(player1, new ProfessorHojo());
+        addCreatureReady(player1, new IcatianPriest());
+        Permanent target = addCreatureReady(player1, new IcatianInfantry());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        int handSize = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 2, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
+
+        harness.activateAbility(player1, 1, null, target.getId());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize + 1);
+    }
+
+    @Test
+    void opponentsActivatedAbilityDrawsForHojoControllerOnce() {
+        Permanent target = addCreatureReady(player1, new ProfessorHojo());
+        addCreatureReady(player2, new IcatianPriest());
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.WHITE, 6);
+        int handSize = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player2, 0, null, target.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize + 1);
+
+        harness.activateAbility(player2, 0, null, target.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize + 1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
 }
