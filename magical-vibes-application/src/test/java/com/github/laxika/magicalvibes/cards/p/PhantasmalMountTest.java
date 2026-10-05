@@ -224,4 +224,43 @@ class PhantasmalMountTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(mount), 0, null, mountain.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Can target itself and survives its own delayed sacrifice triggers after being bounced")
+    void canTargetItself() {
+        Permanent mount = addMountReady();
+
+        enterMain();
+        harness.activateAbility(player1, indexOf(mount), 0, null, mount.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, mount)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mount)).isEqualTo(2);
+        assertThat(mount.isTapped()).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, mount));
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Phantasmal Mount");
+        harness.assertNotInGraveyard(player1, "Phantasmal Mount");
+    }
+
+    @Test
+    @DisplayName("Ability still pumps the target when Mount leaves before resolution")
+    void sourceLeavingBeforeResolutionDoesNotSacrificeTarget() {
+        Permanent mount = addMountReady();
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+
+        enterMain();
+        harness.activateAbility(player1, indexOf(mount), 0, null, bears.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, mount));
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Phantasmal Mount");
+        harness.assertOnBattlefield(player1, "Balduvian Bears");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+        harness.assertNotInGraveyard(player1, "Balduvian Bears");
+    }
 }
