@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.f.FirstVolley;
+import com.github.laxika.magicalvibes.cards.f.Frostling;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OpalEyeKondasYojimbo.class, FirstVolley.class, GrizzlyBears.class, ProdigalPyromancer.class})
+@CardUsed({OpalEyeKondasYojimbo.class, FirstVolley.class, Frostling.class, GrizzlyBears.class, ProdigalPyromancer.class})
 class OpalEyeKondasYojimboTest extends BaseCardTest {
 
     @Test
@@ -262,8 +263,110 @@ class OpalEyeKondasYojimboTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(victim.getMarkedDamage()).isZero();
+        assertThat(opalEye.getMarkedDamage()).isEqualTo(2);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A sacrificed creature referenced by an ability on the stack can be chosen as the source")
+    void canChooseSacrificedDamageSource() {
+        Permanent opalEye = addCreatureReady(player1, new OpalEyeKondasYojimbo());
+        Permanent victim = addCreatureReady(player2, new GrizzlyBears());
+        Permanent frostling = addCreatureReady(player1, new Frostling());
+
+        harness.activateAbility(player1, indexOf(player1, frostling), null, victim.getId());
+        harness.activateAbility(player1, indexOf(player1, opalEye), 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatCode(() -> harness.handlePermanentChosen(player1, frostling.getId()))
+                .doesNotThrowAnyException();
+        harness.passBothPriorities();
+
+        assertThat(victim.getMarkedDamage()).isZero();
         assertThat(opalEye.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Multiple prevention activations add together and prevent redirected damage")
+    void stackedPreventionAppliesToRedirectedDamage() {
+        harness.setLife(player1, 20);
+        Permanent opalEye = addCreatureReady(player1, new OpalEyeKondasYojimbo());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, indexOf(player1, opalEye), 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(player1, opalEye), 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(player1, opalEye), 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, attacker.getId());
+
+        attacker.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
+        assertThat(opalEye.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("A permanent spell on the stack is a legal damage source choice")
+    void canChoosePermanentSpellAsDamageSource() {
+        Permanent opalEye = addCreatureReady(player1, new OpalEyeKondasYojimbo());
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.castFromHand(player1, bears, "{1}{G}");
+        harness.activateAbility(player1, indexOf(player1, opalEye), 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatCode(() -> harness.handlePermanentChosen(player1, bears.getId()))
+                .doesNotThrowAnyException();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The tap ability cannot be activated while summoning sick")
+    void tapAbilityRequiresSummoningSicknessToEnd() {
+        harness.addToBattlefield(player1, new OpalEyeKondasYojimbo());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The prevention ability works while summoning sick and tapped")
+    void preventionDoesNotRequireTapOrHaste() {
+        Permanent opalEye = harness.addToBattlefieldAndReturn(player1, new OpalEyeKondasYojimbo());
+        opalEye.tap();
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, indexOf(player1, opalEye), 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(player1, pyromancer), null, opalEye.getId());
+        harness.passBothPriorities();
+
+        assertThat(opalEye.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Damage already dealt to Opal-Eye consumes the chosen source's next-damage effect")
+    void damageToSelfConsumesRedirection() {
+        harness.setLife(player2, 20);
+        Permanent opalEye = addCreatureReady(player1, new OpalEyeKondasYojimbo());
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+
+        harness.activateAbility(player1, indexOf(player1, opalEye), 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, pyromancer.getId());
+        harness.activateAbility(player1, indexOf(player1, pyromancer), null, opalEye.getId());
+        harness.passBothPriorities();
+        pyromancer.untap();
+        harness.activateAbility(player1, indexOf(player1, pyromancer), null, player2.getId());
+        harness.passBothPriorities();
+
         harness.assertLife(player2, 19);
+        assertThat(opalEye.getMarkedDamage()).isEqualTo(1);
     }
 
     private Permanent addReadyStats(Player player, int power, int toughness) {
