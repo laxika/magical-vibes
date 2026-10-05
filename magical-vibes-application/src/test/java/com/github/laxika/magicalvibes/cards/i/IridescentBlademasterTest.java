@@ -90,9 +90,56 @@ class IridescentBlademasterTest extends BaseCardTest {
     }
 
     private Permanent addReadyBlademaster(Player player) {
-        Permanent perm = new Permanent(new IridescentBlademaster());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new IridescentBlademaster());
+    }
+
+    @Test
+    @DisplayName("Summoning sickness does not prevent activating the ability")
+    void canActivateWhileSummoningSick() {
+        Permanent blademaster = harness.addToBattlefieldAndReturn(player1, new IridescentBlademaster());
+        blademaster.setSummoningSick(true);
+        addAbilityMana(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(blademaster.getPowerModifier()).isEqualTo(2);
+        assertThat(blademaster.getToughnessModifier()).isEqualTo(2);
+        assertThat(blademaster.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Four colorless mana cannot pay the green component")
+    void cannotActivateWithoutGreenMana() {
+        addReadyBlademaster(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The boost waits for resolution and affects only its source")
+    void boostOnlyAppliesToSourceOnResolution() {
+        Permanent source = addReadyBlademaster(player1);
+        Permanent other = addReadyBlademaster(player1);
+        Permanent opposing = addReadyBlademaster(player2);
+        addAbilityMana(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(source.getPowerModifier()).isEqualTo(0);
+        assertThat(source.getToughnessModifier()).isEqualTo(0);
+
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(2);
+        assertThat(source.getToughnessModifier()).isEqualTo(2);
+        assertThat(other.getPowerModifier()).isEqualTo(0);
+        assertThat(other.getToughnessModifier()).isEqualTo(0);
+        assertThat(opposing.getPowerModifier()).isEqualTo(0);
+        assertThat(opposing.getToughnessModifier()).isEqualTo(0);
     }
 }
