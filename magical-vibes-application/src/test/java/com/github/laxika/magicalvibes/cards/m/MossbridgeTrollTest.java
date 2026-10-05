@@ -3,10 +3,14 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.g.GrappleWithDeath;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RevokePrivileges;
+import com.github.laxika.magicalvibes.cards.t.TorporDust;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +19,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MossbridgeTroll.class, AvatarOfMight.class, GrizzlyBears.class, GrappleWithDeath.class,
+        RevokePrivileges.class, TorporDust.class})
 class MossbridgeTrollTest extends BaseCardTest {
-
-    // ===== Intrinsic regeneration: "If this creature would be destroyed, regenerate it." =====
 
     @Test
     @DisplayName("Intrinsic regeneration saves the Troll from a destroy effect without any shield")
@@ -29,8 +33,7 @@ class MossbridgeTrollTest extends BaseCardTest {
         harness.clearPriorityPassed();
         addGrappleMana();
 
-        harness.castSorcery(player2, 0, 0, troll.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, 0, troll.getId());
 
         // Survives via intrinsic regeneration — no shield was ever set.
         harness.assertOnBattlefield(player1, "Mossbridge Troll");
@@ -49,8 +52,7 @@ class MossbridgeTrollTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         addGrappleMana();
-        harness.castSorcery(player2, 0, 0, troll.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, 0, troll.getId());
 
         harness.assertOnBattlefield(player1, "Mossbridge Troll");
 
@@ -59,8 +61,7 @@ class MossbridgeTrollTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         addGrappleMana();
-        harness.castSorcery(player2, 0, 0, troll.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, 0, troll.getId());
 
         harness.assertOnBattlefield(player1, "Mossbridge Troll");
         harness.assertNotInGraveyard(player1, "Mossbridge Troll");
@@ -78,14 +79,11 @@ class MossbridgeTrollTest extends BaseCardTest {
         harness.clearPriorityPassed();
         addGrappleMana();
 
-        harness.castSorcery(player2, 0, 0, troll.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, 0, troll.getId());
 
         harness.assertNotOnBattlefield(player1, "Mossbridge Troll");
         harness.assertInGraveyard(player1, "Mossbridge Troll");
     }
-
-    // ===== Pump ability: tap creatures with total power 10+ for +20/+20 =====
 
     @Test
     @DisplayName("Tapping 10 power of other creatures gives the Troll +20/+20")
@@ -133,6 +131,85 @@ class MossbridgeTrollTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough creature power to crew");
+    }
+
+    @Test
+    void creaturesThatCannotCrewCanStillPayThePumpCost() {
+        Permanent troll = addCreatureReady(player1, new MossbridgeTroll());
+        Permanent first = addCreatureReady(player1, new MossbridgeTroll());
+        Permanent second = addCreatureReady(player1, new MossbridgeTroll());
+        harness.setHand(player1, List.of(new RevokePrivileges()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, first.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, troll)).isEqualTo(25);
+    }
+
+    @Test
+    void negativePowerMustReduceTheTotalPowerPaid() {
+        addCreatureReady(player1, new MossbridgeTroll());
+        Permanent negative = addCreatureReady(player1, new MossbridgeTroll());
+        Permanent first = addCreatureReady(player1, new MossbridgeTroll());
+        Permanent second = addCreatureReady(player1, new MossbridgeTroll());
+        addCreatureReady(player1, new MossbridgeTroll());
+        harness.setHand(player1, List.of(new TorporDust(), new TorporDust()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castEnchantment(player1, 0, negative.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, negative.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, negative)).isEqualTo(-1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, negative.getId());
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+
+        // The selected creatures have only nine total power; another creature is required.
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void tappedTrollCanUseSummoningSickCreaturesToPayTheCost() {
+        Permanent troll = addCreatureReady(player1, new MossbridgeTroll());
+        troll.tap();
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new MossbridgeTroll());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new MossbridgeTroll());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, troll)).isEqualTo(25);
+    }
+
+    @Test
+    void lethalCombatDamageRegeneratesBothTrollsAndRemovesThemFromCombat() {
+        Permanent attacker = addCreatureReady(player1, new MossbridgeTroll());
+        Permanent blocker = addCreatureReady(player2, new MossbridgeTroll());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player1, "Mossbridge Troll");
+        harness.assertOnBattlefield(player2, "Mossbridge Troll");
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(attacker.isTapped()).isTrue();
+        assertThat(blocker.isTapped()).isTrue();
+        assertThat(attacker.isAttacking()).isFalse();
+        assertThat(blocker.isBlocking()).isFalse();
     }
 
     // Grapple with Death costs {1}{B}{G}.
