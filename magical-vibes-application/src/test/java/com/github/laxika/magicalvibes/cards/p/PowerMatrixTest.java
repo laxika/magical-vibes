@@ -83,6 +83,42 @@ class PowerMatrixTest extends BaseCardTest {
         assertThat(target.getToughnessModifier()).isZero();
     }
 
+    @Test
+    @DisplayName("A newly entered Power Matrix can activate immediately")
+    void newlyEnteredMatrixCanActivate() {
+        Permanent matrix = harness.enterBattlefieldAndReturn(player1, new PowerMatrix());
+        Permanent target = addCreature(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(matrix.isTapped()).isTrue();
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(target.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Two Power Matrix abilities cumulatively boost the same creature")
+    void multipleMatricesStackTheirBoosts() {
+        addCreatureReady(player1, new PowerMatrix());
+        addCreatureReady(player1, new PowerMatrix());
+        Permanent target = addCreature(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(target.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+    }
+
     private Permanent addCreature(Player player) {
         return addCreatureReady(player, new FreshVolunteers());
     }
