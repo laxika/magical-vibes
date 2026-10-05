@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -102,6 +104,80 @@ class KnightsOfThornTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection");
+    }
+
+    @Test
+    void redCreatureBlockingPartnerBlocksKnightButItsDamageIsPrevented() {
+        Permanent knight = addCreatureReady(player1, new KnightsOfThorn());
+        Permanent partner = addCreatureReady(player1, new ScavengerFolk());
+        Permanent blocker = addCreatureReady(player2, new MarshGoblins());
+
+        declareBand();
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+
+        assertThat(blocker.getBlockingTargetIds()).containsExactlyInAnyOrder(knight.getId(), partner.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.CombatDamageAssignment prompt =
+                gd.interaction.activeInteraction(PendingInteraction.CombatDamageAssignment.class);
+        assertThat(prompt).isNotNull();
+        assertThat(prompt.playerId()).isEqualTo(player1.getId());
+        assertThat(prompt.totalDamage()).isEqualTo(1);
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(knight.getId(), 1));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(knight, partner);
+        assertThat(knight.getMarkedDamage()).isZero();
+        assertThat(partner.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+    }
+
+    @Test
+    void bandingBlockerChoosesHowAttackerDamageIsDivided() {
+        Permanent attacker = addCreatureReady(player1, new Scarecrow());
+        Permanent knight = addCreatureReady(player2, new KnightsOfThorn());
+        Permanent partner = addCreatureReady(player2, new ScavengerFolk());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        harness.passBothPriorities();
+
+        PendingInteraction.CombatDamageAssignment prompt =
+                gd.interaction.activeInteraction(PendingInteraction.CombatDamageAssignment.class);
+        assertThat(prompt).isNotNull();
+        assertThat(prompt.playerId()).isEqualTo(player2.getId());
+        assertThat(prompt.totalDamage()).isEqualTo(2);
+        harness.handleCombatDamageAssigned(player2, 0, Map.of(knight.getId(), 1, partner.getId(), 1));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(knight).doesNotContain(partner);
+        assertThat(knight.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+    }
+
+    @Test
+    void cannotBandWithTwoCreaturesWithoutBanding() {
+        addCreatureReady(player1, new KnightsOfThorn());
+        addCreatureReady(player1, new ScavengerFolk());
+        addCreatureReady(player1, new Scarecrow());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1,
+                List.of(0, 1, 2), null, List.of(List.of(0, 1, 2))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("at most one creature without banding");
+    }
+
+    private void declareBand() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of(0, 1), null, List.of(List.of(0, 1)));
     }
 
     private static Card createCreature(String name, int power, int toughness, CardColor color) {
