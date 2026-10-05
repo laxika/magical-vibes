@@ -21,8 +21,7 @@ class LoxodonHierarchTest extends BaseCardTest {
     void entersAndGainsLife() {
         harness.setLife(player1, 10);
         harness.castFromHand(player1, new LoxodonHierarch(), "{2}{G}{W}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(14);
     }
@@ -65,5 +64,45 @@ class LoxodonHierarchTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature);
         assertThat(ownCreature.getRegenerationShield()).isZero();
         assertThat(ownCreature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Creatures present at resolution receive shields, but later creatures do not")
+    void regenerationUsesCreaturesPresentAtResolution() {
+        harness.addToBattlefield(player1, new LoxodonHierarch());
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new SelesnyaEvangel());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(original.getRegenerationShield()).isZero();
+        Permanent beforeResolution = harness.enterBattlefieldAndReturn(player1, new SelesnyaEvangel());
+        resolveAllTriggers();
+        Permanent afterResolution = harness.enterBattlefieldAndReturn(player1, new SelesnyaEvangel());
+
+        assertThat(original.getRegenerationShield()).isEqualTo(1);
+        assertThat(beforeResolution.getRegenerationShield()).isEqualTo(1);
+        assertThat(afterResolution.getRegenerationShield()).isZero();
+        assertThat(original.isTapped()).isFalse();
+        assertThat(beforeResolution.isTapped()).isFalse();
+        harness.assertInGraveyard(player1, "Loxodon Hierarch");
+    }
+
+    @Test
+    @DisplayName("The enter trigger gains life even when Hierarch is sacrificed in response")
+    void enterTriggerSurvivesSacrificeInResponse() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 12);
+        harness.enterBattlefieldAndReturn(player1, new LoxodonHierarch());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.assertInGraveyard(player1, "Loxodon Hierarch");
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 12);
+        harness.assertNotOnBattlefield(player1, "Loxodon Hierarch");
     }
 }
