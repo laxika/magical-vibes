@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MonstrousOnslaught.class, HillGiant.class, AirElemental.class, GrizzlyBears.class})
 class MonstrousOnslaughtTest extends BaseCardTest {
 
     @Test
@@ -75,5 +77,68 @@ class MonstrousOnslaughtTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, Map.of(target.getId(), 2)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canResolveWithoutTargetsWhenControllerHasNoCreatures() {
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new MonstrousOnslaught()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0, Map.of());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Monstrous Onslaught");
+        assertThat(opponentCreature.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Air Elemental");
+    }
+
+    @Test
+    void eachTargetMustReceiveAtLeastOneDamage() {
+        harness.addToBattlefield(player1, new HillGiant());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new MonstrousOnslaught()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
+                Map.of(first.getId(), 0, second.getId(), 3)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotRedistributeDamageWhenOneTargetLeavesBattlefield() {
+        harness.addToBattlefield(player1, new HillGiant());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new MonstrousOnslaught()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0, Map.of(first.getId(), 1, second.getId(), 2));
+        harness.getGameData().playerBattlefields.get(player2.getId()).remove(first);
+        harness.passBothPriorities();
+
+        assertThat(second.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        harness.assertInGraveyard(player1, "Monstrous Onslaught");
+    }
+
+    @Test
+    void canDealLethalDamageToControllersOwnCreature() {
+        harness.addToBattlefield(player1, new HillGiant());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MonstrousOnslaught()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0, Map.of(target.getId(), 3));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Hill Giant");
     }
 }
