@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,8 +12,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,6 +28,8 @@ class OriginOfTheHulkTest extends BaseCardTest {
         assertThat(citizen.getCard().getPower()).isEqualTo(1);
         assertThat(citizen.getCard().getToughness()).isEqualTo(1);
         assertThat(citizen.getCard().getColors()).containsExactlyInAnyOrder(CardColor.GREEN, CardColor.WHITE);
+        assertThat(citizen.getCard().getSubtypes()).contains(CardSubtype.CITIZEN);
+        assertThat(citizen.getCard().isToken()).isTrue();
     }
 
     @Test
@@ -72,7 +72,7 @@ class OriginOfTheHulkTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Chapters II and III only target creatures you control")
+    @DisplayName("Chapter II only targets creatures you control")
     void chaptersOnlyTargetOwnCreatures() {
         addSagaWithLore(1);
         Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -85,11 +85,65 @@ class OriginOfTheHulkTest extends BaseCardTest {
                 .doesNotContain(opponentBears.getId());
     }
 
+    @Test
+    void chapterIIRequiresACreatureTargetWhenOneIsAvailable() {
+        addAndResolveSaga();
+        Permanent citizen = findPermanent(player1, "Citizen");
+
+        advanceToNextChapter();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(citizen.getId());
+    }
+
+    @Test
+    void chapterIIIRequiresAnOwnCreatureTargetAndExcludesOpposingCreatures() {
+        addAndResolveSaga();
+        Permanent citizen = findPermanent(player1, "Citizen");
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        findPermanent(player1, "Origin of the Hulk").setCounterCount(CounterType.LORE, 2);
+
+        advanceToNextChapter();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(citizen.getId());
+    }
+
+    @Test
+    void citizenKeepsChapterIICountersAfterChapterIIIBoostExpires() {
+        addAndResolveSaga();
+        Permanent saga = findPermanent(player1, "Origin of the Hulk");
+        Permanent citizen = findPermanent(player1, "Citizen");
+
+        advanceToNextChapter();
+        harness.handlePermanentChosen(player1, citizen.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, citizen)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, citizen)).isEqualTo(3);
+
+        advanceToNextChapter();
+        harness.handlePermanentChosen(player1, citizen.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, citizen)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, citizen)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, citizen, Keyword.TRAMPLE)).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(saga.getCard());
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(citizen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, citizen)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, citizen)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, citizen, Keyword.TRAMPLE)).isFalse();
+    }
+
     private void addAndResolveSaga() {
-        harness.setHand(player1, List.of(new OriginOfTheHulk()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new OriginOfTheHulk(), "{2}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
