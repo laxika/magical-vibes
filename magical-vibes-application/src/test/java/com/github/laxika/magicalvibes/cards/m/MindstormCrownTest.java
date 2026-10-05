@@ -76,4 +76,57 @@ class MindstormCrownTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
     }
+
+    @Test
+    @DisplayName("Multiple Crowns each draw even after the first draw fills the hand")
+    void multipleCrownsUseTheSameEmptyHandSnapshot() {
+        harness.addToBattlefield(player1, new MindstormCrown());
+        harness.addToBattlefield(player1, new MindstormCrown());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new YotianSoldier(), new YotianSoldier()));
+        gd.handSizeAtTurnStart.put(player1.getId(), 0);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Emptying the hand in response does not replace damage with a draw")
+    void stillDealsDamageAfterHandIsEmptiedInResponse() {
+        harness.addToBattlefield(player1, new MindstormCrown());
+        harness.setHand(player1, List.of(new YotianSoldier()));
+        harness.setLibrary(player1, List.of(new YotianSoldier()));
+        gd.handSizeAtTurnStart.put(player1.getId(), 1);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.setHand(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("A Crown controlled by the second player uses that player's snapshot")
+    void usesSecondPlayersHandSnapshot() {
+        harness.addToBattlefield(player2, new MindstormCrown());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new YotianSoldier()));
+        gd.handSizeAtTurnStart.put(player1.getId(), 1);
+        gd.handSizeAtTurnStart.put(player2.getId(), 0);
+        int player1LifeBefore = gd.getLife(player1.getId());
+        int player2LifeBefore = gd.getLife(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(player1LifeBefore);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(player2LifeBefore);
+    }
 }
