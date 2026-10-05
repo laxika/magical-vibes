@@ -102,16 +102,11 @@ class KeldonBattlewagonTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot be declared as a blocker")
     void cannotBeDeclaredAsBlocker() {
-        Permanent battlewagon = harness.addToBattlefieldAndReturn(player2, new KeldonBattlewagon());
-        battlewagon.setSummoningSick(false);
-        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new PygmyRazorback());
-        attacker.setSummoningSick(false);
+        addCreatureReady(player2, new KeldonBattlewagon());
+        Permanent attacker = addCreatureReady(player1, new PygmyRazorback());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
@@ -129,6 +124,64 @@ class KeldonBattlewagonTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Keldon Battlewagon");
         harness.assertInGraveyard(player1, "Keldon Battlewagon");
+    }
+
+    @Test
+    @DisplayName("Can tap a summoning-sick creature to pay the ability cost")
+    void canTapSummoningSickCreature() {
+        Permanent battlewagon = addCreatureReady(player1, new KeldonBattlewagon());
+        Permanent razorback = harness.addToBattlefieldAndReturn(player1, new PygmyRazorback());
+        razorback.setSummoningSick(true);
+
+        harness.activateAbility(player1, index(battlewagon), null, null);
+        harness.handlePermanentChosen(player1, razorback.getId());
+        harness.passBothPriorities();
+
+        assertThat(razorback.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, battlewagon)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Tapping itself doubles its already boosted power")
+    void tappingItselfUsesCurrentBoostedPower() {
+        Permanent battlewagon = addCreatureReady(player1, new KeldonBattlewagon());
+        Permanent razorback = addCreatureReady(player1, new PygmyRazorback());
+
+        harness.activateAbility(player1, index(battlewagon), null, null);
+        harness.handlePermanentChosen(player1, razorback.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, index(battlewagon), null, null);
+        harness.passBothPriorities();
+
+        assertThat(battlewagon.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, battlewagon)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Survives end of combat when it did not attack")
+    void survivesCombatWithoutAttacking() {
+        addCreatureReady(player1, new KeldonBattlewagon());
+        Permanent attacker = addCreatureReady(player1, new PygmyRazorback());
+
+        declareAttackers(List.of(index(attacker)));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Keldon Battlewagon");
+    }
+
+    @Test
+    @DisplayName("End-of-combat sacrifice waits for its delayed trigger to resolve")
+    void sacrificeUsesTheStackAtEndOfCombat() {
+        Permanent battlewagon = addCreatureReady(player1, new KeldonBattlewagon());
+
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            declareAttackers(List.of(index(battlewagon)));
+            harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+            harness.assertOnBattlefield(player1, "Keldon Battlewagon");
+            resolveAllTriggers();
+            harness.assertNotOnBattlefield(player1, "Keldon Battlewagon");
+            harness.assertInGraveyard(player1, "Keldon Battlewagon");
+        });
     }
 
     private int index(Permanent permanent) {
