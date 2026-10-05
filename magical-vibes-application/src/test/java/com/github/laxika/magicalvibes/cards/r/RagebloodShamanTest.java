@@ -4,12 +4,18 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MinotaurSkullcleaver;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RagebloodShaman.class, MinotaurSkullcleaver.class, GrizzlyBears.class})
 class RagebloodShamanTest extends BaseCardTest {
 
     @Test
@@ -68,5 +74,47 @@ class RagebloodShamanTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, minotaur)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, minotaur)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, minotaur, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Two Shamans boost each other and stack their bonuses on another Minotaur")
+    void multipleShamansStackTheirBonuses() {
+        Permanent first = addCreatureReady(player1, new RagebloodShaman());
+        Permanent second = addCreatureReady(player1, new RagebloodShaman());
+        Permanent minotaur = addCreatureReady(player1, new MinotaurSkullcleaver());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, minotaur)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, minotaur)).isEqualTo(4);
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, minotaur)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, minotaur)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, minotaur, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Granted trample deals excess damage to the defending player")
+    void grantedTrampleDealsExcessCombatDamage() {
+        addCreatureReady(player1, new RagebloodShaman());
+        addCreatureReady(player1, new MinotaurSkullcleaver());
+        Permanent blocker = addCreatureReady(player2, new MinotaurSkullcleaver());
+
+        declareAttackersAndPrepareBlockers(List.of(1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        harness.passBothPriorities();
+        harness.handleCombatDamageAssigned(player1, 1, Map.of(
+                blocker.getId(), 2,
+                player2.getId(), 1));
+
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player2, "Minotaur Skullcleaver");
+        harness.assertOnBattlefield(player1, "Minotaur Skullcleaver");
     }
 }
