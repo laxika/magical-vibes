@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.e.Earthshaker;
 import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
 import com.github.laxika.magicalvibes.cards.r.RendFlesh;
 import com.github.laxika.magicalvibes.cards.w.WanderingOnes;
@@ -18,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({KitsuneRiftwalker.class, WanderingOnes.class, IsamaruHoundOfKonda.class,
-        RendFlesh.class, YamabushisFlame.class, KamiOfTwistedReflection.class})
+        RendFlesh.class, YamabushisFlame.class, KamiOfTwistedReflection.class, Earthshaker.class})
 class KitsuneRiftwalkerTest extends BaseCardTest {
 
     @Test
@@ -104,5 +105,38 @@ class KitsuneRiftwalkerTest extends BaseCardTest {
         resolveCombat(player1);
 
         assertThat(riftwalker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Untargeted damage from a Spirit ability is prevented")
+    void untargetedSpiritAbilityDamageIsPrevented() {
+        Permanent earthshaker = addCreatureReady(player1, new Earthshaker());
+        Permanent riftwalker = addCreatureReady(player2, new KitsuneRiftwalker());
+        addCreatureReady(player2, new IsamaruHoundOfKonda());
+
+        harness.castFromHand(player1, new WanderingOnes(), "{U}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Kitsune Riftwalker");
+        assertThat(riftwalker.getMarkedDamage()).isZero();
+        assertThat(earthshaker.getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player2, "Isamaru, Hound of Konda");
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Wandering Ones");
+    }
+
+    @Test
+    @DisplayName("Combat damage from a non-Spirit is not prevented")
+    void nonSpiritCombatDamageIsNotPrevented() {
+        addCreatureReady(player1, new IsamaruHoundOfKonda());
+        addCreatureReady(player2, new KitsuneRiftwalker());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player1);
+
+        harness.assertInGraveyard(player2, "Kitsune Riftwalker");
+        harness.assertInGraveyard(player1, "Isamaru, Hound of Konda");
     }
 }
