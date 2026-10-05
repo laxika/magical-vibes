@@ -67,13 +67,11 @@ class PatronOfTheAkkiTest extends BaseCardTest {
     @Test
     @DisplayName("Offering can cast Patron of the Akki at instant speed")
     void offeringCanBeCastAtInstantSpeed() {
+        advanceToUpkeep(player1);
         Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinCohort());
         harness.setHand(player1, List.of(new PatronOfTheAkki()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
 
         harness.castCreatureWithAlternateCost(player1, 0, List.of(goblin.getId()));
         harness.passBothPriorities();
@@ -92,5 +90,73 @@ class PatronOfTheAkkiTest extends BaseCardTest {
         assertThatThrownBy(() ->
                         harness.castCreatureWithAlternateCost(player1, 0, List.of(mass.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void offeringCannotSacrificeOpponentsGoblin() {
+        Permanent goblin = harness.addToBattlefieldAndReturn(player2, new GoblinCohort());
+        harness.setHand(player1, List.of(new PatronOfTheAkki()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() ->
+                harness.castCreatureWithAlternateCost(player1, 0, List.of(goblin.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Goblin Cohort");
+    }
+
+    @Test
+    void offeringCannotOmitSacrifice() {
+        harness.setHand(player1, List.of(new PatronOfTheAkki()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() ->
+                harness.castCreatureWithAlternateCost(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canCastNormallyWithoutGoblin() {
+        harness.setHand(player1, List.of(new PatronOfTheAkki()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Patron of the Akki");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void normalCastDoesNotGainOfferingInstantTiming() {
+        advanceToUpkeep(player1);
+        harness.setHand(player1, List.of(new PatronOfTheAkki()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void attackBoostUsesCreaturesPresentAtResolution() {
+        Permanent patron = addCreatureReady(player1, new PatronOfTheAkki());
+        addCreatureReady(player2, new GnarledMass());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
+        assertThat(gd.stack).hasSize(1);
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new GnarledMass());
+
+        resolveAllTriggers();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new GnarledMass());
+
+        assertThat(gqs.getEffectivePower(gd, patron)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, patron)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(3);
     }
 }
