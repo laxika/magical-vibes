@@ -63,6 +63,46 @@ class ObsessiveSearchTest extends BaseCardTest {
                 .noneMatch(card -> card.getId().equals(search.getId()));
     }
 
+    @Test
+    @DisplayName("An unpaid madness cost puts the card into the graveyard without drawing")
+    void unpaidMadnessCostDoesNotDraw() {
+        ObsessiveSearch search = discardViaUnhinge();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Obsessive Search");
+        harness.assertNotInHand(player1, "Angel of Retribution");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(search.getId()));
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The madness spell waits on the stack before drawing")
+    void madnessSpellResolvesSeparatelyFromTrigger() {
+        ObsessiveSearch search = discardViaUnhinge();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.assertNotInGraveyard(player1, "Obsessive Search");
+        harness.assertNotInHand(player1, "Angel of Retribution");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getCard().getId()).isEqualTo(search.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(search.getId()));
+        harness.assertNotInGraveyard(player1, "Obsessive Search");
+        harness.assertNotInHand(player1, "Angel of Retribution");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Angel of Retribution");
+        harness.assertInGraveyard(player1, "Obsessive Search");
+    }
+
     private ObsessiveSearch discardViaUnhinge() {
         ObsessiveSearch search = new ObsessiveSearch();
         harness.setHand(player1, List.of(search));
