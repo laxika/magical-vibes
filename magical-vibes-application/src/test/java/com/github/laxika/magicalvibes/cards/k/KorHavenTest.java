@@ -75,8 +75,7 @@ class KorHavenTest extends BaseCardTest {
         addCreatureReady(player1, new RootwaterCommando());
         Permanent attacker = addAttacker(player2);
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0)));
         addPreventionMana();
         activatePrevention(haven, attacker);
@@ -96,8 +95,7 @@ class KorHavenTest extends BaseCardTest {
         Permanent attacker = harness.enterBattlefieldAndReturn(player2, new AncientHydra());
         attacker.setSummoningSick(false);
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0)));
 
         harness.addMana(player2, ManaColor.COLORLESS, 1);
@@ -157,6 +155,61 @@ class KorHavenTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, battlefieldIndex(player1, haven), 1, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can prevent combat damage from an attacking creature you control")
+    void canTargetOwnAttacker() {
+        harness.setLife(player2, 20);
+        Permanent haven = harness.addToBattlefieldAndReturn(player1, new KorHaven());
+        Permanent attacker = addCreatureReady(player1, new RootwaterCommando());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        addPreventionMana();
+
+        activatePrevention(haven, attacker);
+        resolveCombat(player1);
+
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The ability resolves even if Kor Haven leaves the battlefield")
+    void resolvesWithoutSourceOnBattlefield() {
+        harness.setLife(player1, 20);
+        Permanent haven = harness.addToBattlefieldAndReturn(player1, new KorHaven());
+        Permanent attacker = addAttacker(player2);
+        prepareAttackStep();
+        addPreventionMana();
+
+        harness.activateAbility(player1, battlefieldIndex(player1, haven), 1, null, attacker.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(haven);
+        gd.playerGraveyards.get(player1.getId()).add(haven.getCard());
+        harness.passBothPriorities();
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("The target attacker still takes combat damage from its blocker")
+    void doesNotPreventCombatDamageToTargetAttacker() {
+        Permanent haven = harness.addToBattlefieldAndReturn(player1, new KorHaven());
+        addCreatureReady(player1, new RootwaterCommando());
+        Permanent attacker = addAttacker(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0)));
+        addPreventionMana();
+
+        activatePrevention(haven, attacker);
+        resolveCombat(player2);
+
+        harness.assertInGraveyard(player2, "Rootwater Commando");
+        harness.assertNotOnBattlefield(player2, "Rootwater Commando");
+        harness.assertOnBattlefield(player1, "Rootwater Commando");
     }
 
     private void activatePrevention(Permanent haven, Permanent attacker) {
