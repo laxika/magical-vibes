@@ -8,17 +8,22 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.event.GameEventEnvelope;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MudbuttonCursetosser.class, GoblinPiker.class, GrizzlyBears.class, Shock.class})
 class MudbuttonCursetosserTest extends BaseCardTest {
 
     @Test
@@ -39,7 +44,7 @@ class MudbuttonCursetosserTest extends BaseCardTest {
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castCreature(player1, 0);
+        harness.castCreatureWithBeholdPermanent(player1, 0, harness.getPermanentId(player1, "Goblin Piker"));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -54,7 +59,7 @@ class MudbuttonCursetosserTest extends BaseCardTest {
         harness.setHand(player1, List.of(card, goblin));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castCreature(player1, 0);
+        harness.castCreatureWithBeholdHandCard(player1, 0, 1);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -96,8 +101,7 @@ class MudbuttonCursetosserTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, cursetosserId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, cursetosserId);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, bearsId);
@@ -130,8 +134,7 @@ class MudbuttonCursetosserTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, cursetosserId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, cursetosserId);
 
         GameData gameData = harness.getGameData();
         PendingInteraction.PermanentChoice choice =
@@ -139,5 +142,75 @@ class MudbuttonCursetosserTest extends BaseCardTest {
         assertThat(choice).isNotNull();
         assertThat(choice.validIds()).containsExactly(opponentSmallId);
         assertThat(choice.validIds()).doesNotContain(ownCreatureId, opponentLargeId);
+    }
+
+    @Test
+    @DisplayName("Can pay the additional mana without another Goblin")
+    void paysAdditionalManaWithoutGoblin() {
+        harness.castFromHand(player1, new MudbuttonCursetosser(), "{2}{B}");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Mudbutton Cursetosser");
+    }
+
+    @Test
+    @DisplayName("An opponent's Goblin cannot satisfy behold")
+    void opponentsGoblinDoesNotWaiveCost() {
+        harness.addToBattlefield(player2, new MudbuttonCursetosser());
+        harness.setHand(player1, List.of(new MudbuttonCursetosser()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Choosing to pay instead of beholding a Goblin spends the additional mana")
+    void canPayRatherThanRevealGoblin() {
+        harness.setHand(player1, List.of(new MudbuttonCursetosser(), new MudbuttonCursetosser()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Mudbutton Cursetosser");
+        harness.assertInHand(player1, "Mudbutton Cursetosser");
+    }
+
+    @Test
+    @DisplayName("Beholding a card in hand reveals it to both players during casting")
+    void beholdHandCardIsPubliclyRevealed() throws Exception {
+        List<GameEventEnvelope> events = new ArrayList<>();
+        harness.setHand(player1, List.of(new MudbuttonCursetosser(), new MudbuttonCursetosser()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        try (AutoCloseable ignored = harness.subscribeToGameEvents(batch -> batch.events().forEach(events::add))) {
+            harness.castCreatureWithBeholdHandCard(player1, 0, 1);
+        }
+        assertThat(events)
+                .filteredOn(event -> event.fact() instanceof GameEventFact.PrivateReveal)
+                .anySatisfy(event -> {
+                    GameEventFact.PrivateReveal reveal = (GameEventFact.PrivateReveal) event.fact();
+                    assertThat(reveal.subjectPlayerId()).isEqualTo(player1.getId());
+                    assertThat(reveal.zone()).isEqualTo(GameEventFact.RevealZone.HAND);
+                    assertThat(reveal.cards()).extracting(GameEventFact.CardSnapshot::name)
+                            .containsExactly("Mudbutton Cursetosser");
+                    assertThat(event.audience().playerIds())
+                            .containsExactlyInAnyOrder(player1.getId(), player2.getId());
+                });
+        harness.assertInHand(player1, "Mudbutton Cursetosser");
+    }
+
+    @Test
+    @DisplayName("Dying with no opposing creatures leaves no target choice or trigger on the stack")
+    void deathWithNoLegalTargets() {
+        harness.addToBattlefield(player1, new MudbuttonCursetosser());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        UUID sourceId = harness.getPermanentId(player1, "Mudbutton Cursetosser");
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, sourceId);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Mudbutton Cursetosser");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 }
