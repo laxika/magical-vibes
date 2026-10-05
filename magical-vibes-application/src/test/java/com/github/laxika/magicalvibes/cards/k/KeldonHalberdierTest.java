@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.i.IcatianCrier;
+import com.github.laxika.magicalvibes.cards.p.PithingNeedle;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KeldonHalberdier.class, IcatianCrier.class})
+@CardUsed({KeldonHalberdier.class, IcatianCrier.class, PithingNeedle.class})
 class KeldonHalberdierTest extends BaseCardTest {
 
     @Test
@@ -79,8 +80,7 @@ class KeldonHalberdierTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new KeldonHalberdier());
         Permanent blocker = addCreatureReady(player2, new IcatianCrier());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -89,8 +89,8 @@ class KeldonHalberdierTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Suspend can only be activated at sorcery speed")
-    void suspendRequiresSorcerySpeed() {
+    @DisplayName("Suspend is unavailable during upkeep without flash permission")
+    void suspendRequiresCreatureCastingTiming() {
         KeldonHalberdier card = new KeldonHalberdier();
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -100,8 +100,71 @@ class KeldonHalberdierTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("sorcery speed");
+                .hasMessageContaining("cannot be suspended at this time");
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+    }
+
+    @Test
+    @DisplayName("Suspend removes one counter when the upkeep trigger resolves")
+    void upkeepCounterRemovalUsesStack() {
+        KeldonHalberdier card = suspendCard();
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 3);
+    }
+
+    @Test
+    @DisplayName("An opponent's upkeep does not remove suspend counters")
+    void opponentsUpkeepDoesNotRemoveCounters() {
+        KeldonHalberdier card = suspendCard();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+    }
+
+    @Test
+    @DisplayName("Casting normally does not grant suspend haste")
+    void normalCastDoesNotGrantHaste() {
+        harness.setHand(player1, List.of(new KeldonHalberdier()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent permanent = findPermanent(player1, "Keldon Halberdier");
+        assertThat(gqs.hasKeyword(gd, permanent, Keyword.HASTE)).isFalse();
+        assertThat(permanent.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    @CardUsed({KeldonHalberdier.class, PithingNeedle.class})
+    @DisplayName("Pithing Needle does not prevent the suspend special action")
+    void pithingNeedleDoesNotPreventSuspend() {
+        harness.setHand(player1, List.of(new PithingNeedle()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Keldon Halberdier");
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        KeldonHalberdier card = suspendCard();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.stack).isEmpty();
     }
 
     private KeldonHalberdier suspendCard() {
