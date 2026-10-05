@@ -53,7 +53,6 @@ class LurkingNightstalkerTest extends BaseCardTest {
         assertThat(nightstalker.getPowerModifier()).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(nightstalker.getPowerModifier()).isEqualTo(0);
@@ -67,5 +66,35 @@ class LurkingNightstalkerTest extends BaseCardTest {
 
         assertThat(nightstalker.getPowerModifier()).isEqualTo(0);
         assertThat(nightstalker.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("An attacking Nightstalker does not boost another Nightstalker that stays back")
+    void doesNotBoostNonattackingNightstalker() {
+        Permanent attacker = addCreatureReady(player1, new LurkingNightstalker());
+        Permanent nonattacker = addCreatureReady(player1, new LurkingNightstalker());
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(2);
+        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(nonattacker.getPowerModifier()).isZero();
+        assertThat(nonattacker.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Each attacking Nightstalker receives only its own boost")
+    void simultaneousAttackTriggersBoostTheirOwnSources() {
+        Permanent first = addCreatureReady(player1, new LurkingNightstalker());
+        Permanent second = addCreatureReady(player1, new LurkingNightstalker());
+
+        declareAttackers(player1, List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(first.getPowerModifier()).isEqualTo(2);
+        assertThat(first.getToughnessModifier()).isZero();
+        assertThat(second.getPowerModifier()).isEqualTo(2);
+        assertThat(second.getToughnessModifier()).isZero();
     }
 }
