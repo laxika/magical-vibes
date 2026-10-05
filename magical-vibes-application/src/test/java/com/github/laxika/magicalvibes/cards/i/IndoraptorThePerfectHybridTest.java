@@ -29,7 +29,7 @@ class IndoraptorThePerfectHybridTest extends BaseCardTest {
     @Test
     void enrageOffersSacrificeToTheRandomOpponent() {
         Permanent indoraptor = harness.addToBattlefieldAndReturn(player1, new IndoraptorThePerfectHybrid());
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         shockIndoraptor(indoraptor);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -62,6 +62,83 @@ class IndoraptorThePerfectHybridTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    void bloodthirstIgnoresDamageToItsController() {
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        castIndoraptor();
+
+        assertThat(findPermanent(player1, "Indoraptor, the Perfect Hybrid")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void bloodthirstCountsDamageFromAnOpponentsSource() {
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, player2.getId());
+        castIndoraptor();
+
+        assertThat(findPermanent(player1, "Indoraptor, the Perfect Hybrid")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void enrageUsesLastKnownPowerAfterLethalDamageWhenSacrificeIsDeclined() {
+        Permanent indoraptor = harness.addToBattlefieldAndReturn(player1, new IndoraptorThePerfectHybrid());
+        indoraptor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        shockIndoraptor(indoraptor);
+
+        harness.assertInGraveyard(player1, "Indoraptor, the Perfect Hybrid");
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertLife(player2, 16);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void enrageUsesPowerAtResolutionRatherThanWhenDamageWasDealt() {
+        Permanent indoraptor = harness.addToBattlefieldAndReturn(player1, new IndoraptorThePerfectHybrid());
+        indoraptor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, indoraptor.getId());
+        indoraptor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 13);
+    }
+
+    @Test
+    void enrageDoesNotAllowSacrificingATokenCreature() {
+        Permanent indoraptor = harness.addToBattlefieldAndReturn(player1, new IndoraptorThePerfectHybrid());
+        GrizzlyBears tokenCopy = new GrizzlyBears();
+        tokenCopy.setToken(true);
+        Permanent token = harness.addToBattlefieldAndReturn(player2, tokenCopy);
+        shockIndoraptor(indoraptor);
+
+        harness.assertLife(player2, 17);
+        assertThat(findPermanent(player2, "Grizzly Bears")).isSameAs(token);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void enrageLetsTheOpponentChooseWhichNontokenCreatureToSacrifice() {
+        Permanent indoraptor = harness.addToBattlefieldAndReturn(player1, new IndoraptorThePerfectHybrid());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        shockIndoraptor(indoraptor);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleMultiplePermanentsChosen(player2, List.of(second.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(first).doesNotContain(second);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void castIndoraptor() {
         harness.setHand(player1, List.of(new IndoraptorThePerfectHybrid()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -73,8 +150,7 @@ class IndoraptorThePerfectHybridTest extends BaseCardTest {
     private void shockIndoraptor(Permanent indoraptor) {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, indoraptor.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, indoraptor.getId());
         harness.passBothPriorities();
     }
 }
