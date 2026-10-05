@@ -19,8 +19,7 @@ class PardicLancerTest extends BaseCardTest {
     @Test
     @DisplayName("Discarding a card at random gives +1/+0 and first strike")
     void discardsAndBoostsAndGrantsFirstStrike() {
-        harness.addToBattlefield(player1, new PardicLancer());
-        Permanent lancer = findPermanent(player1, "Pardic Lancer");
+        Permanent lancer = harness.addToBattlefieldAndReturn(player1, new PardicLancer());
         harness.setHand(player1, List.of(new PardicArsonist()));
 
         harness.activateAbility(player1, 0, null, null);
@@ -36,14 +35,13 @@ class PardicLancerTest extends BaseCardTest {
     @Test
     @DisplayName("The random discard is paid before the ability resolves")
     void paysRandomDiscardAsActivationCost() {
-        harness.addToBattlefield(player1, new PardicLancer());
+        Permanent lancer = harness.addToBattlefieldAndReturn(player1, new PardicLancer());
         harness.setHand(player1, List.of(new PardicArsonist()));
 
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Pardic Arsonist");
-        Permanent lancer = findPermanent(player1, "Pardic Lancer");
         assertThat(lancer.getPowerModifier()).isEqualTo(0);
         assertThat(lancer.getToughnessModifier()).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, lancer, Keyword.FIRST_STRIKE)).isFalse();
@@ -58,7 +56,7 @@ class PardicLancerTest extends BaseCardTest {
     @Test
     @DisplayName("The boost and first strike wear off at end of turn")
     void boostAndFirstStrikeWearOffAtEndOfTurn() {
-        harness.addToBattlefield(player1, new PardicLancer());
+        Permanent lancer = harness.addToBattlefieldAndReturn(player1, new PardicLancer());
         harness.setHand(player1, List.of(new PardicArsonist()));
 
         harness.activateAbility(player1, 0, null, null);
@@ -67,10 +65,40 @@ class PardicLancerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent lancer = findPermanent(player1, "Pardic Lancer");
         assertThat(lancer.getPowerModifier()).isEqualTo(0);
         assertThat(lancer.getToughnessModifier()).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, lancer, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Repeated activations discard one card each and their power boosts stack")
+    void repeatedActivationsStackWithoutTappingTheSource() {
+        Permanent lancer = harness.addToBattlefieldAndReturn(player1, new PardicLancer());
+        PardicArsonist arsonist = new PardicArsonist();
+        PardicLancer handLancer = new PardicLancer();
+        harness.setHand(player1, List.of(arsonist, handLancer));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId()).getFirst())
+                .isIn(arsonist, handLancer);
+        assertThat(gd.playerHands.get(player1.getId()).getFirst())
+                .isNotSameAs(gd.playerGraveyards.get(player1.getId()).getFirst());
+        assertThat(lancer.getPowerModifier()).isZero();
+
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(arsonist, handLancer);
+        assertThat(lancer.getPowerModifier()).isEqualTo(2);
+        assertThat(lancer.getToughnessModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, lancer, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(lancer.isTapped()).isFalse();
     }
 
     @Test
