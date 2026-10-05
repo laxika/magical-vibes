@@ -19,6 +19,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 class RadiantSummitTest extends BaseCardTest {
 
     @Test
+    void entersTappedWithoutBasicLands() {
+        playRadiantSummit();
+
+        assertThat(findRadiantSummit(player1).isTapped()).isTrue();
+    }
+
+    @Test
     void entersTappedWithFewerThanTwoBasicLands() {
         harness.addToBattlefield(player1, new Forest());
 
@@ -35,6 +42,37 @@ class RadiantSummitTest extends BaseCardTest {
         playRadiantSummit();
 
         assertThat(findRadiantSummit(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    void twoBasicLandsWithTheSameNameCount() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+
+        playRadiantSummit();
+
+        assertThat(findRadiantSummit(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    void entersUntappedWithMoreThanTwoTappedBasicLands() {
+        harness.addToBattlefieldAndReturn(player1, new Forest()).tap();
+        harness.addToBattlefieldAndReturn(player1, new Forest()).tap();
+        harness.addToBattlefieldAndReturn(player1, new Plains()).tap();
+
+        playRadiantSummit();
+
+        assertThat(findRadiantSummit(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    void basicLandTypesDoNotMakeANonbasicLandCount() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new RadiantSummit());
+
+        playRadiantSummit();
+
+        assertThat(findPermanents(player1, "Radiant Summit").get(1).isTapped()).isTrue();
     }
 
     @Test
@@ -58,8 +96,18 @@ class RadiantSummitTest extends BaseCardTest {
     }
 
     @Test
+    void basicLandsControlledByDifferentPlayersAreNotCombined() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Plains());
+
+        playRadiantSummit();
+
+        assertThat(findRadiantSummit(player1).isTapped()).isTrue();
+    }
+
+    @Test
     void tappingProducesRedMana() {
-        addReadyRadiantSummit(player1);
+        addCreatureReady(player1, new RadiantSummit());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -68,7 +116,7 @@ class RadiantSummitTest extends BaseCardTest {
 
     @Test
     void tappingProducesWhiteMana() {
-        addReadyRadiantSummit(player1);
+        addCreatureReady(player1, new RadiantSummit());
 
         harness.activateAbility(player1, 0, 1, null, null);
 
@@ -80,13 +128,6 @@ class RadiantSummitTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.playLand(player1, 0);
-    }
-
-    private Permanent addReadyRadiantSummit(Player player) {
-        Permanent permanent = new Permanent(new RadiantSummit());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 
     private Permanent findRadiantSummit(Player player) {
