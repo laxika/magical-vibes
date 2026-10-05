@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -101,11 +103,206 @@ class QuintoriusKandTest extends BaseCardTest {
                 .contains(first.getId(), second.getId());
     }
 
+    @Test
+    void discoveredSpellTriggersDamageAndLife() {
+        addReadyQuintorius(player1, 5);
+        Card discovered = new GrizzlyBears();
+        Card skippedLand = new Forest();
+        Card skippedExpensiveSpell = new QuintoriusKand();
+        Card remaining = new Shock();
+        harness.setLibrary(player1, List.of(skippedLand, skippedExpensiveSpell, discovered, remaining));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(remaining);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(
+                remaining, skippedLand, skippedExpensiveSpell);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void decliningDiscoveredSpellPutsItInHandWithoutTriggering() {
+        addReadyQuintorius(player1, 5);
+        Card discovered = new GrizzlyBears();
+        Card land = new Forest();
+        Card remaining = new Shock();
+        harness.setLibrary(player1, List.of(land, discovered, remaining));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(discovered);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining, land);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void discoverWithoutQualifyingCardReturnsEverythingToLibrary() {
+        addReadyQuintorius(player1, 5);
+        Card land = new Forest();
+        Card expensive = new QuintoriusKand();
+        harness.setLibrary(player1, List.of(land, expensive));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(land, expensive);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void castingFromHandDoesNotTriggerDamageAndLife() {
+        addReadyQuintorius(player1, 5);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void opponentsExileCastDoesNotTriggerDamageAndLife() {
+        addReadyQuintorius(player1, 5);
+        Card spell = new GrizzlyBears();
+        harness.setExile(player2, List.of(spell));
+        gd.exilePlayPermissions.put(spell.getId(), player2.getId());
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.castFromExile(player2, spell.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void minusSixCanChooseNoCards() {
+        Permanent quintorius = addReadyQuintorius(player1, 7);
+        Card card = new Shock();
+        harness.setGraveyard(player1, List.of(card));
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 2, List.of());
+        harness.passBothPriorities();
+
+        assertThat(quintorius.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(card);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    void minusSixCountsOnlyTargetsStillInGraveyard() {
+        addReadyQuintorius(player1, 7);
+        Card missing = new GrizzlyBears();
+        Card remaining = new Shock();
+        harness.setGraveyard(player1, List.of(missing, remaining));
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 2,
+                List.of(missing.getId(), remaining.getId()));
+        harness.setGraveyard(player1, List.of(remaining));
+        harness.setExile(player1, List.of(missing));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(missing, remaining);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.exilePlayPermissions).containsEntry(remaining.getId(), player1.getId())
+                .doesNotContainKey(missing.getId());
+    }
+
+    @Test
+    void minusSixAllowsPaidSpellCastAndTriggersWhileQuintoriusRemains() {
+        addReadyQuintorius(player1, 7);
+        Card spell = new Shock();
+        harness.setGraveyard(player1, List.of(spell));
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 2, List.of(spell.getId()));
+        harness.passBothPriorities();
+        harness.castFromExile(player1, spell.getId(), player2.getId());
+        harness.passBothPriorities();
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 16);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
+    }
+
+    @Test
+    void minusSixAllowsLandPlayWithoutTriggering() {
+        addReadyQuintorius(player1, 7);
+        Card land = new Forest();
+        harness.setGraveyard(player1, List.of(land));
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 2, List.of(land.getId()));
+        harness.passBothPriorities();
+        harness.castFromExile(player1, land.getId());
+
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void minusSixPermissionExpiresAtEndOfTurn() {
+        addReadyQuintorius(player1, 7);
+        Card spell = new Shock();
+        harness.setGraveyard(player1, List.of(spell));
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 2, List.of(spell.getId()));
+        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, spell.getId(), player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(spell);
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(spell.getId());
+    }
+
+    @Test
+    void createdSpiritHasBothColorsAndSpiritSubtype() {
+        Permanent quintorius = addReadyQuintorius(player1, 5);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        Permanent spirit = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getName().equals("Spirit"))
+                .findFirst().orElseThrow();
+        assertThat(gqs.getEffectiveColors(gd, spirit)).containsExactlyInAnyOrder(CardColor.RED, CardColor.WHITE);
+        assertThat(gqs.hasEffectiveSubtype(gd, spirit, CardSubtype.SPIRIT)).isTrue();
+        assertThat(quintorius.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
+    }
+
     private Permanent addReadyQuintorius(Player player, int loyalty) {
-        Permanent perm = new Permanent(new QuintoriusKand());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new QuintoriusKand());
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
