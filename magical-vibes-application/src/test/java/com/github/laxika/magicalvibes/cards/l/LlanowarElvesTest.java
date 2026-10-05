@@ -25,6 +25,20 @@ class LlanowarElvesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Mana ability resolves immediately into its controller's pool")
+    void manaAbilityResolvesImmediatelyForSecondPlayer() {
+        Permanent perm = addCreatureReady(player2, new LlanowarElves());
+
+        harness.tapPermanent(player2, 0);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(perm.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
     @DisplayName("Already-tapped Llanowar Elves cannot produce mana again")
     void alreadyTappedCannotTapAgain() {
         Permanent perm = addCreatureReady(player1, new LlanowarElves());
