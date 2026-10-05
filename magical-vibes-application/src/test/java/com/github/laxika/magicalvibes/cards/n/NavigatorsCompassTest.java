@@ -12,7 +12,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -22,9 +24,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({NavigatorsCompass.class, Forest.class, Mountain.class})
 class NavigatorsCompassTest extends BaseCardTest {
-
-    // ===== ETB life gain =====
 
     @Test
     @DisplayName("Entering the battlefield triggers gain 3 life")
@@ -34,16 +35,14 @@ class NavigatorsCompassTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
-
-    // ===== Activated ability =====
 
     @Test
     @DisplayName("Activating ability puts it on the stack targeting a land")
     void activatingAbilityPutsOnStack() {
         harness.addToBattlefield(player1, new NavigatorsCompass());
-        harness.addToBattlefield(player1, new Forest());
-        UUID forestId = harness.getPermanentId(player1, "Forest");
+        UUID forestId = harness.addToBattlefieldAndReturn(player1, new Forest()).getId();
 
         harness.activateAbility(player1, 0, null, forestId);
 
@@ -58,8 +57,7 @@ class NavigatorsCompassTest extends BaseCardTest {
     @DisplayName("Resolving ability prompts for basic land type choice")
     void resolvingAbilityPromptsForChoice() {
         harness.addToBattlefield(player1, new NavigatorsCompass());
-        harness.addToBattlefield(player1, new Forest());
-        UUID forestId = harness.getPermanentId(player1, "Forest");
+        UUID forestId = harness.addToBattlefieldAndReturn(player1, new Forest()).getId();
 
         harness.activateAbility(player1, 0, null, forestId);
         harness.passBothPriorities();
@@ -67,14 +65,15 @@ class NavigatorsCompassTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId()).isEqualTo(player1.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context()).isInstanceOf(ChoiceContext.AddBasicLandTypeChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
     }
 
     @Test
     @DisplayName("Choosing Plains adds Plains subtype to target Forest")
     void choosingPlainsAddsSubtype() {
         harness.addToBattlefield(player1, new NavigatorsCompass());
-        harness.addToBattlefield(player1, new Forest());
-        UUID forestId = harness.getPermanentId(player1, "Forest");
+        UUID forestId = harness.addToBattlefieldAndReturn(player1, new Forest()).getId();
 
         harness.activateAbility(player1, 0, null, forestId);
         harness.passBothPriorities();
@@ -88,8 +87,7 @@ class NavigatorsCompassTest extends BaseCardTest {
     @DisplayName("Target land gains temporary mana ability for chosen type")
     void targetLandGainsTemporaryManaAbility() {
         harness.addToBattlefield(player1, new NavigatorsCompass());
-        harness.addToBattlefield(player1, new Forest());
-        UUID forestId = harness.getPermanentId(player1, "Forest");
+        UUID forestId = harness.addToBattlefieldAndReturn(player1, new Forest()).getId();
 
         harness.activateAbility(player1, 0, null, forestId);
         harness.passBothPriorities();
@@ -104,8 +102,7 @@ class NavigatorsCompassTest extends BaseCardTest {
     @DisplayName("Target land can produce new mana type via temporary ability")
     void targetLandCanProduceNewManaType() {
         harness.addToBattlefield(player1, new NavigatorsCompass());
-        harness.addToBattlefield(player1, new Forest());
-        UUID forestId = harness.getPermanentId(player1, "Forest");
+        UUID forestId = harness.addToBattlefieldAndReturn(player1, new Forest()).getId();
 
         harness.activateAbility(player1, 0, null, forestId);
         harness.passBothPriorities();
@@ -124,8 +121,7 @@ class NavigatorsCompassTest extends BaseCardTest {
     @DisplayName("Choosing Swamp for a Mountain adds Swamp subtype")
     void choosingSwampForMountain() {
         harness.addToBattlefield(player1, new NavigatorsCompass());
-        harness.addToBattlefield(player1, new Mountain());
-        UUID mountainId = harness.getPermanentId(player1, "Mountain");
+        UUID mountainId = harness.addToBattlefieldAndReturn(player1, new Mountain()).getId();
 
         harness.activateAbility(player1, 0, null, mountainId);
         harness.passBothPriorities();
@@ -135,14 +131,11 @@ class NavigatorsCompassTest extends BaseCardTest {
         assertThat(mountain.getTransientSubtypes()).contains(CardSubtype.SWAMP);
     }
 
-    // ===== Until end of turn =====
-
     @Test
     @DisplayName("Added subtype and temporary ability are cleared at end of turn")
     void effectsClearedAtEndOfTurn() {
         harness.addToBattlefield(player1, new NavigatorsCompass());
-        harness.addToBattlefield(player1, new Forest());
-        UUID forestId = harness.getPermanentId(player1, "Forest");
+        UUID forestId = harness.addToBattlefieldAndReturn(player1, new Forest()).getId();
 
         harness.activateAbility(player1, 0, null, forestId);
         harness.passBothPriorities();
@@ -152,14 +145,18 @@ class NavigatorsCompassTest extends BaseCardTest {
         assertThat(forest.getTransientSubtypes()).contains(CardSubtype.ISLAND);
         assertThat(forest.getTemporaryActivatedAbilities()).hasSize(1);
 
-        // Simulate end-of-turn cleanup
-        forest.resetModifiers();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest))
+                .containsExactlyInAnyOrder(CardSubtype.FOREST, CardSubtype.ISLAND);
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(forest.getTransientSubtypes()).isEmpty();
         assertThat(forest.getTemporaryActivatedAbilities()).isEmpty();
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
+        harness.tapPermanent(player1, 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
     }
-
-    // ===== Targeting restrictions =====
 
     @Test
     @DisplayName("Cannot target a land controlled by the opponent")
@@ -176,8 +173,7 @@ class NavigatorsCompassTest extends BaseCardTest {
     @DisplayName("Compass taps when ability is activated")
     void compassTapsOnActivation() {
         harness.addToBattlefield(player1, new NavigatorsCompass());
-        harness.addToBattlefield(player1, new Forest());
-        UUID forestId = harness.getPermanentId(player1, "Forest");
+        UUID forestId = harness.addToBattlefieldAndReturn(player1, new Forest()).getId();
 
         harness.activateAbility(player1, 0, null, forestId);
 
@@ -189,8 +185,7 @@ class NavigatorsCompassTest extends BaseCardTest {
     @DisplayName("Cannot activate ability when Compass is already tapped")
     void cannotActivateWhenTapped() {
         harness.addToBattlefield(player1, new NavigatorsCompass());
-        harness.addToBattlefield(player1, new Forest());
-        UUID forestId = harness.getPermanentId(player1, "Forest");
+        UUID forestId = harness.addToBattlefieldAndReturn(player1, new Forest()).getId();
 
         // First activation
         harness.activateAbility(player1, 0, null, forestId);
@@ -206,8 +201,7 @@ class NavigatorsCompassTest extends BaseCardTest {
     @DisplayName("Game log records the land type change")
     void gameLogRecordsTypeChange() {
         harness.addToBattlefield(player1, new NavigatorsCompass());
-        harness.addToBattlefield(player1, new Forest());
-        UUID forestId = harness.getPermanentId(player1, "Forest");
+        UUID forestId = harness.addToBattlefieldAndReturn(player1, new Forest()).getId();
 
         harness.activateAbility(player1, 0, null, forestId);
         harness.passBothPriorities();
@@ -217,7 +211,66 @@ class NavigatorsCompassTest extends BaseCardTest {
                 log.contains("Forest") && log.contains("Island") && log.contains("until end of turn"));
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Adding Plains preserves the Forest's original mana production")
+    void originalManaAbilityIsPreserved() {
+        harness.addToBattlefield(player1, new NavigatorsCompass());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.activateAbility(player1, 0, null, forest.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "PLAINS");
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest))
+                .containsExactlyInAnyOrder(CardSubtype.FOREST, CardSubtype.PLAINS);
+        harness.tapPermanent(player1, 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+    }
+
+    @Test
+    @DisplayName("An ability whose target leaves does not request a land type")
+    void missingTargetDoesNotPromptForChoice() {
+        harness.addToBattlefield(player1, new NavigatorsCompass());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.activateAbility(player1, 0, null, forest.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(forest);
+        gd.playerGraveyards.get(player1.getId()).add(forest.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(forest.getTransientSubtypes()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The activated ability resolves even if the Compass leaves")
+    void abilityResolvesWithoutCompass() {
+        Permanent compass = harness.addToBattlefieldAndReturn(player1, new NavigatorsCompass());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.activateAbility(player1, 0, null, forest.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(compass);
+        gd.playerGraveyards.get(player1.getId()).add(compass.getCard());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "MOUNTAIN");
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest))
+                .containsExactlyInAnyOrder(CardSubtype.FOREST, CardSubtype.MOUNTAIN);
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A nonland permanent is not a legal target")
+    void cannotTargetNonland() {
+        Permanent compass = harness.addToBattlefieldAndReturn(player1, new NavigatorsCompass());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, compass.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(compass.isTapped()).isFalse();
+    }
 
     private void castCompass() {
         harness.setHand(player1, List.of(new NavigatorsCompass()));
