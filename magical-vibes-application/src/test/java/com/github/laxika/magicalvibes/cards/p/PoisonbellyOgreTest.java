@@ -8,8 +8,41 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @CardUsed({PoisonbellyOgre.class, GhostWarden.class, GruulSignet.class})
 class PoisonbellyOgreTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Creature entry requires no target choice and life loss waits for resolution")
+    void entryTriggerIsMandatoryAndNonTargeting() {
+        harness.addToBattlefield(player1, new PoisonbellyOgre());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.enterBattlefieldAndReturn(player2, new GhostWarden());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player2, 20);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("An existing Ogre triggers for a second Ogre entering")
+    void existingOgreTriggersForAnotherOgre() {
+        harness.addToBattlefield(player1, new PoisonbellyOgre());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.enterBattlefieldAndReturn(player2, new PoisonbellyOgre());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+    }
 
     @Test
     @DisplayName("Its controller loses 1 life when another creature enters")
