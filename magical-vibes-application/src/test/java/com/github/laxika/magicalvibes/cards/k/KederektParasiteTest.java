@@ -6,19 +6,20 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KederektParasite.class, HillGiant.class, GrizzlyBears.class})
 class KederektParasiteTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2; // avoid first-turn draw skip
         harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances from UPKEEP to DRAW
+        harness.passUntil(activePlayer, TurnStep.DRAW);
     }
 
     @Test
@@ -97,5 +98,46 @@ class KederektParasiteTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void opponentsRedPermanentDoesNotEnableTrigger() {
+        harness.addToBattlefield(player1, new KederektParasite());
+        harness.addToBattlefield(player2, new HillGiant());
+
+        advanceToDraw(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void gainingRedPermanentAfterDrawDoesNotCreateTrigger() {
+        harness.addToBattlefield(player1, new KederektParasite());
+
+        advanceToDraw(player2);
+        assertThat(gd.stack).isEmpty();
+        harness.addToBattlefield(player1, new HillGiant());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void removingParasiteDoesNotStopItsPendingDamage() {
+        harness.addToBattlefield(player1, new KederektParasite());
+        harness.addToBattlefield(player1, new HillGiant());
+
+        advanceToDraw(player2);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId())
+                .removeIf(permanent -> permanent.getCard() instanceof KederektParasite);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
     }
 }
