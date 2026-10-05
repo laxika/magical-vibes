@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.c.ConsumingVortex;
+import com.github.laxika.magicalvibes.cards.e.EightAndAHalfTails;
 import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
 import com.github.laxika.magicalvibes.cards.n.NagaoBoundByHonor;
 import com.github.laxika.magicalvibes.cards.n.NezumiCutthroat;
@@ -12,6 +14,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -21,7 +25,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * neither.
  */
 @CardUsed({KondasBanner.class, KondaLordOfEiganjo.class, IsamaruHoundOfKonda.class,
-        NezumiRonin.class, NagaoBoundByHonor.class, NezumiCutthroat.class, KuroPitlord.class})
+        NezumiRonin.class, NagaoBoundByHonor.class, NezumiCutthroat.class, KuroPitlord.class,
+        ConsumingVortex.class, EightAndAHalfTails.class})
 class KondasBannerTest extends BaseCardTest {
 
     @Test
@@ -176,6 +181,90 @@ class KondasBannerTest extends BaseCardTest {
         harness.runStateBasedActions();
 
         assertThat(banner.getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("Equip cannot target an opponent's legendary creature")
+    void equipRejectsOpponentsLegendaryCreature() {
+        Permanent banner = addBannerReady(player1);
+        Permanent konda = addCreatureReady(player2, new KondaLordOfEiganjo());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, konda.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(banner.getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("Both bonuses end when the equipped creature leaves the battlefield")
+    void bonusesEndWhenEquippedCreatureLeaves() {
+        Permanent konda = addCreatureReady(player1, new KondaLordOfEiganjo());
+        Permanent nagao = addCreatureReady(player1, new NagaoBoundByHonor());
+        Permanent banner = attachBanner(player1, konda);
+        harness.setHand(player1, List.of(new ConsumingVortex()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThat(gqs.getEffectivePower(gd, nagao)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, nagao)).isEqualTo(5);
+
+        harness.castAndResolveInstant(player1, 0, konda.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(banner).doesNotContain(konda);
+        assertThat(banner.getAttachedTo()).isNull();
+        assertThat(gqs.getEffectivePower(gd, nagao)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, nagao)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An equip target leaving in response preserves the previous attachment and bonuses")
+    void failedReequipPreservesPreviousAttachment() {
+        Permanent banner = addBannerReady(player1);
+        Permanent konda = addCreatureReady(player1, new KondaLordOfEiganjo());
+        Permanent isamaru = addCreatureReady(player1, new IsamaruHoundOfKonda());
+        Permanent kuro = addCreatureReady(player1, new KuroPitlord());
+        banner.setAttachedTo(konda.getId());
+        harness.setHand(player1, List.of(new ConsumingVortex()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, kuro.getId());
+        harness.castAndResolveInstant(player1, 0, kuro.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(kuro);
+        assertThat(banner.getAttachedTo()).isEqualTo(konda.getId());
+        assertThat(gqs.getEffectivePower(gd, isamaru)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, isamaru)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, konda)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, konda)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("The color bonus follows the equipped creature's current color")
+    void colorBonusChangesWhenEquippedCreatureBecomesWhite() {
+        addCreatureReady(player1, new EightAndAHalfTails());
+        Permanent kuro = addCreatureReady(player1, new KuroPitlord());
+        Permanent isamaru = addCreatureReady(player1, new IsamaruHoundOfKonda());
+        Permanent cutthroat = addCreatureReady(player2, new NezumiCutthroat());
+        attachBanner(player1, kuro);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThat(gqs.getEffectivePower(gd, isamaru)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, isamaru)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, cutthroat)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cutthroat)).isEqualTo(2);
+
+        harness.activateAbility(player1, 0, 1, null, kuro.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, isamaru)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, isamaru)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, cutthroat)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, cutthroat)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, kuro)).isEqualTo(11);
+        assertThat(gqs.getEffectiveToughness(gd, kuro)).isEqualTo(11);
     }
 
     private Permanent addBannerReady(Player player) {
