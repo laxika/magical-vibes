@@ -18,6 +18,62 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class QuirionRangerTest extends BaseCardTest {
 
     @Test
+    @DisplayName("A tapped, summoning-sick Ranger can target itself")
+    void tappedNewRangerCanUntapItself() {
+        Permanent ranger = harness.addToBattlefieldAndReturn(player1, new QuirionRanger());
+        harness.addToBattlefield(player1, new Forest());
+        ranger.tap();
+
+        harness.activateAbility(player1, 0, null, ranger.getId());
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(ranger.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(ranger.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An untapped creature is a legal target and uses the activation limit")
+    void untappedTargetStillUsesActivationLimit() {
+        Permanent ranger = harness.addToBattlefieldAndReturn(player1, new QuirionRanger());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.activateAbility(player1, 0, null, ranger.getId());
+        harness.handlePermanentChosen(player1, forest.getId());
+        harness.passBothPriorities();
+
+        assertThat(ranger.isTapped()).isFalse();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, ranger.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Each Ranger has its own once-per-turn activation limit")
+    void multipleRangersHaveIndependentLimits() {
+        Permanent ranger1 = harness.addToBattlefieldAndReturn(player1, new QuirionRanger());
+        Permanent ranger2 = harness.addToBattlefieldAndReturn(player1, new QuirionRanger());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        ranger1.tap();
+        ranger2.tap();
+
+        harness.activateAbility(player1, 0, null, ranger1.getId());
+        harness.handlePermanentChosen(player1, forest.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, ranger2.getId());
+        harness.passBothPriorities();
+
+        assertThat(ranger1.isTapped()).isFalse();
+        assertThat(ranger2.isTapped()).isFalse();
+        assertThat(countPermanents(player1, "Forest")).isZero();
+    }
+
+    @Test
     @DisplayName("Returns a Forest and untaps the target creature")
     void returnsForestAndUntapsTarget() {
         harness.addToBattlefield(player1, new QuirionRanger());
