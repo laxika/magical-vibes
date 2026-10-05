@@ -12,9 +12,58 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Forest.class, JalumTome.class})
 class JalumTomeTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("The ability cannot be activated with only one mana")
+    void cannotActivateWithoutTwoMana() {
+        Permanent tome = harness.addToBattlefieldAndReturn(player1, new JalumTome());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(tome.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Tome cannot activate even with enough mana")
+    void cannotActivateWhileTapped() {
+        Permanent tome = harness.addToBattlefieldAndReturn(player1, new JalumTome());
+        tome.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An activated ability still draws and discards after the Tome leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent tome = harness.addToBattlefieldAndReturn(player1, new JalumTome());
+        Forest oldCard = new Forest();
+        Forest drawnCard = new Forest();
+        harness.setHand(player1, List.of(oldCard));
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(tome);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(oldCard, drawnCard);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(oldCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Activating the ability taps Jalum Tome and puts the ability on the stack")
