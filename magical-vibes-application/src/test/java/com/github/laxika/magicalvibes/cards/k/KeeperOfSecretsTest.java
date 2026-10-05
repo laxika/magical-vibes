@@ -32,8 +32,7 @@ class KeeperOfSecretsTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(targetChoice.validPlayerIds()).containsExactly(player2.getId());
         harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
     }
@@ -69,5 +68,58 @@ class KeeperOfSecretsTest extends BaseCardTest {
         assertThat(targetChoice.validPlayerIds()).containsExactly(player2.getId());
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An opponent's Keeper does not trigger for your exile cast")
+    void doesNotTriggerForOpponentsSpell() {
+        harness.addToBattlefield(player2, new KeeperOfSecrets());
+        KeeperOfSecrets spell = new KeeperOfSecrets();
+        gd.addToExile(player1.getId(), spell);
+        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        harness.addMana(player1, ManaColor.RED, 6);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.castFromExile(player1, spell.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        resolveAllTriggers();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Keeper does not trigger for its own cast from exile")
+    void doesNotTriggerForItsOwnCast() {
+        KeeperOfSecrets spell = new KeeperOfSecrets();
+        gd.addToExile(player1.getId(), spell);
+        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        harness.addMana(player1, ManaColor.RED, 6);
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.castFromExile(player1, spell.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        resolveAllTriggers();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("The trigger still deals the spell's mana value after Keeper leaves")
+    void triggerSurvivesSourceLeavingBattlefield() {
+        harness.addToBattlefield(player1, new KeeperOfSecrets());
+        KeeperOfSecrets spell = new KeeperOfSecrets();
+        gd.addToExile(player1.getId(), spell);
+        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        harness.addMana(player1, ManaColor.RED, 6);
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.castFromExile(player1, spell.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 6);
+        resolveAllTriggers();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 6);
     }
 }
