@@ -66,4 +66,21 @@ class MindKnivesTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+    @Test
+    @DisplayName("Discards the opponent's only card without affecting the caster's hand")
+    void discardsOnlyCardAndLeavesCasterHandAlone() {
+        GrizzlyBears opponentCard = new GrizzlyBears();
+        GrizzlyBears casterCard = new GrizzlyBears();
+        harness.setHand(player2, List.of(opponentCard));
+        harness.setHand(player1, List.of(new MindKnives(), casterCard));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(casterCard);
+        harness.assertInGraveyard(player1, "Mind Knives");
+        assertThat(gd.stack).isEmpty();
+    }
 }
