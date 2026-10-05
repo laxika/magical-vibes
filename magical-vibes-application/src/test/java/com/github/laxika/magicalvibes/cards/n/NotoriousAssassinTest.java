@@ -102,6 +102,86 @@ class NotoriousAssassinTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Discards a nonland card as a cost before the ability resolves")
+    void discardsNonlandCardBeforeResolution() {
+        Permanent assassin = addReadyAssassin(player1);
+        harness.setHand(player1, List.of(new PrimevalShambler(), new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        Permanent target = addCreatureReady(player2, new RockBadger());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Primeval Shambler");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertOnBattlefield(player2, "Rock Badger");
+        assertThat(assassin.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Rock Badger");
+        harness.assertNotInGraveyard(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent assassin = addReadyAssassin(player1);
+        assassin.setTapped(true);
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        Permanent target = addCreatureReady(player2, new RockBadger());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent assassin = addReadyAssassin(player1);
+        assassin.setSummoningSick(true);
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        Permanent target = addCreatureReady(player2, new RockBadger());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(assassin.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot pay the activation cost without black mana")
+    void cannotActivateWithoutBlackMana() {
+        Permanent assassin = addReadyAssassin(player1);
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        Permanent target = addCreatureReady(player2, new RockBadger());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(assassin.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyAssassin(Player player) {
         Permanent permanent = addCreatureReady(player, new NotoriousAssassin());
         harness.forceActivePlayer(player);
