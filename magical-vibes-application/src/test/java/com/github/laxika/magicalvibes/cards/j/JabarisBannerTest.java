@@ -24,6 +24,66 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class JabarisBannerTest extends BaseCardTest {
 
     @Test
+    void activationPaysManaAndTapsBannerBeforeGrantResolves() {
+        Permanent banner = harness.addToBattlefieldAndReturn(player1, new JabarisBanner());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RedwoodTreefolk());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, creature.getId());
+
+        assertThat(banner.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLANKING)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLANKING)).isTrue();
+    }
+
+    @Test
+    void cannotActivateWithoutMana() {
+        harness.addToBattlefield(player1, new JabarisBanner());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RedwoodTreefolk());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLANKING)).isFalse();
+    }
+
+    @Test
+    void cannotActivateTappedBanner() {
+        Permanent banner = harness.addToBattlefieldAndReturn(player1, new JabarisBanner());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RedwoodTreefolk());
+        banner.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLANKING)).isFalse();
+    }
+
+    @Test
+    void blockerWithFlankingDoesNotTriggerGrantedFlanking() {
+        harness.addToBattlefield(player1, new JabarisBanner());
+        Permanent attacker = addCreatureReady(player1, new RedwoodTreefolk());
+        Permanent blocker = addCreatureReady(player2, new ShadowRider());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        attacker.setAttacking(true);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, attackerIndex)));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(blocker.getEffectivePower()).isEqualTo(3);
+        assertThat(blocker.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Ability grants flanking to target creature")
     void grantsFlanking() {
         harness.addToBattlefield(player1, new JabarisBanner());
