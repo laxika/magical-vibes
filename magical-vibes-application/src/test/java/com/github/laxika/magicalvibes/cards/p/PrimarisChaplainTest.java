@@ -61,4 +61,51 @@ class PrimarisChaplainTest extends BaseCardTest {
         assertThat(chaplain.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(bears.getPowerModifier()).isZero();
     }
+
+    @Test
+    @DisplayName("Attacking alone grants indestructible without boosting the Chaplain itself")
+    void attackingAloneGrantsOnlyIndestructible() {
+        Permanent chaplain = addCreatureReady(player1, new PrimarisChaplain());
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(chaplain.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(chaplain.getPowerModifier()).isZero();
+        assertThat(chaplain.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Battle cry does not boost creatures that stay back or grant them indestructible")
+    void nonattackingChaplainGetsNeitherBonus() {
+        Permanent attacker = addCreatureReady(player1, new PrimarisChaplain());
+        Permanent stayingBack = addCreatureReady(player1, new PrimarisChaplain());
+        Permanent opponent = addCreatureReady(player2, new PrimarisChaplain());
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(attacker.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(stayingBack.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(stayingBack.getPowerModifier()).isZero();
+        assertThat(opponent.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(opponent.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Each attacking Chaplain's battle cry boosts the other attackers independently")
+    void multipleBattleCryTriggersAccumulate() {
+        Permanent first = addCreatureReady(player1, new PrimarisChaplain());
+        Permanent second = addCreatureReady(player1, new PrimarisChaplain());
+        Permanent third = addCreatureReady(player1, new PrimarisChaplain());
+
+        declareAttackers(player1, List.of(0, 1, 2));
+        resolveAllTriggers();
+
+        for (Permanent chaplain : List.of(first, second, third)) {
+            assertThat(chaplain.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+            assertThat(chaplain.getPowerModifier()).isEqualTo(2);
+            assertThat(chaplain.getToughnessModifier()).isZero();
+        }
+    }
 }
