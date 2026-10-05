@@ -1,126 +1,184 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.i.IronMyr;
-import com.github.laxika.magicalvibes.cards.g.GoldMyr;
 import com.github.laxika.magicalvibes.cards.c.CopperMyr;
+import com.github.laxika.magicalvibes.cards.g.GoldMyr;
+import com.github.laxika.magicalvibes.cards.i.IronMyr;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KuldothaPhoenix.class, IronMyr.class, GoldMyr.class, CopperMyr.class})
 class KuldothaPhoenixTest extends BaseCardTest {
 
-    
-
     @Test
-    @DisplayName("Triggers during upkeep when in graveyard with metalcraft met")
-    void triggersDuringUpkeepWithMetalcraft() {
-        harness.addToBattlefield(player1, new IronMyr());
-        harness.addToBattlefield(player1, new GoldMyr());
-        harness.addToBattlefield(player1, new CopperMyr());
+    void doesNotAutomaticallyTriggerDuringUpkeep() {
+        addMetalcraft();
         harness.setGraveyard(player1, List.of(new KuldothaPhoenix()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         advanceToUpkeep(player1);
-        // Resolve MayPayManaEffect from stack
-        harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
-        assertThat(gd.pendingMayAbilities).hasSize(1);
-        assertThat(gd.pendingMayAbilities.getFirst().sourceCard().getName()).isEqualTo("Kuldotha Phoenix");
-        assertThat(gd.pendingMayAbilities.getFirst().manaCost()).isEqualTo("{4}");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Kuldotha Phoenix");
     }
 
     @Test
-    @DisplayName("Does not trigger when metalcraft is not met (fewer than 3 artifacts)")
-    void doesNotTriggerWithoutMetalcraft() {
+    void doesNotAutomaticallyTriggerWithoutMetalcraft() {
         harness.addToBattlefield(player1, new IronMyr());
         harness.addToBattlefield(player1, new GoldMyr());
         harness.setGraveyard(player1, List.of(new KuldothaPhoenix()));
 
         advanceToUpkeep(player1);
 
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.pendingMayAbilities).isEmpty();
     }
 
     @Test
-    @DisplayName("Does not trigger during opponent's upkeep")
     void doesNotTriggerDuringOpponentUpkeep() {
-        harness.addToBattlefield(player1, new IronMyr());
-        harness.addToBattlefield(player1, new GoldMyr());
-        harness.addToBattlefield(player1, new CopperMyr());
+        addMetalcraft();
         harness.setGraveyard(player1, List.of(new KuldothaPhoenix()));
 
         advanceToUpkeep(player2);
 
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.pendingMayAbilities).isEmpty();
     }
 
     @Test
-    @DisplayName("Accepting and paying {4} returns Kuldotha Phoenix from graveyard to battlefield")
-    void acceptingReturnsPhoenixToBattlefield() {
+    void payingActivationCostReturnsOnlyTheActivatedPhoenix() {
         KuldothaPhoenix phoenix = new KuldothaPhoenix();
-        harness.addToBattlefield(player1, new IronMyr());
-        harness.addToBattlefield(player1, new GoldMyr());
-        harness.addToBattlefield(player1, new CopperMyr());
-        harness.setGraveyard(player1, List.of(phoenix));
+        KuldothaPhoenix otherPhoenix = new KuldothaPhoenix();
+        addMetalcraft();
+        harness.setGraveyard(player1, List.of(phoenix, otherPhoenix));
+        prepareOwnUpkeep(4);
 
-        advanceToUpkeep(player1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        // Resolve MayPayManaEffect from stack
+        harness.activateGraveyardAbility(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(phoenix, otherPhoenix);
+        harness.assertNotOnBattlefield(player1, "Kuldotha Phoenix");
         harness.passBothPriorities();
-        // Accept — inner effect resolves inline
-        harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getId().equals(phoenix.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getId().equals(phoenix.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(otherPhoenix);
+        assertThat(findPermanent(player1, "Kuldotha Phoenix").getCard().getId()).isEqualTo(phoenix.getId());
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test
-    @DisplayName("Declining keeps Kuldotha Phoenix in graveyard")
-    void decliningKeepsPhoenixInGraveyard() {
-        KuldothaPhoenix phoenix = new KuldothaPhoenix();
-        harness.addToBattlefield(player1, new IronMyr());
-        harness.addToBattlefield(player1, new GoldMyr());
-        harness.addToBattlefield(player1, new CopperMyr());
-        harness.setGraveyard(player1, List.of(phoenix));
+    void choosingNotToActivateKeepsPhoenixInGraveyard() {
+        addMetalcraft();
+        harness.setGraveyard(player1, List.of(new KuldothaPhoenix()));
+        prepareOwnUpkeep(4);
 
-        advanceToUpkeep(player1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        // Resolve MayPayManaEffect from stack
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getId().equals(phoenix.getId()));
+        harness.assertInGraveyard(player1, "Kuldotha Phoenix");
         harness.assertNotOnBattlefield(player1, "Kuldotha Phoenix");
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test
-    @DisplayName("Cannot return if player cannot pay {4}")
-    void cannotReturnWithoutMana() {
-        KuldothaPhoenix phoenix = new KuldothaPhoenix();
+    void cannotActivateWithoutEnoughMana() {
+        addMetalcraft();
+        harness.setGraveyard(player1, List.of(new KuldothaPhoenix()));
+        prepareOwnUpkeep(3);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Kuldotha Phoenix");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+    }
+
+    @Test
+    void cannotActivateWithOnlyTwoArtifactsEvenIfOpponentControlsThird() {
+        harness.addToBattlefield(player1, new IronMyr());
+        harness.addToBattlefield(player1, new GoldMyr());
+        harness.addToBattlefield(player2, new CopperMyr());
+        harness.setGraveyard(player1, List.of(new KuldothaPhoenix()));
+        prepareOwnUpkeep(4);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Kuldotha Phoenix");
+    }
+
+    @Test
+    void cannotActivateDuringOwnMainPhase() {
+        addMetalcraft();
+        harness.setGraveyard(player1, List.of(new KuldothaPhoenix()));
+        prepareOwnUpkeep(4);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateDuringOpponentUpkeep() {
+        addMetalcraft();
+        harness.setGraveyard(player1, List.of(new KuldothaPhoenix()));
+        prepareOwnUpkeep(4);
+        harness.forceActivePlayer(player2);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void losingMetalcraftAfterActivationDoesNotPreventReturn() {
+        addMetalcraft();
+        harness.setGraveyard(player1, List.of(new KuldothaPhoenix()));
+        prepareOwnUpkeep(4);
+        harness.activateGraveyardAbility(player1, 0);
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Copper Myr"));
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Kuldotha Phoenix");
+        harness.assertNotInGraveyard(player1, "Kuldotha Phoenix");
+    }
+
+    @Test
+    void canActivateAfterPhoenixEntersGraveyardDuringUpkeep() {
+        addMetalcraft();
+        prepareOwnUpkeep(4);
+        harness.setGraveyard(player1, List.of(new KuldothaPhoenix()));
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Kuldotha Phoenix");
+        harness.assertNotInGraveyard(player1, "Kuldotha Phoenix");
+    }
+
+    private void addMetalcraft() {
         harness.addToBattlefield(player1, new IronMyr());
         harness.addToBattlefield(player1, new GoldMyr());
         harness.addToBattlefield(player1, new CopperMyr());
-        harness.setGraveyard(player1, List.of(phoenix));
-        // No mana added
+    }
 
-        advanceToUpkeep(player1);
-        // Resolve MayPayManaEffect from stack
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-
-        // Phoenix stays in graveyard because mana cannot be paid
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getId().equals(phoenix.getId()));
-        harness.assertNotOnBattlefield(player1, "Kuldotha Phoenix");
+    private void prepareOwnUpkeep(int mana) {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.COLORLESS, mana);
     }
 }
