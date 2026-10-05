@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DarkthicketWolf;
+import com.github.laxika.magicalvibes.cards.d.DeadWeight;
+import com.github.laxika.magicalvibes.cards.v.VictimOfNight;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -8,7 +11,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,23 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ManorSkeleton.class, DarkthicketWolf.class, VictimOfNight.class, DeadWeight.class})
 class ManorSkeletonTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Manor Skeleton has regenerate activated ability with cost {1}{B}")
-    void hasCorrectAbility() {
-        ManorSkeleton card = new ManorSkeleton();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(RegenerateEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{1}{B}");
-    }
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Manor Skeleton puts it on the stack")
@@ -62,16 +49,13 @@ class ManorSkeletonTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Manor Skeleton");
     }
 
-    // ===== Haste — can attack immediately =====
-
     @Test
     @DisplayName("Manor Skeleton can attack the turn it enters the battlefield due to Haste")
     void canAttackImmediatelyDueToHaste() {
         harness.setLife(player2, 20);
 
-        Permanent skeleton = new Permanent(new ManorSkeleton());
+        Permanent skeleton = harness.addToBattlefieldAndReturn(player1, new ManorSkeleton());
         skeleton.setSummoningSick(true);
-        gd.playerBattlefields.get(player1.getId()).add(skeleton);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -82,8 +66,6 @@ class ManorSkeletonTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
-
-    // ===== Regeneration ability =====
 
     @Test
     @DisplayName("Activating regeneration ability puts it on the stack")
@@ -139,21 +121,19 @@ class ManorSkeletonTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
-    // ===== Regeneration saves from combat damage =====
-
     @Test
     @DisplayName("Regeneration shield saves Manor Skeleton from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent skelePerm = addManorSkeletonReady(player1);
-        skelePerm.setRegenerationShield(1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
         skelePerm.setBlocking(true);
         skelePerm.addBlockingTarget(0);
 
-        GrizzlyBears bears = new GrizzlyBears();
-        Permanent attacker = new Permanent(bears);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new DarkthicketWolf());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -165,6 +145,9 @@ class ManorSkeletonTest extends BaseCardTest {
         Permanent skele = findPermanent(player1, "Manor Skeleton");
         assertThat(skele.isTapped()).isTrue();
         assertThat(skele.getRegenerationShield()).isEqualTo(0);
+        assertThat(skele.getMarkedDamage()).isZero();
+        assertThat(skele.isBlocking()).isFalse();
+        assertThat(skele.getBlockingTargets()).isEmpty();
     }
 
     @Test
@@ -174,11 +157,9 @@ class ManorSkeletonTest extends BaseCardTest {
         skelePerm.setBlocking(true);
         skelePerm.addBlockingTarget(0);
 
-        GrizzlyBears bears = new GrizzlyBears();
-        Permanent attacker = new Permanent(bears);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new DarkthicketWolf());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -190,13 +171,62 @@ class ManorSkeletonTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Manor Skeleton");
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Creating a regeneration shield does not tap a summoning-sick creature")
+    void shieldDoesNotTapCreature() {
+        Permanent skeleton = harness.addToBattlefieldAndReturn(player1, new ManorSkeleton());
+        skeleton.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(skeleton.isTapped()).isFalse();
+        assertThat(skeleton.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A regeneration shield replaces only one destruction")
+    void shieldProtectsOnlyOnce() {
+        Permanent skeleton = addManorSkeletonReady(player1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new VictimOfNight(), new VictimOfNight()));
+        harness.addMana(player2, ManaColor.BLACK, 4);
+
+        harness.castAndResolveInstant(player2, 0, skeleton.getId());
+
+        harness.assertOnBattlefield(player1, "Manor Skeleton");
+        assertThat(skeleton.isTapped()).isTrue();
+        assertThat(skeleton.getRegenerationShield()).isZero();
+
+        harness.castAndResolveInstant(player2, 0, skeleton.getId());
+
+        harness.assertNotOnBattlefield(player1, "Manor Skeleton");
+        harness.assertInGraveyard(player1, "Manor Skeleton");
+    }
+
+    @Test
+    @DisplayName("Regeneration cannot save a creature with zero or less toughness")
+    void regenerationDoesNotPreventToughnessDeath() {
+        Permanent skeleton = addManorSkeletonReady(player1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new DeadWeight()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.castEnchantment(player2, 0, skeleton.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Manor Skeleton");
+        harness.assertInGraveyard(player1, "Manor Skeleton");
+    }
 
     private Permanent addManorSkeletonReady(Player player) {
-        ManorSkeleton card = new ManorSkeleton();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ManorSkeleton());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
