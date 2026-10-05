@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({IonasJudgment.class, GrizzlyBears.class, AuraOfSilence.class, Plains.class})
 class IonasJudgmentTest extends BaseCardTest {
 
     @Test
@@ -45,8 +47,7 @@ class IonasJudgmentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 5);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -63,13 +64,29 @@ class IonasJudgmentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 5);
 
         UUID targetId = harness.getPermanentId(player2, "Aura of Silence");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
         harness.assertNotOnBattlefield(player2, "Aura of Silence");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Aura of Silence"));
+    }
+
+    @Test
+    @DisplayName("Can exile a creature controlled by the caster")
+    void exilesOwnCreature() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new IonasJudgment()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(harness.getGameData().getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Iona's Judgment");
     }
 
     @Test
