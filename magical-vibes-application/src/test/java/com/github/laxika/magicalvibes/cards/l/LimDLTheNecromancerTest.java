@@ -13,7 +13,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -25,18 +24,16 @@ class LimDLTheNecromancerTest extends BaseCardTest {
     @DisplayName("Paying the death trigger returns the opponent's creature as a Zombie")
     void payingDeathTriggerReturnsCreatureAsZombie() {
         harness.addToBattlefield(player1, new LimDLTheNecromancer());
-        harness.addToBattlefield(player2, new DrudgeReavers());
+        Permanent reavers = harness.addToBattlefieldAndReturn(player2, new DrudgeReavers());
         harness.setHand(player1, List.of(new StranglingSoot()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        UUID reaversId = harness.getPermanentId(player2, "Drudge Reavers");
-        harness.castAndResolveInstant(player1, 0, reaversId);
+        harness.castAndResolveInstant(player1, 0, reavers.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         Permanent returned = findPermanent(player1, "Drudge Reavers");
         assertThat(returned.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
@@ -48,13 +45,12 @@ class LimDLTheNecromancerTest extends BaseCardTest {
     @DisplayName("Declining the death trigger leaves the opponent's creature in its graveyard")
     void decliningDeathTriggerLeavesCreatureInGraveyard() {
         harness.addToBattlefield(player1, new LimDLTheNecromancer());
-        harness.addToBattlefield(player2, new DrudgeReavers());
+        Permanent reavers = harness.addToBattlefieldAndReturn(player2, new DrudgeReavers());
         harness.setHand(player1, List.of(new StranglingSoot()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        UUID reaversId = harness.getPermanentId(player2, "Drudge Reavers");
-        harness.castAndResolveInstant(player1, 0, reaversId);
+        harness.castAndResolveInstant(player1, 0, reavers.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -66,13 +62,12 @@ class LimDLTheNecromancerTest extends BaseCardTest {
     @DisplayName("The death trigger does not trigger for a creature you control")
     void ownCreatureDeathDoesNotTriggerAbility() {
         harness.addToBattlefield(player1, new LimDLTheNecromancer());
-        harness.addToBattlefield(player1, new DrudgeReavers());
+        Permanent reavers = harness.addToBattlefieldAndReturn(player1, new DrudgeReavers());
         harness.setHand(player1, List.of(new StranglingSoot()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        UUID reaversId = harness.getPermanentId(player1, "Drudge Reavers");
-        harness.castAndResolveInstant(player1, 0, reaversId);
+        harness.castAndResolveInstant(player1, 0, reavers.getId());
 
         harness.assertInGraveyard(player1, "Drudge Reavers");
         harness.assertNotOnBattlefield(player1, "Drudge Reavers");
@@ -86,11 +81,10 @@ class LimDLTheNecromancerTest extends BaseCardTest {
         Permanent nonZombie = harness.addToBattlefieldAndReturn(player1, new DrudgeReavers());
         Permanent zombie = harness.addToBattlefieldAndReturn(player2, new CorpulentCorpse());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, nonZombie.getId()))
-                .isInstanceOf(IllegalStateException.class);
-
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, nonZombie.getId()))
+                .isInstanceOf(IllegalStateException.class);
         harness.activateAbility(player1, 0, 0, null, zombie.getId());
         harness.passBothPriorities();
 
@@ -101,5 +95,50 @@ class LimDLTheNecromancerTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Corpulent Corpse");
         assertThat(findPermanent(player2, "Corpulent Corpse").isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The death trigger goes on the stack before the payment choice")
+    void paymentIsChosenOnlyWhenDeathTriggerResolves() {
+        harness.addToBattlefield(player1, new LimDLTheNecromancer());
+        Permanent reavers = harness.addToBattlefieldAndReturn(player2, new DrudgeReavers());
+        harness.setHand(player1, List.of(new StranglingSoot()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, reavers.getId());
+
+        harness.assertInGraveyard(player2, "Drudge Reavers");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Drudge Reavers");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Returns your own card when it dies under an opponent's control")
+    void returnsOwnedCardThatOpponentControlled() {
+        harness.addToBattlefield(player1, new LimDLTheNecromancer());
+        Permanent reavers = harness.addToBattlefieldAndReturn(player2, new DrudgeReavers());
+        gd.stolenCreatures.put(reavers.getId(), player1.getId());
+        harness.setHand(player1, List.of(new StranglingSoot()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, reavers.getId());
+        harness.assertInGraveyard(player1, "Drudge Reavers");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Drudge Reavers");
+        harness.assertNotInGraveyard(player1, "Drudge Reavers");
+        assertThat(findPermanent(player1, "Drudge Reavers").getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
     }
 }
