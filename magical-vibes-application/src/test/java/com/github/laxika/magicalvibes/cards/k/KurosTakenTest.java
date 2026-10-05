@@ -96,6 +96,57 @@ class KurosTakenTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Regeneration can be activated while tapped and summoning sick")
+    void regenerationDoesNotRequireTappingOrHaste() {
+        Permanent taken = harness.addToBattlefieldAndReturn(player1, new KurosTaken());
+        taken.setSummoningSick(true);
+        taken.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(taken.getRegenerationShield()).isEqualTo(1);
+        assertThat(taken.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An unused regeneration shield expires at cleanup without tapping the creature")
+    void unusedRegenerationShieldExpiresAtCleanup() {
+        Permanent taken = addCreatureReady(player1, new KurosTaken());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(taken.getRegenerationShield()).isEqualTo(1);
+        assertThat(taken.isTapped()).isFalse();
+
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(taken.getRegenerationShield()).isZero();
+        assertThat(taken.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(taken);
+    }
+
+    @Test
+    @DisplayName("Attacking unblocked does not trigger bushido")
+    void unblockedAttackDoesNotGetBushidoBonus() {
+        Permanent taken = addCreatureReady(player1, new KurosTaken());
+        addCreatureReady(player2, new GnatMiser());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        assertThat(gqs.getEffectivePower(gd, taken)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, taken)).isEqualTo(1);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
     @DisplayName("The regeneration shield saves Kuros's Taken from lethal combat damage")
     void regenerationShieldSavesFromLethalCombatDamage() {
         Permanent taken = addCreatureReady(player1, new KurosTaken());
