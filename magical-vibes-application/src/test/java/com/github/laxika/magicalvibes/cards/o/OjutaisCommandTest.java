@@ -90,6 +90,161 @@ class OjutaisCommandTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Returns a small creature and gains 4 life")
+    void returnsSmallCreatureAndGainsLife() {
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLife(player1, 10);
+
+        castWithModes(new int[]{0, 1}, creature.getId(), List.of());
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertLife(player1, 14);
+    }
+
+    @Test
+    @DisplayName("Returns a small creature and counters a creature spell")
+    void returnsSmallCreatureAndCountersCreatureSpell() {
+        GrizzlyBears deadCreature = new GrizzlyBears();
+        GrizzlyBears creatureSpell = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(deadCreature));
+        harness.setHand(player2, List.of(creatureSpell));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.forceActivePlayer(player2);
+        harness.castCreature(player2, 0);
+        harness.passPriority(player2);
+
+        castWithModes(new int[]{0, 2}, creatureSpell.getId(), List.of(deadCreature.getId()));
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Counters a creature spell and draws a card")
+    void countersCreatureSpellAndDrawsCard() {
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setHand(player2, List.of(creature));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.forceActivePlayer(player2);
+        harness.castCreature(player2, 0);
+        harness.passPriority(player2);
+
+        castWithModes(new int[]{2, 3}, creature.getId(), List.of());
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Return mode rejects a card in an opponent's graveyard")
+    void returnModeRejectsOpponentsGraveyard() {
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.setHand(player1, List.of(new OjutaisCommand()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(
+                player1, 0, 2, new int[]{0, 1}, creature.getId(), List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Return mode rejects a non-creature card with low mana value")
+    void returnModeRejectsNonCreatureCard() {
+        Spellbook artifact = new Spellbook();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.setHand(player1, List.of(new OjutaisCommand()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(
+                player1, 0, 2, new int[]{0, 1}, artifact.getId(), List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot choose the same mode twice")
+    void rejectsRepeatedMode() {
+        harness.setHand(player1, List.of(new OjutaisCommand()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(
+                player1, 0, 2, new int[]{1, 1}, null, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot choose the return mode without a creature target")
+    void returnModeRequiresTarget() {
+        harness.setHand(player1, List.of(new OjutaisCommand()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(
+                player1, 0, 2, new int[]{0, 1}, null, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot choose the counter mode without a creature-spell target")
+    void counterModeRequiresTarget() {
+        harness.setHand(player1, List.of(new OjutaisCommand()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(
+                player1, 0, 2, new int[]{1, 2}, null, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Does not gain life when its only target leaves the graveyard")
+    void doesNotGainLifeWhenOnlyTargetBecomesIllegal() {
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLife(player1, 10);
+        harness.setHand(player1, List.of(new OjutaisCommand()));
+        addMana();
+        harness.castModalInstantWithModes(player1, 0, 2, new int[]{0, 1}, creature.getId(), List.of());
+
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(creature));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Ojutai's Command");
+    }
+
+    @Test
+    @DisplayName("Does not draw when its creature-spell target is countered in response")
+    void doesNotDrawWhenOnlySpellTargetBecomesIllegal() {
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setHand(player2, List.of(creature));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLife(player1, 10);
+        harness.setHand(player1, List.of(new OjutaisCommand(), new OjutaisCommand()));
+        addMana();
+        addMana();
+        harness.forceActivePlayer(player2);
+        harness.castCreature(player2, 0);
+        harness.passPriority(player2);
+        harness.castModalInstantWithModes(player1, 0, 2, new int[]{2, 3}, creature.getId(), List.of());
+        harness.castModalInstantWithModes(player1, 0, 2, new int[]{1, 2}, creature.getId(), List.of());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player1, 14);
+        harness.assertNotInHand(player1, "Grizzly Bears");
+    }
+
     private void castWithModes(int[] modes, java.util.UUID targetId, List<java.util.UUID> targetIds) {
         harness.setHand(player1, List.of(new OjutaisCommand()));
         addMana();
