@@ -82,15 +82,75 @@ class PowerConduitTest extends BaseCardTest {
     @DisplayName("The ability cannot be activated without a counter on a permanent you control")
     void requiresControlledCounter() {
         addConduit();
-        harness.addToBattlefield(player2, new PowerConduit());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new PowerConduit());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null,
-                harness.getPermanentId(player2, "Power Conduit")))
+        assertThatThrownBy(() -> activate(0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("counter");
+    }
+
+    @Test
+    @DisplayName("A permanent with different kinds of counters requires a counter choice")
+    void controllerChoosesWhichKindOfCounterToRemove() {
+        Permanent conduit = addConduit();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        conduit.setCounterCount(CounterType.CHARGE, 1);
+        conduit.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        activate(0, artifact.getId());
+
+        assertThat(conduit.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(conduit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.pendingInteractions).isNotEmpty();
+    }
+
+    @Test
+    @DisplayName("A +1/+1 counter can pay for a charge counter on the same permanent")
+    void convertsCounterOnTargetPermanent() {
+        addConduit();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        artifact.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        activate(0, artifact.getId());
+
+        assertThat(artifact.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(artifact.getCounterCount(CounterType.CHARGE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(artifact.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(artifact.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Counters on opposing permanents cannot pay the activation cost")
+    void cannotRemoveOpponentsCounter() {
+        Permanent conduit = addConduit();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        artifact.setCounterCount(CounterType.CHARGE, 1);
+
+        assertThatThrownBy(() -> activate(0, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("counter");
+
+        assertThat(conduit.isTapped()).isFalse();
+        assertThat(artifact.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Power Conduit can target itself and must tap to pay its cost")
+    void canTargetItselfButCannotActivateAgainWhileTapped() {
+        Permanent conduit = addConduit();
+        conduit.setCounterCount(CounterType.CHARGE, 2);
+
+        activate(0, conduit.getId());
+        harness.passBothPriorities();
+
+        assertThat(conduit.isTapped()).isTrue();
+        assertThat(conduit.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        assertThatThrownBy(() -> activate(0, conduit.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(conduit.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 
     private Permanent addConduit() {
