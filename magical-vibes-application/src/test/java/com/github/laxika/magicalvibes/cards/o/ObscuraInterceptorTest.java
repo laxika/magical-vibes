@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ObscuraInterceptor.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({ObscuraInterceptor.class, GrizzlyBears.class, Mountain.class, Murder.class})
 class ObscuraInterceptorTest extends BaseCardTest {
 
     @Test
@@ -48,10 +49,63 @@ class ObscuraInterceptorTest extends BaseCardTest {
         harness.assertInHand(player2, "Grizzly Bears");
     }
 
+    @Test
+    void mayChooseNotToReturnASpell() {
+        Card targetSpell = castTargetSpellAndInterceptor(new Mountain(), new GrizzlyBears());
+        discardByName("Mountain");
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getId().equals(targetSpell.getId()));
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void connivesWithoutAnySpellToReturn() {
+        harness.setLibrary(player1, List.of(new Mountain()));
+        harness.castFromHand(player1, new ObscuraInterceptor(), "{1}{W}{U}{B}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        discardByName("Mountain");
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.assertOnBattlefield(player1, "Obscura Interceptor");
+    }
+
+    @Test
+    void stillConnivesAndReturnsSpellAfterLeavingBattlefield() {
+        ObscuraInterceptor targetSpell = new ObscuraInterceptor();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, targetSpell, "{1}{W}{U}{B}");
+        harness.passPriority(player2);
+        harness.castFromHand(player1, new ObscuraInterceptor(), "{1}{W}{U}{B}");
+        harness.setLibrary(player1, List.of(new Mountain()));
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Murder()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Obscura Interceptor"));
+        harness.assertInGraveyard(player1, "Obscura Interceptor");
+        harness.passBothPriorities();
+        discardByName("Mountain");
+        harness.handlePermanentChosen(player1, targetSpell.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Obscura Interceptor");
+        harness.assertInGraveyard(player1, "Mountain");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Card castTargetSpellAndInterceptor(Card drawnCard, Card cardToKeep) {
         GrizzlyBears targetSpell = new GrizzlyBears();
-        harness.setHand(player2, List.of(targetSpell));
-        harness.addMana(player2, ManaColor.GREEN, 2);
 
         harness.setHand(player1, List.of(new ObscuraInterceptor(), cardToKeep));
         harness.setLibrary(player1, List.of(drawnCard));
@@ -61,7 +115,7 @@ class ObscuraInterceptorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.forceActivePlayer(player2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, targetSpell, "{1}{G}");
         harness.passPriority(player2);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
