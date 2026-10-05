@@ -18,7 +18,7 @@ class LostLegionTest extends BaseCardTest {
     @Test
     void enteringTheBattlefieldOffersScryTwo() {
         castLostLegion();
-        resolveLostLegionAndEtb();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
         PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
@@ -33,13 +33,75 @@ class LostLegionTest extends BaseCardTest {
         Card secondCard = deck.get(1);
 
         castLostLegion();
-        resolveLostLegionAndEtb();
+        resolveAllTriggers();
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(1, 0), List.of()));
 
         assertThat(deck).containsSubsequence(secondCard, topCard);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    void scryCanKeepOneCardAndBottomTheOther() {
+        Card first = new LostLegion();
+        Card second = new LostLegion();
+        Card third = new LostLegion();
+        harness.setLibrary(player1, List.of(first, second, third));
+        List<Card> opponentLibrary = List.copyOf(gd.playerDecks.get(player2.getId()));
+
+        castLostLegion();
+        resolveAllTriggers();
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry.playerId()).isEqualTo(player1.getId());
+        assertThat(scry.cards()).containsExactly(first, second);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(1), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, third, first);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(opponentLibrary);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void scryCanBottomBothCardsInEitherOrder() {
+        Card first = new LostLegion();
+        Card second = new LostLegion();
+        Card third = new LostLegion();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        castLostLegion();
+        resolveAllTriggers();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third, second, first);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void scryWithOneCardLooksAtOnlyThatCard() {
+        Card onlyCard = new LostLegion();
+        harness.setLibrary(player1, List.of(onlyCard));
+
+        castLostLegion();
+        resolveAllTriggers();
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry.cards()).containsExactly(onlyCard);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void scryWithAnEmptyLibraryFinishesWithoutAChoice() {
+        harness.setLibrary(player1, List.of());
+
+        castLostLegion();
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Lost Legion");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
     private void castLostLegion() {
         harness.setHand(player1, List.of(new LostLegion()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -47,8 +109,4 @@ class LostLegionTest extends BaseCardTest {
         harness.castCreature(player1, 0);
     }
 
-    private void resolveLostLegionAndEtb() {
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-    }
 }
