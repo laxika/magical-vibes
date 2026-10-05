@@ -55,4 +55,42 @@ class PoolResourcesTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(first.getId(), second.getId());
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
     }
+
+    @Test
+    void promisedGiftSeeksOnlyAvailableNonlandWithoutDrawingOrReorderingLands() {
+        Forest firstLand = new Forest();
+        PoolResources nonland = new PoolResources();
+        Forest secondLand = new Forest();
+        harness.setHand(player1, List.of(new PoolResources()));
+        harness.setLibrary(player1, List.of(firstLand, nonland, secondLand));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstantWithGift(player1, 0, null, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(nonland);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(firstLand, secondLand);
+        assertThat(findPermanents(player2, "Fish")).hasSize(1);
+        assertThat(findPermanent(player2, "Fish").isTapped()).isTrue();
+        assertThat(findPermanents(player1, "Fish")).isEmpty();
+    }
+
+    @Test
+    void promisedGiftStillCreatesFishWhenLibraryContainsOnlyLands() {
+        Forest firstLand = new Forest();
+        Forest secondLand = new Forest();
+        harness.setHand(player1, List.of(new PoolResources()));
+        harness.setLibrary(player1, List.of(firstLand, secondLand));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstantWithGift(player1, 0, null, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(firstLand, secondLand);
+        assertThat(findPermanents(player2, "Fish")).hasSize(1);
+        assertThat(findPermanent(player2, "Fish").isTapped()).isTrue();
+    }
 }
