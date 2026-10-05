@@ -56,6 +56,12 @@ class InformationDealerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder).isNotNull();
+        assertThat(reorder.cards()).containsExactly(topCard);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0)));
+
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, secondCard);
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
@@ -73,6 +79,48 @@ class InformationDealerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, secondCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void reordersEntireLibraryWhenThereAreMoreWizardsThanCards() {
+        addCreatureReady(player1, new InformationDealer());
+        addCreatureReady(player1, new InformationDealer());
+        addCreatureReady(player2, new InformationDealer());
+        Card topCard = new Forest();
+        Card secondCard = new Island();
+        Card opponentCard = new Mountain();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(topCard, secondCard));
+        harness.setLibrary(player2, List.of(opponentCard));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder).isNotNull();
+        assertThat(reorder.cards()).containsExactly(topCard, secondCard);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondCard, topCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void emptyLibraryDoesNotRequireAnInteraction() {
+        addCreatureReady(player1, new InformationDealer());
+        addCreatureReady(player2, new InformationDealer());
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
     }
