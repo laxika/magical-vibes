@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Humble;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.UUID;
+import java.util.List;
 
 @CardUsed({KumanoMasterYamabushi.class, GrizzlyBears.class, LlanowarElves.class,
         ProdigalPyromancer.class})
@@ -111,5 +113,66 @@ class KumanoMasterYamabushiTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Kumano can activate repeatedly while summoning sick")
+    void canPingRepeatedlyWithoutHaste() {
+        harness.addToBattlefield(player1, new KumanoMasterYamabushi());
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Kumano's replacement stops applying after it leaves the battlefield")
+    void replacementStopsWhenKumanoDies() {
+        addCreatureReady(player1, new KumanoMasterYamabushi());
+        addCreatureReady(player1, new ProdigalPyromancer());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.RED, 10);
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID kumanoId = harness.getPermanentId(player1, "Kumano, Master Yamabushi");
+
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.passBothPriorities();
+        for (int i = 0; i < 4; i++) {
+            harness.activateAbility(player1, 0, null, kumanoId);
+            harness.passBothPriorities();
+        }
+        harness.assertNotOnBattlefield(player1, "Kumano, Master Yamabushi");
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(isExiled("Grizzly Bears")).isFalse();
+    }
+
+    @Test
+    @CardUsed({Humble.class})
+    @DisplayName("Losing Kumano's abilities disables its exile replacement")
+    void replacementStopsWhenKumanoLosesAbilities() {
+        addCreatureReady(player1, new KumanoMasterYamabushi());
+        addCreatureReady(player1, new ProdigalPyromancer());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.RED, 2);
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Humble()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player1, "Kumano, Master Yamabushi"));
+        harness.activateAbility(player1, 1, null, targetId);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(isExiled("Grizzly Bears")).isFalse();
     }
 }
