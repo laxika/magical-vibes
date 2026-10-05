@@ -109,4 +109,42 @@ class MutilateTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, mongrel)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, mongrel)).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("Creatures entering after resolution are unaffected")
+    void doesNotDebuffCreaturesEnteringLater() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent existingMongrel = harness.addToBattlefieldAndReturn(player2, new WildMongrel());
+
+        castMutilate();
+        harness.castFromHand(player1, new WildMongrel(), "{1}{G}");
+        harness.passBothPriorities();
+
+        Permanent laterMongrel = findPermanent(player1, "Wild Mongrel");
+        assertThat(gqs.getEffectivePower(gd, existingMongrel)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, existingMongrel)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, laterMongrel)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterMongrel)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The debuff does not change when more Swamps enter after resolution")
+    void locksSwampCountAtResolution() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent mongrel = harness.addToBattlefieldAndReturn(player2, new WildMongrel());
+
+        castMutilate();
+        harness.enterBattlefieldAndReturn(player1, new Swamp());
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player2, "Wild Mongrel");
+        assertThat(gqs.getEffectivePower(gd, mongrel)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, mongrel)).isEqualTo(1);
+    }
 }
