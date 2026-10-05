@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.b.BraidwoodCup;
 import com.github.laxika.magicalvibes.cards.g.GoliathBeetle;
 import com.github.laxika.magicalvibes.cards.r.RecklessAbandon;
+import com.github.laxika.magicalvibes.cards.r.Rescue;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PrivateResearch.class, GoliathBeetle.class, RecklessAbandon.class, BraidwoodCup.class})
+@CardUsed({PrivateResearch.class, GoliathBeetle.class, RecklessAbandon.class, BraidwoodCup.class, Rescue.class})
 class PrivateResearchTest extends BaseCardTest {
 
     @Test
@@ -126,11 +127,69 @@ class PrivateResearchTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(research);
     }
 
+    @Test
+    @DisplayName("Private Research does not trigger during the opponent's upkeep")
+    void opponentUpkeepDoesNotAddPageCounter() {
+        Permanent research = addResearchAttachedTo(player1, player2);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(research.getCounterCount(CounterType.PAGE)).isZero();
+    }
+
+    @Test
+    @DisplayName("An enchanted creature dying with no page counters draws no cards")
+    void enchantedCreatureDeathWithNoCountersDrawsNothing() {
+        Permanent research = addResearchAttachedTo(player1, player1);
+        int handSize = gd.playerHands.get(player1.getId()).size();
+
+        killWithRecklessAbandon(findAttachedCreature(research));
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
+        harness.assertInGraveyard(player1, "Private Research");
+    }
+
+    @Test
+    @DisplayName("Returning the enchanted creature to hand does not trigger a draw")
+    void enchantedCreatureReturnedToHandDoesNotDraw() {
+        Permanent research = addResearchAttachedTo(player1, player1);
+        research.setCounterCount(CounterType.PAGE, 2);
+        Permanent creature = findAttachedCreature(research);
+        harness.setHand(player1, List.of(new Rescue()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Goliath Beetle");
+        harness.assertInGraveyard(player1, "Private Research");
+    }
+
+    @Test
+    @DisplayName("Sacrificing the enchanted creature as a spell cost triggers the draw")
+    void enchantedCreatureSacrificedAsCostDrawsCards() {
+        Permanent research = addResearchAttachedTo(player1, player1);
+        research.setCounterCount(CounterType.PAGE, 2);
+        Permanent creature = findAttachedCreature(research);
+        harness.setHand(player1, List.of(new RecklessAbandon()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castSorceryWithSacrifice(player1, 0, player2.getId(), creature.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.assertInGraveyard(player1, "Private Research");
+        harness.assertInGraveyard(player1, "Goliath Beetle");
+        harness.assertLife(player2, 16);
+    }
+
     private Permanent addResearchAttachedTo(Player auraController, Player creatureController) {
         Permanent creature = harness.addToBattlefieldAndReturn(creatureController, new GoliathBeetle());
-        Permanent research = new Permanent(new PrivateResearch());
+        Permanent research = harness.addToBattlefieldAndReturn(auraController, new PrivateResearch());
         research.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(auraController.getId()).add(research);
         return research;
     }
 
