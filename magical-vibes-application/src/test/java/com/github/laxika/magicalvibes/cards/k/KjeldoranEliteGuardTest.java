@@ -184,4 +184,59 @@ class KjeldoranEliteGuardTest extends BaseCardTest {
     private int indexOf(Permanent perm) {
         return gd.playerBattlefields.get(player1.getId()).indexOf(perm);
     }
+
+    @Test
+    @DisplayName("The ability still boosts its target after the Guard leaves in response")
+    void resolvesAfterSourceLeaves() {
+        Permanent guard = addCreatureReady(player1, new KjeldoranEliteGuard());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        int basePower = gqs.getEffectivePower(gd, bears);
+        int baseToughness = gqs.getEffectiveToughness(gd, bears);
+
+        enterCombat();
+        harness.activateAbility(player1, indexOf(guard), 0, null, bears.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, guard));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(basePower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(baseToughness + 2);
+        harness.assertInHand(player1, "Kjeldoran Elite Guard");
+    }
+
+    @Test
+    @DisplayName("A target leaving before resolution does not sacrifice the Guard")
+    void targetLeavesBeforeResolution() {
+        Permanent guard = addCreatureReady(player1, new KjeldoranEliteGuard());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+
+        enterCombat();
+        harness.activateAbility(player1, indexOf(guard), 0, null, bears.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, bears));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Kjeldoran Elite Guard");
+        harness.assertInHand(player1, "Balduvian Bears");
+        assertThat(guard.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The delayed trigger cannot sacrifice a Guard that left and returned")
+    void doesNotSacrificeReturnedSource() {
+        KjeldoranEliteGuard card = new KjeldoranEliteGuard();
+        Permanent guard = addCreatureReady(player1, card);
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+
+        enterCombat();
+        harness.activateAbility(player1, indexOf(guard), 0, null, bears.getId());
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, guard));
+        gd.playerHands.get(player1.getId()).remove(card);
+        Permanent returned = harness.addToBattlefieldAndReturn(player1, card);
+        assertThat(returned.getId()).isNotEqualTo(guard.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, bears));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Kjeldoran Elite Guard");
+        harness.assertInHand(player1, "Balduvian Bears");
+    }
 }
