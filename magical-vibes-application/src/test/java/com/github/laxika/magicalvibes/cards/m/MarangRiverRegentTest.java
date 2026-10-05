@@ -88,6 +88,64 @@ class MarangRiverRegentTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
     }
 
+    @Test
+    @DisplayName("ETB can return a single other Regent controlled by its controller")
+    void returnsOneOtherRegentYouControl() {
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new MarangRiverRegent());
+        MarangRiverRegent card = new MarangRiverRegent();
+        harness.setHand(player1, List.of(card));
+        addCreatureMana();
+
+        harness.castCreature(player1, 0, List.of(other.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(other.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .hasSize(1)
+                .allMatch(permanent -> permanent.getCard() == card);
+    }
+
+    @Test
+    @DisplayName("ETB cannot choose three targets")
+    void cannotChooseThreeTargets() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new MarangRiverRegent());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new MarangRiverRegent());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new MarangRiverRegent());
+        harness.setHand(player1, List.of(new MarangRiverRegent()));
+        addCreatureMana();
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0,
+                List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Omen remains out of the library until the discard is completed")
+    void omenShufflesOnlyAfterDiscard() {
+        MarangRiverRegent card = new MarangRiverRegent();
+        harness.setHand(player1, List.of(card));
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island(), new Island()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1).doesNotContain(card);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2)
+                .filteredOn(libraryCard -> libraryCard == card).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1).doesNotContain(card);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
     private void addCreatureMana() {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
