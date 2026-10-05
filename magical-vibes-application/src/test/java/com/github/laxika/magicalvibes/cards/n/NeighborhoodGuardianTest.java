@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.SavannahLions;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -27,8 +28,7 @@ class NeighborhoodGuardianTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
@@ -60,10 +60,69 @@ class NeighborhoodGuardianTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotTriggerForItsOwnEntry() {
+        harness.setHand(player1, List.of(new NeighborhoodGuardian()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Neighborhood Guardian");
+    }
+
+    @Test
+    void doesNotTriggerForOpponentCreatureEntry() {
+        harness.addToBattlefield(player1, new NeighborhoodGuardian());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castCreature(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void canBoostItselfAndBoostExpiresAtCleanup() {
+        Permanent guardian = harness.addToBattlefieldAndReturn(player1, new NeighborhoodGuardian());
+        harness.setHand(player1, List.of(new NeighborhoodGuardian()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, guardian.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, guardian)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, guardian)).isEqualTo(3);
+
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(gqs.getEffectivePower(gd, guardian)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, guardian)).isEqualTo(2);
+    }
+
+    @Test
+    void canBoostTheEnteringCreature() {
+        harness.addToBattlefield(player1, new NeighborhoodGuardian());
+        harness.setHand(player1, List.of(new NeighborhoodGuardian()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        Permanent entering = findPermanents(player1, "Neighborhood Guardian").get(1);
+        harness.handlePermanentChosen(player1, entering.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, entering)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, entering)).isEqualTo(3);
     }
 }
