@@ -46,4 +46,31 @@ class JacquesLeVertTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, opponentApes)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentApes)).isEqualTo(2);
     }
+
+    @Test
+    void boostsExistingGreenCreaturesWhenItEnters() {
+        Permanent apes = harness.addToBattlefieldAndReturn(player1, new BarbaryApes());
+
+        assertThat(gqs.getEffectiveToughness(gd, apes)).isEqualTo(2);
+
+        harness.enterBattlefieldAndReturn(player1, new JacquesLeVert());
+
+        assertThat(gqs.getEffectivePower(gd, apes)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, apes)).isEqualTo(4);
+    }
+
+    @Test
+    void boostEndsWhenItLeavesTheBattlefield() {
+        Permanent jacques = harness.addToBattlefieldAndReturn(player1, new JacquesLeVert());
+        Permanent apes = harness.addToBattlefieldAndReturn(player1, new BarbaryApes());
+
+        assertThat(gqs.getEffectiveToughness(gd, apes)).isEqualTo(4);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, jacques));
+
+        harness.assertInHand(player1, "Jacques le Vert");
+        harness.assertNotOnBattlefield(player1, "Jacques le Vert");
+        assertThat(gqs.getEffectivePower(gd, apes)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, apes)).isEqualTo(2);
+    }
 }
