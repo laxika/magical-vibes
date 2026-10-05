@@ -34,4 +34,30 @@ class MoonriseClericTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
+
+    @Test
+    @DisplayName("Each attacking Cleric gains life independently")
+    void eachAttackingClericGainsLife() {
+        addCreatureReady(player1, new MoonriseCleric());
+        addCreatureReady(player1, new MoonriseCleric());
+        addCreatureReady(player1, new MoonriseCleric());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        declareAttackers(player1, List.of(0, 1));
+        resolveAllTriggers();
+
+        harness.assertLife(player1, lifeBefore + 2);
+    }
+
+    @Test
+    @DisplayName("An opposing Cleric gains life for its controller")
+    void opposingClericGainsLifeForItsController() {
+        addCreatureReady(player2, new MoonriseCleric());
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        harness.assertLife(player2, lifeBefore + 1);
+    }
 }
