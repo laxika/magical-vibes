@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MasterSkald.class, GrizzlyBears.class, Pacifism.class, Spellbook.class, Ornithopter.class})
 class MasterSkaldTest extends BaseCardTest {
 
     @Test
@@ -83,13 +85,99 @@ class MasterSkaldTest extends BaseCardTest {
                 .containsExactly(secondCreature);
     }
 
+    @Test
+    @DisplayName("Returns a targeted enchantment after exiling a creature")
+    void returnsEnchantment() {
+        GrizzlyBears creature = new GrizzlyBears();
+        Pacifism enchantment = new Pacifism();
+        harness.setGraveyard(player1, List.of(creature, enchantment));
+
+        castMasterSkald();
+        harness.handleMultipleCardsChosen(player1, List.of(enchantment.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(creature);
+        harness.assertInHand(player1, "Pacifism");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot return the target without a creature card to exile")
+    void noCreatureToExileDoesNotReturnTarget() {
+        Spellbook artifact = new Spellbook();
+        harness.setGraveyard(player1, List.of(artifact));
+
+        castMasterSkald();
+        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        harness.assertInGraveyard(player1, "Spellbook");
+        harness.assertNotInHand(player1, "Spellbook");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot exile a creature when there is no legal return target")
+    void noLegalReturnTargetDoesNotExileCreature() {
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setGraveyard(player2, List.of(new Spellbook(), new Pacifism()));
+
+        castMasterSkald();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Spellbook");
+        harness.assertInGraveyard(player2, "Pacifism");
+    }
+
+    @Test
+    @DisplayName("Exiling the targeted artifact creature does not return it")
+    void canExileTargetedArtifactCreature() {
+        Ornithopter creature = new Ornithopter();
+        harness.setGraveyard(player1, List.of(creature));
+
+        castMasterSkald();
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(creature);
+        harness.assertNotInHand(player1, "Ornithopter");
+        harness.assertNotInGraveyard(player1, "Ornithopter");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An illegal return target prevents the entire ability from resolving")
+    void targetLeavingGraveyardPreventsCreatureExile() {
+        GrizzlyBears creature = new GrizzlyBears();
+        Spellbook artifact = new Spellbook();
+        harness.setGraveyard(player1, List.of(creature, artifact));
+
+        castMasterSkald();
+        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setExile(player1, List.of(artifact));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(artifact);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Spellbook");
+    }
+
     private void castMasterSkald() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new MasterSkald()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MasterSkald(), "{4}{W}");
         harness.passBothPriorities();
     }
 }
