@@ -33,12 +33,8 @@ class NamorTheSubMarinerTest extends BaseCardTest {
     @DisplayName("A noncreature spell creates one Merfolk token per blue mana symbol")
     void createsTokensForBlueManaSymbols() {
         Permanent namor = harness.addToBattlefieldAndReturn(player1, new NamorTheSubMariner());
-        harness.setHand(player1, List.of(new Concentrate()));
         harness.setLibrary(player1, List.of(new MerfolkSpy(), new MerfolkSpy(), new MerfolkSpy()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castSorcery(player1, 0, List.of());
+        harness.castFromHand(player1, new Concentrate(), "{2}{U}{U}");
 
         assertThat(gd.stack).anyMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && entry.getCard().getName().equals("Namor the Sub-Mariner"));
@@ -60,9 +56,7 @@ class NamorTheSubMarinerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new NamorTheSubMariner());
         harness.addToBattlefield(player1, new MerfolkSpy());
 
-        harness.setHand(player1, List.of(new MerfolkSpy()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MerfolkSpy(), "{U}");
         assertThat(namorTriggers()).isZero();
         harness.passBothPriorities();
 
@@ -76,6 +70,52 @@ class NamorTheSubMarinerTest extends BaseCardTest {
 
         assertThat(namorTriggers()).isZero();
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("An opponent's blue noncreature spell does not trigger Namor")
+    void ignoresOpponentsSpell() {
+        harness.addToBattlefield(player2, new NamorTheSubMariner());
+        harness.setLibrary(player1, List.of(new MerfolkSpy(), new MerfolkSpy(), new MerfolkSpy()));
+
+        harness.castFromHand(player1, new Concentrate(), "{2}{U}{U}");
+
+        assertThat(namorTriggers()).isZero();
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Namor does not trigger on its own cast and counts itself after entering")
+    void doesNotTriggerOnOwnCast() {
+        harness.castFromHand(player1, new NamorTheSubMariner(), "{1}{U}{U}");
+
+        assertThat(namorTriggers()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        Permanent namor = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(gqs.getEffectivePower(gd, namor)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, namor)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Power and toughness boosts apply after Namor's characteristic ability")
+    void boostAppliesAfterMerfolkCount() {
+        Permanent namor = harness.addToBattlefieldAndReturn(player1, new NamorTheSubMariner());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstant(player1, 0, namor.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, namor)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, namor)).isEqualTo(7);
+
+        harness.addToBattlefield(player1, new MerfolkSpy());
+
+        assertThat(gqs.getEffectivePower(gd, namor)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, namor)).isEqualTo(7);
     }
 
     private long namorTriggers() {
