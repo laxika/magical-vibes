@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.o.OrnithopterOfParadise;
+import com.github.laxika.magicalvibes.cards.s.SanctumWeaver;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,8 +15,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PropheticTitan.class, Forest.class, GrizzlyBears.class, Island.class})
+@CardUsed({PropheticTitan.class, Forest.class, GrizzlyBears.class, Island.class,
+        OrnithopterOfParadise.class, SanctumWeaver.class})
 class PropheticTitanTest extends BaseCardTest {
 
     private static final String DAMAGE_MODE = "This creature deals 4 damage to any target.";
@@ -43,9 +45,7 @@ class PropheticTitanTest extends BaseCardTest {
 
     @Test
     void withDeliriumChoosesBothModes() {
-        harness.setGraveyard(player1, List.of(
-                typedCard(CardType.CREATURE), typedCard(CardType.LAND),
-                typedCard(CardType.ARTIFACT), typedCard(CardType.ENCHANTMENT)));
+        setDelirium();
         GrizzlyBears topCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(topCard, new Forest(), new Island(), new GrizzlyBears()));
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -57,7 +57,7 @@ class PropheticTitanTest extends BaseCardTest {
         harness.handleListChoice(player1, DAMAGE_MODE);
         PendingInteraction.ColorChoice secondChoice =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        assertThat(secondChoice.options()).containsExactly(LIBRARY_MODE, "Done");
+        assertThat(secondChoice.options()).containsExactly(LIBRARY_MODE);
         harness.handleListChoice(player1, LIBRARY_MODE);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
@@ -67,18 +67,150 @@ class PropheticTitanTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
     }
 
+    @Test
+    void damageModeCanTargetAPlayerWithoutLookingAtLibrary() {
+        GrizzlyBears topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+        castTitan();
+
+        harness.handleListChoice(player1, DAMAGE_MODE);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void deliriumDoesNotAllowFinishingAfterOnlyOneMode() {
+        setDelirium();
+        harness.setLibrary(player1, List.of());
+        castTitan();
+
+        harness.handleListChoice(player1, LIBRARY_MODE);
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "Done"))
+                .isInstanceOf(IllegalArgumentException.class);
+        harness.handleListChoice(player1, DAMAGE_MODE);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void losingDeliriumAfterChoosingBothDoesNotRemoveEitherEffect() {
+        setDelirium();
+        GrizzlyBears topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard, new Forest()));
+        castTitan();
+
+        harness.handleListChoice(player1, DAMAGE_MODE);
+        harness.handleListChoice(player1, LIBRARY_MODE);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(topCard.getId()));
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    void illegalDamageTargetPreventsBothModesFromResolving() {
+        setDelirium();
+        GrizzlyBears topCard = new GrizzlyBears();
+        Forest otherCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard, otherCard));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castTitan();
+
+        harness.handleListChoice(player1, DAMAGE_MODE);
+        harness.handleListChoice(player1, LIBRARY_MODE);
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.setGraveyard(player2, List.of(target.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, otherCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void libraryModeRequiresOneCardAndPreservesUntouchedLibraryAboveTheRest() {
+        GrizzlyBears chosen = new GrizzlyBears();
+        Forest first = new Forest();
+        Island second = new Island();
+        GrizzlyBears third = new GrizzlyBears();
+        Island untouched = new Island();
+        harness.setLibrary(player1, List.of(chosen, first, second, third, untouched));
+        castTitan();
+
+        harness.handleListChoice(player1, LIBRARY_MODE);
+        harness.passBothPriorities();
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(untouched);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(
+                untouched, first, second, third);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void singleCardLibraryPutsItsOnlyCardIntoHand() {
+        Forest onlyCard = new Forest();
+        harness.setLibrary(player1, List.of(onlyCard));
+        castTitan();
+
+        harness.handleListChoice(player1, LIBRARY_MODE);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void emptyLibraryDoesNotRequireAChoiceOrCauseADrawLoss() {
+        harness.setLibrary(player1, List.of());
+        castTitan();
+
+        harness.handleListChoice(player1, LIBRARY_MODE);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player1, 20);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    void threeTypesAcrossFourCardsDoNotEnableBothModes() {
+        harness.setGraveyard(player1, List.of(
+                new OrnithopterOfParadise(), new GrizzlyBears(), new Forest(), new Island()));
+        castTitan();
+
+        harness.handleListChoice(player1, DAMAGE_MODE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+    }
+
     private void castTitan() {
-        harness.setHand(player1, List.of(new PropheticTitan()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PropheticTitan(), "{4}{U}{R}");
         harness.passBothPriorities();
     }
 
-    private Card typedCard(CardType type) {
-        Card card = new Card();
-        card.setType(type);
-        return card;
+    private void setDelirium() {
+        harness.setGraveyard(player1, List.of(
+                new OrnithopterOfParadise(), new SanctumWeaver(), new Forest()));
     }
 }
