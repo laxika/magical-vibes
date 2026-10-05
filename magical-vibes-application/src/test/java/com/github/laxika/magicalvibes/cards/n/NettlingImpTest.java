@@ -136,9 +136,8 @@ class NettlingImpTest extends BaseCardTest {
     void rejectsWallAndSummoningSickCreature() {
         addCreatureReady(player1, new NettlingImp());
         Permanent wall = addCreatureReady(player2, new WallOfAir());
-        Permanent fresh = new Permanent(new GrizzlyBears());
+        Permanent fresh = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         fresh.setSummoningSick(true);
-        gd.playerBattlefields.get(player2.getId()).add(fresh);
         setOpponentBeforeAttackers();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, 0, wall.getId()))
@@ -156,6 +155,59 @@ class NettlingImpTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can activate during the opponent's precombat main phase")
+    void activatesBeforeCombat() {
+        Permanent imp = addCreatureReady(player1, new NettlingImp());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 0, 0, target.getId());
+        harness.passBothPriorities();
+        declareAttackers(player2, List.of(0));
+        runEndStep();
+
+        assertThat(imp.isTapped()).isTrue();
+        assertThat(target.isAttackedThisTurn()).isTrue();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("Does not affect a target that changes controller before resolution")
+    void targetChangingControllerBeforeResolutionIsIllegal() {
+        addCreatureReady(player1, new NettlingImp());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        setOpponentBeforeAttackers();
+
+        harness.activateAbility(player1, 0, 0, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerBattlefields.get(player1.getId()).add(target);
+        target.setSummoningSick(true);
+        harness.passBothPriorities();
+        runEndStep();
+
+        assertThat(target.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("Delayed destruction follows the target after it changes controller")
+    void targetChangingControllerAfterResolutionStillDies() {
+        addCreatureReady(player1, new NettlingImp());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        setOpponentBeforeAttackers();
+
+        harness.activateAbility(player1, 0, 0, 0, target.getId());
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerBattlefields.get(player1.getId()).add(target);
+        target.setSummoningSick(true);
+        runEndStep();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
     }
 
     @Test
