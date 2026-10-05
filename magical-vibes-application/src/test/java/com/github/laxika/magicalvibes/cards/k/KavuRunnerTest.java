@@ -75,4 +75,33 @@ class KavuRunnerTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, kavu, Keyword.HASTE)).isTrue();
     }
+
+    @Test
+    @DisplayName("Only regains haste after every opposing white or blue creature leaves")
+    void requiresAllMatchingOpponentCreaturesToLeave() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player1, new KavuRunner());
+        Permanent lancer = harness.addToBattlefieldAndReturn(player2, new BenalishLancer());
+        Permanent raider = harness.addToBattlefieldAndReturn(player2, new ShorelineRaider());
+
+        assertThat(gqs.hasKeyword(gd, kavu, Keyword.HASTE)).isFalse();
+
+        gd.playerBattlefields.get(player2.getId()).remove(lancer);
+        assertThat(gqs.hasKeyword(gd, kavu, Keyword.HASTE)).isFalse();
+
+        gd.playerBattlefields.get(player2.getId()).remove(raider);
+        assertThat(gqs.hasKeyword(gd, kavu, Keyword.HASTE)).isTrue();
+
+        harness.addToBattlefield(player2, new BenalishLancer());
+        assertThat(gqs.hasKeyword(gd, kavu, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Own blue creatures do not prevent haste or receive it from Kavu Runner")
+    void ownBlueCreatureDoesNotPreventOrReceiveHaste() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player1, new KavuRunner());
+        Permanent raider = harness.addToBattlefieldAndReturn(player1, new ShorelineRaider());
+
+        assertThat(gqs.hasKeyword(gd, kavu, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, raider, Keyword.HASTE)).isFalse();
+    }
 }
