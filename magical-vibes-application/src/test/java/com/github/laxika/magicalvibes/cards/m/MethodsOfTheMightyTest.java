@@ -79,11 +79,61 @@ class MethodsOfTheMightyTest extends BaseCardTest {
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Does not resolve the counter mode when its only target becomes untapped")
+    void doesNotPutCountersWhenAllTargetsBecomeIllegal() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.tap();
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castWithoutResolving(new int[]{1, 2}, List.of(target.getId()));
+        target.untap();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Methods of the Mighty");
+    }
+
+    @Test
+    @DisplayName("Resolves the other modes when the tapped creature target becomes untapped")
+    void resolvesRemainingModesWithOneIllegalTarget() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.tap();
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castWithoutResolving(new int[]{0, 1, 2}, List.of(artifact.getId(), target.getId()));
+        target.untap();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Fountain of Youth");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Counter mode ignores noncreature permanents and includes creatures entering before resolution")
+    void putsCountersOnCreaturesPresentAtResolution() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+
+        castWithoutResolving(new int[]{2}, List.of());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertThat(artifact.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
     private void cast(int[] modes, List<java.util.UUID> targets) {
+        castWithoutResolving(modes, targets);
+        harness.passBothPriorities();
+    }
+
+    private void castWithoutResolving(int[] modes, List<java.util.UUID> targets) {
         harness.setHand(player1, List.of(new MethodsOfTheMighty()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castModalInstantWithModes(player1, 0, 1, 3, modes, targets);
-        harness.passBothPriorities();
     }
 }
