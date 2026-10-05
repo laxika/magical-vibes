@@ -70,7 +70,77 @@ class MysteriosMirageTest extends BaseCardTest {
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
+    }
+
+    @Test
+    @DisplayName("Multiple discards still create only one token")
+    void multipleDiscardsCreateOneToken() {
+        harness.addToBattlefield(player1, new MysteriosMirage());
+        harness.addToBattlefield(player1, new PulsatingIllusion());
+        harness.addToBattlefield(player1, new PulsatingIllusion());
+        harness.setHand(player1, List.of(new AvenFlock(), new AvenFlock()));
+
+        for (int permanentIndex = 1; permanentIndex <= 2; permanentIndex++) {
+            harness.activateAbility(player1, permanentIndex, null, null);
+            harness.handleCardChosen(player1, 0);
+            harness.passBothPriorities();
+        }
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Illusion Villain")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's discard does not enable your end-step trigger")
+    void opponentsDiscardDoesNotEnableTrigger() {
+        harness.addToBattlefield(player1, new MysteriosMirage());
+        harness.addToBattlefield(player2, new PulsatingIllusion());
+        harness.setHand(player2, List.of(new AvenFlock()));
+        harness.ensurePriority(player2);
+        harness.activateAbility(player2, 0, null, null);
+        harness.handleCardChosen(player2, 0);
+        harness.passBothPriorities();
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Illusion Villain")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A discard before Mirage enters still enables its end-step trigger")
+    void discardBeforeMirageEntersCounts() {
+        harness.addToBattlefield(player1, new PulsatingIllusion());
+        harness.setHand(player1, List.of(new AvenFlock()));
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.addToBattlefield(player1, new MysteriosMirage());
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Illusion Villain")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Discarding after the end step begins does not trigger Mirage")
+    void discardDuringEndStepIsTooLate() {
+        harness.addToBattlefield(player1, new MysteriosMirage());
+        harness.addToBattlefield(player1, new PulsatingIllusion());
+        harness.setHand(player1, List.of(new AvenFlock()));
+        advanceToEndStep(player1);
+        assertThat(gd.stack).isEmpty();
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Illusion Villain")).isEmpty();
     }
 }
