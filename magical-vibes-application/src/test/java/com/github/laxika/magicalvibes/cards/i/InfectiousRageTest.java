@@ -77,10 +77,8 @@ class InfectiousRageTest extends BaseCardTest {
     }
 
     private Permanent attachRageTo(Player controller, Permanent creature) {
-        Card aura = new InfectiousRage();
-        Permanent auraPermanent = new Permanent(aura);
+        Permanent auraPermanent = harness.addToBattlefieldAndReturn(controller, new InfectiousRage());
         auraPermanent.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(controller.getId()).add(auraPermanent);
         return auraPermanent;
     }
 
@@ -144,7 +142,7 @@ class InfectiousRageTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, shroudedCreature, Keyword.SHROUD)).isTrue();
 
-        attachRageToForJudReview(player1, dyingCreature);
+        attachRageTo(player1, dyingCreature);
         harness.runStateBasedActions();
         harness.passBothPriorities();
 
@@ -155,9 +153,9 @@ class InfectiousRageTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("When every creature is protected from red, Infectious Rage stays in the graveyard")
+    @DisplayName("When the only remaining creature is protected from red, Infectious Rage stays in the graveyard")
     void doesNotAttachToCreatureProtectedFromRed() {
-        Permanent dyingCreature = addCreatureReady(player1, new BattlewiseAven());
+        Permanent dyingCreature = addCreatureReady(player2, new BattlewiseAven());
         Permanent protectedCreature = addCreatureReady(player1, new BattlewiseAven());
         harness.setGraveyard(player1, List.of(new Glory()));
         harness.forceActivePlayer(player1);
@@ -173,26 +171,44 @@ class InfectiousRageTest extends BaseCardTest {
         assertThat(gqs.hasProtectionFrom(gd, protectedCreature, CardColor.RED))
                 .isTrue();
 
-        attachRageToForJudReview(player1, dyingCreature);
-        destroyCreatureForJudReview(dyingCreature);
+        attachRageTo(player1, dyingCreature);
+        destroyCreature(dyingCreature);
 
         harness.assertInGraveyard(player1, "Infectious Rage");
         harness.assertNotOnBattlefield(player1, "Infectious Rage");
     }
 
-    private Permanent attachRageToForJudReview(Player controller, Permanent creature) {
-        Permanent auraPermanent = harness.addToBattlefieldAndReturn(controller, new InfectiousRage());
-        auraPermanent.setAttachedTo(creature.getId());
-        return auraPermanent;
+    @Test
+    @DisplayName("Returns under its owner's control when an opponent's enchanted creature dies")
+    void returnsAfterOpponentsCreatureDies() {
+        Permanent dyingCreature = addCreatureReady(player2, new SylvanSafekeeper());
+        Permanent survivor = addCreatureReady(player2, new BattlewiseAven());
+        attachRageTo(player1, dyingCreature);
+
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        Permanent aura = findPermanent(player1, "Infectious Rage");
+        assertThat(aura.getAttachedTo()).isEqualTo(survivor.getId());
+        harness.assertNotOnBattlefield(player2, "Infectious Rage");
+        harness.assertNotInGraveyard(player1, "Infectious Rage");
     }
 
-    private void destroyCreatureForJudReview(Permanent creature) {
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new ToxicStench()));
-        harness.addMana(player2, ManaColor.BLACK, 2);
-        harness.castAndResolveInstant(player2, 0, creature.getId());
-        harness.passBothPriorities();
+    @Test
+    @DisplayName("Does not return if the Aura leaves the graveyard before its trigger resolves")
+    void doesNotReturnFromExile() {
+        Permanent dyingCreature = addCreatureReady(player1, new SylvanSafekeeper());
+        addCreatureReady(player2, new BattlewiseAven());
+        Card auraCard = attachRageTo(player1, dyingCreature).getCard();
+
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Infectious Rage");
+        assertThat(gd.stack).hasSize(1);
+        harness.setGraveyard(player1, List.of(dyingCreature.getCard()));
+        harness.setExile(player1, List.of(auraCard));
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Infectious Rage");
+        assertThat(gd.findExiledCard(auraCard.getId())).isNotNull();
     }
 }
