@@ -32,6 +32,18 @@ class NezumiCutthroatTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A black Nezumi Cutthroat still cannot block another Nezumi Cutthroat")
+    void cannotBlockAnotherCutthroatDespiteBeingBlack() {
+        addCreatureReady(player1, new NezumiCutthroat());
+        addCreatureReady(player2, new NezumiCutthroat());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid blocker index");
+    }
+
+    @Test
     @DisplayName("Fear stops a non-black, non-artifact creature from blocking Nezumi Cutthroat")
     void fearStopsGreenBlocker() {
         addCreatureReady(player1, new NezumiCutthroat());
