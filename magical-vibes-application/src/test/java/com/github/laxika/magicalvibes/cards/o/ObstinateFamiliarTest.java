@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.s.SharedFate;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ObstinateFamiliar.class, Mountain.class, Forest.class})
+@CardUsed({ObstinateFamiliar.class, Mountain.class, Forest.class, Humility.class, SharedFate.class})
 class ObstinateFamiliarTest extends BaseCardTest {
 
     private void resolveDraw() {
@@ -122,5 +124,61 @@ class ObstinateFamiliarTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
                 .containsExactly("Mountain", "Forest");
+    }
+
+    @Test
+    @DisplayName("A Familiar with no abilities cannot replace a draw")
+    void humilityRemovesDrawReplacement() {
+        harness.addToBattlefield(player1, new ObstinateFamiliar());
+        harness.addToBattlefield(player2, new Humility());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Mountain(), new Forest()));
+
+        resolveDraw();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInHand(player1, "Mountain");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Forest");
+    }
+
+    @Test
+    @DisplayName("Familiar can skip a draw instead of applying Shared Fate")
+    void canSkipDrawBeforeSharedFateApplies() {
+        harness.addToBattlefield(player1, new ObstinateFamiliar());
+        harness.addToBattlefield(player2, new SharedFate());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Mountain()));
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        resolveDraw();
+
+        assertThat(gd.playerDecks.get(player2.getId())).extracting(Card::getName)
+                .containsExactly("Forest");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Mountain");
+        assertThat(gd.playerDecks.get(player2.getId())).extracting(Card::getName)
+                .containsExactly("Forest");
+    }
+
+    @Test
+    @DisplayName("Declining the replacement does not prevent skipping the next draw")
+    void decliningFirstDrawStillAllowsSkippingSecond() {
+        harness.addToBattlefield(player1, new ObstinateFamiliar());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Mountain(), new Forest()));
+
+        resolveTwoDraws();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Mountain");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Forest");
     }
 }
