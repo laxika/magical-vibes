@@ -5,12 +5,14 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({OozeFlux.class, GrizzlyBears.class})
 class OozeFluxTest extends BaseCardTest {
 
     @Test
@@ -87,6 +89,67 @@ class OozeFluxTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(theirBears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(countPermanents(player1, "Ooze")).isZero();
+    }
+
+    @Test
+    @DisplayName("Pays counters before resolution and combines counters from multiple creatures")
+    void combinesCountersFromMultipleCreaturesAsAnActivationCost() {
+        addFlux();
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        first.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        second.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        addMana();
+
+        harness.activateAbility(player1, 0, 0, 2, null);
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(countPermanents(player1, "Ooze")).isZero();
+
+        harness.passBothPriorities();
+
+        Permanent ooze = findPermanent(player1, "Ooze");
+        assertThat(gqs.getEffectivePower(gd, ooze)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ooze)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Lets the controller choose which creatures supply the counters")
+    void choosesTheCounterDistribution() {
+        addFlux();
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        first.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        second.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        addMana();
+
+        harness.activateAbility(player1, 0, 0, 3, null);
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+
+        Permanent ooze = findPermanent(player1, "Ooze");
+        assertThat(gqs.getEffectivePower(gd, ooze)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ooze)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Counters on a noncreature permanent cannot pay the cost")
+    void ignoresNoncreatureCounters() {
+        addFlux();
+        Permanent flux = findPermanent(player1, "Ooze Flux");
+        flux.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        addMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, 1, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(flux.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(countPermanents(player1, "Ooze")).isZero();
     }
 
