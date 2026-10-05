@@ -5,9 +5,13 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.h.HeadwaterSentries;
+import com.github.laxika.magicalvibes.cards.j.JadeGuardian;
+import com.github.laxika.magicalvibes.cards.r.RiverHeraldsBoon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +21,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Pounce.class, GrizzlyBears.class, HillGiant.class, LlanowarElves.class,
+        HeadwaterSentries.class, JadeGuardian.class, RiverHeraldsBoon.class})
 class PounceTest extends BaseCardTest {
 
     @Test
@@ -29,8 +35,7 @@ class PounceTest extends BaseCardTest {
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID elvesId = harness.getPermanentId(player2, "Llanowar Elves");
-        harness.castInstant(player1, 0, List.of(bearId, elvesId));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(bearId, elvesId));
 
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
         harness.assertInGraveyard(player2, "Llanowar Elves");
@@ -47,8 +52,7 @@ class PounceTest extends BaseCardTest {
 
         UUID myBearId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID theirBearId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, List.of(myBearId, theirBearId));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(myBearId, theirBearId));
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -66,8 +70,7 @@ class PounceTest extends BaseCardTest {
 
         UUID giantId = harness.getPermanentId(player1, "Hill Giant");
         UUID elvesId = harness.getPermanentId(player2, "Llanowar Elves");
-        harness.castInstant(player1, 0, List.of(giantId, elvesId));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(giantId, elvesId));
 
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
         harness.assertInGraveyard(player2, "Llanowar Elves");
@@ -168,5 +171,56 @@ class PounceTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void neitherFightsWhenFirstTargetChangesController() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new HeadwaterSentries());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new HeadwaterSentries());
+        harness.setHand(player1, List.of(new Pounce()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        gd.playerBattlefields.get(player2.getId()).add(first);
+        harness.passBothPriorities();
+
+        assertThat(first.getMarkedDamage()).isZero();
+        assertThat(second.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Pounce");
+    }
+
+    @Test
+    void neitherFightsWhenSecondTargetChangesController() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new HeadwaterSentries());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new HeadwaterSentries());
+        harness.setHand(player1, List.of(new Pounce()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(second);
+        gd.playerBattlefields.get(player1.getId()).add(second);
+        harness.passBothPriorities();
+
+        assertThat(first.getMarkedDamage()).isZero();
+        assertThat(second.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Pounce");
+    }
+
+    @Test
+    void ownHexproofCreatureCanFightAndUsesPowerAtResolution() {
+        Permanent guardian = harness.addToBattlefieldAndReturn(player1, new JadeGuardian());
+        Permanent sentries = harness.addToBattlefieldAndReturn(player2, new HeadwaterSentries());
+        harness.setHand(player1, List.of(new Pounce(), new RiverHeraldsBoon()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castInstant(player1, 0, List.of(guardian.getId(), sentries.getId()));
+        harness.castInstant(player1, 0, List.of(guardian.getId(), guardian.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Jade Guardian");
+        harness.assertOnBattlefield(player2, "Headwater Sentries");
+        assertThat(guardian.getMarkedDamage()).isEqualTo(2);
+        assertThat(sentries.getMarkedDamage()).isEqualTo(4);
     }
 }
