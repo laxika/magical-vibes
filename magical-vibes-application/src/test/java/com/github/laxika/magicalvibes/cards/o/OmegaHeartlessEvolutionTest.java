@@ -69,6 +69,55 @@ class OmegaHeartlessEvolutionTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Gains life even when no optional target is chosen")
+    void gainsLifeWithoutChoosingATarget() {
+        harness.setLife(player1, 10);
+        harness.addToBattlefield(player1, new EvolvingWilds());
+        Permanent unchosen = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castOmega(List.of());
+
+        assertThat(unchosen.isTapped()).isFalse();
+        assertThat(unchosen.getCounterCount(CounterType.STUN)).isZero();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(11);
+    }
+
+    @Test
+    @DisplayName("Counts only the controller's nonbasic lands when the trigger resolves")
+    void countsNonbasicLandsAtResolution() {
+        harness.setLife(player1, 10);
+        harness.addToBattlefield(player1, new EvolvingWilds());
+        harness.addToBattlefield(player2, new EvolvingWilds());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setTapped(true);
+        prepareCast();
+        harness.castCreature(player1, 0, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        harness.addToBattlefield(player1, new EvolvingWilds());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(2);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(12);
+    }
+
+    @Test
+    @DisplayName("Gains no life when the only chosen target leaves before resolution")
+    void doesNotGainLifeWhenAllChosenTargetsAreIllegal() {
+        harness.setLife(player1, 10);
+        harness.addToBattlefield(player1, new EvolvingWilds());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareCast();
+        harness.castCreature(player1, 0, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(10);
+    }
     private void castOmega(List<java.util.UUID> targetIds) {
         prepareCast();
         harness.castCreature(player1, 0, targetIds);
