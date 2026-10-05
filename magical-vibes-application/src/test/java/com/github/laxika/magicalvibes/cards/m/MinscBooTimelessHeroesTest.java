@@ -21,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MinscBooTimelessHeroes.class, GrizzlyBears.class, RagingGoblin.class})
+@CardUsed({MinscBooTimelessHeroes.class, GrizzlyBears.class, RagingGoblin.class, MaskwoodNexus.class})
 class MinscBooTimelessHeroesTest extends BaseCardTest {
 
     @Test
@@ -96,14 +96,135 @@ class MinscBooTimelessHeroesTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Boo")).hasSize(1);
     }
 
+    @Test
+    void plusOneMayHaveNoTarget() {
+        Permanent minsc = addReadyMinsc(3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(minsc.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+    }
+
+    @Test
+    void plusOneCanTargetOpponentsBoo() {
+        addReadyMinsc(3);
+        harness.enterBattlefieldAndReturn(player2, new MinscBooTimelessHeroes());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player2, true);
+        resolveAllTriggers();
+        Permanent boo = findPermanent(player2, "Boo");
+
+        harness.activateAbility(player1, 0, 0, null, boo.getId());
+        harness.passBothPriorities();
+
+        assertThat(boo.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void enteringMayDeclineBoo() {
+        harness.enterBattlefieldAndReturn(player1, new MinscBooTimelessHeroes());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Boo");
+    }
+
+    @Test
+    void opponentsUpkeepDoesNotCreateBoo() {
+        addReadyMinsc(3);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Boo");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void minusTwoWithoutCreaturesDoesNothing() {
+        Permanent minsc = addReadyMinsc(3);
+        int opponentLife = gd.getLife(player2.getId());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(minsc.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLife);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void minusTwoNonHamsterDealsModifiedPowerWithoutDrawing() {
+        addReadyMinsc(3);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new RagingGoblin()));
+        int opponentLife = gd.getLife(player2.getId());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLife - 5);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void minusTwoDrawsForCreatureMadeHamsterByMaskwoodNexus() {
+        addReadyMinsc(3);
+        harness.addToBattlefield(player1, new MaskwoodNexus());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new RagingGoblin(), new GrizzlyBears()));
+        int opponentLife = gd.getLife(player2.getId());
+        assertThat(gqs.hasEffectiveSubtype(gd, bears, CardSubtype.HAMSTER)).isTrue();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLife - 2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void minusTwoUsesBoostedBooPowerAfterMinscLeavesBattlefield() {
+        Permanent minsc = enterMinscAndCreateBoo();
+        Permanent boo = findPermanent(player1, "Boo");
+        minsc.setCounterCount(CounterType.LOYALTY, 2);
+        boo.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new RagingGoblin(), new RagingGoblin(),
+                new GrizzlyBears(), new GrizzlyBears()));
+        int opponentLife = gd.getLife(player2.getId());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, boo.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Minsc & Boo, Timeless Heroes");
+        harness.assertNotOnBattlefield(player1, "Boo");
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLife - 4);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+    }
+
     private Permanent enterMinscAndCreateBoo() {
         harness.setHand(player1, List.of(new MinscBooTimelessHeroes()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castPlaneswalker(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         Permanent minsc = findPermanent(player1, "Minsc & Boo, Timeless Heroes");
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
