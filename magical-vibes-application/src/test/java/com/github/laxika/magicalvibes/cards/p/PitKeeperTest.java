@@ -92,6 +92,60 @@ class PitKeeperTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Pit Keeper");
     }
 
+    @Test
+    @DisplayName("The return does nothing if fewer than four creatures remain at resolution")
+    void rechecksCreatureThresholdAtResolution() {
+        DrudgeReavers target = new DrudgeReavers();
+        DrudgeReavers second = new DrudgeReavers();
+        DrudgeReavers third = new DrudgeReavers();
+        harness.setGraveyard(player1, List.of(target, second, third, new DrudgeReavers()));
+
+        castPitKeeper();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of(target, second, third));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotInHand(player1, "Drudge Reavers");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(target);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A target that leaves the graveyard cannot be replaced with another creature")
+    void doesNotReturnAnotherCardWhenTargetLeavesGraveyard() {
+        DrudgeReavers target = new DrudgeReavers();
+        List<DrudgeReavers> remaining = List.of(
+                new DrudgeReavers(), new DrudgeReavers(), new DrudgeReavers(), new DrudgeReavers());
+        harness.setGraveyard(player1, List.of(
+                target, remaining.get(0), remaining.get(1), remaining.get(2), remaining.get(3)));
+
+        castPitKeeper();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of(
+                remaining.get(0), remaining.get(1), remaining.get(2), remaining.get(3)));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotInHand(player1, "Drudge Reavers");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(remaining);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Creatures in an opponent's graveyard are not legal return targets")
+    void cannotTargetOpponentGraveyard() {
+        DrudgeReavers opponentCard = new DrudgeReavers();
+        harness.setGraveyard(player1, List.of(
+                new DrudgeReavers(), new DrudgeReavers(), new DrudgeReavers(), new DrudgeReavers()));
+        harness.setGraveyard(player2, List.of(opponentCard));
+
+        castPitKeeper();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
+                .validCardIds()).hasSize(4).doesNotContain(opponentCard.getId());
+    }
+
     private void castPitKeeper() {
         harness.castFromHand(player1, new PitKeeper(), "{1}{B}");
         harness.passBothPriorities();
