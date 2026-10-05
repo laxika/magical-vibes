@@ -39,6 +39,41 @@ class MurkySewerTest extends BaseCardTest {
     }
 
     @Test
+    void entersUntappedWhenControllerHasLessThan13Life() {
+        harness.setLife(player1, 12);
+        playSewer();
+
+        assertThat(sewer().isTapped()).isFalse();
+    }
+
+    @Test
+    void entersUntappedWhenOpponentHasLessThan13Life() {
+        harness.setLife(player2, 12);
+        playSewer();
+
+        assertThat(sewer().isTapped()).isFalse();
+    }
+
+    @Test
+    void entersTappedWhenPutOntoBattlefieldWithBothPlayersAbove13Life() {
+        harness.setLife(player1, 14);
+        harness.setLife(player2, 14);
+
+        Permanent sewer = harness.enterBattlefieldAndReturn(player1, new MurkySewer());
+
+        assertThat(sewer.isTapped()).isTrue();
+    }
+
+    @Test
+    void entersUntappedWhenPutOntoBattlefieldWithOpponentAt13Life() {
+        harness.setLife(player2, 13);
+
+        Permanent sewer = harness.enterBattlefieldAndReturn(player1, new MurkySewer());
+
+        assertThat(sewer.isTapped()).isFalse();
+    }
+
+    @Test
     void tappingProducesBlueMana() {
         Permanent sewer = addReadySewer();
 
@@ -64,10 +99,7 @@ class MurkySewerTest extends BaseCardTest {
     }
 
     private Permanent addReadySewer() {
-        Permanent sewer = new Permanent(new MurkySewer());
-        sewer.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(sewer);
-        return sewer;
+        return addCreatureReady(player1, new MurkySewer());
     }
 
     private Permanent sewer() {
