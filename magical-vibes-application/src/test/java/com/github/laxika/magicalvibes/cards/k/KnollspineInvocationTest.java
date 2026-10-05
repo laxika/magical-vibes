@@ -20,8 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({KnollspineInvocation.class, SafeholdSentry.class, FireLitThicket.class})
 class KnollspineInvocationTest extends BaseCardTest {
 
-    // ===== Discard-cost choice (mana value must equal X) =====
-
     @Test
     @DisplayName("Activating with X=2 only offers cards with mana value 2 for the discard cost")
     void discardChoiceRestrictedToManaValueX() {
@@ -50,8 +48,6 @@ class KnollspineInvocationTest extends BaseCardTest {
                 .hasMessageContaining("Must discard a");
     }
 
-    // ===== Damage to a player =====
-
     @Test
     @DisplayName("Deals X damage to target player, discarding the chosen card")
     void dealsXDamageToPlayer() {
@@ -76,8 +72,6 @@ class KnollspineInvocationTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
-    // ===== Damage to a creature =====
-
     @Test
     @DisplayName("Deals X damage to target creature, destroying it")
     void dealsXDamageToCreature() {
@@ -96,8 +90,6 @@ class KnollspineInvocationTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Safehold Sentry");
     }
 
-    // ===== X=0 edge case =====
-
     @Test
     @DisplayName("X=0 discards a mana-value-0 card and deals no damage")
     void xZeroDealsNoDamage() {
@@ -111,5 +103,73 @@ class KnollspineInvocationTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         harness.assertInGraveyard(player1, "Fire-Lit Thicket");
+    }
+
+    @Test
+    @DisplayName("Can activate repeatedly without tapping the enchantment")
+    void canActivateRepeatedly() {
+        harness.addToBattlefield(player1, new KnollspineInvocation());
+        harness.setHand(player1, List.of(new SafeholdSentry(), new SafeholdSentry()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, 2, player2.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 2, player2.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        harness.assertOnBattlefield(player1, "Knollspine Invocation");
+    }
+
+    @Test
+    @DisplayName("Any target includes the ability controller")
+    void canDamageController() {
+        harness.addToBattlefield(player1, new KnollspineInvocation());
+        harness.setHand(player1, List.of(new SafeholdSentry()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 2, player1.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertInGraveyard(player1, "Safehold Sentry");
+    }
+
+    @Test
+    @DisplayName("A matching card does not allow activation without enough mana")
+    void cannotActivateWithoutEnoughMana() {
+        harness.addToBattlefield(player1, new KnollspineInvocation());
+        harness.setHand(player1, List.of(new SafeholdSentry()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Safehold Sentry");
+        harness.assertNotInGraveyard(player1, "Safehold Sentry");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A noncreature land is not a legal damage target")
+    void cannotTargetNoncreatureLand() {
+        harness.addToBattlefield(player1, new KnollspineInvocation());
+        harness.addToBattlefield(player2, new FireLitThicket());
+        harness.setHand(player1, List.of(new SafeholdSentry()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        UUID targetId = harness.getPermanentId(player2, "Fire-Lit Thicket");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, targetId))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Safehold Sentry");
+        assertThat(gd.stack).isEmpty();
     }
 }
