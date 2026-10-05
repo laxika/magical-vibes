@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Pariah;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(LlanowarWastes.class)
+@CardUsed({LlanowarWastes.class, GrizzlyBears.class, Pariah.class})
 class LlanowarWastesTest extends BaseCardTest {
 
     @Test
@@ -91,5 +93,24 @@ class LlanowarWastesTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Colored mana can be produced at one life when Pariah redirects the damage")
+    void painDamageIsRedirectedRatherThanPaidAsLife() {
+        harness.setLife(player1, 1);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new LlanowarWastes());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent pariah = harness.addToBattlefieldAndReturn(player1, new Pariah());
+        pariah.setAttachedTo(bears.getId());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        harness.assertLife(player1, 1);
+        harness.assertLife(player2, 20);
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 }
