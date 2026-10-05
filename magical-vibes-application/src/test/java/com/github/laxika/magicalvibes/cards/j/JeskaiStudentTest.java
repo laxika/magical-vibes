@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,14 +15,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({JeskaiStudent.class, Shock.class, GrizzlyBears.class})
 class JeskaiStudentTest extends BaseCardTest {
 
     private Permanent addStudent() {
-        harness.addToBattlefield(player1, new JeskaiStudent());
+        Permanent student = harness.addToBattlefieldAndReturn(player1, new JeskaiStudent());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        return gd.playerBattlefields.get(player1.getId()).getFirst();
+        return student;
     }
 
     private void endTurn() {
@@ -45,8 +47,7 @@ class JeskaiStudentTest extends BaseCardTest {
                 .count();
         assertThat(triggeredOnStack).isEqualTo(1);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, student)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, student)).isEqualTo(4);
@@ -97,8 +98,7 @@ class JeskaiStudentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, student)).isEqualTo(2);
 
@@ -106,5 +106,65 @@ class JeskaiStudentTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, student)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, student)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Prowess resolves before the spell that triggered it")
+    void prowessResolvesBeforeSpell() {
+        Permanent student = addStudent();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(gqs.getEffectivePower(gd, student)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, student)).isEqualTo(3);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, student)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, student)).isEqualTo(4);
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player2, 20);
+
+        resolveAllTriggers();
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Each noncreature spell gives a cumulative prowess boost")
+    void multipleSpellsGiveCumulativeBoosts() {
+        Permanent student = addStudent();
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, student)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, student)).isEqualTo(5);
+
+        endTurn();
+
+        assertThat(gqs.getEffectivePower(gd, student)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, student)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Your noncreature spell triggers prowess during an opponent's turn")
+    void controllerSpellDuringOpponentTurnPumps() {
+        Permanent student = addStudent();
+        harness.forceActivePlayer(player2);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, student)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, student)).isEqualTo(4);
     }
 }
