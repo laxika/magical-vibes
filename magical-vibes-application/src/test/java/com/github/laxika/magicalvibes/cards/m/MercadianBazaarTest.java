@@ -103,6 +103,54 @@ class MercadianBazaarTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
+    @Test
+    @DisplayName("Storing a counter uses the stack even on a newly entered land")
+    void storageCounterIsAddedOnlyOnResolution() {
+        Permanent bazaar = addBazaarWithCounters(0);
+        bazaar.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(bazaar.isTapped()).isTrue();
+        assertThat(bazaar.getCounterCount(CounterType.STORAGE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(bazaar.getCounterCount(CounterType.STORAGE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The mana ability resolves without the stack on a newly entered land")
+    void manaAbilityDoesNotUseTheStack() {
+        Permanent bazaar = addBazaarWithCounters(2);
+        bazaar.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "2");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(redMana()).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isZero();
+        assertThat(bazaar.getCounterCount(CounterType.STORAGE)).isZero();
+        assertThat(bazaar.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The storage ability cannot be activated while the land is tapped")
+    void cannotStoreWhileTapped() {
+        Permanent bazaar = addBazaarWithCounters(0);
+        bazaar.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(bazaar.getCounterCount(CounterType.STORAGE)).isZero();
+    }
+
     private Permanent addBazaarWithCounters(int counters) {
         Permanent bazaar = harness.addToBattlefieldAndReturn(player1, new MercadianBazaar());
         bazaar.setSummoningSick(false);
