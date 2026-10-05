@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.cards.w.WoodlandChampion;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LiegeOfTheHollows.class, WrathOfGod.class, WoodlandChampion.class})
+@CardUsed({LiegeOfTheHollows.class, WrathOfGod.class, WoodlandChampion.class, MindStone.class})
 class LiegeOfTheHollowsTest extends BaseCardTest {
 
     /** Wraths the board so Liege of the Hollows dies and its ON_DEATH trigger goes on the stack. */
@@ -135,5 +136,52 @@ class LiegeOfTheHollowsTest extends BaseCardTest {
         assertThat(squirrelCount(player1)).isZero();
         assertThat(pool.getArtifactOnlyColorless()).isEqualTo(1);
         assertThat(pool.getMyrOnlyColorless()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Both players can activate mana sources while choosing their payments")
+    void bothPlayersCanActivateManaSourcesDuringResolution() {
+        killLiege();
+        var firstStone = harness.addToBattlefieldAndReturn(player1, new MindStone());
+        var secondStone = harness.addToBattlefieldAndReturn(player2, new MindStone());
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleXValueChosen(player1, 1);
+
+        assertThat(squirrelCount(player1)).isZero();
+        assertThat(squirrelCount(player2)).isZero();
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.handleXValueChosen(player2, 1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(firstStone.isTapped()).isTrue();
+        assertThat(secondStone.isTapped()).isTrue();
+        assertThat(squirrelCount(player1)).isEqualTo(1);
+        assertThat(squirrelCount(player2)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A player may pay part of a mixed mana pool while the opponent declines")
+    void partialMixedManaPaymentDoesNotGiveTokensToDecliningOpponent() {
+        killLiege();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 2);
+        assertThat(squirrelCount(player1)).isZero();
+        harness.handleXValueChosen(player2, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(squirrelCount(player1)).isEqualTo(2);
+        assertThat(squirrelCount(player2)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(2);
     }
 }
