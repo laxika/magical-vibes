@@ -31,9 +31,7 @@ class QuicksilverBrashBlurTest extends BaseCardTest {
 
         assertThat(openingHarness.getGameData().playerHands
                 .get(openingHarness.getPlayer1().getId())).isEmpty();
-        assertThat(openingHarness.getGameData().playerBattlefields
-                .get(openingHarness.getPlayer1().getId()))
-                .anyMatch(permanent -> permanent.getCard() instanceof QuicksilverBrashBlur);
+        openingHarness.assertOnBattlefield(openingHarness.getPlayer1(), "Quicksilver, Brash Blur");
     }
 
     @Test
@@ -48,9 +46,7 @@ class QuicksilverBrashBlurTest extends BaseCardTest {
 
         assertThat(openingHarness.getGameData().playerHands
                 .get(openingHarness.getPlayer1().getId())).containsExactly(quicksilver);
-        assertThat(openingHarness.getGameData().playerBattlefields
-                .get(openingHarness.getPlayer1().getId()))
-                .noneMatch(permanent -> permanent.getCard() instanceof QuicksilverBrashBlur);
+        openingHarness.assertNotOnBattlefield(openingHarness.getPlayer1(), "Quicksilver, Brash Blur");
     }
 
     @Test
@@ -109,5 +105,54 @@ class QuicksilverBrashBlurTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once");
+    }
+
+    @Test
+    @DisplayName("Power-up cannot be activated again while its first activation is on the stack")
+    void powerUpLimitAppliesBeforeResolution() {
+        Permanent quicksilver = addCreatureReady(player1, new QuicksilverBrashBlur());
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.ensurePriority(player1);
+
+        assertThat(quicksilver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once");
+
+        harness.passBothPriorities();
+        assertThat(quicksilver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(quicksilver.getCounterCount(CounterType.DOUBLE_STRIKE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Entry-turn power-up discount also applies during an opponent's turn")
+    void powerUpIsDiscountedDuringOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        Permanent quicksilver = harness.enterBattlefieldAndReturn(player1, new QuicksilverBrashBlur());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.ensurePriority(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(quicksilver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(quicksilver.getCounterCount(CounterType.DOUBLE_STRIKE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Power-up still requires red mana when Quicksilver did not enter this turn")
+    void fullCostRequiresRedMana() {
+        Permanent quicksilver = addCreatureReady(player1, new QuicksilverBrashBlur());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(quicksilver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(quicksilver.getCounterCount(CounterType.DOUBLE_STRIKE)).isZero();
     }
 }
