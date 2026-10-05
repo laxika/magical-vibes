@@ -115,6 +115,60 @@ class LabyrinthMinotaurTest extends BaseCardTest {
         assertThat(attacker.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Blocking does not tap an untapped attacker and its next untap still consumes the restriction")
+    void untappedAttackerConsumesRestrictionDuringNextUntap() {
+        addReadyBlocker(player2);
+        Permanent attacker = addReadyAttacker(player1);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(attacker.isTapped()).isFalse();
+        harness.performUntapStep(player1);
+        attacker.tap();
+        harness.performUntapStep(player1);
+
+        assertThat(attacker.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Only the blocked creature skips untapping, and the defender's untap does not consume the restriction")
+    void onlyBlockedAttackerSkipsItsControllersNextUntap() {
+        addReadyBlocker(player2);
+        Permanent blocked = addReadyAttacker(player1);
+        Permanent unblocked = addReadyAttacker(player1);
+        blocked.tap();
+        unblocked.tap();
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        harness.performUntapStep(player2);
+        harness.performUntapStep(player1);
+
+        assertThat(blocked.isTapped()).isTrue();
+        assertThat(unblocked.isTapped()).isFalse();
+
+        harness.performUntapStep(player1);
+        assertThat(blocked.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Labyrinth Minotaur being blocked does not trigger its ability")
+    void beingBlockedDoesNotTrigger() {
+        Permanent minotaur = addReadyBlocker(player1);
+        minotaur.setAttacking(true);
+        addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyBlocker(Player player) {
         return addCreatureReady(player, new LabyrinthMinotaur());
     }
