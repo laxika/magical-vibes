@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({InklingSummoning.class})
 class InklingSummoningTest extends BaseCardTest {
 
     @Test
@@ -22,8 +24,7 @@ class InklingSummoningTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         Permanent inkling = findPermanent(player1, "Inkling");
         assertThat(inkling.getCard().getPower()).isEqualTo(2);
@@ -33,5 +34,34 @@ class InklingSummoningTest extends BaseCardTest {
         assertThat(inkling.getCard().getSubtypes()).contains(CardSubtype.INKLING);
         assertThat(inkling.getCard().getKeywords()).contains(Keyword.FLYING);
         assertThat(inkling.getCard().isToken()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can pay both hybrid symbols with white mana")
+    void castsWithOnlyWhiteMana() {
+        harness.setHand(player1, List.of(new InklingSummoning()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(countPermanents(player1, "Inkling")).isEqualTo(1);
+        harness.assertNotOnBattlefield(player2, "Inkling");
+        harness.assertInGraveyard(player1, "Inkling Summoning");
+        assertThat(findPermanent(player1, "Inkling").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can pay both hybrid symbols with black mana")
+    void castsWithOnlyBlackMana() {
+        harness.setHand(player1, List.of(new InklingSummoning()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(countPermanents(player1, "Inkling")).isEqualTo(1);
+        harness.assertNotOnBattlefield(player2, "Inkling");
+        harness.assertInGraveyard(player1, "Inkling Summoning");
+        assertThat(findPermanent(player1, "Inkling").getCard().getColors())
+                .containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLACK);
     }
 }
