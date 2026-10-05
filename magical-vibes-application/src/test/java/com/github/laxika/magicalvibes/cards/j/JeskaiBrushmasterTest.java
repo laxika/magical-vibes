@@ -50,10 +50,9 @@ class JeskaiBrushmasterTest extends BaseCardTest {
     void doubleStrikeDealsDamageTwice() {
         harness.setLife(player2, 20);
 
-        Permanent brushmaster = new Permanent(new JeskaiBrushmaster());
+        Permanent brushmaster = harness.addToBattlefieldAndReturn(player1, new JeskaiBrushmaster());
         brushmaster.setSummoningSick(false);
         brushmaster.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(brushmaster);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -63,11 +62,65 @@ class JeskaiBrushmasterTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 
+    @Test
+    @DisplayName("Each noncreature spell triggers prowess separately")
+    void multipleSpellsGiveCumulativeBoosts() {
+        Permanent brushmaster = addBrushmaster();
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        for (int i = 0; i < 2; i++) {
+            harness.castInstant(player1, 0, player2.getId());
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+            if (!gd.stack.isEmpty()) {
+                harness.passBothPriorities();
+            }
+        }
+
+        assertThat(gqs.getEffectivePower(gd, brushmaster)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, brushmaster)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("An opponent's noncreature spell does not trigger prowess")
+    void opponentSpellDoesNotPump() {
+        Permanent brushmaster = addBrushmaster();
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, brushmaster)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, brushmaster)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The prowess boost expires during cleanup")
+    void prowessBoostExpires() {
+        Permanent brushmaster = addBrushmaster();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, brushmaster)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, brushmaster)).isEqualTo(5);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+
+        assertThat(gqs.getEffectivePower(gd, brushmaster)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, brushmaster)).isEqualTo(4);
+    }
+
     private Permanent addBrushmaster() {
-        harness.addToBattlefield(player1, new JeskaiBrushmaster());
+        Permanent brushmaster = harness.addToBattlefieldAndReturn(player1, new JeskaiBrushmaster());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        return gd.playerBattlefields.get(player1.getId()).getFirst();
+        return brushmaster;
     }
 }
