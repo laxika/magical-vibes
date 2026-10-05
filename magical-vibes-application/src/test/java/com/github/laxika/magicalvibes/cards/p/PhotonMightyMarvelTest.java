@@ -64,4 +64,58 @@ class PhotonMightyMarvelTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
     }
+
+    @Test
+    @DisplayName("Mana uses damage dealt even if Photon leaves before resolution")
+    void manaUsesDamageDealtAfterSourceLeaves() {
+        Permanent photon = addCreatureReady(player1, new PhotonMightyMarvel());
+        photon.setPowerModifier(3);
+        photon.setAttacking(true);
+
+        resolveCombat();
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player2, 15);
+        gd.playerBattlefields.get(player1.getId()).remove(photon);
+        gd.playerGraveyards.get(player1.getId()).add(photon.getCard());
+        resolveAllTriggers();
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(5);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Ordinary mana of the chosen color drains while Photon mana remains")
+    void ordinaryManaOfChosenColorStillDrains() {
+        Permanent photon = addCreatureReady(player1, new PhotonMightyMarvel());
+        photon.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+        harness.handleListChoice(player1, ManaColor.RED.name());
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Photon mana empties at end of turn")
+    void manaEmptiesAtEndOfTurn() {
+        Permanent photon = addCreatureReady(player1, new PhotonMightyMarvel());
+        photon.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+        harness.handleListChoice(player1, ManaColor.WHITE.name());
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(2);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+    }
 }
