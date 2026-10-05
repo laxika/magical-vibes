@@ -94,4 +94,85 @@ class IshkanahBroodmotherTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void blackManaPaysHybridCostAndNoncreaturesAreExiledBeforeResolution() {
+        Permanent ishkanah = harness.addToBattlefieldAndReturn(player1, new IshkanahBroodmother());
+        Card retained = new GnottvoldRecluse();
+        Card firstCost = new Arachnoform();
+        Card secondCost = new Arachnoform();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(retained, firstCost, secondCost));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleMultipleCardsChosen(player1, List.of(firstCost.getId(), secondCost.getId()));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(retained);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(firstCost, secondCost);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class)).isNull();
+        assertThat(ishkanah.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+        PendingInteraction.SpellbookDraftChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.cards()).extracting(Card::getName).doesNotHaveDuplicates().hasSize(3)
+                .isSubsetOf("Twin-Silk Spider", "Drider", "Brood Weaver", "Glowstone Recluse",
+                        "Gnottvold Recluse", "Hatchery Spider", "Mammoth Spider", "Netcaster Spider",
+                        "Sentinel Spider", "Snarespinner", "Sporecap Spider", "Spidery Grasp",
+                        "Spider Spawning", "Prey Upon", "Arachnoform");
+        Card drafted = choice.cards().getFirst();
+        harness.handleMultipleCardsChosen(player1, List.of(drafted.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drafted);
+        assertThat(drafted.getOwnerId()).isEqualTo(player1.getId());
+    }
+
+    @Test
+    void tappedSummoningSickIshkanahCanDraftRepeatedly() {
+        Permanent ishkanah = harness.addToBattlefieldAndReturn(player1, new IshkanahBroodmother());
+        ishkanah.setTapped(true);
+        ishkanah.setSummoningSick(true);
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(new Arachnoform(), new Arachnoform(),
+                new GnottvoldRecluse(), new GnottvoldRecluse()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        for (int activation = 0; activation < 2; activation++) {
+            harness.activateAbility(player1, 0, null, null);
+            if (activation == 0) {
+                harness.handleMultipleCardsChosen(player1, gd.playerGraveyards.get(player1.getId()).stream()
+                        .limit(2).map(Card::getId).toList());
+            }
+            harness.passBothPriorities();
+            PendingInteraction.SpellbookDraftChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
+            assertThat(choice).isNotNull();
+            harness.handleMultipleCardsChosen(player1, List.of(choice.cards().getFirst().getId()));
+        }
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(4);
+        assertThat(ishkanah.isTapped()).isTrue();
+    }
+
+    @Test
+    void creatureMadeASpiderByArachnoformReceivesTheAnthem() {
+        harness.addToBattlefield(player1, new IshkanahBroodmother());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Arachnoform()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
+    }
 }
