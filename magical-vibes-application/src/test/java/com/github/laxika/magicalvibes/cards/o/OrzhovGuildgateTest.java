@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,7 +15,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({OrzhovGuildgate.class})
 class OrzhovGuildgateTest extends BaseCardTest {
 
     @Test
@@ -67,9 +70,48 @@ class OrzhovGuildgateTest extends BaseCardTest {
     }
 
     private Permanent addGuildgateReady(Player player) {
-        Permanent perm = new Permanent(new OrzhovGuildgate());
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        Permanent guildgate = harness.addToBattlefieldAndReturn(player, new OrzhovGuildgate());
+        guildgate.setSummoningSick(false);
+        return guildgate;
+    }
+
+    @Test
+    @DisplayName("Orzhov Guildgate enters tapped when put directly onto the battlefield")
+    void entersTappedWithoutBeingPlayed() {
+        Permanent guildgate = harness.enterBattlefieldAndReturn(player1, new OrzhovGuildgate());
+
+        assertThat(guildgate.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Guildgate cannot activate its mana ability")
+    void tappedLandCannotProduceMana() {
+        Permanent guildgate = addGuildgateReady(player1);
+        guildgate.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A newly controlled noncreature Guildgate can produce mana once untapped")
+    void newlyControlledLandCanProduceMana() {
+        Permanent guildgate = harness.enterBattlefieldAndReturn(player1, new OrzhovGuildgate());
+        guildgate.setSummoningSick(true);
+        guildgate.untap();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(guildgate.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
