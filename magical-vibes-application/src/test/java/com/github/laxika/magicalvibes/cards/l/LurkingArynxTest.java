@@ -38,8 +38,7 @@ class LurkingArynxTest extends BaseCardTest {
         addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
-        Permanent forest = new Permanent(new Forest());
-        gd.playerBattlefields.get(player2.getId()).add(forest);
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
         addAbilityMana();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
@@ -66,6 +65,77 @@ class LurkingArynxTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must block");
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+    }
+
+    @Test
+    @DisplayName("Exactly eight power permits activation and losing formidable does not stop resolution")
+    void resolvesAfterTotalPowerDropsBelowEight() {
+        addArynxReady();
+        addArynxReady();
+        Permanent support = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new LurkingArynx());
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(support);
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+    }
+
+    @Test
+    @DisplayName("A tapped target is not required to block")
+    void tappedTargetCanRemainUnblocked() {
+        addArynxReady();
+        addArynxReady();
+        addArynxReady();
+        Permanent target = addCreatureReady(player2, new LurkingArynx());
+        target.setTapped(true);
+        addCreatureReady(player2, new LurkingArynx());
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+    }
+
+    @Test
+    @DisplayName("The target need not block when the source is not attacking")
+    void nonattackingSourceDoesNotRequireBlock() {
+        addArynxReady();
+        addArynxReady();
+        addArynxReady();
+        Permanent target = addCreatureReady(player2, new LurkingArynx());
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(player1, List.of(1));
+        gs.declareBlockers(gd, player2, List.of());
+    }
+
+    @Test
+    @DisplayName("The ability can target a creature controlled by its controller")
+    void canTargetOwnCreature() {
+        addArynxReady();
+        Permanent target = addArynxReady();
+        addArynxReady();
+        addCreatureReady(player2, new LurkingArynx());
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
     }
 
     private Permanent addArynxReady() {
