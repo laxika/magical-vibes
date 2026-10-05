@@ -25,8 +25,7 @@ class PinpointAvalancheTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Glory Seeker"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Glory Seeker"));
 
         harness.assertNotOnBattlefield(player2, "Glory Seeker");
         harness.assertInGraveyard(player2, "Glory Seeker");
@@ -35,15 +34,13 @@ class PinpointAvalancheTest extends BaseCardTest {
     @Test
     @DisplayName("Damage cannot be prevented")
     void damageCannotBePrevented() {
-        harness.addToBattlefield(player2, new GlorySeeker());
-        Permanent target = findPermanent(player2, "Glory Seeker");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
         target.setDamagePreventionShield(10);
         harness.setHand(player1, List.of(new PinpointAvalanche()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Glory Seeker");
         harness.assertInGraveyard(player2, "Glory Seeker");
@@ -57,11 +54,26 @@ class PinpointAvalancheTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(4);
         harness.assertOnBattlefield(player1, "Butcher Orgg");
+    }
+
+    @Test
+    @DisplayName("Unpreventable damage does not consume a surviving creature's prevention shield")
+    void leavesPreventionShieldIntact() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ButcherOrgg());
+        target.setDamagePreventionShield(10);
+        harness.setHand(player1, List.of(new PinpointAvalanche()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertOnBattlefield(player2, "Butcher Orgg");
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+        assertThat(target.getDamagePreventionShield()).isEqualTo(10);
     }
 
     @Test
