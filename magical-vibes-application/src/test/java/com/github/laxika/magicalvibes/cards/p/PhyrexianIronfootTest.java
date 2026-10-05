@@ -50,4 +50,68 @@ class PhyrexianIronfootTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
+
+    @Test
+    @DisplayName("Colored snow mana can pay both activation symbols")
+    void coloredSnowManaPaysEntireActivationCost() {
+        Permanent ironfoot = addCreatureReady(player1, new PhyrexianIronfoot());
+        ironfoot.tap();
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(ironfoot.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(ironfoot.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Phyrexian Ironfoot can activate its untap ability")
+    void summoningSicknessDoesNotPreventActivation() {
+        Permanent ironfoot = harness.addToBattlefieldAndReturn(player1, new PhyrexianIronfoot());
+        ironfoot.setSummoningSick(true);
+        ironfoot.tap();
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(ironfoot.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The untap ability untaps only the Ironfoot that activated it")
+    void activationUntapsOnlyItsSource() {
+        Permanent source = addCreatureReady(player1, new PhyrexianIronfoot());
+        Permanent other = addCreatureReady(player1, new PhyrexianIronfoot());
+        Permanent opponent = addCreatureReady(player2, new PhyrexianIronfoot());
+        source.tap();
+        other.tap();
+        opponent.tap();
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(source.isTapped()).isFalse();
+        assertThat(other.isTapped()).isTrue();
+        assertThat(opponent.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The untap ability can be activated while Ironfoot is already untapped")
+    void canActivateWhileUntapped() {
+        Permanent ironfoot = addCreatureReady(player1, new PhyrexianIronfoot());
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(ironfoot.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
 }
