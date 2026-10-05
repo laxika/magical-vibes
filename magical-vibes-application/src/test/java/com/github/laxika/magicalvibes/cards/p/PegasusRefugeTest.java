@@ -116,4 +116,52 @@ class PegasusRefugeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardCostChoice.class);
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("A noncreature card is discarded as a cost before the token is created")
+    void canDiscardNoncreatureCard() {
+        harness.addToBattlefield(player1, new PegasusRefuge());
+        PegasusRefuge discarded = new PegasusRefuge();
+        harness.setHand(player1, List.of(discarded));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Pegasus");
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Pegasus")).hasSize(1);
+        harness.assertNotOnBattlefield(player2, "Pegasus");
+    }
+
+    @Test
+    @DisplayName("Two activations can be stacked, each paying its own mana and discard costs")
+    void canActivateAgainBeforeFirstAbilityResolves() {
+        harness.addToBattlefield(player1, new PegasusRefuge());
+        harness.setHand(player1, List.of(new ArmoredPegasus(), new PegasusRefuge()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.assertNotOnBattlefield(player1, "Pegasus");
+
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Pegasus")).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Pegasus")).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+    }
 }
