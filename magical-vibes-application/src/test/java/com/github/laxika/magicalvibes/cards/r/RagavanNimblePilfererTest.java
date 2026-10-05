@@ -81,20 +81,100 @@ class RagavanNimblePilfererTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castWithAlternateCost(player1, 0, List.of());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent ragavan = findPermanent(player1, "Ragavan, Nimble Pilferer");
         assertThat(ragavan.hasKeyword(Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         harness.assertInHand(player1, "Ragavan, Nimble Pilferer");
         harness.assertNotOnBattlefield(player1, "Ragavan, Nimble Pilferer");
     }
 
+    @Test
+    @DisplayName("Combat damage still creates a Treasure when the damaged player's library is empty")
+    void emptyLibraryStillCreatesTreasure() {
+        addAttackingRagavan();
+        harness.setLibrary(player2, List.of());
+
+        resolveCombatAndTrigger();
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        assertThat(gd.exilePlayPermissions).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Casting Ragavan normally does not grant dash haste or return it at end step")
+    void normalCastDoesNotApplyDash() {
+        harness.setHand(player1, List.of(new RagavanNimblePilferer()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent ragavan = findPermanent(player1, "Ragavan, Nimble Pilferer");
+        assertThat(ragavan.hasKeyword(Keyword.HASTE)).isFalse();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Ragavan, Nimble Pilferer");
+        harness.assertNotInHand(player1, "Ragavan, Nimble Pilferer");
+    }
+
+    @Test
+    @DisplayName("Dash does not create an enters-the-battlefield triggered ability")
+    void dashDoesNotCreateEtbTrigger() {
+        harness.setHand(player1, List.of(new RagavanNimblePilferer()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.castWithAlternateCost(player1, 0, List.of());
+            harness.passBothPriorities();
+        });
+
+        harness.assertOnBattlefield(player1, "Ragavan, Nimble Pilferer");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Dash creates exactly one return trigger at the beginning of the next end step")
+    void dashCreatesOnlyOneEndStepReturnTrigger() {
+        harness.setHand(player1, List.of(new RagavanNimblePilferer()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castWithAlternateCost(player1, 0, List.of());
+        resolveAllTriggers();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Ragavan, Nimble Pilferer");
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        harness.assertInHand(player1, "Ragavan, Nimble Pilferer");
+    }
+
+    @Test
+    @DisplayName("The exiled card stays in exile after its casting permission expires")
+    void castingPermissionExpiresAtEndOfTurn() {
+        addAttackingRagavan();
+        Card topCard = new GrizzlyBears();
+        topCard.setOwnerId(player2.getId());
+        harness.setLibrary(player2, List.of(topCard, new Forest()));
+        resolveCombatAndTrigger();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(topCard.getId());
+    }
     private Permanent addAttackingRagavan() {
         Permanent ragavan = addCreatureReady(player1, new RagavanNimblePilferer());
         ragavan.setAttacking(true);
@@ -103,10 +183,7 @@ class RagavanNimblePilfererTest extends BaseCardTest {
     }
 
     private void resolveCombatAndTrigger() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
     }
 }
