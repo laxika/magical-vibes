@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,19 +15,19 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PyrewildShaman.class, GrizzlyBears.class})
 class PyrewildShamanTest extends BaseCardTest {
 
     private Card putShamanInGraveyard() {
         Card shaman = new PyrewildShaman();
-        gd.playerGraveyards.get(player1.getId()).add(shaman);
+        harness.setGraveyard(player1, List.of(shaman));
         return shaman;
     }
 
     private Permanent addReadyAttacker() {
-        Permanent perm = new Permanent(new GrizzlyBears());
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         perm.setSummoningSick(false);
         perm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
         return perm;
     }
 
@@ -105,12 +106,118 @@ class PyrewildShamanTest extends BaseCardTest {
     void bloodrushRequiresAttackingCreature() {
         Card shaman = new PyrewildShaman();
         harness.setHand(player1, List.of(shaman));
-        Permanent bystander = new Permanent(new GrizzlyBears());
+        Permanent bystander = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bystander.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bystander);
         harness.addMana(player1, ManaColor.RED, 2);
 
         assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, bystander.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Removing the Shaman before its trigger resolves prevents the payment choice")
+    void shamanMustStillBeInGraveyardWhenTriggerResolves() {
+        Card shaman = putShamanInGraveyard();
+        addReadyAttacker();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(shaman));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.passBothPriorities();
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(shaman);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(shaman);
+    }
+
+    @Test
+    @DisplayName("Bloodrush can target an opponent's attacking creature")
+    void bloodrushCanBoostOpponentsAttacker() {
+        Card shaman = new PyrewildShaman();
+        harness.setHand(player1, List.of(shaman));
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new PyrewildShaman());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateHandAbility(player1, 0, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(attacker.getEffectivePower()).isEqualTo(6);
+        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(shaman);
+    }
+
+    @Test
+    @DisplayName("Bloodrush has no effect if its target stops attacking before resolution")
+    void bloodrushRechecksAttackingTarget() {
+        Card shaman = new PyrewildShaman();
+        harness.setHand(player1, List.of(shaman));
+        Permanent attacker = addReadyAttacker();
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateHandAbility(player1, 0, attacker.getId());
+        attacker.setAttacking(false);
+
+        harness.passBothPriorities();
+
+        assertThat(attacker.getEffectivePower()).isEqualTo(2);
+        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(shaman);
+    }
+
+    @Test
+    @DisplayName("Bloodrush can put the Shaman in the graveyard in time for the same combat's trigger")
+    void bloodrushThenCombatDamageReturnsShaman() {
+        Card shaman = new PyrewildShaman();
+        harness.setHand(player1, List.of(shaman));
+        Permanent attacker = addReadyAttacker();
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateHandAbility(player1, 0, attacker.getId());
+        harness.passBothPriorities();
+
+        runCombatDamage();
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(shaman);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(shaman);
+    }
+
+    @Test
+    @DisplayName("Combat damage does not trigger a Shaman still in hand")
+    void shamanInHandDoesNotTrigger() {
+        Card shaman = new PyrewildShaman();
+        harness.setHand(player1, List.of(shaman));
+        addReadyAttacker();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).contains(shaman);
+    }
+
+    @Test
+    @DisplayName("The Shaman cannot return when the player cannot pay all three mana")
+    void insufficientManaLeavesShamanInGraveyard() {
+        Card shaman = putShamanInGraveyard();
+        addReadyAttacker();
+        runCombatDamage();
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(shaman);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(shaman);
     }
 }
