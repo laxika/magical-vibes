@@ -17,8 +17,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({Forest.class, GrizzlyBears.class, HowlingMine.class, Opposition.class, Pacifism.class})
 class OppositionTest extends BaseCardTest {
 
-    // ===== Tapping targets =====
-
     @Test
     @DisplayName("Taps target creature by tapping a creature you control")
     void tapsTargetCreature() {
@@ -88,21 +86,18 @@ class OppositionTest extends BaseCardTest {
         assertThat(target.isTapped()).isTrue();
     }
 
-    // ===== Invalid targets =====
-
     @Test
     @DisplayName("Cannot target an enchantment")
     void cannotTargetEnchantment() {
         addOpposition(player1);
-        addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new Pacifism());
+        enchantment.setAttachedTo(creature.getId());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, enchantment.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an artifact, creature, or land");
     }
-
-    // ===== Cost: tapping a creature you control =====
 
     @Test
     @DisplayName("Cannot activate with no untapped creature to tap")
@@ -146,8 +141,6 @@ class OppositionTest extends BaseCardTest {
         assertThat(target.isTapped()).isTrue();
     }
 
-    // ===== Helpers =====
-
     private Permanent addOpposition(Player player) {
         return harness.addToBattlefieldAndReturn(player, new Opposition());
     }
@@ -164,5 +157,51 @@ class OppositionTest extends BaseCardTest {
 
         assertThat(nonCreature.isTapped()).isFalse();
         assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick creature can pay the tapping cost")
+    void canPayWithSummoningSickCreature() {
+        addOpposition(player1);
+        Permanent cost = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        cost.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(cost.isTapped()).isTrue();
+        assertThat(target.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The creature tapped to pay the cost can also be the target")
+    void canTargetCreatureUsedToPayCost() {
+        addOpposition(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability still resolves after Opposition leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent opposition = addOpposition(player1);
+        Permanent cost = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(opposition);
+        harness.passBothPriorities();
+
+        assertThat(cost.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
     }
 }
