@@ -79,4 +79,40 @@ class MarblePriestTest extends BaseCardTest {
         assertThat(priest.getMarkedDamage()).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(priest);
     }
+
+    @Test
+    @DisplayName("A lone Wall's combat damage is prevented without preventing Marble Priest's damage")
+    void preventsAllCombatDamageFromLoneWall() {
+        Permanent priest = addCreatureReady(player1, new MarblePriest());
+        Permanent wall = addCreatureReady(player2, new WallOfCaltrops());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(priest.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(priest);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(wall);
+        harness.assertInGraveyard(player2, "Wall of Caltrops");
+    }
+
+    @Test
+    @DisplayName("A Wall may block either of two attacking Marble Priests")
+    void competingBlockRequirementsAllowEitherPriest() {
+        addCreatureReady(player1, new MarblePriest());
+        addCreatureReady(player1, new MarblePriest());
+        Permanent wall = addCreatureReady(player2, new WallOfEarth());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+
+        assertThat(wall.isBlocking()).isTrue();
+        assertThat(wall.getBlockingTargetIds())
+                .containsExactly(gd.playerBattlefields.get(player1.getId()).get(1).getId());
+    }
 }
