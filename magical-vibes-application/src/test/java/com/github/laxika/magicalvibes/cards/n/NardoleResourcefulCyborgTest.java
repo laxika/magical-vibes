@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Ponder;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NardoleResourcefulCyborg.class, GrizzlyBears.class, Shock.class})
+@CardUsed({NardoleResourcefulCyborg.class, Ponder.class, Shock.class})
 class NardoleResourcefulCyborgTest extends BaseCardTest {
 
     @Test
@@ -41,7 +41,7 @@ class NardoleResourcefulCyborgTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new NardoleResourcefulCyborg()));
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -54,14 +54,99 @@ class NardoleResourcefulCyborgTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         harness.castInstant(player2, 0, nardole.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent returnedNardole = findPermanent(player1, "Nardole, Resourceful Cyborg");
         assertThat(returnedNardole.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         harness.assertNotInGraveyard(player1, "Nardole, Resourceful Cyborg");
     }
 
+    @Test
+    void restrictedManaPaysForBlueNoncreatureSpell() {
+        Permanent nardole = addReadyNardole();
+        nardole.setCounterCount(CounterType.CHARGE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.setHand(player1, List.of(new Ponder()));
+
+        harness.castSorcery(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getNoncreatureSpellOnlyMana(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    void noCountersProducesNoManaButStillTaps() {
+        Permanent nardole = addReadyNardole();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(nardole.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getNoncreatureSpellOnlyMana(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    void summoningSicknessPreventsManaAbility() {
+        Permanent nardole = addReadyNardole();
+        nardole.setSummoningSick(true);
+        nardole.setCounterCount(CounterType.CHARGE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(nardole.isTapped()).isFalse();
+    }
+
+    @Test
+    void undyingDoesNotReturnWithExistingPlusOneCounter() {
+        Permanent nardole = addReadyNardole();
+        nardole.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castInstant(player2, 0, nardole.getId());
+        resolveAllTriggers();
+        harness.castInstant(player2, 0, nardole.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Nardole, Resourceful Cyborg");
+        harness.assertNotOnBattlefield(player1, "Nardole, Resourceful Cyborg");
+    }
+
+    @Test
+    void undyingIgnoresChargeCountersAndReturnsAsNewPermanent() {
+        Permanent nardole = addReadyNardole();
+        nardole.setCounterCount(CounterType.CHARGE, 3);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, nardole.getId());
+        resolveAllTriggers();
+
+        Permanent returned = findPermanent(player1, "Nardole, Resourceful Cyborg");
+        assertThat(returned.getId()).isNotEqualTo(nardole.getId());
+        assertThat(returned.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        returned.setSummoningSick(false);
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getNoncreatureSpellOnlyMana(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
+    void tappedNardoleCannotActivateAgain() {
+        Permanent nardole = addReadyNardole();
+        nardole.setCounterCount(CounterType.CHARGE, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getNoncreatureSpellOnlyMana(ManaColor.BLUE)).isEqualTo(1);
+    }
     private Permanent addReadyNardole() {
         Permanent nardole = harness.addToBattlefieldAndReturn(player1, new NardoleResourcefulCyborg());
         nardole.setSummoningSick(false);
