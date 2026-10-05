@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LeylineOfCombustion.class, LeylineOfSanctity.class, GrizzlyBears.class,
+        JaggedLightning.class, Shock.class, ZuranSpellcaster.class, LavaAxe.class})
 class LeylineOfCombustionTest extends BaseCardTest {
 
     @Test
@@ -29,9 +32,8 @@ class LeylineOfCombustionTest extends BaseCardTest {
 
         openingHarness.handleMayAbilityChosen(openingHarness.getPlayer1(), true);
 
-        assertThat(openingHarness.getGameData().playerBattlefields
-                .get(openingHarness.getPlayer1().getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Leyline of Combustion"));
+        openingHarness.assertOnBattlefield(openingHarness.getPlayer1(), "Leyline of Combustion");
+        openingHarness.assertNotInHand(openingHarness.getPlayer1(), "Leyline of Combustion");
     }
 
     @Test
@@ -57,7 +59,7 @@ class LeylineOfCombustionTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 5);
         forceOpponentMainPhase();
 
-        harness.castInstant(player2, 0, player1.getId());
+        harness.castSorcery(player2, 0, player1.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -91,9 +93,110 @@ class LeylineOfCombustionTest extends BaseCardTest {
         forceOpponentMainPhase();
 
         harness.castSorcery(player2, 0, List.of(firstTarget.getId(), secondTarget.getId()));
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void mayDeclineOpeningHandPlacement() {
+        GameTestHarness openingHarness = new GameTestHarness();
+        openingHarness.setHand(openingHarness.getPlayer1(), List.of(new LeylineOfCombustion()));
+        openingHarness.skipMulligan();
+
+        openingHarness.handleMayAbilityChosen(openingHarness.getPlayer1(), false);
+
+        openingHarness.assertNotOnBattlefield(openingHarness.getPlayer1(), "Leyline of Combustion");
+        openingHarness.assertInHand(openingHarness.getPlayer1(), "Leyline of Combustion");
+    }
+
+    @Test
+    void ownSpellDoesNotTriggerLeyline() {
+        harness.addToBattlefield(player1, new LeylineOfCombustion());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void opponentTargetingTheirOwnPlayerDoesNotTriggerLeyline() {
+        harness.addToBattlefield(player1, new LeylineOfCombustion());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        forceOpponentMainPhase();
+
+        harness.castInstant(player2, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void opponentAbilityTargetingPlayerTriggersLeyline() {
+        harness.addToBattlefield(player1, new LeylineOfCombustion());
+        addCreatureReady(player2, new ZuranSpellcaster());
+        forceOpponentMainPhase();
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
+    void damageDoesNotTargetOpposingPlayerWithHexproof() {
+        harness.addToBattlefield(player1, new LeylineOfCombustion());
+        harness.addToBattlefield(player2, new LeylineOfSanctity());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        forceOpponentMainPhase();
+
+        harness.castInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void eachLeylineTriggersIndependently() {
+        harness.addToBattlefield(player1, new LeylineOfCombustion());
+        harness.addToBattlefield(player1, new LeylineOfCombustion());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        forceOpponentMainPhase();
+
+        harness.castInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void leylineCastNormallyAlsoTriggers() {
+        harness.setHand(player1, List.of(new LeylineOfCombustion()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Leyline of Combustion");
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        forceOpponentMainPhase();
+        harness.castInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
 
     private void forceOpponentMainPhase() {
