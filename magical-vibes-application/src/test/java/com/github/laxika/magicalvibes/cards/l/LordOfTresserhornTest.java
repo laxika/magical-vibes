@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.b.BloodArtist;
 import com.github.laxika.magicalvibes.cards.e.ElvishRanger;
 import com.github.laxika.magicalvibes.cards.s.StormCrow;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LordOfTresserhorn.class, ElvishRanger.class, StormCrow.class})
+@CardUsed({LordOfTresserhorn.class, ElvishRanger.class, StormCrow.class, BloodArtist.class})
 class LordOfTresserhornTest extends BaseCardTest {
 
     private void castLord() {
@@ -157,10 +158,9 @@ class LordOfTresserhornTest extends BaseCardTest {
 
         lord.setBlocking(true);
         lord.addBlockingTarget(0);
-        Permanent attacker = new Permanent(new ElvishRanger());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new ElvishRanger());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -169,5 +169,52 @@ class LordOfTresserhornTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Lord of Tresserhorn");
         assertThat(lord.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Automatic sacrifices are simultaneous even when a dying creature watches deaths")
+    void automaticSacrificesAreSimultaneous() {
+        harness.addToBattlefield(player1, new BloodArtist());
+        harness.setLibrary(player2, List.of(new ElvishRanger(), new StormCrow()));
+        harness.setHand(player2, List.of());
+
+        castLord();
+
+        for (int i = 0; i < 2; i++) {
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+            harness.handlePermanentChosen(player1, player2.getId());
+        }
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Blood Artist");
+        harness.assertInGraveyard(player1, "Lord of Tresserhorn");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A regeneration shield cannot prevent the ETB sacrifice")
+    void regenerationDoesNotPreventSacrifice() {
+        harness.setLibrary(player2, List.of(new ElvishRanger(), new StormCrow()));
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new LordOfTresserhorn()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castCreature(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Lord of Tresserhorn");
+        harness.assertInGraveyard(player1, "Lord of Tresserhorn");
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
     }
 }
