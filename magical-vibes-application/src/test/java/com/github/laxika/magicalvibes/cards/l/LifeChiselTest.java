@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -77,5 +78,61 @@ class LifeChiselTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("upkeep");
+    }
+
+    @Test
+    @DisplayName("The sacrifice is paid immediately and uses modified toughness")
+    void sacrificeUsesToughnessAtPayment() {
+        harness.addToBattlefield(player1, new LifeChisel());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        advanceToUpkeep(player1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 25);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Each activation retains the toughness of its own sacrificed creature")
+    void repeatedActivationsRetainSeparateToughness() {
+        harness.addToBattlefield(player1, new LifeChisel());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        first.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        advanceToUpkeep(player1);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertLife(player1, 20);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.assertLife(player1, 27);
+        harness.assertOnBattlefield(player1, "Life Chisel");
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot pay the sacrifice cost")
+    void cannotActivateWithoutCreatureYouControl() {
+        harness.addToBattlefield(player1, new LifeChisel());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        advanceToUpkeep(player1);
+        harness.setLife(player1, 20);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player1, 20);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
     }
 }
