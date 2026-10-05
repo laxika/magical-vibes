@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(Mimic.class)
 class MimicTest extends BaseCardTest {
@@ -70,6 +71,77 @@ class MimicTest extends BaseCardTest {
         assertThat(mimic.getTransientSubtypes()).doesNotContain(CardSubtype.SHAPESHIFTER);
     }
 
+    @Test
+    @DisplayName("A newly entered noncreature Mimic can produce mana without using the stack")
+    void newlyEnteredNoncreatureCanProduceMana() {
+        Permanent mimic = harness.addToBattlefieldAndReturn(player1, new Mimic());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(mimic);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(mimic.getCard());
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A newly entered Mimic cannot pay its tap cost after becoming a creature")
+    void animatedNewMimicCannotPayTapCost() {
+        Permanent mimic = harness.addToBattlefieldAndReturn(player1, new Mimic());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, mimic)).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(mimic);
+        assertThat(mimic.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("An animated Mimic retains its mana ability")
+    void animatedMimicCanStillProduceMana() {
+        Permanent mimic = addMimicReady();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(mimic);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(mimic.getCard());
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Sacrificing Mimic in response to its animation does not animate another Mimic")
+    void sacrificedSourceDoesNotAnimateAnotherMimic() {
+        Permanent mimic = addMimicReady();
+        Permanent otherMimic = harness.addToBattlefieldAndReturn(player1, new Mimic());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "WHITE");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(otherMimic);
+        assertThat(gqs.isCreature(gd, otherMimic)).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(mimic.getCard());
+    }
     private Permanent addMimicReady() {
         Permanent mimic = harness.addToBattlefieldAndReturn(player1, new Mimic());
         mimic.setSummoningSick(false);
