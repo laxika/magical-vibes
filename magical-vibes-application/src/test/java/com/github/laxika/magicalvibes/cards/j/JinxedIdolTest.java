@@ -123,4 +123,59 @@ class JinxedIdolTest extends BaseCardTest {
                 .filteredOn(p -> p.getCard().getName().equals("Trained Armodon"))
                 .hasSize(1);
     }
+
+    @Test
+    @DisplayName("Sacrifice is paid immediately, before control changes on resolution")
+    void sacrificeIsPaidBeforeAbilityResolves() {
+        addIdolAndCreature(player1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        harness.assertInGraveyard(player1, "Trained Armodon");
+        harness.assertNotOnBattlefield(player1, "Trained Armodon");
+        harness.assertOnBattlefield(player1, "Jinxed Idol");
+        harness.assertNotOnBattlefield(player2, "Jinxed Idol");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Jinxed Idol");
+        harness.assertNotOnBattlefield(player1, "Jinxed Idol");
+    }
+
+    @Test
+    @DisplayName("Giving away the Idol in response to its upkeep trigger does not avoid damage")
+    void pendingUpkeepTriggerDamagesOriginalController() {
+        addIdolAndCreature(player1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        advanceToUpkeep(player1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Jinxed Idol");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("New controller can sacrifice their own creature to give the Idol back")
+    void newControllerCanGiveIdolBack() {
+        addIdolAndCreature(player1);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.addToBattlefield(player2, new TrainedArmodon());
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Trained Armodon");
+        harness.assertOnBattlefield(player1, "Jinxed Idol");
+        harness.assertNotOnBattlefield(player2, "Jinxed Idol");
+    }
 }
