@@ -120,6 +120,50 @@ class OkinaTempleToTheGrandfathersTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("A newly entered Okina can activate its boost without producing mana")
+    void newlyEnteredLandCanActivateBoost() {
+        Permanent okina = harness.addToBattlefieldAndReturn(player1, new OkinaTempleToTheGrandfathers());
+        Permanent konda = addCreatureReady(player1, new KondaLordOfEiganjo());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, null, konda.getId());
+
+        assertThat(okina.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(konda.getEffectivePower()).isEqualTo(3);
+        assertThat(konda.getEffectiveToughness()).isEqualTo(3);
+
+        harness.passBothPriorities();
+
+        assertThat(konda.getEffectivePower()).isEqualTo(4);
+        assertThat(konda.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The activated boost resolves after Okina leaves the battlefield")
+    void boostResolvesWithoutItsSource() {
+        Permanent okina = addReadyOkina(player1);
+        Permanent konda = addCreatureReady(player1, new KondaLordOfEiganjo());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, null, konda.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(okina);
+        gd.playerGraveyards.get(player1.getId()).add(okina.getCard());
+        harness.passBothPriorities();
+
+        assertThat(konda.getEffectivePower()).isEqualTo(4);
+        assertThat(konda.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyOkina(Player player) {
         Permanent permanent = harness.addToBattlefieldAndReturn(player, new OkinaTempleToTheGrandfathers());
         permanent.setSummoningSick(false);
