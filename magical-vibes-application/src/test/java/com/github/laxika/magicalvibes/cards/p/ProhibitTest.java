@@ -10,8 +10,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 @CardUsed({Prohibit.class, GrizzlyBears.class, GiantSpider.class, SerraAngel.class})
 class ProhibitTest extends BaseCardTest {
 
@@ -25,7 +23,6 @@ class ProhibitTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, bears.getId());
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -33,7 +30,7 @@ class ProhibitTest extends BaseCardTest {
     }
 
     @Test
-    void cannotTargetManaValue4SpellWithoutKicker() {
+    void canTargetManaValue4SpellWithoutKickerButDoesNotCounterIt() {
         GiantSpider spider = new GiantSpider();
         harness.setHand(player1, List.of(spider));
         harness.addMana(player1, ManaColor.GREEN, 4);
@@ -42,10 +39,12 @@ class ProhibitTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passPriority(player1);
 
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, spider.getId()))
-                .isInstanceOf(IllegalStateException.class);
+        harness.castAndResolveInstant(player2, 0, spider.getId());
+
+        harness.assertInGraveyard(player2, "Prohibit");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Giant Spider");
     }
 
     @Test
@@ -58,7 +57,6 @@ class ProhibitTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 4);
 
         harness.castCreature(player1, 0);
-        harness.passPriority(player1);
         harness.castKickedInstant(player2, 0, spider.getId());
         harness.passBothPriorities();
 
@@ -67,7 +65,7 @@ class ProhibitTest extends BaseCardTest {
     }
 
     @Test
-    void cannotTargetManaValue5SpellWithKicker() {
+    void canTargetManaValue5SpellWithKickerButDoesNotCounterIt() {
         SerraAngel angel = new SerraAngel();
         harness.setHand(player1, List.of(angel));
         harness.addMana(player1, ManaColor.WHITE, 5);
@@ -76,9 +74,29 @@ class ProhibitTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 4);
 
         harness.castCreature(player1, 0);
-        harness.passPriority(player1);
 
-        assertThatThrownBy(() -> harness.castKickedInstant(player2, 0, angel.getId()))
-                .isInstanceOf(IllegalStateException.class);
+        harness.castKickedInstant(player2, 0, angel.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Prohibit");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Serra Angel");
+    }
+
+    @Test
+    void kickedStillCountersManaValue2Spell() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.setHand(player2, List.of(new Prohibit()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.castKickedInstant(player2, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Prohibit");
     }
 }
