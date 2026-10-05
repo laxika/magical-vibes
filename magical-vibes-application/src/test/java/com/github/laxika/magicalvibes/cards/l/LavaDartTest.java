@@ -92,4 +92,74 @@ class LavaDartTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(mountain);
         harness.assertInGraveyard(player1, "Lava Dart");
     }
+
+    @Test
+    @DisplayName("A normal cast followed by flashback can kill a creature with 2 toughness")
+    void normalCastThenFlashbackKillsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new DwarvenDriller());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.setHand(player1, List.of(new LavaDart()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.assertInGraveyard(player1, "Lava Dart");
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
+
+        harness.castFlashbackWithSacrifice(player1, 0, creature.getId(), mountain.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Dwarven Driller");
+        harness.assertInGraveyard(player2, "Dwarven Driller");
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.assertNotInGraveyard(player1, "Lava Dart");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Lava Dart"));
+    }
+
+    @Test
+    @DisplayName("Flashback can sacrifice a tapped Mountain without paying mana")
+    void flashbackCanSacrificeTappedMountain() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        mountain.tap();
+        harness.setGraveyard(player1, List.of(new LavaDart()));
+
+        harness.castFlashbackWithSacrifice(player1, 0, player1.getId(), mountain.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.assertNotOnBattlefield(player1, "Mountain");
+        harness.assertNotInGraveyard(player1, "Lava Dart");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Lava Dart"));
+    }
+
+    @Test
+    @DisplayName("A Mountain is not a legal damage target")
+    void rejectsLandTarget() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        harness.setHand(player1, List.of(new LavaDart()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, mountain.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Lava Dart");
+        harness.assertOnBattlefield(player2, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Mana cannot replace the Mountain sacrifice for flashback")
+    void flashbackRequiresSacrificeEvenWithManaAvailable() {
+        harness.setGraveyard(player1, List.of(new LavaDart()));
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Lava Dart");
+        harness.assertOnBattlefield(player1, "Mountain");
+        harness.assertLife(player2, 20);
+    }
 }
