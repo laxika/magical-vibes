@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({MemoryBank.class, Island.class})
 class MemoryBankTest extends BaseCardTest {
@@ -22,8 +23,7 @@ class MemoryBankTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
@@ -31,7 +31,7 @@ class MemoryBankTest extends BaseCardTest {
     }
 
     @Test
-    void recastFromExileDrawsAgainAndGoesToGraveyard() {
+    void cannotRecastBankedCardDuringTheSameGame() {
         MemoryBank card = new MemoryBank();
         Island firstDraw = new Island();
         Island secondDraw = new Island();
@@ -40,16 +40,16 @@ class MemoryBankTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castFromExile(player1, card.getId());
-        harness.passBothPriorities();
+        assertThatThrownBy(() -> harness.castFromExile(player1, card.getId()))
+                .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
-        assertThat(gd.findExiledCard(card.getId())).isNull();
-        harness.assertInGraveyard(player1, "Memory Bank");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondDraw);
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        harness.assertNotInGraveyard(player1, "Memory Bank");
     }
 }
