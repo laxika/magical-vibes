@@ -50,8 +50,7 @@ class LashOfMaliceTest extends BaseCardTest {
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
         addCreature(player1);
-        Permanent artifact = new Permanent(new FountainOfYouth());
-        gd.playerBattlefields.get(player2.getId()).add(artifact);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
         harness.setHand(player1, List.of(new LashOfMalice()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -60,17 +59,60 @@ class LashOfMaliceTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private void castLashOfMalice(Permanent target) {
+    @Test
+    @DisplayName("Can target a creature you control")
+    void canTargetOwnCreature() {
+        Permanent target = addCreature(player1);
+
+        castLashOfMalice(target);
+
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("Repeated toughness reductions put the creature into its owner's graveyard")
+    void repeatedReductionsKillCreature() {
+        Permanent target = addCreature(player2);
+
+        castLashOfMalice(target);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        castLashOfMalice(target);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(target.getCard());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not affect another creature when its target leaves before resolution")
+    void targetLeavesBeforeResolution() {
+        Permanent target = addCreature(player2);
+        Permanent other = addCreature(player2);
         harness.setHand(player1, List.of(new LashOfMalice()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+
         harness.passBothPriorities();
+
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Lash of Malice");
+    }
+
+    private void castLashOfMalice(Permanent target) {
+        harness.setHand(player1, List.of(new LashOfMalice()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private Permanent addCreature(Player player) {
-        Permanent permanent = new Permanent(new CentaurCourser());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new CentaurCourser());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
