@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.k.KothOfTheHammer;
+import com.github.laxika.magicalvibes.cards.s.Shatter;
+import com.github.laxika.magicalvibes.cards.t.TrueConviction;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -9,18 +13,19 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MyrBattlesphere.class, KothOfTheHammer.class, Shatter.class, TrueConviction.class})
 class MyrBattlesphereTest extends BaseCardTest {
-
-    // ===== ETB token creation =====
 
     @Test
     @DisplayName("ETB creates four 1/1 colorless Myr artifact creature tokens")
@@ -35,6 +40,12 @@ class MyrBattlesphereTest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         assertThat(battlefield).hasSize(5); // 1 Battlesphere + 4 Myr tokens
         assertThat(countMyrTokens()).isEqualTo(4);
+        for (Permanent token : findPermanents(player1, "Myr")) {
+            assertThat(token.getCard().isToken()).isTrue();
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
+            assertThat(token.getCard().getColor()).isNull();
+        }
     }
 
     @Test
@@ -53,19 +64,12 @@ class MyrBattlesphereTest extends BaseCardTest {
         assertThat(myrToken.getCard().getSubtypes()).contains(CardSubtype.MYR);
     }
 
-    // ===== Attack trigger =====
-
     @Test
     @DisplayName("Attacking with Myr Battlesphere pushes attack trigger onto stack")
     void attackTriggerPushesOntoStack() {
         setupBattlefieldWithMyr(2);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0)); // Battlesphere attacks
+        declareAttackers(List.of(0)); // Battlesphere attacks
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -77,12 +81,7 @@ class MyrBattlesphereTest extends BaseCardTest {
     void attackTriggerPromptsMultiPermanentChoice() {
         setupBattlefieldWithMyr(2);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
         harness.passBothPriorities(); // resolve attack trigger
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
@@ -94,12 +93,7 @@ class MyrBattlesphereTest extends BaseCardTest {
         setupBattlefieldWithMyr(3);
         harness.setLife(player2, 20);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
         harness.passBothPriorities(); // resolve attack trigger
 
         // Choose all 3 Myr tokens to tap
@@ -127,12 +121,7 @@ class MyrBattlesphereTest extends BaseCardTest {
         setupBattlefieldWithMyr(2);
         harness.setLife(player2, 20);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
         harness.passBothPriorities(); // resolve attack trigger
 
         // Choose zero Myr
@@ -152,12 +141,7 @@ class MyrBattlesphereTest extends BaseCardTest {
         setupBattlefieldWithMyr(4);
         harness.setLife(player2, 20);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
         harness.passBothPriorities(); // resolve attack trigger
 
         // Choose only 2 out of 4 Myr
@@ -177,17 +161,10 @@ class MyrBattlesphereTest extends BaseCardTest {
     @DisplayName("Battlesphere itself is not eligible for tapping since it taps to attack")
     void battlesphereNotEligibleForTapping() {
         // Only the Battlesphere on the battlefield, no Myr tokens
-        Permanent battlesphere = new Permanent(new MyrBattlesphere());
-        battlesphere.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(battlesphere);
+        Permanent battlesphere = addCreatureReady(player1, new MyrBattlesphere());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
         harness.setLife(player2, 20);
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
         harness.passBothPriorities(); // resolve attack trigger — no untapped Myr to tap
 
         // No multi-permanent choice should be prompted since the only Myr is tapped
@@ -208,13 +185,8 @@ class MyrBattlesphereTest extends BaseCardTest {
         battlefield.get(1).tap();
         battlefield.get(2).tap();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
         harness.setLife(player2, 20);
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
         harness.passBothPriorities(); // resolve attack trigger
 
         // Should only have 1 untapped Myr as eligible choice
@@ -235,12 +207,7 @@ class MyrBattlesphereTest extends BaseCardTest {
     void completingMyrChoiceFinishesParkedAttackTriggerResolution() {
         setupBattlefieldWithMyr(1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
         harness.passBothPriorities();
 
         assertThat(gd.pendingEffectResolutionEntry)
@@ -256,16 +223,130 @@ class MyrBattlesphereTest extends BaseCardTest {
         assertThat(gd.pendingEffectResolutionIndex).isZero();
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Attack ability damages the attacked planeswalker instead of its controller")
+    void attackAbilityDamagesAttackedPlaneswalker() {
+        setupBattlefieldWithMyr(2);
+        Permanent koth = harness.addToBattlefieldAndReturn(player2, new KothOfTheHammer());
+        koth.setCounterCount(CounterType.LOYALTY, 3);
+        harness.setLife(player2, 20);
 
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of(0), Map.of(0, koth.getId()));
+        harness.passBothPriorities();
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> harness.handleMultiplePermanentsChosen(player1, getMyrTokenIds(2)));
+
+        assertThat(koth.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getPowerModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Lifelink gains life for damage dealt by the attack ability")
+    void lifelinkAppliesToAttackAbilityDamage() {
+        setupBattlefieldWithMyr(3);
+        harness.addToBattlefield(player1, new TrueConviction());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> harness.handleMultiplePermanentsChosen(player1, getMyrTokenIds(3)));
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Attack ability still taps Myr and deals damage after Battlesphere is destroyed")
+    void attackAbilityDealsDamageAfterSourceIsDestroyed() {
+        setupBattlefieldWithMyr(3);
+        Permanent battlesphere = gd.playerBattlefields.get(player1.getId()).getFirst();
+        List<UUID> myrIds = getMyrTokenIds(3);
+        harness.setHand(player1, List.of(new Shatter()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        harness.castInstant(player1, 0, battlesphere.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.findPermanentById(gd, battlesphere.getId())).isNull();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, myrIds);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        for (UUID myrId : myrIds) {
+            assertThat(gqs.findPermanentById(gd, myrId).isTapped()).isTrue();
+        }
+    }
+
+    @Test
+    @DisplayName("Another Battlesphere can be tapped, but an opponent's Myr cannot")
+    void canTapNontokenMyrControlledByAbilityController() {
+        Permanent attacker = addCreatureReady(player1, new MyrBattlesphere());
+        Permanent otherMyr = harness.addToBattlefieldAndReturn(player1, new MyrBattlesphere());
+        Permanent opposingMyr = harness.addToBattlefieldAndReturn(player2, new MyrBattlesphere());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> harness.handleMultiplePermanentsChosen(player1, List.of(otherMyr.getId())));
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(otherMyr.isTapped()).isTrue();
+        assertThat(opposingMyr.isTapped()).isFalse();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Summoning sick Myr tokens can be tapped for the attack ability")
+    void canTapSummoningSickMyrTokens() {
+        setupBattlefieldWithMyr(2);
+        List<UUID> myrIds = getMyrTokenIds(2);
+        for (UUID myrId : myrIds) {
+            gqs.findPermanentById(gd, myrId).setSummoningSick(true);
+        }
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> harness.handleMultiplePermanentsChosen(player1, myrIds));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getPowerModifier()).isEqualTo(2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        for (UUID myrId : myrIds) {
+            assertThat(gqs.findPermanentById(gd, myrId).isTapped()).isTrue();
+        }
+    }
+
+    @Test
+    @DisplayName("Battlesphere can tap itself if it is untapped before the attack ability resolves")
+    void untappedAttackingBattlesphereCanTapItself() {
+        Permanent battlesphere = addCreatureReady(player1, new MyrBattlesphere());
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        battlesphere.untap();
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> harness.handleMultiplePermanentsChosen(player1, List.of(battlesphere.getId())));
+
+        assertThat(battlesphere.isTapped()).isTrue();
+        assertThat(battlesphere.getPowerModifier()).isEqualTo(1);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
     /**
      * Sets up a battlefield with a non-summoning-sick Myr Battlesphere at index 0
      * and the specified number of untapped Myr tokens.
      */
     private void setupBattlefieldWithMyr(int myrCount) {
-        Permanent battlesphere = new Permanent(new MyrBattlesphere());
-        battlesphere.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(battlesphere);
+        addCreatureReady(player1, new MyrBattlesphere());
 
         for (int i = 0; i < myrCount; i++) {
             Card myrToken = new Card();
@@ -279,9 +360,7 @@ class MyrBattlesphereTest extends BaseCardTest {
             myrToken.setSubtypes(List.of(CardSubtype.MYR));
             myrToken.setAdditionalTypes(java.util.Set.of(CardType.ARTIFACT));
 
-            Permanent myrPermanent = new Permanent(myrToken);
-            myrPermanent.setSummoningSick(false);
-            gd.playerBattlefields.get(player1.getId()).add(myrPermanent);
+            addCreatureReady(player1, myrToken);
         }
     }
 
