@@ -50,8 +50,7 @@ class LancersEnKorTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, lancers.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, lancers.getId());
 
         assertThat(destination.getMarkedDamage()).isEqualTo(1);
         assertThat(lancers.getMarkedDamage()).isEqualTo(1);
@@ -76,6 +75,79 @@ class LancersEnKorTest extends BaseCardTest {
         assertThatThrownBy(() ->
                 harness.activateAbility(player1, indexOf(player1, lancers), null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Redirected damage can be redirected again by the destination")
+    void redirectsDamageThroughAnotherEnKor() {
+        Permanent lancers = addCreatureReady(player1, new LancersEnKor());
+        Permanent intermediate = addCreatureReady(player1, new LancersEnKor());
+        Permanent destination = addCreatureReady(player1, new LancersEnKor());
+
+        harness.activateAbility(player1, indexOf(player1, intermediate), null, destination.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(player1, lancers), null, intermediate.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, lancers.getId());
+
+        assertThat(lancers.getMarkedDamage()).isEqualTo(1);
+        assertThat(intermediate.getMarkedDamage()).isZero();
+        assertThat(destination.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Two activations redirect both points of a two-damage event")
+    void multipleActivationsRedirectMultipleDamage() {
+        Permanent lancers = addCreatureReady(player1, new LancersEnKor());
+        Permanent destination = addCreatureReady(player1, new LancersEnKor());
+
+        harness.activateAbility(player1, indexOf(player1, lancers), null, destination.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(player1, lancers), null, destination.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, lancers.getId());
+
+        assertThat(lancers.getMarkedDamage()).isZero();
+        assertThat(destination.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Redirecting to itself is legal and does not prevent damage")
+    void canRedirectDamageToItself() {
+        Permanent lancers = addCreatureReady(player1, new LancersEnKor());
+
+        harness.activateAbility(player1, indexOf(player1, lancers), null, lancers.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, lancers.getId());
+
+        assertThat(lancers.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A destination leaving the battlefield does not prevent damage to Lancers")
+    void doesNotRedirectToDestinationThatHasLeftBattlefield() {
+        Permanent lancers = addCreatureReady(player1, new LancersEnKor());
+        Permanent destination = addCreatureReady(player1, new HonorGuard());
+
+        harness.activateAbility(player1, indexOf(player1, lancers), null, destination.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, destination.getId());
+        harness.assertInGraveyard(player1, "Honor Guard");
+        harness.castAndResolveInstant(player2, 0, lancers.getId());
+
+        assertThat(lancers.getMarkedDamage()).isEqualTo(2);
     }
 
     private int indexOf(Player player, Permanent perm) {
