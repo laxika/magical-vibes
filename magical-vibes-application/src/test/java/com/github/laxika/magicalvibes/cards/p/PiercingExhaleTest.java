@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 import java.util.UUID;
@@ -32,8 +34,7 @@ class PiercingExhaleTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Card topCard = new GrizzlyBears();
         Card secondCard = new AirElemental();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(topCard, secondCard));
+        harness.setLibrary(player1, List.of(topCard, secondCard));
         harness.setHand(player1, List.of(new PiercingExhale()));
         addMana();
 
@@ -70,9 +71,8 @@ class PiercingExhaleTest extends BaseCardTest {
     @DisplayName("Can deal power damage to a planeswalker")
     void dealsPowerDamageToPlaneswalker() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new AirElemental());
-        Permanent planeswalker = new Permanent(new ChandraNalaar());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
         planeswalker.setCounterCount(CounterType.LOYALTY, 6);
-        gd.playerBattlefields.get(player2.getId()).add(planeswalker);
         harness.setHand(player1, List.of(new PiercingExhale()));
         addMana();
 
@@ -97,13 +97,120 @@ class PiercingExhaleTest extends BaseCardTest {
                 .hasMessageContaining("creature you control");
     }
 
+    @Test
+    @DisplayName("Revealing a Dragon from hand enables surveil without discarding it")
+    void revealedDragonRemainsInHand() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card dragon = new DragonWhelp();
+        Card topCard = new GrizzlyBears();
+        Card secondCard = new AirElemental();
+        harness.setLibrary(player1, List.of(topCard, secondCard));
+        harness.setHand(player1, List.of(new PiercingExhale(), dragon));
+        addMana();
+
+        castWithBehold(List.of(source.getId(), target.getId()), List.of(), List.of(1));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(dragon);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(topCard, secondCard);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(1), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(topCard).doesNotContain(secondCard, dragon);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The same creature can be both targets")
+    void creatureCanDamageItself() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PiercingExhale()));
+        addMana();
+
+        harness.castInstant(player1, 0, List.of(creature.getId(), creature.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Damage uses the creature's power at resolution and is not a fight")
+    void usesCurrentPowerWithoutReturnDamage() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new DragonWhelp());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new PiercingExhale()));
+        addMana();
+
+        harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
+        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+        assertThat(source.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Dragon Whelp");
+        harness.assertOnBattlefield(player2, "Air Elemental");
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @DisplayName("Surveil still happens when one target leaves, but no damage is dealt")
+    void surveilsWithOneRemainingTarget(boolean removeSource) {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new DragonWhelp());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Card topCard = new GrizzlyBears();
+        Card secondCard = new AirElemental();
+        harness.setLibrary(player1, List.of(topCard, secondCard));
+        harness.setHand(player1, List.of(new PiercingExhale()));
+        addMana();
+
+        castWithBehold(List.of(source.getId(), target.getId()), List.of(source.getId()), List.of());
+        if (removeSource) {
+            gd.playerBattlefields.get(player1.getId()).remove(source);
+            gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        } else {
+            gd.playerBattlefields.get(player2.getId()).remove(target);
+            gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        }
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(topCard, secondCard);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0, 1), List.of()));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, secondCard);
+    }
+
+    @Test
+    @DisplayName("No surveil happens when both targets become illegal")
+    void doesNotResolveWithNoLegalTargets() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new DragonWhelp());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Card topCard = new GrizzlyBears();
+        Card secondCard = new AirElemental();
+        harness.setLibrary(player1, List.of(topCard, secondCard));
+        harness.setHand(player1, List.of(new PiercingExhale()));
+        addMana();
+
+        castWithBehold(List.of(source.getId(), target.getId()), List.of(source.getId()), List.of());
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, secondCard);
+        harness.assertInGraveyard(player1, "Piercing Exhale");
+    }
+
     private void castWithBehold(List<UUID> targetIds, List<UUID> beholdPermanentIds,
                                 List<Integer> beholdHandCardIndices) {
-        harness.ensurePriority(player1);
-        gs.playCard(gd, player1, 0, 0, null, null, targetIds, List.<UUID>of(), false,
-                null, null, List.<UUID>of(), null, List.<Integer>of(), false, null,
-                List.<Integer>of(), List.<UUID>of(), List.<UUID>of(), List.<String>of(), false,
-                null, null, beholdPermanentIds, beholdHandCardIndices, null);
+        harness.castSorceryWithBehold(player1, 0, null, targetIds,
+                beholdPermanentIds, beholdHandCardIndices);
     }
 
     private void addMana() {
