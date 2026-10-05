@@ -39,6 +39,51 @@ class JetFreedomFighterTest extends BaseCardTest {
     }
 
     @Test
+    void etbCountsJetButNotOpponentsCreatures() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        castJet(target);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    void etbCountsCreaturesAtResolution() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new JetFreedomFighter(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.castInstant(player1, 0, bear.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    void etbDoesNotCountJetAfterHeLeavesBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new JetFreedomFighter(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        Permanent jet = findPermanent(player1, "Jet, Freedom Fighter");
+        harness.castInstant(player1, 0, jet.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Jet, Freedom Fighter");
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
     void deathPutsCountersOnUpToTwoTargetCreatures() {
         Permanent jet = harness.addToBattlefieldAndReturn(player1, new JetFreedomFighter());
         Permanent firstTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -65,12 +110,46 @@ class JetFreedomFighterTest extends BaseCardTest {
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    void deathMayChooseOneOpponentsCreature() {
+        Permanent jet = harness.addToBattlefieldAndReturn(player1, new JetFreedomFighter());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        killJet(jet);
+
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanent(player1, "Grizzly Bears").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isZero();
+    }
+
+    @Test
+    void deathStillPutsCounterOnRemainingLegalTarget() {
+        Permanent jet = harness.addToBattlefieldAndReturn(player1, new JetFreedomFighter());
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        killJet(jet);
+        harness.handlePermanentChosen(player1, firstTarget.getId());
+        harness.handlePermanentChosen(player1, secondTarget.getId());
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, firstTarget.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(secondTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private void castJet(Permanent target) {
         harness.setHand(player1, List.of(new JetFreedomFighter()));
         addJetMana();
         harness.castCreature(player1, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void killJet(Permanent jet) {
