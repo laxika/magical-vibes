@@ -105,6 +105,28 @@ class MightOfOldKrosaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Main-phase boosts accumulate even when cast with another spell on the stack")
+    void mainPhaseBoostsAccumulateWithNonemptyStack() {
+        Permanent target = addCreatureReady(player1, new AshcoatBear());
+        harness.setHand(player1, List.of(new MightOfOldKrosa(), new MightOfOldKrosa()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getPowerModifier()).isEqualTo(4);
+        assertThat(target.getToughnessModifier()).isEqualTo(4);
+
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(8);
+        assertThat(target.getToughnessModifier()).isEqualTo(8);
+    }
+
+    @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new LocketOfYesterdays());
