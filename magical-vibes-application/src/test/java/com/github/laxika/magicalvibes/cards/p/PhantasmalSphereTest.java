@@ -75,4 +75,71 @@ class PhantasmalSphereTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(sphere);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
+
+    @Test
+    void opponentsUpkeepDoesNotAddCounters() {
+        Permanent sphere = harness.addToBattlefieldAndReturn(player1, new PhantasmalSphere());
+
+        advanceToUpkeep(player2);
+
+        assertThat(sphere.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(sphere);
+    }
+
+    @Test
+    void returningToHandCreatesOrbUsingOnlyPlusOneCounters() {
+        Permanent sphere = harness.addToBattlefieldAndReturn(player1, new PhantasmalSphere());
+        sphere.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        sphere.setCounterCount(CounterType.AGE, 4);
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToHand(gd, sphere));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Phantasmal Sphere");
+        assertThat(gd.playerBattlefields.get(player2.getId())).singleElement().satisfies(orb -> {
+            assertThat(orb.getCard().getName()).isEqualTo("Orb");
+            assertThat(orb.getEffectivePower()).isEqualTo(2);
+            assertThat(orb.getEffectiveToughness()).isEqualTo(2);
+        });
+    }
+
+    @Test
+    void exilingOpponentControlledSphereGivesOrbToItsOpponent() {
+        Permanent sphere = harness.addToBattlefieldAndReturn(player2, new PhantasmalSphere());
+        sphere.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToExile(gd, sphere));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(player1.getId());
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement().satisfies(orb -> {
+            assertThat(orb.getCard().getName()).isEqualTo("Orb");
+            assertThat(orb.getEffectivePower()).isEqualTo(3);
+            assertThat(orb.getEffectiveToughness()).isEqualTo(3);
+        });
+    }
+
+    @Test
+    void leavingWithoutCountersCreatesOrbThatDiesImmediately() {
+        Permanent sphere = harness.addToBattlefieldAndReturn(player1, new PhantasmalSphere());
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToHand(gd, sphere));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Phantasmal Sphere");
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.gameLog).anySatisfy(log ->
+                assertThat(log.plainText()).contains("0/0 blue Orb creature token enters the battlefield"));
+    }
 }
