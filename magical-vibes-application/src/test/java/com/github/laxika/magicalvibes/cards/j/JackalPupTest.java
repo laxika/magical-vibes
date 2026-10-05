@@ -28,8 +28,7 @@ class JackalPupTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         UUID pupId = harness.getPermanentId(player2, "Jackal Pup");
-        harness.castInstant(player1, 0, pupId);
-        harness.passBothPriorities(); // Kindle deals 2, ON_DEALT_DAMAGE queued
+        harness.castAndResolveInstant(player1, 0, pupId);
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -44,13 +43,35 @@ class JackalPupTest extends BaseCardTest {
         addCreatureReady(player2, new JackalPup()); // 2/1
         harness.setLife(player2, 20);
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player1); // Combat damage: Pup takes 1, trigger queued
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         harness.assertInGraveyard(player2, "Jackal Pup"); // 2/1 dies to 1 damage
+    }
+
+    @Test
+    @DisplayName("Lethal damage is reflected in full when the trigger resolves after Jackal Pup dies")
+    void reflectsFullDamageAfterLeavingBattlefield() {
+        harness.addToBattlefield(player2, new JackalPup());
+        harness.setGraveyard(player1, List.of(new Kindle()));
+        harness.setGraveyard(player2, List.of(new Kindle()));
+        harness.setHand(player1, List.of(new Kindle()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Jackal Pup"));
+
+        harness.assertInGraveyard(player2, "Jackal Pup");
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 16);
     }
 }
