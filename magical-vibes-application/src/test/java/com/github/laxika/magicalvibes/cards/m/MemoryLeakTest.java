@@ -81,10 +81,117 @@ class MemoryLeakTest extends BaseCardTest {
         harness.assertInHand(player1, "Grizzly Bears");
     }
 
+    @Test
+    void exilesFromGraveyardWhenTheOpponentsHandIsEmpty() {
+        Card graveyardCard = new MemoryLeak();
+        harness.setHand(player2, List.of());
+        harness.setGraveyard(player2, List.of(graveyardCard));
+
+        castMemoryLeak();
+        harness.handleMultipleCardsChosen(player1, List.of(graveyardCard.getId()));
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(graveyardCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Memory Leak");
+    }
+
+    @Test
+    void resolvesWithoutAChoiceWhenBothZonesAreEmpty() {
+        harness.setHand(player2, List.of());
+        harness.setGraveyard(player2, List.of());
+
+        castMemoryLeak();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Memory Leak");
+    }
+
+    @Test
+    void doesNotExileLandsFromEitherZone() {
+        Card handLand = new Swamp();
+        Card graveyardLand = new Swamp();
+        harness.setHand(player2, List.of(handLand));
+        harness.setGraveyard(player2, List.of(graveyardLand));
+
+        castMemoryLeak();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(handLand);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(graveyardLand);
+        harness.assertInGraveyard(player1, "Memory Leak");
+    }
+
+    @Test
+    void controllerMustChooseExactlyOneEligibleCard() {
+        Card handCard = new MemoryLeak();
+        Card graveyardCard = new MemoryLeak();
+        harness.setHand(player2, List.of(handCard));
+        harness.setGraveyard(player2, List.of(graveyardCard));
+
+        castMemoryLeak();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2, List.of(handCard.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .hasMessageContaining("exactly one");
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(handCard.getId(), graveyardCard.getId())))
+                .hasMessageContaining("exactly one");
+
+        harness.handleMultipleCardsChosen(player1, List.of(handCard.getId()));
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(handCard);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(graveyardCard);
+    }
+
+    @Test
+    void cyclingDiscardsAsACostBeforeTheDrawResolves() {
+        Card cycledCard = new MemoryLeak();
+        Card drawnCard = new Swamp();
+        harness.setHand(player1, List.of(cycledCard));
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(cycledCard);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void revealsTheEntireHandToBothPlayersBeforeChoosing() {
+        Card land = new Swamp();
+        Card nonland = new MemoryLeak();
+        harness.setHand(player2, List.of(land, nonland));
+        harness.clearMessages();
+
+        castMemoryLeak();
+
+        assertThat(harness.getConn1().getSentMessages()).anyMatch(message ->
+                message.contains("REVEAL_HAND") && message.contains(land.getId().toString())
+                        && message.contains(nonland.getId().toString()));
+        assertThat(harness.getConn2().getSentMessages()).anyMatch(message ->
+                message.contains("REVEAL_HAND") && message.contains(land.getId().toString())
+                        && message.contains(nonland.getId().toString()));
+
+        harness.handleMultipleCardsChosen(player1, List.of(nonland.getId()));
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(nonland);
+    }
+
     private void castMemoryLeak() {
         harness.setHand(player1, List.of(new MemoryLeak()));
         harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 }
