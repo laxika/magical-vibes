@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -11,13 +12,15 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Phelddagrif.class, Pillage.class})
+@CardUsed({Phelddagrif.class, Pillage.class, LeylineOfSanctity.class})
 class PhelddagrifTest extends BaseCardTest {
 
     private Permanent addPhelddagrif(ManaColor mana) {
@@ -31,7 +34,7 @@ class PhelddagrifTest extends BaseCardTest {
     void greenAbilityGrantsTrampleAndGivesHippo() {
         Permanent phelddagrif = addPhelddagrif(ManaColor.GREEN);
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
         assertThat(phelddagrif.getGrantedKeywords()).contains(Keyword.TRAMPLE);
@@ -51,7 +54,7 @@ class PhelddagrifTest extends BaseCardTest {
     void trampleWearsOff() {
         Permanent phelddagrif = addPhelddagrif(ManaColor.GREEN);
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -66,7 +69,7 @@ class PhelddagrifTest extends BaseCardTest {
     void whiteAbilityGrantsFlyingAndGivesLife() {
         Permanent phelddagrif = addPhelddagrif(ManaColor.WHITE);
 
-        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
         harness.passBothPriorities();
 
         assertThat(phelddagrif.getGrantedKeywords()).contains(Keyword.FLYING);
@@ -79,7 +82,7 @@ class PhelddagrifTest extends BaseCardTest {
     void flyingWearsOff() {
         Permanent phelddagrif = addPhelddagrif(ManaColor.WHITE);
 
-        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -95,7 +98,7 @@ class PhelddagrifTest extends BaseCardTest {
         addCreatureReady(player1, new Phelddagrif());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -105,7 +108,7 @@ class PhelddagrifTest extends BaseCardTest {
         addPhelddagrif(ManaColor.BLUE);
         harness.setLibrary(player2, List.of(new Pillage()));
 
-        harness.activateAbility(player1, 0, 2, null, null);
+        harness.activateAbility(player1, 0, 2, null, player2.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -126,12 +129,61 @@ class PhelddagrifTest extends BaseCardTest {
         addPhelddagrif(ManaColor.BLUE);
         harness.setLibrary(player2, List.of(new Pillage()));
 
-        harness.activateAbility(player1, 0, 2, null, null);
+        harness.activateAbility(player1, 0, 2, null, player2.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
         int handBefore = gd.playerHands.get(player2.getId()).size();
         harness.handleMayAbilityChosen(player2, false);
         assertThat(gd.playerHands.get(player2.getId()).size()).isEqualTo(handBefore);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1, 2})
+    @DisplayName("Each ability requires an opponent who can legally be targeted")
+    void cannotActivateAgainstOpponentWithHexproof(int abilityIndex) {
+        addPhelddagrif(List.of(ManaColor.GREEN, ManaColor.WHITE, ManaColor.BLUE).get(abilityIndex));
+        harness.addToBattlefield(player2, new LeylineOfSanctity());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, abilityIndex, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1, 2})
+    @DisplayName("An ability does not resolve if its opponent target gains hexproof")
+    void opponentBecomingIllegalStopsEntireAbility(int abilityIndex) {
+        Permanent phelddagrif = addPhelddagrif(
+                List.of(ManaColor.GREEN, ManaColor.WHITE, ManaColor.BLUE).get(abilityIndex));
+        harness.setLibrary(player2, List.of(new Pillage()));
+
+        harness.activateAbility(player1, 0, abilityIndex, null, player2.getId());
+        harness.addToBattlefield(player2, new LeylineOfSanctity());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Phelddagrif");
+        assertThat(phelddagrif.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE, Keyword.FLYING);
+        harness.assertNotOnBattlefield(player2, "Hippo");
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("A second blue activation still offers a draw after Phelddagrif has left")
+    void blueAbilityStillOffersDrawWhenSourceAlreadyReturned() {
+        addPhelddagrif(ManaColor.BLUE);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setLibrary(player2, List.of(new Pillage(), new Pillage()));
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.activateAbility(player1, 0, 2, null, player2.getId());
+        harness.activateAbility(player1, 0, 2, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.assertInHand(player1, "Phelddagrif");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 2);
     }
 }
