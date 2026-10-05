@@ -57,7 +57,7 @@ class PrairieStreamTest extends BaseCardTest {
 
     @Test
     void tappingProducesWhiteMana() {
-        addReadyPrairieStream(player1);
+        harness.addToBattlefield(player1, new PrairieStream());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -66,11 +66,67 @@ class PrairieStreamTest extends BaseCardTest {
 
     @Test
     void tappingProducesBlueMana() {
-        addReadyPrairieStream(player1);
+        harness.addToBattlefield(player1, new PrairieStream());
 
         harness.activateAbility(player1, 0, 1, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
+    void entersTappedWithoutBasicLands() {
+        playPrairieStream();
+
+        assertThat(findPrairieStream(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    void twoTappedBasicLandsOfTheSameTypeAreEnough() {
+        harness.addToBattlefieldAndReturn(player1, new Plains()).tap();
+        harness.addToBattlefieldAndReturn(player1, new Plains()).tap();
+
+        playPrairieStream();
+
+        assertThat(findPrairieStream(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    void entersUntappedWithMoreThanTwoBasicLands() {
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Plains());
+
+        playPrairieStream();
+
+        assertThat(findPrairieStream(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    void nonbasicLandWithBasicLandTypesDoesNotSupplySecondBasicLand() {
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new PrairieStream());
+
+        playPrairieStream();
+
+        assertThat(findPermanents(player1, "Prairie Stream")).hasSize(2);
+        assertThat(findPermanents(player1, "Prairie Stream").get(1).isTapped()).isTrue();
+    }
+
+    @Test
+    void replacementAppliesWhenPutOntoBattlefieldWithoutBeingPlayed() {
+        Permanent permanent = harness.enterBattlefieldAndReturn(player1, new PrairieStream());
+
+        assertThat(permanent.isTapped()).isTrue();
+    }
+
+    @Test
+    void putOntoBattlefieldUntappedWithTwoBasicLands() {
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Island());
+
+        Permanent permanent = harness.enterBattlefieldAndReturn(player1, new PrairieStream());
+
+        assertThat(permanent.isTapped()).isFalse();
     }
 
     private void playPrairieStream() {
@@ -78,13 +134,6 @@ class PrairieStreamTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.playLand(player1, 0);
-    }
-
-    private Permanent addReadyPrairieStream(Player player) {
-        Permanent permanent = new Permanent(new PrairieStream());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 
     private Permanent findPrairieStream(Player player) {
