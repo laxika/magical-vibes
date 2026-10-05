@@ -39,6 +39,47 @@ class JuriMasterOfTheRevueTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each sacrifice gives Juri another counter")
+    void repeatedSacrificesAddCounters() {
+        Permanent juri = harness.addToBattlefieldAndReturn(player1, new JuriMasterOfTheRevue());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        sacrificeOwnPermanent(first);
+        sacrificeOwnPermanent(second);
+
+        assertThat(juri.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Sacrificing Juri uses its power before the sacrifice, without an extra counter")
+    void selfSacrificeDealsLastKnownPowerDamage() {
+        harness.addToBattlefield(player1, new JuriMasterOfTheRevue());
+        int lifeBefore = gd.getLife(player2.getId());
+
+        castEdictAt(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Juri, Master of the Revue");
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("A creature dying without being sacrificed does not give Juri a counter")
+    void lethalDamageToAllyDoesNotAddCounter() {
+        Permanent juri = harness.addToBattlefieldAndReturn(player1, new JuriMasterOfTheRevue());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        killJuriWithFlameJavelin(bears.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(juri.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
     @DisplayName("Juri does not trigger when an opponent sacrifices a permanent")
     void opponentSacrificeDoesNotAddCounter() {
         Permanent juri = harness.addToBattlefieldAndReturn(player1, new JuriMasterOfTheRevue());
@@ -107,7 +148,6 @@ class JuriMasterOfTheRevueTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new FlameJavelin()));
         harness.addMana(player2, ManaColor.RED, 6);
-        harness.castInstant(player2, 0, juriId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, juriId);
     }
 }
