@@ -88,6 +88,42 @@ class PeregrineDrakeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
     }
 
+    @Test
+    @DisplayName("Peregrine Drake resolves normally when there are no lands")
+    void resolvesWithNoLands() {
+        castPeregrineDrake();
+
+        harness.assertOnBattlefield(player1, "Peregrine Drake");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Peregrine Drake chooses lands when its enter trigger resolves")
+    void choosesLandsAtResolution() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        harness.castFromHand(player1, new PeregrineDrake(), "{4}{U}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Peregrine Drake");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+        harness.tapPermanent(player2, 0);
+        assertThat(land.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(land.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(land.getId()));
+
+        assertThat(land.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castPeregrineDrake() {
         harness.castFromHand(player1, new PeregrineDrake(), "{4}{U}");
         harness.passBothPriorities();
