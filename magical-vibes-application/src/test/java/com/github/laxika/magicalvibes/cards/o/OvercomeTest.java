@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Overcome.class, GrizzlyBears.class})
 class OvercomeTest extends BaseCardTest {
 
     @Test
@@ -29,8 +31,7 @@ class OvercomeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Overcome()));
         harness.addMana(player1, ManaColor.GREEN, 5);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(p1a.getEffectivePower()).isEqualTo(4);
         assertThat(p1a.getEffectiveToughness()).isEqualTo(4);
@@ -53,8 +54,7 @@ class OvercomeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Overcome()));
         harness.addMana(player1, ManaColor.GREEN, 5);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         attacker.setAttacking(true);
         harness.forceActivePlayer(player1);
@@ -83,8 +83,7 @@ class OvercomeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Overcome()));
         harness.addMana(player1, ManaColor.GREEN, 5);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(creature.getEffectivePower()).isEqualTo(4);
         assertThat(creature.getEffectiveToughness()).isEqualTo(4);
@@ -110,13 +109,58 @@ class OvercomeTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Overcome");
+        assertThat(entry.getCard()).isInstanceOf(Overcome.class);
+    }
+
+    @Test
+    @DisplayName("Creatures entering after Overcome resolves do not receive its effects")
+    void creaturesEnteringAfterResolutionAreNotAffected() {
+        Permanent existing = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Overcome()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(existing.getEffectivePower()).isEqualTo(4);
+        assertThat(existing.getEffectiveToughness()).isEqualTo(4);
+        assertThat(existing.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(newcomer.getEffectivePower()).isEqualTo(2);
+        assertThat(newcomer.getEffectiveToughness()).isEqualTo(2);
+        assertThat(newcomer.hasKeyword(Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Creatures entering while Overcome is on the stack receive its effects")
+    void creaturesEnteringBeforeResolutionAreAffected() {
+        harness.setHand(player1, List.of(new Overcome()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.castSorcery(player1, 0, 0);
+
+        Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertThat(newcomer.getEffectivePower()).isEqualTo(4);
+        assertThat(newcomer.getEffectiveToughness()).isEqualTo(4);
+        assertThat(newcomer.hasKeyword(Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Overcome resolves with no creatures under its controller's control")
+    void resolvesWithoutCreatures() {
+        harness.setHand(player1, List.of(new Overcome()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Overcome");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
     }
 
     private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
