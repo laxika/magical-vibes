@@ -16,9 +16,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MatopiGolemTest extends BaseCardTest {
 
     private Permanent addGolemReady() {
-        addCreatureReady(player1, new MatopiGolem());
+        Permanent golem = addCreatureReady(player1, new MatopiGolem());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        return findPermanent(player1, "Matopi Golem");
+        return golem;
     }
 
     /** Puts a shielded Golem in front of a lethal attacker so combat damage forces regeneration. */
@@ -62,6 +62,7 @@ class MatopiGolemTest extends BaseCardTest {
         harness.passBothPriorities();
 
         blockPantherWarriors(findPermanent(player1, "Matopi Golem"));
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Matopi Golem");
         Permanent regenerated = findPermanent(player1, "Matopi Golem");
@@ -95,9 +96,67 @@ class MatopiGolemTest extends BaseCardTest {
         blockPantherWarriors(golem);
 
         harness.handleListChoice(player1, "Regenerate and put a -1/-1 counter on it");
+        resolveAllTriggers();
         Permanent regenerated = findPermanent(player1, "Matopi Golem");
         assertThat(regenerated.getRegenerationShield()).isEqualTo(1);
         assertThat(regenerated.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The regeneration counter uses the stack and can be responded to")
+    void counterWaitsForTriggeredAbilityToResolve() {
+        Permanent golem = addGolemReady();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        blockPantherWarriors(golem);
+
+        harness.assertOnBattlefield(player1, "Matopi Golem");
+        assertThat(golem.isTapped()).isTrue();
+        assertThat(golem.isBlocking()).isFalse();
+        assertThat(golem.getMarkedDamage()).isZero();
+        assertThat(golem.getRegenerationShield()).isZero();
+        assertThat(golem.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(golem.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Choosing the plain shield preserves the Golem's counter-producing shield")
+    void canChoosePlainShieldAmongMultipleShields() {
+        Permanent golem = addGolemReady();
+        addForeignShield(golem);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        blockPantherWarriors(golem);
+        harness.handleListChoice(player1, "Regenerate without an additional effect");
+
+        harness.assertOnBattlefield(player1, "Matopi Golem");
+        assertThat(golem.getRegenerationShield()).isEqualTo(1);
+        assertThat(golem.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Multiple activations create shields but one regeneration incurs only one counter")
+    void multipleShieldsOnlyProduceOneCounterForOneRegeneration() {
+        Permanent golem = addGolemReady();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        blockPantherWarriors(golem);
+        resolveAllTriggers();
+
+        assertThat(golem.getRegenerationShield()).isEqualTo(1);
+        assertThat(golem.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     @Test
