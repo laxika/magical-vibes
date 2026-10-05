@@ -43,8 +43,7 @@ class NightDealingsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GlacialRay()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
         assertThat(dealings.getCounterCount(CounterType.THEFT)).isEqualTo(2);
@@ -58,10 +57,8 @@ class NightDealingsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GlacialRay(), new GlacialRay()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         assertThat(dealings.getCounterCount(CounterType.THEFT)).isZero();
     }
@@ -74,8 +71,7 @@ class NightDealingsTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 2);
         harness.forceActivePlayer(player2);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
         harness.passBothPriorities();
 
         assertThat(dealings.getCounterCount(CounterType.THEFT)).isZero();
@@ -113,9 +109,7 @@ class NightDealingsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .extracting(Card::getName)
-                .contains("Nezumi Cutthroat");
+        harness.assertInHand(player1, "Nezumi Cutthroat");
     }
 
     @Test
@@ -139,9 +133,7 @@ class NightDealingsTest extends BaseCardTest {
 
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .extracting(Card::getName)
-                .contains("Orochi Hatchery");
+        harness.assertInHand(player1, "Orochi Hatchery");
     }
 
     @Test
@@ -153,6 +145,72 @@ class NightDealingsTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Each simultaneous combat damage source contributes its damage")
+    void multipleCombatSourcesAddTheirDamage() {
+        Permanent dealings = harness.addToBattlefieldAndReturn(player1, new NightDealings());
+        addCreatureReady(player1, new NezumiCutthroat()).setAttacking(true);
+        addCreatureReady(player1, new NezumiCutthroat()).setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(dealings.getCounterCount(CounterType.THEFT)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Zero X is legal with no theft counters")
+    void zeroXWithNoCounters() {
+        Permanent dealings = harness.addToBattlefieldAndReturn(player1, new NightDealings());
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.setLibrary(player1, List.of(new OrochiHatchery(), new Plains()));
+
+        harness.activateAbility(player1, 0, 0, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(dealings.getCounterCount(CounterType.THEFT)).isZero();
+        harness.assertInHand(player1, "Orochi Hatchery");
+    }
+
+    @Test
+    @DisplayName("Counters are paid on activation and the chosen X survives counter changes")
+    void countersArePaidBeforeResolution() {
+        Permanent dealings = harness.addToBattlefieldAndReturn(player1, new NightDealings());
+        dealings.setCounterCount(CounterType.THEFT, 2);
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        setupLibrary();
+
+        harness.activateAbility(player1, 0, 2, null);
+
+        assertThat(dealings.getCounterCount(CounterType.THEFT)).isZero();
+        dealings.setCounterCount(CounterType.THEFT, 1);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Nezumi Cutthroat");
+        assertThat(dealings.getCounterCount(CounterType.THEFT)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A restricted search may fail to find an available card")
+    void mayFailToFind() {
+        Permanent dealings = harness.addToBattlefieldAndReturn(player1, new NightDealings());
+        dealings.setCounterCount(CounterType.THEFT, 2);
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        setupLibrary();
+
+        harness.activateAbility(player1, 0, 2, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(dealings.getCounterCount(CounterType.THEFT)).isZero();
+        harness.assertNotInHand(player1, "Nezumi Cutthroat");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void setupLibrary() {
