@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.a.ArgothianSwine;
+import com.github.laxika.magicalvibes.cards.r.Rescind;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ManaLeech.class, Mountain.class, ArgothianSwine.class})
+@CardUsed({ManaLeech.class, Mountain.class, ArgothianSwine.class, Rescind.class})
 class ManaLeechTest extends BaseCardTest {
 
     @Test
@@ -111,18 +113,74 @@ class ManaLeechTest extends BaseCardTest {
         assertThat(manaLeech.isTapped()).isTrue();
     }
 
+    @Test
+    void alreadyTappedLandIsStillLocked() {
+        addReadyManaLeech(player1);
+        Permanent targetLand = addReadyLand(player2);
+        targetLand.tap();
+
+        harness.activateAbility(player1, 0, null, targetLand.getId());
+        harness.passBothPriorities();
+        advanceToNextTurn(player1);
+
+        assertThat(targetLand.isTapped()).isTrue();
+    }
+
+    @Test
+    void summoningSickManaLeechCannotActivate() {
+        Permanent manaLeech = addReadyManaLeech(player1);
+        manaLeech.setSummoningSick(true);
+        Permanent targetLand = addReadyLand(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetLand.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(manaLeech.isTapped()).isFalse();
+        assertThat(targetLand.isTapped()).isFalse();
+    }
+
+    @Test
+    void sourceLeavingBeforeResolutionStillTapsLandButDoesNotLockIt() {
+        Permanent manaLeech = addReadyManaLeech(player1);
+        Permanent targetLand = addReadyLand(player2);
+        harness.activateAbility(player1, 0, null, targetLand.getId());
+
+        harness.setHand(player2, List.of(new Rescind()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.castInstant(player2, 0, manaLeech.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(manaLeech);
+        assertThat(targetLand.isTapped()).isTrue();
+        advanceToNextTurn(player1);
+        assertThat(targetLand.isTapped()).isFalse();
+    }
+
+    @Test
+    void sourceLeavingAfterResolutionReleasesLand() {
+        Permanent manaLeech = addReadyManaLeech(player1);
+        Permanent targetLand = addReadyLand(player2);
+        harness.activateAbility(player1, 0, null, targetLand.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Rescind()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.castInstant(player2, 0, manaLeech.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(manaLeech);
+        assertThat(targetLand.isTapped()).isTrue();
+        advanceToNextTurn(player1);
+        assertThat(targetLand.isTapped()).isFalse();
+    }
+
     private Permanent addReadyManaLeech(Player player) {
-        Permanent permanent = new Permanent(new ManaLeech());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new ManaLeech());
     }
 
     private Permanent addReadyLand(Player player) {
-        Permanent permanent = new Permanent(new Mountain());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new Mountain());
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
