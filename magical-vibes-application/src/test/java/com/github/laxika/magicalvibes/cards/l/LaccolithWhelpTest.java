@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.f.FlaringPain;
 import com.github.laxika.magicalvibes.cards.s.SkyshroudRidgeback;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LaccolithWhelp.class, SkyshroudRidgeback.class})
+@CardUsed({LaccolithWhelp.class, SkyshroudRidgeback.class, FlaringPain.class})
 class LaccolithWhelpTest extends BaseCardTest {
 
     private Permanent addAttacker() {
@@ -169,10 +170,7 @@ class LaccolithWhelpTest extends BaseCardTest {
         Permanent attacker = addAttacker();
         Permanent blocker = addBlocker();
 
-        prepareDeclareBlockers();
-        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
-        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+        declareBlock(attacker, blocker);
 
         harness.handlePermanentChosen(player1, blocker.getId());
 
@@ -217,5 +215,60 @@ class LaccolithWhelpTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Accepting assigns no combat damage even when damage cannot be prevented")
+    void acceptingStillAssignsNoCombatDamageWhenDamageCannotBePrevented() {
+        harness.castFromHand(player1, new FlaringPain(), "{1}{R}");
+        harness.passBothPriorities();
+        Permanent attacker = addAttacker();
+        Permanent blocker = addBlocker();
+        Permanent otherCreature = addBlocker();
+
+        declareBlock(attacker, blocker);
+        harness.handlePermanentChosen(player1, otherCreature.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveCombat();
+
+        assertThat(otherCreature.getMarkedDamage()).isEqualTo(1);
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+    }
+
+    @Test
+    @DisplayName("Accepting with zero power still assigns no combat damage")
+    void acceptingWithZeroPowerStillSuppressesCombatDamage() {
+        Permanent attacker = addAttacker();
+        Permanent blocker = addBlocker();
+        declareBlock(attacker, blocker);
+        harness.handlePermanentChosen(player1, blocker.getId());
+        attacker.setPowerModifier(-1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        attacker.setPowerModifier(0);
+        resolveCombat();
+
+        assertThat(blocker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Losing the only target makes the ability do nothing")
+    void losingTargetDoesNotSuppressCombatDamage() {
+        Permanent attacker = addAttacker();
+        Permanent blocker = addBlocker();
+        Permanent target = addBlocker();
+        declareBlock(attacker, blocker);
+        harness.handlePermanentChosen(player1, target.getId());
+        target.setMarkedDamage(3);
+        harness.runStateBasedActions();
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        resolveCombat();
+
+        assertThat(blocker.getMarkedDamage()).isEqualTo(1);
     }
 }
