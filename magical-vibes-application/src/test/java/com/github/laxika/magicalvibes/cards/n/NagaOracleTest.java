@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DuneBeetle;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({NagaOracle.class, DuneBeetle.class})
 class NagaOracleTest extends BaseCardTest {
 
     /** Casts Naga Oracle and resolves it plus its ETB trigger, leaving the surveil interaction active. */
@@ -31,9 +33,9 @@ class NagaOracleTest extends BaseCardTest {
 
     /** Replaces the top three library cards with three distinct, identity-trackable cards. */
     private Card[] seedTopThree(GameData gd) {
-        Card top0 = new GrizzlyBears();
-        Card top1 = new GrizzlyBears();
-        Card top2 = new GrizzlyBears();
+        Card top0 = new DuneBeetle();
+        Card top1 = new DuneBeetle();
+        Card top2 = new DuneBeetle();
         List<Card> deck = gd.playerDecks.get(player1.getId());
         deck.add(0, top2);
         deck.add(0, top1);
@@ -143,4 +145,42 @@ class NagaOracleTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .anyMatch(log -> log.contains("library is empty"));
     }
+
+    @Test
+    @DisplayName("A two-card library lets the controller keep one and mill the other")
+    void surveilWithTwoCardsRemaining() {
+        Card first = new DuneBeetle();
+        Card second = new DuneBeetle();
+        harness.setLibrary(player1, List.of(first, second));
+
+        GameData gd = resolveEtbSurveil();
+
+        PendingInteraction.Scry surveil = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(surveil.cards()).containsExactly(first, second);
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(1), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first).doesNotContain(second);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A one-card library can put its only card into the graveyard")
+    void surveilWithOneCardRemaining() {
+        Card onlyCard = new DuneBeetle();
+        harness.setLibrary(player1, List.of(onlyCard));
+
+        GameData gd = resolveEtbSurveil();
+
+        PendingInteraction.Scry surveil = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(surveil.cards()).containsExactly(onlyCard);
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(onlyCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
 }
