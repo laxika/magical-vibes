@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,9 +14,67 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({LuxCannon.class})
 class LuxCannonTest extends BaseCardTest {
 
-    // ===== First ability: put a charge counter =====
+    @Test
+    void chargeCounterIsAddedOnlyOnResolution() {
+        Permanent cannon = harness.addToBattlefieldAndReturn(player1, new LuxCannon());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(cannon.isTapped()).isTrue();
+        assertThat(cannon.getCounterCount(CounterType.CHARGE)).isZero();
+        harness.passBothPriorities();
+        assertThat(cannon.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    void canDestroyItselfAndPaysCountersBeforeResolution() {
+        Permanent cannon = harness.addToBattlefieldAndReturn(player1, new LuxCannon());
+        cannon.setCounterCount(CounterType.CHARGE, 3);
+
+        harness.activateAbility(player1, 0, 1, null, cannon.getId());
+
+        assertThat(cannon.isTapped()).isTrue();
+        assertThat(cannon.getCounterCount(CounterType.CHARGE)).isZero();
+        harness.assertOnBattlefield(player1, "Lux Cannon");
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Lux Cannon");
+        harness.assertInGraveyard(player1, "Lux Cannon");
+    }
+
+    @Test
+    void destroyAbilityResolvesAfterItsSourceIsDestroyed() {
+        Permanent cannon = harness.addToBattlefieldAndReturn(player1, new LuxCannon());
+        Permanent opponentCannon = harness.addToBattlefieldAndReturn(player2, new LuxCannon());
+        cannon.setCounterCount(CounterType.CHARGE, 3);
+        opponentCannon.setCounterCount(CounterType.CHARGE, 3);
+
+        harness.activateAbility(player1, 0, 1, null, opponentCannon.getId());
+        harness.activateAbility(player2, 0, 1, null, cannon.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Lux Cannon");
+        harness.assertOnBattlefield(player2, "Lux Cannon");
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Lux Cannon");
+        harness.assertInGraveyard(player1, "Lux Cannon");
+        harness.assertInGraveyard(player2, "Lux Cannon");
+    }
+
+    @Test
+    void otherCounterTypesCannotPayTheChargeCounterCost() {
+        Permanent cannon = harness.addToBattlefieldAndReturn(player1, new LuxCannon());
+        cannon.setCounterCount(CounterType.CHARGE, 2);
+        cannon.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, cannon.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(cannon.isTapped()).isFalse();
+        assertThat(cannon.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        assertThat(cannon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
 
     @Test
     @DisplayName("Tapping Lux Cannon puts a charge counter on it")
@@ -32,9 +91,7 @@ class LuxCannonTest extends BaseCardTest {
     @Test
     @DisplayName("Can accumulate multiple charge counters over multiple turns")
     void accumulatesChargeCounters() {
-        harness.addToBattlefield(player1, new LuxCannon());
-
-        Permanent cannon = findPermanent(player1, "Lux Cannon");
+        Permanent cannon = harness.addToBattlefieldAndReturn(player1, new LuxCannon());
 
         // Activate three times (untapping between uses)
         harness.activateAbility(player1, 0, null, null);
@@ -51,15 +108,12 @@ class LuxCannonTest extends BaseCardTest {
         assertThat(cannon.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
-    // ===== Second ability: destroy target permanent =====
 
     @Test
     @DisplayName("Activating second ability with 3 charge counters destroys target permanent")
     void destroysTargetPermanent() {
-        harness.addToBattlefield(player1, new LuxCannon());
+        Permanent cannon = harness.addToBattlefieldAndReturn(player1, new LuxCannon());
         harness.addToBattlefield(player2, new LuxCannon()); // target
-
-        Permanent cannon = findPermanent(player1, "Lux Cannon");
         cannon.setCounterCount(CounterType.CHARGE, 3);
 
         UUID targetId = harness.getPermanentId(player2, "Lux Cannon");
@@ -78,10 +132,8 @@ class LuxCannonTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate second ability with fewer than 3 charge counters")
     void cannotDestroyWithFewerThanThreeCounters() {
-        harness.addToBattlefield(player1, new LuxCannon());
+        Permanent cannon = harness.addToBattlefieldAndReturn(player1, new LuxCannon());
         harness.addToBattlefield(player2, new LuxCannon());
-
-        Permanent cannon = findPermanent(player1, "Lux Cannon");
         cannon.setCounterCount(CounterType.CHARGE, 2);
 
         UUID targetId = harness.getPermanentId(player2, "Lux Cannon");
@@ -93,10 +145,8 @@ class LuxCannonTest extends BaseCardTest {
     @Test
     @DisplayName("Activating with more than 3 charge counters only removes 3")
     void removesExactlyThreeCounters() {
-        harness.addToBattlefield(player1, new LuxCannon());
+        Permanent cannon = harness.addToBattlefieldAndReturn(player1, new LuxCannon());
         harness.addToBattlefield(player2, new LuxCannon());
-
-        Permanent cannon = findPermanent(player1, "Lux Cannon");
         cannon.setCounterCount(CounterType.CHARGE, 5);
 
         UUID targetId = harness.getPermanentId(player2, "Lux Cannon");
@@ -110,10 +160,8 @@ class LuxCannonTest extends BaseCardTest {
     @Test
     @DisplayName("Destroy ability fizzles when target is removed before resolution")
     void destroyFizzlesWhenTargetRemoved() {
-        harness.addToBattlefield(player1, new LuxCannon());
+        Permanent cannon = harness.addToBattlefieldAndReturn(player1, new LuxCannon());
         harness.addToBattlefield(player2, new LuxCannon());
-
-        Permanent cannon = findPermanent(player1, "Lux Cannon");
         cannon.setCounterCount(CounterType.CHARGE, 3);
 
         UUID targetId = harness.getPermanentId(player2, "Lux Cannon");
@@ -132,14 +180,11 @@ class LuxCannonTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
-    // ===== Tap constraint =====
 
     @Test
     @DisplayName("Cannot use both abilities in the same turn since both require tapping")
     void cannotUseBothAbilitiesSameTurn() {
-        harness.addToBattlefield(player1, new LuxCannon());
-
-        Permanent cannon = findPermanent(player1, "Lux Cannon");
+        Permanent cannon = harness.addToBattlefieldAndReturn(player1, new LuxCannon());
         cannon.setCounterCount(CounterType.CHARGE, 3);
 
         // Use first ability (tap to add counter)
@@ -147,7 +192,7 @@ class LuxCannonTest extends BaseCardTest {
         harness.activateAbility(player1, cannonIndex, null, null);
         harness.passBothPriorities();
 
-        // Now cannon is tapped — cannot activate second ability
+        // Now cannon is tapped Ă˘â‚¬â€ť cannot activate second ability
         assertThat(cannon.isTapped()).isTrue();
         UUID targetId = harness.getPermanentId(player1, "Lux Cannon");
         assertThatThrownBy(() -> harness.activateAbility(player1, cannonIndex, 1, null, targetId))
