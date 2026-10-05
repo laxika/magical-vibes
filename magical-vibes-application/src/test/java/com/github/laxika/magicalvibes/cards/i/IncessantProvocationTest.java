@@ -15,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 @CardUsed({IncessantProvocation.class, GrizzlyBears.class, Mountain.class})
 class IncessantProvocationTest extends BaseCardTest {
@@ -59,12 +60,7 @@ class IncessantProvocationTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of()))
+        assertThatThrownBy(() -> declareAttackers(player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
     }
@@ -84,7 +80,52 @@ class IncessantProvocationTest extends BaseCardTest {
     private void castProvocation(Permanent target) {
         harness.setHand(player1, List.of(new IncessantProvocation()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castSorcery(player1, 0, target.getId());
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+    }
+
+    @Test
+    @DisplayName("Can untap and grant haste to a creature you already control")
+    void canTargetOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.tap();
+
+        castProvocation(target);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThatCode(() -> declareAttackers(List.of(0))).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("A tapped creature is not required to attack")
+    void tappedCreatureNeedNotAttack() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        castProvocation(target);
+        target.tap();
+
+        assertThatCode(() -> declareAttackers(List.of())).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("The perpetual attack requirement survives returning to hand and being recast")
+    void attackRequirementSurvivesZoneChanges() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        castProvocation(target);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, target));
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castCreature(player2, gd.playerHands.get(player2.getId()).size() - 1);
         harness.passBothPriorities();
+
+        Permanent returned = gd.playerBattlefields.get(player2.getId()).getFirst();
+        assertThat(returned.hasKeyword(Keyword.HASTE)).isFalse();
+        returned.setSummoningSick(false);
+        assertThatThrownBy(() -> declareAttackers(player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
     }
 }
