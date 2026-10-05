@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -100,6 +101,86 @@ class LitaLittleOrphanAmphibianTest extends BaseCardTest {
 
     private Permanent addLita() {
         return harness.enterBattlefieldAndReturn(player1, new LitaLittleOrphanAmphibian());
+    }
+
+    @Test
+    void ownEntryDoesNotTriggerAlliance() {
+        addLita();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void choicesBecomeAvailableAgainNextTurn() {
+        Permanent lita = addLita();
+        castGrizzlyBears();
+        harness.handleListChoice(player1, COUNTER);
+        harness.passBothPriorities();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.handleListChoice(player1, COUNTER);
+        harness.passBothPriorities();
+
+        assertThat(lita.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void noFurtherAbilityIsStackedAfterAllModesAreChosen() {
+        Permanent lita = addLita();
+        castGrizzlyBears();
+        harness.handleListChoice(player1, COUNTER);
+        harness.passBothPriorities();
+        castGrizzlyBears();
+        harness.handleListChoice(player1, FOOD);
+        harness.passBothPriorities();
+        castGrizzlyBears();
+        harness.handleListChoice(player1, SCRY);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(lita.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void choiceIsConsumedBeforeTheAbilityResolves() {
+        Permanent lita = addLita();
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.handleListChoice(player1, COUNTER);
+
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThatThrownBy(() -> harness.handleListChoice(player1, COUNTER))
+                .isInstanceOf(IllegalArgumentException.class);
+        harness.handleListChoice(player1, FOOD);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(lita.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Food");
+    }
+
+    @Test
+    void foodCanBeSacrificedForThreeLifeImmediately() {
+        addLita();
+        castGrizzlyBears();
+        harness.handleListChoice(player1, FOOD);
+        harness.passBothPriorities();
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        Permanent food = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getName().equals("Food"))
+                .findFirst().orElseThrow();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(food), null, null);
+        harness.assertNotOnBattlefield(player1, "Food");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore + 3);
     }
 
     private void castGrizzlyBears() {
