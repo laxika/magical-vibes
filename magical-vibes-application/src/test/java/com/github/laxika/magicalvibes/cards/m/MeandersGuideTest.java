@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -78,5 +79,109 @@ class MeandersGuideTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Reanimation waits for the reflexive trigger to resolve after tapping")
+    void tappingCreatesASeparateReanimationTrigger() {
+        addCreatureReady(player1, new MeandersGuide());
+        Permanent merfolk = addCreatureReady(player1, new MeandersGuide());
+        harness.setGraveyard(player1, List.of(new MeandersGuide()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(merfolk.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Meanders Guide");
+        assertThat(countPermanents(player1, "Meanders Guide")).isEqualTo(2);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player1, "Meanders Guide");
+        assertThat(countPermanents(player1, "Meanders Guide")).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Merfolk can be tapped and mana value three can be returned")
+    void canTapSummoningSickMerfolkAndReturnManaValueThree() {
+        addCreatureReady(player1, new MeandersGuide());
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new MeandersGuide());
+        harness.setGraveyard(player1, List.of(new MeandersGuide()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(merfolk.isTapped()).isTrue();
+        harness.assertNotInGraveyard(player1, "Meanders Guide");
+        assertThat(countPermanents(player1, "Meanders Guide")).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An already tapped Merfolk cannot pay for reanimation")
+    void cannotTapAlreadyTappedMerfolk() {
+        addCreatureReady(player1, new MeandersGuide());
+        Permanent merfolk = addCreatureReady(player1, new MeandersGuide());
+        merfolk.tap();
+        harness.setGraveyard(player1, List.of(new MeandersGuide()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Meanders Guide");
+        assertThat(countPermanents(player1, "Meanders Guide")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An opponent's untapped Merfolk cannot pay for reanimation")
+    void cannotTapOpponentsMerfolk() {
+        addCreatureReady(player1, new MeandersGuide());
+        Permanent merfolk = addCreatureReady(player2, new MeandersGuide());
+        harness.setGraveyard(player1, List.of(new MeandersGuide()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(merfolk.isTapped()).isFalse();
+        harness.assertInGraveyard(player1, "Meanders Guide");
+    }
+
+    @Test
+    @DisplayName("Tapping is allowed without a legal target and cannot return an opponent's card")
+    void canTapWithoutTargetsButCannotReturnOpponentsCard() {
+        addCreatureReady(player1, new MeandersGuide());
+        Permanent merfolk = addCreatureReady(player1, new MeandersGuide());
+        harness.setGraveyard(player2, List.of(new MeandersGuide()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(merfolk.isTapped()).isTrue();
+        harness.assertInGraveyard(player2, "Meanders Guide");
+        harness.assertNotOnBattlefield(player2, "Meanders Guide");
+        assertThat(countPermanents(player1, "Meanders Guide")).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed({MeandersGuide.class, Plains.class})
+    @DisplayName("A noncreature card with low mana value cannot be returned")
+    void cannotReturnNoncreatureCard() {
+        addCreatureReady(player1, new MeandersGuide());
+        Permanent merfolk = addCreatureReady(player1, new MeandersGuide());
+        harness.setGraveyard(player1, List.of(new Plains()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(merfolk.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Plains");
+        harness.assertNotOnBattlefield(player1, "Plains");
     }
 }
