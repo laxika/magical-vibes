@@ -46,8 +46,7 @@ class KindledFuryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID targetId = harness.getPermanentId(player1, "Elvish Warrior");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent warrior = findPermanent(player1, "Elvish Warrior");
         assertThat(warrior.getPowerModifier()).isEqualTo(1);
@@ -63,8 +62,7 @@ class KindledFuryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Elvish Warrior");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent warrior = findPermanent(player2, "Elvish Warrior");
         assertThat(warrior.getPowerModifier()).isEqualTo(1);
@@ -82,8 +80,7 @@ class KindledFuryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID targetId = harness.getPermanentId(player1, "Elvish Warrior");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -115,5 +112,48 @@ class KindledFuryTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         harness.assertInGraveyard(player1, "Kindled Fury");
+    }
+
+    @Test
+    @DisplayName("Multiple Kindled Furies stack their boosts and expire together")
+    void multipleCastsStackUntilEndOfTurn() {
+        Permanent warrior = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
+        harness.setHand(player1, List.of(new KindledFury(), new KindledFury()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, warrior.getId());
+        harness.castAndResolveInstant(player1, 0, warrior.getId());
+
+        assertThat(warrior.getPowerModifier()).isEqualTo(2);
+        assertThat(warrior.getToughnessModifier()).isZero();
+        assertThat(warrior.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(warrior.getPowerModifier()).isZero();
+        assertThat(warrior.getToughnessModifier()).isZero();
+        assertThat(warrior.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Kindled Fury affects only its targeted creature")
+    void doesNotAffectOtherCreatures() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
+        harness.setHand(player1, List.of(new KindledFury()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        for (Permanent unaffected : List.of(other, opponent)) {
+            assertThat(unaffected.getPowerModifier()).isZero();
+            assertThat(unaffected.getToughnessModifier()).isZero();
+            assertThat(unaffected.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        }
     }
 }
