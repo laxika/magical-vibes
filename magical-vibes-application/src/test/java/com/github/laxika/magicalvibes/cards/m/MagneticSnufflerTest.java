@@ -72,4 +72,86 @@ class MagneticSnufflerTest extends BaseCardTest {
                 .contains("Furnace Skullbomb");
         assertThat(skullbomb.getAttachedTo()).isNull();
     }
+
+    @Test
+    @DisplayName("An opponent's Equipment is not a legal graveyard target")
+    void etbDoesNotReturnOpponentsEquipment() {
+        harness.setGraveyard(player2, List.of(new DarksteelAxe()));
+        harness.setHand(player1, List.of(new MagneticSnuffler()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player2, "Darksteel Axe");
+        harness.assertNotOnBattlefield(player1, "Darksteel Axe");
+    }
+
+    @Test
+    @DisplayName("Equipment still returns unattached if Snuffler leaves before its trigger resolves")
+    void equipmentReturnsWhenSourceHasLeft() {
+        DarksteelAxe axe = new DarksteelAxe();
+        harness.setGraveyard(player1, List.of(axe));
+        harness.setHand(player1, List.of(new MagneticSnuffler()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(axe.getId()));
+
+        Permanent snuffler = findPermanent(player1, "Magnetic Snuffler");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, snuffler));
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Darksteel Axe").getAttachedTo()).isNull();
+        harness.assertNotInGraveyard(player1, "Darksteel Axe");
+        harness.assertInGraveyard(player1, "Magnetic Snuffler");
+    }
+
+    @Test
+    @DisplayName("An opponent's artifact sacrifice does not add a counter")
+    void opponentsArtifactSacrificeDoesNotAddCounter() {
+        Permanent snuffler = harness.addToBattlefieldAndReturn(player1, new MagneticSnuffler());
+        harness.addToBattlefield(player2, new FurnaceSkullbomb());
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player2, 0, 0, null);
+        resolveAllTriggers();
+
+        assertThat(snuffler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player2, "Furnace Skullbomb");
+    }
+
+    @Test
+    @DisplayName("Destroying an artifact is not sacrificing it")
+    void artifactDestructionDoesNotAddCounter() {
+        Permanent snuffler = harness.addToBattlefieldAndReturn(player1, new MagneticSnuffler());
+        Permanent skullbomb = harness.addToBattlefieldAndReturn(player1, new FurnaceSkullbomb());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .destroyPermanentToGraveyard(gd, skullbomb));
+        resolveAllTriggers();
+
+        assertThat(snuffler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Furnace Skullbomb");
+    }
+
+    @Test
+    @DisplayName("Each artifact sacrifice adds a counter")
+    void repeatedArtifactSacrificesEachAddCounter() {
+        Permanent snuffler = harness.addToBattlefieldAndReturn(player1, new MagneticSnuffler());
+        harness.addToBattlefield(player1, new FurnaceSkullbomb());
+        harness.addToBattlefield(player1, new FurnaceSkullbomb());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 1, 0, null);
+        resolveAllTriggers();
+        harness.activateAbility(player1, 1, 0, null);
+        resolveAllTriggers();
+
+        assertThat(snuffler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
 }
