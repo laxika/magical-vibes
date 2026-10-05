@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.f.FathomSeer;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
@@ -13,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LocketOfYesterdays.class, HillGiant.class, Shock.class, ThinkTwice.class})
+@CardUsed({LocketOfYesterdays.class, HillGiant.class, Shock.class, ThinkTwice.class, FathomSeer.class})
 class LocketOfYesterdaysTest extends BaseCardTest {
 
     @Test
@@ -62,7 +63,7 @@ class LocketOfYesterdaysTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new Shock(), new Shock()));
         harness.setHand(player1, List.of(new Shock()));
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -71,8 +72,80 @@ class LocketOfYesterdaysTest extends BaseCardTest {
         addLocket();
         harness.setGraveyard(player1, List.of(new ThinkTwice()));
         harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.castFlashback(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void reducesFlashbackCostForOtherMatchingCards() {
+        addLocket();
+        harness.setGraveyard(player1, List.of(new ThinkTwice(), new ThinkTwice()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castFlashback(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void excessReductionDoesNotRemoveColoredRequirement() {
+        addLocket();
+        harness.setGraveyard(player1, List.of(new ThinkTwice(), new ThinkTwice(), new ThinkTwice()));
+        harness.setHand(player1, List.of(new ThinkTwice()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void excessReductionStopsAtZeroGenericMana() {
+        addLocket();
+        harness.setGraveyard(player1, List.of(new ThinkTwice(), new ThinkTwice(), new ThinkTwice()));
+        harness.setHand(player1, List.of(new ThinkTwice()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void opponentsLocketDoesNotReduceYourSpells() {
+        harness.addToBattlefield(player2, new LocketOfYesterdays());
+        harness.setGraveyard(player1, List.of(new ThinkTwice()));
+        harness.setHand(player1, List.of(new ThinkTwice()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void unrelatedGraveyardCardsDoNotReduceCost() {
+        addLocket();
+        harness.setGraveyard(player1, List.of(new LocketOfYesterdays()));
+        harness.setHand(player1, List.of(new ThinkTwice()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void faceDownSpellHasNoNameToMatchGraveyardCards() {
+        addLocket();
+        harness.setGraveyard(player1, List.of(new FathomSeer()));
+        harness.setHand(player1, List.of(new FathomSeer()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castCreatureWithMorph(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
 
