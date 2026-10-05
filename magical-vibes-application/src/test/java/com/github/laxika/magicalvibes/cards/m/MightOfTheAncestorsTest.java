@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SeekerOfSunlight;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,19 +14,19 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MightOfTheAncestors.class, GrizzlyBears.class})
+@CardUsed({MightOfTheAncestors.class, SeekerOfSunlight.class})
 class MightOfTheAncestorsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Beginning of combat gives a controlled creature +2/+0 and vigilance")
     void boostsAndGrantsVigilanceToTarget() {
         addMight();
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SeekerOfSunlight());
 
         resolveBeginningOfCombat(player1, target);
 
-        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isTrue();
     }
 
@@ -34,15 +34,15 @@ class MightOfTheAncestorsTest extends BaseCardTest {
     @DisplayName("The trigger can target only a creature you control")
     void targetsOnlyCreaturesYouControl() {
         addMight();
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new SeekerOfSunlight());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new SeekerOfSunlight());
 
         advanceToBeginningOfCombat(player1);
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validIds()).contains(ownCreature.getId())
-                .doesNotContain(opponentCreature.getId());
+                .doesNotContain(opponentCreature.getId(), gd.playerBattlefields.get(player1.getId()).getFirst().getId());
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -51,20 +51,61 @@ class MightOfTheAncestorsTest extends BaseCardTest {
     @DisplayName("The boost and vigilance expire at end of turn")
     void effectsExpireAtEndOfTurn() {
         addMight();
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SeekerOfSunlight());
 
         resolveBeginningOfCombat(player1, target);
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isTrue();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isFalse();
     }
 
-    private Permanent addMight() {
-        return harness.addToBattlefieldAndReturn(player1, new MightOfTheAncestors());
+    @Test
+    @DisplayName("No ability triggers during an opponent's combat")
+    void doesNotTriggerOnOpponentsTurn() {
+        addMight();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SeekerOfSunlight());
+
+        advanceToBeginningOfCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Only the chosen creature receives the effects")
+    void doesNotAffectOtherCreatures() {
+        addMight();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SeekerOfSunlight());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new SeekerOfSunlight());
+
+        resolveBeginningOfCombat(player1, target);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Combat proceeds without a target when no creatures are controlled")
+    void noLegalTarget() {
+        addMight();
+        harness.addToBattlefield(player2, new SeekerOfSunlight());
+
+        advanceToBeginningOfCombat(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+    private void addMight() {
+        harness.addToBattlefield(player1, new MightOfTheAncestors());
     }
 
     private void resolveBeginningOfCombat(Player activePlayer, Permanent target) {
@@ -76,7 +117,6 @@ class MightOfTheAncestorsTest extends BaseCardTest {
     private void advanceToBeginningOfCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 }
