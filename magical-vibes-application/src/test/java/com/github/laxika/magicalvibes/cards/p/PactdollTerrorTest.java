@@ -1,16 +1,16 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GlazeFiend;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.l.LoxodonSurveyor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PactdollTerror.class, GlazeFiend.class, LoxodonSurveyor.class})
 class PactdollTerrorTest extends BaseCardTest {
 
     @Test
@@ -19,10 +19,7 @@ class PactdollTerrorTest extends BaseCardTest {
         int player1LifeBefore = gd.getLife(player1.getId());
         int player2LifeBefore = gd.getLife(player2.getId());
 
-        harness.setHand(player1, List.of(new PactdollTerror()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PactdollTerror(), "{3}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -37,10 +34,7 @@ class PactdollTerrorTest extends BaseCardTest {
         int player1LifeBefore = gd.getLife(player1.getId());
         int player2LifeBefore = gd.getLife(player2.getId());
 
-        harness.setHand(player1, List.of(new GlazeFiend()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GlazeFiend(), "{1}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -58,14 +52,47 @@ class PactdollTerrorTest extends BaseCardTest {
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player2, List.of(new GlazeFiend()));
-        harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new GlazeFiend(), "{1}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(player1LifeBefore);
         assertThat(gd.getLife(player2.getId())).isEqualTo(player2LifeBefore);
     }
+
+    @Test
+    @DisplayName("Another artifact's entry drains and gains life in one ability resolution")
+    void allyArtifactDrainResolvesAsOneAbility() {
+        harness.addToBattlefield(player1, new PactdollTerror());
+        int player1LifeBefore = gd.getLife(player1.getId());
+        int player2LifeBefore = gd.getLife(player2.getId());
+
+        harness.castFromHand(player1, new GlazeFiend(), "{1}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(player1LifeBefore);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(player2LifeBefore);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(player1LifeBefore + 1);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(player2LifeBefore - 1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A nonartifact creature entering under its controller's control does not drain")
+    void nonartifactCreatureEntryDoesNotDrain() {
+        harness.addToBattlefield(player1, new PactdollTerror());
+        int player1LifeBefore = gd.getLife(player1.getId());
+        int player2LifeBefore = gd.getLife(player2.getId());
+
+        harness.castFromHand(player1, new LoxodonSurveyor(), "{2}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(player1LifeBefore);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(player2LifeBefore);
+        assertThat(gd.stack).isEmpty();
+    }
+
 }
