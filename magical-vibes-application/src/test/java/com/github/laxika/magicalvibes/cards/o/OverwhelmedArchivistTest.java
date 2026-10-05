@@ -55,8 +55,7 @@ class OverwhelmedArchivistTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         Permanent haunt = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(haunt.isTransformed()).isTrue();
@@ -81,8 +80,7 @@ class OverwhelmedArchivistTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         Permanent haunt = gd.playerBattlefields.get(player1.getId()).getFirst();
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
@@ -92,5 +90,62 @@ class OverwhelmedArchivistTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.exiledCards.stream().map(exiled -> exiled.card().getId()))
                 .contains(haunt.getOriginalCard().getId());
+    }
+
+    @Test
+    @DisplayName("The front face can discard the card it just drew")
+    void entersWithEmptyHandDiscardsDrawnCard() {
+        Card drawn = new Island();
+        harness.setLibrary(player1, List.of(drawn));
+        harness.setHand(player1, List.of(new OverwhelmedArchivist()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.DiscardChoice) {
+            harness.handleCardChosen(player1, 0);
+        }
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(drawn);
+        harness.assertOnBattlefield(player1, "Overwhelmed Archivist");
+    }
+
+    @Test
+    @DisplayName("Disturb costs four mana and entering as Archive Haunt does not loot")
+    void disturbDoesNotTriggerFrontFaceLoot() {
+        Card undrawn = new Island();
+        harness.setLibrary(player1, List.of(undrawn));
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(new OverwhelmedArchivist()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement()
+                .satisfies(permanent -> assertThat(permanent.isTransformed()).isTrue());
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The front face goes to the graveyard normally")
+    void frontFaceDoesNotUseBackFaceExileReplacement() {
+        Permanent archivist = harness.addToBattlefieldAndReturn(player1, new OverwhelmedArchivist());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, archivist));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(archivist.getOriginalCard());
+        assertThat(gd.exiledCards).isEmpty();
     }
 }
