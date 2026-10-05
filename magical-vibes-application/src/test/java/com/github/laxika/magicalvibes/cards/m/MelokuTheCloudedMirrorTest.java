@@ -33,15 +33,12 @@ class MelokuTheCloudedMirrorTest extends BaseCardTest {
         harness.activateAbility(player1, melokuIndex, null, null);
 
         harness.assertInHand(player1, "Island");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Island"));
+        harness.assertNotOnBattlefield(player1, "Island");
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Illusion"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Illusion");
         assertThat(tokens).hasSize(1);
         Permanent token = tokens.getFirst();
         assertThat(token.getCard().getPower()).isEqualTo(1);
@@ -110,6 +107,68 @@ class MelokuTheCloudedMirrorTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.assertInHand(player1, "Plains");
         harness.assertOnBattlefield(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("Can activate a tapped Meloku and return a tapped land")
+    void canActivateWhileTappedAndReturnTappedLand() {
+        Permanent meloku = harness.addToBattlefieldAndReturn(player1, new MelokuTheCloudedMirror());
+        meloku.setTapped(true);
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        island.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInHand(player1, "Island");
+        assertThat(countPermanents(player1, "Illusion")).isZero();
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Illusion")).isEqualTo(1);
+        assertThat(meloku.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A controlled land returns to its owner's hand")
+    void returnsControlledLandToOpponentsHand() {
+        harness.addToBattlefield(player1, new MelokuTheCloudedMirror());
+        Island island = new Island();
+        island.setOwnerId(player2.getId());
+        harness.addToBattlefield(player1, island);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInHand(player2, "Island");
+        harness.assertNotInHand(player1, "Island");
+        harness.assertNotOnBattlefield(player1, "Island");
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Illusion")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Illusion")).isZero();
+    }
+
+    @Test
+    @DisplayName("Can activate repeatedly before either ability resolves")
+    void canActivateRepeatedlyBeforeResolution() {
+        harness.addToBattlefield(player1, new MelokuTheCloudedMirror());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.addToBattlefield(player1, new Plains());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, island.getId());
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInHand(player1, "Island");
+        harness.assertInHand(player1, "Plains");
+        assertThat(gd.stack).hasSize(2);
+        assertThat(countPermanents(player1, "Illusion")).isZero();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Illusion")).isEqualTo(2);
     }
 
     private int battlefieldIndex(Player owner, String name) {
