@@ -191,4 +191,67 @@ class PatchworkGnomesTest extends BaseCardTest {
         assertThat(gnomes.getRegenerationShield()).isEqualTo(2);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }
+
+    @Test
+    @DisplayName("Summoning sickness does not prevent the discard ability")
+    void canActivateWhileSummoningSick() {
+        Permanent gnomes = harness.addToBattlefieldAndReturn(player1, new PatchworkGnomes());
+        gnomes.setSummoningSick(true);
+        harness.setHand(player1, List.of(new PatchworkGnomes()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gnomes.getRegenerationShield()).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(gnomes.getRegenerationShield()).isEqualTo(1);
+        assertThat(gnomes.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Resolving regeneration protects only the source and does not remove it from combat yet")
+    void resolvingShieldDoesNotImmediatelyRegenerate() {
+        Permanent gnomes = addCreatureReady(player1, new PatchworkGnomes());
+        Permanent otherGnomes = addCreatureReady(player1, new PatchworkGnomes());
+        gnomes.setAttacking(true);
+        harness.setHand(player1, List.of(new PatchworkGnomes()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gnomes.getRegenerationShield()).isEqualTo(1);
+        assertThat(otherGnomes.getRegenerationShield()).isZero();
+        assertThat(gnomes.isTapped()).isFalse();
+        assertThat(gnomes.isAttacking()).isTrue();
+        assertThat(gnomes.getTimesRegeneratedThisTurn()).isZero();
+    }
+
+    @Test
+    @DisplayName("A shield created by discarding a card replaces lethal combat destruction")
+    void discardedCardProtectsAgainstLethalCombatDamage() {
+        Permanent gnomes = addCreatureReady(player1, new PatchworkGnomes());
+        harness.setHand(player1, List.of(new PatchworkGnomes()));
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        gnomes.setBlocking(true);
+        gnomes.addBlockingTarget(0);
+        Permanent attacker = addCreatureReady(player2, new PatchworkGnomes());
+        attacker.setAttacking(true);
+        resolveCombat(player2);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(gnomes);
+        assertThat(gnomes.isTapped()).isTrue();
+        assertThat(gnomes.isBlocking()).isFalse();
+        assertThat(gnomes.getBlockingTargets()).isEmpty();
+        assertThat(gnomes.getMarkedDamage()).isZero();
+        assertThat(gnomes.getRegenerationShield()).isZero();
+        assertThat(gnomes.getTimesRegeneratedThisTurn()).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(attacker.getCard());
+    }
 }
