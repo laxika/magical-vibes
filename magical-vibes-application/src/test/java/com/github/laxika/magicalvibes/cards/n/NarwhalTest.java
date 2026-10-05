@@ -120,4 +120,52 @@ class NarwhalTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Narwhal");
         harness.assertInGraveyard(player2, "Rysorian Badger");
     }
+
+    @Test
+    @DisplayName("First strike while blocking kills a green attacker before it deals damage")
+    void firstStrikeKillsAttackerFirst() {
+        Permanent attacker = addCreatureReady(player1, new RysorianBadger());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new Narwhal());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Rysorian Badger");
+        harness.assertOnBattlefield(player2, "Narwhal");
+        assertThat(blocker.getMarkedDamage()).isZero();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Protection from red does not prevent damage from a green blocker")
+    void takesDamageFromGreenBlocker() {
+        Permanent attacker = addCreatureReady(player1, new Narwhal());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new LeapingLizard());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Narwhal");
+        harness.assertOnBattlefield(player2, "Leaping Lizard");
+        assertThat(blocker.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A non-red instant resolves normally on Narwhal")
+    void nonRedInstantResolves() {
+        Permanent narwhal = addCreatureReady(player1, new Narwhal());
+        harness.setHand(player1, List.of(new Shrink()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstant(player1, 0, narwhal.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, narwhal)).isEqualTo(-3);
+        harness.assertOnBattlefield(player1, "Narwhal");
+        harness.assertInGraveyard(player1, "Shrink");
+    }
 }
