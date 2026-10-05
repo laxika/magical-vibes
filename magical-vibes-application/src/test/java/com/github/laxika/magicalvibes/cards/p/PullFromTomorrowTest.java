@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PullFromTomorrow.class})
 class PullFromTomorrowTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -98,5 +100,64 @@ class PullFromTomorrowTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Pull from Tomorrow");
+    }
+
+    @Test
+    @DisplayName("X=0 with an empty hand draws nothing and finishes without a discard choice")
+    void xZeroWithEmptyHandFinishesResolving() {
+        harness.setHand(player1, List.of(new PullFromTomorrow()));
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Pull from Tomorrow");
+    }
+
+    @Test
+    @DisplayName("X=0 still requires discarding a card already in hand")
+    void xZeroStillDiscardsFromExistingHand() {
+        PullFromTomorrow retainedCard = new PullFromTomorrow();
+        harness.setHand(player1, List.of(new PullFromTomorrow(), retainedCard));
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(retainedCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The discarded card may have been in hand before the draw")
+    void canDiscardCardThatWasNotDrawn() {
+        PullFromTomorrow retainedCard = new PullFromTomorrow();
+        PullFromTomorrow drawnCard = new PullFromTomorrow();
+        harness.setHand(player1, List.of(new PullFromTomorrow(), retainedCard));
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castInstant(player1, 0, 1, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(retainedCard, drawnCard);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(retainedCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 }
