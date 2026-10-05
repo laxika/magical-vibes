@@ -90,11 +90,121 @@ class ProfessorZeiAnthropologistTest extends BaseCardTest {
                 .hasMessageContaining("during your turn");
     }
 
+    @Test
+    void returnsInstantDuringYourEndStepAndPaysSacrificeBeforeResolution() {
+        Permanent professor = addReadyProfessor();
+        Card returned = new LightningBolt();
+        harness.setGraveyard(player1, List.of(returned));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.END_STEP);
+
+        harness.activateAbilityWithGraveyardTargets(player1, professorIndex(professor), 1,
+                List.of(returned.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(professor);
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
+                .contains(professor.getCard().getId(), returned.getId());
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId).doesNotContain(returned.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId).contains(returned.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId).doesNotContain(returned.getId());
+    }
+
+    @Test
+    void rejectsOpponentsGraveyardWithoutPayingCosts() {
+        Permanent professor = addReadyProfessor();
+        Card returned = new LightningBolt();
+        harness.setGraveyard(player2, List.of(returned));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, professorIndex(professor), 1, List.of(returned.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("your graveyard");
+
+        assertThat(professor.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(professor);
+        assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getId).contains(returned.getId());
+    }
+
+    @Test
+    void requiresManaForReturnAbility() {
+        Permanent professor = addReadyProfessor();
+        Card returned = new LightningBolt();
+        harness.setGraveyard(player1, List.of(returned));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, professorIndex(professor), 1, List.of(returned.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(professor.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(professor);
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId).contains(returned.getId());
+    }
+
+    @Test
+    void cannotLootWithoutACardToDiscard() {
+        Permanent professor = addReadyProfessor();
+        harness.setHand(player1, List.of());
+        Card drawn = new ProfessorZeiAnthropologist();
+        harness.setLibrary(player1, List.of(drawn));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, professorIndex(professor), null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(professor.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId).containsExactly(drawn.getId());
+    }
+
+    @Test
+    void canLootDuringOpponentsTurnAndDiscardsBeforeDrawing() {
+        Permanent professor = addReadyProfessor();
+        Card discarded = new ProfessorZeiAnthropologist();
+        Card drawn = new ProfessorZeiAnthropologist();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, professorIndex(professor), null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(professor.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId).contains(discarded.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId).containsExactly(drawn.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId).containsExactly(drawn.getId());
+    }
+
+    @Test
+    void neitherAbilityCanActivateWithSummoningSickness() {
+        Permanent professor = harness.addToBattlefieldAndReturn(player1, new ProfessorZeiAnthropologist());
+        professor.setSummoningSick(true);
+        Card discarded = new ProfessorZeiAnthropologist();
+        Card returned = new LightningBolt();
+        harness.setHand(player1, List.of(discarded));
+        harness.setGraveyard(player1, List.of(returned));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, professorIndex(professor), null, null))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("summoning sickness");
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, professorIndex(professor), 1, List.of(returned.getId())))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("summoning sickness");
+
+        assertThat(professor.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(professor);
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId).containsExactly(discarded.getId());
+    }
+
     private Permanent addReadyProfessor() {
-        Permanent professor = new Permanent(new ProfessorZeiAnthropologist());
-        professor.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(professor);
-        return professor;
+        return addCreatureReady(player1, new ProfessorZeiAnthropologist());
     }
 
     private int professorIndex(Permanent professor) {
