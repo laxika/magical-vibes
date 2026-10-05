@@ -26,8 +26,7 @@ class PacksDisdainTest extends BaseCardTest {
         harness.setHand(caster, List.of(new PacksDisdain()));
         harness.addMana(caster, ManaColor.BLACK, 1);
         harness.addMana(caster, ManaColor.COLORLESS, 1);
-        harness.castInstant(caster, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, target.getId());
     }
 
     @Test
@@ -126,5 +125,67 @@ class PacksDisdainTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, nonCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("A targeted creature you control counts itself")
+    void ownTargetCountsItself() {
+        Permanent target = addCreatureReady(player1, new ElvishWarrior());
+
+        castAt(player1, target);
+        harness.handleListChoice(player1, "ELF");
+
+        assertThat(target.getEffectivePower()).isEqualTo(1);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Elvish Warrior");
+    }
+
+    @Test
+    @DisplayName("Lethal toughness reduction puts the creature into its owner's graveyard")
+    void lethalReductionKillsTarget() {
+        addCreatureReady(player1, new ElvishWarrior());
+        addCreatureReady(player1, new ElvishWarrior());
+        addCreatureReady(player1, new ElvishWarrior());
+        Permanent target = addCreatureReady(player2, new ElvishWarrior());
+
+        castAt(player1, target);
+        harness.handleListChoice(player1, "ELF");
+
+        harness.assertNotOnBattlefield(player2, "Elvish Warrior");
+        harness.assertInGraveyard(player2, "Elvish Warrior");
+        harness.assertInGraveyard(player1, "Pack's Disdain");
+    }
+
+    @Test
+    @DisplayName("Permanents entering before resolution count toward the reduction")
+    void countDeterminedAtResolution() {
+        addCreatureReady(player1, new ElvishWarrior());
+        Permanent target = addCreatureReady(player2, new IndomitableAncients());
+        harness.setHand(player1, List.of(new PacksDisdain()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, target.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.addToBattlefield(player1, new ElvishWarrior());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "ELF");
+
+        assertThat(target.getEffectivePower()).isEqualTo(0);
+        assertThat(target.getEffectiveToughness()).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("The reduction does not increase when another permanent enters after resolution")
+    void reductionIsFixedAfterResolution() {
+        addCreatureReady(player1, new ElvishWarrior());
+        Permanent target = addCreatureReady(player2, new IndomitableAncients());
+
+        castAt(player1, target);
+        harness.handleListChoice(player1, "ELF");
+        harness.addToBattlefield(player1, new ElvishWarrior());
+
+        assertThat(target.getEffectivePower()).isEqualTo(1);
+        assertThat(target.getEffectiveToughness()).isEqualTo(9);
     }
 }
