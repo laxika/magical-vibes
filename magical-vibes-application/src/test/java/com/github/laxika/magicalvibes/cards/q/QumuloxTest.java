@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.q;
 import com.github.laxika.magicalvibes.cards.c.CacklingImp;
 import com.github.laxika.magicalvibes.cards.m.MyrQuadropod;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,6 +18,69 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Qumulox.class, MyrQuadropod.class, CacklingImp.class})
 class QumuloxTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Three artifacts reduce the cost to three generic and two blue mana")
+    void partialAffinityReduction() {
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player1, new MyrQuadropod());
+        }
+        harness.setHand(player1, List.of(new Qumulox()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Qumulox");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Excess artifacts do not reduce the two blue mana requirement")
+    void excessAffinityReductionStopsAtZeroGeneric() {
+        for (int i = 0; i < 8; i++) {
+            harness.addToBattlefield(player1, new MyrQuadropod());
+        }
+        harness.setHand(player1, List.of(new Qumulox()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Qumulox");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A creature without flying or reach cannot block Qumulox")
+    void groundCreatureCannotBlock() {
+        addCreatureReady(player1, new Qumulox());
+        addCreatureReady(player2, new MyrQuadropod());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(
+                gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("(flying)");
+    }
+
+    @Test
+    @DisplayName("A flying creature can block Qumulox")
+    void flyingCreatureCanBlock() {
+        addCreatureReady(player1, new Qumulox());
+        Permanent blocker = addCreatureReady(player2, new CacklingImp());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
 
     @Test
     @DisplayName("Affinity for artifacts reduces the generic mana cost")
