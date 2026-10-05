@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.v.VaporSnag;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PhyrexianUnlife.class, Shock.class, GrizzlyBears.class, VaporSnag.class})
 class PhyrexianUnlifeTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Controller doesn't lose at 0 life with Phyrexian Unlife")
@@ -32,8 +33,7 @@ class PhyrexianUnlifeTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(0);
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
@@ -51,8 +51,7 @@ class PhyrexianUnlifeTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(-1);
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
@@ -70,8 +69,7 @@ class PhyrexianUnlifeTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         // Life should stay at 0 — damage dealt as poison instead
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(0);
@@ -91,8 +89,7 @@ class PhyrexianUnlifeTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         // Damage that brings you TO 0 is normal life loss, not poison
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(0);
@@ -113,8 +110,7 @@ class PhyrexianUnlifeTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.playerPoisonCounters.get(player1.getId())).isEqualTo(10);
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
@@ -131,8 +127,7 @@ class PhyrexianUnlifeTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(0);
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
@@ -150,8 +145,7 @@ class PhyrexianUnlifeTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         // Normal damage reduces life, no poison
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(8);
@@ -184,8 +178,7 @@ class PhyrexianUnlifeTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(0);
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
@@ -230,5 +223,84 @@ class PhyrexianUnlifeTest extends BaseCardTest {
         // Lifelink should still gain 2 life (2/2 blocker deals 2 damage to blocked attacker)
         // Life was -1, lifelink adds 2, so life should be 1
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Damage at negative life adds poison without further life loss")
+    void damageAtNegativeLifeAddsPoison() {
+        harness.addToBattlefield(player1, new PhyrexianUnlife());
+        harness.setLife(player1, -3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, -3);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isEqualTo(2);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("Only damage after crossing zero life becomes poison")
+    void successiveDamageEventsCrossZero() {
+        harness.addToBattlefield(player1, new PhyrexianUnlife());
+        harness.setLife(player1, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, -1);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isZero();
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, -1);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isEqualTo(2);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("Direct life loss below zero does not become poison")
+    void directLifeLossBelowZeroDoesNotBecomePoison() {
+        harness.addToBattlefield(player1, new PhyrexianUnlife());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLife(player1, -1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new VaporSnag()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+
+        harness.assertLife(player1, -2);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isZero();
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("Simultaneous combat damage crossing zero is entirely life loss")
+    void simultaneousCombatDamageCrossingZeroIsLifeLoss() {
+        harness.addToBattlefield(player1, new PhyrexianUnlife());
+        harness.setLife(player1, 1);
+        addCreatureReady(player2, new GrizzlyBears()).setAttacking(true);
+        addCreatureReady(player2, new GrizzlyBears()).setAttacking(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, -3);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 }
