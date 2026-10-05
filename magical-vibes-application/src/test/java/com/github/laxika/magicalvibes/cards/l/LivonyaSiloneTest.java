@@ -81,6 +81,20 @@ class LivonyaSiloneTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Durkwood Boars");
     }
 
+    @Test
+    @DisplayName("A legendary land controlled by the attacker does not prevent blocking")
+    void canBeBlockedWhenOnlyAttackerControlsLegendaryLand() {
+        harness.addToBattlefield(player1, new Karakas());
+        Permanent livonya = addCreatureReady(player1, new LivonyaSilone());
+        Permanent blocker = addCreatureReady(player2, new DurkwoodBoars());
+
+        declareAttackersAndPrepareBlockers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(livonya)));
+        declareBlock(blocker, livonya);
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
     private void declareBlock(Permanent blocker, Permanent attacker) {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
