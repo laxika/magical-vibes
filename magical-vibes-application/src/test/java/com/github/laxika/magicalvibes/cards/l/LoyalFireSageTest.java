@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(LoyalFireSage.class)
+@CardUsed({LoyalFireSage.class})
 class LoyalFireSageTest extends BaseCardTest {
 
     @Test
@@ -46,5 +46,49 @@ class LoyalFireSageTest extends BaseCardTest {
         assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ALLY);
         assertThat(token.getCard().isToken()).isTrue();
+    }
+
+    @Test
+    void firebendingManaCanPayForAllyCreationDuringCombat() {
+        Permanent sage = addCreatureReady(player1, new LoyalFireSage());
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(sage)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(sage), 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Ally")).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    void tappedSummoningSickSageCanActivateRepeatedly() {
+        Permanent sage = harness.addToBattlefieldAndReturn(player1, new LoyalFireSage());
+        sage.setSummoningSick(true);
+        sage.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(sage), 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(sage), 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Ally")).isEqualTo(2);
+        assertThat(countPermanents(player2, "Ally")).isZero();
+        assertThat(sage.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    void firebendingAddsManaToAttackingController() {
+        Permanent sage = addCreatureReady(player2, new LoyalFireSage());
+
+        declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(sage)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
     }
 }
