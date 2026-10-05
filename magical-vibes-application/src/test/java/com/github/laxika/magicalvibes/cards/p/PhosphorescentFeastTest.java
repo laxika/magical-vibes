@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @CardUsed({PhosphorescentFeast.class, Tarmogoyf.class, PactOfNegation.class})
 class PhosphorescentFeastTest extends BaseCardTest {
 
@@ -50,5 +52,59 @@ class PhosphorescentFeastTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Waits for a reveal selection before granting life")
+    void waitsForRevealSelection() {
+        pay(player1);
+        harness.setHand(player1, List.of(new PhosphorescentFeast(), new PhosphorescentFeast()));
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.pendingInteractions).isNotEmpty();
+    }
+
+    @Test
+    @DisplayName("Revealing zero cards gains no life even with green cards in hand")
+    void canRevealZeroCards() {
+        pay(player1);
+        harness.setHand(player1, List.of(new PhosphorescentFeast(), new PhosphorescentFeast()));
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        assertThat(gd.pendingInteractions).isNotEmpty();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Only revealed cards contribute green mana symbols")
+    void canRevealOnlyPartOfHand() {
+        pay(player1);
+        PhosphorescentFeast revealed = new PhosphorescentFeast();
+        harness.setHand(player1, List.of(new PhosphorescentFeast(), revealed, new Tarmogoyf()));
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        assertThat(gd.pendingInteractions).isNotEmpty();
+        harness.handleMultipleCardsChosen(player1, List.of(revealed.getId()));
+
+        harness.assertLife(player1, 26);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gameLogContains("reveals")).isTrue();
+    }
+
+    @Test
+    @DisplayName("An empty hand gains no life and does not count the resolving Feast")
+    void emptyHandGainsNoLife() {
+        pay(player1);
+        harness.setHand(player1, List.of(new PhosphorescentFeast()));
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }
