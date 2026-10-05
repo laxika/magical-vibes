@@ -57,7 +57,6 @@ class OblivionsHungerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
@@ -77,11 +76,76 @@ class OblivionsHungerTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature you control");
     }
 
+    @Test
+    void drawsWhenCounterIsAddedBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Card drawn = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(drawn));
+
+        cast(target);
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+    }
+
+    @Test
+    void doesNotDrawWhenCounterIsRemovedBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Card libraryCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(libraryCard));
+
+        cast(target);
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+    }
+
+    @Test
+    void otherCounterTypesDoNotAllowDrawing() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.setCounterCount(CounterType.CHARGE, 1);
+        Card libraryCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(libraryCard));
+
+        castResolve(target);
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+    }
+
+    @Test
+    void doesNotDrawWhenTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Card libraryCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(libraryCard));
+
+        cast(target);
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        harness.setGraveyard(player1, List.of(target.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+    }
+
     private void castResolve(Permanent target) {
+        cast(target);
+        harness.passBothPriorities();
+    }
+
+    private void cast(Permanent target) {
         harness.setHand(player1, List.of(new OblivionsHunger()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
     }
 }
