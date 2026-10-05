@@ -50,6 +50,36 @@ class MarbleDiamondTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
     }
 
+    @Test
+    @DisplayName("Cannot produce mana immediately after entering tapped")
+    void cannotProduceManaImmediatelyAfterEntering() {
+        harness.castFromHand(player1, new MarbleDiamond(), "{2}");
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(findDiamond(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Mana ability resolves immediately while a spell is on the stack")
+    void producesManaWithoutUsingTheStack() {
+        Permanent diamond = harness.addToBattlefieldAndReturn(player1, new MarbleDiamond());
+        diamond.untap();
+        harness.castFromHand(player1, new MarbleDiamond(), "{2}");
+        assertThat(gd.stack).hasSize(1);
+        var spell = gd.stack.getFirst();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(diamond.isTapped()).isTrue();
+        assertThat(gd.stack).containsExactly(spell);
+    }
+
     private Permanent findDiamond(Player player) {
         return findPermanent(player, "Marble Diamond");
     }
