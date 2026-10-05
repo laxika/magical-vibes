@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.c.Conflagrate;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -9,12 +10,83 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MizzixOfTheIzmagnus.class, Divination.class, GrizzlyBears.class, Shock.class})
+@CardUsed({MizzixOfTheIzmagnus.class, Divination.class, GrizzlyBears.class, Shock.class, Conflagrate.class})
 class MizzixOfTheIzmagnusTest extends BaseCardTest {
+
+    @Test
+    void countsEveryXSymbolWhenCheckingSpellManaValue() {
+        harness.addToBattlefield(player1, new MizzixOfTheIzmagnus());
+        gd.playerExperienceCounters.put(player1.getId(), 3);
+        harness.setHand(player1, List.of(new Conflagrate()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castSorceryForX(player1, 0, 2, Map.of(player2.getId(), 2));
+        resolveAllTriggers();
+
+        assertThat(gd.playerExperienceCounters).containsEntry(player1.getId(), 4);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        harness.assertInGraveyard(player1, "Conflagrate");
+    }
+
+    @Test
+    void pendingTriggersDoNotRecheckExperienceCountersOnResolution() {
+        harness.addToBattlefield(player1, new MizzixOfTheIzmagnus());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerExperienceCounters).containsEntry(player1.getId(), 2);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    void coloredManaCannotBeReplacedByExperienceCounters() {
+        harness.addToBattlefield(player1, new MizzixOfTheIzmagnus());
+        gd.playerExperienceCounters.put(player1.getId(), 5);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerExperienceCounters).containsEntry(player1.getId(), 5);
+    }
+
+    @Test
+    void creatureSpellsDoNotGrantExperienceCounters() {
+        harness.addToBattlefield(player1, new MizzixOfTheIzmagnus());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerExperienceCounters.getOrDefault(player1.getId(), 0)).isZero();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void opponentsSpellsDoNotGrantExperienceCounters() {
+        harness.addToBattlefield(player1, new MizzixOfTheIzmagnus());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerExperienceCounters.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.playerExperienceCounters.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
 
     @Test
     void gainsExperienceOnlyForInstantOrSorcerySpellsWithGreaterManaValue() {
