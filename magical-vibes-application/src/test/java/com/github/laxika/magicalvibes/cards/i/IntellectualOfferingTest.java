@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.model.ManaPool;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -18,7 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({IntellectualOffering.class, GrizzlyBears.class, Island.class})
+@CardUsed({IntellectualOffering.class, GrizzlyBears.class, Island.class, SolRing.class})
 class IntellectualOfferingTest extends BaseCardTest {
 
     @Test
@@ -30,10 +30,7 @@ class IntellectualOfferingTest extends BaseCardTest {
         Permanent opponentLand = tappedLand(player2);
         harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
         harness.setLibrary(player2, List.of(new Island(), new Island(), new Island()));
-        harness.setHand(player1, List.of(new IntellectualOffering()));
-        addOfferingMana();
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new IntellectualOffering(), "{4}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).filteredOn(card -> card instanceof Island).hasSize(3);
@@ -55,10 +52,7 @@ class IntellectualOfferingTest extends BaseCardTest {
         Permanent player3Land = tappedLand(player3);
         harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
         harness.setLibrary(player2, List.of(new Island(), new Island(), new Island()));
-        harness.setHand(player1, List.of(new IntellectualOffering()));
-        addOfferingMana();
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new IntellectualOffering(), "{4}{U}");
         harness.passBothPriorities();
 
         PendingInteraction.PermanentChoice firstChoice =
@@ -85,9 +79,74 @@ class IntellectualOfferingTest extends BaseCardTest {
         assertThat(player3Land.isTapped()).isTrue();
     }
 
-    private void addOfferingMana() {
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
+    @Test
+    @DisplayName("Untaps noncreature artifacts as well as creatures")
+    void untapsNoncreatureArtifacts() {
+        Permanent ownArtifact = harness.addToBattlefieldAndReturn(player1, new SolRing());
+        Permanent opponentArtifact = harness.addToBattlefieldAndReturn(player2, new SolRing());
+        ownArtifact.tap();
+        opponentArtifact.tap();
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
+        harness.setLibrary(player2, List.of(new Island(), new Island(), new Island()));
+
+        harness.castFromHand(player1, new IntellectualOffering(), "{4}{U}");
+        harness.passBothPriorities();
+
+        assertThat(ownArtifact.isTapped()).isFalse();
+        assertThat(opponentArtifact.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("May choose the same opponent twice in a multiplayer game")
+    void choosesSameOpponentTwiceInMultiplayer() {
+        Player player3 = addThirdPlayer();
+        Permanent ownCreature = tappedCreature(player1);
+        Permanent chosenCreature = tappedCreature(player2);
+        Permanent unchosenCreature = tappedCreature(player3);
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
+        harness.setLibrary(player2, List.of(new Island(), new Island(), new Island()));
+
+        harness.castFromHand(player1, new IntellectualOffering(), "{4}{U}");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        assertThat(ownCreature.isTapped()).isTrue();
+        assertThat(chosenCreature.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+        assertThat(gd.playerHands.get(player3.getId())).isEmpty();
+
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        assertThat(ownCreature.isTapped()).isFalse();
+        assertThat(chosenCreature.isTapped()).isFalse();
+        assertThat(unchosenCreature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The active opponent draws before the caster")
+    void activeOpponentDrawsFirst() {
+        gd.activePlayerId = player2.getId();
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
+        harness.setLibrary(player2, List.of(new Island(), new Island(), new Island()));
+        gd.gameLog.clear();
+
+        harness.castFromHand(player1, new IntellectualOffering(), "{4}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.gameLog.stream()
+                .map(entry -> entry.plainText())
+                .filter(text -> text.endsWith(" draws a card."))
+                .toList()).containsExactly(
+                        player2.getUsername() + " draws a card.",
+                        player2.getUsername() + " draws a card.",
+                        player2.getUsername() + " draws a card.",
+                        player1.getUsername() + " draws a card.",
+                        player1.getUsername() + " draws a card.",
+                        player1.getUsername() + " draws a card.");
     }
 
     private Permanent tappedCreature(Player player) {
