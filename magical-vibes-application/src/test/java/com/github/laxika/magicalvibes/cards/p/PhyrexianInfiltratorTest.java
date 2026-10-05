@@ -102,4 +102,48 @@ class PhyrexianInfiltratorTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
         assertThat(controls(player1.getId(), infiltrator.getId())).isTrue();
     }
+    @Test
+    @DisplayName("Can target itself without changing control")
+    void canTargetItself() {
+        Permanent infiltrator = harness.addToBattlefieldAndReturn(player1, new PhyrexianInfiltrator());
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, infiltrator.getId());
+        harness.passBothPriorities();
+
+        assertThat(controls(player1.getId(), infiltrator.getId())).isTrue();
+        assertThat(controls(player2.getId(), infiltrator.getId())).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not exchange when the source leaves before resolution")
+    void doesNothingWhenSourceLeavesBeforeResolution() {
+        Permanent infiltrator = harness.addToBattlefieldAndReturn(player1, new PhyrexianInfiltrator());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingKavu());
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(infiltrator);
+        harness.passBothPriorities();
+
+        assertThat(controls(player2.getId(), target.getId())).isTrue();
+        assertThat(controls(player1.getId(), target.getId())).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exchange lasts into the next turn")
+    void exchangeLastsIntoNextTurn() {
+        Permanent infiltrator = harness.addToBattlefieldAndReturn(player1, new PhyrexianInfiltrator());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingKavu());
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(controls(player2.getId(), infiltrator.getId())).isTrue();
+        assertThat(controls(player1.getId(), target.getId())).isTrue();
+    }
 }
