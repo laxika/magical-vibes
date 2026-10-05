@@ -5,10 +5,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.a.AwakenerDruid;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.o.ObstinateBaloth;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +20,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MassPolymorph.class, AirElemental.class, AwakenerDruid.class, Forest.class,
+        GrizzlyBears.class, LightningBolt.class, LlanowarElves.class, ObstinateBaloth.class})
 class MassPolymorphTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Mass Polymorph puts it on the stack")
@@ -32,10 +36,8 @@ class MassPolymorphTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Mass Polymorph");
+        assertThat(entry.getCard()).isInstanceOf(MassPolymorph.class);
     }
-
-    // ===== Resolving =====
 
     @Test
     @DisplayName("Exiles all creatures you control and puts revealed creature cards onto the battlefield")
@@ -46,9 +48,7 @@ class MassPolymorphTest extends BaseCardTest {
 
         // Set up library: non-creature on top, creature underneath
         GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new LightningBolt());
-        gd.playerDecks.get(player1.getId()).add(new AirElemental());
+        harness.setLibrary(player1, List.of(new LightningBolt(), new AirElemental()));
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
@@ -78,11 +78,7 @@ class MassPolymorphTest extends BaseCardTest {
 
         // Set up library: non-creature, creature, non-creature, creature
         GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new LightningBolt());
-        gd.playerDecks.get(player1.getId()).add(new AirElemental());
-        gd.playerDecks.get(player1.getId()).add(new LightningBolt());
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new LightningBolt(), new AirElemental(), new LightningBolt(), new GrizzlyBears()));
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
@@ -134,9 +130,7 @@ class MassPolymorphTest extends BaseCardTest {
 
         // Library with only non-creature cards
         GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new LightningBolt());
-        gd.playerDecks.get(player1.getId()).add(new LightningBolt());
+        harness.setLibrary(player1, List.of(new LightningBolt(), new LightningBolt()));
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
@@ -162,7 +156,7 @@ class MassPolymorphTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 6);
 
         GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
@@ -190,9 +184,7 @@ class MassPolymorphTest extends BaseCardTest {
 
         // Library with only one creature card (but two were exiled)
         GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new LightningBolt());
-        gd.playerDecks.get(player1.getId()).add(new AirElemental());
+        harness.setLibrary(player1, List.of(new LightningBolt(), new AirElemental()));
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
@@ -222,8 +214,7 @@ class MassPolymorphTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 6);
 
         GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new AirElemental());
+        harness.setLibrary(player1, List.of(new AirElemental()));
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
@@ -246,8 +237,7 @@ class MassPolymorphTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 6);
 
         GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new AirElemental());
+        harness.setLibrary(player1, List.of(new AirElemental()));
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
@@ -255,5 +245,70 @@ class MassPolymorphTest extends BaseCardTest {
         gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Mass Polymorph");
+    }
+
+    @Test
+    @DisplayName("Exiles animated lands and counts them among the creatures exiled")
+    void exilesAnimatedForestAlongsideItsDruid() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of(new AwakenerDruid()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castCreature(player1, 0, harness.getPermanentId(player1, "Forest"));
+        resolveAllTriggers();
+        assertThat(gqs.isCreature(gd, findPermanent(player1, "Forest"))).isTrue();
+
+        harness.setHand(player1, List.of(new MassPolymorph()));
+        harness.setLibrary(player1, List.of(new LlanowarElves(), new ObstinateBaloth()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(c -> c.getName()).contains("Forest", "Awakener Druid");
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        harness.assertOnBattlefield(player1, "Obstinate Baloth");
+        resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("Stops revealing at the required creature and leaves later creatures in the library")
+    void stopsAfterRequiredCreature() {
+        harness.addToBattlefield(player1, new LlanowarElves());
+        AirElemental revealed = new AirElemental();
+        GrizzlyBears unrevealed = new GrizzlyBears();
+        LightningBolt noncreature = new LightningBolt();
+        harness.setLibrary(player1, List.of(noncreature, revealed, unrevealed));
+        harness.setHand(player1, List.of(new MassPolymorph()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Air Elemental");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(noncreature, unrevealed);
+    }
+
+    @Test
+    @DisplayName("Returned noncreatures are shuffled before revealed creatures' enter triggers resolve")
+    void enterTriggerWaitsUntilSpellFinishes() {
+        harness.addToBattlefield(player1, new LlanowarElves());
+        LightningBolt noncreature = new LightningBolt();
+        harness.setLibrary(player1, List.of(noncreature, new ObstinateBaloth()));
+        harness.setHand(player1, List.of(new MassPolymorph()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Obstinate Baloth");
+        harness.assertInGraveyard(player1, "Mass Polymorph");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(noncreature);
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+        harness.assertLife(player1, 24);
     }
 }
