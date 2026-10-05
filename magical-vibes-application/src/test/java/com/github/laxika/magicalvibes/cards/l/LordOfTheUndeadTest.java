@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.d.DeepwoodGhoul;
 import com.github.laxika.magicalvibes.cards.g.Gravedigger;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LordOfTheUndead.class, Gravedigger.class, ScatheZombies.class, GrizzlyBears.class, HolyDay.class})
+@CardUsed({LordOfTheUndead.class, Gravedigger.class, ScatheZombies.class, GrizzlyBears.class})
 class LordOfTheUndeadTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -439,14 +437,65 @@ class LordOfTheUndeadTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(target));
 
         harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
-        gd.playerGraveyards.get(player1.getId()).clear();
+        harness.setGraveyard(player1, List.of());
         harness.passBothPriorities();
 
         harness.assertNotInHand(player1, "Gravedigger");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
-    // ===== Lord remains on battlefield =====
+    @Test
+    @DisplayName("The ability resolves after its source leaves the battlefield")
+    void returnsTargetAfterSourceLeaves() {
+        Permanent lord = addReadyLord(player1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        Gravedigger target = new Gravedigger();
+        harness.setGraveyard(player1, List.of(target));
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(lord);
+        harness.setGraveyard(player1, List.of(target, lord.getCard()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Gravedigger");
+        harness.assertNotInGraveyard(player1, "Gravedigger");
+        harness.assertInGraveyard(player1, "Lord of the Undead");
+    }
+
+    @Test
+    @DisplayName("The ability can return another Lord using black and colorless mana")
+    void returnsAnotherLordWithMixedMana() {
+        addReadyLord(player1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        LordOfTheUndead target = new LordOfTheUndead();
+        harness.setGraveyard(player1, List.of(target));
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Lord of the Undead");
+        harness.assertNotInGraveyard(player1, "Lord of the Undead");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("The ability requires black mana even with enough total mana")
+    void cannotActivateWithoutBlackMana() {
+        Permanent lord = addReadyLord(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        ScatheZombies target = new ScatheZombies();
+        harness.setGraveyard(player1, List.of(target));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(lord.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Scathe Zombies");
+    }
 
     @Test
     @DisplayName("Lord of the Undead remains on battlefield after activation and resolution")
