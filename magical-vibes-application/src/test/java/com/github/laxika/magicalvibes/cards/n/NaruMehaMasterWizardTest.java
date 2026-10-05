@@ -3,12 +3,16 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
+import com.github.laxika.magicalvibes.cards.c.ConeOfFlame;
+import com.github.laxika.magicalvibes.cards.c.Commandeer;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +20,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({NaruMehaMasterWizard.class, CounselOfTheSoratami.class, FugitiveWizard.class,
+        GrizzlyBears.class, Shock.class, ConeOfFlame.class, Commandeer.class})
 class NaruMehaMasterWizardTest extends BaseCardTest {
-
-    // ===== ETB spell copy — targeting =====
 
     @Test
     @DisplayName("ETB triggers permanent choice to select a spell on the stack")
@@ -106,8 +110,6 @@ class NaruMehaMasterWizardTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
-    // ===== ETB spell copy — resolution =====
-
     @Test
     @DisplayName("Selecting a spell target puts ETB trigger on stack and resolving copies the spell")
     void etbCopiesTargetSpell() {
@@ -164,18 +166,14 @@ class NaruMehaMasterWizardTest extends BaseCardTest {
         assertThat(handAfter - handBefore).isEqualTo(2);
     }
 
-    // ===== Static ability — Wizard lord =====
-
     @Test
     @DisplayName("Other Wizards get +1/+1")
     void otherWizardsGetBoost() {
-        FugitiveWizard wizard = new FugitiveWizard();
-        harness.addToBattlefield(player1, wizard);
+        Permanent wizardPerm = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard());
         NaruMehaMasterWizard naru = new NaruMehaMasterWizard();
         harness.addToBattlefield(player1, naru);
 
         // FugitiveWizard is a 1/1 Wizard — with Naru Meha's lord effect, should get +1/+1
-        Permanent wizardPerm = findPermanent(player1, "Fugitive Wizard");
         var bonus = gqs.computeStaticBonus(gd, wizardPerm);
         assertThat(bonus.power()).isEqualTo(1);
         assertThat(bonus.toughness()).isEqualTo(1);
@@ -184,11 +182,7 @@ class NaruMehaMasterWizardTest extends BaseCardTest {
     @Test
     @DisplayName("Naru Meha does not boost itself (other Wizards)")
     void doesNotBoostSelf() {
-        NaruMehaMasterWizard naru = new NaruMehaMasterWizard();
-        harness.addToBattlefield(player1, naru);
-
-        // Naru Meha is a 3/3 — should not boost itself
-        Permanent naruPerm = findPermanent(player1, "Naru Meha, Master Wizard");
+        Permanent naruPerm = harness.addToBattlefieldAndReturn(player1, new NaruMehaMasterWizard());
         var bonus = gqs.computeStaticBonus(gd, naruPerm);
         assertThat(bonus.power()).isEqualTo(0);
         assertThat(bonus.toughness()).isEqualTo(0);
@@ -197,15 +191,131 @@ class NaruMehaMasterWizardTest extends BaseCardTest {
     @Test
     @DisplayName("Non-Wizard creatures are not boosted")
     void nonWizardNotBoosted() {
-        GrizzlyBears bears = new GrizzlyBears();
-        harness.addToBattlefield(player1, bears);
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         NaruMehaMasterWizard naru = new NaruMehaMasterWizard();
         harness.addToBattlefield(player1, naru);
 
         // Grizzly Bears is not a Wizard — should get no boost
-        Permanent bearsPerm = findPermanent(player1, "Grizzly Bears");
         var bonus = gqs.computeStaticBonus(gd, bearsPerm);
         assertThat(bonus.power()).isEqualTo(0);
         assertThat(bonus.toughness()).isEqualTo(0);
+    }
+
+    @Test
+    void opponentsWizardsAreNotBoosted() {
+        Permanent wizard = harness.addToBattlefieldAndReturn(player2, new FugitiveWizard());
+        harness.addToBattlefield(player1, new NaruMehaMasterWizard());
+
+        var bonus = gqs.computeStaticBonus(gd, wizard);
+        assertThat(bonus.power()).isZero();
+        assertThat(bonus.toughness()).isZero();
+    }
+
+    @Test
+    void canChooseNewTargetForInstantCopy() {
+        Shock shock = new Shock();
+        harness.setHand(player1, List.of(shock, new NaruMehaMasterWizard()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, shock.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player1, "Shock");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void canKeepOriginalTargetForInstantCopy() {
+        Shock shock = new Shock();
+        harness.setHand(player1, List.of(shock, new NaruMehaMasterWizard()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.setLife(player2, 20);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, shock.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void canChooseNewTargetsForEveryTargetOfCopiedSpell() {
+        Permanent originalFirst = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent originalSecond = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent originalThird = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent newFirst = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent newSecond = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent newThird = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        ConeOfFlame cone = new ConeOfFlame();
+        harness.setHand(player1, List.of(cone, new NaruMehaMasterWizard()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castSorcery(player1, 0,
+                List.of(originalFirst.getId(), originalSecond.getId(), originalThird.getId()));
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, cone.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, newFirst.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, newSecond.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, newThird.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .contains(originalFirst, originalSecond, originalThird, newFirst)
+                .doesNotContain(newSecond, newThird);
+        assertThat(newFirst.getMarkedDamage()).isEqualTo(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .contains(originalFirst, newFirst)
+                .doesNotContain(originalSecond, originalThird);
+    }
+
+    @Test
+    void doesNotCopySpellWhoseControlChangedBeforeTriggerResolves() {
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        harness.setHand(player1, List.of(counsel, new NaruMehaMasterWizard()));
+        harness.addMana(player1, ManaColor.BLUE, 7);
+        harness.setHand(player2, List.of(new Commandeer()));
+        harness.addMana(player2, ManaColor.BLUE, 7);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, counsel.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, counsel.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().isCopy()).isFalse();
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(counsel);
     }
 }
