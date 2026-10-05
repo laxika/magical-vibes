@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.e.EpharasDispersal;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.j.JacesSanctum;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianCensor;
+import com.github.laxika.magicalvibes.cards.s.Syncopate;
 import com.github.laxika.magicalvibes.cards.t.TheGreatSynthesis;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -21,9 +23,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({JinGitaxias.class, TheGreatSynthesis.class, JacesSanctum.class,
-        GrizzlyBears.class, HillGiant.class, PhyrexianCensor.class, Forest.class})
+        GrizzlyBears.class, HillGiant.class, PhyrexianCensor.class, Forest.class,
+        EpharasDispersal.class, Syncopate.class})
 class JinGitaxiasTest extends BaseCardTest {
 
     @Test
@@ -110,6 +114,170 @@ class JinGitaxiasTest extends BaseCardTest {
                 .contains("Grizzly Bears", "Hill Giant");
     }
 
+    @Test
+    void doesNotDrawForCreatureSpellsEvenWithManaValueAboveThree() {
+        harness.addToBattlefield(player1, new JinGitaxias());
+        harness.setHand(player1, List.of(new HillGiant()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Hill Giant");
+    }
+
+    @Test
+    void doesNotDrawForOpponentsNoncreatureSpell() {
+        harness.addToBattlefield(player1, new JinGitaxias());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new EpharasDispersal()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of());
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player2, 0, bear.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bear.getCard());
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void wardCountersOpponentsSpellWhenTheyCannotPayTwo() {
+        Permanent jin = harness.addToBattlefieldAndReturn(player1, new JinGitaxias());
+        harness.setHand(player2, List.of(new EpharasDispersal()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player2, 0, jin.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Jin-Gitaxias");
+        harness.assertInGraveyard(player2, "Ephara's Dispersal");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void countsChosenXWhenCheckingSpellManaValue() {
+        harness.addToBattlefield(player1, new JinGitaxias());
+        HillGiant giant = new HillGiant();
+        harness.setHand(player1, List.of(giant, new Syncopate()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, 2, giant.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void cannotActivateWithOnlySixCardsInHand() {
+        harness.addToBattlefield(player1, new JinGitaxias());
+        harness.setHand(player1, cards(6));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Jin-Gitaxias");
+    }
+
+    @Test
+    void cannotActivateOutsideSorceryTiming() {
+        harness.addToBattlefield(player1, new JinGitaxias());
+        harness.setHand(player1, cards(7));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void activationStillResolvesAfterHandDropsBelowSeven() {
+        harness.addToBattlefield(player1, new JinGitaxias());
+        harness.setHand(player1, cards(7));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "The Great Synthesis");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void chapterIDrawsBasedOnHandSizeAtResolution() {
+        addBackFaceSaga(0);
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        advanceSagaToNextChapter();
+        harness.setHand(player1, List.of(new Forest(), new Forest(), new Forest()));
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(6);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void sagaDoesNotRemoveHandSizeLimitUnlessChapterIResolved() {
+        addBackFaceSaga(1);
+        harness.setHand(player1, cards(8));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+
+        gs.advanceStep(gd);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNotNull();
+    }
+
+    @Test
+    void chapterIIIReturnsFrontFaceEvenWhenAllSpellsAreDeclined() {
+        addBackFaceSaga(2);
+        GrizzlyBears bear = new GrizzlyBears();
+        harness.setHand(player1, List.of(bear));
+        advanceSagaToNextChapter();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertOnBattlefield(player1, "Jin-Gitaxias");
+        harness.assertNotOnBattlefield(player1, "The Great Synthesis");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bear);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void chapterIIIReturnsFrontFaceWhenHandContainsOnlyLands() {
+        addBackFaceSaga(2);
+        Forest forest = new Forest();
+        harness.setHand(player1, List.of(forest));
+        advanceSagaToNextChapter();
+
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Jin-Gitaxias");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private Permanent addBackFaceSaga(int lore) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new JinGitaxias());
         saga.setCard(saga.getOriginalCard().getBackFaceCard());
@@ -121,7 +289,6 @@ class JinGitaxiasTest extends BaseCardTest {
     private void advanceSagaToNextChapter() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
     }
 
