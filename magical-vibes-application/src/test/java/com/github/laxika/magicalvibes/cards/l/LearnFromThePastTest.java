@@ -25,12 +25,48 @@ class LearnFromThePastTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 4);
         int targetLibrarySize = gd.playerDecks.get(player2.getId()).size();
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(targetLibrarySize + 2);
         harness.assertInHand(player1, "Giant Spider");
+    }
+
+    @Test
+    @DisplayName("Self-targeting shuffles before drawing and leaves the resolving spell in the graveyard")
+    void selfTargetingShufflesBeforeDrawing() {
+        LearnFromThePast shuffledCard = new LearnFromThePast();
+        LearnFromThePast spell = new LearnFromThePast();
+        harness.setGraveyard(player1, List.of(shuffledCard));
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(shuffledCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+    }
+
+    @Test
+    @DisplayName("An empty target graveyard does not prevent the caster from drawing")
+    void emptyTargetGraveyardStillDraws() {
+        LearnFromThePast draw = new LearnFromThePast();
+        LearnFromThePast untouched = new LearnFromThePast();
+        harness.setGraveyard(player1, List.of(untouched));
+        harness.setGraveyard(player2, List.of());
+        harness.setLibrary(player1, List.of(draw));
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new LearnFromThePast()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(draw);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(untouched);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
 
     @Test
