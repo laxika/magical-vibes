@@ -69,4 +69,75 @@ class NiallSilvainTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("Can target itself even though paying the tap cost taps it")
+    void canRegenerateItself() {
+        Permanent source = addCreatureReady(player1, new NiallSilvain());
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, 0, null, source.getId());
+        harness.passBothPriorities();
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(source.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Three green mana and one colorless mana cannot pay the ability cost")
+    void requiresFourGreenMana() {
+        Permanent source = addCreatureReady(player1, new NiallSilvain());
+        harness.addToBattlefield(player2, new Squire());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        UUID targetId = harness.getPermanentId(player2, "Squire");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(source.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents paying the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new NiallSilvain());
+        harness.addToBattlefield(player2, new Squire());
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        UUID targetId = harness.getPermanentId(player2, "Squire");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Niall Silvain cannot activate its ability")
+    void cannotActivateWhileTapped() {
+        Permanent source = addCreatureReady(player1, new NiallSilvain());
+        source.tap();
+        harness.addToBattlefield(player2, new Squire());
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        UUID targetId = harness.getPermanentId(player2, "Squire");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability resolves after Niall Silvain leaves the battlefield")
+    void abilityResolvesWithoutSource() {
+        Permanent source = addCreatureReady(player1, new NiallSilvain());
+        harness.addToBattlefield(player2, new Squire());
+        Permanent target = findPermanent(player2, "Squire");
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, source);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Niall Silvain");
+        assertThat(target.getRegenerationShield()).isEqualTo(1);
+    }
 }
