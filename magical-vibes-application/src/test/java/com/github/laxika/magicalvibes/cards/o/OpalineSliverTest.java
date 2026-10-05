@@ -3,9 +3,10 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.e.ElaborateFirecannon;
 import com.github.laxika.magicalvibes.cards.m.MetallicSliver;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.Snapback;
+import com.github.laxika.magicalvibes.cards.t.TelekineticSliver;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OpalineSliver.class, MetallicSliver.class, Shock.class, ElaborateFirecannon.class})
+@CardUsed({OpalineSliver.class, MetallicSliver.class, Shock.class, ElaborateFirecannon.class,
+        Snapback.class, TelekineticSliver.class})
 class OpalineSliverTest extends BaseCardTest {
 
     @Test
@@ -81,14 +83,76 @@ class OpalineSliverTest extends BaseCardTest {
         harness.addToBattlefield(player1, new OpalineSliver());
         var sliverId = harness.getPermanentId(player1, "Opaline Sliver");
 
-        Permanent firecannon = new Permanent(new ElaborateFirecannon());
+        var firecannon = harness.addToBattlefieldAndReturn(player2, new ElaborateFirecannon());
         firecannon.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(firecannon);
         harness.addMana(player2, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player2, 0, null, sliverId);
 
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The controller may decline the draw before the targeting spell resolves")
+    void mayDeclineDraw() {
+        var sliver = harness.addToBattlefieldAndReturn(player1, new OpalineSliver());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        beginTurn(player2);
+        harness.setHand(player2, List.of(new Snapback()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, sliver.getId());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        harness.assertOnBattlefield(player1, "Opaline Sliver");
+
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Opaline Sliver");
+        harness.assertInHand(player1, "Opaline Sliver");
+    }
+
+    @Test
+    @DisplayName("Each Opaline Sliver grants a separate draw trigger")
+    void multipleCopiesCreateSeparateTriggers() {
+        var sliver = harness.addToBattlefieldAndReturn(player1, new OpalineSliver());
+        harness.addToBattlefield(player1, new OpalineSliver());
+
+        beginTurn(player2);
+        harness.setHand(player2, List.of(new Snapback()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, sliver.getId());
+
+        assertThat(gd.stack).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("A granted draw trigger survives Opaline Sliver leaving the battlefield")
+    void triggerSurvivesGrantingSliverLeaving() {
+        var opaline = harness.addToBattlefieldAndReturn(player1, new OpalineSliver());
+        var otherSliver = harness.addToBattlefieldAndReturn(player1, new TelekineticSliver());
+
+        beginTurn(player2);
+        harness.setHand(player2, List.of(new Snapback()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, otherSliver.getId());
+
+        harness.setHand(player1, List.of(new Snapback()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, opaline.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Opaline Sliver");
+        int handBeforeDraw = gd.playerHands.get(player1.getId()).size();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBeforeDraw + 1);
+        harness.assertOnBattlefield(player1, "Telekinetic Sliver");
     }
 
     private void beginTurn(com.github.laxika.magicalvibes.model.Player player) {
