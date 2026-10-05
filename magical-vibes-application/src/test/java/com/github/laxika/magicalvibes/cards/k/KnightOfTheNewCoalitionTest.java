@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(KnightOfTheNewCoalition.class)
+@CardUsed({KnightOfTheNewCoalition.class})
 class KnightOfTheNewCoalitionTest extends BaseCardTest {
 
     @Test
@@ -25,8 +25,7 @@ class KnightOfTheNewCoalitionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent knight = findPermanent(player1, "Knight");
         assertThat(knight.getCard().isToken()).isTrue();
@@ -35,5 +34,47 @@ class KnightOfTheNewCoalitionTest extends BaseCardTest {
         assertThat(knight.getCard().getColors()).containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLUE);
         assertThat(knight.getCard().getSubtypes()).contains(CardSubtype.KNIGHT);
         assertThat(gqs.hasKeyword(gd, knight, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The Knight token is created by a separate enter trigger, not when the spell is cast")
+    void tokenWaitsForEnterTriggerToResolve() {
+        harness.setHand(player1, List.of(new KnightOfTheNewCoalition()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        assertThat(countPermanents(player1, "Knight")).isZero();
+        harness.assertNotOnBattlefield(player1, "Knight of the New Coalition");
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Knight of the New Coalition");
+        assertThat(countPermanents(player1, "Knight")).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+        assertThat(countPermanents(player1, "Knight")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Knight")).isZero();
+    }
+
+    @Test
+    @DisplayName("The created Knight can attack without tapping once summoning sickness ends")
+    void knightTokenAttacksWithoutTapping() {
+        harness.setHand(player1, List.of(new KnightOfTheNewCoalition()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent knight = findPermanent(player1, "Knight");
+        assertThat(knight.isTapped()).isFalse();
+        assertThat(knight.isSummoningSick()).isTrue();
+        knight.setSummoningSick(false);
+
+        int knightIndex = gd.playerBattlefields.get(player1.getId()).indexOf(knight);
+        declareAttackersAndPrepareBlockers(List.of(knightIndex));
+
+        assertThat(knight.isAttacking()).isTrue();
+        assertThat(knight.isTapped()).isFalse();
     }
 }
