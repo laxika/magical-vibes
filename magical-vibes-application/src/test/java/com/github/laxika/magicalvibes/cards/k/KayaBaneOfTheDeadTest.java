@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({KayaBaneOfTheDead.class, GrizzlyBears.class, GlaringSpotlight.class,
-        IntoTheRoil.class, LeylineOfSanctity.class, Shock.class})
+        IntoTheRoil.class, LeylineOfSanctity.class, Shock.class, KnightOfGrace.class})
 class KayaBaneOfTheDeadTest extends BaseCardTest {
 
     @Test
@@ -64,8 +64,7 @@ class KayaBaneOfTheDeadTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         harness.assertLife(player2, 18);
     }
@@ -80,8 +79,7 @@ class KayaBaneOfTheDeadTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, artifact.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, artifact.getId());
 
         harness.assertInHand(player2, "Glaring Spotlight");
     }
@@ -98,11 +96,71 @@ class KayaBaneOfTheDeadTest extends BaseCardTest {
                 .hasMessageContaining("shroud");
     }
 
+    @Test
+    @DisplayName("Kaya allows targeting creatures with hexproof from black")
+    void targetsCreatureWithHexproofFromBlack() {
+        addReadyKaya(5);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new KnightOfGrace());
+
+        harness.activateAbility(player1, 0, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Knight of Grace");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(Card::getName)
+                .contains("Knight of Grace");
+    }
+
+    @Test
+    @DisplayName("-3 can exile a creature controlled by Kaya's controller")
+    void exilesOwnCreature() {
+        addReadyKaya(5);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getName)
+                .contains("Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Using Kaya's last loyalty makes a hexproof target illegal at resolution")
+    void lastLoyaltyRestoresHexproofBeforeResolution() {
+        addReadyKaya(3);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        TestCards.mutableCard(creature).setKeywords(EnumSet.of(Keyword.HEXPROOF));
+
+        harness.activateAbility(player1, 0, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Kaya, Bane of the Dead");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Using Kaya's last loyalty still exiles a creature without hexproof")
+    void lastLoyaltyDoesNotPreventExilingOrdinaryCreature() {
+        addReadyKaya(3);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Kaya, Bane of the Dead");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(Card::getName)
+                .contains("Grizzly Bears");
+    }
+
     private Permanent addReadyKaya(int loyalty) {
-        Permanent kaya = new Permanent(new KayaBaneOfTheDead());
+        Permanent kaya = harness.addToBattlefieldAndReturn(player1, new KayaBaneOfTheDead());
         kaya.setCounterCount(CounterType.LOYALTY, loyalty);
         kaya.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(kaya);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return kaya;
