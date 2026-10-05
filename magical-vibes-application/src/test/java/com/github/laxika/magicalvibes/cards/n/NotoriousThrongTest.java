@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.m.MothdustChangeling;
+import com.github.laxika.magicalvibes.cards.p.PricklyBoggart;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -18,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(NotoriousThrong.class)
+@CardUsed({NotoriousThrong.class, PricklyBoggart.class, MothdustChangeling.class})
 class NotoriousThrongTest extends BaseCardTest {
 
     private List<Permanent> faerieRogueTokens() {
@@ -125,5 +127,121 @@ class NotoriousThrongTest extends BaseCardTest {
         gd.combatDamageToPlayerControllerSubtypesThisTurn
                 .computeIfAbsent(player1.getId(), k -> ConcurrentHashMap.newKeySet())
                 .add(CardSubtype.ROGUE);
+    }
+
+    @Test
+    @DisplayName("Normal cost remains available after Rogue combat damage and gives no extra turn")
+    void normalCostAfterRogueDamageDoesNotGrantExtraTurn() {
+        setupProwl();
+        gd.damageDealtToPlayersThisTurn.put(player2.getId(), 1);
+
+        harness.castFromHand(player1, new NotoriousThrong(), "{3}{U}");
+        harness.passBothPriorities();
+
+        assertThat(faerieRogueTokens()).hasSize(1);
+        assertThat(gd.extraTurns).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Token count is determined on resolution rather than when the spell is cast")
+    void tokenCountUsesDamageAtResolution() {
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.damageDealtToPlayersThisTurn.put(player2.getId(), 1);
+
+        harness.castFromHand(player1, new NotoriousThrong(), "{3}{U}");
+        gd.damageDealtToPlayersThisTurn.merge(player2.getId(), 2, Integer::sum);
+        harness.passBothPriorities();
+
+        assertThat(faerieRogueTokens()).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Opponent's Rogue combat damage does not enable the caster's prowl")
+    void opponentRogueDamageDoesNotEnableProwl() {
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.combatDamageToPlayerControllerSubtypesThisTurn
+                .computeIfAbsent(player2.getId(), k -> ConcurrentHashMap.newKeySet())
+                .add(CardSubtype.ROGUE);
+        gd.damageDealtToPlayersThisTurn.put(player1.getId(), 1);
+        harness.setHand(player1, List.of(new NotoriousThrong()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        assertThatThrownBy(() -> harness.castWithProwl(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Damage to an opponent alone does not enable prowl without qualifying combat damage")
+    void noncombatDamageDoesNotEnableProwl() {
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.damageDealtToPlayersThisTurn.put(player2.getId(), 3);
+        harness.setHand(player1, List.of(new NotoriousThrong()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        assertThatThrownBy(() -> harness.castWithProwl(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Prowl requires six mana even when the four-mana normal cost could be paid")
+    void prowlRequiresFullAlternativeCost() {
+        setupProwl();
+        gd.damageDealtToPlayersThisTurn.put(player2.getId(), 1);
+        harness.setHand(player1, List.of(new NotoriousThrong()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        assertThatThrownBy(() -> harness.castWithProwl(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.extraTurns).isEmpty();
+        assertThat(faerieRogueTokens()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Rogue combat damage enables prowl even after that Rogue leaves the battlefield")
+    void rogueDamageEnablesProwlAfterSourceLeaves() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        Permanent rogue = harness.addToBattlefieldAndReturn(player1, new PricklyBoggart());
+        rogue.setSummoningSick(false);
+        rogue.setAttacking(true);
+        rogue.setAttackTarget(player2.getId());
+        harness.resolveCombatDamage();
+        harness.assertLife(player2, 19);
+        gd.playerBattlefields.get(player1.getId()).remove(rogue);
+        harness.setGraveyard(player1, List.of(rogue.getCard()));
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.setHand(player1, List.of(new NotoriousThrong()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castWithProwl(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(faerieRogueTokens()).hasSize(1);
+        assertThat(gd.extraTurns).containsExactly(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Changeling combat damage qualifies as Rogue damage for prowl")
+    void changelingCombatDamageEnablesProwl() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        Permanent changeling = harness.addToBattlefieldAndReturn(player1, new MothdustChangeling());
+        changeling.setSummoningSick(false);
+        changeling.setAttacking(true);
+        changeling.setAttackTarget(player2.getId());
+        harness.resolveCombatDamage();
+        harness.assertLife(player2, 19);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.setHand(player1, List.of(new NotoriousThrong()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castWithProwl(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(faerieRogueTokens()).hasSize(1);
+        assertThat(gd.extraTurns).containsExactly(player1.getId());
     }
 }
