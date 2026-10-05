@@ -111,4 +111,73 @@ class MindlessAutomatonTest extends BaseCardTest {
         perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, counters);
         return perm;
     }
+
+    @Test
+    @DisplayName("Discard and mana are paid before the counter ability resolves")
+    void discardAndManaArePaidBeforeResolution() {
+        Permanent automaton = addReadyAutomaton(player1, 2);
+        automaton.setTapped(true);
+        automaton.setSummoningSick(true);
+        MindlessAutomaton discardedCard = new MindlessAutomaton();
+        harness.setHand(player1, List.of(discardedCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(discardedCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discardedCard);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(automaton.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(automaton.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(automaton.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Counter removal is paid immediately even while tapped and summoning sick")
+    void removeCountersIsAnImmediateCostWithoutTapRestriction() {
+        Permanent automaton = addReadyAutomaton(player1, 3);
+        automaton.setTapped(true);
+        automaton.setSummoningSick(true);
+        MindlessAutomaton drawnCard = new MindlessAutomaton();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(automaton.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(automaton.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A pending counter ability cannot save the Automaton after its last counters are removed")
+    void pendingCounterAbilityDoesNotSaveSource() {
+        Permanent automaton = addReadyAutomaton(player1, 2);
+        MindlessAutomaton discardedCard = new MindlessAutomaton();
+        MindlessAutomaton drawnCard = new MindlessAutomaton();
+        harness.setHand(player1, List.of(discardedCard));
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(automaton);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(automaton.getCard(), discardedCard);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(automaton);
+        assertThat(automaton.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
 }
