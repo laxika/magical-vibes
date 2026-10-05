@@ -94,8 +94,8 @@ class PendrellMistsTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getId().equals(opponentInfantry.getId()));
+        assertThat(findPermanent(player2, "Benalish Infantry").getId()).isEqualTo(opponentInfantry.getId());
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -107,7 +107,67 @@ class PendrellMistsTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getId().equals(mindStone.getId()));
+        assertThat(findPermanent(player1, "Mind Stone").getId()).isEqualTo(mindStone.getId());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Two Mists require two separate payments for the same creature")
+    void multipleMistsRequireSeparatePayments() {
+        addMists(player1);
+        addMists(player2);
+        addInfantry(player1);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertOnBattlefield(player1, "Benalish Infantry");
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Benalish Infantry");
+        harness.assertInGraveyard(player1, "Benalish Infantry");
+    }
+
+    @Test
+    @DisplayName("Each creature receives its own independently payable trigger")
+    void eachCreatureHasIndependentPayment() {
+        addMists(player1);
+        addInfantry(player1);
+        addInfantry(player1);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(countPermanents(player1, "Benalish Infantry")).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Benalish Infantry");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Removing Mists after upkeep begins does not remove the creature's trigger")
+    void triggerSurvivesMistsLeavingBattlefield() {
+        Permanent mists = harness.addToBattlefieldAndReturn(player1, new PendrellMists());
+        addInfantry(player1);
+
+        advanceToUpkeep(player1);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, mists);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Benalish Infantry");
+        harness.assertInGraveyard(player1, "Benalish Infantry");
     }
 }
