@@ -68,4 +68,84 @@ class KillianDecisiveMentorTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
+
+    @Test
+    void goadsAnAlreadyTappedCreatureWhenAnAuraEnters() {
+        harness.addToBattlefield(player1, new KillianDecisiveMentor());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.setTapped(true);
+        harness.setHand(player1, List.of(new HolyStrength()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(als.getMustAttackRequirementCount(gd, target)).isEqualTo(1);
+    }
+
+    @Test
+    void doesNotTriggerForAnOpponentsEnchantmentEntering() {
+        harness.addToBattlefield(player1, new KillianDecisiveMentor());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new GloriousAnthem()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
+
+        harness.castEnchantment(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(als.getMustAttackRequirementCount(gd, target)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void doesNotDrawForAnUnenchantedAttacker() {
+        harness.addToBattlefield(player1, new KillianDecisiveMentor());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        declareAttackers(player1, List.of(1));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void doesNotDrawForAnAttackerEnchantedOnlyByAnOpponentsAura() {
+        harness.addToBattlefield(player1, new KillianDecisiveMentor());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new HolyStrength());
+        aura.setAttachedTo(attacker.getId());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        declareAttackers(player1, List.of(1));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void mayChooseNoCreatureWhenAnEnchantmentEnters() {
+        harness.addToBattlefield(player1, new KillianDecisiveMentor());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GloriousAnthem()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(als.getMustAttackRequirementCount(gd, target)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 }
