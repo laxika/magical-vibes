@@ -33,10 +33,7 @@ class PolarKrakenTest extends BaseCardTest {
         harness.castFromHand(player1, new PolarKraken(), "{8}{U}{U}{U}");
         harness.passBothPriorities();
 
-        Permanent kraken = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> "Polar Kraken".equals(p.getCard().getName()))
-                .findFirst()
-                .orElseThrow();
+        Permanent kraken = findPermanent(player1, "Polar Kraken");
         assertThat(kraken.isTapped()).isTrue();
     }
 
@@ -96,8 +93,7 @@ class PolarKrakenTest extends BaseCardTest {
         Permanent kraken = addCreatureReady(player1, new PolarKraken());
         Permanent blocker = addCreatureReady(player2, new BalduvianBears());
 
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(kraken)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(kraken)));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker), 0)));
         harness.passBothPriorities();
@@ -179,5 +175,48 @@ class PolarKrakenTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(kraken);
         assertThat(landsControlledBy(player1.getId())).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("The controller chooses which lands pay cumulative upkeep")
+    void choosesLandsToSacrifice() {
+        Permanent kraken = harness.addToBattlefieldAndReturn(player1, new PolarKraken());
+        kraken.setCounterCount(CounterType.AGE, 1);
+        Permanent firstIsland = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent secondIsland = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent retainedIsland = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        Permanent opponentIsland = harness.addToBattlefieldAndReturn(player2, new Island());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstIsland.getId(), secondIsland.getId()));
+
+        assertThat(kraken.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(kraken, retainedIsland, bears).doesNotContain(firstIsland, secondIsland);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(firstIsland.getCard(), secondIsland.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentIsland);
+        assertThat(landsControlledBy(player1.getId())).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep does not trigger during the opponent's upkeep")
+    void doesNotTriggerOnOpponentUpkeep() {
+        Permanent kraken = harness.addToBattlefieldAndReturn(player1, new PolarKraken());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(kraken.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(kraken, island);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotInGraveyard(player1, "Polar Kraken");
     }
 }
