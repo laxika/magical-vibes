@@ -105,6 +105,65 @@ class NorinTheWaryTest extends BaseCardTest {
         assertReturned(norin);
     }
 
+    @Test
+    @DisplayName("Exiles before a creature spell resolves")
+    void exilesWhenCreatureSpellIsCast() {
+        Permanent norin = harness.addToBattlefieldAndReturn(player1, new NorinTheWary());
+        harness.setHand(player1, List.of(new AshcoatBear()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertExiled(norin);
+        harness.assertNotOnBattlefield(player1, "Ashcoat Bear");
+
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Ashcoat Bear");
+        advanceToEndStep(player1);
+        assertReturned(norin);
+    }
+
+    @Test
+    @DisplayName("Exiles when Norin itself attacks before dealing combat damage")
+    void exilesWhenItAttacks() {
+        Permanent norin = addCreatureReady(player1, new NorinTheWary());
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertExiled(norin);
+        advanceToEndStep(player1);
+        harness.assertLife(player2, 20);
+        assertReturned(norin);
+        Permanent returned = findPermanent(player1, "Norin the Wary");
+        assertThat(returned.getId()).isNotEqualTo(norin.getId());
+        assertThat(returned.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A spell cast during the end step delays Norin's return until the following end step")
+    void exileDuringEndStepReturnsNextTurn() {
+        Permanent norin = harness.addToBattlefieldAndReturn(player1, new NorinTheWary());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Sprout()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstant(player1, 0);
+        resolveAllTriggers();
+        assertExiled(norin);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertExiled(norin);
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
+        assertExiled(norin);
+
+        resolveAllTriggers();
+        assertReturned(norin);
+    }
+
     private void assertExiled(Permanent norin) {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(norin);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -119,6 +178,7 @@ class NorinTheWaryTest extends BaseCardTest {
     }
 
     private void advanceToEndStep(com.github.laxika.magicalvibes.model.Player activePlayer) {
-        harness.passUntil(activePlayer, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(activePlayer, TurnStep.END_STEP);
+        resolveAllTriggers();
     }
 }
