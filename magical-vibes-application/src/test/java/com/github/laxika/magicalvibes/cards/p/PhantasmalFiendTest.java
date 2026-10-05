@@ -86,4 +86,83 @@ class PhantasmalFiendTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, fiend)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, fiend)).isEqualTo(5);
     }
+
+    @Test
+    @DisplayName("Boost resolving after a switch still applies before the switch")
+    void switchThenBoost() {
+        Permanent fiend = harness.addToBattlefieldAndReturn(player1, new PhantasmalFiend());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, fiend)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, fiend)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Phantasmal Fiend");
+    }
+
+    @Test
+    @DisplayName("Two switches cancel each other, preserving the boost")
+    void twoSwitchesCancel() {
+        Permanent fiend = harness.addToBattlefieldAndReturn(player1, new PhantasmalFiend());
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, fiend)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, fiend)).isEqualTo(2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, fiend)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, fiend)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Repeated black activations stack and zero toughness puts the Fiend in the graveyard")
+    void repeatedBoostsCanKillFiend() {
+        Permanent fiend = harness.addToBattlefieldAndReturn(player1, new PhantasmalFiend());
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        for (int i = 0; i < 4; i++) {
+            harness.activateAbility(player1, 0, 0, null, null);
+            harness.passBothPriorities();
+        }
+        assertThat(gqs.getEffectivePower(gd, fiend)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, fiend)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Phantasmal Fiend");
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Phantasmal Fiend");
+        harness.assertInGraveyard(player1, "Phantasmal Fiend");
+    }
+
+    @Test
+    @DisplayName("Boosts after a switch can reduce power to zero without killing the Fiend")
+    void switchedFiendSurvivesZeroPower() {
+        Permanent fiend = harness.addToBattlefieldAndReturn(player1, new PhantasmalFiend());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        for (int i = 0; i < 5; i++) {
+            harness.activateAbility(player1, 0, 0, null, null);
+            harness.passBothPriorities();
+        }
+
+        assertThat(gqs.getEffectivePower(gd, fiend)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, fiend)).isEqualTo(6);
+        harness.assertOnBattlefield(player1, "Phantasmal Fiend");
+        harness.assertNotInGraveyard(player1, "Phantasmal Fiend");
+    }
 }
