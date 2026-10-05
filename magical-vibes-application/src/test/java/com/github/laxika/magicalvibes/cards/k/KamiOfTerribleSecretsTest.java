@@ -68,4 +68,72 @@ class KamiOfTerribleSecretsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
     }
+
+    @Test
+    void doesNothingWhenOnlyOpponentControlsRequiredPermanents() {
+        harness.addToBattlefield(player2, new DarksteelCitadel());
+        harness.addToBattlefield(player2, new PhyrexianArena());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new KamiOfTerribleSecrets()));
+        addMana();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotInHand(player1, "Forest");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void doesNothingWhenArtifactLeavesBeforeTriggerResolves() {
+        prepareQualifyingTrigger();
+        gd.playerBattlefields.get(player1.getId())
+                .removeIf(permanent -> permanent.getCard() instanceof DarksteelCitadel);
+
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Forest");
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNothingWhenEnchantmentLeavesBeforeTriggerResolves() {
+        prepareQualifyingTrigger();
+        gd.playerBattlefields.get(player1.getId())
+                .removeIf(permanent -> permanent.getCard() instanceof PhyrexianArena);
+
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Forest");
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void triggerStillResolvesWhenKamiLeavesBattlefield() {
+        prepareQualifyingTrigger();
+        gd.playerBattlefields.get(player1.getId())
+                .removeIf(permanent -> permanent.getCard() instanceof KamiOfTerribleSecrets);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void prepareQualifyingTrigger() {
+        harness.addToBattlefield(player1, new DarksteelCitadel());
+        harness.addToBattlefield(player1, new PhyrexianArena());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new KamiOfTerribleSecrets()));
+        addMana();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+    }
 }
