@@ -3,10 +3,12 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.f.Fireblast;
 import com.github.laxika.magicalvibes.cards.h.HearthCharm;
 import com.github.laxika.magicalvibes.cards.l.LightningCloud;
+import com.github.laxika.magicalvibes.cards.n.Nekrataal;
 import com.github.laxika.magicalvibes.cards.p.Pariah;
 import com.github.laxika.magicalvibes.cards.t.Tremor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({OgreEnforcer.class, Fireblast.class, HearthCharm.class, LightningCloud.class,
-        Pariah.class, Tremor.class})
+        Nekrataal.class, Pariah.class, Tremor.class})
 class OgreEnforcerTest extends BaseCardTest {
 
     @Test
@@ -33,8 +35,7 @@ class OgreEnforcerTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getId().equals(enforcer.getId()));
+        harness.assertOnBattlefield(player2, "Ogre Enforcer");
         assertThat(enforcer.getMarkedDamage()).isEqualTo(4);
     }
 
@@ -47,8 +48,7 @@ class OgreEnforcerTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, enforcer.getId());
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getId().equals(enforcer.getId()));
+        harness.assertNotOnBattlefield(player2, "Ogre Enforcer");
     }
 
     @Test
@@ -59,8 +59,7 @@ class OgreEnforcerTest extends BaseCardTest {
 
         harness.runStateBasedActions();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getId().equals(enforcer.getId()));
+        harness.assertNotOnBattlefield(player2, "Ogre Enforcer");
     }
 
     @Test
@@ -72,8 +71,7 @@ class OgreEnforcerTest extends BaseCardTest {
 
         harness.runStateBasedActions();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getId().equals(enforcer.getId()));
+        harness.assertOnBattlefield(player2, "Ogre Enforcer");
     }
 
     @Test
@@ -84,14 +82,12 @@ class OgreEnforcerTest extends BaseCardTest {
 
         enforcer.addMarkedDamage(sourceId, 2);
         harness.runStateBasedActions();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getId().equals(enforcer.getId()));
+        harness.assertOnBattlefield(player2, "Ogre Enforcer");
 
         enforcer.addMarkedDamage(sourceId, 2);
         harness.runStateBasedActions();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getId().equals(enforcer.getId()));
+        harness.assertNotOnBattlefield(player2, "Ogre Enforcer");
     }
 
     @Test
@@ -108,13 +104,63 @@ class OgreEnforcerTest extends BaseCardTest {
         dealOneLightningCloudDamageToPlayer();
         dealOneLightningCloudDamageToPlayer();
         dealOneLightningCloudDamageToPlayer();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getId().equals(enforcer.getId()));
+        harness.assertOnBattlefield(player2, "Ogre Enforcer");
 
         dealOneLightningCloudDamageToPlayer();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getId().equals(enforcer.getId()));
+        harness.assertNotOnBattlefield(player2, "Ogre Enforcer");
+    }
+
+    @Test
+    @DisplayName("Ordinary destruction still destroys Ogre Enforcer")
+    void diesToDestroyEffect() {
+        Permanent enforcer = harness.addToBattlefieldAndReturn(player2, new OgreEnforcer());
+        harness.setHand(player1, List.of(new Nekrataal()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, enforcer.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Ogre Enforcer");
+        harness.assertInGraveyard(player2, "Ogre Enforcer");
+    }
+
+    @Test
+    @DisplayName("Uses current toughness when deciding whether a source dealt lethal damage")
+    void diesWhenToughnessFallsToDamageFromOneSource() {
+        Permanent enforcer = harness.addToBattlefieldAndReturn(player2, new OgreEnforcer());
+        harness.setHand(player1, List.of(new Tremor(), new Tremor()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        enforcer.setToughnessModifier(-2);
+        harness.runStateBasedActions();
+        harness.assertOnBattlefield(player2, "Ogre Enforcer");
+
+        enforcer.setToughnessModifier(-3);
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player2, "Ogre Enforcer");
+    }
+
+    @Test
+    @DisplayName("Four damage from one source is not lethal while toughness is five")
+    void survivesSingleSourceDamageBelowModifiedToughness() {
+        Permanent enforcer = harness.addToBattlefieldAndReturn(player2, new OgreEnforcer());
+        enforcer.setToughnessModifier(1);
+        harness.setHand(player1, List.of(new Fireblast()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castAndResolveInstant(player1, 0, enforcer.getId());
+
+        harness.assertOnBattlefield(player2, "Ogre Enforcer");
+        assertThat(enforcer.getMarkedDamage()).isEqualTo(4);
+
+        enforcer.setToughnessModifier(0);
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player2, "Ogre Enforcer");
     }
 
     private void dealOneLightningCloudDamageToPlayer() {
@@ -123,5 +169,24 @@ class OgreEnforcerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Lethal combat damage from a single creature destroys Ogre Enforcer")
+    void diesToSingleSourceCombatDamage() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new OgreEnforcer());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new OgreEnforcer());
+        attacker.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+
+        harness.resolveCombatDamage();
+
+        harness.assertNotOnBattlefield(player1, "Ogre Enforcer");
+        harness.assertNotOnBattlefield(player2, "Ogre Enforcer");
+        harness.assertInGraveyard(player1, "Ogre Enforcer");
+        harness.assertInGraveyard(player2, "Ogre Enforcer");
     }
 }
