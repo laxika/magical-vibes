@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KeeperOfTheDead.class, PlatedRootwalla.class, Fugue.class, MemoryCrystal.class})
+@CardUsed({KeeperOfTheDead.class, PlatedRootwalla.class, Fugue.class, MemoryCrystal.class, Deathlace.class})
 class KeeperOfTheDeadTest extends BaseCardTest {
 
     @Test
@@ -121,13 +121,61 @@ class KeeperOfTheDeadTest extends BaseCardTest {
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(player2.getId(), target.getId()));
         harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
                 .contains(target.getId());
         assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getId)
                 .doesNotContain(target.getCard().getId());
+    }
+
+    @Test
+    @DisplayName("Opponent creature cards reduce the graveyard advantage")
+    void opponentCreatureCardsCountAgainstDifference() {
+        readyKeeper(List.of(new PlatedRootwalla(), new PlatedRootwalla()), List.of(new PlatedRootwalla()));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PlatedRootwalla());
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, List.of(player2.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Opponent noncreature cards do not reduce the graveyard advantage")
+    void opponentNoncreatureCardsDoNotCountAgainstDifference() {
+        readyKeeper(List.of(new PlatedRootwalla(), new PlatedRootwalla()), List.of(new Fugue(), new Fugue()));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PlatedRootwalla());
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(player2.getId(), target.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getId)
+                .contains(target.getCard().getId());
+    }
+
+    @Test
+    @DisplayName("Cannot choose yourself as the targeted player")
+    void cannotTargetController() {
+        readyKeeper(List.of(new PlatedRootwalla(), new PlatedRootwalla()), List.of());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new PlatedRootwalla());
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, List.of(player1.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Removing the controller's creature cards after activation does not stop destruction")
+    void removingControllerGraveyardAfterActivationDoesNotStopDestruction() {
+        readyKeeper(List.of(new PlatedRootwalla(), new PlatedRootwalla()), List.of());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PlatedRootwalla());
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(player2.getId(), target.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getId)
+                .contains(target.getCard().getId());
     }
 
     private void readyKeeper(List<Card> controllerGraveyard, List<Card> opponentGraveyard) {
