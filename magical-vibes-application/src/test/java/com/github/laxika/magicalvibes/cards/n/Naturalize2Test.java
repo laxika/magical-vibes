@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Naturalize2.class, AetherCharge.class, DreamChisel.class, GlorySeeker.class})
@@ -44,6 +45,37 @@ class Naturalize2Test extends BaseCardTest {
     }
 
     @Test
+    void canDestroyOwnEnchantment() {
+        harness.addToBattlefield(player1, new AetherCharge());
+        cast(harness.getPermanentId(player1, "Aether Charge"));
+
+        harness.assertNotOnBattlefield(player1, "Aether Charge");
+        harness.assertInGraveyard(player1, "Aether Charge");
+    }
+
+    @Test
+    void doesNotDestroyAnotherArtifactWhenTargetLeavesBeforeResolution() {
+        var target = harness.addToBattlefieldAndReturn(player2, new DreamChisel());
+        var other = harness.addToBattlefieldAndReturn(player2, new DreamChisel());
+        harness.setHand(player1, List.of(new Naturalize2(), new Naturalize2()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(permanent -> permanent.getId())
+                .containsExactly(other.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(card -> card.getName())
+                .containsExactlyInAnyOrder("Naturalize 2", "Naturalize 2");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     void cannotTargetCreature() {
         harness.addToBattlefield(player2, new GlorySeeker());
         harness.setHand(player1, List.of(new Naturalize2()));
@@ -59,7 +91,6 @@ class Naturalize2Test extends BaseCardTest {
         harness.setHand(player1, List.of(new Naturalize2()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 }
