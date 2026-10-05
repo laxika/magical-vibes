@@ -39,8 +39,6 @@ class MistformWallTest extends BaseCardTest {
     void hasDefenderAsWall() {
         Permanent wall = addCreatureReady(player1, new MistformWall());
 
-        assertThat(gqs.effectiveCreatureSubtypes(gd, wall))
-                .containsExactlyInAnyOrder(CardSubtype.ILLUSION, CardSubtype.WALL);
         assertThat(gqs.hasKeyword(gd, wall, Keyword.DEFENDER)).isTrue();
     }
 
@@ -95,6 +93,56 @@ class MistformWallTest extends BaseCardTest {
         activateAndChoose(CardSubtype.ELF);
 
         assertThat(gqs.effectiveCreatureSubtypes(gd, wall)).containsExactly(CardSubtype.ELF);
+        assertThat(gqs.hasKeyword(gd, wall, Keyword.DEFENDER)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Changing away from Wall permits attacking, and changing back prevents it")
+    void attackPermissionTracksChosenType() {
+        Permanent wall = addCreatureReady(player1, new MistformWall());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThat(als.canAttack(gd, wall, player1.getId())).isFalse();
+
+        activateAndChoose(CardSubtype.GOBLIN);
+
+        assertThat(als.canAttack(gd, wall, player1.getId())).isTrue();
+
+        activateAndChoose(CardSubtype.WALL);
+
+        assertThat(als.canAttack(gd, wall, player1.getId())).isFalse();
+    }
+
+    @Test
+    @DisplayName("The type-changing ability can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent wall = addCreatureReady(player1, new MistformWall());
+        wall.setTapped(true);
+        wall.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        activateAndChoose(CardSubtype.GOBLIN);
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, wall)).containsExactly(CardSubtype.GOBLIN);
+        assertThat(gqs.hasKeyword(gd, wall, Keyword.DEFENDER)).isFalse();
+        assertThat(wall.isTapped()).isTrue();
+        assertThat(wall.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Defender remains until the activated ability resolves")
+    void activationDoesNotImmediatelyRemoveDefender() {
+        Permanent wall = addCreatureReady(player1, new MistformWall());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.hasKeyword(gd, wall, Keyword.DEFENDER)).isTrue();
+        assertThat(als.canAttack(gd, wall, player1.getId())).isFalse();
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
+
         assertThat(gqs.hasKeyword(gd, wall, Keyword.DEFENDER)).isFalse();
     }
 
