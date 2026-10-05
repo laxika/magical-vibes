@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DoublingSeason;
+import com.github.laxika.magicalvibes.cards.l.Lignify;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,6 +10,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MakeshiftMannequin.class, GrizzlyBears.class, ProdigalPyromancer.class, Shock.class,
+        DoublingSeason.class, Lignify.class})
 class MakeshiftMannequinTest extends BaseCardTest {
 
     private void addCost() {
@@ -28,12 +33,9 @@ class MakeshiftMannequinTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MakeshiftMannequin()));
         addCost();
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getId().equals(creature.getId()))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, creature.getName());
     }
 
     @Test
@@ -67,9 +69,7 @@ class MakeshiftMannequinTest extends BaseCardTest {
     void sacrificedWhenTargetedByAbility() {
         Permanent bears = reanimate(new GrizzlyBears());
 
-        harness.addToBattlefield(player2, new ProdigalPyromancer());
-        Permanent pyro = findPermanent(player2, "Prodigal Pyromancer");
-        pyro.setSummoningSick(false);
+        Permanent pyro = addCreatureReady(player2, new ProdigalPyromancer());
 
         harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(pyro),
                 null, bears.getId());
@@ -91,5 +91,71 @@ class MakeshiftMannequinTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, shock.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotTargetOpponentsGraveyard() {
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(bears));
+        harness.setHand(player1, List.of(new MakeshiftMannequin()));
+        addCost();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doublingSeasonDoublesEnteringMannequinCounter() {
+        harness.addToBattlefield(player1, new DoublingSeason());
+
+        Permanent bears = reanimate(new GrizzlyBears());
+
+        assertThat(bears.getCounterCount(CounterType.MANNEQUIN)).isEqualTo(2);
+    }
+
+    @Test
+    void mannequinCounterOnAnotherCreatureDoesNotGrantAbility() {
+        Permanent returned = reanimate(new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        returned.setCounterCount(CounterType.MANNEQUIN, 0);
+        other.setCounterCount(CounterType.MANNEQUIN, 1);
+        Permanent pyro = addCreatureReady(player2, new ProdigalPyromancer());
+
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(pyro),
+                null, other.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(other);
+        assertThat(other.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    void restoringCounterDoesNotRestartExpiredGrant() {
+        Permanent bears = reanimate(new GrizzlyBears());
+        bears.setCounterCount(CounterType.MANNEQUIN, 0);
+        harness.runStateBasedActions();
+        bears.setCounterCount(CounterType.MANNEQUIN, 1);
+        Permanent pyro = addCreatureReady(player2, new ProdigalPyromancer());
+
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(pyro),
+                null, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    void losingAbilitiesSuppressesMannequinTrigger() {
+        Permanent bears = reanimate(new GrizzlyBears());
+        Permanent lignify = harness.addToBattlefieldAndReturn(player1, new Lignify());
+        lignify.setAttachedTo(bears.getId());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(bears.getMarkedDamage()).isEqualTo(2);
     }
 }
