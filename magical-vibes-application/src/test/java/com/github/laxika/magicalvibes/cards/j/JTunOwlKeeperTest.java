@@ -65,8 +65,7 @@ class JTunOwlKeeperTest extends BaseCardTest {
         owlKeeper.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
         harness.castFromHand(player1, new Sunscour(), "{5}{W}{W}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         List<Permanent> birds = findPermanents(player1, "Bird");
         assertThat(birds).hasSize(3);
@@ -114,5 +113,72 @@ class JTunOwlKeeperTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(owlKeeper);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(owlKeeper.getCard());
+    }
+
+    @Test
+    @DisplayName("Each age counter can be paid with a different permitted color")
+    void cumulativeUpkeepCanBePaidWithMixedMana() {
+        Permanent owlKeeper = harness.addToBattlefieldAndReturn(player1, new JTunOwlKeeper());
+        owlKeeper.setCounterCount(CounterType.AGE, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(owlKeeper.getCounterCount(CounterType.AGE)).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(owlKeeper);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(countPermanents(player1, "Bird")).isZero();
+    }
+
+    @Test
+    @DisplayName("An insufficient upkeep payment consumes no mana and creates Birds after sacrifice")
+    void insufficientPaymentCreatesBirdsWithoutPartialPayment() {
+        Permanent owlKeeper = harness.addToBattlefieldAndReturn(player1, new JTunOwlKeeper());
+        owlKeeper.setCounterCount(CounterType.AGE, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(owlKeeper);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(owlKeeper.getCard());
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(countPermanents(player1, "Bird")).isEqualTo(3);
+        assertThat(countPermanents(player2, "Bird")).isZero();
+    }
+
+    @Test
+    @DisplayName("Declining upkeep creates a Bird for the newly added age counter")
+    void decliningFirstUpkeepCreatesOneBird() {
+        Permanent owlKeeper = harness.addToBattlefieldAndReturn(player1, new JTunOwlKeeper());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(owlKeeper);
+        assertThat(countPermanents(player1, "Bird")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Dying without age counters creates no Birds")
+    void deathWithoutAgeCountersCreatesNoBirds() {
+        Permanent owlKeeper = harness.addToBattlefieldAndReturn(player1, new JTunOwlKeeper());
+        owlKeeper.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        harness.castFromHand(player1, new Sunscour(), "{5}{W}{W}");
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(owlKeeper.getCard());
+        assertThat(countPermanents(player1, "Bird")).isZero();
     }
 }
