@@ -24,8 +24,7 @@ class OutOfTheWayTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new AirElemental()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Birds of Paradise");
         harness.assertInHand(player2, "Birds of Paradise");
@@ -63,5 +62,60 @@ class OutOfTheWayTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("nonland permanent an opponent controls");
+    }
+
+    @Test
+    void returnsNonGreenPermanentForFullCostAndDraws() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new OutOfTheWay()));
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Air Elemental");
+        harness.assertInHand(player2, "Air Elemental");
+        harness.assertInHand(player1, "Island");
+        harness.assertInGraveyard(player1, "Out of the Way");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void reducedCostStillRequiresBlueMana() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BirdsOfParadise());
+        harness.setHand(player1, List.of(new OutOfTheWay()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Birds of Paradise");
+        harness.assertInHand(player1, "Out of the Way");
+    }
+
+    @Test
+    void doesNotDrawWhenOnlyTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BirdsOfParadise());
+        harness.setHand(player1, List.of(new OutOfTheWay(), new OutOfTheWay()));
+        harness.setLibrary(player1, List.of(new Island(), new AirElemental()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Birds of Paradise");
+        harness.assertInHand(player1, "Island");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
     }
 }
