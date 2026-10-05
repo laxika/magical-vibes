@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(KnightOfDawnsLight.class)
+@CardUsed({KnightOfDawnsLight.class})
 class KnightOfDawnsLightTest extends BaseCardTest {
 
     @Test
@@ -38,10 +38,57 @@ class KnightOfDawnsLightTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
+    }
+
+    @Test
+    void opponentDoesNotGainAdditionalLife() {
+        harness.addToBattlefield(player1, new KnightOfDawnsLight());
+        harness.setLife(player2, 20);
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player2.getId(), 3));
+
+        harness.assertLife(player2, 23);
+    }
+
+    @Test
+    void multipleKnightsEachAddOneLifePerEvent() {
+        harness.addToBattlefield(player1, new KnightOfDawnsLight());
+        harness.addToBattlefield(player1, new KnightOfDawnsLight());
+        harness.setLife(player1, 20);
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3));
+        harness.assertLife(player1, 25);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
+        harness.assertLife(player1, 28);
+    }
+
+    @Test
+    void GainingZeroLifeDoesNotCreateLifeGain() {
+        harness.addToBattlefield(player1, new KnightOfDawnsLight());
+        harness.setLife(player1, 20);
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 0));
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void repeatedActivationsStackWithoutTappingTheKnight() {
+        Permanent knight = harness.addToBattlefieldAndReturn(player1, new KnightOfDawnsLight());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(4);
+        assertThat(knight.isTapped()).isFalse();
     }
 }
