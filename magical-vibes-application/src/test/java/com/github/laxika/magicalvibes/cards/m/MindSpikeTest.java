@@ -58,11 +58,58 @@ class MindSpikeTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an opponent");
     }
 
+    @Test
+    void drawsWhenTargetHandIsEmpty() {
+        Card drawn = new Shock();
+        harness.setLibrary(player1, List.of(drawn));
+
+        cast(List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void casterMustChooseExactlyOneEligibleCardWithoutDrawing() {
+        Card forest = new Forest();
+        Card bears = new GrizzlyBears();
+        Card firstShock = new Shock();
+        Card secondShock = new Shock();
+        Card topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+        cast(List.of(forest, firstShock, bears, secondShock));
+
+        PendingInteraction.RevealedHandChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+        assertThat(choice.validIndices()).containsExactly(1, 3);
+        harness.assertLife(player1, 20);
+        assertThatThrownBy(() -> harness.handleCardChosen(player2, 1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 2))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleCardChosen(player1, 3);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(forest, firstShock, bears);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(secondShock);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
     private void cast(List<Card> targetHand) {
         harness.setHand(player1, List.of(new MindSpike()));
         harness.setHand(player2, targetHand);
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 }
