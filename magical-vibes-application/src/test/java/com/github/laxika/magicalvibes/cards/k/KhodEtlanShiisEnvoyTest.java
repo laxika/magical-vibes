@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.a.AshayaSoulOfTheWild;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MerfolkOfThePearlTrident;
@@ -13,8 +14,34 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({KhodEtlanShiisEnvoy.class, MerfolkOfThePearlTrident.class,
-        GrizzlyBears.class, Forest.class})
+        GrizzlyBears.class, Forest.class, AshayaSoulOfTheWild.class})
 class KhodEtlanShiisEnvoyTest extends BaseCardTest {
+
+    @Test
+    void alsoMakesItselfAnIslandWhenAshayaMakesItALand() {
+        Permanent khod = harness.addToBattlefieldAndReturn(player1, new KhodEtlanShiisEnvoy());
+        harness.addToBattlefield(player1, new AshayaSoulOfTheWild());
+
+        assertThat(gqs.hasEffectiveSubtype(gd, khod, CardSubtype.FOREST)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, khod, CardSubtype.ISLAND)).isTrue();
+    }
+
+    @Test
+    void effectsEndWhenEnvoyLeavesTheBattlefield() {
+        Permanent khod = harness.addToBattlefieldAndReturn(player1, new KhodEtlanShiisEnvoy());
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new MerfolkOfThePearlTrident());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        assertThat(gqs.getEffectivePower(gd, merfolk)).isEqualTo(2);
+        assertThat(gqs.hasEffectiveSubtype(gd, forest, CardSubtype.ISLAND)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(khod);
+
+        assertThat(gqs.getEffectivePower(gd, merfolk)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, merfolk)).isEqualTo(1);
+        assertThat(gqs.hasEffectiveSubtype(gd, forest, CardSubtype.ISLAND)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, forest, CardSubtype.FOREST)).isTrue();
+    }
 
     @Test
     void buffsOtherMatchingCreaturesYouControl() {
