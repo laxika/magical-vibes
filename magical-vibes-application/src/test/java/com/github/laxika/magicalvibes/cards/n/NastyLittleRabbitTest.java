@@ -76,10 +76,52 @@ class NastyLittleRabbitTest extends BaseCardTest {
         assertThat(rabbit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("Rechecks the power condition when the combat trigger resolves")
+    void doesNothingIfPowerFallsBelowFourBeforeResolution() {
+        Permanent rabbit = addCreatureReady(player1, new NastyLittleRabbit());
+        rabbit.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        advanceToCombat(player1);
+        assertThat(gd.stack).hasSize(1);
+        rabbit.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.passBothPriorities();
+
+        assertThat(rabbit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Gaining sufficient power after combat begins does not create a trigger")
+    void doesNotTriggerRetroactively() {
+        Permanent rabbit = addCreatureReady(player1, new NastyLittleRabbit());
+        rabbit.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        advanceToCombat(player1);
+        assertThat(gd.stack).isEmpty();
+        rabbit.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.passBothPriorities();
+
+        assertThat(rabbit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Each Rabbit puts a counter only on itself")
+    void multipleRabbitsReceiveTheirOwnCounters() {
+        Permanent first = addCreatureReady(player1, new NastyLittleRabbit());
+        Permanent second = addCreatureReady(player1, new NastyLittleRabbit());
+        first.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        advanceToCombat(player1);
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 }
