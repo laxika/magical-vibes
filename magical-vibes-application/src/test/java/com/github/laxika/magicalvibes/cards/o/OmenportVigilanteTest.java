@@ -51,16 +51,74 @@ class OmenportVigilanteTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, vigilante, Keyword.DOUBLE_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, vigilante, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Gains double strike as soon as the crime spell is cast")
+    void gainsDoubleStrikeBeforeCrimeSpellResolves() {
+        Permanent vigilante = harness.addToBattlefieldAndReturn(player1, new OmenportVigilante());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.hasKeyword(gd, vigilante, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A crime committed before this creature enters still grants double strike")
+    void earlierCrimeGrantsDoubleStrike() {
+        castShockAt(player2.getId());
+
+        Permanent vigilante = harness.addToBattlefieldAndReturn(player1, new OmenportVigilante());
+
+        assertThat(gqs.hasKeyword(gd, vigilante, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Targeting an opponent's creature grants double strike even after that creature dies")
+    void targetingOpponentsCreatureCommitsCrime() {
+        Permanent vigilante = harness.addToBattlefieldAndReturn(player1, new OmenportVigilante());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new OmenportVigilante());
+
+        castShockAt(target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Omenport Vigilante");
+        assertThat(gqs.hasKeyword(gd, vigilante, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Targeting your own creature does not grant double strike")
+    void targetingOwnCreatureDoesNotCommitCrime() {
+        Permanent vigilante = harness.addToBattlefieldAndReturn(player1, new OmenportVigilante());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new OmenportVigilante());
+
+        castShockAt(target.getId());
+
+        assertThat(gqs.hasKeyword(gd, vigilante, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's crime only grants double strike to their Vigilante")
+    void opponentsCrimeDoesNotGrantYourCreatureDoubleStrike() {
+        Permanent vigilante = harness.addToBattlefieldAndReturn(player1, new OmenportVigilante());
+        Permanent opponentsVigilante = harness.addToBattlefieldAndReturn(player2, new OmenportVigilante());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(gqs.hasKeyword(gd, vigilante, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentsVigilante, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
     private void castShockAt(java.util.UUID targetId) {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 }
