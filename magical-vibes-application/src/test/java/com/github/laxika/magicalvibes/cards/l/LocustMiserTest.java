@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(LocustMiser.class)
+@CardUsed({LocustMiser.class, Humility.class})
 class LocustMiserTest extends BaseCardTest {
 
     @Test
@@ -37,6 +38,64 @@ class LocustMiserTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.setHand(player1, handOfSevenCards());
+
+        gs.advanceStep(gd);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Multiple Locust Misers reduce maximum hand size cumulatively")
+    void multipleMisersStack() {
+        harness.addToBattlefield(player1, new LocustMiser());
+        harness.addToBattlefield(player1, new LocustMiser());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player2, handOfSevenCards());
+
+        gs.advanceStep(gd);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A maximum hand size below zero requires discarding the entire hand")
+    void reductionBelowZeroDiscardsEntireHand() {
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, new LocustMiser());
+        }
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player2, handOfSevenCards());
+
+        gs.advanceStep(gd);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("Locust Miser has no hand-size effect when Humility removes its ability")
+    void losingAbilitiesStopsHandSizeReduction() {
+        harness.addToBattlefield(player1, new LocustMiser());
+        harness.addToBattlefield(player1, new Humility());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player2, handOfSevenCards());
+
+        gs.advanceStep(gd);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("An opponent at the reduced maximum hand size does not discard")
+    void noDiscardAtReducedMaximum() {
+        harness.addToBattlefield(player1, new LocustMiser());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player2, List.of(
+                new LocustMiser(), new LocustMiser(), new LocustMiser(),
+                new LocustMiser(), new LocustMiser()));
 
         gs.advanceStep(gd);
 
