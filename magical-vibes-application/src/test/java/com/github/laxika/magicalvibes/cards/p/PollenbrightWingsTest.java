@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.s.SunderingVitae;
 import com.github.laxika.magicalvibes.cards.w.Watchwolf;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PollenbrightWings.class, Watchwolf.class, Forest.class})
+@CardUsed({PollenbrightWings.class, Watchwolf.class, Forest.class, SunderingVitae.class})
 class PollenbrightWingsTest extends BaseCardTest {
 
     @Test
@@ -107,6 +108,7 @@ class PollenbrightWingsTest extends BaseCardTest {
         attachWings(attacker);
         attacker.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new Watchwolf());
+        attachWings(player2, blocker);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -115,6 +117,7 @@ class PollenbrightWingsTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(findPermanents(player1, "Saproling")).isEmpty();
+        assertThat(findPermanents(player2, "Saproling")).isEmpty();
     }
 
     @Test
@@ -133,6 +136,58 @@ class PollenbrightWingsTest extends BaseCardTest {
         assertThat(findPermanents(player2, "Saproling")).isEmpty();
     }
 
+    @Test
+    @DisplayName("Zero combat damage does not trigger token creation")
+    void zeroCombatDamageDoesNotTrigger() {
+        Permanent creature = addCreatureReady(player1, new Watchwolf());
+        creature.setPowerModifier(-3);
+        attachWings(creature);
+        creature.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Token count uses damage dealt even if the creature's power changes")
+    void tokenCountUsesDamageDealt() {
+        Permanent creature = addCreatureReady(player1, new Watchwolf());
+        attachWings(creature);
+        creature.setAttacking(true);
+
+        resolveCombat();
+        assertThat(gd.stack).isNotEmpty();
+        creature.setPowerModifier(4);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        assertThat(findPermanents(player1, "Saproling")).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Destroying the Aura in response does not stop its token trigger")
+    void tokenTriggerSurvivesAuraDestruction() {
+        Permanent creature = addCreatureReady(player1, new Watchwolf());
+        attachWings(creature);
+        Permanent aura = findPermanent(player1, "Pollenbright Wings");
+        creature.setAttacking(true);
+
+        resolveCombat();
+        assertThat(gd.stack).isNotEmpty();
+        harness.setHand(player1, List.of(new SunderingVitae()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, aura.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Pollenbright Wings")).isEmpty();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+        assertThat(findPermanents(player1, "Saproling")).hasSize(3);
+    }
+
     private void addPollenbrightWingsMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -144,8 +199,7 @@ class PollenbrightWingsTest extends BaseCardTest {
     }
 
     private void attachWings(Player controller, Permanent creature) {
-        Permanent aura = new Permanent(new PollenbrightWings());
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new PollenbrightWings());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
     }
 }
