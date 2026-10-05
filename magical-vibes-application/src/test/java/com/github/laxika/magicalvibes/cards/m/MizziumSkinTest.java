@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DrudgeBeetle;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MizziumSkin.class, DrudgeBeetle.class})
 class MizziumSkinTest extends BaseCardTest {
 
     @Test
@@ -92,10 +94,82 @@ class MizziumSkinTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Normal casting affects only the chosen creature")
+    void normalCastingAffectsOnlyTarget() {
+        Permanent target = addCreature(player1);
+        Permanent other = addCreature(player1);
+        harness.setHand(player1, List.of(new MizziumSkin()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.HEXPROOF)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Overload can resolve without any creatures")
+    void overloadNeedsNoTargets() {
+        harness.setHand(player1, List.of(new MizziumSkin()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castWithOverload(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Mizzium Skin");
+    }
+
+    @Test
+    @DisplayName("Overload affects creatures present at resolution, but not later arrivals")
+    void overloadLocksInCreaturesAtResolution() {
+        harness.setHand(player1, List.of(new MizziumSkin()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castWithOverload(player1, 0);
+
+        Permanent beforeResolution = addCreature(player1);
+        harness.passBothPriorities();
+        Permanent afterResolution = addCreature(player1);
+
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.HEXPROOF)).isFalse();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.HEXPROOF)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A target that changes controller before resolution receives neither effect")
+    void targetMustStillBeControlledAtResolution() {
+        Permanent target = addCreature(player1);
+        harness.setHand(player1, List.of(new MizziumSkin()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerBattlefields.get(player2.getId()).add(target);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isFalse();
+        harness.assertInGraveyard(player1, "Mizzium Skin");
+    }
+
     private Permanent addCreature(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new DrudgeBeetle());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
