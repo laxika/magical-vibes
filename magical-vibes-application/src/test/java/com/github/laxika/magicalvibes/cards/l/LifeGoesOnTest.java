@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.a.Abrade;
+import com.github.laxika.magicalvibes.cards.f.FirebrandArcher;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +14,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LifeGoesOn.class, Abrade.class, FirebrandArcher.class, Unsummon.class})
 class LifeGoesOnTest extends BaseCardTest {
 
     @Test
@@ -21,8 +24,7 @@ class LifeGoesOnTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LifeGoesOn()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(24);
     }
@@ -36,8 +38,7 @@ class LifeGoesOnTest extends BaseCardTest {
 
         gd.creatureDeathCountThisTurn.merge(player2.getId(), 1, Integer::sum);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(28);
     }
@@ -59,21 +60,77 @@ class LifeGoesOnTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Killing a creature with Shock enables morbid")
+    @DisplayName("Killing a creature with Abrade enables morbid")
     void actualCreatureDeathEnablesMorbid() {
         harness.setLife(player1, 20);
-        harness.setHand(player1, List.of(new Shock(), new LifeGoesOn()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new Abrade(), new LifeGoesOn()));
+        harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new FirebrandArcher());
 
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearsId);
+        UUID archerId = harness.getPermanentId(player2, "Firebrand Archer");
+        harness.castInstant(player1, 0, 0, archerId);
         harness.passBothPriorities();
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(28);
+    }
+
+    @Test
+    @DisplayName("A creature dying in response upgrades life gain at resolution")
+    void creatureDiesInResponse() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new LifeGoesOn(), new Abrade()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addToBattlefield(player2, new FirebrandArcher());
+
+        harness.castInstant(player1, 0);
+        harness.castInstant(player1, 0, 0, harness.getPermanentId(player2, "Firebrand Archer"));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Firebrand Archer");
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 28);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Multiple creature deaths still grant only 8 life")
+    void multipleDeathsDoNotMultiplyLifeGain() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Abrade(), new Abrade(), new LifeGoesOn()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addToBattlefield(player2, new FirebrandArcher());
+        harness.addToBattlefield(player2, new FirebrandArcher());
+
+        harness.castInstant(player1, 0, 0, harness.getPermanentId(player2, "Firebrand Archer"));
+        harness.passBothPriorities();
+        harness.castInstant(player1, 0, 0, harness.getPermanentId(player2, "Firebrand Archer"));
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.assertLife(player1, 28);
+    }
+
+    @Test
+    @DisplayName("Returning a creature to hand does not enable morbid")
+    void returningCreatureToHandDoesNotCountAsDeath() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Unsummon(), new LifeGoesOn()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addToBattlefield(player2, new FirebrandArcher());
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Firebrand Archer"));
+        harness.assertInHand(player2, "Firebrand Archer");
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.assertLife(player1, 24);
     }
 }
