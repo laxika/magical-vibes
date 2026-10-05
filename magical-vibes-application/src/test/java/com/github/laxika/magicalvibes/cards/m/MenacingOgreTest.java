@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(MenacingOgre.class)
+@CardUsed({MenacingOgre.class})
 class MenacingOgreTest extends BaseCardTest {
 
     @Test
@@ -53,6 +53,58 @@ class MenacingOgreTest extends BaseCardTest {
         harness.assertLife(player2, 20);
         assertThat(ogre.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void controllerAloneChoosesHighestNumberAndGetsExactlyTwoCounters() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent ogre = castMenacingOgre();
+
+        harness.handleXValueChosen(player1, 7);
+        harness.handleXValueChosen(player2, 3);
+
+        harness.assertLife(player1, 13);
+        harness.assertLife(player2, 20);
+        assertThat(ogre.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void firstChoiceDoesNotRevealNumbersOrApplyEffectsBeforeSecondChoice() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent ogre = castMenacingOgre();
+
+        harness.handleXValueChosen(player1, 4);
+
+        assertThat(gameLogContains("reveals 4")).isFalse();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(ogre.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.XValueChoice.class);
+
+        harness.handleXValueChosen(player2, 1);
+
+        assertThat(gameLogContains("reveals 4")).isTrue();
+        assertThat(gameLogContains("reveals 1")).isTrue();
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+        assertThat(ogre.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void choiceCanExceedLifeTotalWithoutLosingLifeWhenOpponentChoosesHigher() {
+        harness.setLife(player1, 3);
+        harness.setLife(player2, 20);
+        Permanent ogre = castMenacingOgre();
+
+        harness.handleXValueChosen(player1, 5);
+        harness.handleXValueChosen(player2, 6);
+
+        harness.assertLife(player1, 3);
+        harness.assertLife(player2, 14);
+        assertThat(ogre.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     private Permanent castMenacingOgre() {
