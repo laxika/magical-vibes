@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GravestoneStrider;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.r.RubblebeltMaverick;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MacabreReconstruction.class, GrizzlyBears.class, LeoninScimitar.class})
+@CardUsed({MacabreReconstruction.class, GrizzlyBears.class, LeoninScimitar.class,
+        RubblebeltMaverick.class, GravestoneStrider.class})
 class MacabreReconstructionTest extends BaseCardTest {
 
     @Test
@@ -93,5 +97,130 @@ class MacabreReconstructionTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void mayChooseZeroTargetsEvenWhenCreaturesAreAvailable() {
+        Card creature = new RubblebeltMaverick();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new MacabreReconstruction()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature);
+        harness.assertInGraveyard(player1, "Macabre Reconstruction");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void mayCastWithAnEmptyGraveyard() {
+        harness.setHand(player1, List.of(new MacabreReconstruction()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Macabre Reconstruction");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void mayChooseOnlyOneOfTwoAvailableCreatures() {
+        Card chosen = new RubblebeltMaverick();
+        Card unchosen = new RubblebeltMaverick();
+        harness.setGraveyard(player1, List.of(chosen, unchosen));
+        harness.setHand(player1, List.of(new MacabreReconstruction()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(unchosen).doesNotContain(chosen);
+    }
+
+    @Test
+    void returnsRemainingLegalTargetWhenAnotherTargetIsExiled() {
+        Card exiled = new RubblebeltMaverick();
+        Card remaining = new RubblebeltMaverick();
+        Card strider = new GravestoneStrider();
+        harness.setGraveyard(player1, List.of(exiled, remaining, strider));
+        harness.setHand(player1, List.of(new MacabreReconstruction()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castSorcery(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(exiled.getId(), remaining.getId()));
+        harness.activateGraveyardAbilityWithGraveyardTargets(player1, 2, 0, List.of(exiled.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(exiled, strider);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(exiled, strider, remaining);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void costsTwoLessAfterSurveillingACreatureIntoTheGraveyard() {
+        Card milled = new RubblebeltMaverick();
+        harness.setLibrary(player1, List.of(milled));
+        harness.setHand(player1, List.of(new RubblebeltMaverick(), new MacabreReconstruction()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+        harness.castSorcery(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(milled.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(milled);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void doesNotReduceCostWhenOnlyANoncreatureCardEnteredTheGraveyard() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, artifact));
+        harness.setHand(player1, List.of(new MacabreReconstruction()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void returnsNothingWhenAllTargetsLeaveTheGraveyardBeforeResolution() {
+        Card creature = new RubblebeltMaverick();
+        Card strider = new GravestoneStrider();
+        harness.setGraveyard(player1, List.of(creature, strider));
+        harness.setHand(player1, List.of(new MacabreReconstruction()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castSorcery(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId(), strider.getId()));
+        harness.activateGraveyardAbilityWithGraveyardTargets(player1, 1, 0, List.of(creature.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(creature, strider);
+        harness.assertInGraveyard(player1, "Macabre Reconstruction");
+        assertThat(gd.stack).isEmpty();
     }
 }
