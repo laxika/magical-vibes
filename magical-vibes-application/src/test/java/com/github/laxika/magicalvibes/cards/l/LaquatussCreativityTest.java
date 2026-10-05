@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.a.AlmsCollector;
+import com.github.laxika.magicalvibes.cards.t.TomorrowAzamisFamiliar;
 import com.github.laxika.magicalvibes.cards.p.Peek;
 import com.github.laxika.magicalvibes.cards.w.WoodlandDruid;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -92,6 +94,46 @@ class LaquatussCreativityTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, permanent.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @CardUsed({AlmsCollector.class})
+    @DisplayName("Alms Collector replaces the multi-card draw, but the original discard count remains")
+    void almsCollectorReplacesWholeDrawInstruction() {
+        harness.addToBattlefield(player1, new AlmsCollector());
+        harness.setHand(player2, List.of(new WoodlandDruid(), new Peek()));
+        harness.setLibrary(player2, List.of(new Island(), new Island()));
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.setHand(player1, List.of(new LaquatussCreativity()));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @CardUsed({TomorrowAzamisFamiliar.class})
+    @DisplayName("A draw replacement must finish before the target chooses discards")
+    void waitsForDrawReplacementBeforeDiscarding() {
+        harness.addToBattlefield(player2, new TomorrowAzamisFamiliar());
+        harness.setHand(player2, List.of(new WoodlandDruid()));
+        harness.setLibrary(player2, List.of(new Island(), new Peek(), new Island()));
+        harness.setHand(player1, List.of(new LaquatussCreativity()));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
     private void addMana() {
