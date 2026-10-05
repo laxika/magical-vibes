@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.c.CabalRitual;
 import com.github.laxika.magicalvibes.cards.t.TaintedWood;
+import com.github.laxika.magicalvibes.cards.w.WasteAway;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,8 +14,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NantukoCultivator.class, TaintedWood.class, CabalRitual.class})
+@CardUsed({NantukoCultivator.class, TaintedWood.class, CabalRitual.class, WasteAway.class})
 class NantukoCultivatorTest extends BaseCardTest {
 
     @Test
@@ -124,6 +126,53 @@ class NantukoCultivatorTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void nonlandSelectionIsRejectedWithoutDiscardingIt() {
+        harness.setLibrary(player1, List.of(new CabalRitual()));
+        harness.setHand(player1, List.of(new NantukoCultivator(), new CabalRitual(), new TaintedWood()));
+        castCultivator();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleXValueChosen(player1, 1);
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInGraveyard(player1, "Tainted Wood");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(findPermanent(player1, "Nantuko Cultivator")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void stillDiscardsAndDrawsWhenCultivatorLeavesBeforeItsTriggerResolves() {
+        harness.setLibrary(player1, List.of(new CabalRitual()));
+        harness.setHand(player1, List.of(new TaintedWood()));
+        harness.setHand(player2, List.of(new WasteAway(), new CabalRitual()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        Permanent cultivator = harness.enterBattlefieldAndReturn(player1, new NantukoCultivator());
+
+        harness.castInstantWithDiscard(player2, 0, cultivator.getId(), 1);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Nantuko Cultivator");
+        harness.assertInGraveyard(player1, "Nantuko Cultivator");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleXValueChosen(player1, 1);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Tainted Wood");
+        harness.assertInHand(player1, "Cabal Ritual");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(cultivator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
