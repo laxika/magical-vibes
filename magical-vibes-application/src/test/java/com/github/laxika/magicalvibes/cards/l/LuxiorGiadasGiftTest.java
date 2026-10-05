@@ -77,4 +77,124 @@ class LuxiorGiadasGiftTest extends BaseCardTest {
         assertThat(gqs.isPlaneswalker(gd, planeswalker)).isTrue();
         assertThat(gqs.isCreature(gd, planeswalker)).isFalse();
     }
+
+    @Test
+    void normalEquipAttachesToCreatureForThreeMana() {
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LuxiorGiadasGift());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        equipment.setCounterCount(CounterType.CHARGE, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 1, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+    }
+
+    @Test
+    void equipPlaneswalkerCannotTargetOpponentsPlaneswalker() {
+        harness.addToBattlefield(player1, new LuxiorGiadasGift());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, planeswalker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void normalEquipCannotTargetNoncreaturePlaneswalker() {
+        harness.addToBattlefield(player1, new LuxiorGiadasGift());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, planeswalker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void equipPlaneswalkerCannotBeActivatedOutsideMainPhase() {
+        harness.addToBattlefield(player1, new LuxiorGiadasGift());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, planeswalker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void equippedPlaneswalkerCanActivateLoyaltyAndItsSizeUpdatesImmediately() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LuxiorGiadasGift());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+        equipment.setAttachedTo(planeswalker.getId());
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, planeswalker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, planeswalker)).isEqualTo(4);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void zeroLoyaltyEquippedPlaneswalkerSurvivesWithAnotherCounter() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LuxiorGiadasGift());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 0);
+        planeswalker.setCounterCount(CounterType.CHARGE, 1);
+        equipment.setAttachedTo(planeswalker.getId());
+
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Chandra Nalaar");
+        assertThat(gqs.getEffectivePower(gd, planeswalker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, planeswalker)).isEqualTo(1);
+
+        equipment.setAttachedTo(null);
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Chandra Nalaar");
+        harness.assertNotOnBattlefield(player1, "Chandra Nalaar");
+    }
+
+    @Test
+    void equippedPlaneswalkerWithNoCountersDiesAsZeroToughnessCreature() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LuxiorGiadasGift());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 0);
+        equipment.setAttachedTo(planeswalker.getId());
+
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Chandra Nalaar");
+        harness.assertNotOnBattlefield(player1, "Chandra Nalaar");
+        assertThat(equipment.getAttachedTo()).isNull();
+    }
+
+    @Test
+    void damageToEquippedPlaneswalkerDoesNotRemoveLoyalty() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LuxiorGiadasGift());
+        Permanent damageSource = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+        damageSource.setCounterCount(CounterType.LOYALTY, 6);
+        equipment.setAttachedTo(planeswalker.getId());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player2, 0, 1, 1, planeswalker.getId());
+        harness.passBothPriorities();
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        assertThat(planeswalker.getMarkedDamage()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, planeswalker)).isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Chandra Nalaar");
+    }
 }
