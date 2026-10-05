@@ -69,4 +69,54 @@ class KarplusanMinotaurTest extends BaseCardTest {
 
         assertThat(gd.getLife(target.getId())).isEqualTo(19);
     }
+
+    @Test
+    @DisplayName("A flip triggers every Minotaur its player controls, but not opposing Minotaurs")
+    void coinFlipTriggersOtherControlledMinotaursAndCanDamageCreatures() {
+        harness.addToBattlefield(player1, new KarplusanMinotaur());
+        advanceToUpkeep(player1);
+
+        harness.addToBattlefield(player1, new KarplusanMinotaur());
+        var target = harness.addToBattlefieldAndReturn(player2, new KarplusanMinotaur());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        boolean won = gameLogContains("wins the coin flip for Karplusan Minotaur");
+        var chooser = won ? player1 : player2;
+        for (int i = 0; i < 2; i++) {
+            var choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+            assertThat(choice).isNotNull();
+            assertThat(choice.playerId()).isEqualTo(chooser.getId());
+            harness.handlePermanentChosen(chooser, target.getId());
+        }
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player2, "Karplusan Minotaur");
+    }
+
+    @Test
+    @DisplayName("Coin-flip targeting follows the controller when the second player controls the Minotaur")
+    void coinFlipTriggerWorksForSecondPlayer() {
+        harness.addToBattlefield(player2, new KarplusanMinotaur());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        boolean won = gameLogContains("wins the coin flip for Karplusan Minotaur");
+        var chooser = won ? player2 : player1;
+        var choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(chooser.getId());
+        harness.handlePermanentChosen(chooser, player1.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player2, "Karplusan Minotaur");
+    }
 }
