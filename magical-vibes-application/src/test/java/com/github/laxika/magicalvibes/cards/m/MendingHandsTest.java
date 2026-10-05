@@ -93,4 +93,93 @@ class MendingHandsTest extends BaseCardTest {
         assertThat(afterCleanup.getDamagePreventionShield()).isEqualTo(0);
         assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isEqualTo(0);
     }
+
+    @Test
+    @DisplayName("Damage beyond the fourth point reaches the protected creature")
+    void damageAfterShieldIsExhaustedReachesCreature() {
+        Permanent target = addCreatureReady(player2, new GnarledMass());
+        harness.setHand(player1, List.of(new MendingHands()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        for (int i = 0; i < 5; i++) {
+            harness.setHand(player1, List.of(new FirstVolley()));
+            harness.addMana(player1, ManaColor.RED, 2);
+            harness.castAndResolveInstant(player1, 0, target.getId());
+        }
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(target.getDamagePreventionShield()).isZero();
+        harness.assertOnBattlefield(player2, "Gnarled Mass");
+    }
+
+    @Test
+    @DisplayName("Two Mending Hands prevent eight damage across successive sources")
+    void multipleShieldsAccumulate() {
+        Permanent target = addCreatureReady(player2, new GnarledMass());
+        harness.setHand(player1, List.of(new MendingHands(), new MendingHands()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        for (int i = 0; i < 9; i++) {
+            harness.setHand(player1, List.of(new FirstVolley()));
+            harness.addMana(player1, ManaColor.RED, 2);
+            harness.castAndResolveInstant(player1, 0, target.getId());
+        }
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(target.getDamagePreventionShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Mending Hands prevents four spell damage to a player without protecting their creatures")
+    void playerShieldPreventsOnlyFirstFourSpellDamage() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new MendingHands()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        for (int i = 0; i < 5; i++) {
+            Permanent target = addCreatureReady(player2, new GnarledMass());
+            harness.setHand(player1, List.of(new FirstVolley()));
+            harness.addMana(player1, ManaColor.RED, 2);
+            harness.castAndResolveInstant(player1, 0, target.getId());
+            assertThat(target.getMarkedDamage()).isEqualTo(1);
+            harness.assertLife(player2, i < 4 ? 20 : 19);
+        }
+    }
+
+    @Test
+    @DisplayName("Shields created by resolving Mending Hands expire at cleanup")
+    void resolvedShieldsExpireAtCleanup() {
+        Permanent target = addCreatureReady(player1, new GnarledMass());
+        harness.setHand(player1, List.of(new MendingHands(), new MendingHands()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("Resolving Mending Hands prevents unblocked combat damage to the chosen player")
+    void resolvedPlayerShieldPreventsCombatDamage() {
+        harness.setLife(player2, 20);
+        Permanent attacker = addCreatureReady(player1, new GnarledMass());
+        harness.setHand(player1, List.of(new MendingHands()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        resolveCombat();
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+    }
 }
