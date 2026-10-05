@@ -65,4 +65,63 @@ class LeoninBladetrapTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Leonin Bladetrap");
     }
+
+    @Test
+    void sacrificeIsPaidBeforeDamageResolves() {
+        harness.addToBattlefield(player1, new LeoninBladetrap());
+        Permanent attacker = addCreatureReady(player2, new Cathodion());
+        attacker.setAttacking(true);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Leonin Bladetrap");
+        harness.assertInGraveyard(player1, "Leonin Bladetrap");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(attacker.getMarkedDamage()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void tappedBladetrapCanDamageItsControllersAttackers() {
+        harness.addToBattlefield(player1, new LeoninBladetrap());
+        findPermanent(player1, "Leonin Bladetrap").setTapped(true);
+        Permanent attacker = addCreatureReady(player1, new Cathodion());
+        attacker.setAttacking(true);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Leonin Bladetrap");
+    }
+
+    @Test
+    void creatureRemovedFromCombatBeforeResolutionIsNotDamaged() {
+        harness.addToBattlefield(player1, new LeoninBladetrap());
+        Permanent removedAttacker = addCreatureReady(player2, new Cathodion());
+        removedAttacker.setAttacking(true);
+        Permanent remainingAttacker = addCreatureReady(player2, new Cathodion());
+        remainingAttacker.setAttacking(true);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        removedAttacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(removedAttacker.getMarkedDamage()).isZero();
+        assertThat(remainingAttacker.getMarkedDamage()).isEqualTo(2);
+    }
 }
