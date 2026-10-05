@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LightningStrike;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KeldonStrikeTeam.class, GrizzlyBears.class})
+@CardUsed({KeldonStrikeTeam.class, GrizzlyBears.class, LightningStrike.class})
 class KeldonStrikeTeamTest extends BaseCardTest {
 
     @Test
@@ -27,8 +28,7 @@ class KeldonStrikeTeamTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castKickedCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(soldiers(player1)).hasSize(2);
     }
@@ -69,6 +69,53 @@ class KeldonStrikeTeamTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.HASTE)).isFalse();
         assertThat(gqs.hasKeyword(gd, strikeTeam, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Soldiers and creatures entering later receive haste through the end step")
+    void grantsHasteToTokensAndLaterEntrants() {
+        harness.setHand(player1, List.of(new KeldonStrikeTeam()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castKickedCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(soldiers(player1)).hasSize(2).allSatisfy(soldier -> {
+            assertThat(gqs.hasKeyword(gd, soldier, Keyword.HASTE)).isTrue();
+            assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(1);
+        });
+        Permanent laterCreature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.HASTE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.HASTE)).isTrue();
+        assertThat(soldiers(player1)).allSatisfy(soldier ->
+                assertThat(gqs.hasKeyword(gd, soldier, Keyword.HASTE)).isTrue());
+    }
+
+    @Test
+    @DisplayName("Kicked token trigger survives the source leaving, but its haste effect does not")
+    void tokenTriggerResolvesAfterSourceDies() {
+        harness.setHand(player1, List.of(new KeldonStrikeTeam()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent strikeTeam = findPermanent(player1, "Keldon Strike Team");
+        harness.setHand(player2, List.of(new LightningStrike()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, strikeTeam.getId());
+        harness.assertInGraveyard(player1, "Keldon Strike Team");
+        resolveAllTriggers();
+
+        assertThat(soldiers(player1)).hasSize(2).allSatisfy(soldier ->
+                assertThat(gqs.hasKeyword(gd, soldier, Keyword.HASTE)).isFalse());
     }
 
     private List<Permanent> soldiers(Player player) {
