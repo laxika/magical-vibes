@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -38,8 +37,7 @@ class MaraudingBrinefangTest extends BaseCardTest {
                 .allMatch(card -> card.getSubtypes().contains(CardSubtype.ISLAND))
                 .hasSize(1);
 
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertInHand(player1, "Island");
     }
@@ -74,11 +72,76 @@ class MaraudingBrinefangTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Marauding Brinefang");
     }
 
+    @Test
+    @DisplayName("Islandcycling pays and discards before its search resolves")
+    void islandcyclingPaysCostsImmediately() {
+        harness.setHand(player1, List.of(new MaraudingBrinefang()));
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Marauding Brinefang");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.assertInHand(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("Islandcycling resolves without drawing when no Island is available")
+    void islandcyclingWithoutIsland() {
+        harness.setHand(player1, List.of(new MaraudingBrinefang()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Marauding Brinefang");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent may decline ward even with enough mana")
+    void wardPaymentCanBeDeclined() {
+        Permanent brinefang = addBrinefang();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 4);
+        harness.castInstant(player2, 0, brinefang.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player2, "Shock");
+        assertThat(brinefang.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Marauding Brinefang");
+    }
+
+    @Test
+    @DisplayName("Ward does not trigger for its controller's spell")
+    void wardDoesNotTaxController() {
+        Permanent brinefang = harness.addToBattlefieldAndReturn(player1, new MaraudingBrinefang());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, brinefang.getId());
+        harness.passBothPriorities();
+
+        assertThat(brinefang.getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Shock");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private Permanent addBrinefang() {
-        harness.addToBattlefield(player1, new MaraudingBrinefang());
+        Permanent brinefang = harness.addToBattlefieldAndReturn(player1, new MaraudingBrinefang());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        return findPermanent(player1, "Marauding Brinefang");
+        return brinefang;
     }
 }
