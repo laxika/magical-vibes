@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.j.JamuraanLion;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianMarauder;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MiraculousRecovery.class, JamuraanLion.class})
+@CardUsed({MiraculousRecovery.class, JamuraanLion.class, PhyrexianMarauder.class})
 class MiraculousRecoveryTest extends BaseCardTest {
 
     @Test
@@ -26,12 +27,45 @@ class MiraculousRecoveryTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MiraculousRecovery()));
         harness.addMana(player1, ManaColor.WHITE, 5);
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         Permanent returned = findPermanent(player1, creature.getName());
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         harness.assertNotInGraveyard(player1, creature.getName());
+    }
+
+    @Test
+    @DisplayName("A zero-toughness creature survives because the counter is added before state-based actions")
+    void zeroToughnessCreatureSurvivesResolution() {
+        Card creature = new PhyrexianMarauder();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new MiraculousRecovery()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        Permanent returned = findPermanent(player1, creature.getName());
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertNotInGraveyard(player1, creature.getName());
+    }
+
+    @Test
+    @DisplayName("Only the targeted card is returned and only that permanent receives a counter")
+    void returnsOnlyTargetedCardAndCountersOnlyReturnedPermanent() {
+        Permanent existing = harness.addToBattlefieldAndReturn(player1, new JamuraanLion());
+        Card target = new PhyrexianMarauder();
+        Card other = new JamuraanLion();
+        harness.setGraveyard(player1, List.of(other, target));
+        harness.setHand(player1, List.of(new MiraculousRecovery()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        Permanent returned = findPermanent(player1, target.getName());
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(existing.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, other.getName());
+        harness.assertNotInGraveyard(player1, target.getName());
     }
 
     @Test
