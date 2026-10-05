@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RooftopSaboteurs;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.s.SkitteringSurveyor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Forest.class, GrizzlyBears.class, InvasionOfKamigawa.class, RooftopSaboteurs.class})
+@CardUsed({Forest.class, GrizzlyBears.class, InvasionOfKamigawa.class, RooftopSaboteurs.class, SkitteringSurveyor.class})
 class InvasionOfKamigawaTest extends BaseCardTest {
 
     @Test
@@ -51,17 +51,17 @@ class InvasionOfKamigawaTest extends BaseCardTest {
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
                 .checkAfterDefenseRemoved(gd, battle));
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         Permanent saboteurs = findPermanent(player1, "Rooftop Saboteurs");
         assertThat(saboteurs.isTransformed()).isTrue();
-        assertThat(saboteurs.getCard().hasType(CardType.CREATURE)).isTrue();
     }
 
     @Test
     void rooftopSaboteursDrawsWhenItDealsCombatDamageToAPlayerOrBattle() {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new Forest());
+        harness.setLibrary(player1, List.of(new Forest()));
         Permanent saboteurs = addCreatureReady(player1, new RooftopSaboteurs());
         saboteurs.setAttacking(true);
         saboteurs.setAttackTarget(player2.getId());
@@ -74,9 +74,8 @@ class InvasionOfKamigawaTest extends BaseCardTest {
 
     @Test
     void rooftopSaboteursAlsoDrawsWhenItDealsCombatDamageToABattle() {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new Forest());
-        Permanent battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfKamigawa());
+        harness.setLibrary(player1, List.of(new Forest()));
+        Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfKamigawa());
         battle.setProtectorPlayerId(player2.getId());
         battle.setCounterCount(CounterType.DEFENSE, 5);
         Permanent saboteurs = addCreatureReady(player1, new RooftopSaboteurs());
@@ -88,6 +87,62 @@ class InvasionOfKamigawaTest extends BaseCardTest {
 
         assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(3);
         harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    void tapsAndStunsAnOpponentsArtifact() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SkitteringSurveyor());
+
+        castInvasion(target.getId());
+        resolveAllTriggers();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(1);
+    }
+
+    @Test
+    void alreadyTappedCreatureStillGetsStunCounterAndSkipsOneUntap() {
+        Permanent target = addCreatureReady(player2, new RooftopSaboteurs());
+        target.setTapped(true);
+
+        castInvasion(target.getId());
+        resolveAllTriggers();
+
+        assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(1);
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.STUN)).isZero();
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void cannotTargetAnOpponentsLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new InvasionOfKamigawa()));
+        addBlueAndColorlessMana();
+
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, land.getId(), null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void mayDeclineCastingRooftopSaboteursAfterDefeat() {
+        Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfKamigawa());
+        battle.setCounterCount(CounterType.DEFENSE, 0);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
+                .checkAfterDefenseRemoved(gd, battle));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Invasion of Kamigawa");
+        harness.assertNotOnBattlefield(player1, "Rooftop Saboteurs");
+        assertThat(gd.findExiledCard(battle.getCard().getId())).isNotNull();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void castInvasion(java.util.UUID targetId) {
