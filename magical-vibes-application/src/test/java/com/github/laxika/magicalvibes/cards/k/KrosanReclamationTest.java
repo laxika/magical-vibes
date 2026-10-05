@@ -130,6 +130,57 @@ class KrosanReclamationTest extends BaseCardTest {
     }
 
     @Test
+    void stillShufflesRemainingTargetWhenAnotherTargetLeavesGraveyard() {
+        KrosanReclamation spell = new KrosanReclamation();
+        KrosanReclamation response = new KrosanReclamation();
+        GrizzlyFate first = new GrizzlyFate();
+        GuidedStrike second = new GuidedStrike();
+        harness.setGraveyard(player2, List.of(first, second));
+        harness.setHand(player1, List.of(spell));
+        harness.setHand(player2, List.of(response));
+        int librarySizeBefore = gd.playerDecks.get(player2.getId()).size();
+        addMana();
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.castInstant(player2, 0, player2.getId());
+        harness.handleMultipleCardsChosen(player2, List.of(first.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).contains(first).doesNotContain(second);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .hasSize(librarySizeBefore + 2).contains(first, second);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(response);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
+    }
+
+    @Test
+    void flashbackCannotSelectTheSpellItselfFromItsOwnGraveyard() {
+        KrosanReclamation spell = new KrosanReclamation();
+        GuidedStrike target = new GuidedStrike();
+        harness.setGraveyard(player1, List.of(spell, target));
+        int librarySizeBefore = gd.playerDecks.get(player1.getId()).size();
+        addMana();
+
+        harness.castFlashback(player1, 0, player1.getId());
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(target.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .hasSize(librarySizeBefore + 1).contains(target).doesNotContain(spell);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+    }
+
+    @Test
     void canChooseFewerThanTwoCards() {
         KrosanReclamation spell = new KrosanReclamation();
         GrizzlyFate selected = new GrizzlyFate();
