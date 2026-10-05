@@ -26,8 +26,7 @@ class OppressiveWillTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, handOfHonor.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, handOfHonor.getId());
 
         harness.assertInGraveyard(player1, "Hand of Honor");
         assertThat(harness.getGameData().stack).isEmpty();
@@ -45,8 +44,7 @@ class OppressiveWillTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, handOfHonor.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, handOfHonor.getId());
 
         assertThat(harness.getGameData().interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -70,12 +68,66 @@ class OppressiveWillTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, handOfHonor.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, handOfHonor.getId());
 
         assertThat(harness.getGameData().interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Hand of Honor");
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    void usesHandSizeAtResolutionRatherThanWhenCast() {
+        HandOfHonor handOfHonor = new HandOfHonor();
+        harness.setHand(player1, List.of(handOfHonor));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.setHand(player2, List.of(new OppressiveWill(), new HandOfHonor()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, handOfHonor.getId());
+        harness.setHand(player2, List.of(new HandOfHonor(), new HandOfHonor()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Hand of Honor");
+        assertThat(harness.getGameData().playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    void emptyHandAllowsTargetControllerToPayZero() {
+        HandOfHonor handOfHonor = new HandOfHonor();
+        harness.setHand(player1, List.of(handOfHonor));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.setHand(player2, List.of(new OppressiveWill()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, handOfHonor.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Hand of Honor");
+        assertThat(harness.getGameData().playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void targetControllerCanDeclineEvenAZeroPayment() {
+        HandOfHonor handOfHonor = new HandOfHonor();
+        harness.setHand(player1, List.of(handOfHonor));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.setHand(player2, List.of(new OppressiveWill()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, handOfHonor.getId());
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
