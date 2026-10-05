@@ -100,6 +100,52 @@ class PhyrexianProwlerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A tapped, summoning-sick Prowler can stack boosts, paying each counter immediately")
+    void stacksBoostsAndPaysCountersBeforeResolution() {
+        Permanent prowler = addCreatureReady(player1, new PhyrexianProwler());
+        prowler.setSummoningSick(true);
+        prowler.setTapped(true);
+        prowler.setCounterCount(CounterType.FADE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(prowler.getCounterCount(CounterType.FADE)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, prowler)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, prowler)).isEqualTo(3);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(prowler.getCounterCount(CounterType.FADE)).isZero();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, prowler)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, prowler)).isEqualTo(5);
+        harness.assertOnBattlefield(player1, "Phyrexian Prowler");
+    }
+
+    @Test
+    @DisplayName("Spending the last counter in response to fading causes sacrifice when fading resolves")
+    void spendingLastCounterInResponseToFadingCausesSacrifice() {
+        Permanent prowler = addCreatureReady(player1, new PhyrexianProwler());
+        prowler.setCounterCount(CounterType.FADE, 1);
+
+        advanceToUpkeep(player1);
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(prowler.getCounterCount(CounterType.FADE)).isZero();
+
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, prowler)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, prowler)).isEqualTo(4);
+        harness.assertOnBattlefield(player1, "Phyrexian Prowler");
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Phyrexian Prowler");
+        harness.assertInGraveyard(player1, "Phyrexian Prowler");
+    }
+
+    @Test
     @DisplayName("The activated ability's boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
         Permanent prowler = addCreatureReady(player1, new PhyrexianProwler());
