@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KnightOfDawnsLight;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({JoinForces.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({JoinForces.class, KnightOfDawnsLight.class, Mountain.class})
 class JoinForcesTest extends BaseCardTest {
 
     @Test
@@ -72,8 +72,75 @@ class JoinForcesTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Zero targets may be chosen without affecting other creatures")
+    void allowsZeroTargets() {
+        Permanent creature = addTappedCreature();
+
+        castJoinForces(List.of());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Join Forces");
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Already untapped creatures of either player get the boost")
+    void boostsUntappedCreaturesOfEitherPlayer() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new KnightOfDawnsLight());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new KnightOfDawnsLight());
+        Permanent unchosen = addTappedCreature();
+
+        castJoinForces(List.of(own.getId(), opposing.getId()));
+
+        assertThat(own.isTapped()).isFalse();
+        assertThat(opposing.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, own)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opposing)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opposing)).isEqualTo(4);
+        assertThat(unchosen.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, unchosen)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, unchosen)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The remaining legal target is affected when the first target leaves")
+    void resolvesForRemainingTarget() {
+        Permanent removed = addTappedCreature();
+        Permanent remaining = addTappedCreature();
+        harness.setHand(player1, List.of(new JoinForces()));
+        addMana();
+        harness.castInstant(player1, 0, List.of(removed.getId(), remaining.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(removed);
+        gd.playerGraveyards.get(player2.getId()).add(removed.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(remaining.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, remaining)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, remaining)).isEqualTo(4);
+        harness.assertInGraveyard(player1, "Join Forces");
+    }
+
+    @Test
+    @DisplayName("Cannot choose more than two creatures")
+    void rejectsThreeTargets() {
+        Permanent first = addTappedCreature();
+        Permanent second = addTappedCreature();
+        Permanent third = addTappedCreature();
+        harness.setHand(player1, List.of(new JoinForces()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private Permanent addTappedCreature() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new KnightOfDawnsLight());
         creature.tap();
         return creature;
     }
@@ -81,8 +148,7 @@ class JoinForcesTest extends BaseCardTest {
     private void castJoinForces(List<UUID> targets) {
         harness.setHand(player1, List.of(new JoinForces()));
         addMana();
-        harness.castInstant(player1, 0, targets);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targets);
     }
 
     private void addMana() {
