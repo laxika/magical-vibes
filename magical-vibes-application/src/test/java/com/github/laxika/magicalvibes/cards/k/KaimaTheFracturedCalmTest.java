@@ -44,6 +44,101 @@ class KaimaTheFracturedCalmTest extends BaseCardTest {
         assertThat(als.getMustAttackRequirementCount(gd, enchantedOpponent)).isZero();
     }
 
+    @Test
+    void countsEachCreatureOnceRegardlessOfNumberOfAuras() {
+        Permanent kaima = addCreatureReady(player1, new KaimaTheFracturedCalm());
+        Permanent first = addCreatureReady(player2, new GrizzlyBears());
+        Permanent second = addCreatureReady(player2, new GrizzlyBears());
+        Permanent unenchanted = addCreatureReady(player2, new GrizzlyBears());
+        addAura(player1, first);
+        addAura(player1, first);
+        addAura(player1, second);
+
+        resolveControllerEndStep();
+
+        assertThat(kaima.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(als.getMustAttackRequirementCount(gd, first)).isEqualTo(1);
+        assertThat(als.getMustAttackRequirementCount(gd, second)).isEqualTo(1);
+        assertThat(als.getMustAttackRequirementCount(gd, unenchanted)).isZero();
+    }
+
+    @Test
+    void removingAuraAfterResolutionDoesNotEndGoad() {
+        addCreatureReady(player1, new KaimaTheFracturedCalm());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent aura = addAura(player1, creature);
+
+        resolveControllerEndStep();
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+
+        assertThat(als.getMustAttackRequirementCount(gd, creature)).isEqualTo(1);
+        gd.expireFloatingEffectsAtTurnStart(player2.getId());
+        assertThat(als.getMustAttackRequirementCount(gd, creature)).isEqualTo(1);
+    }
+
+    @Test
+    void checksAuraPresenceAtResolutionAndStillGoadsIfKaimaLeaves() {
+        Permanent kaima = addCreatureReady(player1, new KaimaTheFracturedCalm());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(kaima);
+        addAura(player1, creature);
+        resolveAllTriggers();
+
+        assertThat(als.getMustAttackRequirementCount(gd, creature)).isEqualTo(1);
+        assertThat(kaima.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void auraRemovedBeforeResolutionDoesNotQualify() {
+        Permanent kaima = addCreatureReady(player1, new KaimaTheFracturedCalm());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent aura = addAura(player1, creature);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        resolveAllTriggers();
+
+        assertThat(als.getMustAttackRequirementCount(gd, creature)).isZero();
+        assertThat(kaima.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsEndStep() {
+        Permanent kaima = addCreatureReady(player1, new KaimaTheFracturedCalm());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        addAura(player1, creature);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(als.getMustAttackRequirementCount(gd, creature)).isZero();
+        assertThat(kaima.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void additionalEndStepDoesNotAddAnotherGoadRequirementForSamePlayer() {
+        addCreatureReady(player1, new KaimaTheFracturedCalm());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        addAura(player1, creature);
+
+        resolveControllerEndStep();
+        resolveControllerEndStep();
+
+        assertThat(als.getMustAttackRequirementCount(gd, creature)).isEqualTo(1);
+    }
+
     private Permanent addAura(com.github.laxika.magicalvibes.model.Player controller, Permanent host) {
         Permanent aura = harness.addToBattlefieldAndReturn(controller, new Hobble());
         aura.setAttachedTo(host.getId());
@@ -54,7 +149,7 @@ class KaimaTheFracturedCalmTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntil(player1, TurnStep.END_STEP);
         resolveAllTriggers();
     }
 }
