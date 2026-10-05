@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.f.Farseek;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(OvergrownTomb.class)
+@CardUsed({OvergrownTomb.class, Farseek.class})
 class OvergrownTombTest extends BaseCardTest {
 
     @Test
@@ -81,6 +82,65 @@ class OvergrownTombTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(tomb.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Paying exactly 2 life lets Overgrown Tomb enter untapped")
+    void payingExactLifeTotalEntersUntapped() {
+        playOvergrownTomb(2);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getLife(player1.getId())).isZero();
+        assertThat(findTomb(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The entering land's controller pays for Overgrown Tomb")
+    void putOntoBattlefieldOtherControllerPaysLife() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 10);
+
+        Permanent tomb = harness.enterBattlefieldAndReturn(player2, new OvergrownTomb());
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(8);
+        assertThat(tomb.isTapped()).isFalse();
+        harness.assertOnBattlefield(player2, "Overgrown Tomb");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Declining payment applies when Overgrown Tomb is put onto the battlefield")
+    void putOntoBattlefieldDecliningPaymentEntersTapped() {
+        harness.setLife(player1, 20);
+
+        Permanent tomb = harness.enterBattlefieldAndReturn(player1, new OvergrownTomb());
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(tomb.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Farseek puts Overgrown Tomb onto the battlefield tapped even when life is paid")
+    void farseekKeepsTombTappedAfterPayment() {
+        harness.setLife(player1, 20);
+        harness.setLibrary(player1, List.of(new OvergrownTomb()));
+        harness.setHand(player1, List.of(new Farseek()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(findTomb(player1).isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Farseek");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void playOvergrownTomb(int life) {
