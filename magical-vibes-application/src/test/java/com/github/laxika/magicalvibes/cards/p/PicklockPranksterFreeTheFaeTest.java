@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.FreeTheFae;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.o.Opt;
-import com.github.laxika.magicalvibes.cards.z.Zombify;
+import com.github.laxika.magicalvibes.cards.g.Gingerbrute;
+import com.github.laxika.magicalvibes.cards.q.QuickStudy;
+import com.github.laxika.magicalvibes.cards.s.SleightOfHand;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,14 +17,14 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PicklockPranksterFreeTheFae.class, FreeTheFae.class, GrizzlyBears.class, Opt.class, Zombify.class})
+@CardUsed({PicklockPranksterFreeTheFae.class, FreeTheFae.class, Gingerbrute.class, QuickStudy.class, SleightOfHand.class})
 class PicklockPranksterFreeTheFaeTest extends BaseCardTest {
 
     @Test
     void freeTheFaeMillsFourAndReturnsOneInstantSorceryOrFaerie() {
-        Card nonmatching = new GrizzlyBears();
-        Card instant = new Opt();
-        Card sorcery = new Zombify();
+        Card nonmatching = new Gingerbrute();
+        Card instant = new QuickStudy();
+        Card sorcery = new SleightOfHand();
         Card faerie = new PicklockPranksterFreeTheFae();
         harness.setLibrary(player1, List.of(nonmatching, instant, sorcery, faerie));
 
@@ -55,7 +55,7 @@ class PicklockPranksterFreeTheFaeTest extends BaseCardTest {
 
     @Test
     void freeTheFaeDoesNothingAfterMillingWhenNoEligibleCardWasMilled() {
-        List<Card> milled = List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
+        List<Card> milled = List.of(new Gingerbrute(), new Gingerbrute(), new Gingerbrute(), new Gingerbrute());
         harness.setLibrary(player1, milled);
 
         PicklockPranksterFreeTheFae card = new PicklockPranksterFreeTheFae();
@@ -89,6 +89,60 @@ class PicklockPranksterFreeTheFaeTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() == card);
+    }
+
+    @Test
+    void shortLibraryReturnsMilledSorceryButCannotReturnOlderGraveyardCard() {
+        Card olderInstant = new QuickStudy();
+        Card sorcery = new SleightOfHand();
+        Card nonmatching = new Gingerbrute();
+        harness.setGraveyard(player1, List.of(olderInstant));
+        harness.setLibrary(player1, List.of(nonmatching, sorcery));
+        PicklockPranksterFreeTheFae card = new PicklockPranksterFreeTheFae();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAdventure(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        List<Card> graveyard = gd.playerGraveyards.get(player1.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class).validIndices())
+                .containsExactly(indexOf(graveyard, sorcery));
+        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, indexOf(graveyard, olderInstant)))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleGraveyardCardChosen(player1, indexOf(graveyard, sorcery));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(sorcery);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(olderInstant, nonmatching);
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+    }
+
+    @Test
+    void returnsMilledFaerieAndLeavesFifthLibraryCardUntouched() {
+        Card faerie = new PicklockPranksterFreeTheFae();
+        List<Card> nonmatching = List.of(new Gingerbrute(), new Gingerbrute(), new Gingerbrute());
+        Card fifth = new QuickStudy();
+        harness.setLibrary(player1, List.of(faerie, nonmatching.get(0), nonmatching.get(1), nonmatching.get(2), fifth));
+        PicklockPranksterFreeTheFae card = new PicklockPranksterFreeTheFae();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAdventure(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        List<Card> graveyard = gd.playerGraveyards.get(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class).validIndices())
+                .containsExactly(indexOf(graveyard, faerie));
+        harness.handleGraveyardCardChosen(player1, indexOf(graveyard, faerie));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(faerie);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrderElementsOf(nonmatching);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fifth);
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private int indexOf(List<Card> cards, Card card) {
