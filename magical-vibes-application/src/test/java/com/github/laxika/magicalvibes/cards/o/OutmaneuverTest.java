@@ -34,8 +34,8 @@ class OutmaneuverTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.castInstantForX(player1, 0, 1, List.of(attacker.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
+        resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         harness.assertOnBattlefield(player2, "Coral Merfolk");
@@ -60,8 +60,8 @@ class OutmaneuverTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.castInstantForX(player1, 0, 1, List.of(targetedAttacker.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
+        resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         harness.assertOnBattlefield(player2, "Coral Merfolk");
@@ -89,8 +89,8 @@ class OutmaneuverTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.castInstantForX(player1, 0, 2, List.of(firstAttacker.getId(), secondAttacker.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
+        resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -113,8 +113,8 @@ class OutmaneuverTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.castInstantForX(player1, 0, 1, List.of(attacker.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
+        resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
@@ -147,6 +147,63 @@ class OutmaneuverTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.castInstantForX(player1, 0, 1, List.of(attacker.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Targets must be blocked creatures");
+    }
+
+    @Test
+    @DisplayName("Outmaneuver can be cast with X zero and no targets")
+    void canBeCastWithZeroTargets() {
+        harness.setHand(player1, List.of(new Outmaneuver()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstantForX(player1, 0, 0, List.of());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Outmaneuver");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The defending player can target opposing blocked creatures and blockers still deal damage")
+    void defenderCanTargetOpposingBlockedCreature() {
+        Permanent attacker = addAttacker(player1);
+        Permanent blocker = addCreature(player2);
+        block(attacker, blocker);
+        harness.setLife(player2, 20);
+        harness.setHand(player2, List.of(new Outmaneuver()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passPriority(player1);
+
+        harness.castInstantForX(player2, 0, 1, List.of(attacker.getId()));
+        resolveAllTriggers();
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player2, "Coral Merfolk");
+        harness.assertNotOnBattlefield(player1, "Coral Merfolk");
+        harness.assertInGraveyard(player1, "Coral Merfolk");
+    }
+
+    @Test
+    @DisplayName("A blocking creature is not a legal target")
+    void cannotTargetBlockingCreature() {
+        Permanent attacker = addAttacker(player1);
+        Permanent blocker = addCreature(player2);
+        block(attacker, blocker);
+        harness.setHand(player1, List.of(new Outmaneuver()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castInstantForX(player1, 0, 1, List.of(blocker.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Targets must be blocked creatures");
     }
