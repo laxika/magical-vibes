@@ -1,13 +1,15 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,9 +20,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({NestedGhoul.class, Shock.class, FugitiveWizard.class, GrizzlyBears.class, Ornithopter.class})
 class NestedGhoulTest extends BaseCardTest {
 
-    // ===== Non-combat damage trigger =====
 
     @Test
     @DisplayName("When Nested Ghoul is dealt lethal damage by a spell, a Zombie token is still created")
@@ -32,8 +34,6 @@ class NestedGhoulTest extends BaseCardTest {
         UUID ghoulId = harness.getPermanentId(player2, "Nested Ghoul");
         harness.castInstant(player1, 0, ghoulId);
         harness.passBothPriorities(); // Resolve Shock — 2 damage to Nested Ghoul (lethal for 4/2)
-
-        GameData gd = harness.getGameData();
 
         // ON_DEALT_DAMAGE trigger should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -51,23 +51,20 @@ class NestedGhoulTest extends BaseCardTest {
         assertThat(tokens.get(0).getCard().getToughness()).isEqualTo(2);
         assertThat(tokens.get(0).getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(tokens.get(0).getCard().isToken()).isTrue();
+        assertThat(tokens.get(0).getCard().getSubtypes()).containsExactlyInAnyOrder(
+                CardSubtype.PHYREXIAN, CardSubtype.ZOMBIE);
     }
 
-    // ===== Combat damage trigger =====
 
     @Test
     @DisplayName("When Nested Ghoul is dealt non-lethal combat damage, a Zombie token is created and it survives")
     void nonLethalCombatDamageCreatesToken() {
-        harness.addToBattlefield(player2, new NestedGhoul());
-        harness.addToBattlefield(player1, new FugitiveWizard()); // 1/1
+        Permanent ghoul = addCreatureReady(player2, new NestedGhoul());
+        Permanent attacker = addCreatureReady(player1, new FugitiveWizard());
 
         // Player1 attacks with Fugitive Wizard (1/1), player2 blocks with Nested Ghoul (4/2)
-        Permanent attacker = gd.playerBattlefields.get(player1.getId()).getFirst();
-        attacker.setSummoningSick(false);
         attacker.setAttacking(true);
 
-        Permanent ghoul = gd.playerBattlefields.get(player2.getId()).getFirst();
-        ghoul.setSummoningSick(false);
         ghoul.setBlocking(true);
         ghoul.addBlockingTarget(0);
 
@@ -94,16 +91,12 @@ class NestedGhoulTest extends BaseCardTest {
     @Test
     @DisplayName("When Nested Ghoul takes lethal combat damage, a Zombie token is still created")
     void lethalCombatDamageCreatesToken() {
-        harness.addToBattlefield(player2, new NestedGhoul());
-        harness.addToBattlefield(player1, new GrizzlyBears()); // 2/2
+        Permanent ghoul = addCreatureReady(player2, new NestedGhoul());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
 
         // Player1 attacks with Grizzly Bears (2/2), player2 blocks with Nested Ghoul (4/2)
-        Permanent attacker = gd.playerBattlefields.get(player1.getId()).getFirst();
-        attacker.setSummoningSick(false);
         attacker.setAttacking(true);
 
-        Permanent ghoul = gd.playerBattlefields.get(player2.getId()).getFirst();
-        ghoul.setSummoningSick(false);
         ghoul.setBlocking(true);
         ghoul.addBlockingTarget(0);
 
@@ -130,22 +123,16 @@ class NestedGhoulTest extends BaseCardTest {
     @Test
     @DisplayName("Two blockers dealing damage to Nested Ghoul create two tokens")
     void twoBlockersCreateTwoTokens() {
-        harness.addToBattlefield(player1, new NestedGhoul());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent ghoul = addCreatureReady(player1, new NestedGhoul());
+        Permanent blocker1 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker2 = addCreatureReady(player2, new GrizzlyBears());
 
         // Player1 attacks with Nested Ghoul, player2 blocks with two Grizzly Bears
-        Permanent ghoul = gd.playerBattlefields.get(player1.getId()).getFirst();
-        ghoul.setSummoningSick(false);
         ghoul.setAttacking(true);
 
-        Permanent blocker1 = gd.playerBattlefields.get(player2.getId()).get(0);
-        blocker1.setSummoningSick(false);
         blocker1.setBlocking(true);
         blocker1.addBlockingTarget(0);
 
-        Permanent blocker2 = gd.playerBattlefields.get(player2.getId()).get(1);
-        blocker2.setSummoningSick(false);
         blocker2.setBlocking(true);
         blocker2.addBlockingTarget(0);
 
@@ -173,5 +160,25 @@ class NestedGhoulTest extends BaseCardTest {
 
         // Nested Ghoul should be in the graveyard (4/2 takes 4 total combat damage)
         harness.assertInGraveyard(player1, "Nested Ghoul");
+    }
+
+    @Test
+    @DisplayName("A zero-power blocker does not trigger Nested Ghoul")
+    void zeroPowerBlockerDoesNotCreateToken() {
+        Permanent ghoul = addCreatureReady(player1, new NestedGhoul());
+        Permanent blocker = addCreatureReady(player2, new Ornithopter());
+        ghoul.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        harness.resolveCombatDamage();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Zombie")).isEmpty();
+        harness.assertOnBattlefield(player1, "Nested Ghoul");
+        harness.assertInGraveyard(player2, "Ornithopter");
     }
 }
