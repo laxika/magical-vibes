@@ -22,7 +22,7 @@ class ManaVaultTest extends BaseCardTest {
     void tappingProducesThreeColorlessMana() {
         addVault(player1, false);
 
-        gs.tapPermanent(gd, player1, 0);
+        harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
@@ -116,13 +116,52 @@ class ManaVaultTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
     }
+
+    @Test
+    @DisplayName("An untapped Mana Vault does not put a damage trigger on the stack")
+    void untappedVaultDoesNotTrigger() {
+        addVault(player1, false);
+
+        advanceToDraw(player1);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Tapping Mana Vault after the draw step begins does not cause damage")
+    void tappingAfterDrawStepBeginsDoesNotCauseDamage() {
+        Permanent vault = addVault(player1, false);
+        harness.setLife(player1, 20);
+
+        advanceToDraw(player1);
+        harness.tapPermanent(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(vault.isTapped()).isTrue();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("An initially untapped Mana Vault can be tapped in response to its upkeep trigger and untapped by paying")
+    void canTapInResponseToUpkeepTriggerAndPayToUntap() {
+        Permanent vault = addVault(player1, false);
+
+        advanceToUpkeep(player1);
+        harness.tapPermanent(player1, 0);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(vault.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
     private Permanent addVault(Player player, boolean tapped) {
-        Permanent perm = new Permanent(new ManaVault());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ManaVault());
         perm.setSummoningSick(false);
         if (tapped) {
             perm.tap();
         }
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
