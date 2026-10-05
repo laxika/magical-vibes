@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.p.PyromancersGauntlet;
 import com.github.laxika.magicalvibes.cards.w.WallOfSwords;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({InnerStruggle.class, GrizzlyBears.class, Plains.class, WallOfSwords.class})
+@CardUsed({InnerStruggle.class, GrizzlyBears.class, Plains.class, WallOfSwords.class, PyromancersGauntlet.class})
 class InnerStruggleTest extends BaseCardTest {
 
     @Test
@@ -28,8 +29,7 @@ class InnerStruggleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -43,8 +43,7 @@ class InnerStruggleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Wall of Swords");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent wall = findPermanent(player2, "Wall of Swords");
         assertThat(wall.getMarkedDamage()).isEqualTo(3);
@@ -82,5 +81,48 @@ class InnerStruggleTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Inner Struggle");
+    }
+
+    @Test
+    @DisplayName("Uses the creature's power at resolution")
+    void usesPowerAtResolution() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfSwords());
+        harness.setHand(player1, List.of(new InnerStruggle()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castInstant(player1, 0, wall.getId());
+        wall.setPowerModifier(-2);
+        harness.passBothPriorities();
+
+        assertThat(wall.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Wall of Swords");
+    }
+
+    @Test
+    @DisplayName("An own creature with negative power deals no damage")
+    void negativePowerDealsNoDamageToOwnCreature() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bear.setPowerModifier(-3);
+        harness.setHand(player1, List.of(new InnerStruggle()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        assertThat(bear.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Pyromancer's Gauntlet does not increase damage dealt by the creature")
+    void spellDamageBonusDoesNotApplyToCreatureSelfDamage() {
+        harness.addToBattlefield(player1, new PyromancersGauntlet());
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfSwords());
+        harness.setHand(player1, List.of(new InnerStruggle()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveInstant(player1, 0, wall.getId());
+
+        harness.assertOnBattlefield(player2, "Wall of Swords");
+        assertThat(wall.getMarkedDamage()).isEqualTo(3);
     }
 }
