@@ -12,7 +12,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({KalemnesCaptain.class, Bonesplitter.class, GloriousAnthem.class, GrizzlyBears.class})
 class KalemnesCaptainTest extends BaseCardTest {
@@ -38,18 +37,86 @@ class KalemnesCaptainTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Kalemne's Captain cannot activate monstrosity after becoming monstrous")
-    void monstrosityOnlyResolvesOnce() {
-        addReadyCaptain();
+    @DisplayName("Monstrosity can be activated again but does nothing once the Captain is monstrous")
+    void activatingMonstrosityAgainDoesNothing() {
+        Permanent captain = addReadyCaptain();
         addMonstrosityMana();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.addToBattlefield(player2, new Bonesplitter());
         addMonstrosityMana();
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("already monstrous");
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(captain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(captain.isMonstrous()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Bonesplitter");
+    }
+
+    @Test
+    @DisplayName("The exile trigger resolves separately and includes permanents added after monstrosity resolves")
+    void exileTriggerChecksPermanentsWhenItResolves() {
+        Permanent captain = addReadyCaptain();
+        Bonesplitter equipment = new Bonesplitter();
+        harness.addToBattlefield(player1, equipment);
+        addMonstrosityMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(captain.isMonstrous()).isTrue();
+        harness.assertOnBattlefield(player1, "Bonesplitter");
+        assertThat(gd.findExiledCard(equipment.getId())).isNull();
+        GloriousAnthem anthem = new GloriousAnthem();
+        harness.addToBattlefield(player2, anthem);
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(equipment.getId())).isNotNull();
+        assertThat(gd.findExiledCard(anthem.getId())).isNotNull();
+        harness.assertNotInGraveyard(player1, "Bonesplitter");
+        harness.assertNotInGraveyard(player2, "Glorious Anthem");
+        harness.assertOnBattlefield(player1, "Kalemne's Captain");
+    }
+
+    @Test
+    @DisplayName("Multiple pending monstrosity activations add counters and trigger exile only once")
+    void multiplePendingActivationsBecomeMonstrousOnlyOnce() {
+        Permanent captain = addReadyCaptain();
+        addMonstrosityMana();
+        addMonstrosityMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.addToBattlefield(player2, new Bonesplitter());
+        harness.passBothPriorities();
+
+        assertThat(captain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(captain.isMonstrous()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Bonesplitter");
+    }
+
+    @Test
+    @DisplayName("Monstrosity is usable while summoning sick and tapped")
+    void monstrosityDoesNotRequireAnUntappedReadyCreature() {
+        Permanent captain = harness.addToBattlefieldAndReturn(player1, new KalemnesCaptain());
+        captain.setSummoningSick(true);
+        captain.setTapped(true);
+        addMonstrosityMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(captain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(captain.isMonstrous()).isTrue();
+        assertThat(captain.isTapped()).isTrue();
     }
 
     private Permanent addReadyCaptain() {
