@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Moonshadow.class, DampenThought.class, Shock.class, Spellbook.class})
 class MoonshadowTest extends BaseCardTest {
 
     @Test
@@ -37,7 +39,7 @@ class MoonshadowTest extends BaseCardTest {
         Permanent spellbook = harness.addToBattlefieldAndReturn(player1, new Spellbook());
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, spellbook));
-        drainStack();
+        resolveAllTriggers();
 
         assertThat(moonshadow.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
@@ -50,8 +52,7 @@ class MoonshadowTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DampenThought()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         assertThat(gd.stack).isEmpty();
         assertThat(moonshadow.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
@@ -77,7 +78,7 @@ class MoonshadowTest extends BaseCardTest {
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, spellbook));
         moonshadow.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 0);
-        drainStack();
+        resolveAllTriggers();
 
         assertThat(moonshadow.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
     }
@@ -94,16 +95,69 @@ class MoonshadowTest extends BaseCardTest {
         assertThat(moonshadow.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("Milling several permanent cards together removes only one counter")
+    void simultaneousPermanentCardsRemoveOnlyOneCounter() {
+        Permanent moonshadow = addMoonshadowWithCounters(6);
+        harness.setLibrary(player1, List.of(new Moonshadow(), new Moonshadow(),
+                new Moonshadow(), new Moonshadow()));
+        harness.setHand(player1, List.of(new DampenThought()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(moonshadow.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("A single permanent card milled from the library removes a counter")
+    void singlePermanentCardMilledRemovesCounter() {
+        Permanent moonshadow = addMoonshadowWithCounters(2);
+        harness.setLibrary(player1, List.of(new Moonshadow(), new Shock(), new Shock(), new Shock()));
+        harness.setHand(player1, List.of(new DampenThought()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(moonshadow.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Separate graveyard events each remove a counter")
+    void separateGraveyardEventsEachRemoveCounter() {
+        Permanent moonshadow = addMoonshadowWithCounters(3);
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, first));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, second));
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+        assertThat(moonshadow.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A token going to the graveyard does not trigger Moonshadow")
+    void tokenDoesNotTrigger() {
+        Permanent moonshadow = addMoonshadowWithCounters(2);
+        Moonshadow tokenCard = new Moonshadow();
+        tokenCard.setToken(true);
+        Permanent token = harness.addToBattlefieldAndReturn(player1, tokenCard);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, token));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(moonshadow.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+    }
+
     private Permanent addMoonshadowWithCounters(int count) {
         Permanent moonshadow = harness.addToBattlefieldAndReturn(player1, new Moonshadow());
         moonshadow.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, count);
         return moonshadow;
-    }
-
-    private void drainStack() {
-        int guard = 0;
-        while (!gd.stack.isEmpty() && guard++ < 50) {
-            harness.passBothPriorities();
-        }
     }
 }
