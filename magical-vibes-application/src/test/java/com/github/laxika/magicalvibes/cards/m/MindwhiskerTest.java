@@ -74,6 +74,84 @@ class MindwhiskerTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(topCard);
     }
 
+    @Test
+    @DisplayName("Surveil may leave the top card in the library")
+    void upkeepCanKeepTopCard() {
+        harness.addToBattlefield(player1, new Mindwhisker());
+        Card topCard = new GrizzlyBears();
+        Card nextCard = new Shock();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, nextCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(topCard);
+    }
+
+    @Test
+    @DisplayName("Does not surveil during an opponent's upkeep")
+    void opponentUpkeepDoesNotSurveil() {
+        harness.addToBattlefield(player1, new Mindwhisker());
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @DisplayName("Surveilling the seventh card immediately enables threshold")
+    void surveilEnablesThreshold() {
+        harness.setGraveyard(player1, graveyardCards(6));
+        harness.addToBattlefield(player1, new Mindwhisker());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Card topCard = new Shock();
+        harness.setLibrary(player1, List.of(topCard, new GrizzlyBears()));
+        Permanent opposingBears = findPermanent(player2, "Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, opposingBears)).isEqualTo(2);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(7).contains(topCard);
+        assertThat(gqs.getEffectivePower(gd, opposingBears)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingBears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Threshold stops applying as soon as the graveyard drops below seven")
+    void thresholdUpdatesWhenGraveyardShrinks() {
+        harness.setGraveyard(player1, graveyardCards(7));
+        harness.addToBattlefield(player1, new Mindwhisker());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent opposingBears = findPermanent(player2, "Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, opposingBears)).isEqualTo(1);
+
+        harness.setGraveyard(player1, graveyardCards(6));
+
+        assertThat(gqs.getEffectivePower(gd, opposingBears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingBears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Multiple Mindwhiskers apply their power reductions cumulatively")
+    void multipleMindwhiskersStack() {
+        harness.setGraveyard(player1, graveyardCards(8));
+        harness.addToBattlefield(player1, new Mindwhisker());
+        harness.addToBattlefield(player1, new Mindwhisker());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent opposingBears = findPermanent(player2, "Grizzly Bears");
+
+        assertThat(gqs.getEffectivePower(gd, opposingBears)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, opposingBears)).isEqualTo(2);
+    }
+
     private List<Card> graveyardCards(int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
