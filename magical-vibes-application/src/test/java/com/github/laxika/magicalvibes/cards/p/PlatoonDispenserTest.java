@@ -1,20 +1,25 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.ScrapworkMutt;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PlatoonDispenser.class, Forest.class, GrizzlyBears.class, ScrapworkMutt.class, Disenchant.class})
 class PlatoonDispenserTest extends BaseCardTest {
 
     @Test
@@ -23,7 +28,7 @@ class PlatoonDispenserTest extends BaseCardTest {
         harness.addToBattlefield(player1, new PlatoonDispenser());
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new GrizzlyBears());
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
         advanceToEndStep(player1);
@@ -36,7 +41,7 @@ class PlatoonDispenserTest extends BaseCardTest {
     void doesNotDrawWithOnlyOneOtherCreature() {
         harness.addToBattlefield(player1, new PlatoonDispenser());
         harness.addToBattlefield(player1, new GrizzlyBears());
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
         advanceToEndStep(player1);
@@ -80,24 +85,118 @@ class PlatoonDispenserTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Platoon Dispenser");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(cardInExile -> cardInExile.getName().equals("Platoon Dispenser"));
     }
 
+    @Test
+    void doesNotTriggerDuringOpponentsEndStep() {
+        harness.addToBattlefield(player1, new PlatoonDispenser());
+        harness.addToBattlefield(player1, new ScrapworkMutt());
+        harness.addToBattlefield(player1, new ScrapworkMutt());
+        harness.setLibrary(player1, List.of(new Forest()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    void opponentsCreaturesDoNotCount() {
+        harness.addToBattlefield(player1, new PlatoonDispenser());
+        harness.addToBattlefield(player2, new ScrapworkMutt());
+        harness.addToBattlefield(player2, new ScrapworkMutt());
+        harness.setLibrary(player1, List.of(new Forest()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    void doesNotDrawWhenSecondCreatureArrivesAfterEndStepBegins() {
+        harness.addToBattlefield(player1, new PlatoonDispenser());
+        harness.addToBattlefield(player1, new ScrapworkMutt());
+        harness.setLibrary(player1, List.of(new Forest()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        assertThat(gd.stack).isEmpty();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Soldier");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void rechecksOtherCreatureCountOnResolution() {
+        harness.addToBattlefield(player1, new PlatoonDispenser());
+        harness.addToBattlefield(player1, new ScrapworkMutt());
+        harness.addToBattlefield(player1, new ScrapworkMutt());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player2, List.of(new Disenchant()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Scrapwork Mutt"));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    void destroyingUnearthedDispenserExilesItInsteadOfReturningItToGraveyard() {
+        harness.setGraveyard(player1, List.of(new PlatoonDispenser()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Platoon Dispenser"));
+
+        harness.assertNotOnBattlefield(player1, "Platoon Dispenser");
+        harness.assertNotInGraveyard(player1, "Platoon Dispenser");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Platoon Dispenser"));
+    }
+
+    @Test
+    void unearthCannotBeActivatedDuringEndStep() {
+        harness.setGraveyard(player1, List.of(new PlatoonDispenser()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.forceStep(TurnStep.END_STEP);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Platoon Dispenser");
+        harness.assertNotOnBattlefield(player1, "Platoon Dispenser");
+    }
+
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
         harness.passBothPriorities();
-        harness.passBothPriorities();
-    }
-
-    private void setDeck(Player player, List<com.github.laxika.magicalvibes.model.Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
     }
 }
