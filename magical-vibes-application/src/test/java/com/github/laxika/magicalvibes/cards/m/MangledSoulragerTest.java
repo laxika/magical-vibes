@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.s.SiegeGangCommander;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -13,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MangledSoulrager.class, GiantSpider.class})
+@CardUsed({MangledSoulrager.class, GiantSpider.class, SiegeGangCommander.class})
 class MangledSoulragerTest extends BaseCardTest {
 
     @Test
@@ -78,4 +80,56 @@ class MangledSoulragerTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Mangled Soulrager");
         harness.assertInHand(player1, "Giant Spider");
     }
+
+    @Test
+    @DisplayName("The enters switch persists into the next turn")
+    void entersSwitchPersistsAcrossTurns() {
+        Permanent spider = harness.enterBattlefieldAndReturn(player2, new GiantSpider());
+        Permanent soulrager = harness.enterBattlefieldAndReturn(player1, new MangledSoulrager());
+        harness.passBothPriorities();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, soulrager)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, soulrager)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A boon switch persists into the next turn")
+    void boonSwitchPersistsAcrossTurns() {
+        harness.enterBattlefieldAndReturn(player1, new MangledSoulrager());
+        harness.passBothPriorities();
+        Permanent spider = harness.enterBattlefieldAndReturn(player1, new GiantSpider());
+        harness.passBothPriorities();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Simultaneously entering creatures each consume a boon use")
+    void simultaneousCreaturesEachConsumeBoonUse() {
+        harness.enterBattlefieldAndReturn(player1, new MangledSoulrager());
+        harness.passBothPriorities();
+        harness.enterBattlefieldAndReturn(player1, new SiegeGangCommander());
+        resolveAllTriggers();
+
+        for (int i = 0; i < 8; i++) {
+            Permanent spider = harness.enterBattlefieldAndReturn(player1, new GiantSpider());
+            harness.passBothPriorities();
+            assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(2);
+        }
+
+        Permanent thirteenth = harness.enterBattlefieldAndReturn(player1, new GiantSpider());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, thirteenth)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, thirteenth)).isEqualTo(4);
+    }
+
 }
