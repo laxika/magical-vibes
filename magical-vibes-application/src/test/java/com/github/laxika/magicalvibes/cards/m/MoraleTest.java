@@ -28,8 +28,7 @@ class MoraleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         declareAttackers(List.of(0));
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         // Attacking creature gets +1/+1
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
@@ -50,8 +49,7 @@ class MoraleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         declareAttackers(player2, List.of(0));
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gqs.getEffectivePower(gd, opponentAttacker)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentAttacker)).isEqualTo(2);
@@ -68,8 +66,7 @@ class MoraleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         declareAttackers(List.of(0));
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
@@ -82,5 +79,47 @@ class MoraleTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(1);
+    }
+
+    @Test
+    void boostsEveryAttackingCreature() {
+        Permanent firstAttacker = addCreatureReady(player1, new Pikemen());
+        Permanent secondAttacker = addCreatureReady(player1, new Pikemen());
+        Permanent defender = addCreatureReady(player2, new Pikemen());
+
+        harness.setHand(player1, List.of(new Morale()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        declareAttackers(List.of(0, 1));
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gqs.getEffectivePower(gd, firstAttacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, firstAttacker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, secondAttacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, secondAttacker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, defender)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, defender)).isEqualTo(1);
+    }
+
+    @Test
+    void castingBeforeAttackersAreDeclaredDoesNotBoostLaterAttackers() {
+        Permanent creature = addCreatureReady(player1, new Pikemen());
+        addCreatureReady(player2, new Pikemen());
+
+        harness.setHand(player1, List.of(new Morale()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+
+        assertThat(creature.isAttacking()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Morale");
     }
 }
