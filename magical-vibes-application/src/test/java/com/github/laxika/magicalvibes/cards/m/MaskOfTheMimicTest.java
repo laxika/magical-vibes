@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.h.HonorGuard;
+import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.cards.s.SpinedWurm;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -13,12 +14,76 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MaskOfTheMimic.class, SpinedWurm.class, HonorGuard.class})
+@CardUsed({MaskOfTheMimic.class, SpinedWurm.class, HonorGuard.class, PsychogenicProbe.class})
 class MaskOfTheMimicTest extends BaseCardTest {
+    @Test
+    @DisplayName("A face-down nontoken creature is a legal target but has no matching name")
+    void faceDownTargetDoesNotFindACard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SpinedWurm());
+        target.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new HonorGuard());
+        Card copy = new SpinedWurm();
+        harness.setLibrary(player1, List.of(copy));
+        harness.setHand(player1, List.of(new MaskOfTheMimic()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstantWithSacrifice(player1, 0, target.getId(), sacrifice.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(copy);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(target);
+        harness.assertInGraveyard(player1, "Honor Guard");
+        harness.assertInGraveyard(player1, "Mask of the Mimic");
+    }
+
+    @Test
+    @CardUsed({PsychogenicProbe.class})
+    @DisplayName("Searching an empty library still shuffles it and triggers Psychogenic Probe")
+    void emptyLibraryStillTriggersShuffleAbilities() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SpinedWurm());
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new HonorGuard());
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new MaskOfTheMimic()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstantWithSacrifice(player1, 0, target.getId(), sacrifice.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Mask of the Mimic");
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's creature to pay the additional cost")
+    void cannotSacrificeOpponentsCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SpinedWurm());
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player2, new HonorGuard());
+        harness.setHand(player1, List.of(new MaskOfTheMimic()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithSacrifice(player1, 0, target.getId(), sacrifice.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Spined Wurm");
+        harness.assertOnBattlefield(player2, "Honor Guard");
+        harness.assertInHand(player1, "Mask of the Mimic");
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Sacrifices a creature and puts a same-named library card onto the battlefield")
