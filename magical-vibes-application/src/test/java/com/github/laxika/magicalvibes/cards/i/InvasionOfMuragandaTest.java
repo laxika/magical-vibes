@@ -1,9 +1,13 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CopperHostCrusher;
+import com.github.laxika.magicalvibes.cards.k.KhenraSpellspear;
+import com.github.laxika.magicalvibes.cards.p.PortentTracker;
 import com.github.laxika.magicalvibes.cards.p.PrimordialPlasm;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport;
@@ -16,7 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GrizzlyBears.class, InvasionOfMuraganda.class, PrimordialPlasm.class})
+@CardUsed({GrizzlyBears.class, InvasionOfMuraganda.class, PrimordialPlasm.class,
+        PortentTracker.class, CopperHostCrusher.class, KhenraSpellspear.class})
 class InvasionOfMuragandaTest extends BaseCardTest {
 
     @Test
@@ -25,8 +30,7 @@ class InvasionOfMuragandaTest extends BaseCardTest {
         Permanent opponent = addCreatureReady(player2, new GrizzlyBears());
 
         castInvasion(List.of(friendly.getId(), opponent.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(friendly.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(friendly.getMarkedDamage()).isEqualTo(2);
@@ -39,8 +43,7 @@ class InvasionOfMuragandaTest extends BaseCardTest {
         Permanent opponent = addCreatureReady(player2, new GrizzlyBears());
 
         castInvasion(List.of(friendly.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(friendly.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(friendly.getMarkedDamage()).isZero();
@@ -54,8 +57,7 @@ class InvasionOfMuragandaTest extends BaseCardTest {
 
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
                 .checkAfterDefenseRemoved(gd, battle));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent plasm = findPermanent(player1, "Primordial Plasm");
         assertThat(plasm.isTransformed()).isTrue();
@@ -78,6 +80,105 @@ class InvasionOfMuragandaTest extends BaseCardTest {
         assertThat(target.getToughnessModifier()).isEqualTo(2);
         assertThat(target.isLosesAllAbilitiesUntilEndOfTurn()).isTrue();
         assertThat(plasm.isLosesAllAbilitiesUntilEndOfTurn()).isFalse();
+    }
+
+    @Test
+    void counterStillResolvesWhenFightOpponentLeaves() {
+        Permanent friendly = addCreatureReady(player1, new PortentTracker());
+        Permanent opponent = addCreatureReady(player2, new PortentTracker());
+
+        castInvasion(List.of(friendly.getId(), opponent.getId()));
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player2.getId()).remove(opponent);
+        resolveAllTriggers();
+
+        assertThat(friendly.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(friendly.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void fightDoesNothingWhenFriendlyCreatureLeaves() {
+        Permanent friendly = addCreatureReady(player1, new PortentTracker());
+        Permanent opponent = addCreatureReady(player2, new PortentTracker());
+
+        castInvasion(List.of(friendly.getId(), opponent.getId()));
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(friendly);
+        resolveAllTriggers();
+
+        assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opponent.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponent);
+    }
+
+    @Test
+    void primordialPlasmCanTargetAnOpponentCreature() {
+        addCreatureReady(player1, new PrimordialPlasm());
+        Permanent target = addCreatureReady(player2, new PortentTracker());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(target.isLosesAllAbilitiesUntilEndOfTurn()).isTrue();
+    }
+
+    @Test
+    void primordialPlasmRemovesKeywordsAndItsEffectsExpireAtEndOfTurn() {
+        addCreatureReady(player1, new PrimordialPlasm());
+        Permanent target = addCreatureReady(player1, new CopperHostCrusher());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(10);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isFalse();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(8);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isTrue();
+    }
+
+    @Test
+    void primordialPlasmDoesNotTriggerDuringOpponentsCombat() {
+        addCreatureReady(player1, new PrimordialPlasm());
+        Permanent target = addCreatureReady(player2, new PortentTracker());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.isLosesAllAbilitiesUntilEndOfTurn()).isFalse();
+    }
+
+    @Test
+    void castingDefeatedBattleAsPrimordialPlasmDoesNotTriggerProwess() {
+        Permanent spellspear = addCreatureReady(player1, new KhenraSpellspear());
+        Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfMuraganda());
+        battle.setCounterCount(CounterType.DEFENSE, 0);
+
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
+                .checkAfterDefenseRemoved(gd, battle));
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Primordial Plasm");
+        assertThat(gqs.getEffectivePower(gd, spellspear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, spellspear)).isEqualTo(2);
     }
 
     private void castInvasion(List<java.util.UUID> targetIds) {
