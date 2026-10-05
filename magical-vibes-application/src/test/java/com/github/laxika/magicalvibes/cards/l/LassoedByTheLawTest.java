@@ -87,7 +87,112 @@ class LassoedByTheLawTest extends BaseCardTest {
                 .hasMessageContaining("you control");
     }
 
+    @Test
+    @DisplayName("Creates a Mercenary even when there is no legal exile target")
+    void createsMercenaryWithoutExileTarget() {
+        harness.enterBattlefieldAndReturn(player1, new LassoedByTheLaw());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Mercenary")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Creates a Mercenary even if the exile target leaves in response")
+    void createsMercenaryWhenExileTargetBecomesIllegal() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castAndResolveSpell(target);
+
+        harness.setHand(player1, List.of(new Disperse()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(countPermanents(player1, "Mercenary")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Leaving before the exile trigger resolves prevents exile but not token creation")
+    void sourceLeavesBeforeExileResolves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castAndResolveSpell(target);
+        Permanent source = findPermanent(player1, "Lassoed by the Law");
+
+        harness.setHand(player1, List.of(new Disperse()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, source.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player1, "Lassoed by the Law");
+        assertThat(countPermanents(player1, "Mercenary")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A newly created Mercenary cannot pay its tap cost")
+    void mercenaryHasSummoningSickness() {
+        castAndResolve(harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()));
+        Permanent mercenary = findPermanent(player1, "Mercenary");
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(mercenary);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, index, 0, null, mercenary.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(mercenary.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Mercenary cannot activate outside a main phase")
+    void mercenaryCannotActivateDuringCombat() {
+        castAndResolve(harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()));
+        Permanent mercenary = findPermanent(player1, "Mercenary");
+        mercenary.setSummoningSick(false);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(mercenary);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, index, 0, null, mercenary.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+        assertThat(mercenary.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Mercenary can boost itself and the bonus expires at end of turn")
+    void mercenaryCanBoostItselfUntilEndOfTurn() {
+        castAndResolve(harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()));
+        Permanent mercenary = findPermanent(player1, "Mercenary");
+        mercenary.setSummoningSick(false);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(mercenary);
+
+        harness.activateAbility(player1, index, 0, null, mercenary.getId());
+        resolveAllTriggers();
+        assertThat(mercenary.getPowerModifier()).isEqualTo(1);
+        assertThat(mercenary.getToughnessModifier()).isZero();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(mercenary.getPowerModifier()).isZero();
+        assertThat(mercenary.getToughnessModifier()).isZero();
+    }
+
     private void castAndResolve(Permanent target) {
+        castAndResolveSpell(target);
+        resolveAllTriggers();
+    }
+
+    private void castAndResolveSpell(Permanent target) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -96,7 +201,6 @@ class LassoedByTheLawTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castEnchantment(player1, 0, target.getId());
-        harness.passBothPriorities();
         harness.passBothPriorities();
     }
 }
