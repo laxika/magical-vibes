@@ -101,6 +101,58 @@ class KjeldoranKnightTest extends BaseCardTest {
     }
 
     @Test
+    void toughnessBoostRequiresTwoWhiteMana() {
+        addCreatureReady(player1, new KjeldoranKnight());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    void bothAbilitiesWorkWhileTappedAndSummoningSick() {
+        Permanent knight = harness.addToBattlefieldAndReturn(player1, new KjeldoranKnight());
+        knight.setSummoningSick(true);
+        knight.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(knight.getEffectivePower()).isEqualTo(2);
+        assertThat(knight.getEffectiveToughness()).isEqualTo(3);
+        assertThat(knight.isTapped()).isTrue();
+    }
+
+    @Test
+    void bandingLetsDefendingPlayerAssignAttackerDamage() {
+        Permanent attacker = addCreatureReady(player1, new BalduvianBears());
+        Permanent knight = addCreatureReady(player2, new KjeldoranKnight());
+        Permanent bear = addCreatureReady(player2, new BalduvianBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        harness.passBothPriorities();
+
+        PendingInteraction.CombatDamageAssignment prompt =
+                gd.interaction.activeInteraction(PendingInteraction.CombatDamageAssignment.class);
+        assertThat(prompt).isNotNull();
+        assertThat(prompt.playerId()).isEqualTo(player2.getId());
+        assertThat(prompt.totalDamage()).isEqualTo(2);
+        harness.handleCombatDamageAssigned(player2, 0, Map.of(bear.getId(), 2));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(knight);
+        harness.assertInGraveyard(player2, bear.getCard().getName());
+        harness.assertInGraveyard(player1, attacker.getCard().getName());
+    }
+
+    @Test
     void bandingLetsActivePlayerAssignBlockerDamage() {
         Permanent knight = addCreatureReady(player1, new KjeldoranKnight());
         Permanent bear = addCreatureReady(player1, new BalduvianBears());
