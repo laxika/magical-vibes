@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.j;
 
-import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SarkhanTheDragonspeaker;
+import com.github.laxika.magicalvibes.cards.s.SmokeTeller;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({JeskaiCharm.class, SmokeTeller.class, SarkhanTheDragonspeaker.class})
 class JeskaiCharmTest extends BaseCardTest {
 
     private void addJeskaiMana() {
@@ -26,6 +28,7 @@ class JeskaiCharmTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
     }
 
+    @CardUsed({JeskaiCharm.class, SmokeTeller.class, SarkhanTheDragonspeaker.class})
     @Nested
     @DisplayName("Mode 0: Put target creature on top of its owner's library")
     class TuckMode {
@@ -33,34 +36,59 @@ class JeskaiCharmTest extends BaseCardTest {
         @Test
         @DisplayName("Puts the target creature on top of its owner's library")
         void putsCreatureOnTopOfLibrary() {
-            harness.addToBattlefield(player2, new GrizzlyBears());
+            harness.addToBattlefield(player2, new SmokeTeller());
             harness.setHand(player1, List.of(new JeskaiCharm()));
             addJeskaiMana();
 
-            harness.castInstant(player1, 0, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+            harness.castInstant(player1, 0, 0, harness.getPermanentId(player2, "Smoke Teller"));
             harness.passBothPriorities();
 
-            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+            harness.assertNotOnBattlefield(player2, "Smoke Teller");
             List<Card> deck = gd.playerDecks.get(player2.getId());
-            assertThat(deck.getFirst().getName()).isEqualTo("Grizzly Bears");
+            assertThat(deck.getFirst().getName()).isEqualTo("Smoke Teller");
         }
 
         @Test
         @DisplayName("Cannot target a noncreature permanent")
         void cannotTargetNoncreature() {
-            harness.addToBattlefield(player2, new ChandraNalaar());
+            harness.addToBattlefield(player2, new SarkhanTheDragonspeaker());
             harness.setHand(player1, List.of(new JeskaiCharm()));
             addJeskaiMana();
 
             assertThatThrownBy(() -> harness.castInstant(player1, 0, 0,
-                    harness.getPermanentId(player2, "Chandra Nalaar")))
+                    harness.getPermanentId(player2, "Sarkhan, the Dragonspeaker")))
                     .isInstanceOf(IllegalStateException.class);
         }
     }
 
+    @CardUsed({JeskaiCharm.class, SmokeTeller.class, SarkhanTheDragonspeaker.class})
     @Nested
     @DisplayName("Mode 1: Jeskai Charm deals 4 damage to target opponent or planeswalker")
     class DamageMode {
+
+        @Test
+        void canDamageOwnPlaneswalker() {
+            Permanent sarkhan = harness.addToBattlefieldAndReturn(player1, new SarkhanTheDragonspeaker());
+            sarkhan.setCounterCount(CounterType.LOYALTY, 6);
+            harness.setHand(player1, List.of(new JeskaiCharm()));
+            addJeskaiMana();
+
+            harness.castInstant(player1, 0, 1, sarkhan.getId());
+            harness.passBothPriorities();
+
+            assertThat(sarkhan.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+            harness.assertLife(player1, 20);
+        }
+
+        @Test
+        void cannotDamageCreature() {
+            Permanent creature = harness.addToBattlefieldAndReturn(player2, new SmokeTeller());
+            harness.setHand(player1, List.of(new JeskaiCharm()));
+            addJeskaiMana();
+
+            assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, creature.getId()))
+                    .isInstanceOf(IllegalStateException.class);
+        }
 
         @Test
         @DisplayName("Deals 4 damage to the target opponent")
@@ -77,9 +105,8 @@ class JeskaiCharmTest extends BaseCardTest {
         @Test
         @DisplayName("Deals 4 damage to a target planeswalker")
         void dealsDamageToPlaneswalker() {
-            Permanent chandra = new Permanent(new ChandraNalaar());
+            Permanent chandra = harness.addToBattlefieldAndReturn(player2, new SarkhanTheDragonspeaker());
             chandra.setCounterCount(CounterType.LOYALTY, 6);
-            gd.playerBattlefields.get(player2.getId()).add(chandra);
             harness.setHand(player1, List.of(new JeskaiCharm()));
             addJeskaiMana();
 
@@ -100,23 +127,54 @@ class JeskaiCharmTest extends BaseCardTest {
         }
     }
 
+    @CardUsed({JeskaiCharm.class, SmokeTeller.class, SarkhanTheDragonspeaker.class})
     @Nested
     @DisplayName("Mode 2: Creatures you control get +1/+1 and gain lifelink until end of turn")
     class PumpMode {
 
         @Test
-        @DisplayName("Boosts your creatures and grants lifelink only to them")
-        void boostsOwnCreaturesAndGrantsLifelink() {
-            harness.addToBattlefield(player1, new GrizzlyBears());
-            harness.addToBattlefield(player2, new GrizzlyBears());
+        void doesNotAffectCreaturesEnteringAfterResolution() {
+            Permanent original = harness.addToBattlefieldAndReturn(player1, new SmokeTeller());
+            harness.setHand(player1, List.of(new JeskaiCharm()));
+            addJeskaiMana();
+
+            harness.castInstant(player1, 0, 2, null);
+            harness.passBothPriorities();
+            Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new SmokeTeller());
+
+            assertThat(original.getEffectivePower()).isEqualTo(3);
+            assertThat(gqs.hasKeyword(gd, original, Keyword.LIFELINK)).isTrue();
+            assertThat(newcomer.getEffectivePower()).isEqualTo(2);
+            assertThat(newcomer.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.hasKeyword(gd, newcomer, Keyword.LIFELINK)).isFalse();
+        }
+
+        @Test
+        void canResolveWithoutCreatures() {
             harness.setHand(player1, List.of(new JeskaiCharm()));
             addJeskaiMana();
 
             harness.castInstant(player1, 0, 2, null);
             harness.passBothPriorities();
 
-            Permanent ownBear = findPermanent(player1, "Grizzly Bears");
-            Permanent opponentBear = findPermanent(player2, "Grizzly Bears");
+            harness.assertInGraveyard(player1, "Jeskai Charm");
+            harness.assertLife(player1, 20);
+            harness.assertLife(player2, 20);
+        }
+
+        @Test
+        @DisplayName("Boosts your creatures and grants lifelink only to them")
+        void boostsOwnCreaturesAndGrantsLifelink() {
+            harness.addToBattlefield(player1, new SmokeTeller());
+            harness.addToBattlefield(player2, new SmokeTeller());
+            harness.setHand(player1, List.of(new JeskaiCharm()));
+            addJeskaiMana();
+
+            harness.castInstant(player1, 0, 2, null);
+            harness.passBothPriorities();
+
+            Permanent ownBear = findPermanent(player1, "Smoke Teller");
+            Permanent opponentBear = findPermanent(player2, "Smoke Teller");
             assertThat(ownBear.getEffectivePower()).isEqualTo(3);
             assertThat(ownBear.getEffectiveToughness()).isEqualTo(3);
             assertThat(gqs.hasKeyword(gd, ownBear, Keyword.LIFELINK)).isTrue();
@@ -127,7 +185,7 @@ class JeskaiCharmTest extends BaseCardTest {
         @Test
         @DisplayName("Boost and lifelink wear off at end of turn")
         void effectsWearOffAtEndOfTurn() {
-            harness.addToBattlefield(player1, new GrizzlyBears());
+            harness.addToBattlefield(player1, new SmokeTeller());
             harness.setHand(player1, List.of(new JeskaiCharm()));
             addJeskaiMana();
 
@@ -137,7 +195,7 @@ class JeskaiCharmTest extends BaseCardTest {
             harness.clearPriorityPassed();
             harness.passBothPriorities();
 
-            Permanent bear = findPermanent(player1, "Grizzly Bears");
+            Permanent bear = findPermanent(player1, "Smoke Teller");
             assertThat(bear.getEffectivePower()).isEqualTo(2);
             assertThat(bear.getEffectiveToughness()).isEqualTo(2);
             assertThat(gqs.hasKeyword(gd, bear, Keyword.LIFELINK)).isFalse();
