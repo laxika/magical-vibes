@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.c.ConsumingVortex;
 import com.github.laxika.magicalvibes.cards.l.LanternKami;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -11,10 +13,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MyojinOfInfiniteRage.class, Mountain.class, LanternKami.class})
+@CardUsed({MyojinOfInfiniteRage.class, Mountain.class, LanternKami.class, ConsumingVortex.class})
 class MyojinOfInfiniteRageTest extends BaseCardTest {
 
     @Test
@@ -87,6 +91,59 @@ class MyojinOfInfiniteRageTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough counters");
+    }
+
+    @Test
+    @DisplayName("The counter is paid immediately, before any lands are destroyed")
+    void counterIsRemovedAsActivationCost() {
+        Permanent myojin = harness.enterBattlefieldAndReturn(player1, new MyojinOfInfiniteRage());
+        myojin.setCounterCount(CounterType.DIVINITY, 1);
+        myojin.setTapped(true);
+        harness.addToBattlefieldAndReturn(player2, new Mountain());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(myojin.getCounterCount(CounterType.DIVINITY)).isZero();
+        assertThat(gqs.hasKeyword(gd, myojin, Keyword.INDESTRUCTIBLE)).isFalse();
+        harness.assertOnBattlefield(player2, "Mountain");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough counters");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Mountain");
+        harness.assertNotOnBattlefield(player2, "Mountain");
+    }
+
+    @Test
+    @DisplayName("The land destruction resolves even if Myojin is returned to hand in response")
+    void destroysLandsAfterSourceLeavesBattlefield() {
+        Permanent myojin = addMyojinWithDivinityCounter(player1);
+        harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.addToBattlefieldAndReturn(player2, new Mountain());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new ConsumingVortex()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.castAndResolveInstant(player2, 0, myojin.getId());
+
+        harness.assertInHand(player1, "Myojin of Infinite Rage");
+        harness.assertNotOnBattlefield(player1, "Myojin of Infinite Rage");
+        harness.assertOnBattlefield(player1, "Mountain");
+        harness.assertOnBattlefield(player2, "Mountain");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Mountain");
+        harness.assertNotOnBattlefield(player2, "Mountain");
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.assertInGraveyard(player2, "Mountain");
     }
 
     private Permanent addMyojinWithDivinityCounter(Player player) {
