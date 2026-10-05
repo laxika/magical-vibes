@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.i.IdeasUnbound;
 import com.github.laxika.magicalvibes.cards.i.InnerChamberGuard;
+import com.github.laxika.magicalvibes.cards.t.TomorrowAzamisFamiliar;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -12,7 +14,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OverwhelmingIntellect.class, InnerChamberGuard.class, IdeasUnbound.class})
+@CardUsed({OverwhelmingIntellect.class, InnerChamberGuard.class, IdeasUnbound.class,
+        TomorrowAzamisFamiliar.class})
 class OverwhelmingIntellectTest extends BaseCardTest {
 
     @Test
@@ -61,5 +64,47 @@ class OverwhelmingIntellectTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(intellect);
+    }
+
+    @Test
+    void countersCreatureBeforeChoosingCardsForReplacedDraw() {
+        InnerChamberGuard creature = new InnerChamberGuard();
+        harness.castFromHand(player1, creature, "{1}{W}");
+        harness.addToBattlefield(player2, new TomorrowAzamisFamiliar());
+        harness.setLibrary(player2, List.of(
+                new InnerChamberGuard(), new IdeasUnbound(), new InnerChamberGuard()));
+        harness.setHand(player2, List.of(new OverwhelmingIntellect()));
+        harness.addMana(player2, ManaColor.BLUE, 6);
+
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
+        harness.assertInGraveyard(player1, "Inner-Chamber Guard");
+        assertThat(gd.stack).noneMatch(entry -> entry.getTargetableId().equals(creature.getId()));
+    }
+
+    @Test
+    void doesNotDrawWhenTargetWasAlreadyCountered() {
+        InnerChamberGuard creature = new InnerChamberGuard();
+        harness.castFromHand(player1, creature, "{1}{W}");
+        harness.setHand(player2, List.of(new OverwhelmingIntellect(), new OverwhelmingIntellect()));
+        harness.setLibrary(player2, List.of(new InnerChamberGuard(), new InnerChamberGuard(),
+                new InnerChamberGuard(), new InnerChamberGuard()));
+        harness.addMana(player2, ManaColor.BLUE, 12);
+
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, creature.getId());
+        harness.ensurePriority(player2);
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Inner-Chamber Guard");
     }
 }
