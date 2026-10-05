@@ -51,8 +51,7 @@ class LeapingAmbushTest extends BaseCardTest {
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
         addTappedCreature(player1);
-        Permanent enchantment = new Permanent(new Pacifism());
-        gd.playerBattlefields.get(player2.getId()).add(enchantment);
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new Pacifism());
         harness.setHand(player1, List.of(new LeapingAmbush()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -61,18 +60,55 @@ class LeapingAmbushTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("An untapped friendly creature receives the boost and reach without affecting other creatures")
+    void affectsOnlyUntappedFriendlyTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent other = addTappedCreature(player2);
+
+        castLeapingAmbush(target);
+
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(target.hasKeyword(Keyword.REACH)).isTrue();
+        assertThat(target.isTapped()).isFalse();
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(other.hasKeyword(Keyword.REACH)).isFalse();
+        assertThat(other.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated casts stack their boosts and both expire at end of turn")
+    void repeatedBoostsStackAndExpire() {
+        Permanent target = addTappedCreature(player2);
+        castLeapingAmbush(target);
+        castLeapingAmbush(target);
+
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(6);
+        assertThat(target.hasKeyword(Keyword.REACH)).isTrue();
+        assertThat(target.isTapped()).isFalse();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(target.hasKeyword(Keyword.REACH)).isFalse();
+    }
+
     private void castLeapingAmbush(Permanent target) {
         harness.setHand(player1, List.of(new LeapingAmbush()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private Permanent addTappedCreature(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
         permanent.setSummoningSick(false);
         permanent.tap();
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
