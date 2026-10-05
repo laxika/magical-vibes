@@ -50,7 +50,6 @@ class OblivionCrownTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
@@ -97,6 +96,56 @@ class OblivionCrownTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Flash allows Oblivion Crown to be cast during upkeep")
+    void canCastDuringUpkeep() {
+        Permanent creature = addCreatureReady(player1, new BlindPhantasm());
+        harness.setHand(player1, List.of(new OblivionCrown()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Oblivion Crown");
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+        harness.setHand(player1, List.of(new HorizonCanopy()));
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick creature can repeatedly discard any card for cumulative boosts")
+    void repeatedActivationsDoNotRequireTapOrMana() {
+        Permanent creature = addEnchantedCreature();
+        creature.setTapped(true);
+        creature.setSummoningSick(true);
+        BlindPhantasm discardedCreature = new BlindPhantasm();
+        HorizonCanopy discardedLand = new HorizonCanopy();
+        harness.setHand(player1, List.of(discardedCreature, discardedLand));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discardedCreature);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discardedCreature, discardedLand);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
+        assertThat(creature.isTapped()).isTrue();
     }
 
     private Permanent addEnchantedCreature() {
