@@ -1,15 +1,15 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.cards.d.DayOfJudgment;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -18,10 +18,10 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MitoticSlime.class, DayOfJudgment.class, Unsummon.class})
 class MitoticSlimeTest extends BaseCardTest {
 
-    // ===== Death trigger =====
-
+    @CardUsed({MitoticSlime.class, DayOfJudgment.class})
     @Nested
     @DisplayName("Death trigger")
     class DeathTriggerTests {
@@ -31,11 +31,8 @@ class MitoticSlimeTest extends BaseCardTest {
         void deathTriggerCreatesTwoTokens() {
             harness.addToBattlefield(player1, new MitoticSlime());
 
-            harness.setHand(player1, List.of(new WrathOfGod()));
-            harness.addMana(player1, ManaColor.WHITE, 4);
-
-            harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
-            harness.passBothPriorities(); // Resolve Wrath — Slime dies
+            harness.castFromHand(player1, new DayOfJudgment(), "{2}{W}{W}");
+            harness.passBothPriorities(); // Resolve Day of Judgment — Slime dies
 
             GameData gd = harness.getGameData();
 
@@ -67,27 +64,25 @@ class MitoticSlimeTest extends BaseCardTest {
         void oozeTokensHaveDeathTrigger() {
             harness.addToBattlefield(player1, new MitoticSlime());
 
-            // Kill Mitotic Slime with Wrath of God
-            harness.setHand(player1, List.of(new WrathOfGod()));
-            harness.addMana(player1, ManaColor.WHITE, 4);
-
-            harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
-            harness.passBothPriorities(); // Resolve Wrath — Slime dies
+            // Kill Mitotic Slime with Day of Judgment
+            harness.castFromHand(player1, new DayOfJudgment(), "{2}{W}{W}");
+            harness.passBothPriorities(); // Resolve Day of Judgment — Slime dies
             harness.passBothPriorities(); // Resolve Slime death trigger — two 2/2 Ooze tokens enter
 
             GameData gd = harness.getGameData();
 
-            // Verify the 2/2 tokens have ON_DEATH effects
-            List<Permanent> oozeTokens = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Ooze") && p.getCard().getPower() == 2)
-                    .toList();
-            assertThat(oozeTokens).hasSize(2);
+            assertThat(findPermanents(player1, "Ooze")).hasSize(2);
+            harness.castFromHand(player1, new DayOfJudgment(), "{2}{W}{W}");
+            harness.passBothPriorities();
+            assertThat(gd.stack).hasSize(2);
 
-            for (Permanent oozeToken : oozeTokens) {
-                assertThat(oozeToken.getCard().getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-                assertThat(oozeToken.getCard().getEffects(EffectSlot.ON_DEATH).getFirst())
-                        .isInstanceOf(CreateTokenEffect.class);
-            }
+            harness.passBothPriorities();
+            assertThat(findPermanents(player1, "Ooze")).hasSize(2)
+                    .allSatisfy(token -> assertThat(token.getCard().getPower()).isEqualTo(1));
+            assertThat(gd.stack).hasSize(1);
+
+            harness.passBothPriorities();
+            assertThat(findPermanents(player1, "Ooze")).hasSize(4);
         }
 
         @Test
@@ -95,12 +90,9 @@ class MitoticSlimeTest extends BaseCardTest {
         void killingOozeTokenCreatesSmallTokens() {
             harness.addToBattlefield(player1, new MitoticSlime());
 
-            // Kill Mitotic Slime with Wrath of God
-            harness.setHand(player1, List.of(new WrathOfGod()));
-            harness.addMana(player1, ManaColor.WHITE, 4);
-
-            harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
-            harness.passBothPriorities(); // Resolve Wrath — Slime dies
+            // Kill Mitotic Slime with Day of Judgment
+            harness.castFromHand(player1, new DayOfJudgment(), "{2}{W}{W}");
+            harness.passBothPriorities(); // Resolve Day of Judgment — Slime dies
             harness.passBothPriorities(); // Resolve Slime death trigger — two 2/2 Ooze tokens enter
 
             GameData gd = harness.getGameData();
@@ -108,12 +100,9 @@ class MitoticSlimeTest extends BaseCardTest {
                     .filter(p -> p.getCard().getName().equals("Ooze") && p.getCard().getPower() == 2)
                     .count()).isEqualTo(2);
 
-            // Now kill all creatures again with another Wrath
-            harness.setHand(player1, List.of(new WrathOfGod()));
-            harness.addMana(player1, ManaColor.WHITE, 4);
-
-            harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
-            harness.passBothPriorities(); // Resolve Wrath — both 2/2 Ooze tokens die
+            // Now kill all creatures again with another Day of Judgment
+            harness.castFromHand(player1, new DayOfJudgment(), "{2}{W}{W}");
+            harness.passBothPriorities(); // Resolve Day of Judgment — both 2/2 Ooze tokens die
 
             // Two death triggers should be on the stack (one per 2/2 token)
             assertThat(gd.stack).hasSize(2);
@@ -135,6 +124,40 @@ class MitoticSlimeTest extends BaseCardTest {
                 assertThat(smallToken.getCard().getSubtypes()).contains(CardSubtype.OOZE);
                 assertThat(smallToken.getCard().isToken()).isTrue();
             }
+
+            harness.castFromHand(player1, new DayOfJudgment(), "{2}{W}{W}");
+            harness.passBothPriorities();
+            assertThat(gd.stack).isEmpty();
+            assertThat(findPermanents(player1, "Ooze")).isEmpty();
         }
+    }
+
+    @Test
+    @DisplayName("Returning Mitotic Slime to hand does not create Oozes")
+    void returningSlimeToHandDoesNotTrigger() {
+        harness.addToBattlefield(player1, new MitoticSlime());
+        Permanent slime = findPermanent(player1, "Mitotic Slime");
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, slime.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Mitotic Slime");
+        assertThat(findPermanents(player1, "Ooze")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The dying Slime's controller creates the tokens")
+    void opponentControlledSlimeCreatesTokensForOpponent() {
+        harness.addToBattlefield(player2, new MitoticSlime());
+        harness.castFromHand(player1, new DayOfJudgment(), "{2}{W}{W}");
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(findPermanents(player2, "Ooze")).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player2, "Ooze")).hasSize(2);
+        assertThat(findPermanents(player1, "Ooze")).isEmpty();
     }
 }
