@@ -40,4 +40,18 @@ class OgreTaskmasterTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Ogre Taskmaster does not prevent another creature from blocking")
+    void otherCreatureCanStillBlock() {
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent ogre = addCreatureReady(player2, new OgreTaskmaster());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(ogre.isBlocking()).isFalse();
+    }
 }
