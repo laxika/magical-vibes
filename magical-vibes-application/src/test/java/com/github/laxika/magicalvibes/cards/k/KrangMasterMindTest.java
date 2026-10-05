@@ -25,8 +25,7 @@ class KrangMasterMindTest extends BaseCardTest {
         addKrangMana();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
     }
@@ -40,8 +39,7 @@ class KrangMasterMindTest extends BaseCardTest {
         addKrangMana();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
     }
@@ -65,6 +63,100 @@ class KrangMasterMindTest extends BaseCardTest {
         Permanent krang = harness.addToBattlefieldAndReturn(player1, new KrangMasterMind());
 
         assertThat(gqs.getEffectivePower(gd, krang)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, krang)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Affinity reduces the cost for artifacts you control")
+    void affinityReducesGenericCost() {
+        harness.addToBattlefield(player1, new Ornithopter());
+        harness.addToBattlefield(player1, new Ornithopter());
+        harness.setHand(player1, List.of(new KrangMasterMind()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Affinity can eliminate all generic mana without reducing the blue cost")
+    void affinityEliminatesGenericCost() {
+        for (int i = 0; i < 7; i++) {
+            harness.addToBattlefield(player1, new Ornithopter());
+        }
+        harness.setHand(player1, List.of(new KrangMasterMind()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Entering with an empty hand draws four cards")
+    void drawsFourFromEmptyHand() {
+        harness.setHand(player1, List.of(new KrangMasterMind()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        addKrangMana();
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The draw amount uses the hand size when the trigger resolves")
+    void recalculatesDrawAmountOnResolution() {
+        harness.setHand(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.enterBattlefieldAndReturn(player1, new KrangMasterMind());
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player1, List.of(new Forest()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The draw trigger does nothing if the hand reaches four before resolution")
+    void rechecksHandConditionOnResolution() {
+        harness.setHand(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.enterBattlefieldAndReturn(player1, new KrangMasterMind());
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Entering with four cards does not put a draw ability on the stack")
+    void doesNotTriggerWithFourCards() {
+        harness.setHand(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+
+        harness.enterBattlefieldAndReturn(player1, new KrangMasterMind());
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The power boost updates as other artifacts enter")
+    void boostUpdatesWhenArtifactsEnter() {
+        Permanent krang = harness.addToBattlefieldAndReturn(player1, new KrangMasterMind());
+        assertThat(gqs.getEffectivePower(gd, krang)).isEqualTo(1);
+
+        harness.enterBattlefieldAndReturn(player1, new Ornithopter());
+
+        assertThat(gqs.getEffectivePower(gd, krang)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, krang)).isEqualTo(4);
     }
 
