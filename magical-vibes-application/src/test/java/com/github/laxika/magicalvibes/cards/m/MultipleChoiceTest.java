@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SpinedKarok;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,18 +15,17 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MultipleChoice.class, GrizzlyBears.class})
+@CardUsed({MultipleChoice.class, SpinedKarok.class})
 class MultipleChoiceTest extends BaseCardTest {
 
     @Test
     void xOneScriesThenDraws() {
         harness.setHand(player1, List.of(new MultipleChoice()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new SpinedKarok()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0, 1);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
         gs.handleInteractionAnswer(gd, player1,
@@ -38,13 +37,12 @@ class MultipleChoiceTest extends BaseCardTest {
 
     @Test
     void xTwoLetsChosenPlayerReturnCreature() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new SpinedKarok());
         harness.setHand(player1, List.of(new MultipleChoice()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, 2);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2);
         harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.PermanentChoice playerChoice =
@@ -57,8 +55,8 @@ class MultipleChoiceTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player2, bears.getId());
 
-        assertThat(findPermanents(player2, "Grizzly Bears")).isEmpty();
-        assertThat(gd.playerHands.get(player2.getId())).anyMatch(card -> card.getName().equals("Grizzly Bears"));
+        assertThat(findPermanents(player2, "Spined Karok")).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).anyMatch(card -> card.getName().equals("Spined Karok"));
     }
 
     @Test
@@ -67,8 +65,7 @@ class MultipleChoiceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castSorcery(player1, 0, 3);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3);
 
         Permanent elemental = findPermanent(player1, "Elemental");
         assertThat(elemental.getEffectivePower()).isEqualTo(4);
@@ -79,14 +76,13 @@ class MultipleChoiceTest extends BaseCardTest {
 
     @Test
     void xFourDoesAllThreeModes() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new SpinedKarok());
         harness.setHand(player1, List.of(new MultipleChoice()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new SpinedKarok()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castSorcery(player1, 0, 4);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 4);
         gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(0), List.of()));
         harness.handleMayAbilityChosen(player1, true);
@@ -94,8 +90,109 @@ class MultipleChoiceTest extends BaseCardTest {
         harness.handlePermanentChosen(player2, bears.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(findPermanents(player2, "Grizzly Bears")).isEmpty();
+        assertThat(findPermanents(player2, "Spined Karok")).isEmpty();
         assertThat(findPermanents(player1, "Elemental")).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void xZeroHasNoEffect() {
+        harness.setHand(player1, List.of(new MultipleChoice()));
+        harness.setLibrary(player1, List.of(new MultipleChoice()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(findPermanents(player1, "Elemental")).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void xTwoCanDeclineChoosingAPlayer() {
+        harness.addToBattlefield(player2, new SpinedKarok());
+        harness.setHand(player1, List.of(new MultipleChoice()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 2);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertOnBattlefield(player2, "Spined Karok");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(findPermanents(player1, "Elemental")).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void xFiveStillDrawsAndCreatesTokenWhenChosenPlayerHasNoCreatures() {
+        harness.setHand(player1, List.of(new MultipleChoice()));
+        harness.setLibrary(player1, List.of(new MultipleChoice()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castAndResolveSorcery(player1, 0, 5);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        harness.assertInHand(player1, "Multiple Choice");
+        assertThat(findPermanents(player1, "Elemental")).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void xFourCreatesTokenEvenWhenPlayerChoiceIsDeclined() {
+        harness.setHand(player1, List.of(new MultipleChoice()));
+        harness.setLibrary(player1, List.of(new MultipleChoice()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 4);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInHand(player1, "Multiple Choice");
+        assertThat(findPermanents(player1, "Elemental")).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void xTwoCanChooseTheCasterWhoChoosesTheirOwnCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new SpinedKarok());
+        harness.setHand(player1, List.of(new MultipleChoice()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 2);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        harness.assertNotOnBattlefield(player1, "Spined Karok");
+        harness.assertInHand(player1, "Spined Karok");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void xOneDrawsAfterPuttingTheScriedCardOnTheBottom() {
+        SpinedKarok bottomedCard = new SpinedKarok();
+        MultipleChoice drawnCard = new MultipleChoice();
+        harness.setHand(player1, List.of(new MultipleChoice()));
+        harness.setLibrary(player1, List.of(bottomedCard, drawnCard));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bottomedCard);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
