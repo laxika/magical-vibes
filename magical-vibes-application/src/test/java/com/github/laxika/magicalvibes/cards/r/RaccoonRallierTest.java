@@ -68,4 +68,72 @@ class RaccoonRallierTest extends BaseCardTest {
     private Permanent addReadyRallier() {
         return addCreatureReady(player1, new RaccoonRallier());
     }
+
+    @Test
+    void tapsSourceAsCostAndCanTargetItself() {
+        Permanent rallier = addReadyRallier();
+
+        harness.activateAbility(player1, 0, 0, null, rallier.getId());
+
+        assertThat(rallier.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, rallier, Keyword.HASTE)).isFalse();
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, rallier, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent rallier = addReadyRallier();
+        rallier.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, rallier.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+    }
+
+    @Test
+    void summoningSickRallierCannotGiveItselfHaste() {
+        Permanent rallier = addReadyRallier();
+        rallier.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, rallier.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+    }
+
+    @Test
+    void grantedHasteLetsNewRallierActivateItsTapAbility() {
+        addReadyRallier();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new RaccoonRallier());
+        target.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    void cannotActivateOutsideMainPhase() {
+        Permanent rallier = addReadyRallier();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, rallier.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+    }
+
+    @Test
+    void cannotActivateWithAnAbilityOnTheStack() {
+        Permanent first = addReadyRallier();
+        Permanent second = addReadyRallier();
+        harness.activateAbility(player1, 0, 0, null, first.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, second.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+    }
 }
