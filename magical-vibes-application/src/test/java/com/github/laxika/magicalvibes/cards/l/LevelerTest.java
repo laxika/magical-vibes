@@ -32,6 +32,49 @@ class LevelerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Exiles the library as it exists when the enter trigger resolves")
+    void exilesLibraryAtResolutionRatherThanEntry() {
+        Card originalCard = new Frogmite();
+        Card addedCard = new Frogmite();
+        Card alreadyExiledCard = new Frogmite();
+        harness.setLibrary(player1, List.of(originalCard));
+        harness.setExile(player1, List.of(alreadyExiledCard));
+        harness.castFromHand(player1, new Leveler(), "{5}");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Leveler");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(originalCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(alreadyExiledCard);
+
+        harness.setLibrary(player1, List.of(originalCard, addedCard));
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .containsExactly(alreadyExiledCard, originalCard, addedCard);
+    }
+
+    @Test
+    @DisplayName("Triggers when entering without being cast and exiles the entering controller's library")
+    void enteringWithoutCastingExilesOtherControllersLibrary() {
+        Card firstPlayerCard = new Frogmite();
+        Card secondPlayerCard = new Frogmite();
+        harness.setLibrary(player1, List.of(firstPlayerCard));
+        harness.setLibrary(player2, List.of(secondPlayerCard));
+
+        harness.enterBattlefieldAndReturn(player2, new Leveler());
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(firstPlayerCard);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(secondPlayerCard);
+        harness.assertOnBattlefield(player2, "Leveler");
+    }
+
+    @Test
     @DisplayName("Does not affect the opponent's library when its controller's library is empty")
     void emptyControllerLibraryLeavesOpponentLibraryUntouched() {
         Card opponentCard = new Frogmite();
