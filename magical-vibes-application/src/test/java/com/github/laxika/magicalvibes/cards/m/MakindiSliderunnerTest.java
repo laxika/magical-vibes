@@ -53,9 +53,47 @@ class MakindiSliderunnerTest extends BaseCardTest {
         assertThat(sliderunner.getEffectivePower()).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
+        assertThat(sliderunner.getEffectivePower()).isEqualTo(2);
+        assertThat(sliderunner.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Lands entering without being played trigger landfall independently")
+    void landsEnteringWithoutBeingPlayedStackBoosts() {
+        Permanent sliderunner = harness.addToBattlefieldAndReturn(player1, new MakindiSliderunner());
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(sliderunner.getEffectivePower()).isEqualTo(2);
+        assertThat(sliderunner.getEffectiveToughness()).isEqualTo(1);
+
+        harness.passBothPriorities();
+        assertThat(sliderunner.getEffectivePower()).isEqualTo(3);
+        assertThat(sliderunner.getEffectiveToughness()).isEqualTo(2);
+
+        harness.passBothPriorities();
+        assertThat(sliderunner.getEffectivePower()).isEqualTo(4);
+        assertThat(sliderunner.getEffectiveToughness()).isEqualTo(3);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(sliderunner.getEffectivePower()).isEqualTo(2);
+        assertThat(sliderunner.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A nonland entering does not trigger landfall")
+    void nonlandEnteringDoesNotTrigger() {
+        Permanent sliderunner = harness.addToBattlefieldAndReturn(player1, new MakindiSliderunner());
+
+        harness.enterBattlefieldAndReturn(player1, new MakindiSliderunner());
+
+        assertThat(gd.stack).isEmpty();
         assertThat(sliderunner.getEffectivePower()).isEqualTo(2);
         assertThat(sliderunner.getEffectiveToughness()).isEqualTo(1);
     }
