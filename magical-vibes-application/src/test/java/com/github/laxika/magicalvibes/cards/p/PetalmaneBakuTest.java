@@ -14,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({PetalmaneBaku.class, VitalSurge.class, TeardropKami.class, GoblinCohort.class})
 class PetalmaneBakuTest extends BaseCardTest {
@@ -118,6 +119,56 @@ class PetalmaneBakuTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 
+    @Test
+    @DisplayName("The mana ability works while tapped and summoning sick and does not use the stack")
+    void manaAbilityWorksWhileTappedAndSummoningSick() {
+        Permanent baku = addReadyBaku();
+        baku.setTapped(true);
+        baku.setSummoningSick(true);
+        baku.setCounterCount(CounterType.KI, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 3, null);
+
+        assertThat(baku.getCounterCount(CounterType.KI)).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(baku.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Choosing zero leaves existing ki counters in place but still pays the mana cost")
+    void choosingZeroPreservesExistingCounters() {
+        Permanent baku = addReadyBaku();
+        baku.setCounterCount(CounterType.KI, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null);
+
+        assertThat(baku.getCounterCount(CounterType.KI)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot remove more ki counters than are present")
+    void cannotChooseMoreCountersThanAvailable() {
+        Permanent baku = addReadyBaku();
+        baku.setCounterCount(CounterType.KI, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 3, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(baku.getCounterCount(CounterType.KI)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
     private Permanent addReadyBaku() {
         return addCreatureReady(player1, new PetalmaneBaku());
     }
