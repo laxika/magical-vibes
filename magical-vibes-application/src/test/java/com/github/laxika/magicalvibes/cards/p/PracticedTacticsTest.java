@@ -63,6 +63,78 @@ class PracticedTacticsTest extends BaseCardTest {
                 .hasMessageContaining("attacking or blocking creature");
     }
 
+    @Test
+    @DisplayName("An empty party deals no damage even when the opponent has party creatures")
+    void emptyPartyIgnoresOpponentsCreatures() {
+        harness.addToBattlefield(player2, new SoulWarden());
+        harness.addToBattlefield(player2, new FaerieMiscreant());
+        harness.addToBattlefield(player2, new BoggartBrute());
+        harness.addToBattlefield(player2, new FugitiveWizard());
+        Permanent target = addAttacker(player2, new AirElemental());
+
+        castAt(target.getId());
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        harness.assertInGraveyard(player1, "Practiced Tactics");
+    }
+
+    @Test
+    @DisplayName("Two creatures sharing a party role count only once")
+    void duplicateRolesCountOnlyOnce() {
+        harness.addToBattlefield(player1, new FugitiveWizard());
+        harness.addToBattlefield(player1, new FugitiveWizard());
+        Permanent target = addBlocker(player2, new AirElemental());
+
+        castAt(target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Air Elemental");
+    }
+
+    @Test
+    @DisplayName("Party size is determined on resolution rather than when cast")
+    void countsPartyAtResolution() {
+        Permanent target = addAttacker(player2, new AirElemental());
+        harness.setHand(player1, List.of(new PracticedTactics()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, target.getId());
+
+        harness.addToBattlefield(player1, new FugitiveWizard());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A target that leaves combat before resolution is illegal")
+    void doesNotDamageCreatureThatLeftCombat() {
+        harness.addToBattlefield(player1, new FugitiveWizard());
+        Permanent target = addAttacker(player2, new AirElemental());
+        harness.setHand(player1, List.of(new PracticedTactics()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, target.getId());
+
+        target.setAttacking(false);
+        target.setAttackTarget(null);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        harness.assertInGraveyard(player1, "Practiced Tactics");
+    }
+
+    @Test
+    @DisplayName("Can damage a blocking creature controlled by the caster")
+    void canTargetOwnBlocker() {
+        harness.addToBattlefield(player1, new FugitiveWizard());
+        Permanent target = addBlocker(player1, new AirElemental());
+
+        castAt(target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
     private void addFullParty() {
         harness.addToBattlefield(player1, new SoulWarden());
         harness.addToBattlefield(player1, new FaerieMiscreant());
@@ -73,13 +145,11 @@ class PracticedTacticsTest extends BaseCardTest {
     private void castAt(UUID targetId) {
         harness.setHand(player1, List.of(new PracticedTactics()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 
     private Permanent addAttacker(Player owner, Card card) {
-        harness.addToBattlefield(owner, card);
-        Permanent attacker = findPermanent(owner, card.getName());
+        Permanent attacker = harness.addToBattlefieldAndReturn(owner, card);
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
         attacker.setAttackTarget(player1.getId());
@@ -87,8 +157,7 @@ class PracticedTacticsTest extends BaseCardTest {
     }
 
     private Permanent addBlocker(Player owner, Card card) {
-        harness.addToBattlefield(owner, card);
-        Permanent blocker = findPermanent(owner, card.getName());
+        Permanent blocker = harness.addToBattlefieldAndReturn(owner, card);
         blocker.setBlocking(true);
         blocker.addBlockingTargetId(UUID.randomUUID());
         return blocker;
