@@ -46,7 +46,6 @@ class NamazuTraderTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, bears.getId());
-        harness.passBothPriorities();
 
         PendingInteraction.Scry surveil = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
         assertThat(surveil).isNotNull();
@@ -72,7 +71,6 @@ class NamazuTraderTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, relic.getId());
-        harness.passBothPriorities();
 
         PendingInteraction.Scry surveil = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
         assertThat(surveil).isNotNull();
@@ -80,5 +78,65 @@ class NamazuTraderTest extends BaseCardTest {
                 new InteractionAnswer.ScryOrder(List.of(), List.of(0, 1)));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(relic);
+    }
+
+    @Test
+    void decliningSacrificeLeavesLibraryAndCreatureUntouched() {
+        addCreatureReady(player1, new NamazuTrader());
+        Permanent other = addCreatureReady(player1, new NamazuTrader());
+        Card top = new Forest();
+        harness.setLibrary(player1, List.of(top));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(other);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void sacrificeChoiceExcludesSourceLandsAndOpponentsCreatures() {
+        addCreatureReady(player1, new NamazuTrader());
+        Permanent other = addCreatureReady(player1, new NamazuTrader());
+        harness.addToBattlefield(player1, new Forest());
+        addCreatureReady(player2, new NamazuTrader());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).containsExactly(other.getId());
+    }
+
+    @Test
+    void surveilCanKeepBothCardsInChosenOrderDuringAttackAbilityResolution() {
+        addCreatureReady(player1, new NamazuTrader());
+        Permanent other = addCreatureReady(player1, new NamazuTrader());
+        Card first = new Forest();
+        Card second = new NamazuTrader();
+        Card third = new Forest();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, other.getId());
+
+        PendingInteraction.Scry surveil = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(surveil).isNotNull();
+        assertThat(surveil.cards()).containsExactly(first, second);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(1, 0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first, third);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(other.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(first, second);
+        assertThat(gd.stack).isEmpty();
     }
 }
