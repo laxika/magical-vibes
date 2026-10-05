@@ -1,22 +1,27 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.c.CosisTrickster;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OracleOfTragedy.class, Forest.class, GrizzlyBears.class, HillGiant.class, WrathOfGod.class})
+@CardUsed({OracleOfTragedy.class, Forest.class, GrizzlyBears.class, HillGiant.class, WrathOfGod.class, CosisTrickster.class})
 class OracleOfTragedyTest extends BaseCardTest {
 
     @Test
@@ -76,8 +81,7 @@ class OracleOfTragedyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WrathOfGod()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleListChoice(player1,
                 "Shuffle up to four target cards with mana value 3 or greater from your graveyard into your library");
 
@@ -91,5 +95,54 @@ class OracleOfTragedyTest extends BaseCardTest {
                 .doesNotContain(qualifyingCard.getId());
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(Card::getId).contains(qualifyingCard.getId());
+    }
+
+    @Test
+    @DisplayName("The death draw mode draws before discarding even with an empty hand")
+    void deathDrawsThenDiscardsWithEmptyHand() {
+        Card drawnCard = new Forest();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addToBattlefield(player1, new OracleOfTragedy());
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleListChoice(player1, "Draw a card, then discard a card");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(drawnCard);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    @DisplayName("The shuffle mode shuffles even when zero cards are targeted")
+    void zeroTargetsStillShuffleLibrary(boolean hasQualifyingCard) {
+        Permanent trickster = harness.addToBattlefieldAndReturn(player2, new CosisTrickster());
+        Card qualifyingCard = new HillGiant();
+        harness.setGraveyard(player1, hasQualifyingCard ? List.of(qualifyingCard) : List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new OracleOfTragedy()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0, 1);
+        harness.passBothPriorities();
+        if (hasQualifyingCard) {
+            harness.handleMultipleCardsChosen(player1, List.of());
+        }
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .hasSize(hasQualifyingCard ? 1 : 0);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(trickster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }
