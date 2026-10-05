@@ -44,8 +44,7 @@ class KenkuArtificerTest extends BaseCardTest {
         addManaForKenku();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Kenku Artificer");
     }
@@ -74,13 +73,65 @@ class KenkuArtificerTest extends BaseCardTest {
                 .hasMessageContaining("noncreature artifact");
     }
 
+    @Test
+    @DisplayName("Can decline to target even when a noncreature artifact is available")
+    void canDeclineAvailableTarget() {
+        Permanent millstone = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        harness.setHand(player1, List.of(new KenkuArtificer()));
+        addManaForKenku();
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Kenku Artificer");
+        assertThat(millstone.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.isCreature(gd, millstone)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Animation persists after Kenku leaves and through the next turn")
+    void animationPersistsWithoutSource() {
+        Permanent millstone = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        castKenku(millstone.getId());
+        Permanent kenku = findPermanent(player1, "Kenku Artificer");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, kenku));
+        advanceToUpkeep(player2);
+
+        assertThat(gqs.isCreature(gd, millstone)).isTrue();
+        assertThat(gqs.isArtifact(gd, millstone)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, millstone)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, millstone)).isEqualTo(3);
+        assertThat(gqs.hasEffectiveSubtype(gd, millstone, CardSubtype.HOMUNCULUS)).isTrue();
+        assertThat(gqs.hasKeyword(gd, millstone, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Removing the target before the trigger resolves prevents animation")
+    void targetLeavesBeforeResolution() {
+        Permanent millstone = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        harness.setHand(player1, List.of(new KenkuArtificer()));
+        addManaForKenku();
+        harness.castCreature(player1, 0, millstone.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Kenku Artificer");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, millstone));
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Millstone");
+        harness.assertNotOnBattlefield(player1, "Millstone");
+        assertThat(millstone.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private void castKenku(java.util.UUID targetId) {
         harness.setHand(player1, List.of(new KenkuArtificer()));
         addManaForKenku();
 
         harness.castCreature(player1, 0, targetId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void addManaForKenku() {
