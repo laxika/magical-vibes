@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -39,7 +40,7 @@ class MsMarvelElasticAllyTest extends BaseCardTest {
     @DisplayName("Unmodified creature combat damage does not draw")
     void unmodifiedCreatureDoesNotDraw() {
         addMsMarvel();
-        Permanent attacker = addReadyAttacker();
+        addReadyAttacker();
         Card topCard = new Forest();
         harness.setLibrary(player1, List.of(topCard));
 
@@ -93,6 +94,116 @@ class MsMarvelElasticAllyTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("The ETB boost enables a controlled creature to draw on combat damage")
+    void etbBoostEnablesDraw() {
+        Permanent attacker = addReadyAttacker();
+        castMsMarvel(attacker);
+        Card topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+
+        resolveCombatWith();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
+    }
+
+    @Test
+    @DisplayName("Ms. Marvel's own increased power can trigger the draw")
+    void msMarvelCanTriggerHerOwnDraw() {
+        Permanent attacker = addCreatureReady(player1, new MsMarvelElasticAlly());
+        attacker.setAttacking(true);
+        attacker.setPowerModifier(1);
+        Card topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+
+        resolveCombatWith();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
+    }
+
+    @Test
+    @DisplayName("Power below base power does not trigger the draw")
+    void reducedPowerDoesNotDraw() {
+        addMsMarvel();
+        Permanent attacker = addReadyAttacker();
+        attacker.setPowerModifier(-1);
+        Card topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+
+        resolveCombatWith();
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).contains(topCard);
+    }
+
+    @Test
+    @DisplayName("An opponent's increased-power creature does not trigger the draw")
+    void opponentCreatureDoesNotDraw() {
+        addMsMarvel();
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        attacker.setPowerModifier(1);
+        Card topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).contains(topCard);
+    }
+
+    @Test
+    @DisplayName("Separate combat damage events in one turn still draw only once")
+    void laterCombatDamageDoesNotDrawAgain() {
+        addMsMarvel();
+        Permanent attacker = addReadyAttacker();
+        attacker.setPowerModifier(1);
+        Card firstCard = new Forest();
+        Card secondCard = new Forest();
+        harness.setLibrary(player1, List.of(firstCard, secondCard));
+
+        resolveCombatWith();
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        attacker.setAttacking(true);
+        resolveCombatWith();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(firstCard).doesNotContain(secondCard);
+        assertThat(gd.playerDecks.get(player1.getId())).contains(secondCard);
+    }
+
+    @Test
+    @DisplayName("A +1/+1 counter increases power above base power and enables the draw")
+    void counterEnablesDraw() {
+        addMsMarvel();
+        Permanent attacker = addReadyAttacker();
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Card topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+
+        resolveCombatWith();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
+    }
+
+    @Test
+    @DisplayName("Nonqualifying damage does not consume the once-per-turn trigger")
+    void nonqualifyingDamageDoesNotConsumeTrigger() {
+        addMsMarvel();
+        Permanent attacker = addReadyAttacker();
+        Card topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+
+        resolveCombatWith();
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(topCard);
+        attacker.setPowerModifier(1);
+        attacker.setAttacking(true);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        resolveCombatWith();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
+    }
+
     private void addMsMarvel() {
         harness.addToBattlefield(player1, new MsMarvelElasticAlly());
     }
@@ -103,8 +214,7 @@ class MsMarvelElasticAllyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private Permanent addReadyAttacker() {
