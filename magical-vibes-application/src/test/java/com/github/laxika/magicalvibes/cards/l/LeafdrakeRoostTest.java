@@ -103,6 +103,64 @@ class LeafdrakeRoostTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Casting Leafdrake Roost on an opponent's land grants that opponent the ability")
+    void canCastOnOpponentsLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new BreedingPool());
+        harness.setHand(player1, List.of(new LeafdrakeRoost()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castEnchantment(player1, 0, land.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(aura.getAttachedTo()).isEqualTo(land.getId());
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.activateAbility(player2, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Removing the Aura removes the land's granted ability")
+    void removingAuraRemovesGrantedAbility() {
+        Permanent land = setUpEnchantedLand();
+        gd.playerBattlefields.get(player1.getId()).removeIf(permanent -> permanent != land);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(land.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An activated ability still creates its Drake after the Aura leaves")
+    void activatedAbilitySurvivesAuraRemoval() {
+        Permanent land = setUpEnchantedLand(player2, player1);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.activateAbility(player2, 0, 2, null, null);
+        assertThat(gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())).isEmpty();
+
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())).isEmpty();
+    }
+
     private Permanent setUpEnchantedLand() {
         return setUpEnchantedLand(player1, player1);
     }
