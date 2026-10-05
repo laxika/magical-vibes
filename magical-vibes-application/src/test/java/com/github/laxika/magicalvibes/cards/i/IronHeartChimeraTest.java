@@ -80,6 +80,71 @@ class IronHeartChimeraTest extends BaseCardTest {
         assertThat(source.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isZero();
     }
 
+    @Test
+    @DisplayName("Sacrifice is paid immediately, before the ability resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent source = addSource();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BrassTalonChimera());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertSacrificed(source);
+        assertThat(target.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isZero();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertBuffed(target);
+    }
+
+    @Test
+    @DisplayName("A tapped Chimera with summoning sickness can pay the sacrifice cost")
+    void tappedSummoningSickSourceCanActivate() {
+        Permanent source = addSource();
+        source.setTapped(true);
+        source.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BrassTalonChimera());
+
+        activate(target);
+
+        assertSacrificed(source);
+        assertBuffed(target);
+    }
+
+    @Test
+    @DisplayName("Two sacrificed Chimeras place two separate +2/+2 counters")
+    void multipleSacrificesAccumulateCounters() {
+        addSource();
+        addSource();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BrassTalonChimera());
+
+        activate(target);
+        activate(target);
+
+        assertThat(target.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A target sacrificed in response receives neither the counter nor vigilance")
+    void targetSacrificedInResponseReceivesNoEffects() {
+        Permanent source = addSource();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BrassTalonChimera());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertSacrificed(source);
+        harness.assertInGraveyard(player1, "Brass-Talon Chimera");
+        assertThat(target.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isZero();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addSource() {
         return harness.addToBattlefieldAndReturn(player1, new IronHeartChimera());
     }
