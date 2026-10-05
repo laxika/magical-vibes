@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.f.FanaticalFirebrand;
+import com.github.laxika.magicalvibes.cards.s.SunSentinel;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -8,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PathOfMettle.class, SunSentinel.class, FanaticalFirebrand.class})
 class PathOfMettleTest extends BaseCardTest {
 
     @Test
@@ -101,6 +105,76 @@ class PathOfMettleTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getId).contains(attacker.getCard().getId());
     }
 
+    @Test
+    void firstStrikeAndDoubleStrikeEachPreventEntryDamage() {
+        Permanent firstStrike = addCreature(player1, "First strike creature", Keyword.FIRST_STRIKE);
+        Permanent doubleStrike = addCreature(player2, "Double strike creature", Keyword.DOUBLE_STRIKE);
+
+        castPathOfMettle();
+
+        assertThat(firstStrike.getMarkedDamage()).isZero();
+        assertThat(doubleStrike.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void oneAttackerWithMultipleQualifyingKeywordsDoesNotTransform() {
+        Permanent path = harness.addToBattlefieldAndReturn(player1, new PathOfMettle());
+        Permanent attacker = addCreature(player1, "Fast attacker", Keyword.FIRST_STRIKE, Keyword.HASTE);
+
+        declareAttackers(player1, attacker);
+        harness.passBothPriorities();
+
+        assertThat(path.isTransformed()).isFalse();
+    }
+
+    @Test
+    void transformTriggerStillResolvesAfterAnAttackerLeaves() {
+        Permanent path = harness.addToBattlefieldAndReturn(player1, new PathOfMettle());
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new SunSentinel());
+        sentinel.setSummoningSick(false);
+        Permanent firebrand = harness.addToBattlefieldAndReturn(player1, new FanaticalFirebrand());
+        Permanent defender = harness.addToBattlefieldAndReturn(player2, new FanaticalFirebrand());
+
+        declareAttackers(player1, sentinel, firebrand);
+        harness.activateAbility(player2, indexOf(player2, defender), 0, null, firebrand.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firebrand);
+        assertThat(path.isTransformed()).isTrue();
+    }
+
+    @Test
+    void metzaliDoesNothingWhenNoCreatureAttacked() {
+        Permanent metzali = addTransformedMetzali(player1);
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player2, new SunSentinel());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, indexOf(player1, metzali), 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(sentinel);
+        assertThat(metzali.isTapped()).isTrue();
+    }
+
+    @Test
+    void metzaliCanDestroyItsControllersCreatureAfterCombatRemoval() {
+        Permanent metzali = addTransformedMetzali(player1);
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new SunSentinel());
+        sentinel.setSummoningSick(false);
+        declareAttackers(player1, sentinel);
+        sentinel.setAttacking(false);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, indexOf(player1, metzali), 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sentinel);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(sentinel.getCard());
+    }
+
     private void castPathOfMettle() {
         harness.setHand(player1, List.of(new PathOfMettle()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -125,11 +199,10 @@ class PathOfMettleTest extends BaseCardTest {
 
     private Permanent addTransformedMetzali(Player player) {
         PathOfMettle card = new PathOfMettle();
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
         permanent.setCard(card.getBackFaceCard());
         permanent.setTransformed(true);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
@@ -144,9 +217,8 @@ class PathOfMettleTest extends BaseCardTest {
         keywordSet.addAll(List.of(keywords));
         card.setKeywords(keywordSet);
 
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
