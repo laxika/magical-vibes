@@ -64,4 +64,36 @@ class PitRaptorTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Pit Raptor");
     }
+
+    @Test
+    @DisplayName("Four mana with only one black cannot pay the upkeep cost")
+    void insufficientBlackManaSacrificesWithoutSpendingMana() {
+        harness.addToBattlefield(player1, new PitRaptor());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Pit Raptor");
+        harness.assertInGraveyard(player1, "Pit Raptor");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The controller can decline upkeep payment even with enough mana")
+    void decliningAffordablePaymentDoesNotSpendMana() {
+        harness.addToBattlefield(player1, new PitRaptor());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Pit Raptor");
+        harness.assertInGraveyard(player1, "Pit Raptor");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
+    }
 }
