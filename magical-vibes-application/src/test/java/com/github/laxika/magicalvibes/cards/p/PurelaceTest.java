@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Purelace.class, GrizzlyBears.class, Forest.class, DarkRitual.class})
+@CardUsed({Purelace.class, GrizzlyBears.class, Forest.class, DarkRitual.class, Unsummon.class})
 class PurelaceTest extends BaseCardTest {
 
     @Test
@@ -74,8 +75,7 @@ class PurelaceTest extends BaseCardTest {
         harness.castCreature(player1, 1);
         UUID bearsSpellId = gd.stack.getFirst().getCard().getId();
 
-        harness.castInstant(player1, 0, bearsSpellId);
-        harness.passBothPriorities(); // resolve Purelace on the spell
+        harness.castAndResolveInstant(player1, 0, bearsSpellId);
         harness.passBothPriorities(); // resolve the Grizzly Bears spell
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
@@ -91,11 +91,67 @@ class PurelaceTest extends BaseCardTest {
 
         harness.castInstant(player1, 1);
         Card targetSpell = gd.stack.getFirst().getCard();
-        harness.castInstant(player1, 0, targetSpell.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetSpell.getId());
 
         assertThat(gqs.getEffectiveCardColors(gd, targetSpell)).containsExactly(CardColor.WHITE);
 
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("The color change ends when the affected permanent leaves the battlefield")
+    void colorChangeDoesNotFollowCreatureThroughHandAndRecasting() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Purelace(), new Unsummon()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.WHITE);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.assertInHand(player1, "Grizzly Bears");
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveColors(gd, findPermanent(player1, "Grizzly Bears")))
+                .containsExactly(CardColor.GREEN);
+    }
+
+    @Test
+    @DisplayName("Purelace does not affect a target that leaves the battlefield in response")
+    void removedTargetDoesNotChangeColorInHand() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Purelace(), new Unsummon()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Purelace");
+        assertThat(gqs.getEffectiveCardColors(gd, target.getCard())).containsExactly(CardColor.GREEN);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A spell's color change ends when it resolves into the graveyard")
+    void instantReturnsToOriginalColorInGraveyard() {
+        harness.setHand(player1, List.of(new Purelace(), new DarkRitual()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 1);
+        Card targetSpell = gd.stack.getFirst().getCard();
+        harness.castAndResolveInstant(player1, 0, targetSpell.getId());
+        assertThat(gqs.getEffectiveCardColors(gd, targetSpell)).containsExactly(CardColor.WHITE);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Dark Ritual");
+        assertThat(gqs.getEffectiveCardColors(gd, targetSpell)).containsExactly(CardColor.BLACK);
     }
 }
