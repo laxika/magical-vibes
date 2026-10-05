@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.a.Aethersnatch;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.d.DoomedNecromancer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({LutriTheSpellchaser.class, Shock.class, CounselOfTheSoratami.class,
-        GrizzlyBears.class, DoomedNecromancer.class})
+        GrizzlyBears.class, DoomedNecromancer.class, Aethersnatch.class})
 class LutriTheSpellchaserTest extends BaseCardTest {
 
     @Test
@@ -79,9 +80,8 @@ class LutriTheSpellchaserTest extends BaseCardTest {
     void nonCastEntryDoesNotTrigger() {
         LutriTheSpellchaser lutri = new LutriTheSpellchaser();
         DoomedNecromancer necromancer = new DoomedNecromancer();
-        Permanent necromancerPermanent = new Permanent(necromancer);
+        Permanent necromancerPermanent = harness.addToBattlefieldAndReturn(player1, necromancer);
         necromancerPermanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(necromancerPermanent);
         harness.setGraveyard(player1, List.of(lutri));
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -91,6 +91,84 @@ class LutriTheSpellchaserTest extends BaseCardTest {
         harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(lutri.getId()));
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Lutri's copy may choose a different target without changing the original")
+    void copyMayChooseNewTarget() {
+        Shock shock = new Shock();
+        harness.setHand(player1, List.of(shock, new LutriTheSpellchaser()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, shock.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Lutri cannot copy an opponent's instant")
+    void cannotCopyOpponentsInstant() {
+        harness.setHand(player1, List.of(new LutriTheSpellchaser()));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Lutri resolves normally with no instant or sorcery to copy")
+    void resolvesWithNoLegalSpellTarget() {
+        harness.setHand(player1, List.of(new LutriTheSpellchaser()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Lutri, the Spellchaser");
+    }
+
+    @Test
+    @DisplayName("A player who gains control of Lutri's spell did not cast it")
+    void stolenLutriSpellDoesNotTrigger() {
+        LutriTheSpellchaser lutri = new LutriTheSpellchaser();
+        harness.setHand(player1, List.of(lutri));
+        harness.setHand(player2, List.of(new Shock(), new Aethersnatch()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.BLUE, 6);
+
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, lutri.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Lutri, the Spellchaser");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).hasSize(1);
     }
