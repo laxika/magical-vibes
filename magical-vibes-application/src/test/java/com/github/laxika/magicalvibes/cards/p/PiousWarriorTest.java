@@ -25,8 +25,7 @@ class PiousWarriorTest extends BaseCardTest {
         addCreatureReady(player1, new ShockTroops());
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
         resolveAllTriggers();
@@ -42,8 +41,7 @@ class PiousWarriorTest extends BaseCardTest {
         addCreatureReady(player1, new WildJhovall());
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
         resolveAllTriggers();
@@ -51,6 +49,42 @@ class PiousWarriorTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Pious Warrior");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore + 3);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(warrior);
+    }
+
+    @Test
+    @DisplayName("Attacking Pious Warrior gains life from damage received, not damage dealt")
+    void gainsLifeWhenBlocked() {
+        addCreatureReady(player1, new PiousWarrior());
+        addCreatureReady(player2, new WildJhovall());
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int defenderLifeBefore = gd.playerLifeTotals.get(player2.getId());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, lifeBefore + 3);
+        harness.assertLife(player2, defenderLifeBefore);
+        harness.assertInGraveyard(player1, "Pious Warrior");
+        harness.assertOnBattlefield(player2, "Wild Jhovall");
+    }
+
+    @Test
+    @DisplayName("Dealing combat damage to a player does not gain life")
+    void unblockedAttackDoesNotGainLife() {
+        addCreatureReady(player1, new PiousWarrior());
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int defenderLifeBefore = gd.playerLifeTotals.get(player2.getId());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, lifeBefore);
+        harness.assertLife(player2, defenderLifeBefore - 2);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
