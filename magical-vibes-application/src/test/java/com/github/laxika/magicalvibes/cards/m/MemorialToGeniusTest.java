@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,9 +14,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MemorialToGenius.class})
 class MemorialToGeniusTest extends BaseCardTest {
 
-    // ===== Enters the battlefield tapped =====
 
     @Test
     @DisplayName("Memorial to Genius enters the battlefield tapped")
@@ -24,13 +25,12 @@ class MemorialToGeniusTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent memorial = findPermanent(player1, "Memorial to Genius");
         assertThat(memorial.isTapped()).isTrue();
     }
 
-    // ===== Tap for mana =====
 
     @Test
     @DisplayName("Tapping Memorial to Genius produces blue mana")
@@ -38,12 +38,11 @@ class MemorialToGeniusTest extends BaseCardTest {
         Permanent memorial = addMemorialReady(player1);
         int index = gd.playerBattlefields.get(player1.getId()).indexOf(memorial);
 
-        gs.tapPermanent(gd, player1, index);
+        harness.tapPermanent(player1, index);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
     }
 
-    // ===== Sacrifice ability =====
 
     @Test
     @DisplayName("Activating sacrifice ability puts it on the stack")
@@ -111,13 +110,64 @@ class MemorialToGeniusTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Cannot pay the draw ability's blue cost with only colorless mana")
+    void cannotActivateWithoutBlueMana() {
+        Permanent memorial = addMemorialReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(memorial.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Memorial to Genius");
+        harness.assertNotInGraveyard(player1, "Memorial to Genius");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(5);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate the draw ability with only four mana")
+    void cannotActivateWithoutEnoughMana() {
+        Permanent memorial = addMemorialReady(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(memorial.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Memorial to Genius");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Draw ability can be activated during the opponent's turn and draws only on resolution")
+    void activatesDuringOpponentsTurn() {
+        harness.addToBattlefield(player1, new MemorialToGenius());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new MemorialToGenius(), new MemorialToGenius()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        int opponentHandSize = gd.playerHands.get(player2.getId()).size();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Memorial to Genius");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize);
+        assertThat(gd.stack).isEmpty();
+    }
 
     private Permanent addMemorialReady(Player player) {
-        MemorialToGenius card = new MemorialToGenius();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new MemorialToGenius());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
