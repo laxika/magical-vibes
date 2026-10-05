@@ -2,21 +2,22 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KraulWarrior.class})
 class KraulWarriorTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating the ability gives +3/+3")
     void abilityBoostsSelf() {
-        Permanent warrior = addReadyKraulWarrior(player1);
+        Permanent warrior = addCreatureReady(player1, new KraulWarrior());
         harness.addMana(player1, ManaColor.GREEN, 6);
 
         harness.activateAbility(player1, 0, null, null);
@@ -29,7 +30,7 @@ class KraulWarriorTest extends BaseCardTest {
     @Test
     @DisplayName("Ability can be activated repeatedly")
     void abilityStacks() {
-        Permanent warrior = addReadyKraulWarrior(player1);
+        Permanent warrior = addCreatureReady(player1, new KraulWarrior());
         harness.addMana(player1, ManaColor.GREEN, 12);
 
         harness.activateAbility(player1, 0, null, null);
@@ -44,7 +45,7 @@ class KraulWarriorTest extends BaseCardTest {
     @Test
     @DisplayName("Boost wears off at end of turn")
     void boostWearsOff() {
-        Permanent warrior = addReadyKraulWarrior(player1);
+        Permanent warrior = addCreatureReady(player1, new KraulWarrior());
         harness.addMana(player1, ManaColor.GREEN, 6);
 
         harness.activateAbility(player1, 0, null, null);
@@ -63,7 +64,7 @@ class KraulWarriorTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate without enough mana")
     void cannotActivateWithoutMana() {
-        addReadyKraulWarrior(player1);
+        addCreatureReady(player1, new KraulWarrior());
         harness.addMana(player1, ManaColor.GREEN, 5);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -71,10 +72,56 @@ class KraulWarriorTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
-    private Permanent addReadyKraulWarrior(Player player) {
-        Permanent perm = new Permanent(new KraulWarrior());
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Generic activation cost can be paid with colorless mana")
+    void acceptsMixedManaPayment() {
+        Permanent warrior = addCreatureReady(player1, new KraulWarrior());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(warrior.getEffectivePower()).isEqualTo(5);
+        assertThat(warrior.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Tapped and summoning-sick warrior can activate its ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent warrior = harness.addToBattlefieldAndReturn(player1, new KraulWarrior());
+        warrior.setSummoningSick(true);
+        warrior.tap();
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(warrior.getEffectivePower()).isEqualTo(5);
+        assertThat(warrior.getEffectiveToughness()).isEqualTo(5);
+        assertThat(warrior.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Activation boosts only its source and waits for resolution")
+    void boostsOnlySourceOnResolution() {
+        Permanent warrior = addCreatureReady(player1, new KraulWarrior());
+        Permanent otherWarrior = addCreatureReady(player1, new KraulWarrior());
+        Permanent opposingWarrior = addCreatureReady(player2, new KraulWarrior());
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(warrior.getPowerModifier()).isZero();
+        assertThat(warrior.getToughnessModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(warrior.getEffectivePower()).isEqualTo(5);
+        assertThat(warrior.getEffectiveToughness()).isEqualTo(5);
+        assertThat(otherWarrior.getPowerModifier()).isZero();
+        assertThat(otherWarrior.getToughnessModifier()).isZero();
+        assertThat(opposingWarrior.getPowerModifier()).isZero();
+        assertThat(opposingWarrior.getToughnessModifier()).isZero();
     }
 }
