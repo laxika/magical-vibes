@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.c.Crusade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.s.Skullcrack;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PowerLeak.class, Crusade.class, GrizzlyBears.class, Island.class})
+@CardUsed({PowerLeak.class, Crusade.class, GrizzlyBears.class, Island.class, Skullcrack.class})
 class PowerLeakTest extends BaseCardTest {
 
     @Test
@@ -49,8 +50,6 @@ class PowerLeakTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an enchantment");
     }
 
-    // ===== No mana: full damage, no prompt =====
-
     @Test
     @DisplayName("Enchanted enchantment's controller with no mana takes the full 2 damage")
     void noManaTakesFullDamage() {
@@ -65,8 +64,6 @@ class PowerLeakTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
     }
-
-    // ===== Paying mana prevents that much of the 2 damage =====
 
     @Test
     @DisplayName("Paying 1 mana prevents 1 damage, so the controller takes 1")
@@ -173,8 +170,6 @@ class PowerLeakTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
     }
 
-    // ===== Only fires on the enchanted controller's upkeep =====
-
     @Test
     @DisplayName("Power Leak does NOT trigger during the aura controller's own upkeep")
     void doesNotFireDuringAuraControllerUpkeep() {
@@ -190,7 +185,55 @@ class PowerLeakTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Paying more than 2 mana spends the chosen amount and prevents all damage")
+    void canPayMoreThanDamageAmount() {
+        Permanent enchantment = addEnchantment(player2);
+        attachPowerLeak(enchantment);
+        advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.BLUE, 5);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player2, 5);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Power Leak triggers on its controller's upkeep when enchanting their enchantment")
+    void triggersForOwnEnchantment() {
+        Permanent enchantment = addEnchantment(player1);
+        attachPowerLeak(enchantment);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("Paying mana cannot prevent Power Leak damage after Skullcrack")
+    void paymentCannotPreventUnpreventableDamage() {
+        Permanent enchantment = addEnchantment(player2);
+        attachPowerLeak(enchantment);
+        advanceToUpkeep(player2);
+        harness.setHand(player1, List.of(new Skullcrack()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player2, 2);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+    }
 
     private void attachPowerLeak(Permanent enchantment) {
         Permanent powerLeak = harness.addToBattlefieldAndReturn(player1, new PowerLeak());
