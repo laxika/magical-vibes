@@ -65,7 +65,6 @@ class MerfolkTradersTest extends BaseCardTest {
     @DisplayName("Only its controller draws and discards")
     void onlyControllerIsAffected() {
         harness.setLibrary(player1, List.of(new MerfolkTraders()));
-        harness.setHand(player1, List.of(new MerfolkTraders()));
         harness.setLibrary(player2, List.of(new MerfolkTraders()));
         harness.setHand(player2, List.of(new MerfolkTraders()));
         harness.forceActivePlayer(player1);
@@ -83,5 +82,36 @@ class MerfolkTradersTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Entering without being cast loots for the controller even on another player's turn")
+    void enteringWithoutCastingOnOpponentsTurn() {
+        MerfolkTraders drawnCard = new MerfolkTraders();
+        MerfolkTraders existingCard = new MerfolkTraders();
+        harness.setLibrary(player2, List.of(drawnCard));
+        harness.setHand(player2, List.of(existingCard));
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new MerfolkTraders()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.enterBattlefieldAndReturn(player2, new MerfolkTraders());
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(existingCard);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(existingCard, drawnCard);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(existingCard);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
     }
 }
