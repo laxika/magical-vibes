@@ -99,4 +99,23 @@ class LostSoulTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be blocked");
     }
+
+    @Test
+    @DisplayName("A blocker with swampwalk cannot block Lost Soul while its controller controls a Swamp")
+    void swampwalkOnBlockerDoesNotCancelSwampwalk() {
+        harness.addToBattlefield(player2, new Swamp());
+        Permanent blocker = addCreatureReady(player2, new LostSoul());
+        Permanent attacker = addCreatureReady(player1, new LostSoul());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
 }
