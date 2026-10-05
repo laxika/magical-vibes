@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.p.Peek;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,13 +16,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Nightsnare.class, Forest.class, GrizzlyBears.class, Peek.class})
 class NightsnareTest extends BaseCardTest {
 
     private void castNightsnare() {
         harness.setHand(player1, List.of(new Nightsnare()));
         harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 
     @Test
@@ -114,5 +115,61 @@ class NightsnareTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("opponent");
+    }
+
+    @Test
+    @DisplayName("Declining with one nonland card discards only that available card")
+    void decliningWithOneCardDiscardsIt() {
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        castNightsnare();
+
+        harness.handleCardChosen(player1, -1);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Nightsnare");
+    }
+
+    @Test
+    @DisplayName("A lone land is discarded without requiring a second card")
+    void loneLandFallsBackToDiscardAvailableCard() {
+        harness.setHand(player2, List.of(new Forest()));
+        castNightsnare();
+
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Nightsnare");
+    }
+
+    @Test
+    @DisplayName("Only the caster chooses a nonland, and only the opponent chooses fallback discards")
+    void choicesBelongToTheCorrectPlayers() {
+        harness.setHand(player2, List.of(new GrizzlyBears(), new Peek(), new Forest()));
+        castNightsnare();
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+
+        harness.handleCardChosen(player1, -1);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Peek");
+        harness.assertInHand(player2, "Forest");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
