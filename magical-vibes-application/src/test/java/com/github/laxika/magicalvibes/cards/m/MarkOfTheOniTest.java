@@ -120,6 +120,40 @@ class MarkOfTheOniTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrifices itself during the opponent's end step without a Demon")
+    void sacrificesDuringOpponentsEndStep() {
+        Permanent creature = addCreatureReady(player2, new GnarledMass());
+        castOn(creature);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Mark of the Oni");
+        harness.assertOnBattlefield(player2, "Gnarled Mass");
+        harness.assertNotOnBattlefield(player1, "Gnarled Mass");
+    }
+
+    @Test
+    @DisplayName("Can enchant a creature already controlled by its controller")
+    void canEnchantOwnCreature() {
+        Permanent creature = addCreatureReady(player1, new GnarledMass());
+
+        Permanent aura = castOn(creature);
+
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+        advanceToEndStep();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Mark of the Oni");
+        harness.assertOnBattlefield(player1, "Gnarled Mass");
+        harness.assertNotOnBattlefield(player2, "Gnarled Mass");
+    }
+
+    @Test
     @DisplayName("Cannot enchant a noncreature permanent")
     void cannotTargetNonCreature() {
         harness.addToBattlefield(player1, new MirrorGallery());
