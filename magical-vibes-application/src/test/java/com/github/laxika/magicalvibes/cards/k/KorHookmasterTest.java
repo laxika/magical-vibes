@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -15,17 +16,18 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KorHookmaster.class, GrizzlyBears.class})
 class KorHookmasterTest extends BaseCardTest {
 
     @Nested
     @DisplayName("ETB trigger")
+    @CardUsed({KorHookmaster.class, GrizzlyBears.class})
     class EnterTheBattlefield {
 
         @Test
         @DisplayName("Taps target creature an opponent controls")
         void tapsTargetCreature() {
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
+            Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
             assertThat(bears.isTapped()).isFalse();
 
             castHookmaster(player2, "Grizzly Bears");
@@ -38,8 +40,7 @@ class KorHookmasterTest extends BaseCardTest {
         @Test
         @DisplayName("Target creature doesn't untap during its controller's next untap step")
         void targetSkipsNextUntap() {
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
+            Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
             castHookmaster(player2, "Grizzly Bears");
             harness.passBothPriorities();
@@ -48,10 +49,71 @@ class KorHookmasterTest extends BaseCardTest {
             assertThat(bears.isTapped()).isTrue();
             assertThat(bears.getSkipUntapCount()).isEqualTo(1);
         }
+
+        @Test
+        void restrictionExpiresAfterOneControllerUntapStep() {
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new KorHookmaster());
+            castHookmaster(player2, "Kor Hookmaster");
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            harness.performUntapStep(player1);
+            assertThat(target.isTapped()).isTrue();
+            harness.performUntapStep(player2);
+            assertThat(target.isTapped()).isTrue();
+            harness.performUntapStep(player2);
+            assertThat(target.isTapped()).isFalse();
+        }
+
+        @Test
+        void alreadyTappedCreatureStillSkipsUntap() {
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new KorHookmaster());
+            target.setTapped(true);
+            castHookmaster(player2, "Kor Hookmaster");
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            harness.performUntapStep(player2);
+            assertThat(target.isTapped()).isTrue();
+            harness.performUntapStep(player2);
+            assertThat(target.isTapped()).isFalse();
+        }
+
+        @Test
+        void twoTriggersBeforeUntapPreventOnlyTheNextUntap() {
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new KorHookmaster());
+            castHookmaster(player2, "Kor Hookmaster");
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+            castHookmaster(player2, "Kor Hookmaster");
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            harness.performUntapStep(player2);
+            assertThat(target.isTapped()).isTrue();
+            harness.performUntapStep(player2);
+            assertThat(target.isTapped()).isFalse();
+        }
+
+        @Test
+        void triggerResolvesAfterSourceLeavesBattlefield() {
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new KorHookmaster());
+            castHookmaster(player2, "Kor Hookmaster");
+            harness.passBothPriorities();
+            gd.playerBattlefields.get(player1.getId()).clear();
+            harness.passBothPriorities();
+
+            assertThat(target.isTapped()).isTrue();
+            harness.performUntapStep(player2);
+            assertThat(target.isTapped()).isTrue();
+            harness.performUntapStep(player2);
+            assertThat(target.isTapped()).isFalse();
+        }
     }
 
     @Nested
     @DisplayName("Targeting restrictions")
+    @CardUsed({KorHookmaster.class, GrizzlyBears.class})
     class TargetingRestrictions {
 
         @Test
