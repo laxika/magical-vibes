@@ -97,6 +97,67 @@ class IvyDancerTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Ivy Dancer can target itself and taps immediately as a cost")
+    void canTargetItselfAndPaysTapCost() {
+        Permanent dancer = addReadyIvyDancer(player1);
+
+        harness.activateAbility(player1, 0, null, dancer.getId());
+
+        assertThat(dancer.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, dancer, Keyword.FORESTWALK)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, dancer, Keyword.FORESTWALK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped Ivy Dancer cannot activate its ability")
+    void cannotActivateWhileTapped() {
+        Permanent dancer = addReadyIvyDancer(player1);
+        dancer.setTapped(true);
+        Permanent target = addReadyIvyDancer(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FORESTWALK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An Ivy Dancer with summoning sickness cannot activate its ability")
+    void cannotActivateWithSummoningSickness() {
+        Permanent dancer = addReadyIvyDancer(player1);
+        dancer.setSummoningSick(true);
+        Permanent target = addReadyIvyDancer(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(dancer.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Forest controlled by the attacker does not prevent blocking")
+    void attackersForestDoesNotPreventBlocking() {
+        addReadyIvyDancer(player1);
+        Permanent attacker = addReadyIvyDancer(player1);
+        Permanent blocker = addReadyIvyDancer(player2);
+        harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FORESTWALK)).isTrue();
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+        declareBlock(blocker, attacker);
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
     private Permanent addReadyIvyDancer(Player player) {
         return addCreatureReady(player, new IvyDancer());
     }
