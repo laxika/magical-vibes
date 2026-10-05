@@ -17,11 +17,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MisfortuneTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Resolving prompts the opponent to choose a mode")
-    void resolvingPromptsOpponentChoice() {
+    @DisplayName("Casting prompts the opponent to choose a mode before priority is passed")
+    void castingPromptsOpponentChoice() {
         setupAndCast();
-
-        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -93,6 +91,64 @@ class MisfortuneTest extends BaseCardTest {
 
         assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(artifact.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+    }
+
+    @Test
+    void acceptGainsLifeWithNoCreatures() {
+        setupAndCast();
+        chooseModeAndFinishOriginalResolution(true);
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void declineDealsDamageWithNoCreatures() {
+        setupAndCast();
+        chooseModeAndFinishOriginalResolution(false);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void acceptCountersEveryControlledCreatureWithinOriginalResolution() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ElvishRanger());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new ElvishRanger());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new ElvishRanger());
+        setupAndCast();
+        chooseModeAndFinishOriginalResolution(true);
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertLife(player1, 24);
+    }
+
+    @Test
+    void declineKillsEveryOneToughnessCreatureAndDealsDamageWithinOriginalResolution() {
+        harness.addToBattlefield(player2, new ElvishRanger());
+        harness.addToBattlefield(player2, new ElvishRanger());
+        harness.addToBattlefield(player1, new ElvishRanger());
+        setupAndCast();
+        chooseModeAndFinishOriginalResolution(false);
+
+        assertThat(countPermanents(player2, "Elvish Ranger")).isZero();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .filteredOn(card -> card instanceof ElvishRanger).hasSize(2);
+        harness.assertOnBattlefield(player1, "Elvish Ranger");
+        harness.assertLife(player2, 16);
+    }
+
+    private void chooseModeAndFinishOriginalResolution(boolean accepted) {
+        boolean choosingDuringCasting = gd.interaction.isAwaitingInput();
+        if (!choosingDuringCasting) {
+            harness.passBothPriorities();
+        }
+        harness.handleMayAbilityChosen(player2, accepted);
+        if (choosingDuringCasting) {
+            harness.passBothPriorities();
+        }
     }
 
     private void setupAndCast() {
