@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.d.DimirGuildmage;
+import com.github.laxika.magicalvibes.cards.t.ThundersongTrumpeter;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.cards.v.ViashinoSlasher;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -13,7 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({IndenturedOaf.class, ViashinoSlasher.class, DimirGuildmage.class})
+@CardUsed({IndenturedOaf.class, ViashinoSlasher.class, DimirGuildmage.class, ThundersongTrumpeter.class,
+        TurnToFrog.class})
 class IndenturedOafTest extends BaseCardTest {
 
     @Test
@@ -55,5 +59,54 @@ class IndenturedOafTest extends BaseCardTest {
 
         harness.assertLife(player2, 16);
         assertThat(oaf.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Prevents damage to multicolored red creatures")
+    void preventsCombatDamageToMulticoloredRedCreature() {
+        Permanent oaf = addCreatureReady(player1, new IndenturedOaf());
+        Permanent redCreature = addCreatureReady(player2, new ThundersongTrumpeter());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(redCreature.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(redCreature);
+        assertThat(oaf.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Prevents its damage to a red attacker when blocking")
+    void preventsCombatDamageWhileBlocking() {
+        Permanent redCreature = addCreatureReady(player1, new ViashinoSlasher());
+        Permanent oaf = addCreatureReady(player2, new IndenturedOaf());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(redCreature.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(redCreature);
+        assertThat(oaf.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Losing all abilities removes its damage prevention")
+    void dealsDamageToRedCreatureAfterLosingAbilities() {
+        Permanent oaf = addCreatureReady(player1, new IndenturedOaf());
+        Permanent redCreature = addCreatureReady(player2, new ViashinoSlasher());
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, oaf.getId());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(redCreature.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(redCreature);
+        harness.assertInGraveyard(player1, "Indentured Oaf");
     }
 }
