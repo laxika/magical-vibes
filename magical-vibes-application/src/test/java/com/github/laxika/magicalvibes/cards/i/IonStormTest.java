@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.a.Arachnoid;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -80,6 +81,68 @@ class IonStormTest extends BaseCardTest {
                 .hasMessageContaining("counter");
         assertThat(counterHolder.getCounterCount(CounterType.QUEST)).isEqualTo(1);
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Controller chooses which eligible counter type to remove from a permanent")
+    void choosesCounterTypeWhenBothTypesArePresent() {
+        addIonStorm();
+        Permanent counterHolder = harness.addToBattlefieldAndReturn(player1, new Arachnoid());
+        counterHolder.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        counterHolder.setCounterCount(CounterType.CHARGE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(counterHolder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(counterHolder.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "+1/+1 counters");
+        assertThat(counterHolder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(counterHolder.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Cannot remove counters from an opponent's permanent")
+    void rejectsOpponentsCounter() {
+        addIonStorm();
+        Permanent counterHolder = harness.addToBattlefieldAndReturn(player2, new Arachnoid());
+        counterHolder.setCounterCount(CounterType.CHARGE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("counter");
+
+        assertThat(counterHolder.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Removes exactly one counter immediately and can activate again without tapping")
+    void paysCountersDuringEachActivation() {
+        Permanent ionStorm = addIonStorm();
+        ionStorm.setCounterCount(CounterType.CHARGE, 3);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        assertThat(ionStorm.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        assertThat(ionStorm.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     private Permanent addIonStorm() {
