@@ -31,8 +31,7 @@ class PretendersClaimTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new FreshVolunteers());
         Permanent defendingLand = addLand(player2);
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -50,8 +49,7 @@ class PretendersClaimTest extends BaseCardTest {
         Permanent firstDefendingLand = addLand(player2);
         Permanent secondDefendingLand = addLand(player2);
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -68,8 +66,7 @@ class PretendersClaimTest extends BaseCardTest {
         addCreatureReady(player2, new FreshVolunteers());
         Permanent defendingLand = addLand(player2);
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
@@ -91,8 +88,7 @@ class PretendersClaimTest extends BaseCardTest {
         addClaim(player1);
         addCreatureReady(player2, new FreshVolunteers());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Pretender's Claim"));
@@ -117,6 +113,77 @@ class PretendersClaimTest extends BaseCardTest {
         prepareDeclareBlockers();
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, 0)));
+        harness.passBothPriorities();
+
+        assertThat(defendingLand.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An Aura controlled by the defender still taps that defender's lands")
+    void defenderControlsClaimOnOpponentsAttacker() {
+        Permanent attacker = addCreatureReady(player1, new FreshVolunteers());
+        addClaimAttachedTo(player2, attacker);
+        Permanent attackingLand = addLand(player1);
+        addCreatureReady(player2, new FreshVolunteers());
+        Permanent defendingLand = addLand(player2);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
+        harness.passBothPriorities();
+
+        assertThat(defendingLand.isTapped()).isTrue();
+        assertThat(attackingLand.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The trigger still taps lands after the enchanted attacker leaves")
+    void attackerLeavesBeforeTriggerResolves() {
+        Permanent attacker = addCreatureReady(player1, new FreshVolunteers());
+        addClaimAttachedTo(player1, attacker);
+        addCreatureReady(player2, new FreshVolunteers());
+        Permanent defendingLand = addLand(player2);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, attacker));
+        harness.passBothPriorities();
+
+        assertThat(defendingLand.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An unblocked enchanted attacker does not tap defending lands")
+    void unblockedAttackDoesNotTrigger() {
+        Permanent attacker = addCreatureReady(player1, new FreshVolunteers());
+        addClaimAttachedTo(player1, attacker);
+        addCreatureReady(player2, new FreshVolunteers());
+        Permanent defendingLand = addLand(player2);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+
+        assertThat(defendingLand.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Defending lands are tapped even if the attacked planeswalker leaves before resolution")
+    void attackedPlaneswalkerLeavesBeforeTriggerResolves() {
+        Permanent attacker = addCreatureReady(player1, new FreshVolunteers());
+        addClaimAttachedTo(player1, attacker);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new NicolBolasPlaneswalker());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
+        addCreatureReady(player2, new FreshVolunteers());
+        Permanent defendingLand = addLand(player2);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of(0), Map.of(0, planeswalker.getId()));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, planeswalker));
         harness.passBothPriorities();
 
         assertThat(defendingLand.isTapped()).isTrue();
