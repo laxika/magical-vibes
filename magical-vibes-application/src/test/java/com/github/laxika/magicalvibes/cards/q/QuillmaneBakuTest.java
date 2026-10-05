@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.CallousDeceiver;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.r.ReachThroughMists;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({QuillmaneBaku.class, CallousDeceiver.class, Forest.class, GrizzlyBears.class,
-        HillGiant.class, ReachThroughMists.class})
+        HillGiant.class, Ornithopter.class, ReachThroughMists.class})
 class QuillmaneBakuTest extends BaseCardTest {
 
     @Test
@@ -81,8 +82,7 @@ class QuillmaneBakuTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player2, "Grizzly Bears");
         assertThat(baku.getCounterCount(CounterType.KI)).isEqualTo(1);
         assertThat(baku.isTapped()).isTrue();
     }
@@ -123,6 +123,69 @@ class QuillmaneBakuTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Accepting an Arcane cast trigger adds a ki counter before the spell resolves")
+    void arcaneSpellAddsKiCounter() {
+        Permanent baku = addBaku();
+        prepareMainPhase();
+        harness.castFromHand(player1, new ReachThroughMists(), "{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(baku.getCounterCount(CounterType.KI)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("X may exceed the target's mana value and counters are paid immediately")
+    void bouncesCreatureBelowChosenX() {
+        Permanent baku = addBaku();
+        baku.setCounterCount(CounterType.KI, 3);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 3, bears.getId());
+
+        assertThat(baku.getCounterCount(CounterType.KI)).isZero();
+        assertThat(baku.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Quillmane Baku may target itself with X equal to five")
+    void canBounceItself() {
+        Permanent baku = addBaku();
+        baku.setCounterCount(CounterType.KI, 5);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 5, baku.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Quillmane Baku");
+        harness.assertInHand(player1, "Quillmane Baku");
+    }
+
+    @Test
+    @DisplayName("X may be zero with no ki counters to bounce a zero mana value creature")
+    void zeroCountersCanBounceZeroManaValueCreature() {
+        Permanent baku = addBaku();
+        Permanent thopter = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, thopter.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
+        harness.assertInHand(player2, "Ornithopter");
+        assertThat(baku.getCounterCount(CounterType.KI)).isZero();
+        assertThat(baku.isTapped()).isTrue();
     }
 
     private Permanent addBaku() {
