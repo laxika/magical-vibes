@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,13 +14,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NinjaOfTheHand.class, GrizzlyBears.class})
+@CardUsed({NinjaOfTheHand.class})
 class NinjaOfTheHandTest extends BaseCardTest {
 
     @Test
     @DisplayName("Power-up costs two generic mana during the entry turn and puts a counter on Ninja")
     void powerUpIsDiscountedAndMakesOpponentDiscard() {
-        GrizzlyBears discarded = new GrizzlyBears();
+        NinjaOfTheHand discarded = new NinjaOfTheHand();
         Permanent ninja = harness.enterBattlefieldAndReturn(player1, new NinjaOfTheHand());
         harness.setHand(player2, List.of(discarded));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -40,7 +39,7 @@ class NinjaOfTheHandTest extends BaseCardTest {
     @Test
     @DisplayName("Power-up costs its full activation cost after the entry turn")
     void powerUpIsNotDiscountedAfterEntryTurn() {
-        GrizzlyBears discarded = new GrizzlyBears();
+        NinjaOfTheHand discarded = new NinjaOfTheHand();
         Permanent ninja = addCreatureReady(player1, new NinjaOfTheHand());
         harness.setHand(player2, List.of(discarded));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -57,7 +56,7 @@ class NinjaOfTheHandTest extends BaseCardTest {
     @DisplayName("Power-up can be activated only once")
     void powerUpCanBeActivatedOnlyOnce() {
         Permanent ninja = addCreatureReady(player1, new NinjaOfTheHand());
-        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new NinjaOfTheHand()));
         harness.addMana(player1, ManaColor.COLORLESS, 8);
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -69,5 +68,60 @@ class NinjaOfTheHandTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once");
+    }
+    @Test
+    @DisplayName("Power-up puts a counter on Ninja even when the opponent has no cards")
+    void emptyOpponentHandDoesNotPreventCounter() {
+        Permanent ninja = harness.enterBattlefieldAndReturn(player1, new NinjaOfTheHand());
+        NinjaOfTheHand ownCard = new NinjaOfTheHand();
+        harness.setHand(player1, List.of(ownCard));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(ninja.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(ownCard);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The opponent chooses exactly one card to discard and the controller keeps their hand")
+    void opponentChoosesOneCard() {
+        Permanent ninja = harness.enterBattlefieldAndReturn(player1, new NinjaOfTheHand());
+        NinjaOfTheHand ownCard = new NinjaOfTheHand();
+        NinjaOfTheHand kept = new NinjaOfTheHand();
+        NinjaOfTheHand discarded = new NinjaOfTheHand();
+        harness.setHand(player1, List.of(ownCard));
+        harness.setHand(player2, List.of(kept, discarded));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(ownCard);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(kept);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discarded);
+        assertThat(ninja.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The once-only limit applies while the first power-up is still on the stack")
+    void cannotActivateAgainBeforeResolution() {
+        Permanent ninja = harness.enterBattlefieldAndReturn(player1, new NinjaOfTheHand());
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once");
+
+        harness.passBothPriorities();
+        assertThat(ninja.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }
