@@ -115,6 +115,61 @@ class NeurokStealthsuitTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature you control");
     }
 
+    @Test
+    @DisplayName("Blue ability moves shroud from the old creature to the new creature")
+    void blueAbilityMovesShroudToNewCreature() {
+        Permanent suit = addSuitReady(player1);
+        Permanent oldCreature = addCreatureReady(player1, new Arachnoid());
+        Permanent newCreature = addCreatureReady(player1, new Arachnoid());
+        suit.setAttachedTo(oldCreature.getId());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, newCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(suit.getAttachedTo()).isEqualTo(newCreature.getId());
+        assertThat(gqs.hasKeyword(gd, oldCreature, Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, newCreature, Keyword.SHROUD)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Equip moves shroud from the old creature to the new creature")
+    void equipMovesShroudToNewCreature() {
+        Permanent suit = addSuitReady(player1);
+        Permanent oldCreature = addCreatureReady(player1, new Arachnoid());
+        Permanent newCreature = addCreatureReady(player1, new Arachnoid());
+        suit.setAttachedTo(oldCreature.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, newCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(suit.getAttachedTo()).isEqualTo(newCreature.getId());
+        assertThat(gqs.hasKeyword(gd, oldCreature, Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, newCreature, Keyword.SHROUD)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Blue ability leaves the old attachment intact if the target gains shroud")
+    void blueAbilityDoesNotMoveWhenTargetGainsShroud() {
+        Permanent suit = addSuitReady(player1);
+        Permanent otherSuit = addSuitReady(player1);
+        Permanent oldCreature = addCreatureReady(player1, new Arachnoid());
+        Permanent target = addCreatureReady(player1, new Arachnoid());
+        suit.setAttachedTo(oldCreature.getId());
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.activateAbility(player1, 1, 0, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(otherSuit.getAttachedTo()).isEqualTo(target.getId());
+        harness.passBothPriorities();
+
+        assertThat(suit.getAttachedTo()).isEqualTo(oldCreature.getId());
+        assertThat(gqs.hasKeyword(gd, oldCreature, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.SHROUD)).isTrue();
+    }
+
     private Permanent addSuitReady(Player player) {
         Permanent permanent = harness.addToBattlefieldAndReturn(player, new NeurokStealthsuit());
         permanent.setSummoningSick(false);
