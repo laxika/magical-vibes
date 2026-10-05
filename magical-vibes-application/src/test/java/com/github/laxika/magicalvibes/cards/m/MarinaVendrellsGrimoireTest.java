@@ -1,10 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.GameStatus;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,24 +14,19 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MarinaVendrellsGrimoire.class, Forest.class, GrizzlyBears.class, Shock.class})
+@CardUsed({MarinaVendrellsGrimoire.class, Forest.class})
 class MarinaVendrellsGrimoireTest extends BaseCardTest {
 
     @Test
     @DisplayName("Draws five cards when cast onto the battlefield")
     void castEtbDrawsFiveCards() {
-        harness.setHand(player1, List.of(new MarinaVendrellsGrimoire()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-
-        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new MarinaVendrellsGrimoire(), "{5}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 4);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(5);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 5);
     }
 
@@ -44,7 +36,9 @@ class MarinaVendrellsGrimoireTest extends BaseCardTest {
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.addToBattlefield(player1, new MarinaVendrellsGrimoire());
+        harness.enterBattlefieldAndReturn(player1, new MarinaVendrellsGrimoire());
+
+        assertThat(gd.stack).isEmpty();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
@@ -72,7 +66,7 @@ class MarinaVendrellsGrimoireTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MarinaVendrellsGrimoire());
         harness.setLife(player1, 20);
         harness.setHand(player1, new ArrayList<>(List.of(
-                new Forest(), new GrizzlyBears(), new Forest(), new GrizzlyBears())));
+                new Forest(), new Forest(), new Forest(), new Forest())));
 
         harness.inMutationScope(() -> harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 2, "test"));
         harness.passBothPriorities();
@@ -119,12 +113,102 @@ class MarinaVendrellsGrimoireTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.addToBattlefield(player1, new MarinaVendrellsGrimoire());
         harness.setHand(player1, new ArrayList<>(List.of(
-                new Forest(), new Forest(), new Forest(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new Forest(), new Forest(), new Forest())));
+                new Forest(), new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest(), new Forest())));
 
         harness.getGameService().advanceStep(gd);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(9);
+    }
+
+    @Test
+    void lifeGainWaitsForTriggeredAbilityToResolve() {
+        harness.addToBattlefield(player1, new MarinaVendrellsGrimoire());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    void lifeLossWithAlreadyEmptyHandLosesOnlyOnResolution() {
+        harness.addToBattlefield(player1, new MarinaVendrellsGrimoire());
+        harness.setHand(player1, List.of());
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 1, "test"));
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    void negativeLifeAndEmptyHandAloneDoNotLoseTheGame() {
+        harness.addToBattlefield(player1, new MarinaVendrellsGrimoire());
+        harness.setHand(player1, List.of());
+        harness.setLife(player1, -5);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    void opponentLifeChangesDoNotDrawOrDiscardForController() {
+        harness.addToBattlefield(player1, new MarinaVendrellsGrimoire());
+        harness.setHand(player1, List.of(new Forest()));
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+
+        harness.inMutationScope(() -> {
+            harness.getLifeSupport().applyGainLife(gd, player2.getId(), 2);
+            harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 1, "test");
+        });
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    void payingLifeTriggersDiscard() {
+        harness.addToBattlefield(player1, new MarinaVendrellsGrimoire());
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyLifePayment(gd, player1.getId(), 1, "test"));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    void drawingFromEmptyLibraryStillLosesTheGame() {
+        harness.addToBattlefield(player1, new MarinaVendrellsGrimoire());
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.runStateBasedActions();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
     }
 }
