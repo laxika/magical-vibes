@@ -64,6 +64,8 @@ class KamiOfTheTendedGardenTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(spirit);
         assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(card -> card.getId().equals(spirit.getId()));
@@ -111,12 +113,50 @@ class KamiOfTheTendedGardenTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(spirit.getId()));
         assertThat(gd.playerHands.get(player1.getId()))
                 .noneMatch(card -> card.getId().equals(spirit.getId()));
+    }
+
+    @Test
+    @DisplayName("The upkeep payment does not trigger on an opponent's upkeep")
+    void noPaymentOnOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new KamiOfTheTendedGarden());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Kami of the Tended Garden");
+    }
+
+    @Test
+    @DisplayName("Sacrificing Kami during upkeep triggers Soulshift")
+    void upkeepSacrificeTriggersSoulshift() {
+        harness.addToBattlefield(player1, new KamiOfTheTendedGarden());
+        Card spirit = new NikkoOnna();
+        harness.setGraveyard(player1, List.of(spirit));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Kami of the Tended Garden");
+        var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(spirit.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Nikko-Onna");
+        harness.assertNotInGraveyard(player1, "Nikko-Onna");
     }
 }
