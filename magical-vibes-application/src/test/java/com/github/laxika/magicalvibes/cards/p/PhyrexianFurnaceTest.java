@@ -132,4 +132,47 @@ class PhyrexianFurnaceTest extends BaseCardTest {
                 player1, 0, 1, null, targetCard.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("A tapped Furnace can be sacrificed in response, and its tap ability uses the new bottom card")
+    void sacrificeTappedFurnaceInResponseToBottomCardAbility() {
+        Card bottomCard = new JanglingAutomaton();
+        Card nextCard = new MindStone();
+        Card drawCard = new MindStone();
+        Permanent furnace = harness.addToBattlefieldAndReturn(player1, new PhyrexianFurnace());
+        harness.setGraveyard(player2, List.of(bottomCard, nextCard));
+        harness.setLibrary(player1, List.of(drawCard));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        assertThat(furnace.isTapped()).isTrue();
+        harness.activateAbility(player1, 0, 1, null, bottomCard.getId(), Zone.GRAVEYARD);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(furnace);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(furnace.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(bottomCard, nextCard);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawCard);
+    }
+
+    @Test
+    @DisplayName("Sacrifice ability requires one mana even when the Furnace is untapped")
+    void sacrificeAbilityCannotBeActivatedWithoutMana() {
+        Card targetCard = new JanglingAutomaton();
+        Permanent furnace = harness.addToBattlefieldAndReturn(player1, new PhyrexianFurnace());
+        harness.setGraveyard(player2, List.of(targetCard));
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, 1, null, targetCard.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(furnace);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(targetCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
 }
