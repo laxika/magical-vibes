@@ -141,4 +141,101 @@ class PipersMelodyTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Werebear");
         harness.assertInGraveyard(player1, "Piper's Melody");
     }
+
+    @Test
+    @CardUsed(PsychogenicProbe.class)
+    void selectingZeroTargetsStillShufflesLibrary() {
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setGraveyard(player1, List.of(new Werebear()));
+        harness.setHand(player1, List.of(new PipersMelody()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setLife(player1, 20);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+        harness.assertInGraveyard(player1, "Werebear");
+    }
+
+    @Test
+    @CardUsed(PsychogenicProbe.class)
+    void noCreatureCardsStillShufflesLibrary() {
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setGraveyard(player1, List.of(new CarefulStudy()));
+        harness.setHand(player1, List.of(new PipersMelody()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setLife(player1, 20);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+        harness.assertInGraveyard(player1, "Careful Study");
+    }
+
+    @Test
+    void shufflesOnlySelectedSubset() {
+        Card selected = new Werebear();
+        Card unselected = new Werebear();
+        harness.setGraveyard(player1, List.of(selected, unselected));
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new PipersMelody()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(selected);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(unselected).doesNotContain(selected);
+    }
+
+    @Test
+    void resolvesForRemainingLegalTarget() {
+        Card removed = new Werebear();
+        Card remaining = new Werebear();
+        harness.setGraveyard(player1, List.of(removed, remaining));
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new PipersMelody()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(removed.getId(), remaining.getId()));
+        harness.setGraveyard(player1, List.of(remaining));
+        harness.setExile(player1, List.of(removed));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(removed);
+        harness.assertInGraveyard(player1, "Piper's Melody");
+    }
+
+    @Test
+    @CardUsed(PsychogenicProbe.class)
+    void allTargetsIllegalDoesNotShuffleLibrary() {
+        Card target = new Werebear();
+        Card libraryCard = new CarefulStudy();
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setGraveyard(player1, List.of(target));
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setHand(player1, List.of(new PipersMelody()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setLife(player1, 20);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        harness.assertInGraveyard(player1, "Piper's Melody");
+    }
 }
