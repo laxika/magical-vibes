@@ -80,13 +80,90 @@ class PetravarkTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Returning Petravark to hand also returns the land, untapped")
+    void landReturnsWhenPetravarkIsBounced() {
+        Permanent peak = harness.addToBattlefieldAndReturn(player2, new TaintedPeak());
+        peak.tap();
+        castAndResolvePetravark(peak.getId());
+        Permanent petravark = findPermanent(player1, "Petravark");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, petravark));
+        harness.assertInHand(player1, "Petravark");
+        harness.assertNotOnBattlefield(player2, "Tainted Peak");
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player2, "Tainted Peak").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A land controlled by another player returns to its owner")
+    void stolenLandReturnsToOwner() {
+        TaintedPeak land = new TaintedPeak();
+        land.setOwnerId(player2.getId());
+        Permanent peak = harness.addToBattlefieldAndReturn(player1, land);
+        castAndResolvePetravark(peak.getId());
+        Permanent petravark = findPermanent(player1, "Petravark");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, petravark));
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Tainted Peak");
+        harness.assertNotOnBattlefield(player1, "Tainted Peak");
+    }
+
+    @Test
+    @DisplayName("Each Petravark returns only the land it exiled")
+    void multiplePetravarksKeepSeparateExiledLands() {
+        Permanent firstLand = harness.addToBattlefieldAndReturn(player2, new TaintedPeak());
+        Permanent secondLand = harness.addToBattlefieldAndReturn(player2, new TaintedPeak());
+        castAndResolvePetravark(firstLand.getId());
+        Permanent firstPetravark = findPermanent(player1, "Petravark");
+        castAndResolvePetravark(secondLand.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, firstPetravark));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player2, "Tainted Peak"))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactly(firstLand.getCard().getId());
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(card -> card.getId()).containsExactly(secondLand.getCard().getId());
+    }
+
+    @Test
+    @DisplayName("The enter trigger does nothing if its target land has left the battlefield")
+    void targetLeavesBeforeEnterTriggerResolves() {
+        Permanent peak = harness.addToBattlefieldAndReturn(player2, new TaintedPeak());
+        harness.setHand(player1, List.of(new Petravark()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0, 0, peak.getId());
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, peak));
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Tainted Peak");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        Permanent petravark = findPermanent(player1, "Petravark");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, petravark));
+        resolveAllTriggers();
+        harness.assertNotOnBattlefield(player2, "Tainted Peak");
+        harness.assertInGraveyard(player2, "Tainted Peak");
+    }
+
     private void castAndResolvePetravark(UUID targetId) {
         harness.setHand(player1, List.of(new Petravark()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0, 0, targetId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
