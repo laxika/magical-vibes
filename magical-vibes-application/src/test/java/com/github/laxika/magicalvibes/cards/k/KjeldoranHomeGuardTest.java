@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -70,8 +69,7 @@ class KjeldoranHomeGuardTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new GiveNoGround()));
         harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.castInstant(player1, 0, guard.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, guard.getId());
 
         prepareDeclareBlockers(player1);
         gs.declareBlockers(gd, player2, List.of(
@@ -96,12 +94,43 @@ class KjeldoranHomeGuardTest extends BaseCardTest {
         declareAttackers(player1, List.of()); // stays back
         harness.passBothPriorities();
 
-        assertThat(gd.hasDelayedAction(PutCounterOnPermanentAtEndOfCombat.class)).isFalse();
-
         leaveEndOfCombat();
 
         assertThat(guard.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isZero();
         assertThat(findPermanents(player1, "Deserter")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Declaring an attacker does not trigger the end-of-combat ability early")
+    void declaringAttackerDoesNotTriggerEarly() {
+        addCreatureReady(player1, new KjeldoranHomeGuard());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Deserter")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The end-of-combat ability uses the stack before placing a counter or creating a token")
+    void endOfCombatAbilityWaitsForResolution() {
+        Permanent guard = addCreatureReady(player1, new KjeldoranHomeGuard());
+
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            declareAttackers(player1, List.of(0));
+            harness.passUntil(TurnStep.END_OF_COMBAT);
+        });
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(guard.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isZero();
+        assertThat(findPermanents(player1, "Deserter")).isEmpty();
+
+        resolveAllTriggers();
+
+        assertThat(guard.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isEqualTo(1);
+        assertThat(findPermanents(player1, "Deserter")).hasSize(1);
     }
 
     private void leaveEndOfCombat() {
