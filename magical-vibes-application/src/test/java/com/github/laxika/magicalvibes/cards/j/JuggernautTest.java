@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.w.WallOfSwords;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Juggernaut.class, WallOfSwords.class, GrizzlyBears.class})
+@CardUsed({Juggernaut.class, WallOfSwords.class, GrizzlyBears.class, Pacifism.class})
 class JuggernautTest extends BaseCardTest {
 
     @Test
@@ -55,6 +56,21 @@ class JuggernautTest extends BaseCardTest {
         declareAttackers(List.of());
 
         assertThat(juggernaut.isAttacking()).isFalse();
+    }
+
+    @Test
+    void doesNotHaveToAttackWhenEnchantedWithPacifism() {
+        Permanent juggernaut = addCreatureReady(player1, new Juggernaut());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Pacifism()));
+        harness.addMana(player2, com.github.laxika.magicalvibes.model.ManaColor.WHITE, 2);
+        harness.castEnchantment(player2, 0, juggernaut.getId());
+        harness.passBothPriorities();
+
+        declareAttackers(List.of());
+
+        assertThat(juggernaut.isAttacking()).isFalse();
+        harness.assertOnBattlefield(player2, "Pacifism");
     }
 
     @Test
