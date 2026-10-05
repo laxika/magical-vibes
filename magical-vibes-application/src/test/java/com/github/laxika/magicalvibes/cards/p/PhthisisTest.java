@@ -16,7 +16,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Phthisis.class, GiantSpider.class, GrizzlyBears.class, WringFlesh.class, WithstandDeath.class})
+@CardUsed({Phthisis.class, GiantSpider.class, GrizzlyBears.class, WringFlesh.class, WithstandDeath.class,
+        PlatinumEmperion.class})
 class PhthisisTest extends BaseCardTest {
 
     @Test
@@ -54,8 +55,7 @@ class PhthisisTest extends BaseCardTest {
     @Test
     @DisplayName("Causes no life loss when power plus toughness is negative")
     void causesNoLifeLossWhenPowerPlusToughnessIsNegative() {
-        harness.addToBattlefield(player2, new GiantSpider());
-        UUID targetId = harness.getPermanentId(player2, "Giant Spider");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GiantSpider()).getId();
 
         harness.setHand(player1, List.of(new WringFlesh(), new WringFlesh()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -74,8 +74,7 @@ class PhthisisTest extends BaseCardTest {
     @Test
     @DisplayName("Its controller loses life even when the target is indestructible")
     void controllerLosesLifeWhenTargetIsIndestructible() {
-        harness.addToBattlefield(player2, new GiantSpider());
-        UUID targetId = harness.getPermanentId(player2, "Giant Spider");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GiantSpider()).getId();
 
         harness.setHand(player1, List.of(new WithstandDeath()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -108,8 +107,7 @@ class PhthisisTest extends BaseCardTest {
     @Test
     @DisplayName("Suspend exiles Phthisis with five time counters and later offers a free cast")
     void suspendOffersFreeCast() {
-        harness.addToBattlefield(player2, new GiantSpider());
-        UUID targetId = harness.getPermanentId(player2, "Giant Spider");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GiantSpider()).getId();
         Phthisis card = suspendPhthisis();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
@@ -148,6 +146,52 @@ class PhthisisTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+    }
+
+    @Test
+    @DisplayName("Destroys Platinum Emperion before applying life loss")
+    void destroysLifeTotalRestrictionBeforeLifeLoss() {
+        harness.addToBattlefield(player2, new PlatinumEmperion());
+        castPhthisis();
+        harness.setLife(player2, 20);
+
+        UUID targetId = harness.getPermanentId(player2, "Platinum Emperion");
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertInGraveyard(player2, "Platinum Emperion");
+        harness.assertLife(player2, 4);
+    }
+
+    @Test
+    @DisplayName("Negative power can still produce positive life loss")
+    void addsNegativePowerToPositiveToughness() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GiantSpider()).getId();
+        harness.setHand(player1, List.of(new WringFlesh()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        castPhthisis();
+        harness.setLife(player2, 20);
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertInGraveyard(player2, "Giant Spider");
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Targeting your own creature makes you lose life")
+    void ownCreatureControllerLosesLife() {
+        harness.addToBattlefield(player1, new GiantSpider());
+        castPhthisis();
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        UUID targetId = harness.getPermanentId(player1, "Giant Spider");
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertInGraveyard(player1, "Giant Spider");
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 20);
     }
 
     private Phthisis suspendPhthisis() {
