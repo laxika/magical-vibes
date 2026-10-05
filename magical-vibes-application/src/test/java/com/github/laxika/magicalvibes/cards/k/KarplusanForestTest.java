@@ -90,4 +90,38 @@ class KarplusanForestTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
+
+    @Test
+    @DisplayName("Untapping allows another mana choice and each colored activation deals damage")
+    void canChooseDifferentColorAfterUntapping() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new KarplusanForest());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.performUntapStep(player1);
+        assertThat(land.isTapped()).isFalse();
+        harness.activateAbility(player1, 0, 2, null, null);
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        harness.assertLife(player1, 18);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The other player's forest adds mana and deals damage to that player")
+    void otherPlayersForestDamagesItsController() {
+        harness.forceActivePlayer(player2);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 17);
+        harness.addToBattlefield(player2, new KarplusanForest());
+
+        harness.activateAbility(player2, 0, 2, null, null);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 16);
+        assertThat(gd.stack).isEmpty();
+    }
 }
