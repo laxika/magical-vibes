@@ -89,6 +89,65 @@ class MerchantScrollTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
     }
 
+    @Test
+    @DisplayName("A blue sorcery is excluded while every blue instant remains selectable")
+    void excludesBlueSorceriesAndOffersAllBlueInstants() {
+        setupAndCast();
+        Boomerang first = new Boomerang();
+        Boomerang second = new Boomerang();
+        harness.setLibrary(player1, List.of(first, new MerchantScroll(), new Shock(), second));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(first, second);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerDecks.get(player1.getId())).contains(first).doesNotContain(second);
+        harness.assertInGraveyard(player1, "Merchant Scroll");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Finding a blue instant reveals it and triggers a shuffle ability exactly once")
+    void successfulSearchRevealsCardAndTriggersShuffle() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of(new Boomerang(), new GrizzlyBears()));
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Boomerang");
+        harness.assertLife(player1, 18);
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("reveals") && entry.contains("Boomerang"));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The search may find nothing even with a blue instant present and still shuffles")
+    void canFailToFindWithMatchingCardPresent() {
+        setupAndCast();
+        Boomerang available = new Boomerang();
+        harness.setLibrary(player1, List.of(available));
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(available);
+        harness.assertLife(player1, 18);
+        harness.assertInGraveyard(player1, "Merchant Scroll");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
     private void setupAndCast() {
         harness.castFromHand(player1, new MerchantScroll(), "{1}{U}");
     }
