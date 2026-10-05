@@ -92,10 +92,65 @@ class PalinchronTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Palinchron");
     }
 
+    @Test
+    void mayChooseANonzeroSubsetOfAvailableLands() {
+        List<Permanent> lands = addTappedLands(player1, 3);
+
+        castPalinchron();
+        harness.handleMultiplePermanentsChosen(player1, List.of(lands.get(1).getId()));
+
+        assertThat(lands.get(0).isTapped()).isTrue();
+        assertThat(lands.get(1).isTapped()).isFalse();
+        assertThat(lands.get(2).isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void entersNormallyWhenThereAreNoLandsToUntap() {
+        castPalinchron();
+
+        harness.assertOnBattlefield(player1, "Palinchron");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void activatedAbilityReturnsToOwnerRatherThanController() {
+        Palinchron card = new Palinchron();
+        card.setOwnerId(player2.getId());
+        harness.addToBattlefield(player1, card);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Palinchron");
+        harness.assertNotInHand(player1, "Palinchron");
+        harness.assertNotOnBattlefield(player1, "Palinchron");
+    }
+
+    @Test
+    void earlierActivationDoesNotReturnAnotherPalinchronAfterSourceLeaves() {
+        Palinchron original = new Palinchron();
+        harness.addToBattlefield(player1, original);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new Palinchron());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Palinchron")).containsExactly(other);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(original);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castPalinchron() {
         harness.castFromHand(player1, new Palinchron(), "{5}{U}{U}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private List<Permanent> addTappedLands(Player player, int count) {
