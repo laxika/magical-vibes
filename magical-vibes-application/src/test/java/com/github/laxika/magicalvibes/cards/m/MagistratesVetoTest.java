@@ -66,6 +66,29 @@ class MagistratesVetoTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("White creatures can block after Magistrate's Veto leaves the battlefield")
+    void restrictionEndsWhenEnchantmentLeaves() {
+        harness.addToBattlefield(player1, new MagistratesVeto());
+        Permanent veto = findPermanent(player1, "Magistrate's Veto");
+        Permanent attacker = addCreatureReady(player1, new KyrenSniper());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new JhovallRider());
+
+        prepareDeclareBlockers();
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("White creatures and blue creatures can't block");
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, veto));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
     private void assertCannotBlock(Card blocker) {
         harness.addToBattlefield(player1, new MagistratesVeto());
         Permanent attacker = addCreatureReady(player1, new KyrenSniper());
