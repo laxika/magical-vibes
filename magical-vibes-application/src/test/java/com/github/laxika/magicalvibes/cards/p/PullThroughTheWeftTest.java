@@ -92,6 +92,96 @@ class PullThroughTheWeftTest extends BaseCardTest {
                 .doesNotContain(land.getId(), instant.getId());
     }
 
+    @Test
+    void canResolveWithNoCardsInOwnGraveyard() {
+        Card opposingLand = new Forest();
+        Card spell = new PullThroughTheWeft();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(opposingLand));
+        harness.setHand(player1, List.of(spell));
+        addManaForSpell();
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingLand);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void canDeclineEveryTargetEvenWhenCardsAreAvailable() {
+        Card permanent = new GrizzlyBears();
+        Card land = new Forest();
+        Card spell = new PullThroughTheWeft();
+        harness.setGraveyard(player1, List.of(permanent, land));
+        harness.setHand(player1, List.of(spell));
+        addManaForSpell();
+
+        harness.castSorcery(player1, 0, 0);
+        chooseNothing();
+        chooseNothing();
+        chooseNothing();
+        chooseNothing();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(permanent, land, spell);
+    }
+
+    @Test
+    void landTargetsAreDistinctAndOnlyFromOwnGraveyard() {
+        Card firstLand = new Forest();
+        Card secondLand = new Island();
+        Card opposingLand = new Forest();
+        harness.setGraveyard(player1, List.of(firstLand, secondLand));
+        harness.setGraveyard(player2, List.of(opposingLand));
+        harness.setHand(player1, List.of(new PullThroughTheWeft()));
+        addManaForSpell();
+
+        harness.castSorcery(player1, 0, 0);
+        choose(firstLand);
+        PendingInteraction.MultiGraveyardChoice secondChoice = gd.interaction
+                .activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(secondChoice.validCardIds()).containsExactly(secondLand.getId());
+        choose(secondLand);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactlyInAnyOrder(firstLand.getId(), secondLand.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .allMatch(Permanent::isTapped);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingLand);
+    }
+
+    @Test
+    void survivingLandTargetReturnsWhenOtherTargetLeavesGraveyard() {
+        Card removedLand = new Forest();
+        Card survivingLand = new Island();
+        harness.setGraveyard(player1, List.of(removedLand, survivingLand));
+        harness.setHand(player1, List.of(new PullThroughTheWeft()));
+        addManaForSpell();
+
+        harness.castSorcery(player1, 0, 0);
+        choose(removedLand);
+        choose(survivingLand);
+        harness.setGraveyard(player1, List.of(survivingLand));
+        harness.setExile(player1, List.of(removedLand));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactly(survivingLand.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .allMatch(Permanent::isTapped);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(removedLand);
+    }
+
     private void choose(Card card) {
         harness.handleMultipleCardsChosen(player1, List.of(card.getId()));
     }
