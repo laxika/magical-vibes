@@ -38,4 +38,31 @@ class PenumbraBobcatTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Cat")).hasSize(2);
     }
+
+    @Test
+    void eachControllerReceivesTheirOwnTokenAfterSimultaneousDeaths() {
+        harness.addToBattlefield(player1, new PenumbraBobcat());
+        harness.addToBattlefield(player2, new PenumbraBobcat());
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Cat")).hasSize(1);
+        assertThat(findPermanents(player2, "Cat")).hasSize(1);
+        harness.assertInGraveyard(player1, "Penumbra Bobcat");
+        harness.assertInGraveyard(player2, "Penumbra Bobcat");
+    }
+
+    @Test
+    void catTokenDoesNotCreateAnotherTokenWhenItDies() {
+        harness.addToBattlefield(player1, new PenumbraBobcat());
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Cat")).hasSize(1);
+
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Cat")).isEmpty();
+        assertThat(findPermanents(player2, "Cat")).isEmpty();
+    }
 }
