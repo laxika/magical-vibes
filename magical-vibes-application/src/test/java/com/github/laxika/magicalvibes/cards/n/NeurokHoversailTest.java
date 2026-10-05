@@ -124,6 +124,49 @@ class NeurokHoversailTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Re-equipping moves flying from the old creature to the new creature")
+    void reequippingMovesFlyingToNewCreature() {
+        Permanent hoversail = addHoversailReady(player1);
+        Permanent oldCreature = addCreatureReady(player1, new AlphaMyr());
+        Permanent newCreature = addCreatureReady(player1, new AlphaMyr());
+        hoversail.setAttachedTo(oldCreature.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, newCreature.getId());
+
+        assertThat(hoversail.getAttachedTo()).isEqualTo(oldCreature.getId());
+        assertThat(gqs.hasKeyword(gd, oldCreature, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, newCreature, Keyword.FLYING)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(hoversail.getAttachedTo()).isEqualTo(newCreature.getId());
+        assertThat(gqs.hasKeyword(gd, oldCreature, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, newCreature, Keyword.FLYING)).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Equip cannot be activated while another equip ability is on the stack")
+    void cannotEquipWithNonemptyStack() {
+        Permanent hoversail = addHoversailReady(player1);
+        Permanent creature = addCreatureReady(player1, new AlphaMyr());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(hoversail.getAttachedTo()).isNull();
+
+        harness.passBothPriorities();
+
+        assertThat(hoversail.getAttachedTo()).isEqualTo(creature.getId());
+    }
     private Permanent addHoversailReady(Player player) {
         Permanent perm = harness.addToBattlefieldAndReturn(player, new NeurokHoversail());
         perm.setSummoningSick(false);
