@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({KaZarOfTheSavageLand.class, Forest.class})
 class KaZarOfTheSavageLandTest extends BaseCardTest {
@@ -24,8 +25,7 @@ class KaZarOfTheSavageLandTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent zabu = findPermanent(player1, "Zabu");
         assertThat(zabu.getCard().getSupertypes()).contains(CardSupertype.LEGENDARY);
@@ -49,11 +49,110 @@ class KaZarOfTheSavageLandTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castFromLibraryTop(player1);
-        harness.passBothPriorities();
+        harness.castAndResolveFromLibraryTop(player1);
 
         harness.assertOnBattlefield(player1, "Forest");
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(forest);
+    }
+
+    @Test
+    void topCardIsPrivateAndPermissionEndsWhenKaZarLeaves() {
+        harness.addToBattlefield(player1, new KaZarOfTheSavageLand());
+        Permanent kaZar = findPermanent(player1, "Ka-Zar of the Savage Land");
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearMessages();
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages())
+                .anyMatch(message -> message.contains("\"revealedLibraryTopCards\":[[{"));
+        assertThat(harness.getConn2().getSentMessages())
+                .anyMatch(message -> message.contains("\"revealedLibraryTopCards\":[[],[]]"));
+
+        gd.playerBattlefields.get(player1.getId()).remove(kaZar);
+        harness.clearMessages();
+        harness.publishState();
+        assertThat(harness.getConn1().getSentMessages())
+                .anyMatch(message -> message.contains("\"revealedLibraryTopCards\":[[],[]]"));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+    }
+
+    @Test
+    void doesNotGrantAnAdditionalLandPlay() {
+        harness.addToBattlefield(player1, new KaZarOfTheSavageLand());
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+        playForest();
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+    }
+
+    @Test
+    void cannotPlayTopLandOutsideMainPhaseOrOnOpponentsTurn() {
+        harness.addToBattlefield(player1, new KaZarOfTheSavageLand());
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+    }
+
+    @Test
+    void doesNotPermitCastingNonlandTopCard() {
+        harness.addToBattlefield(player1, new KaZarOfTheSavageLand());
+        KaZarOfTheSavageLand topCard = new KaZarOfTheSavageLand();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void zabuIgnoresOpponentsLandsAndKeepsLandfallAfterKaZarLeaves() {
+        harness.setHand(player1, List.of(new KaZarOfTheSavageLand()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        Permanent zabu = findPermanent(player1, "Zabu");
+        gd.playerBattlefields.get(player1.getId())
+                .remove(findPermanent(player1, "Ka-Zar of the Savage Land"));
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Forest()));
+        harness.playLand(player2, 0);
+        assertThat(gd.stack).isEmpty();
+        assertThat(zabu.getEffectivePower()).isEqualTo(2);
+
+        playForest();
+        assertThat(zabu.getEffectivePower()).isEqualTo(2);
+        resolveAllTriggers();
+        assertThat(zabu.getEffectivePower()).isEqualTo(3);
+        assertThat(zabu.getEffectiveToughness()).isEqualTo(3);
     }
 
     private void playForest() {
