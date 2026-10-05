@@ -24,8 +24,7 @@ class MatsuTribeSniperTest extends BaseCardTest {
         Permanent flyer = addCreatureReady(player2, new OyobiWhoSplitTheHeavens());
 
         harness.activateAbility(player1, 0, null, flyer.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(sniper.isTapped()).isTrue();
         assertThat(flyer.isTapped()).isTrue();
@@ -75,5 +74,58 @@ class MatsuTribeSniperTest extends BaseCardTest {
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 1);
         assertThat(sniper.getSkipUntapCount()).isZero();
+    }
+
+    @Test
+    void damagedCreatureSkipsOnlyItsControllersNextUntap() {
+        addCreatureReady(player1, new MatsuTribeSniper());
+        Permanent flyer = addCreatureReady(player2, new OyobiWhoSplitTheHeavens());
+
+        harness.activateAbility(player1, 0, null, flyer.getId());
+        resolveAllTriggers();
+
+        harness.performUntapStep(player1);
+        assertThat(flyer.isTapped()).isTrue();
+        assertThat(flyer.getSkipUntapCount()).isEqualTo(1);
+        harness.performUntapStep(player2);
+        assertThat(flyer.isTapped()).isTrue();
+        assertThat(flyer.getSkipUntapCount()).isZero();
+        harness.performUntapStep(player2);
+        assertThat(flyer.isTapped()).isFalse();
+    }
+
+    @Test
+    void repeatedDamageBeforeNextUntapDoesNotSkipTwoUntapSteps() {
+        addCreatureReady(player1, new MatsuTribeSniper());
+        addCreatureReady(player1, new MatsuTribeSniper());
+        Permanent flyer = addCreatureReady(player2, new OyobiWhoSplitTheHeavens());
+
+        harness.activateAbility(player1, 0, null, flyer.getId());
+        resolveAllTriggers();
+        harness.activateAbility(player1, 1, null, flyer.getId());
+        resolveAllTriggers();
+
+        assertThat(flyer.getMarkedDamage()).isEqualTo(2);
+        harness.performUntapStep(player2);
+        assertThat(flyer.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(flyer.isTapped()).isFalse();
+    }
+
+    @Test
+    void damageFromAnotherCreatureDoesNotTriggerSniper() {
+        addCreatureReady(player1, new MatsuTribeSniper());
+        Permanent attacker = addCreatureReady(player1, new GnarledMass());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new OyobiWhoSplitTheHeavens());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(blocker.getMarkedDamage()).isEqualTo(3);
+        assertThat(blocker.isTapped()).isFalse();
+        assertThat(blocker.getSkipUntapCount()).isZero();
     }
 }
