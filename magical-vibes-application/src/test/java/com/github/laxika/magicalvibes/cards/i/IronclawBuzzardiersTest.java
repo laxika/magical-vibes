@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.cards.d.DurkwoodBaloth;
 import com.github.laxika.magicalvibes.cards.e.ErrantDoomsayers;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -92,6 +93,42 @@ class IronclawBuzzardiersTest extends BaseCardTest {
                 player1, indexOf(player1, buzzardiers), null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Blocking restriction uses the attacker's current power")
+    void cannotBlockPowerOneCreatureWithPlusOneCounter() {
+        Permanent buzzardiers = addReadyBuzzardiers(player2);
+        Permanent attacker = addCreatureReady(player1, new ErrantDoomsayers());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        declareAttackersAndPrepareBlockers(List.of(indexOf(player1, attacker)));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(indexOf(player2, buzzardiers), indexOf(player1, attacker)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("power too high");
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick source grants flying only to itself on resolution")
+    void flyingAbilityNeedsNeitherTapNorHasteAndOnlyAffectsSource() {
+        Permanent buzzardiers = addReadyBuzzardiers(player1);
+        buzzardiers.setSummoningSick(true);
+        buzzardiers.setTapped(true);
+        Permanent otherBuzzardiers = addReadyBuzzardiers(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, indexOf(player1, buzzardiers), null, null);
+
+        assertThat(gqs.hasKeyword(gd, buzzardiers, Keyword.FLYING)).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, buzzardiers, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherBuzzardiers, Keyword.FLYING)).isFalse();
+        assertThat(buzzardiers.isTapped()).isTrue();
     }
 
     private Permanent addReadyBuzzardiers(Player player) {
