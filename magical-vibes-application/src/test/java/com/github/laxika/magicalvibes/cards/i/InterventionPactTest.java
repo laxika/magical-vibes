@@ -8,10 +8,8 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.PayManaOrLoseGameAtNextUpkeep;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -112,6 +110,87 @@ class InterventionPactTest extends BaseCardTest {
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 
+    @Test
+    @DisplayName("The opponent's upkeep does not trigger the payment")
+    void waitsForControllersUpkeep() {
+        castInterventionPact();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getDelayedActions(PayManaOrLoseGameAtNextUpkeep.class)).hasSize(1);
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("The payment is owed even when no damage was prevented")
+    void owesPaymentWithoutPreventingDamage() {
+        harness.setLife(player1, 20);
+        castInterventionPact();
+        reachNextUpkeepPrompt();
+
+        harness.assertLife(player1, 20);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("The upkeep payment accepts two white mana and one colorless mana")
+    void paysExactMixedManaCost() {
+        castInterventionPact();
+        reachNextUpkeepPrompt();
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Three mana cannot pay the upkeep cost without two white mana")
+    void insufficientWhiteManaCausesLoss() {
+        castInterventionPact();
+        reachNextUpkeepPrompt();
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("An unused prevention shield expires at the end of the turn")
+    void unusedShieldExpiresAtEndOfTurn() {
+        harness.setLife(player1, 20);
+        Permanent source = castInterventionPact();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        source.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("The chosen source can still deal damage to the other player")
+    void doesNotPreventDamageToOtherPlayer() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent source = addCreatureReady(player1, new BlindPhantasm());
+        castInterventionPactChoosing(source);
+
+        source.setAttacking(true);
+        resolveCombat(player1);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
     private Permanent castInterventionPact() {
         Permanent source = addCreatureReady(player2, new BlindPhantasm());
         castInterventionPactChoosing(source);
@@ -128,10 +207,7 @@ class InterventionPactTest extends BaseCardTest {
     }
 
     private void reachNextUpkeepPrompt() {
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        gd.turnNumber = 3;
-        gd.activePlayerId = player1.getId();
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
     }
 
