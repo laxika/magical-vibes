@@ -49,4 +49,77 @@ class LockeColeTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
+
+    @Test
+    @DisplayName("The newly drawn card can be discarded")
+    void canDiscardTheDrawnCard() {
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new LockeCole()));
+
+        Permanent locke = addCreatureReady(player1, new LockeCole());
+        locke.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.assertInHand(player1, "Forest");
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInHand(player1, "Locke Cole");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The attacking controller draws and discards rather than the damaged player")
+    void opponentControllerDrawsAndDiscards() {
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.setHand(player2, List.of(new LockeCole()));
+        harness.setHand(player1, List.of(new Forest()));
+
+        Permanent locke = addCreatureReady(player2, new LockeCole());
+        locke.setAttacking(true);
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.assertInHand(player2, "Forest");
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertInGraveyard(player2, "Locke Cole");
+        harness.assertInHand(player2, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Blocked combat applies deathtouch and lifelink without looting")
+    void blockedCombatAppliesKeywordsWithoutLooting() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        Permanent attacker = addCreatureReady(player1, new LockeCole());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new LockeCole());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Locke Cole");
+        harness.assertInGraveyard(player2, "Locke Cole");
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 22);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
 }
