@@ -50,6 +50,57 @@ class OverwhelmingInstinctTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Does not trigger when the opponent attacks with three creatures")
+    void doesNotTriggerForOpponentAttack() {
+        setUpBattlefieldAndLibrary();
+        harness.setHand(player2, List.of());
+        for (int i = 0; i < 3; i++) {
+            addCreatureReady(player2, new ElvishWarrior());
+        }
+
+        declareAttackers(player2, List.of(0, 1, 2));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each copy draws a card for the same attack")
+    void eachCopyTriggersIndependently() {
+        setUpBattlefieldAndLibrary(3, new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior());
+        harness.addToBattlefield(player1, new OverwhelmingInstinct());
+
+        declareAttackers(List.of(1, 2, 3));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Can draw again in another combat in the same turn")
+    void triggersAgainInAnotherCombat() {
+        setUpBattlefieldAndLibrary(3, new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior());
+
+        declareAttackers(List.of(1, 2, 3));
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).forEach(permanent -> {
+            permanent.setTapped(false);
+            permanent.setAttacking(false);
+        });
+        declareAttackers(List.of(1, 2, 3));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
     private void setUpBattlefieldAndLibrary() {
         setUpBattlefieldAndLibrary(3, new ElvishWarrior());
     }
