@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RaiseTheAlarm;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -85,8 +86,59 @@ class LucyMacLeanPositivelyArmedTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
-    private Permanent addLucy(Player player) {
-        return harness.addToBattlefieldAndReturn(player, new LucyMacLeanPositivelyArmed());
+    @Test
+    @DisplayName("Simultaneous tokens each offer a copy until one is accepted")
+    void canDeclineFirstSimultaneousTokenAndCopySecond() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        addLucy(player1);
+
+        createTokens(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice).isNotNull();
+        assertThat(targetChoice.validPlayerIds()).containsExactly(player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(countTokens(player2)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @CardUsed(Shock.class)
+    @DisplayName("A token removed before resolution is copied using last known information")
+    void copiesTokenThatLeftBattlefieldBeforeResolution() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        addLucy(player1);
+
+        createTokens(player1);
+        harness.passBothPriorities();
+        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .findFirst().orElseThrow();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, token.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(token);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(countTokens(player2)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    private void addLucy(Player player) {
+        harness.addToBattlefield(player, new LucyMacLeanPositivelyArmed());
     }
 
     private void createTokens(Player player) {
@@ -95,8 +147,7 @@ class LucyMacLeanPositivelyArmedTest extends BaseCardTest {
         harness.setHand(player, hand);
         harness.addMana(player, ManaColor.WHITE, 1);
         harness.addMana(player, ManaColor.COLORLESS, 1);
-        harness.castInstant(player, hand.size() - 1);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player, hand.size() - 1);
     }
 
     private long countTokens(Player player) {
