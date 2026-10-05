@@ -53,4 +53,57 @@ class MoltenMonstrosityTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void paysFullCostWithoutCreatures() {
+        harness.setHand(player1, List.of(new MoltenMonstrosity()));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void usesGreatestPowerRatherThanCombinedPower() {
+        harness.addToBattlefield(player1, new MoltenMonstrosity());
+        harness.addToBattlefield(player1, new MoltenMonstrosity());
+        harness.setHand(player1, List.of(new MoltenMonstrosity()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void usesCurrentPowerAndCapsReductionAtGenericCost() {
+        var creature = harness.addToBattlefieldAndReturn(player1, new MoltenMonstrosity());
+        creature.setPowerModifier(3);
+        harness.setHand(player1, List.of(new MoltenMonstrosity()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void negativePowerDoesNotIncreaseCost() {
+        var creature = harness.addToBattlefieldAndReturn(player1, new MoltenMonstrosity());
+        creature.setPowerModifier(-6);
+        harness.setHand(player1, List.of(new MoltenMonstrosity()));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
 }
