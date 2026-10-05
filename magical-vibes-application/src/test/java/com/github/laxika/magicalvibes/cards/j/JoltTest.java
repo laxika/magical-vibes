@@ -129,6 +129,56 @@ class JoltTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the tap or untap still draws at the next turn's upkeep")
+    void decliningStillDrawsAtNextUpkeep() {
+        harness.setLibrary(player1, List.of(new Forest()));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BayFalcon());
+        prepareJolt();
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleMayAbilityChosen(player1, false);
+
+        gd.turnNumber++;
+        gd.activePlayerId = player2.getId();
+        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
+        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Waits for the next turn and draws only once even if another upkeep occurs")
+    void waitsForNextTurnAndDrawsOnlyOnce() {
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BayFalcon());
+        castJolt(target.getId());
+        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
+
+        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+
+        gd.turnNumber++;
+        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+
+        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
     @DisplayName("Does not draw if the target leaves before resolution")
     void doesNotResolveIfTargetLeavesBeforeResolution() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new BayFalcon());
@@ -150,8 +200,7 @@ class JoltTest extends BaseCardTest {
 
     private void castJolt(UUID targetId) {
         prepareJolt();
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
         if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
             harness.handleMayAbilityChosen(player1, true);
         }
