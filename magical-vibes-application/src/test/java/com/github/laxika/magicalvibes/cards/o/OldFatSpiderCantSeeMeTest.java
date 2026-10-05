@@ -80,6 +80,90 @@ class OldFatSpiderCantSeeMeTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Old Fat Spider Can't See Me");
     }
 
+    @Test
+    void chapterIHexproofEndsWhenSagaLeaves() {
+        Permanent saga = addSaga(0);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, saga));
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isFalse();
+    }
+
+    @Test
+    void chapterIDoesNotGrantHexproofIfSagaLeavesBeforeResolution() {
+        Permanent saga = addSaga(0);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, saga));
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isFalse();
+    }
+
+    @Test
+    void chapterIICanChooseNoTarget() {
+        addSaga(1);
+        Permanent sorcerer = addCreatureReady(player2, new ProdigalSorcerer());
+        harness.setLife(player1, 20);
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        assertThat(sorcerer.isTapped()).isTrue();
+    }
+
+    @Test
+    void chapterIIPreventionEndsWhenSagaLeaves() {
+        Permanent saga = addSaga(1);
+        Permanent sorcerer = addCreatureReady(player2, new ProdigalSorcerer());
+        harness.setLife(player1, 20);
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, sorcerer.getId());
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, saga));
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    void chapterIIPreventsPendingDamageEvenIfChosenCreatureLeaves() {
+        addSaga(1);
+        Permanent sorcerer = addCreatureReady(player2, new ProdigalSorcerer());
+        harness.setLife(player1, 20);
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, sorcerer.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, sorcerer));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertOnBattlefield(player1, "Old Fat Spider Can't See Me");
+    }
+
     private Permanent addSaga(int loreCounters) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new OldFatSpiderCantSeeMe());
         saga.setCounterCount(CounterType.LORE, loreCounters);
