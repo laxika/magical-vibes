@@ -140,6 +140,57 @@ class KnightOfValorTest extends BaseCardTest {
         assertThat(blocker.getEffectivePower()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("The activated ability combines with flanking to kill a two-toughness blocker")
+    void activatedAbilityStacksWithFlanking() {
+        Permanent knight = addCreatureReady(player1, new KnightOfValor());
+        Permanent blocker = addCreatureReady(player2, new LongbowArcher());
+        knight.setAttacking(true);
+        declareBlockers(knight, blocker);
+        resolveAllTriggers();
+
+        assertThat(blocker.getEffectiveToughness()).isEqualTo(1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, battlefieldIndex(knight), null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(blocker.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(knight);
+    }
+
+    @Test
+    @DisplayName("Activation without blockers has no effect but uses the turn's activation")
+    void activationWithoutBlockersUsesLimit() {
+        Permanent knight = addCreatureReady(player1, new KnightOfValor());
+        Permanent otherCreature = addCreatureReady(player2, new LongbowArcher());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, battlefieldIndex(knight), null, null);
+        harness.passBothPriorities();
+
+        assertThat(otherCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(otherCreature.getEffectiveToughness()).isEqualTo(2);
+        harness.clearPriorityPassed();
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(knight), null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+    }
+
+    @Test
+    @DisplayName("Flanking does not trigger for a blocker with flanking")
+    void flankingDoesNotWeakenFlankingBlocker() {
+        Permanent knight = addCreatureReady(player1, new KnightOfValor());
+        Permanent blocker = addCreatureReady(player2, new KnightOfValor());
+        knight.setAttacking(true);
+
+        declareBlockers(knight, blocker);
+        resolveAllTriggers();
+
+        assertThat(blocker.getEffectivePower()).isEqualTo(2);
+        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+    }
+
     private void declareBlockers(Permanent attacker, Permanent... blockers) {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(blockers).stream()
