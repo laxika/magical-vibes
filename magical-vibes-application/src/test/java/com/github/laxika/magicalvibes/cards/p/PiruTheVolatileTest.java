@@ -66,6 +66,53 @@ class PiruTheVolatileTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Kokusho, the Evening Star");
     }
 
+    @Test
+    @DisplayName("Death damage gains seven life per nonlegendary creature, even for excess damage")
+    void deathDamageUsesLifelinkAfterPiruLeavesTheBattlefield() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent piru = harness.addToBattlefieldAndReturn(player1, new PiruTheVolatile());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        destroy(player2, piru);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player1, 34);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Sacrificing Piru for its upkeep triggers its damage ability")
+    void upkeepSacrificeTriggersDeathDamage() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new PiruTheVolatile());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Piru, the Volatile");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player1, 27);
+    }
+
+    @Test
+    @DisplayName("Piru does not demand payment during an opponent's upkeep")
+    void opponentsUpkeepDoesNotTriggerPayment() {
+        harness.addToBattlefield(player1, new PiruTheVolatile());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Piru, the Volatile");
+    }
+
     private void destroy(Player caster, Permanent target) {
         harness.forceActivePlayer(caster);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -73,7 +120,6 @@ class PiruTheVolatileTest extends BaseCardTest {
         harness.setHand(caster, List.of(new Murder()));
         harness.addMana(caster, ManaColor.BLACK, 2);
         harness.addMana(caster, ManaColor.COLORLESS, 1);
-        harness.castInstant(caster, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, target.getId());
     }
 }
