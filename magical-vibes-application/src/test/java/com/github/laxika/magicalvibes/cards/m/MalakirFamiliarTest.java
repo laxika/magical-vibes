@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
+import com.github.laxika.magicalvibes.cards.s.StoneHavenMedic;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -9,11 +10,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MalakirFamiliar.class, AngelOfMercy.class})
+@CardUsed({MalakirFamiliar.class, AngelOfMercy.class, StoneHavenMedic.class})
 class MalakirFamiliarTest extends BaseCardTest {
 
     @Test
@@ -54,11 +53,49 @@ class MalakirFamiliarTest extends BaseCardTest {
     }
 
     private void castAngelOfMercy(com.github.laxika.magicalvibes.model.Player player) {
-        harness.setHand(player, List.of(new AngelOfMercy()));
-        harness.addMana(player, ManaColor.WHITE, 5);
-        harness.castCreature(player, 0);
+        harness.castFromHand(player, new AngelOfMercy(), "{4}{W}");
+        resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("Separate life gain events each add another +1/+1")
+    void separateLifeGainEventsStack() {
+        Permanent familiar = addCreatureReady(player1, new MalakirFamiliar());
+        addCreatureReady(player1, new StoneHavenMedic());
+        addCreatureReady(player1, new StoneHavenMedic());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 1, null, null);
+        resolveAllTriggers();
+        assertThat(gqs.getEffectivePower(gd, familiar)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, familiar)).isEqualTo(2);
+
+        harness.activateAbility(player1, 2, null, null);
+        resolveAllTriggers();
+        assertThat(gqs.getEffectivePower(gd, familiar)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, familiar)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Each Familiar triggers independently and the boost waits for resolution")
+    void eachFamiliarTriggersIndependently() {
+        Permanent first = addCreatureReady(player1, new MalakirFamiliar());
+        Permanent second = addCreatureReady(player1, new MalakirFamiliar());
+        addCreatureReady(player1, new StoneHavenMedic());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 2, null, null);
         harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
     }
 }
