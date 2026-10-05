@@ -30,7 +30,7 @@ class PhyrexianEtchingsTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        gs.advanceStep(gd);
+        harness.passUntil(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
@@ -108,5 +108,77 @@ class PhyrexianEtchingsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(etchings);
         assertThat(gd.playerHands.get(player1.getId())).contains(etchings.getCard());
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("No age counters means no cards drawn at the controller's end step")
+    void noAgeCountersDrawsNoCards() {
+        harness.addToBattlefield(player1, new PhyrexianEtchings());
+        harness.setLibrary(player1, List.of(new SnowCoveredMountain()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Does not draw at the opponent's end step")
+    void opponentsEndStepDoesNotDraw() {
+        Permanent etchings = harness.addToBattlefieldAndReturn(player1, new PhyrexianEtchings());
+        etchings.setCounterCount(CounterType.AGE, 2);
+        harness.setLibrary(player1, List.of(new SnowCoveredMountain(), new SnowCoveredMountain()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    @DisplayName("Draw count uses age counters when the end-step trigger resolves")
+    void drawCountUsesCountersAtResolution() {
+        Permanent etchings = harness.addToBattlefieldAndReturn(player1, new PhyrexianEtchings());
+        etchings.setCounterCount(CounterType.AGE, 1);
+        harness.setLibrary(player1, List.of(
+                new SnowCoveredMountain(), new SnowCoveredMountain(), new SnowCoveredMountain()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        etchings.setCounterCount(CounterType.AGE, 3);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 3);
+    }
+
+    @Test
+    @DisplayName("Sacrificing an opponent-owned Etchings makes its last controller lose life")
+    void lastControllerLosesLifeRatherThanOwner() {
+        PhyrexianEtchings card = new PhyrexianEtchings();
+        card.setOwnerId(player1.getId());
+        Permanent etchings = harness.addToBattlefieldAndReturn(player2, card);
+        etchings.setCounterCount(CounterType.AGE, 2);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(etchings);
+        harness.assertInGraveyard(player1, "Phyrexian Etchings");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 14);
     }
 }
