@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.g.GhostWarden;
 import com.github.laxika.magicalvibes.cards.g.Gristleback;
 import com.github.laxika.magicalvibes.cards.h.HatchingPlans;
+import com.github.laxika.magicalvibes.cards.w.WitnessProtection;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Mimeofacture.class, GhostWarden.class, Gristleback.class, HatchingPlans.class})
+@CardUsed({Mimeofacture.class, GhostWarden.class, Gristleback.class, HatchingPlans.class, WitnessProtection.class})
 class MimeofactureTest extends BaseCardTest {
 
     @Test
@@ -135,6 +136,89 @@ class MimeofactureTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("opponent");
+    }
+
+
+    @Test
+    @DisplayName("May fail to find even when a same-name card is present")
+    void mayDeclineMatchingCard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GhostWarden());
+        GhostWarden matching = new GhostWarden();
+        harness.setLibrary(player2, List.of(matching));
+
+        castMimeofacture(target, List.of());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(target);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(matching);
+    }
+
+    @Test
+    @DisplayName("Can search for a noncreature permanent")
+    void putsMatchingEnchantmentOntoBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HatchingPlans());
+        HatchingPlans matching = new HatchingPlans();
+        harness.setLibrary(player2, List.of(matching));
+
+        castMimeofacture(target, List.of());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactly(matching.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(target);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each replicate payment creates another independent search")
+    void twoReplicatePaymentsCreateTwoCopies() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GhostWarden());
+        GhostWarden first = new GhostWarden();
+        GhostWarden second = new GhostWarden();
+        GhostWarden third = new GhostWarden();
+        harness.setLibrary(player2, List.of(first, second, third));
+
+        castMimeofacture(target, List.of("{3}{U}", "{3}{U}"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, false);
+
+        for (int i = 0; i < 3; i++) {
+            harness.passBothPriorities();
+            assertThat(gd.interaction.activeInteraction())
+                    .isInstanceOf(PendingInteraction.LibrarySearch.class);
+            harness.handleCardChosen(player1, 0);
+        }
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactlyInAnyOrder(first.getId(), second.getId(), third.getId());
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Uses the target's current name after a name-changing effect")
+    void renamedPermanentDoesNotMatchItsOriginalName() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GhostWarden());
+        GhostWarden originalNameCard = new GhostWarden();
+        harness.setLibrary(player2, List.of(originalNameCard));
+        harness.setHand(player1, List.of(new WitnessProtection()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        castMimeofacture(target, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(originalNameCard.getId()));
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(originalNameCard);
     }
 
     private void castMimeofacture(Permanent target, List<String> replicatePayments) {
