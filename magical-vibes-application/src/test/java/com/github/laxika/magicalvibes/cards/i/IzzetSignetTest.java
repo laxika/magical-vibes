@@ -29,6 +29,23 @@ class IzzetSignetTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Colored mana can pay Izzet Signet's generic activation cost")
+    void canPayActivationCostWithColoredMana() {
+        Permanent signet = addReadySignet();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(signet.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
     @DisplayName("Cannot activate Izzet Signet without paying one")
     void cannotActivateWithoutMana() {
         addReadySignet();
