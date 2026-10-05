@@ -9,38 +9,37 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Metagamer.class, GrizzlyBears.class})
 class MetagamerTest extends BaseCardTest {
 
     @Test
-    void increasesTheCostOfYourSpells() {
+    void doesNotIncreaseTheCostOfYourSpellsOutsideTheWinningDeck() {
         harness.addToBattlefield(player1, new Metagamer());
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        assertThatThrownBy(() -> harness.castCreature(player1, 0))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("not playable");
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test
-    void increasesTheCostOfOpponentsSpells() {
+    void doesNotIncreaseTheCostOfOpponentsSpellsOutsideTheWinningDeck() {
         harness.addToBattlefield(player1, new Metagamer());
         harness.forceActivePlayer(player2);
-        harness.forceStep(gd.currentStep);
-        harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new GrizzlyBears()));
         harness.addMana(player2, ManaColor.GREEN, 2);
 
-        assertThatThrownBy(() -> harness.castCreature(player2, 0))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("not playable");
+        harness.castCreature(player2, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
 
     @Test
-    void castsWithTheAdditionalMana() {
+    void leavesSurplusManaWhenCastingASpellOutsideTheWinningDeck() {
         harness.addToBattlefield(player1, new Metagamer());
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 3);
@@ -48,6 +47,6 @@ class MetagamerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 }
