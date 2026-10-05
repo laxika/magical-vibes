@@ -28,12 +28,12 @@ class MechanicalMobsterTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.getGameService().playCard(gd, player1, 0, 0, target.getId(), null);
-        harness.passBothPriorities();
+        harness.castCreature(player1, 0, target.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(graveyardCard.getId()));
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         discardByName("Grizzly Bears");
@@ -52,10 +52,10 @@ class MechanicalMobsterTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Mountain()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.getGameService().playCard(gd, player1, 0, 0, target.getId(), null);
-        harness.passBothPriorities();
+        harness.castCreature(player1, 0, target.getId());
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(graveyardCard.getId()));
+        harness.passBothPriorities();
         discardByName("Mountain");
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -67,10 +67,29 @@ class MechanicalMobsterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MechanicalMobster()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        assertThatThrownBy(() -> harness.getGameService().playCard(
-                gd, player1, 0, 0, opponentCreature.getId(), null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, opponentCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature you control");
+    }
+
+    @Test
+    void connivesWhenEveryGraveyardIsEmpty() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player1, List.of(new MechanicalMobster(), new Mountain()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        discardByName("Grizzly Bears");
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertInHand(player1, "Mountain");
     }
 
     private void discardByName(String cardName) {
