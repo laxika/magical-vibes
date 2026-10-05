@@ -13,10 +13,8 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -104,10 +102,7 @@ class MilaCraftyCompanionTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         assertThat(returned.hasKeyword(Keyword.HASTE)).isTrue();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(returned);
@@ -120,10 +115,8 @@ class MilaCraftyCompanionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
         int lifeBefore = gd.getLife(player2.getId());
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.permanentChoiceContext())
@@ -132,6 +125,194 @@ class MilaCraftyCompanionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    void lukkaDrawsDuringTheSameResolutionAsDiscarding() {
+        addReadyLukka(5);
+        Forest discarded = new Forest();
+        Forest drawn = new Forest();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(drawn));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        List<Card> handAfterDiscardChoice = List.copyOf(gd.playerHands.get(player1.getId()));
+        harness.passBothPriorities();
+
+        assertThat(handAfterDiscardChoice).containsExactly(drawn);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+    }
+
+    @Test
+    void lukkaMayDeclineToDiscardWithoutDrawing() {
+        Permanent lukka = addReadyLukka(5);
+        Forest retained = new Forest();
+        Forest libraryCard = new Forest();
+        harness.setHand(player1, List.of(retained));
+        harness.setLibrary(player1, List.of(libraryCard));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(retained);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(lukka.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
+    }
+
+    @Test
+    void lukkaCannotDrawWithoutACardToDiscard() {
+        addReadyLukka(5);
+        harness.setHand(player1, List.of());
+        Forest libraryCard = new Forest();
+        harness.setLibrary(player1, List.of(libraryCard));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+    }
+
+    @Test
+    void milaMayDeclineDrawingWhenMilaItselfIsTargeted() {
+        Permanent mila = harness.addToBattlefieldAndReturn(player1, new MilaCraftyCompanion());
+        Forest libraryCard = new Forest();
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, mila.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(mila);
+    }
+
+    @Test
+    void milaAddsLoyaltyToUnattackedPlaneswalkersOnlyOnceForMultipleAttackers() {
+        addMilaAndPlaneswalker();
+        Permanent unattacked = harness.addToBattlefieldAndReturn(player1, new LukkaWaywardBonder());
+        Permanent attacked = gd.playerBattlefields.get(player1.getId()).get(1);
+        Permanent first = addCreatureReady(player2, new MilaCraftyCompanion());
+        Permanent second = addCreatureReady(player2, new GrizzlyBears());
+        int firstIndex = gd.playerBattlefields.get(player2.getId()).indexOf(first);
+        int secondIndex = gd.playerBattlefields.get(player2.getId()).indexOf(second);
+
+        harness.beginAttackerDeclarationInput();
+        harness.inMutationScope(() -> harness.getCombatAttackService().declareAttackers(
+                gd, player2, List.of(firstIndex, secondIndex),
+                Map.of(firstIndex, attacked.getId(), secondIndex, attacked.getId())));
+        harness.passBothPriorities();
+
+        assertThat(attacked.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
+        assertThat(unattacked.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
+    }
+
+    @Test
+    void lukkaReturnedCreatureSurvivesOpponentsUpkeep() {
+        addReadyLukka(5);
+        MilaCraftyCompanion creature = new MilaCraftyCompanion();
+        harness.setGraveyard(player1, List.of(creature));
+
+        harness.activateAbility(player1, 0, 1, null, creature.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        Permanent returned = findPermanent(player1, "Mila, Crafty Companion");
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(returned);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(returned);
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card() == creature
+                && entry.ownerId().equals(player1.getId()));
+    }
+
+    @Test
+    void canCastMilaFaceAndItsTargetingAbilityWorks() {
+        harness.setHand(player1, List.of(new MilaCraftyCompanion()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castCreature(player1, 0, 0);
+        harness.passBothPriorities();
+        Permanent mila = findPermanent(player1, "Mila, Crafty Companion");
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, mila.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void canCastLukkaFaceAndActivateItsLoyaltyAbility() {
+        harness.setHand(player1, List.of(new MilaCraftyCompanion()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.castCreature(player1, 0, 1);
+        harness.passBothPriorities();
+        Permanent lukka = findPermanent(player1, "Lukka, Wayward Bonder");
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(lukka.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void milaDoesNotDrawForItsControllersSpell() {
+        Permanent mila = harness.addToBattlefieldAndReturn(player1, new MilaCraftyCompanion());
+        Forest libraryCard = new Forest();
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, mila.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void lukkaEmblemUsesCreaturesPowerWhenDamageResolves() {
+        addReadyLukka(7);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new MilaCraftyCompanion()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castCreature(player1, 0, 0);
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player1, player2.getId());
+        Permanent mila = findPermanent(player1, "Mila, Crafty Companion");
+        mila.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        int lifeBefore = gd.getLife(player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 4);
     }
 
     private void addMilaAndPlaneswalker() {
@@ -143,9 +324,7 @@ class MilaCraftyCompanionTest extends BaseCardTest {
     }
 
     private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
-        creature.setSummoningSick(false);
-        return creature;
+        return addCreatureReady(player, new GrizzlyBears());
     }
 
     private Permanent addReadyLukka(int loyalty) {
