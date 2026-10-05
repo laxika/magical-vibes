@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
@@ -41,8 +42,7 @@ class PathOfThePyromancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(drawn);
@@ -62,8 +62,7 @@ class PathOfThePyromancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
@@ -71,5 +70,83 @@ class PathOfThePyromancerTest extends BaseCardTest {
         harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
         harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
         harness.passBothPriorities();
+    }
+
+    @Test
+    void planeswalkMajorityChangesThePlane() {
+        verifyVoteOutcome(ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK,
+                ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK, true);
+    }
+
+    @Test
+    void chaosMajorityTriggersChaosWithoutPlaneswalking() {
+        verifyVoteOutcome(ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS,
+                ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS, false);
+    }
+
+    @Test
+    void tiedVoteTriggersChaosWithoutPlaneswalking() {
+        verifyVoteOutcome(ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK,
+                ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS, false);
+    }
+
+    @Test
+    void resolvesAndVotesOutsidePlanechase() {
+        gd.planechase = null;
+        Forest discarded = new Forest();
+        List<Card> drawn = List.of(new Forest(), new Forest());
+        harness.setHand(player1, List.of(new PathOfThePyromancer(), discarded));
+        harness.setLibrary(player1, drawn);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
+        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(drawn);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void verifyVoteOutcome(String firstVote, String secondVote, boolean planeswalk) {
+        PlanarObject startingPlane = gd.planechase.faceUp.getFirst();
+        Card arrivingPlane = gd.planechase.deck.getFirst();
+        Forest spellDraw = new Forest();
+        Forest planarDraw = new Forest();
+        harness.setHand(player1, List.of(new PathOfThePyromancer()));
+        harness.setLibrary(player1, List.of(spellDraw, planarDraw));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(spellDraw);
+        PendingInteraction.ColorChoice firstChoice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(firstChoice).isNotNull();
+        assertThat(firstChoice.playerId()).isEqualTo(player1.getId());
+        harness.handleListChoice(player1, firstVote);
+        PendingInteraction.ColorChoice secondChoice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(secondChoice).isNotNull();
+        assertThat(secondChoice.playerId()).isEqualTo(player2.getId());
+        assertThat(gd.planechase.faceUp).containsExactly(startingPlane);
+
+        harness.handleListChoice(player2, secondVote);
+
+        if (planeswalk) {
+            assertThat(gd.planechase.faceUp).hasSize(1).doesNotContain(startingPlane);
+            assertThat(gd.planechase.faceUp.getFirst().getCard()).isSameAs(arrivingPlane);
+            assertThat(gd.planechase.deck).containsExactly(startingPlane.getCard());
+        } else {
+            assertThat(gd.planechase.faceUp).containsExactly(startingPlane);
+            assertThat(gd.planechase.deck).containsExactly(arrivingPlane);
+        }
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(spellDraw, planarDraw);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }
