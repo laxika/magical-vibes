@@ -17,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Landslide.class, Forest.class, Mountain.class})
+@CardUsed({Landslide.class, Forest.class, Mountain.class, JaceBeleren.class})
 class LandslideTest extends BaseCardTest {
 
     @Test
@@ -94,5 +94,64 @@ class LandslideTest extends BaseCardTest {
         harness.assertLife(player2, 20);
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Only chosen Mountains are sacrificed, and opposing Mountains cannot be chosen")
+    void choosingSomeMountainsLeavesTheRest() {
+        Permanent chosen = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent unchosen = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        chosen.setTapped(true);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Landslide()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(chosen.getId(), unchosen.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId()));
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(unchosen).doesNotContain(chosen);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposing);
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.assertInGraveyard(player1, "Landslide");
+    }
+
+    @Test
+    @DisplayName("Landslide can target its controller")
+    void canDamageItsController() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Landslide()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(mountain.getId()));
+
+        harness.assertLife(player1, 19);
+        harness.assertNotOnBattlefield(player1, "Mountain");
+    }
+
+    @Test
+    @CardUsed(JaceBeleren.class)
+    @DisplayName("An illegal sole target prevents the Mountain sacrifice")
+    void illegalTargetPreventsSacrifice() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        harness.setHand(player1, List.of(new Landslide()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castSorcery(player1, 0, planeswalker.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(planeswalker);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(mountain);
+        harness.assertInGraveyard(player1, "Landslide");
+        assertThat(gd.stack).isEmpty();
     }
 }
