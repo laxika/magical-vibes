@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.f.FieryTemper;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LonghornFirebeast.class})
+@CardUsed({LonghornFirebeast.class, FieryTemper.class})
 class LonghornFirebeastTest extends BaseCardTest {
 
     private void castAndResolveToChoice() {
@@ -63,5 +64,33 @@ class LonghornFirebeastTest extends BaseCardTest {
         harness.assertLife(player2, 20);
         harness.assertNotOnBattlefield(player1, "Longhorn Firebeast");
         harness.assertInGraveyard(player1, "Longhorn Firebeast");
+    }
+
+    @Test
+    @DisplayName("The trigger still deals damage after Firebeast is destroyed in response")
+    void acceptingDealsDamageAfterSourceLeavesBattlefield() {
+        harness.setHand(player1, List.of(new LonghornFirebeast()));
+        harness.setHand(player2, List.of(new FieryTemper()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Longhorn Firebeast"));
+
+        harness.assertNotOnBattlefield(player1, "Longhorn Firebeast");
+        harness.assertInGraveyard(player1, "Longhorn Firebeast");
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player2, 15);
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof LonghornFirebeast)
+                .hasSize(1);
     }
 }
