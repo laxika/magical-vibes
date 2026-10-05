@@ -72,6 +72,40 @@ class OgreGatecrasherTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("A defender allowed to attack remains a legal destruction target")
+    void destroysDefenderAllowedToAttack() {
+        Permanent defender = harness.addToBattlefieldAndReturn(player1, new WakestoneGargoyle());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        castOgreGatecrasher(defender.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Wakestone Gargoyle");
+        harness.assertNotOnBattlefield(player1, "Wakestone Gargoyle");
+        harness.assertOnBattlefield(player1, "Ogre Gatecrasher");
+    }
+
+    @Test
+    @DisplayName("The trigger does not destroy another defender when its target leaves")
+    void targetLeavingDoesNotRedirectDestruction() {
+        Permanent defender = harness.addToBattlefieldAndReturn(player2, new WakestoneGargoyle());
+        Permanent otherDefender = harness.addToBattlefieldAndReturn(player2, new WakestoneGargoyle());
+        castOgreGatecrasher(defender.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player2.getId()).remove(defender);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(otherDefender);
+        harness.assertOnBattlefield(player1, "Ogre Gatecrasher");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castOgreGatecrasher(UUID targetId) {
         harness.setHand(player1, List.of(new OgreGatecrasher()));
         harness.addMana(player1, ManaColor.RED, 1);
