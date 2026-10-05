@@ -1,20 +1,23 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.f.Fling;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MoonveilDragon.class, GrizzlyBears.class, Fling.class})
 class MoonveilDragonTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Activating ability puts it on the stack")
@@ -81,7 +84,6 @@ class MoonveilDragonTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, ownBears)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(5);
@@ -98,5 +100,72 @@ class MoonveilDragonTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Tapped, summoning-sick Dragon can activate on an opponent's turn")
+    void canActivateWhileTappedAndSummoningSickOnOpponentsTurn() {
+        Permanent dragon = harness.enterBattlefieldAndReturn(player1, new MoonveilDragon());
+        dragon.setTapped(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, dragon)).isEqualTo(5);
+        assertThat(dragon.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Boost includes creatures entering before resolution but excludes later arrivals")
+    void affectedCreaturesAreDeterminedAtResolution() {
+        Permanent dragon = addCreatureReady(player1, new MoonveilDragon());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        Permanent beforeResolution = harness.enterBattlefieldAndReturn(player1, new MoonveilDragon());
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(5);
+        harness.passBothPriorities();
+        Permanent afterResolution = harness.enterBattlefieldAndReturn(player1, new MoonveilDragon());
+
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Activated boost resolves even after its source is sacrificed")
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent source = addCreatureReady(player1, new MoonveilDragon());
+        Permanent remainingDragon = addCreatureReady(player1, new MoonveilDragon());
+        harness.setHand(player1, List.of(new Fling()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.castInstantWithSacrifice(player1, 0, player2.getId(), source.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, remainingDragon)).isEqualTo(5);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(source);
+        assertThat(gqs.getEffectivePower(gd, remainingDragon)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, remainingDragon)).isEqualTo(5);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Mana of another color cannot pay the red activation cost")
+    void cannotActivateWithOnlyNonRedMana() {
+        addCreatureReady(player1, new MoonveilDragon());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.stack).isEmpty();
     }
 }
