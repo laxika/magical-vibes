@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Necrologia.class, GrizzlyBears.class})
+@CardUsed({Necrologia.class, GrizzlyBears.class, Counterspell.class})
 class NecrologiaTest extends BaseCardTest {
 
     private void prepareCaster() {
@@ -62,6 +63,39 @@ class NecrologiaTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Countering Necrologia does not refund the life paid or draw cards")
+    void counteringDoesNotRefundLife() {
+        prepareCaster();
+        int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
+        Necrologia spell = (Necrologia) harness.getGameData().playerHands.get(player1.getId()).getFirst();
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, 3, null);
+        harness.castAndResolveInstant(player2, 0, spell.getId());
+
+        harness.assertLife(player1, lifeBefore - 3);
+        assertThat(harness.getGameData().playerHands.get(player1.getId())).isEmpty();
+        assertThat(harness.getGameData().playerDecks.get(player1.getId())).hasSize(4);
+        harness.assertInGraveyard(player1, "Necrologia");
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The announced X remains fixed when life changes before resolution")
+    void lifeChangeDoesNotChangeCardsDrawn() {
+        prepareCaster();
+
+        harness.castInstant(player1, 0, 3, null);
+        harness.setLife(player1, 1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 1);
+        assertThat(harness.getGameData().playerHands.get(player1.getId())).hasSize(3);
+        assertThat(harness.getGameData().stack).isEmpty();
     }
 
     @Test
