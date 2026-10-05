@@ -54,7 +54,6 @@ class IronWillTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, cockroach.getId());
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(cockroach.getEffectivePower()).isEqualTo(4);
@@ -85,5 +84,58 @@ class IronWillTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Iron Will");
         harness.assertInHand(player1, "Giant Cockroach");
+    }
+
+    @Test
+    @DisplayName("Cycling pays its discard cost before drawing and accepts colored mana")
+    void cyclingDiscardsBeforeResolution() {
+        harness.setHand(player1, List.of(new IronWill()));
+        harness.setLibrary(player1, List.of(new GiantCockroach()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Iron Will");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Giant Cockroach");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cycling cannot be activated with only one mana")
+    void cyclingRequiresTwoMana() {
+        harness.setHand(player1, List.of(new IronWill()));
+        harness.setLibrary(player1, List.of(new GiantCockroach()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Iron Will");
+        harness.assertNotInGraveyard(player1, "Iron Will");
+        harness.assertNotInHand(player1, "Giant Cockroach");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Multiple Iron Wills add their toughness boosts only to the chosen creature")
+    void multipleBoostsAccumulate() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GiantCockroach());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GiantCockroach());
+        harness.setHand(player1, List.of(new IronWill(), new IronWill()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(target.getEffectiveToughness()).isEqualTo(10);
+        assertThat(other.getEffectivePower()).isEqualTo(4);
+        assertThat(other.getEffectiveToughness()).isEqualTo(2);
     }
 }
