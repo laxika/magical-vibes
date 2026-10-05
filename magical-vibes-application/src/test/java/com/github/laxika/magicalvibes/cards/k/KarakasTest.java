@@ -59,4 +59,54 @@ class KarakasTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("legendary creature");
     }
+
+    @Test
+    @DisplayName("Karakas can return a legendary creature you control")
+    void returnsOwnLegendaryCreature() {
+        Permanent karakas = harness.addToBattlefieldAndReturn(player1, new Karakas());
+        Permanent jedit = harness.addToBattlefieldAndReturn(player1, new JeditOjanen());
+
+        harness.activateAbility(player1, 0, 1, null, jedit.getId());
+
+        assertThat(karakas.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Jedit Ojanen");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Jedit Ojanen");
+        harness.assertNotOnBattlefield(player1, "Jedit Ojanen");
+    }
+
+    @Test
+    @DisplayName("A legendary creature returns to its owner rather than its controller")
+    void returnsStolenCreatureToOwner() {
+        harness.addToBattlefield(player1, new Karakas());
+        JeditOjanen card = new JeditOjanen();
+        card.setOwnerId(player1.getId());
+        Permanent jedit = harness.addToBattlefieldAndReturn(player2, card);
+
+        harness.activateAbility(player1, 0, 1, null, jedit.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Jedit Ojanen");
+        harness.assertNotInHand(player2, "Jedit Ojanen");
+        harness.assertNotOnBattlefield(player2, "Jedit Ojanen");
+    }
+
+    @Test
+    @DisplayName("Tapping Karakas for mana prevents activating its return ability")
+    void manaAndReturnAbilityShareTapCost() {
+        Permanent karakas = harness.addToBattlefieldAndReturn(player1, new Karakas());
+        Permanent jedit = harness.addToBattlefieldAndReturn(player2, new JeditOjanen());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(karakas.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, jedit.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Jedit Ojanen");
+        harness.assertNotInHand(player2, "Jedit Ojanen");
+    }
 }
