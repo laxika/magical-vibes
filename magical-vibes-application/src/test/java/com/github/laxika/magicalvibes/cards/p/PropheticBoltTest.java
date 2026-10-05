@@ -42,8 +42,7 @@ class PropheticBoltTest extends BaseCardTest {
         addPropheticBoltMana();
         int lifeBefore = gd.getLife(player2.getId());
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 4);
 
@@ -70,8 +69,7 @@ class PropheticBoltTest extends BaseCardTest {
         Card[] top = setTopFour();
         addPropheticBoltMana();
 
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Bloodfire Kavu"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Bloodfire Kavu"));
 
         harness.handleMultipleCardsChosen(player1, List.of(top[0].getId()));
         PendingInteraction.LibraryReorder reorderInteraction =
@@ -103,11 +101,71 @@ class PropheticBoltTest extends BaseCardTest {
         addPropheticBoltMana();
         int lifeBefore = gd.getLife(player2.getId());
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 4);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertInGraveyard(player1, "Prophetic Bolt");
     }
+
+    @Test
+    void putsRemainingLookedAtCardsBelowUntouchedLibraryInChosenOrder() {
+        harness.setHand(player1, List.of(new PropheticBolt()));
+        Card[] top = setTopFour();
+        Card untouched = new YavimayaCoast();
+        harness.setLibrary(player1, List.of(top[0], top[1], top[2], top[3], untouched));
+        addPropheticBoltMana();
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(top[2].getId()));
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(
+                reorder.cards().indexOf(top[3]),
+                reorder.cards().indexOf(top[1]),
+                reorder.cards().indexOf(top[0]))));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(top[2]);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(untouched, top[3], top[1], top[0]);
+        harness.assertInGraveyard(player1, "Prophetic Bolt");
+    }
+
+    @Test
+    void putsOnlyLibraryCardIntoHandWithoutReorder() {
+        harness.setHand(player1, List.of(new PropheticBolt()));
+        Card onlyCard = new AetherMutation();
+        harness.setLibrary(player1, List.of(onlyCard));
+        addPropheticBoltMana();
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 4);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Prophetic Bolt");
+    }
+
+    @Test
+    void doesNotLookAtLibraryWhenOnlyTargetIsSacrificed() {
+        harness.addToBattlefield(player2, new BloodfireKavu());
+        harness.setHand(player1, List.of(new PropheticBolt()));
+        Card[] top = setTopFour();
+        addPropheticBoltMana();
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Bloodfire Kavu"));
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Prophetic Bolt");
+        harness.assertInGraveyard(player2, "Bloodfire Kavu");
+    }
+
 }
