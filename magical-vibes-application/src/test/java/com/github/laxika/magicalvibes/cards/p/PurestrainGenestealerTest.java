@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -37,14 +36,13 @@ class PurestrainGenestealerTest extends BaseCardTest {
         declareAttack();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
         assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.BATTLEFIELD_TAPPED);
         assertThat(search.params().cards()).containsExactly(forest);
 
-        harness.getGameService().handleInteractionAnswer(
-                gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(genestealer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         Permanent searchedForest = findPermanent(player1, "Forest");
@@ -83,6 +81,48 @@ class PurestrainGenestealerTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
     }
 
+    @Test
+    @DisplayName("Removing the last counter immediately searches only for basic lands")
+    void lastCounterSearchesDuringTheSameResolution() {
+        Permanent genestealer = addGenestealerWithCounters(1);
+        Forest forest = new Forest();
+        PurestrainGenestealer nonland = new PurestrainGenestealer();
+        harness.setLibrary(player1, List.of(nonland, forest));
+
+        declareAttack();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(genestealer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(forest);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(findPermanent(player1, "Forest").isTapped()).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonland);
+    }
+
+    @Test
+    @DisplayName("The counter remains removed when the controller chooses not to find a land")
+    void mayFailToFindAfterRemovingCounter() {
+        Permanent genestealer = addGenestealerWithCounters(2);
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+
+        declareAttack();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(genestealer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(genestealer);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
     private Permanent castGenestealer() {
         harness.setHand(player1, List.of(new PurestrainGenestealer()));
         harness.addMana(player1, ManaColor.GREEN, 1);
