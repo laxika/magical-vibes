@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PursuitOfFlight.class, GrizzlyBears.class, FountainOfYouth.class})
 class PursuitOfFlightTest extends BaseCardTest {
 
     @Test
@@ -40,9 +42,8 @@ class PursuitOfFlightTest extends BaseCardTest {
     @DisplayName("Enchanted creature can pay {U} to gain flying until end of turn")
     void grantedAbilityGivesFlying() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent aura = new Permanent(new PursuitOfFlight());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new PursuitOfFlight());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
 
@@ -57,9 +58,8 @@ class PursuitOfFlightTest extends BaseCardTest {
     @DisplayName("Granted flying wears off at end of turn but the +2/+2 remains")
     void flyingWearsOffAtEndOfTurn() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent aura = new Permanent(new PursuitOfFlight());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new PursuitOfFlight());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.activateAbility(player1, 0, null, null);
@@ -77,9 +77,8 @@ class PursuitOfFlightTest extends BaseCardTest {
     @DisplayName("Creature loses the boost and the granted ability when the Aura leaves")
     void effectsStopWhenAuraRemoved() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent aura = new Permanent(new PursuitOfFlight());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new PursuitOfFlight());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
@@ -105,5 +104,62 @@ class PursuitOfFlightTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("The enchanted creature's controller can activate an ability granted by an opposing Aura")
+    void opposingCreatureControllerCanActivate() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PursuitOfFlight()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.activateAbility(player2, 0, null, null);
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(bears.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An activated flying ability resolves after the Aura leaves and lasts until end of turn")
+    void activatedAbilitySurvivesAuraLeaving() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new PursuitOfFlight());
+        aura.setAttachedTo(bears.getId());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The granted ability requires blue mana")
+    void cannotActivateWithOnlyRedMana() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new PursuitOfFlight());
+        aura.setAttachedTo(bears.getId());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
     }
 }
