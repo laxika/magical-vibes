@@ -30,8 +30,7 @@ class KaboomTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Kaboom()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        harness.castSorcery(player1, 0, List.of(player1.getId(), player2.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(player1.getId(), player2.getId()));
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -89,8 +88,7 @@ class KaboomTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Kaboom()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -110,6 +108,67 @@ class KaboomTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void sameNonlandCanBeRevealedAgainForTheNextTarget() {
+        Card revealed = new GlorySeeker();
+        harness.setLibrary(player1, List.of(revealed));
+        harness.setHand(player1, List.of(new Kaboom()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(player1.getId(), player2.getId()));
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(revealed);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void stopsAtFirstNonlandAndKeepsUnrevealedCardsAboveTheBottomedCards() {
+        Card forest = new Forest();
+        Card revealed = new GlorySeeker();
+        Card untouched = new Kaboom();
+        harness.setLibrary(player1, List.of(forest, revealed, untouched));
+        harness.setHand(player1, List.of(new Kaboom()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 18);
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder.cards()).containsExactly(forest, revealed);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched, revealed, forest);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void processesTargetsInActivePlayerOrderRegardlessOfSelectionOrder() {
+        Card first = new GlorySeeker();
+        Card second = new Kaboom();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new Kaboom()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(player2.getId(), player1.getId()));
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 15);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, second);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void cannotChooseTheSamePlayerTwice() {
+        harness.setHand(player1, List.of(new Kaboom()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(player2.getId(), player2.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
