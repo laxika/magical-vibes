@@ -52,6 +52,68 @@ class MineBearerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Sacrifice is paid immediately while destruction waits for resolution")
+    void sacrificeIsPaidBeforeResolution() {
+        addReadyMineBearer(player1);
+        Permanent attacker = addAttacker(player2);
+
+        harness.activateAbility(player1, 0, 0, null, attacker.getId());
+
+        harness.assertNotOnBattlefield(player1, "Mine Bearer");
+        harness.assertInGraveyard(player1, "Mine Bearer");
+        harness.assertOnBattlefield(player2, "Pygmy Razorback");
+        harness.assertNotInGraveyard(player2, "Pygmy Razorback");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Pygmy Razorback");
+        harness.assertInGraveyard(player2, "Pygmy Razorback");
+    }
+
+    @Test
+    @DisplayName("Can destroy an attacking creature its controller controls")
+    void canDestroyOwnAttackingCreature() {
+        addReadyMineBearer(player1);
+        Permanent attacker = addAttacker(player1);
+
+        harness.activateAbility(player1, 0, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Mine Bearer");
+        harness.assertNotOnBattlefield(player1, "Pygmy Razorback");
+        harness.assertInGraveyard(player1, "Pygmy Razorback");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped and does not sacrifice itself")
+    void cannotActivateWhileTapped() {
+        Permanent bearer = addReadyMineBearer(player1);
+        bearer.setTapped(true);
+        Permanent attacker = addAttacker(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Mine Bearer");
+        harness.assertNotInGraveyard(player1, "Mine Bearer");
+        harness.assertOnBattlefield(player2, "Pygmy Razorback");
+    }
+
+    @Test
+    @DisplayName("Cannot activate with summoning sickness and does not sacrifice itself")
+    void cannotActivateWithSummoningSickness() {
+        harness.addToBattlefield(player1, new MineBearer());
+        Permanent attacker = addAttacker(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Mine Bearer");
+        harness.assertNotInGraveyard(player1, "Mine Bearer");
+        harness.assertOnBattlefield(player2, "Pygmy Razorback");
+    }
+
     private Permanent addReadyMineBearer(Player player) {
         return addCreatureReady(player, new MineBearer());
     }
