@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.d.DarksteelAxe;
+import com.github.laxika.magicalvibes.cards.f.FieldCreeper;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LilianasElite.class, GrizzlyBears.class, Plains.class, DarksteelAxe.class, FieldCreeper.class})
 class LilianasEliteTest extends BaseCardTest {
 
     @Test
@@ -58,10 +61,49 @@ class LilianasEliteTest extends BaseCardTest {
     }
 
     private Permanent addEliteReady(Player player) {
-        Permanent elite = new Permanent(new LilianasElite());
+        Permanent elite = harness.addToBattlefieldAndReturn(player, new LilianasElite());
         elite.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(elite);
         return elite;
+    }
+
+    @Test
+    @DisplayName("Has no bonus with an empty graveyard")
+    void hasNoBonusWithEmptyGraveyard() {
+        Permanent elite = addEliteReady(player1);
+        harness.setGraveyard(player1, List.of());
+
+        assertThat(gqs.getEffectivePower(gd, elite)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elite)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Loses its bonus as creature cards leave the graveyard")
+    void updatesWhenCreatureCardsLeaveGraveyard() {
+        Permanent elite = addEliteReady(player1);
+        harness.setGraveyard(player1, List.of(new LilianasElite(), new LilianasElite()));
+
+        assertThat(gqs.getEffectivePower(gd, elite)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, elite)).isEqualTo(3);
+
+        gd.playerGraveyards.get(player1.getId()).removeFirst();
+
+        assertThat(gqs.getEffectivePower(gd, elite)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, elite)).isEqualTo(2);
+
+        gd.playerGraveyards.get(player1.getId()).clear();
+
+        assertThat(gqs.getEffectivePower(gd, elite)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elite)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Counts an artifact creature card once")
+    void countsArtifactCreatureCardOnce() {
+        Permanent elite = addEliteReady(player1);
+        harness.setGraveyard(player1, List.of(new FieldCreeper()));
+
+        assertThat(gqs.getEffectivePower(gd, elite)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, elite)).isEqualTo(2);
     }
 
     private List<Card> createCreatureCards(int count) {
