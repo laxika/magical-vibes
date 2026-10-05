@@ -13,8 +13,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,6 +24,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({IncubationIncongruity.class, Divination.class, Forest.class, GrizzlyBears.class,
+        LlanowarElves.class, Plains.class, Shock.class})
 class IncubationIncongruityTest extends BaseCardTest {
 
     @Test
@@ -89,5 +92,141 @@ class IncubationIncongruityTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 1, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void incubationCanDeclineCreatureAndPreservesUnseenTopCard() {
+        LlanowarElves creature = new LlanowarElves();
+        Forest unseen = new Forest();
+        List<Card> viewed = List.of(creature, new Shock(), new Plains(), new Divination(), new Forest());
+        harness.setLibrary(player1, List.of(viewed.get(0), viewed.get(1), viewed.get(2),
+                viewed.get(3), viewed.get(4), unseen));
+        harness.setHand(player1, List.of(new IncubationIncongruity()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castModalSorcery(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(unseen);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(1, 6))
+                .containsExactlyInAnyOrderElementsOf(viewed);
+    }
+
+    @Test
+    void incubationWithNoCreatureBottomsOnlyViewedCards() {
+        LlanowarElves unseen = new LlanowarElves();
+        List<Card> viewed = List.of(new Shock(), new Plains(), new Divination(), new Forest(), new Plains());
+        harness.setLibrary(player1, List.of(viewed.get(0), viewed.get(1), viewed.get(2),
+                viewed.get(3), viewed.get(4), unseen));
+        harness.setHand(player1, List.of(new IncubationIncongruity()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castModalSorcery(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(unseen);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(1, 6))
+                .containsExactlyInAnyOrderElementsOf(viewed);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void incubationLooksAtAllCardsInShortLibraryAndChoosesOnlyOneCreature() {
+        LlanowarElves chosen = new LlanowarElves();
+        GrizzlyBears remaining = new GrizzlyBears();
+        Forest land = new Forest();
+        harness.setLibrary(player1, List.of(chosen, remaining, land));
+        harness.setHand(player1, List.of(new IncubationIncongruity()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castModalSorcery(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(remaining, land);
+    }
+
+    @Test
+    void incubationWithEmptyLibraryDoesNotRequireAChoice() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new IncubationIncongruity()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castModalSorcery(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void incongruityCanBeCastDuringOpponentsTurn() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new IncubationIncongruity()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        harness.castModalInstant(player1, 0, 1, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target.getCard());
+        harness.assertOnBattlefield(player2, "Frog Lizard");
+    }
+
+    @Test
+    void incubationCannotBeCastDuringOpponentsTurn() {
+        harness.setHand(player1, List.of(new IncubationIncongruity()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.castModalSorcery(player1, 0, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void incongruityCreatesNoTokenWhenTargetDiesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new IncubationIncongruity()));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castModalInstant(player1, 0, 1, List.of(target.getId()));
+        harness.castInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Frog Lizard");
+        harness.assertNotOnBattlefield(player1, "Frog Lizard");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void incongruityCanExileOwnCreatureAndCreatesTokenForCaster() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new IncubationIncongruity()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castModalInstant(player1, 0, 1, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target.getCard());
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Frog Lizard");
+        harness.assertNotOnBattlefield(player2, "Frog Lizard");
     }
 }
