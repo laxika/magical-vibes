@@ -64,4 +64,18 @@ class KongmingSleepingDragonTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, infantry)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, infantry)).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("Tapped Kongming still buffs other creatures")
+    void tappedSourceStillBuffsOtherCreatures() {
+        Permanent kongming = harness.addToBattlefieldAndReturn(player1, new KongmingSleepingDragon());
+        Permanent infantry = harness.addToBattlefieldAndReturn(player1, new WuInfantry());
+
+        kongming.setTapped(true);
+
+        assertThat(gqs.getEffectivePower(gd, infantry)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, infantry)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, kongming)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, kongming)).isEqualTo(2);
+    }
 }
