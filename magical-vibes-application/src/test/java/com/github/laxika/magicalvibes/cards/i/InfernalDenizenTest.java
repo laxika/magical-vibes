@@ -129,9 +129,7 @@ class InfernalDenizenTest extends BaseCardTest {
     @Test
     @DisplayName("{T}: gains control of target creature while Denizen remains on the battlefield")
     void tapAbilityStealsCreature() {
-        harness.addToBattlefield(player1, new InfernalDenizen());
-        Permanent denizen = denizen(player1);
-        denizen.setSummoningSick(false);
+        Permanent denizen = addCreatureReady(player1, new InfernalDenizen());
 
         harness.addToBattlefield(player2, new GrizzlyBears());
         Permanent bears = findPermanent(player2, "Grizzly Bears");
@@ -150,9 +148,7 @@ class InfernalDenizenTest extends BaseCardTest {
     @Test
     @DisplayName("Stolen creature returns when Denizen leaves the battlefield")
     void controlEndsWhenDenizenLeaves() {
-        harness.addToBattlefield(player1, new InfernalDenizen());
-        Permanent denizen = denizen(player1);
-        denizen.setSummoningSick(false);
+        Permanent denizen = addCreatureReady(player1, new InfernalDenizen());
 
         harness.addToBattlefield(player2, new GrizzlyBears());
         Permanent bears = findPermanent(player2, "Grizzly Bears");
@@ -245,5 +241,40 @@ class InfernalDenizenTest extends BaseCardTest {
 
         assertThat(denizen(player1).isTapped()).isFalse();
         harness.assertOnBattlefield(player1, "Swamp");
+    }
+
+    @Test
+    @DisplayName("Activated ability cannot gain control if Denizen leaves before resolution")
+    void sourceLeavesBeforeActivatedAbilityResolves() {
+        Permanent denizen = addCreatureReady(player1, new InfernalDenizen());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castInstant(player2, 0, denizen.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Infernal Denizen");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
+    }
+
+    @Test
+    @DisplayName("Untapping Denizen does not end its activated control effect")
+    void controlSurvivesSourceUntapping() {
+        Permanent denizen = addCreatureReady(player1, new InfernalDenizen());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+        assertThat(denizen.isTapped()).isTrue();
+
+        harness.performUntapStep(player1);
+
+        assertThat(denizen.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
     }
 }
