@@ -151,4 +151,75 @@ class MinionOfTeveshSzatTest extends BaseCardTest {
         assertThat(minion.isTapped()).isFalse();
         assertThat(order.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("A summoning-sick Minion cannot pay the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        Permanent minion = harness.addToBattlefieldAndReturn(player1, new MinionOfTeveshSzat());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, minion.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(minion.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Minion cannot activate again")
+    void cannotActivateTwiceWithoutUntapping() {
+        Permanent minion = addMinionReady(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, minion.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, minion.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passBothPriorities();
+        assertThat(minion.getPowerModifier()).isEqualTo(3);
+        assertThat(minion.getToughnessModifier()).isEqualTo(-2);
+    }
+
+    @Test
+    @DisplayName("The ability resolves after its source dies")
+    void abilityResolvesAfterSourceDies() {
+        Permanent source = addMinionReady(player1);
+        addMinionReady(player1);
+        addMinionReady(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 1, null, source.getId());
+        harness.activateAbility(player1, 2, null, source.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(source);
+        harness.assertInGraveyard(player1, "Minion of Tevesh Szat");
+
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Balduvian Bears");
+        harness.assertInGraveyard(player2, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("One black mana and other colors cannot pay the upkeep cost")
+    void insufficientBlackManaDoesNotPartiallyPay() {
+        harness.addToBattlefield(player1, new MinionOfTeveshSzat());
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+    }
 }
