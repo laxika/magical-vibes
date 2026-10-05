@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LilianaTheLastHope;
+import com.github.laxika.magicalvibes.cards.j.JadeMage;
+import com.github.laxika.magicalvibes.cards.t.TeferiTemporalArchmage;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -20,7 +18,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OnakkeOathkeeper.class, GrizzlyBears.class, LilianaTheLastHope.class})
+@CardUsed({OnakkeOathkeeper.class, JadeMage.class, TeferiTemporalArchmage.class})
 class OnakkeOathkeeperTest extends BaseCardTest {
 
     @Test
@@ -28,8 +26,8 @@ class OnakkeOathkeeperTest extends BaseCardTest {
     void taxesOnlyPlaneswalkerAttackers() {
         harness.addToBattlefield(player1, new OnakkeOathkeeper());
         Permanent planeswalker = addPlaneswalker(player1);
-        addCreatureReady(player2, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new JadeMage());
+        addCreatureReady(player2, new JadeMage());
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         declareAttackers(player2, List.of(0, 1), Map.of(0, planeswalker.getId(), 1, player1.getId()));
@@ -42,7 +40,7 @@ class OnakkeOathkeeperTest extends BaseCardTest {
     void requiresManaToAttackPlaneswalker() {
         harness.addToBattlefield(player1, new OnakkeOathkeeper());
         Permanent planeswalker = addPlaneswalker(player1);
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new JadeMage());
 
         assertThatThrownBy(() -> declareAttackers(player2, List.of(0), Map.of(0, planeswalker.getId())))
                 .isInstanceOf(IllegalStateException.class)
@@ -53,7 +51,7 @@ class OnakkeOathkeeperTest extends BaseCardTest {
     @DisplayName("The graveyard ability exiles Onakke Oathkeeper and returns a planeswalker")
     void returnsTargetPlaneswalkerFromGraveyard() {
         Card source = new OnakkeOathkeeper();
-        Card planeswalker = new LilianaTheLastHope();
+        Card planeswalker = new TeferiTemporalArchmage();
         harness.setGraveyard(player1, List.of(source, planeswalker));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -73,7 +71,7 @@ class OnakkeOathkeeperTest extends BaseCardTest {
     @DisplayName("The graveyard ability cannot target a creature card")
     void cannotTargetCreatureFromGraveyard() {
         Card source = new OnakkeOathkeeper();
-        Card creature = new GrizzlyBears();
+        Card creature = new JadeMage();
         harness.setGraveyard(player1, List.of(source, creature));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -81,6 +79,70 @@ class OnakkeOathkeeperTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateGraveyardAbilityWithGraveyardTargets(
                 player1, 0, 0, List.of(creature.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void multipleOathkeepersChargeForEveryPlaneswalkerAttacker() {
+        harness.addToBattlefield(player1, new OnakkeOathkeeper());
+        harness.addToBattlefield(player1, new OnakkeOathkeeper());
+        Permanent planeswalker = addPlaneswalker(player1);
+        addCreatureReady(player2, new JadeMage());
+        addCreatureReady(player2, new JadeMage());
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+
+        declareAttackers(player2, List.of(0, 1),
+                Map.of(0, planeswalker.getId(), 1, planeswalker.getId()));
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .allMatch(Permanent::isAttacking);
+    }
+
+    @Test
+    void attackingThePlayerDoesNotRequirePayment() {
+        harness.addToBattlefield(player1, new OnakkeOathkeeper());
+        addPlaneswalker(player1);
+        addCreatureReady(player2, new JadeMage());
+
+        declareAttackers(player2, List.of(0), Map.of(0, player1.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().isAttacking()).isTrue();
+    }
+
+    @Test
+    void cannotTargetAnOpponentsPlaneswalkerCard() {
+        Card source = new OnakkeOathkeeper();
+        Card planeswalker = new TeferiTemporalArchmage();
+        harness.setGraveyard(player1, List.of(source));
+        harness.setGraveyard(player2, List.of(planeswalker));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(planeswalker.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(source);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(6);
+    }
+
+    @Test
+    void targetLeavingGraveyardDoesNotRefundTheExileCost() {
+        Card source = new OnakkeOathkeeper();
+        Card planeswalker = new TeferiTemporalArchmage();
+        harness.setGraveyard(player1, List.of(source, planeswalker));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateGraveyardAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(planeswalker.getId()));
+        harness.setGraveyard(player1, List.of());
+        gd.playerHands.get(player1.getId()).add(planeswalker);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(source);
+        assertThat(gd.playerHands.get(player1.getId())).contains(planeswalker);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     private void declareAttackers(Player player, List<Integer> attackerIndices,
@@ -93,13 +155,6 @@ class OnakkeOathkeeperTest extends BaseCardTest {
     }
 
     private Permanent addPlaneswalker(Player player) {
-        Card card = new Card();
-        card.setName("Test Planeswalker");
-        card.setType(CardType.PLANESWALKER);
-        card.setLoyalty(4);
-        Permanent permanent = new Permanent(card);
-        permanent.setCounterCount(CounterType.LOYALTY, 4);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return harness.enterBattlefieldAndReturn(player, new TeferiTemporalArchmage());
     }
 }
