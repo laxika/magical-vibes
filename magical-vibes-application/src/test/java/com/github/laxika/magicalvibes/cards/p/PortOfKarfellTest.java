@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.f.FearlessPup;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
@@ -10,13 +11,17 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PortOfKarfell.class, GrizzlyBears.class, HolyDay.class, LightningBolt.class,
+        Opt.class, Shock.class, FearlessPup.class})
 class PortOfKarfellTest extends BaseCardTest {
 
     @Test
@@ -85,6 +90,92 @@ class PortOfKarfellTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Port of Karfell");
         harness.assertInGraveyard(player1, "Holy Day");
+    }
+
+    @Test
+    @DisplayName("Pays costs before resolution and can return a newly milled creature")
+    void returnsNewlyMilledCreature() {
+        Permanent port = harness.addToBattlefieldAndReturn(player1, new PortOfKarfell());
+        Card creature = new FearlessPup();
+        Card remaining = new PortOfKarfell();
+        harness.setGraveyard(player1, List.of());
+        harness.setLibrary(player1, List.of(new PortOfKarfell(), creature,
+                new PortOfKarfell(), new PortOfKarfell(), remaining));
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(port);
+        harness.assertInGraveyard(player1, "Port of Karfell");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        harness.handleGraveyardCardChosen(player1,
+                gd.playerGraveyards.get(player1.getId()).indexOf(creature));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .singleElement()
+                .matches(p -> p.getCard().getId().equals(creature.getId()) && p.isTapped());
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(creature);
+    }
+
+    @Test
+    @DisplayName("Mills all available cards from a short library and still returns a creature")
+    void returnsCreatureAfterMillingShortLibrary() {
+        harness.addToBattlefield(player1, new PortOfKarfell());
+        Card creature = new FearlessPup();
+        Card opposingCreature = new FearlessPup();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(opposingCreature));
+        harness.setLibrary(player1, List.of(creature));
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.handleGraveyardCardChosen(player1,
+                gd.playerGraveyards.get(player1.getId()).indexOf(creature));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .singleElement()
+                .matches(p -> p.getCard().getId().equals(creature.getId()) && p.isTapped());
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingCreature);
+    }
+
+    @Test
+    @DisplayName("With an empty library the return is mandatory and cannot choose a noncreature")
+    void returnsExistingCreatureWithEmptyLibrary() {
+        harness.addToBattlefield(player1, new PortOfKarfell());
+        Card creature = new FearlessPup();
+        Card noncreature = new PortOfKarfell();
+        harness.setGraveyard(player1, List.of(creature, noncreature));
+        harness.setLibrary(player1, List.of());
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1,
+                gd.playerGraveyards.get(player1.getId()).indexOf(noncreature)))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleGraveyardCardChosen(player1,
+                gd.playerGraveyards.get(player1.getId()).indexOf(creature));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .singleElement()
+                .matches(p -> p.getCard().getId().equals(creature.getId()) && p.isTapped());
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(noncreature).doesNotContain(creature);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void addActivationMana() {
