@@ -58,4 +58,24 @@ class IronclawOrcsTest extends BaseCardTest {
         assertThat(bls.canBlockAttacker(gd, orcs, goblin,
                 gd.playerBattlefields.get(player1.getId()))).isFalse();
     }
+
+    @Test
+    void canBlockAttackerWhosePowerIsReducedBelowTwo() {
+        Permanent orcs = orcs();
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+
+        assertThat(bls.canBlockAttacker(gd, orcs, bears,
+                gd.playerBattlefields.get(player1.getId()))).isTrue();
+    }
+
+    @Test
+    void boostingOrcsDoesNotRaiseBlockingThreshold() {
+        Permanent orcs = orcs();
+        orcs.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+
+        assertThat(bls.canBlockAttacker(gd, orcs, bears,
+                gd.playerBattlefields.get(player1.getId()))).isFalse();
+    }
 }
