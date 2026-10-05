@@ -37,6 +37,67 @@ class PyrohemiaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can activate without creatures and still damages both players")
+    void activatedAbilityWorksWithoutCreatures() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new Pyrohemia());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+        harness.assertOnBattlefield(player1, "Pyrohemia");
+    }
+
+    @Test
+    @DisplayName("Can activate repeatedly and accumulated damage kills creatures")
+    void repeatedActivationsAccumulateDamage() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new Pyrohemia());
+        harness.addToBattlefield(player1, new KavuPredator());
+        harness.addToBattlefield(player2, new KavuPredator());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Kavu Predator");
+        harness.assertOnBattlefield(player2, "Kavu Predator");
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Kavu Predator");
+        harness.assertNotOnBattlefield(player2, "Kavu Predator");
+        harness.assertInGraveyard(player1, "Kavu Predator");
+        harness.assertInGraveyard(player2, "Kavu Predator");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player1, "Pyrohemia");
+    }
+
+    @Test
+    @DisplayName("Does not trigger when the last creature dies after the end step begins")
+    void doesNotTriggerWhenLastCreatureDiesDuringEndStep() {
+        harness.addToBattlefield(player1, new Pyrohemia());
+        harness.addToBattlefield(player2, new FirefrightMage());
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).isEmpty();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Firefright Mage");
+        harness.assertOnBattlefield(player1, "Pyrohemia");
+        harness.assertNotInGraveyard(player1, "Pyrohemia");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Sacrifices itself at end step when no creatures are on the battlefield")
     void sacrificesAtEndStepWhenNoCreatures() {
         harness.addToBattlefield(player1, new Pyrohemia());
