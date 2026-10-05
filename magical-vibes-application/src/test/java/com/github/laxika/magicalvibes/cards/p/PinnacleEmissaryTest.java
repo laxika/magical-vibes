@@ -30,8 +30,7 @@ class PinnacleEmissaryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 0);
 
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent drone = findPermanent(player1, "Drone");
         assertThat(drone.getCard().getColor()).isNull();
@@ -63,8 +62,7 @@ class PinnacleEmissaryTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
 
         harness.castArtifact(player2, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent drone = findPermanent(player2, "Drone");
         Permanent groundAttacker = addReadyAttacker(player1, new GrizzlyBears());
@@ -103,11 +101,123 @@ class PinnacleEmissaryTest extends BaseCardTest {
         assertThat(gd.findExiledCard(emissary.getId())).isNotNull();
     }
 
+    @Test
+    void triggerCreatesDroneBeforeArtifactResolves() {
+        harness.addToBattlefield(player1, new PinnacleEmissary());
+        harness.setHand(player1, List.of(new Spellbook()));
+
+        harness.castArtifact(player1, 0);
+        assertThat(countPermanents(player1, "Drone")).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Drone")).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Spellbook");
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Spellbook");
+    }
+
+    @Test
+    void opponentCastingArtifactDoesNotTriggerEmissary() {
+        harness.addToBattlefield(player1, new PinnacleEmissary());
+        harness.setHand(player2, List.of(new Spellbook()));
+        harness.forceActivePlayer(player2);
+
+        harness.castArtifact(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Drone")).isZero();
+        assertThat(countPermanents(player2, "Drone")).isZero();
+    }
+
+    @Test
+    void artifactEnteringWithoutBeingCastDoesNotTriggerEmissary() {
+        harness.addToBattlefield(player1, new PinnacleEmissary());
+
+        harness.enterBattlefieldAndReturn(player1, new Spellbook());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Drone")).isZero();
+    }
+
+    @Test
+    void doesNotTriggerForItsOwnCastButTriggersForAnotherEmissary() {
+        harness.setHand(player1, List.of(new PinnacleEmissary(), new PinnacleEmissary()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        assertThat(countPermanents(player1, "Drone")).isZero();
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Pinnacle Emissary")).isEqualTo(2);
+        assertThat(countPermanents(player1, "Drone")).isEqualTo(1);
+    }
+
+    @Test
+    void normallyCastEmissaryIsNotExiledAtEndStep() {
+        harness.setHand(player1, List.of(new PinnacleEmissary()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Pinnacle Emissary");
+    }
+
+    @Test
+    void redWarpPaymentAllowsRecastForNormalCostOnLaterTurn() {
+        PinnacleEmissary emissary = new PinnacleEmissary();
+        harness.setHand(player1, List.of(emissary));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Pinnacle Emissary");
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+        assertThat(gd.findExiledCard(emissary.getId())).isNotNull();
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        assertThatThrownBy(() -> harness.castFromExile(player1, emissary.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.setLibrary(player1, List.of(new Spellbook()));
+        harness.setLibrary(player2, List.of(new Spellbook()));
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromExile(player1, emissary.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Pinnacle Emissary");
+        assertThat(gd.findExiledCard(emissary.getId())).isNull();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Pinnacle Emissary");
+    }
+
     private Permanent addReadyAttacker(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
+        Permanent permanent = addCreatureReady(player, card);
         permanent.setAttacking(true);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
