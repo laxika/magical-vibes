@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -75,14 +76,10 @@ class MarchTowardPerfectionTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
-        Permanent firstPermanent = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(first.getId()))
-                .findFirst()
-                .orElseThrow();
-        Permanent secondPermanent = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(second.getId()))
-                .findFirst()
-                .orElseThrow();
+        List<Permanent> myrs = findPermanents(player1, "Myr Convert");
+        assertThat(myrs).hasSize(2);
+        Permanent firstPermanent = myrs.getFirst();
+        Permanent secondPermanent = myrs.getLast();
 
         assertThat(firstPermanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(firstPermanent.getCounterCount(CounterType.DEATHTOUCH)).isEqualTo(1);
@@ -111,11 +108,91 @@ class MarchTowardPerfectionTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
-        Permanent myrPermanent = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(myr.getId()))
-                .findFirst()
-                .orElseThrow();
+        Permanent myrPermanent = findPermanent(player1, "Myr Convert");
         assertThat(myrPermanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(myrPermanent.getCounterCount(CounterType.DEATHTOUCH)).isEqualTo(1);
+    }
+
+    @Test
+    void boonPersistsAcrossTurnsAndIgnoresOpponentsCreatureSpells() {
+        harness.setHand(player1, List.of(new MarchTowardPerfection(), new MyrConvert()));
+        harness.setHand(player2, List.of(new MyrConvert()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        PendingInteraction.SpellbookDraftChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(choice.cards().getFirst().getId()));
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castCreature(player2, 0);
+        resolveAllTriggers();
+
+        Permanent opponentsMyr = findPermanent(player2, "Myr Convert");
+        assertThat(opponentsMyr.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opponentsMyr.getCounterCount(CounterType.DEATHTOUCH)).isZero();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent myr = findPermanent(player1, "Myr Convert");
+        assertThat(myr.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(myr.getCounterCount(CounterType.DEATHTOUCH)).isEqualTo(1);
+    }
+
+    @Test
+    void multipleBoonsApplyToTheSameNextCreatureAndAreAllConsumed() {
+        harness.setHand(player1, List.of(new MarchTowardPerfection(), new MarchTowardPerfection(),
+                new MyrConvert(), new MyrConvert()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        for (int i = 0; i < 2; i++) {
+            harness.castSorcery(player1, 0);
+            harness.passBothPriorities();
+            PendingInteraction.SpellbookDraftChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
+            harness.handleMultipleCardsChosen(player1, List.of(choice.cards().getFirst().getId()));
+        }
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        List<Permanent> myrs = findPermanents(player1, "Myr Convert");
+        assertThat(myrs).hasSize(2);
+        assertThat(myrs.getFirst().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(myrs.getFirst().getCounterCount(CounterType.DEATHTOUCH)).isEqualTo(2);
+        assertThat(myrs.getLast().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(myrs.getLast().getCounterCount(CounterType.DEATHTOUCH)).isZero();
+    }
+
+    @Test
+    void draftOffersDistinctSpellbookCardsAndPutsOnlyTheSelectedCardInHand() {
+        harness.setHand(player1, List.of(new MarchTowardPerfection()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.SpellbookDraftChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.cards()).hasSize(3);
+        assertThat(choice.cards().stream().map(Card::getName).toList())
+                .doesNotHaveDuplicates()
+                .isSubsetOf("Archfiend of the Dross", "Bilious Skulldweller", "Diminished Returner",
+                        "Entomber Exarch", "Myr Convert", "Phyrexian Fleshgorger", "Phyrexian Gargantua",
+                        "Phyrexian Obliterator", "Phyrexian Rager", "Phyrexian Revoker", "Scrapwork Rager",
+                        "Soulless Jailer", "Toxic Abomination", "Vault Skirge", "Zenith Chronicler");
+
+        Card drafted = choice.cards().getLast();
+        harness.handleMultipleCardsChosen(player1, List.of(drafted.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drafted);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
     }
 }
