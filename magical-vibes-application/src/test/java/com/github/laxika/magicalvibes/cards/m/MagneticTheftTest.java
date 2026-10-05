@@ -69,6 +69,70 @@ class MagneticTheftTest extends BaseCardTest {
                 .hasMessageContaining("creature");
     }
 
+    @Test
+    @DisplayName("Animated Equipment remains a legal target but cannot become attached")
+    void cannotAttachAnimatedEquipment() {
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new EnsouledScimitar());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new Arachnoid());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        castMagneticTheft(equipment, creature);
+
+        assertThat(equipment.getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Magnetic Theft");
+    }
+
+    @Test
+    @DisplayName("Can attach Equipment to an animated Equipment creature")
+    void canAttachToAnimatedEquipment() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new EnsouledScimitar());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new EnsouledScimitar());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        castMagneticTheft(equipment, creature);
+
+        assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(equipment);
+    }
+
+    @Test
+    @DisplayName("Attaching to the current equipped creature does not change the timestamp")
+    void attachingToSameCreatureDoesNothing() {
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new EnsouledScimitar());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Arachnoid());
+        castMagneticTheft(equipment, creature);
+        long timestamp = equipment.getTimestamp();
+
+        castMagneticTheft(equipment, creature);
+
+        assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(equipment.getTimestamp()).isEqualTo(timestamp);
+    }
+
+    @Test
+    @DisplayName("Equipment stays on its old creature when the new target leaves before resolution")
+    void missingCreatureDoesNotUnattachEquipment() {
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new EnsouledScimitar());
+        Permanent oldCreature = harness.addToBattlefieldAndReturn(player2, new Arachnoid());
+        Permanent newCreature = harness.addToBattlefieldAndReturn(player1, new Arachnoid());
+        equipment.setAttachedTo(oldCreature.getId());
+        harness.setHand(player1, List.of(new MagneticTheft()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, List.of(equipment.getId(), newCreature.getId()));
+        harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, newCreature);
+
+        harness.passBothPriorities();
+
+        assertThat(equipment.getAttachedTo()).isEqualTo(oldCreature.getId());
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Magnetic Theft");
+    }
+
     private void castMagneticTheft(Permanent equipment, Permanent creature) {
         harness.setHand(player1, List.of(new MagneticTheft()));
         harness.addMana(player1, ManaColor.RED, 1);
