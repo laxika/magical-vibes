@@ -245,6 +245,27 @@ class JayemdaeTomeTest extends BaseCardTest {
 
     // ===== Helpers =====
 
+    @Test
+    @DisplayName("Ability draws exactly the top card only when it resolves")
+    void drawsExactlyOneTopCardOnResolution() {
+        Forest top = new Forest();
+        Forest next = new Forest();
+        addReadyTome(player1);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(top, next));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top, next);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(top);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(next);
+    }
+
     private Permanent addReadyTome(Player player) {
         Permanent perm = harness.addToBattlefieldAndReturn(player, new JayemdaeTome());
         perm.setSummoningSick(false);
