@@ -104,4 +104,67 @@ class PitImpTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, imp)).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("Unresolved activations count toward the twice-per-turn limit")
+    void unresolvedActivationsCountTowardLimit() {
+        Permanent imp = addCreatureReady(player1, new PitImp());
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.getEffectivePower(gd, imp)).isZero();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no more than 2 times each turn");
+
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, imp)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, imp)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Each Pit Imp has its own activation limit")
+    void activationLimitIsIndependentForEachImp() {
+        Permanent first = addCreatureReady(player1, new PitImp());
+        Permanent second = addCreatureReady(player1, new PitImp());
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 1, null, null);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The activation limit resets for the opponent's turn too")
+    void activationLimitResetsOnOpponentsTurn() {
+        Permanent imp = addCreatureReady(player1, new PitImp());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no more than 2 times each turn");
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, imp)).isEqualTo(2);
+    }
 }
