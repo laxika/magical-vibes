@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.c.CabalTrainee;
 import com.github.laxika.magicalvibes.cards.c.Cagemail;
+import com.github.laxika.magicalvibes.cards.e.Excruciator;
 import com.github.laxika.magicalvibes.cards.f.FlaringPain;
 import com.github.laxika.magicalvibes.cards.g.GiantWarthog;
 import com.github.laxika.magicalvibes.cards.l.LavaDart;
@@ -22,7 +23,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CabalTrainee.class, Cagemail.class, FlaringPain.class, GiantWarthog.class, LavaDart.class, PhantomCentaur.class, ToxicStench.class})
+@CardUsed({CabalTrainee.class, Cagemail.class, Excruciator.class, FlaringPain.class, GiantWarthog.class, LavaDart.class, PhantomCentaur.class, ToxicStench.class})
 class PhantomCentaurTest extends BaseCardTest {
 
     @Test
@@ -159,8 +160,7 @@ class PhantomCentaurTest extends BaseCardTest {
         Permanent firstBlocker = addCreatureReady(player2, new GiantWarthog());
         Permanent secondBlocker = addCreatureReady(player2, new GiantWarthog());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
@@ -179,7 +179,67 @@ class PhantomCentaurTest extends BaseCardTest {
     private void dealLavaDartForJudReview(Permanent target) {
         harness.setHand(player1, List.of(new LavaDart()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+    }
+
+    @Test
+    @DisplayName("Losing the last counter puts the unboosted Centaur into the graveyard")
+    void losingLastCounterCausesDeath() {
+        Permanent centaur = harness.enterBattlefieldAndReturn(player2, new PhantomCentaur());
+        centaur.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        dealLavaDartForJudReview(centaur);
+
+        harness.assertNotOnBattlefield(player2, "Phantom Centaur");
+        harness.assertInGraveyard(player2, "Phantom Centaur");
+        assertThat(centaur.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Damage remains prevented with no counters and a toughness boost")
+    void preventsAnotherDamageEventAfterLastCounterIsRemoved() {
+        Permanent centaur = harness.enterBattlefieldAndReturn(player2, new PhantomCentaur());
+        harness.setHand(player1, List.of(new Cagemail()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castEnchantment(player1, 0, centaur.getId());
         harness.passBothPriorities();
+        centaur.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+
+        dealLavaDartForJudReview(centaur);
+
+        assertThat(findPermanent(player2, "Phantom Centaur")).isSameAs(centaur);
+        assertThat(centaur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(centaur.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Controller chooses between protection and counter-removing prevention")
+    void controllerChoosesPreventionOrderForBlackCombatDamage() {
+        addCreatureReady(player1, new CabalTrainee());
+        harness.enterBattlefieldAndReturn(player2, new PhantomCentaur());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+    }
+
+    @Test
+    @CardUsed({PhantomCentaur.class, Excruciator.class, Cagemail.class})
+    @DisplayName("Unpreventable combat damage from a source still removes a counter")
+    void sourceUnpreventableCombatDamageStillRemovesCounter() {
+        addCreatureReady(player1, new Excruciator());
+        Permanent centaur = harness.enterBattlefieldAndReturn(player2, new PhantomCentaur());
+        harness.setHand(player1, List.of(new Cagemail()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castEnchantment(player1, 0, centaur.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(centaur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertInGraveyard(player2, "Phantom Centaur");
     }
 }
