@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IonasJudgment;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredPlains;
 import com.github.laxika.magicalvibes.cards.t.TyvarKell;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -17,10 +18,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KayaTheInexorable.class, GrizzlyBears.class, IonasJudgment.class, Shock.class, TyvarKell.class})
+@CardUsed({KayaTheInexorable.class, GrizzlyBears.class, IonasJudgment.class, Shock.class,
+        TyvarKell.class, SnowCoveredPlains.class})
 class KayaTheInexorableTest extends BaseCardTest {
 
     @Test
@@ -82,11 +86,230 @@ class KayaTheInexorableTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Tyvar Kell");
     }
 
+    @Test
+    void plusOneCanResolveWithoutATarget() {
+        Permanent kaya = addReadyKaya(5);
+
+        harness.activateAbility(player1, battlefieldIndex(kaya), 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(kaya.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
+        assertThat(countPermanents(player1, "Spirit")).isZero();
+    }
+
+    @Test
+    void minusThreeExilesOpposingPlaneswalker() {
+        Permanent kaya = addReadyKaya(5);
+        Permanent tyvar = harness.addToBattlefieldAndReturn(player2, new TyvarKell());
+        tyvar.setCounterCount(CounterType.LOYALTY, 3);
+
+        harness.activateAbility(player1, battlefieldIndex(kaya), 1, null, tyvar.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Tyvar Kell");
+        assertThat(gd.findExiledCard(tyvar.getCard().getId())).isNotNull();
+        assertThat(kaya.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+    }
+
+    @Test
+    void minusThreeCannotTargetLand() {
+        Permanent kaya = addReadyKaya(5);
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new SnowCoveredPlains());
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(kaya), 1, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void plusOneCannotTargetTokenCreature() {
+        Permanent kaya = addReadyKaya(5);
+        Permanent tyvar = harness.addToBattlefieldAndReturn(player1, new TyvarKell());
+        tyvar.setCounterCount(CounterType.LOYALTY, 3);
+        harness.activateAbility(player1, battlefieldIndex(tyvar), 1, null, null);
+        resolveAllTriggers();
+        Permanent elf = findPermanent(player1, "Elf Warrior");
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(kaya), 0, null, elf.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void multipleGhostformAbilitiesEachCreateASpirit() {
+        Permanent kaya = addReadyKaya(5);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.activateAbility(player1, battlefieldIndex(kaya), 0, null, creature.getId());
+        resolveAllTriggers();
+        harness.performUntapStep(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, battlefieldIndex(kaya), 0, null, creature.getId());
+        resolveAllTriggers();
+
+        harness.setHand(player1, List.of(new IonasJudgment()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castSorcery(player1, 0, creature.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(countPermanents(player1, "Spirit")).isEqualTo(2);
+    }
+
+    @Test
+    void ghostformAbilityWorksAfterItsCounterIsRemoved() {
+        Permanent kaya = addReadyKaya(5);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.activateAbility(player1, battlefieldIndex(kaya), 0, null, creature.getId());
+        resolveAllTriggers();
+        creature.setCounterCount(CounterType.GHOSTFORM, 0);
+
+        harness.setHand(player1, List.of(new IonasJudgment()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castSorcery(player1, 0, creature.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(countPermanents(player1, "Spirit")).isEqualTo(1);
+    }
+
+    @Test
+    void ghostformOnOpposingCreatureCreatesSpiritForItsController() {
+        Permanent kaya = addReadyKaya(5);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.activateAbility(player1, battlefieldIndex(kaya), 0, null, creature.getId());
+        resolveAllTriggers();
+
+        harness.setHand(player1, List.of(new IonasJudgment()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castSorcery(player1, 0, creature.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(countPermanents(player2, "Spirit")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Spirit")).isZero();
+    }
+
+    @Test
+    void ultimateCastsLegendarySpellFromGraveyard() {
+        createEmblem();
+        harness.setGraveyard(player1, List.of(new TyvarKell()));
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Tyvar Kell");
+        harness.assertNotInGraveyard(player1, "Tyvar Kell");
+    }
+
+    @Test
+    void ultimateCastsLegendarySpellFromExile() {
+        createEmblem();
+        TyvarKell tyvar = new TyvarKell();
+        harness.setExile(player1, List.of(tyvar));
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Tyvar Kell");
+        assertThat(gd.findExiledCard(tyvar.getId())).isNull();
+    }
+
+    @Test
+    void ultimateDoesNotUseCardsOwnedByOpponent() {
+        createEmblem();
+        harness.setExile(player2, List.of(new TyvarKell()));
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertNotOnBattlefield(player1, "Tyvar Kell");
+    }
+
+    @Test
+    void ultimateDoesNotOfferNonlegendaryCards() {
+        createEmblem();
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new SnowCoveredPlains()));
+        harness.setExile(player1, List.of(new TyvarKell()));
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Tyvar Kell");
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Snow-Covered Plains");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void ultimateDoesNotTriggerDuringOpponentsUpkeep() {
+        createEmblem();
+        harness.setHand(player1, List.of(new TyvarKell()));
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInHand(player1, "Tyvar Kell");
+    }
+
+    @Test
+    void ultimateAllowsOnlyOneSpellAcrossAllZones() {
+        createEmblem();
+        harness.setHand(player1, List.of(new TyvarKell()));
+        harness.setGraveyard(player1, List.of(new KayaTheInexorable()));
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Tyvar Kell");
+        harness.assertNotOnBattlefield(player1, "Kaya the Inexorable");
+        harness.assertInGraveyard(player1, "Kaya the Inexorable");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void ultimateCanCastFaceDownLegendaryCardWithLookPermission() {
+        createEmblem();
+        TyvarKell tyvar = new TyvarKell();
+        gd.addToExile(player1.getId(), tyvar, null, true, player2.getId());
+        gd.additionalExileLookPermissions.put(tyvar.getId(), Set.of(player1.getId()));
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Tyvar Kell");
+    }
+
+    @Test
+    void decliningHandSpellDoesNotRevealItsIdentity() {
+        createEmblem();
+        harness.setHand(player1, List.of(new TyvarKell()));
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Tyvar Kell");
+        assertThat(gameLogContains("declines to cast Tyvar Kell")).isFalse();
+    }
+
+    private void createEmblem() {
+        Permanent kaya = addReadyKaya(7);
+        harness.activateAbility(player1, battlefieldIndex(kaya), 2, null, null);
+        resolveAllTriggers();
+        harness.setGraveyard(player1, List.of());
+    }
+
     private Permanent addReadyKaya(int loyalty) {
-        Permanent kaya = new Permanent(new KayaTheInexorable());
+        Permanent kaya = harness.addToBattlefieldAndReturn(player1, new KayaTheInexorable());
         kaya.setCounterCount(CounterType.LOYALTY, loyalty);
-        kaya.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(kaya);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return kaya;
