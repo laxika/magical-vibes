@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DuneBeetle;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,13 +14,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LilianasInfluence.class, LilianaDeathWielder.class, DuneBeetle.class})
 class LilianasInfluenceTest extends BaseCardTest {
 
     @Test
     @DisplayName("Puts a -1/-1 counter on each creature you don't control")
     void putsMinusOneOnOpponentCreaturesOnly() {
-        Permanent mine = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent theirs = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent mine = harness.addToBattlefieldAndReturn(player1, new DuneBeetle());
+        Permanent theirs = harness.addToBattlefieldAndReturn(player2, new DuneBeetle());
         setupAndCast();
 
         harness.passBothPriorities();
@@ -61,8 +61,7 @@ class LilianasInfluenceTest extends BaseCardTest {
     @DisplayName("Accepting may searches library when not in graveyard")
     void acceptingMaySearchesLibrary() {
         Card liliana = createLilianaDeathWielder();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(liliana);
+        harness.setLibrary(player1, List.of(liliana));
         setupAndCast();
 
         harness.passBothPriorities();
@@ -90,18 +89,81 @@ class LilianasInfluenceTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("A library selection puts exactly the chosen Liliana into hand")
+    void librarySelectionMovesChosenCopyToHand() {
+        Card chosen = new LilianaDeathWielder();
+        Card other = new LilianaDeathWielder();
+        Card filler = new DuneBeetle();
+        harness.setGraveyard(player1, List.of());
+        harness.setLibrary(player1, List.of(chosen, other, filler));
+        setupAndCast();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(other, filler);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A library search may fail to find even when Liliana is present")
+    void librarySearchCanFailToFind() {
+        Card liliana = new LilianaDeathWielder();
+        harness.setGraveyard(player1, List.of());
+        harness.setLibrary(player1, List.of(liliana));
+        setupAndCast();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(liliana);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Accepting a search must not force a graveyard copy when a library copy exists")
+    void doesNotAutomaticallyTakeGraveyardCopyInsteadOfAllowingLibrarySearch() {
+        Card graveyardCopy = new LilianaDeathWielder();
+        Card libraryCopy = new LilianaDeathWielder();
+        harness.setGraveyard(player1, List.of(graveyardCopy));
+        harness.setLibrary(player1, List.of(libraryCopy));
+        setupAndCast();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyardCopy);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCopy);
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Counters affect every opposing creature but not an opposing planeswalker")
+    void countersExcludeNoncreaturesAndStillApplyWhenSearchIsDeclined() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new DuneBeetle());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new DuneBeetle());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new LilianaDeathWielder());
+        setupAndCast();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(first.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(planeswalker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+    }
+
     private void setupAndCast() {
-        harness.setHand(player1, List.of(new LilianasInfluence()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new LilianasInfluence(), "{4}{B}{B}");
     }
 
     private Card createLilianaDeathWielder() {
-        Card liliana = new Card();
-        liliana.setName("Liliana, Death Wielder");
-        liliana.setType(CardType.PLANESWALKER);
-        liliana.setManaCost("{5}{B}{B}");
-        return liliana;
+        return new LilianaDeathWielder();
     }
 }
