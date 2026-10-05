@@ -30,7 +30,7 @@ class KozileksPathfinderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         pathfinder.setAttacking(true);
-        enterDeclareBlockers();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -49,7 +49,7 @@ class KozileksPathfinderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         otherAttacker.setAttacking(true);
-        enterDeclareBlockers();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
     }
@@ -57,11 +57,11 @@ class KozileksPathfinderTest extends BaseCardTest {
     @Test
     @DisplayName("Ability requires colorless mana and a creature target")
     void abilityRequiresColorlessManaAndCreatureTarget() {
-        addReadyPathfinder(player1);
+        Permanent pathfinder = addReadyPathfinder(player1);
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         harness.addMana(player1, ManaColor.WHITE, 1);
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, pathfinder.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("mana");
 
@@ -75,10 +75,82 @@ class KozileksPathfinderTest extends BaseCardTest {
         return addCreatureReady(player, new KozileksPathfinder());
     }
 
-    private void enterDeclareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+    @Test
+    @DisplayName("Restriction expires at the end of the turn")
+    void restrictionExpiresAtEndOfTurn() {
+        Permanent pathfinder = addReadyPathfinder(player1);
+        Permanent blocker = addReadyPathfinder(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        harness.passBothPriorities();
+
+        pathfinder.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+    }
+
+    @Test
+    @DisplayName("Targeted creature can block a different Kozilek's Pathfinder")
+    void restrictionAppliesOnlyToTheSourcePermanent() {
+        addReadyPathfinder(player1);
+        Permanent otherPathfinder = addReadyPathfinder(player1);
+        Permanent blocker = addReadyPathfinder(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        otherPathfinder.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+    }
+
+    @Test
+    @DisplayName("Repeated activations prevent multiple creatures from blocking")
+    void repeatedActivationsRestrictEachTarget() {
+        Permanent pathfinder = addReadyPathfinder(player1);
+        Permanent firstBlocker = addReadyPathfinder(player2);
+        Permanent secondBlocker = addReadyPathfinder(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, firstBlocker.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, secondBlocker.getId());
+        harness.passBothPriorities();
+
+        pathfinder.setAttacking(true);
+        prepareDeclareBlockers();
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't block");
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't block");
+    }
+
+    @Test
+    @DisplayName("Tapped, summoning-sick Pathfinder can activate its ability")
+    void abilityDoesNotRequireTappingOrHaste() {
+        Permanent pathfinder = harness.addToBattlefieldAndReturn(player1, new KozileksPathfinder());
+        pathfinder.setSummoningSick(true);
+        pathfinder.setTapped(true);
+        Permanent blocker = addReadyPathfinder(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        pathfinder.setTapped(false);
+        pathfinder.setSummoningSick(false);
+        pathfinder.setAttacking(true);
+        prepareDeclareBlockers();
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't block");
     }
 }
