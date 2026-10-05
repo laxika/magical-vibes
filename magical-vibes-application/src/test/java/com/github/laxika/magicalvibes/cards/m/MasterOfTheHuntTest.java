@@ -98,8 +98,7 @@ class MasterOfTheHuntTest extends BaseCardTest {
         createWolf(player2);
         List<Permanent> wolves = findWolves(player2);
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(1, 0),
                 new BlockerAssignment(2, 0)));
@@ -125,7 +124,7 @@ class MasterOfTheHuntTest extends BaseCardTest {
         addMasterMana(player1);
         createWolf();
         findWolves(player1).getFirst().setSummoningSick(false);
-        Permanent otherCreature = addMasterReady(player1);
+        addMasterReady(player1);
 
         beginAttackDeclaration();
         assertThatThrownBy(() -> harness.getGameService().declareAttackers(
@@ -136,6 +135,55 @@ class MasterOfTheHuntTest extends BaseCardTest {
                 List.of(List.of(1, 2))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("with banding");
+    }
+
+    @Test
+    @DisplayName("The mana-only ability can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent master = harness.addToBattlefieldAndReturn(player1, new MasterOfTheHunt());
+        master.setSummoningSick(true);
+        master.setTapped(true);
+        addMasterMana(player1);
+
+        createWolf();
+
+        assertThat(findWolves(player1)).hasSize(1);
+        assertThat(master.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An activated ability creates its Wolf after the Master leaves the battlefield")
+    void abilityResolvesWithoutItsSource() {
+        Permanent master = addMasterReady(player1);
+        addMasterMana(player1);
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(master);
+        gd.playerGraveyards.get(player1.getId()).add(master.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(findWolves(player1)).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(master);
+    }
+
+    @Test
+    @DisplayName("A named band can contain three Wolves without ordinary banding")
+    void threeWolvesCanAttackInOneBand() {
+        addMasterReady(player1);
+        addMasterMana(player1);
+        addMasterMana(player1);
+        addMasterMana(player1);
+        createWolf();
+        createWolf();
+        createWolf();
+        List<Permanent> wolves = findWolves(player1);
+        wolves.forEach(wolf -> wolf.setSummoningSick(false));
+
+        declareBand(List.of(1, 2, 3));
+
+        assertThat(wolves.getFirst().getBandId()).isNotNull();
+        assertThat(wolves).allSatisfy(wolf ->
+                assertThat(wolf.getBandId()).isEqualTo(wolves.getFirst().getBandId()));
     }
 
     private void createWolf() {
