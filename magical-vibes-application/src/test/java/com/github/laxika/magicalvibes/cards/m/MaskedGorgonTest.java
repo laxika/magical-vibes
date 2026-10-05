@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.e.EpicStruggle;
 import com.github.laxika.magicalvibes.cards.h.HaplessResearcher;
 import com.github.laxika.magicalvibes.cards.i.IronshellBeetle;
 import com.github.laxika.magicalvibes.cards.l.Lifelace;
+import com.github.laxika.magicalvibes.cards.n.NamelessInversion;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.cards.x.XathridGorgon;
 import com.github.laxika.magicalvibes.model.Card;
@@ -19,10 +20,12 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AnuridBrushhopper.class, EpicStruggle.class, HaplessResearcher.class, IronshellBeetle.class, Lifelace.class, MaskedGorgon.class, SuntailHawk.class, XathridGorgon.class})
+@CardUsed({AnuridBrushhopper.class, EpicStruggle.class, HaplessResearcher.class, IronshellBeetle.class, Lifelace.class, MaskedGorgon.class, NamelessInversion.class, SuntailHawk.class, XathridGorgon.class})
 class MaskedGorgonTest extends BaseCardTest {
 
     @Test
@@ -106,7 +109,6 @@ class MaskedGorgonTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Lifelace.class)
     @DisplayName("A green Masked Gorgon has protection from Gorgons")
     void greenMaskedGorgonHasProtectionFromGorgons() {
         Permanent maskedGorgon = addMaskedGorgon(player1);
@@ -117,5 +119,105 @@ class MaskedGorgonTest extends BaseCardTest {
 
         assertThat(gqs.getEffectiveColors(gd, maskedGorgon)).containsExactly(CardColor.GREEN);
         assertThat(gqs.hasProtectionFromSourceSubtypes(gd, maskedGorgon, maskedGorgon)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A changeling spell cannot target a green creature protected from Gorgons")
+    void changelingSpellCannotTargetGreenCreature() {
+        harness.addToBattlefield(player1, new MaskedGorgon());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AnuridBrushhopper());
+        harness.setHand(player1, List.of(new NamelessInversion()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A changeling spell cannot target a white creature protected from Gorgons")
+    void changelingSpellCannotTargetWhiteCreature() {
+        harness.addToBattlefield(player1, new MaskedGorgon());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        harness.setHand(player1, List.of(new NamelessInversion()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A changeling spell loses its target when that creature becomes green")
+    void changelingSpellTargetBecomesProtectedBeforeResolution() {
+        harness.addToBattlefield(player1, new MaskedGorgon());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HaplessResearcher());
+        harness.setHand(player1, List.of(new NamelessInversion()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castInstant(player1, 0, target.getId());
+
+        harness.setHand(player2, List.of(new Lifelace()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.castInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Hapless Researcher");
+        harness.assertInGraveyard(player1, "Nameless Inversion");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Protection from Gorgons prevents targeting by a Gorgon's activated ability")
+    void gorgonAbilityCannotTargetProtectedCreature() {
+        harness.addToBattlefield(player2, new MaskedGorgon());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AnuridBrushhopper());
+        addCreatureReady(player1, new XathridGorgon());
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Gorgons cannot block protected creatures even below threshold")
+    void gorgonCannotBlockProtectedCreature() {
+        harness.addToBattlefield(player1, new MaskedGorgon());
+        addCreatureReady(player1, new AnuridBrushhopper());
+        addCreatureReady(player2, new MaskedGorgon());
+        declareAttackersAndPrepareBlockers(List.of(1));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, Map.of(0, 1)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Protection from Gorgons prevents combat damage from an attacking Masked Gorgon")
+    void protectedBlockerSurvivesGorgonCombatDamage() {
+        addCreatureReady(player1, new MaskedGorgon());
+        addCreatureReady(player2, new AnuridBrushhopper());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, Map.of(0, 0));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player2, "Anurid Brushhopper");
+        harness.assertOnBattlefield(player1, "Masked Gorgon");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Threshold prevents green and white creatures from blocking Masked Gorgon")
+    void thresholdPreventsGreenAndWhiteBlockers() {
+        Permanent attacker = addCreatureReady(player1, new MaskedGorgon());
+        Permanent greenBlocker = addCreatureReady(player2, new IronshellBeetle());
+        Permanent whiteBlocker = addCreatureReady(player2, new SuntailHawk());
+        List<Permanent> defenders = gd.playerBattlefields.get(player2.getId());
+
+        assertThat(bls.canBlockAttacker(gd, greenBlocker, attacker, defenders)).isTrue();
+        assertThat(bls.canBlockAttacker(gd, whiteBlocker, attacker, defenders)).isTrue();
+        fillGraveyard(player1, 7);
+        assertThat(bls.canBlockAttacker(gd, greenBlocker, attacker, defenders)).isFalse();
+        assertThat(bls.canBlockAttacker(gd, whiteBlocker, attacker, defenders)).isFalse();
+        fillGraveyard(player1, 6);
+        assertThat(bls.canBlockAttacker(gd, greenBlocker, attacker, defenders)).isTrue();
+        assertThat(bls.canBlockAttacker(gd, whiteBlocker, attacker, defenders)).isTrue();
     }
 }
