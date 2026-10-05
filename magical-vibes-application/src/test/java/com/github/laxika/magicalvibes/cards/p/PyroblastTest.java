@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianConjurer;
 import com.github.laxika.magicalvibes.cards.c.Chaoslace;
+import com.github.laxika.magicalvibes.cards.t.Thoughtlace;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,10 +16,11 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Pyroblast.class, BalduvianConjurer.class, PaleBears.class})
+@CardUsed({Pyroblast.class, BalduvianConjurer.class, PaleBears.class, Chaoslace.class, Thoughtlace.class})
 class PyroblastTest extends BaseCardTest {
 
     @Nested
+    @CardUsed({Pyroblast.class, BalduvianConjurer.class, PaleBears.class, Chaoslace.class, Thoughtlace.class})
     @DisplayName("Mode 0: Counter target spell if it's blue")
     class CounterMode {
 
@@ -66,6 +68,31 @@ class PyroblastTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed(Thoughtlace.class)
+        @DisplayName("Counters a spell that becomes blue before resolution")
+        void countersSpellThatBecomesBlue() {
+            PaleBears bears = new PaleBears();
+            harness.setHand(player1, List.of(bears));
+            harness.addMana(player1, ManaColor.GREEN, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 2);
+            harness.setHand(player2, List.of(new Pyroblast(), new Thoughtlace()));
+            harness.addMana(player2, ManaColor.RED, 1);
+            harness.addMana(player2, ManaColor.BLUE, 1);
+
+            harness.castCreature(player1, 0);
+            harness.passPriority(player1);
+            harness.castInstant(player2, 0, 0, bears.getId());
+            harness.castInstant(player2, 0, bears.getId());
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            harness.assertInGraveyard(player1, "Pale Bears");
+            harness.assertNotOnBattlefield(player1, "Pale Bears");
+            harness.assertInGraveyard(player2, "Thoughtlace");
+            harness.assertInGraveyard(player2, "Pyroblast");
+        }
+
+        @Test
         @CardUsed(Chaoslace.class)
         @DisplayName("Checks the target spell's color when it resolves")
         void checksTargetSpellColorAtResolution() {
@@ -94,6 +121,7 @@ class PyroblastTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({Pyroblast.class, BalduvianConjurer.class, PaleBears.class, Chaoslace.class, Thoughtlace.class})
     @DisplayName("Mode 1: Destroy target permanent if it's blue")
     class DestroyMode {
 
@@ -128,11 +156,30 @@ class PyroblastTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed(Thoughtlace.class)
+        @DisplayName("Destroys a permanent that becomes blue before resolution")
+        void destroysPermanentThatBecomesBlue() {
+            UUID targetId = harness.addToBattlefieldAndReturn(player2, new PaleBears()).getId();
+            harness.setHand(player1, List.of(new Pyroblast(), new Thoughtlace()));
+            harness.addMana(player1, ManaColor.RED, 1);
+            harness.addMana(player1, ManaColor.BLUE, 1);
+
+            harness.castInstant(player1, 0, 1, targetId);
+            harness.castInstant(player1, 0, targetId);
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            harness.assertNotOnBattlefield(player2, "Pale Bears");
+            harness.assertInGraveyard(player2, "Pale Bears");
+            harness.assertInGraveyard(player1, "Thoughtlace");
+            harness.assertInGraveyard(player1, "Pyroblast");
+        }
+
+        @Test
         @CardUsed(Chaoslace.class)
         @DisplayName("Checks the target permanent's color when it resolves")
         void checksTargetPermanentColorAtResolution() {
-            harness.addToBattlefield(player2, new BalduvianConjurer());
-            UUID targetId = harness.getPermanentId(player2, "Balduvian Conjurer");
+            UUID targetId = harness.addToBattlefieldAndReturn(player2, new BalduvianConjurer()).getId();
 
             harness.setHand(player1, List.of(new Pyroblast(), new Chaoslace()));
             harness.addMana(player1, ManaColor.RED, 2);
