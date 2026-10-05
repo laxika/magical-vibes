@@ -103,17 +103,53 @@ class PaladinsArmsTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, equipped)).isEqualTo(6);
     }
 
+    @Test
+    @DisplayName("Ward does not trigger for the equipped creature's controller's spell")
+    void ownSpellDoesNotRequireWardPayment() {
+        Permanent arms = addArmsReady(player1);
+        Permanent equipped = addCreatureReady(player1);
+        arms.setAttachedTo(equipped.getId());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, equipped.getId());
+
+        assertThat(gqs.getEffectivePower(gd, equipped)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, equipped)).isEqualTo(6);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Declining an affordable ward payment counters the spell")
+    void decliningWardCountersSpell() {
+        Permanent arms = addArmsReady(player1);
+        Permanent equipped = addCreatureReady(player1);
+        arms.setAttachedTo(equipped.getId());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.castInstant(player2, 0, equipped.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player2, "Giant Growth");
+        assertThat(gqs.getEffectivePower(gd, equipped)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, equipped)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addArmsReady(Player player) {
-        Permanent permanent = new Permanent(new PaladinsArms());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new PaladinsArms());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
     private Permanent addCreatureReady(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
