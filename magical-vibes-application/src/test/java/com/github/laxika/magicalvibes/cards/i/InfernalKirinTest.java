@@ -108,4 +108,59 @@ class InfernalKirinTest extends BaseCardTest {
     private void addInfernalKirin() {
         harness.addToBattlefield(player1, new InfernalKirin());
     }
+
+    @Test
+    @DisplayName("A mana value four Spirit discards matching cards before that Spirit resolves")
+    void higherManaValueSpiritDiscardsMatchingCards() {
+        addInfernalKirin();
+        harness.setHand(player2, List.of(new InfernalKirin(), new InfernalKirin(),
+                new DescendantOfKiyomaro(), new GhostLitStalker()));
+
+        harness.castFromHand(player1, new InfernalKirin(), "{2}{B}{B}");
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(card -> card.getName())
+                .containsExactly("Descendant of Kiyomaro", "Ghost-Lit Stalker");
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(card -> card.getName())
+                .containsExactly("Infernal Kirin", "Infernal Kirin");
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The entire hand is revealed even when no cards match the spell's mana value")
+    void revealsHandWithoutMatchingCards() {
+        addInfernalKirin();
+        harness.setHand(player2, List.of(new HandOfHonor(), new DescendantOfKiyomaro()));
+
+        harness.castFromHand(player1, new SpiritualVisit(), "{W}");
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(card -> card.getName())
+                .containsExactly("Hand of Honor", "Descendant of Kiyomaro");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.gameLog).anySatisfy(entry -> assertThat(entry.plainText())
+                .contains("reveals their hand:", "Hand of Honor", "Descendant of Kiyomaro"));
+    }
+
+    @Test
+    @DisplayName("The trigger resolves against an empty hand")
+    void emptyHandDoesNotPreventResolution() {
+        addInfernalKirin();
+        harness.setHand(player2, List.of());
+
+        harness.castFromHand(player1, new SpiritualVisit(), "{W}");
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.gameLog).anySatisfy(entry -> assertThat(entry.plainText())
+                .contains("reveals their hand. It is empty."));
+    }
 }
