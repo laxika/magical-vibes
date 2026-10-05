@@ -78,8 +78,7 @@ class KasetoOrochiArchmageTest extends BaseCardTest {
     @DisplayName("Kaseto can target creatures only")
     void cannotTargetLand() {
         Permanent kaseto = addCreatureReady(player1, new KasetoOrochiArchmage());
-        Permanent land = new Permanent(new Forest());
-        gd.playerBattlefields.get(player2.getId()).add(land);
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -87,6 +86,58 @@ class KasetoOrochiArchmageTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, kasetoIndex, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Kaseto can target itself repeatedly")
+    void canBoostItselfRepeatedlyWhileTappedAndSummoningSick() {
+        Permanent kaseto = harness.addToBattlefieldAndReturn(player1, new KasetoOrochiArchmage());
+        kaseto.setSummoningSick(true);
+        kaseto.setTapped(true);
+
+        activate(kaseto, kaseto);
+        activate(kaseto, kaseto);
+
+        assertThat(gqs.getEffectivePower(gd, kaseto)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, kaseto)).isEqualTo(6);
+        assertThat(kaseto.isCantBeBlocked()).isTrue();
+        assertThat(kaseto.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Kaseto can make an opposing Snake unblockable and boost it")
+    void canTargetOpposingSnake() {
+        Permanent kaseto = addCreatureReady(player1, new KasetoOrochiArchmage());
+        Permanent target = addCreatureReady(player2, new KasetoOrochiArchmage());
+
+        activate(kaseto, target);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, kaseto)).isEqualTo(2);
+        assertThat(kaseto.isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Kaseto's ability applies only when it resolves")
+    void effectsWaitForResolution() {
+        Permanent kaseto = addCreatureReady(player1, new KasetoOrochiArchmage());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        int kasetoIndex = gd.playerBattlefields.get(player1.getId()).indexOf(kaseto);
+
+        harness.activateAbility(player1, kasetoIndex, 0, null, kaseto.getId());
+
+        assertThat(gqs.getEffectivePower(gd, kaseto)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, kaseto)).isEqualTo(2);
+        assertThat(kaseto.isCantBeBlocked()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, kaseto)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, kaseto)).isEqualTo(4);
+        assertThat(kaseto.isCantBeBlocked()).isTrue();
     }
 
     private void activate(Permanent kaseto, Permanent target) {
