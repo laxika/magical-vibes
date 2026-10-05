@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.a.Annex;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -7,10 +8,31 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(MoggHollows.class)
+@CardUsed({MoggHollows.class, Annex.class})
 class MoggHollowsTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Changing control does not prevent untapping during the new controller's untap step")
+    void newControllerCanUntapLandBeforeActivatorsNextTurn() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new MoggHollows());
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Annex()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player2, 0, land.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Mogg Hollows");
+        harness.performUntapStep(player2);
+
+        assertThat(land.isTapped()).isFalse();
+    }
 
     @Test
     @DisplayName("First ability adds colorless without locking the untap step")
