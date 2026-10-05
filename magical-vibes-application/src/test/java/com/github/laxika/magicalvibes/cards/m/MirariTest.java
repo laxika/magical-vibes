@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.c.CallOfTheHerd;
 import com.github.laxika.magicalvibes.cards.c.ClawsOfGix;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.d.Divert;
 import com.github.laxika.magicalvibes.cards.s.Squire;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Mirari.class, Disenchant.class, CallOfTheHerd.class, Squire.class, ClawsOfGix.class})
+@CardUsed({Mirari.class, Disenchant.class, CallOfTheHerd.class, Squire.class, ClawsOfGix.class, Divert.class})
 class MirariTest extends BaseCardTest {
 
     @Test
@@ -92,8 +93,7 @@ class MirariTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .contains(newTarget.getId())
-                .doesNotContain(originalTarget.getId());
+                .contains(newTarget.getId(), originalTarget.getId());
 
         harness.handlePermanentChosen(player1, newTarget.getId());
         harness.passBothPriorities();
@@ -159,5 +159,58 @@ class MirariTest extends BaseCardTest {
         assertThat(gd.stack.stream()
                 .anyMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY))
                 .isTrue();
+    }
+
+    @Test
+    @DisplayName("The copy inherits a target changed before Mirari's trigger resolves")
+    void copiesCurrentTargetOfSpell() {
+        harness.addToBattlefield(player1, new Mirari());
+        Permanent originalTarget = harness.addToBattlefieldAndReturn(player2, new ClawsOfGix());
+        Permanent changedTarget = harness.addToBattlefieldAndReturn(player2, new ClawsOfGix());
+        Disenchant spell = new Disenchant();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castInstant(player1, 0, originalTarget.getId());
+        harness.passPriority(player1);
+
+        harness.setHand(player2, List.of(new Divert()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, spell.getId());
+        harness.handlePermanentChosen(player2, changedTarget.getId());
+
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(originalTarget)
+                .doesNotContain(changedTarget);
+    }
+
+    @Test
+    @DisplayName("Copying a flashback spell creates two tokens without casting the copy")
+    void copiesFlashbackSpellWithoutRetriggering() {
+        harness.addToBattlefield(player1, new Mirari());
+        CallOfTheHerd spell = new CallOfTheHerd();
+        harness.setGraveyard(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castFlashback(player1, 0);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards.stream().map(entry -> entry.card())).containsExactly(spell);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
