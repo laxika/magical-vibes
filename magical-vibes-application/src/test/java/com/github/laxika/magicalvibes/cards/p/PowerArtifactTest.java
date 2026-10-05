@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.a.ArgothianPixies;
 import com.github.laxika.magicalvibes.cards.b.BasaltMonolith;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PowerArtifact.class, BasaltMonolith.class, GrizzlyBears.class})
+@CardUsed({PowerArtifact.class, BasaltMonolith.class, ArgothianPixies.class})
 class PowerArtifactTest extends BaseCardTest {
 
     @Test
@@ -69,13 +69,62 @@ class PowerArtifactTest extends BaseCardTest {
     @Test
     @DisplayName("Can enchant only an artifact")
     void cannotEnchantNonArtifact() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ArgothianPixies());
         harness.setHand(player1, List.of(new PowerArtifact()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an artifact");
+    }
+
+    @Test
+    void reducedAbilityUntapsArtifactOnResolution() {
+        Permanent artifact = castOnArtifact();
+        harness.tapPermanent(player2, 0);
+        assertThat(artifact.isTapped()).isTrue();
+
+        harness.activateAbility(player2, 0, null, null);
+
+        assertThat(artifact.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(2);
+        harness.passBothPriorities();
+        assertThat(artifact.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotAddManaCostToManaAbility() {
+        Permanent artifact = castOnArtifact();
+
+        harness.tapPermanent(player2, 0);
+
+        assertThat(artifact.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void stackedReductionsCannotMakeAbilityFree() {
+        Permanent artifact = castOnArtifact();
+        castPowerArtifact(artifact);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void reducesArtifactAbilityForAuraController() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new BasaltMonolith());
+        castPowerArtifact(artifact);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
     }
 
     private Permanent castOnArtifact() {
