@@ -3,17 +3,81 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
+import com.github.laxika.magicalvibes.cards.s.SharedFate;
+import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LaboratoryManiac.class, PlatinumAngel.class, SharedFate.class, ThinkTwice.class, TurnToFrog.class})
 class LaboratoryManiacTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Drawing the last card does not win; the next draw from the empty library does")
+    void winsOnlyOnDrawAfterLastCard() {
+        harness.addToBattlefield(player1, new LaboratoryManiac());
+        ThinkTwice lastCard = new ThinkTwice();
+        harness.setLibrary(player1, List.of(lastCard));
+        harness.setHand(player1, List.of(new ThinkTwice()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).contains(lastCard);
+
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Laboratory Maniac cannot replace an empty-library draw after losing its abilities")
+    void losesWhenManiacHasLostAbilities() {
+        var maniac = harness.addToBattlefieldAndReturn(player1, new LaboratoryManiac());
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new TurnToFrog(), new ThinkTwice()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveInstant(player1, 0, maniac.getId());
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Drawing player chooses between Laboratory Maniac and Shared Fate replacements")
+    void competingReplacementRequiresDrawingPlayersChoice() {
+        harness.addToBattlefield(player1, new LaboratoryManiac());
+        harness.addToBattlefield(player2, new SharedFate());
+        harness.setLibrary(player1, List.of());
+        ThinkTwice opponentTopCard = new ThinkTwice();
+        harness.setLibrary(player2, List.of(opponentTopCard));
+        harness.forceActivePlayer(player1);
+        gd.turnNumber = 2;
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentTopCard);
+    }
 
     @Test
     @DisplayName("Player wins when drawing from empty library with Laboratory Maniac on the battlefield")
