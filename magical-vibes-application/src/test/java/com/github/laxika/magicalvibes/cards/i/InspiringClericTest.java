@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -10,6 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({InspiringCleric.class})
 class InspiringClericTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -37,6 +39,8 @@ class InspiringClericTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Inspiring Cleric");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
     // ===== ETB life gain =====
@@ -74,7 +78,22 @@ class InspiringClericTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Entering without being cast gains life for the entering creature's controller")
+    void enteringWithoutCastingGainsLifeForOtherController() {
+        harness.enterBattlefieldAndReturn(player2, new InspiringCleric());
+
+        harness.assertOnBattlefield(player2, "Inspiring Cleric");
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 24);
+        assertThat(gd.stack).isEmpty();
+    }
 
     private void castInspiringCleric() {
         harness.setHand(player1, List.of(new InspiringCleric()));
