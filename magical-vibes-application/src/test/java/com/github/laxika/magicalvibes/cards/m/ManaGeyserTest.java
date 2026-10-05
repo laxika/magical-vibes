@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.FurnaceWhelp;
+import com.github.laxika.magicalvibes.cards.g.GreatFurnace;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ManaGeyser.class, Mountain.class, FurnaceWhelp.class})
+@CardUsed({ManaGeyser.class, Mountain.class, FurnaceWhelp.class, GreatFurnace.class})
 class ManaGeyserTest extends BaseCardTest {
 
     @Test
@@ -55,5 +56,43 @@ class ManaGeyserTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @DisplayName("Does not count a land that untaps before resolution")
+    void doesNotCountLandUntappedBeforeResolution() {
+        Permanent opponentLand = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        opponentLand.tap();
+
+        harness.castFromHand(player1, new ManaGeyser(), "{3}{R}{R}");
+        opponentLand.untap();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @DisplayName("Counts tapped artifact lands once and awards mana only to the caster")
+    void countsTappedArtifactLands() {
+        Permanent opponentLand = harness.addToBattlefieldAndReturn(player2, new GreatFurnace());
+        opponentLand.tap();
+        harness.addToBattlefield(player2, new GreatFurnace());
+
+        harness.castFromHand(player1, new ManaGeyser(), "{3}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isZero();
+        harness.assertInGraveyard(player1, "Mana Geyser");
+    }
+
+    @Test
+    @DisplayName("Resolves without adding mana when the opponent has no permanents")
+    void resolvesWithEmptyOpponentBattlefield() {
+        harness.castFromHand(player1, new ManaGeyser(), "{3}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        harness.assertInGraveyard(player1, "Mana Geyser");
     }
 }
