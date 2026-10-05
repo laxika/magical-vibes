@@ -57,6 +57,32 @@ class PersonalTutorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing the second eligible sorcery leaves the other in the shuffled library")
+    void choosesOneOfMultipleSorceries() {
+        Card firstSorcery = new AncestralMemories();
+        Card chosenSorcery = new PersonalTutor();
+        List<Card> originalDeck = List.of(new Island(), firstSorcery, new GrizzlyBears(), chosenSorcery);
+        harness.setLibrary(player1, originalDeck);
+        List<Card> opponentDeck = List.of(new Island(), new GrizzlyBears());
+        harness.setLibrary(player2, opponentDeck);
+
+        cast();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(firstSorcery, chosenSorcery);
+
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(chosenSorcery);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrderElementsOf(originalDeck);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(opponentDeck);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("reveals")).isTrue();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+    }
+
+    @Test
     @DisplayName("Failing to find is allowed")
     void failToFindIsAllowed() {
         List<Card> originalDeck = setupLibrary();
