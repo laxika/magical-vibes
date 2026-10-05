@@ -81,6 +81,67 @@ class KamiOfAncientLawTest extends BaseCardTest {
                 .anyMatch(log -> log.contains("fizzles"));
     }
 
+    @Test
+    @DisplayName("Sacrifice is paid immediately while destruction waits for resolution")
+    void paysSacrificeBeforeResolution() {
+        addReadyKami(player1);
+        Permanent target = addReadyEnchantment(player2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Kami of Ancient Law");
+        harness.assertInGraveyard(player1, "Kami of Ancient Law");
+        harness.assertOnBattlefield(player2, "Blood Rites");
+        harness.assertNotInGraveyard(player2, "Blood Rites");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Blood Rites");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can sacrifice a tapped Kami to destroy an enchantment")
+    void canActivateWhileTapped() {
+        Permanent kami = addReadyKami(player1);
+        kami.tap();
+        Permanent target = addReadyEnchantment(player2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Kami of Ancient Law");
+        harness.assertInGraveyard(player2, "Blood Rites");
+    }
+
+    @Test
+    @DisplayName("Can destroy an enchantment controlled by its controller")
+    void destroysOwnEnchantment() {
+        addReadyKami(player1);
+        Permanent target = addReadyEnchantment(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Blood Rites");
+        harness.assertInGraveyard(player1, "Blood Rites");
+        harness.assertInGraveyard(player1, "Kami of Ancient Law");
+    }
+
+    @Test
+    @DisplayName("Cannot activate without a target or sacrifice Kami for an invalid activation")
+    void cannotActivateWithoutTarget() {
+        addReadyKami(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Kami of Ancient Law");
+        harness.assertNotInGraveyard(player1, "Kami of Ancient Law");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyKami(Player player) {
         return addCreatureReady(player, new KamiOfAncientLaw());
     }
