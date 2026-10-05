@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DistortingLens;
 import com.github.laxika.magicalvibes.cards.r.RoyalAssassin;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.Terror;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KnightOfGrace.class, GrizzlyBears.class, RoyalAssassin.class, Shock.class, Terror.class})
+@CardUsed({KnightOfGrace.class, GrizzlyBears.class, RoyalAssassin.class, Shock.class, Terror.class, DistortingLens.class})
 class KnightOfGraceTest extends BaseCardTest {
 
     
@@ -72,20 +74,14 @@ class KnightOfGraceTest extends BaseCardTest {
     @Test
     @DisplayName("Black activated abilities from opponent cannot target Knight of Grace")
     void blackActivatedAbilitiesFromOpponentCannotTarget() {
-        Permanent knight = new Permanent(new KnightOfGrace());
-        knight.setSummoningSick(false);
+        Permanent knight = addCreatureReady(player1, new KnightOfGrace());
         knight.tap(); // Royal Assassin requires tapped target
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(knight);
 
         // Add valid target so ability is usable
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.tap();
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(bears);
 
-        Permanent assassin = new Permanent(new RoyalAssassin());
-        assassin.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(assassin);
+        addCreatureReady(player2, new RoyalAssassin());
 
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, knight.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -140,5 +136,87 @@ class KnightOfGraceTest extends BaseCardTest {
         var bonus = gqs.computeStaticBonus(gd, knightPerm);
         assertThat(bonus.power()).isEqualTo(0);
         assertThat(bonus.toughness()).isEqualTo(0);
+    }
+
+    @Test
+    void firstStrikeKillsBlockerBeforeRegularDamage() {
+        addCreatureReady(player1, new KnightOfGrace());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player1, "Knight of Grace");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(findPermanent(player1, "Knight of Grace").getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void bonusDoesNotStackAndDisappearsWhenLastBlackPermanentLeaves() {
+        Permanent knight = harness.addToBattlefieldAndReturn(player1, new KnightOfGrace());
+        Permanent ownAssassin = harness.addToBattlefieldAndReturn(player1, new RoyalAssassin());
+        Permanent opposingAssassin = harness.addToBattlefieldAndReturn(player2, new RoyalAssassin());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(3);
+        harness.castInstant(player1, 0, ownAssassin.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(3);
+
+        harness.castInstant(player1, 0, opposingAssassin.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
+    }
+
+    @Test
+    void ownBlackAbilityCanDestroyKnight() {
+        Permanent knight = harness.addToBattlefieldAndReturn(player1, new KnightOfGrace());
+        knight.tap();
+        addCreatureReady(player1, new RoyalAssassin());
+
+        harness.activateAbility(player1, 1, null, knight.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Knight of Grace");
+        harness.assertInGraveyard(player1, "Knight of Grace");
+    }
+
+    @Test
+    void opponentBlackAbilityCanTargetAfterItsSourceBecomesRed() {
+        Permanent knight = harness.addToBattlefieldAndReturn(player2, new KnightOfGrace());
+        knight.tap();
+        Permanent assassin = addCreatureReady(player1, new RoyalAssassin());
+        harness.addToBattlefield(player1, new DistortingLens());
+
+        harness.activateAbility(player1, 1, null, assassin.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
+
+        harness.activateAbility(player1, 0, null, knight.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Knight of Grace");
+    }
+
+    @Test
+    void abilityBecomesIllegalWhenSourceBecomesBlackBeforeResolution() {
+        Permanent knight = harness.addToBattlefieldAndReturn(player2, new KnightOfGrace());
+        harness.addToBattlefield(player1, new DistortingLens());
+        harness.addToBattlefield(player2, new DistortingLens());
+
+        harness.activateAbility(player1, 0, null, knight.getId());
+        harness.activateAbility(player2, 1, null, harness.getPermanentId(player1, "Distorting Lens"));
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, "BLACK");
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(3);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player2, "Knight of Grace");
     }
 }
