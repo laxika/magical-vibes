@@ -129,4 +129,58 @@ class OrggTest extends BaseCardTest {
         assertThatCode(() -> declareAttackers(List.of(0)))
                 .doesNotThrowAnyException();
     }
+
+    @Test
+    @DisplayName("Can't attack when an untapped defender's effective power reaches 3")
+    void cantAttackWhenDefenderEffectivePowerReachesThree() {
+        orggReadyToAttack();
+        Permanent defender = addCreatureReady(player2, new GoblinHero());
+        defender.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can attack when an untapped defender's effective power falls below 3")
+    void canAttackWhenDefenderEffectivePowerFallsBelowThree() {
+        orggReadyToAttack();
+        Permanent defender = addCreatureReady(player2, new IronrootTreefolk());
+        defender.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+
+        assertThatCode(() -> declareAttackers(List.of(0)))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("An untapped large creature prevents attacking even alongside a tapped large creature")
+    void cantAttackWhenOnlyOneLargeDefenderIsTapped() {
+        orggReadyToAttack();
+        addCreatureReady(player2, new IronrootTreefolk()).tap();
+        addCreatureReady(player2, new IronrootTreefolk());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick untapped large creature still prevents attacking")
+    void cantAttackWhenLargeDefenderIsSummoningSick() {
+        orggReadyToAttack();
+        harness.addToBattlefield(player2, new IronrootTreefolk());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can block a creature whose effective power falls below 3")
+    void canBlockWhenAttackerEffectivePowerFallsBelowThree() {
+        Permanent orgg = addCreatureReady(player1, new Orgg());
+        Permanent attacker = addCreatureReady(player2, new IronrootTreefolk());
+        attacker.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+
+        assertThat(bls.canBlockAttacker(gd, orgg, attacker,
+                gd.playerBattlefields.get(player1.getId()))).isTrue();
+    }
 }
