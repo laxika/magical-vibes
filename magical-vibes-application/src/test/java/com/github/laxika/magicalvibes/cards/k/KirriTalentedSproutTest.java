@@ -35,7 +35,7 @@ class KirriTalentedSproutTest extends BaseCardTest {
         int nonMatchingBasePower = gqs.getEffectivePower(gd, nonMatching);
         int opponentPlantBasePower = gqs.getEffectivePower(gd, opponentPlant);
         Permanent kirri = addKirri(player1);
-        int kirriBasePower = gqs.getEffectivePower(gd, kirri);
+        int kirriBasePower = kirri.getCard().getPower();
 
         assertThat(gqs.getEffectivePower(gd, kirri)).isEqualTo(kirriBasePower);
         assertThat(gqs.getEffectivePower(gd, plant)).isEqualTo(plantBasePower + 2);
@@ -68,6 +68,120 @@ class KirriTalentedSproutTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Forest");
     }
 
+    @Test
+    void returnsPlantToHand() {
+        assertReturnsToHand(new CarnivorousPlant());
+    }
+
+    @Test
+    void returnsTreefolkToHand() {
+        assertReturnsToHand(new BattlewandOak());
+    }
+
+    @Test
+    void doesNotTriggerDuringPrecombatMain() {
+        addKirri(player1);
+        Card land = new Forest();
+        harness.setGraveyard(player1, List.of(land));
+        harness.forceStep(TurnStep.DRAW);
+
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(land);
+    }
+
+    @Test
+    void triggersAtEachPostcombatMainPhase() {
+        addKirri(player1);
+        Card plant = new CarnivorousPlant();
+        Card treefolk = new BattlewandOak();
+        harness.setGraveyard(player1, List.of(plant, treefolk));
+
+        advanceToPostcombatMain(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(plant.getId()));
+        harness.passBothPriorities();
+
+        advanceToPostcombatMain(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(treefolk.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(plant, treefolk);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsPostcombatMain() {
+        addKirri(player1);
+        Card land = new Forest();
+        harness.setGraveyard(player1, List.of(land));
+
+        advanceToPostcombatMain(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(land);
+    }
+
+    @Test
+    void doesNotOfferOpponentsGraveyardCards() {
+        addKirri(player1);
+        Card ownLand = new Forest();
+        Card opposingPlant = new CarnivorousPlant();
+        harness.setGraveyard(player1, List.of(ownLand));
+        harness.setGraveyard(player2, List.of(opposingPlant));
+
+        advanceToPostcombatMain(player1);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(ownLand.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(ownLand.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingPlant);
+    }
+
+    @Test
+    void hasNoTargetWhenOnlyNonmatchingCardsAreInGraveyard() {
+        addKirri(player1);
+        Card bear = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bear));
+
+        advanceToPostcombatMain(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(bear);
+    }
+
+    @Test
+    void doesNotReturnTargetThatLeavesGraveyardBeforeResolution() {
+        addKirri(player1);
+        Card land = new Forest();
+        harness.setGraveyard(player1, List.of(land));
+        advanceToPostcombatMain(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(land.getId()));
+
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Forest");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void assertReturnsToHand(Card card) {
+        addKirri(player1);
+        harness.setGraveyard(player1, List.of(card));
+        advanceToPostcombatMain(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(card.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(card);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
+    }
+
     private Permanent addKirri(Player player) {
         return harness.addToBattlefieldAndReturn(player, new KirriTalentedSprout());
     }
@@ -75,8 +189,6 @@ class KirriTalentedSproutTest extends BaseCardTest {
     private void advanceToPostcombatMain(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(activePlayer, TurnStep.POSTCOMBAT_MAIN);
     }
 }
