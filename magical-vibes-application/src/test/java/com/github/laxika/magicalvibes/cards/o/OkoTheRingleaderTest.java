@@ -109,21 +109,88 @@ class OkoTheRingleaderTest extends BaseCardTest {
                 .count()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Combat trigger without a creature to copy does not grant hexproof")
+    void noCreatureToCopyDoesNotGrantHexproof() {
+        Permanent oko = addReadyOko(player1, 3);
+
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isPlaneswalker(gd, oko)).isTrue();
+        assertThat(gqs.hasKeyword(gd, oko, Keyword.HEXPROOF)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Combat trigger with an illegal target does not grant hexproof")
+    void removedTargetDoesNotGrantHexproof() {
+        Permanent oko = addReadyOko(player1, 3);
+        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isPlaneswalker(gd, oko)).isTrue();
+        assertThat(gqs.hasKeyword(gd, oko, Keyword.HEXPROOF)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A token copying Oko's creature form inherits hexproof permanently")
+    void copyOfCreatureFormRetainsHexproofAfterCleanup() {
+        Permanent transformedOko = addReadyOko(player1, 3);
+        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        Permanent secondOko = addReadyOko(player1, 6);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(secondOko), 2, null, null);
+        harness.passBothPriorities();
+
+        Permanent copy = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .filter(permanent -> gqs.hasKeyword(gd, permanent, Keyword.HEXPROOF))
+                .findFirst().orElseThrow();
+        assertThat(gqs.isCreature(gd, copy)).isTrue();
+
+        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+
+        assertThat(gqs.isPlaneswalker(gd, transformedOko)).isTrue();
+        assertThat(gqs.isCreature(gd, copy)).isTrue();
+        assertThat(gqs.hasKeyword(gd, copy, Keyword.HEXPROOF)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Declining the optional combat target does not grant hexproof")
+    void decliningCreatureCopyDoesNotGrantHexproof() {
+        Permanent oko = addReadyOko(player1, 3);
+        addReadyCreature(player1, new GrizzlyBears());
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isPlaneswalker(gd, oko)).isTrue();
+        assertThat(gqs.hasKeyword(gd, oko, Keyword.HEXPROOF)).isFalse();
+    }
+
     private Permanent addReadyOko(Player player, int loyalty) {
         OkoTheRingleader okoCard = new OkoTheRingleader();
-        Permanent oko = new Permanent(okoCard);
+        Permanent oko = harness.addToBattlefieldAndReturn(player, okoCard);
         oko.setCounterCount(CounterType.LOYALTY, loyalty);
         oko.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(oko);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return oko;
     }
 
     private Permanent addReadyCreature(Player player, GrizzlyBears card) {
-        Permanent creature = new Permanent(card);
+        Permanent creature = harness.addToBattlefieldAndReturn(player, card);
         creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
         return creature;
     }
 }
