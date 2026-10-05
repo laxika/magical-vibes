@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.r.RendFlesh;
 import com.github.laxika.magicalvibes.cards.w.WanderingOnes;
+import com.github.laxika.magicalvibes.cards.y.YamabushisFlame;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KondaLordOfEiganjo.class, WanderingOnes.class, RendFlesh.class})
+@CardUsed({KondaLordOfEiganjo.class, WanderingOnes.class, RendFlesh.class, YamabushisFlame.class})
 class KondaLordOfEiganjoTest extends BaseCardTest {
 
     @Test
@@ -84,8 +85,38 @@ class KondaLordOfEiganjoTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new RendFlesh()));
         harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.castInstant(player1, 0, konda.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, konda.getId());
+
+        harness.assertOnBattlefield(player2, "Konda, Lord of Eiganjo");
+        harness.assertNotInGraveyard(player2, "Konda, Lord of Eiganjo");
+    }
+
+    @Test
+    @DisplayName("Multiple blockers trigger Konda's bushido only once")
+    void multipleBlockersGiveOnlyOneBushidoBonus() {
+        Permanent konda = addCreatureReady(player1, new KondaLordOfEiganjo());
+        addCreatureReady(player2, new WanderingOnes());
+        addCreatureReady(player2, new WanderingOnes());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+
+        assertThat(gqs.getEffectivePower(gd, konda)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, konda)).isEqualTo(3);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, konda)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, konda)).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("Indestructible keeps Konda on the battlefield after lethal damage")
+    void indestructibleSurvivesLethalDamage() {
+        Permanent konda = addCreatureReady(player2, new KondaLordOfEiganjo());
+        harness.setHand(player1, List.of(new YamabushisFlame()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player1, 0, konda.getId());
 
         harness.assertOnBattlefield(player2, "Konda, Lord of Eiganjo");
         harness.assertNotInGraveyard(player2, "Konda, Lord of Eiganjo");
