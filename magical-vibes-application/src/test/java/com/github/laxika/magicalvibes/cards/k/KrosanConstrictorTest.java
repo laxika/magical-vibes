@@ -17,7 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KrosanConstrictor.class, CabalTorturer.class, BaskingRootwalla.class})
+@CardUsed({KrosanConstrictor.class, CabalTorturer.class, BaskingRootwalla.class,
+        MortalCombat.class, Swamp.class})
 class KrosanConstrictorTest extends BaseCardTest {
 
     @Test
@@ -56,7 +57,6 @@ class KrosanConstrictorTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(MortalCombat.class)
     @DisplayName("Cannot target a black noncreature permanent")
     void cannotTargetBlackNoncreaturePermanent() {
         Permanent constrictor = addCreatureReady(player1, new KrosanConstrictor());
@@ -69,7 +69,6 @@ class KrosanConstrictorTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Swamp.class)
     @DisplayName("Swampwalk prevents blocking while the defending player controls a Swamp")
     void swampwalkPreventsBlockingWithDefendingSwamp() {
         Permanent constrictor = addCreatureReady(player1, new KrosanConstrictor());
@@ -92,6 +91,98 @@ class KrosanConstrictorTest extends BaseCardTest {
     void swampwalkAllowsBlockingWithoutDefendingSwamp() {
         Permanent constrictor = addCreatureReady(player1, new KrosanConstrictor());
         constrictor.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new BaskingRootwalla());
+
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(constrictor);
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.getBlockingTargets()).containsExactly(attackerIndex);
+    }
+
+    @Test
+    @DisplayName("Can weaken a black creature controlled by its controller")
+    void canTargetFriendlyBlackCreature() {
+        addCreatureReady(player1, new KrosanConstrictor());
+        Permanent target = addCreatureReady(player1, new CabalTorturer());
+        int originalPower = gqs.getEffectivePower(gd, target);
+        int originalToughness = gqs.getEffectiveToughness(gd, target);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(originalPower - 2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(originalToughness);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick constrictor cannot pay the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        Permanent constrictor = harness.addToBattlefieldAndReturn(player1, new KrosanConstrictor());
+        constrictor.setSummoningSick(true);
+        Permanent target = addCreatureReady(player2, new CabalTorturer());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(constrictor.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped constrictor cannot activate again")
+    void cannotActivateWhileTapped() {
+        Permanent constrictor = addCreatureReady(player1, new KrosanConstrictor());
+        constrictor.setTapped(true);
+        Permanent target = addCreatureReady(player2, new CabalTorturer());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The activated ability resolves after its source leaves the battlefield")
+    void abilityResolvesWithoutItsSource() {
+        Permanent constrictor = addCreatureReady(player1, new KrosanConstrictor());
+        Permanent target = addCreatureReady(player2, new CabalTorturer());
+        int originalPower = gqs.getEffectivePower(gd, target);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(constrictor);
+        gd.playerGraveyards.get(player1.getId()).add(constrictor.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(originalPower - 2);
+    }
+
+    @Test
+    @DisplayName("The ability does not affect another creature when its target leaves")
+    void abilityDoesNotRetargetAfterTargetLeaves() {
+        Permanent constrictor = addCreatureReady(player1, new KrosanConstrictor());
+        Permanent target = addCreatureReady(player2, new CabalTorturer());
+        Permanent otherCreature = addCreatureReady(player2, new CabalTorturer());
+        int originalPower = gqs.getEffectivePower(gd, otherCreature);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(constrictor.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(originalPower);
+    }
+
+    @Test
+    @DisplayName("A Swamp controlled only by the attacker does not prevent blocking")
+    void attackersSwampDoesNotEnableSwampwalk() {
+        Permanent constrictor = addCreatureReady(player1, new KrosanConstrictor());
+        constrictor.setAttacking(true);
+        harness.addToBattlefield(player1, new Swamp());
         Permanent blocker = addCreatureReady(player2, new BaskingRootwalla());
 
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(constrictor);
