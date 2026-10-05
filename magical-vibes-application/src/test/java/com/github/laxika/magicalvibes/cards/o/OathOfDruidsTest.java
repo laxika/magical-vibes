@@ -17,6 +17,48 @@ import static org.assertj.core.api.Assertions.assertThat;
 class OathOfDruidsTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Revealing stops at the first creature and leaves later cards in the library")
+    void stopsAtFirstCreature() {
+        harness.addToBattlefield(player1, new OathOfDruids());
+        harness.addToBattlefield(player2, new CrashingBoars());
+        harness.setLibrary(player1, List.of(new ElvenPalisade(), new CrashingBoars(),
+                new ElvenPalisade(), new CrashingBoars()));
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(countPermanents(player1, "Crashing Boars")).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Elven Palisade", "Crashing Boars");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Elven Palisade");
+    }
+
+    @Test
+    @DisplayName("The opponent's upkeep ability resolves after Oath leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        harness.addToBattlefield(player1, new OathOfDruids());
+        harness.addToBattlefield(player1, new CrashingBoars());
+        harness.setLibrary(player2, List.of(new CrashingBoars(), new ElvenPalisade()));
+
+        advanceToUpkeep(player2);
+        harness.handlePermanentChosen(player2, player1.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Oath of Druids"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertOnBattlefield(player2, "Crashing Boars");
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Elven Palisade");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("The active player reveals their library and puts the first creature onto the battlefield")
     void activePlayerRevealsTheirLibrary() {
         harness.addToBattlefield(player1, new OathOfDruids());
