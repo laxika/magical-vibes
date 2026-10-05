@@ -5,8 +5,6 @@ import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.d.DemonOfDeathsGate;
 import com.github.laxika.magicalvibes.cards.d.DragonlordDromoka;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
-import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -20,7 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KaaliaOfTheVast.class, SerraAngel.class, DemonOfDeathsGate.class, ShivanDragon.class, GrizzlyBears.class, DragonlordDromoka.class, AngelOfTheDawn.class, ChandraNalaar.class})
+@CardUsed({KaaliaOfTheVast.class, DemonOfDeathsGate.class, GrizzlyBears.class, DragonlordDromoka.class, AngelOfTheDawn.class, ChandraNalaar.class})
 class KaaliaOfTheVastTest extends BaseCardTest {
 
     @Test
@@ -38,7 +36,7 @@ class KaaliaOfTheVastTest extends BaseCardTest {
         Permanent angel = findPermanent(player1, "Angel of the Dawn");
         assertThat(angel).isNotNull();
         assertThat(angel.isTapped()).isTrue();
-        assertThat(angel.isAttackedThisTurn()).isTrue();
+        assertThat(angel.isAttackedThisTurn()).isFalse();
         assertThat(angel.getAttackTarget()).isEqualTo(player2.getId());
         assertThat(kaalia.isAttacking()).isTrue();
     }
@@ -91,7 +89,7 @@ class KaaliaOfTheVastTest extends BaseCardTest {
         Permanent dragon = findPermanent(player1, "Dragonlord Dromoka");
         assertThat(dragon).isNotNull();
         assertThat(dragon.isTapped()).isTrue();
-        assertThat(dragon.isAttackedThisTurn()).isTrue();
+        assertThat(dragon.isAttackedThisTurn()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -119,17 +117,51 @@ class KaaliaOfTheVastTest extends BaseCardTest {
     }
 
     private void attackWithKaalia() {
-        Permanent kaalia = new Permanent(new KaaliaOfTheVast());
-        kaalia.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(kaalia);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
-
+        addCreatureReady(player1, new KaaliaOfTheVast());
+        declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
+    }
+
+    @Test
+    void putsDemonWithoutPayingItsAlternativeCost() {
+        harness.setHand(player1, List.of(new DemonOfDeathsGate()));
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        attackWithKaalia();
+
+        harness.handleCardChosen(player1, 0);
+
+        Permanent demon = findPermanent(player1, "Demon of Death's Gate");
+        assertThat(demon).isNotNull();
+        assertThat(demon.isTapped()).isTrue();
+        assertThat(demon.getAttackTarget()).isEqualTo(player2.getId());
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        harness.assertOnBattlefield(player1, "Kaalia of the Vast");
+    }
+
+    @Test
+    void noEligibleCardLeavesHandUnchanged() {
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        attackWithKaalia();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void triggerStillPutsCreatureAttackingAfterKaaliaLeaves() {
+        Permanent kaalia = addCreatureReady(player1, new KaaliaOfTheVast());
+        harness.setHand(player1, List.of(new DragonlordDromoka()));
+        declareAttackers(player1, List.of(0), Map.of(0, player2.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(kaalia);
+        gd.playerGraveyards.get(player1.getId()).add(kaalia.getCard());
+        resolveAllTriggers();
+
+        harness.handleCardChosen(player1, 0);
+
+        Permanent dragon = findPermanent(player1, "Dragonlord Dromoka");
+        assertThat(dragon).isNotNull();
+        assertThat(dragon.isTapped()).isTrue();
+        assertThat(dragon.getAttackTarget()).isEqualTo(player2.getId());
     }
 }
