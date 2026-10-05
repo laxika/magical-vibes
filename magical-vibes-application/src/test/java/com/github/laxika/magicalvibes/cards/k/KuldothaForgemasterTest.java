@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.FlightSpellbomb;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,33 +20,15 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KuldothaForgemaster.class, FlightSpellbomb.class, GoldMyr.class,
+        LeoninScimitar.class, LlanowarElves.class, Spellbook.class})
 class KuldothaForgemasterTest extends BaseCardTest {
-
-    @Test
-    @DisplayName("Cannot activate ability without enough artifacts to sacrifice")
-    void cannotActivateWithoutEnoughArtifacts() {
-        harness.addToBattlefield(player1, new KuldothaForgemaster());
-        harness.addToBattlefield(player1, new Spellbook());
-        harness.addToBattlefield(player1, new LeoninScimitar());
-
-        Permanent forgemaster = findPermanent(player1, "Kuldotha Forgemaster");
-        forgemaster.setSummoningSick(false);
-
-        // Only 2 other artifacts (Forgemaster itself is artifact too, so 3 total, but we need 3 to sacrifice)
-        // Forgemaster + Spellbook + Leonin Scimitar = 3 artifacts total, exactly enough
-        // Let's test with just 2 non-forgemaster artifacts and remove one:
-        // Actually, Forgemaster is an artifact creature so there ARE 3 artifacts (itself + 2).
-        // That's exactly 3 so auto-sacrifice would trigger. Let's test with only 2 total.
-    }
 
     @Test
     @DisplayName("Cannot activate with fewer than 3 artifacts")
     void cannotActivateWithFewerThanThreeArtifacts() {
-        harness.addToBattlefield(player1, new KuldothaForgemaster());
+        addCreatureReady(player1, new KuldothaForgemaster());
         harness.addToBattlefield(player1, new Spellbook());
-
-        Permanent forgemaster = findPermanent(player1, "Kuldotha Forgemaster");
-        forgemaster.setSummoningSick(false);
 
         // Forgemaster + Spellbook = only 2 artifacts
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -57,17 +39,13 @@ class KuldothaForgemasterTest extends BaseCardTest {
     @Test
     @DisplayName("Auto-sacrifices when exactly 3 artifacts available")
     void autoSacrificesWhenExactlyThreeArtifacts() {
-        harness.addToBattlefield(player1, new KuldothaForgemaster());
+        addCreatureReady(player1, new KuldothaForgemaster());
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player1, new LeoninScimitar());
 
-        Permanent forgemaster = findPermanent(player1, "Kuldotha Forgemaster");
-        forgemaster.setSummoningSick(false);
-
         // Forgemaster + Spellbook + Leonin Scimitar = exactly 3 artifacts
         // Put an artifact in the library for the search
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new GoldMyr());
+        harness.setLibrary(player1, List.of(new GoldMyr()));
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -81,13 +59,10 @@ class KuldothaForgemasterTest extends BaseCardTest {
     @Test
     @DisplayName("Prompts for artifact choice when more than 3 available")
     void promptsForChoiceWithMoreThanThreeArtifacts() {
-        harness.addToBattlefield(player1, new KuldothaForgemaster());
+        addCreatureReady(player1, new KuldothaForgemaster());
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player1, new FlightSpellbomb());
-
-        Permanent forgemaster = findPermanent(player1, "Kuldotha Forgemaster");
-        forgemaster.setSummoningSick(false);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -99,22 +74,18 @@ class KuldothaForgemasterTest extends BaseCardTest {
     @Test
     @DisplayName("Completing all three sacrifice choices puts ability on stack")
     void completingThreeSacrificesPutsAbilityOnStack() {
-        harness.addToBattlefield(player1, new KuldothaForgemaster());
+        addCreatureReady(player1, new KuldothaForgemaster());
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player1, new FlightSpellbomb());
         harness.addToBattlefield(player1, new GoldMyr());
-
-        Permanent forgemaster = findPermanent(player1, "Kuldotha Forgemaster");
-        forgemaster.setSummoningSick(false);
 
         // 5 artifacts, need to sacrifice 3 by choice
         UUID spellbookId = findPermanent(player1, "Spellbook").getId();
         UUID scimitarId = findPermanent(player1, "Leonin Scimitar").getId();
         UUID spellbombId = findPermanent(player1, "Flight Spellbomb").getId();
 
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new Spellbook());
+        harness.setLibrary(player1, List.of(new Spellbook()));
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -147,16 +118,12 @@ class KuldothaForgemasterTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving ability searches library for artifact and puts it onto battlefield")
     void resolvingSearchesForArtifact() {
-        harness.addToBattlefield(player1, new KuldothaForgemaster());
+        addCreatureReady(player1, new KuldothaForgemaster());
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player1, new LeoninScimitar());
 
-        Permanent forgemaster = findPermanent(player1, "Kuldotha Forgemaster");
-        forgemaster.setSummoningSick(false);
-
         // Seed library with an artifact to find
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(new GoldMyr(), new LlanowarElves()));
+        harness.setLibrary(player1, List.of(new GoldMyr(), new LlanowarElves()));
 
         // Exactly 3 artifacts -> auto-sacrifice all
         harness.activateAbility(player1, 0, null, null);
@@ -169,7 +136,7 @@ class KuldothaForgemasterTest extends BaseCardTest {
                 .allMatch(c -> c.getName().equals("Gold Myr"));
 
         // Choose Gold Myr
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         // Gold Myr should be on the battlefield
         harness.assertOnBattlefield(player1, "Gold Myr");
@@ -178,19 +145,15 @@ class KuldothaForgemasterTest extends BaseCardTest {
     @Test
     @DisplayName("Artifact found enters battlefield untapped")
     void artifactEntersUntapped() {
-        harness.addToBattlefield(player1, new KuldothaForgemaster());
+        addCreatureReady(player1, new KuldothaForgemaster());
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player1, new LeoninScimitar());
 
-        Permanent forgemaster = findPermanent(player1, "Kuldotha Forgemaster");
-        forgemaster.setSummoningSick(false);
-
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new GoldMyr());
+        harness.setLibrary(player1, List.of(new GoldMyr()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         Permanent goldMyr = findPermanent(player1, "Gold Myr");
         assertThat(goldMyr.isTapped()).isFalse();
@@ -210,12 +173,9 @@ class KuldothaForgemasterTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate when already tapped")
     void cannotActivateWhenAlreadyTapped() {
-        harness.addToBattlefield(player1, new KuldothaForgemaster());
+        Permanent forgemaster = addCreatureReady(player1, new KuldothaForgemaster());
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player1, new LeoninScimitar());
-
-        Permanent forgemaster = findPermanent(player1, "Kuldotha Forgemaster");
-        forgemaster.setSummoningSick(false);
         forgemaster.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -226,15 +186,11 @@ class KuldothaForgemasterTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificed artifacts go to graveyard even when auto-sacrificed")
     void sacrificedArtifactsGoToGraveyard() {
-        harness.addToBattlefield(player1, new KuldothaForgemaster());
+        addCreatureReady(player1, new KuldothaForgemaster());
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player1, new LeoninScimitar());
 
-        Permanent forgemaster = findPermanent(player1, "Kuldotha Forgemaster");
-        forgemaster.setSummoningSick(false);
-
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new GoldMyr());
+        harness.setLibrary(player1, List.of(new GoldMyr()));
 
         // Exactly 3 artifacts -> all auto-sacrificed
         harness.activateAbility(player1, 0, null, null);
@@ -247,26 +203,96 @@ class KuldothaForgemasterTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Forgemaster taps as part of the cost")
+    @DisplayName("Forgemaster taps when three other artifacts are sacrificed")
     void forgemasterTapsAsCost() {
-        harness.addToBattlefield(player1, new KuldothaForgemaster());
-        harness.addToBattlefield(player1, new Spellbook());
-        harness.addToBattlefield(player1, new LeoninScimitar());
-
-        Permanent forgemaster = findPermanent(player1, "Kuldotha Forgemaster");
-        forgemaster.setSummoningSick(false);
-
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new GoldMyr());
-
-        // Before activation, forgemaster is untapped
-        assertThat(forgemaster.isTapped()).isFalse();
+        Permanent forgemaster = addCreatureReady(player1, new KuldothaForgemaster());
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player1, new GoldMyr());
+        }
+        List<UUID> sacrificeIds = findPermanents(player1, "Gold Myr").stream()
+                .map(Permanent::getId).toList();
 
         harness.activateAbility(player1, 0, null, null);
+        for (UUID id : sacrificeIds) {
+            harness.handlePermanentChosen(player1, id);
+        }
 
-        // Forgemaster should be tapped (but also sacrificed in this case since exactly 3 artifacts)
-        // Since all 3 are auto-sacrificed, forgemaster is gone from battlefield
+        assertThat(forgemaster.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Kuldotha Forgemaster");
+        harness.assertNotOnBattlefield(player1, "Gold Myr");
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Opponent artifacts and nonartifact creatures cannot pay the sacrifice cost")
+    void cannotUseOpponentArtifactsOrNonartifacts() {
+        Permanent forgemaster = addCreatureReady(player1, new KuldothaForgemaster());
+        harness.addToBattlefield(player1, new GoldMyr());
+        harness.addToBattlefield(player1, new LlanowarElves());
+        harness.addToBattlefield(player2, new GoldMyr());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough permanents to sacrifice");
+        assertThat(forgemaster.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.assertOnBattlefield(player2, "Gold Myr");
+    }
+
+    @Test
+    @DisplayName("May fail to find even when an artifact is available")
+    void mayFailToFindAvailableArtifact() {
+        addCreatureReady(player1, new KuldothaForgemaster());
+        harness.addToBattlefield(player1, new GoldMyr());
+        harness.addToBattlefield(player1, new GoldMyr());
+        GoldMyr artifact = new GoldMyr();
+        harness.setLibrary(player1, List.of(artifact));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(artifact);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Ability resolves with an empty library after sacrificing its source")
+    void resolvesWithEmptyLibrary() {
+        addCreatureReady(player1, new KuldothaForgemaster());
+        harness.addToBattlefield(player1, new GoldMyr());
+        harness.addToBattlefield(player1, new GoldMyr());
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Kuldotha Forgemaster");
+    }
+    @Test
+    @DisplayName("Search can put a noncreature artifact onto the battlefield")
+    void searchesForNoncreatureArtifact() {
+        addCreatureReady(player1, new KuldothaForgemaster());
+        harness.addToBattlefield(player1, new GoldMyr());
+        harness.addToBattlefield(player1, new GoldMyr());
+        Spellbook artifact = new Spellbook();
+        harness.setLibrary(player1, List.of(artifact));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Spellbook");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(artifact);
+        assertThat(gd.stack).isEmpty();
     }
 
 }
