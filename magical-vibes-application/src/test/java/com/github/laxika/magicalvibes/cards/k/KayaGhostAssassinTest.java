@@ -34,6 +34,7 @@ class KayaGhostAssassinTest extends BaseCardTest {
                 permanent -> permanent.getCard().getName().equals("Kaya, Ghost Assassin"));
 
         advanceToUpkeep(player1);
+        resolveAllTriggers();
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(
                 permanent -> permanent.getCard().getName().equals("Kaya, Ghost Assassin"));
     }
@@ -54,6 +55,7 @@ class KayaGhostAssassinTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(
                 permanent -> permanent.getCard().getName().equals("Grizzly Bears"));
         advanceToUpkeep(player1);
+        resolveAllTriggers();
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(
                 permanent -> permanent.getCard().getName().equals("Grizzly Bears"));
     }
@@ -83,11 +85,70 @@ class KayaGhostAssassinTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName).contains("Shock");
     }
 
+    @Test
+    void zeroWithLegalCreatureTargetOffersChoiceAtResolution() {
+        Permanent kaya = addReadyKaya(3);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, battlefieldIndex(kaya), 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(kaya);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void zeroWithIllegalCreatureTargetDoesNotExileKayaOrLoseLife() {
+        Permanent kaya = addReadyKaya(3);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, battlefieldIndex(kaya), 0, null, creature.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        gd.playerGraveyards.get(player2.getId()).add(creature.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(kaya);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void zeroWithoutTargetStillLosesLifeWhenKayaLeavesBeforeResolution() {
+        Permanent kaya = addReadyKaya(3);
+
+        harness.activateAbility(player1, battlefieldIndex(kaya), 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(kaya);
+        gd.playerGraveyards.get(player1.getId()).add(kaya.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Kaya, Ghost Assassin")).isEmpty();
+    }
+
+    @Test
+    void minusTwoDrawsEvenWhenOpponentHasNoCards() {
+        addReadyKaya(3);
+        harness.setHand(player2, List.of());
+        Card drawnCard = new Shock();
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private Permanent addReadyKaya(int loyalty) {
-        Permanent kaya = new Permanent(new KayaGhostAssassin());
+        Permanent kaya = harness.addToBattlefieldAndReturn(player1, new KayaGhostAssassin());
         kaya.setCounterCount(CounterType.LOYALTY, loyalty);
         kaya.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(kaya);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return kaya;
