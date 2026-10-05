@@ -91,7 +91,59 @@ class NestingDragonTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castInstant(player1, 0, egg.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("The landfall token has both Dragon and Egg creature types")
+    void eggIsAlsoADragon() {
+        Permanent egg = createDragonEgg();
+
+        assertThat(egg.getCard().getSubtypes()).containsExactlyInAnyOrder(CardSubtype.DRAGON, CardSubtype.EGG);
+    }
+
+    @Test
+    @DisplayName("An opponent's land does not trigger Nesting Dragon")
+    void opposingLandDoesNotCreateEgg() {
+        harness.addToBattlefield(player1, new NestingDragon());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new Forest()));
+
+        harness.playLand(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Dragon Egg")).isZero();
+        assertThat(countPermanents(player2, "Dragon Egg")).isZero();
+    }
+
+    @Test
+    @DisplayName("Each land entering without being played creates an Egg")
+    void landsPutOntoBattlefieldCreateSeparateEggs() {
+        harness.addToBattlefield(player1, new NestingDragon());
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Dragon Egg")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The Egg's death ability works after Nesting Dragon leaves")
+    void eggHatchesWithoutNestingDragon() {
+        Permanent egg = createDragonEgg();
+        Permanent nestingDragon = findPermanent(player1, "Nesting Dragon");
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castInstant(player1, 0, nestingDragon.getId());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Nesting Dragon")).isZero();
+        assertThat(countPermanents(player1, "Dragon")).isZero();
+        destroyEgg(egg);
+
+        assertThat(countPermanents(player1, "Dragon Egg")).isZero();
+        assertThat(countPermanents(player1, "Dragon")).isEqualTo(1);
     }
 }
