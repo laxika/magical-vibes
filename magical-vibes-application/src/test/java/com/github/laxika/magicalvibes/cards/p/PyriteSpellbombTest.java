@@ -24,11 +24,11 @@ class PyriteSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.assertInGraveyard(player1, "Pyrite Spellbomb");
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Pyrite Spellbomb");
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
     }
 
     @Test
@@ -70,6 +70,57 @@ class PyriteSpellbombTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Pyrite Spellbomb");
+        harness.assertInHand(player1, "Ornithopter");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+    }
+
+    @Test
+    @DisplayName("A tapped Spellbomb can deal damage to its controller")
+    void tappedSpellbombCanDamageItsController() {
+        var spellbomb = harness.addToBattlefieldAndReturn(player1, new PyriteSpellbomb());
+        spellbomb.tap();
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+
+        harness.assertNotOnBattlefield(player1, "Pyrite Spellbomb");
+        harness.assertInGraveyard(player1, "Pyrite Spellbomb");
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Colorless mana cannot pay for the damage ability")
+    void damageAbilityRequiresRedMana() {
+        harness.addToBattlefield(player1, new PyriteSpellbomb());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setLife(player2, 20);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Pyrite Spellbomb");
+        harness.assertNotInGraveyard(player1, "Pyrite Spellbomb");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A tapped Spellbomb can use colored mana to draw, sacrificing before resolution")
+    void tappedSpellbombCanDrawWithColoredMana() {
+        var spellbomb = harness.addToBattlefieldAndReturn(player1, new PyriteSpellbomb());
+        spellbomb.tap();
+        harness.setLibrary(player1, List.of(new Ornithopter()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Pyrite Spellbomb");
+        harness.assertInGraveyard(player1, "Pyrite Spellbomb");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        harness.passBothPriorities();
         harness.assertInHand(player1, "Ornithopter");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
     }
