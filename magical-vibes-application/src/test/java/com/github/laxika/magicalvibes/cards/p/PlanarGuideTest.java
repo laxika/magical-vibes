@@ -30,7 +30,6 @@ class PlanarGuideTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Forest");
         harness.assertOnBattlefield(player2, "Forest");
         harness.assertNotOnBattlefield(player1, "Planar Guide");
-        assertThat(gd.getDelayedActions(PendingExileReturn.class)).hasSize(2);
     }
 
     @Test
@@ -61,6 +60,68 @@ class PlanarGuideTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
+    @Test
+    void returnsBothOwnersCreaturesWithOneDelayedTrigger() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new PlanarGuide());
+
+        activateGuide();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void exilesGuideAsCostBeforeExilingOtherCreatures() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent guide = harness.addToBattlefieldAndReturn(player1, new PlanarGuide());
+        guide.tap();
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, indexOnBattlefield(player1, "Planar Guide"), null, null);
+
+        harness.assertNotOnBattlefield(player1, "Planar Guide");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        advanceToEndStep();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Planar Guide");
+    }
+
+    @Test
+    void activationDuringEndStepWaitsUntilFollowingTurnsEndStep() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new PlanarGuide());
+        harness.forceStep(TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, indexOnBattlefield(player1, "Planar Guide"), null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Planar Guide");
+    }
+
     private void activateGuide() {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -73,15 +134,10 @@ class PlanarGuideTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
     }
 
     private int indexOnBattlefield(com.github.laxika.magicalvibes.model.Player player, String name) {
-        var battlefield = gd.playerBattlefields.get(player.getId());
-        for (int i = 0; i < battlefield.size(); i++) {
-            if (battlefield.get(i).getCard().getName().equals(name)) {
-                return i;
-            }
-        }
-        throw new IllegalStateException(name + " is not on the battlefield");
+        return gd.playerBattlefields.get(player.getId()).indexOf(findPermanent(player, name));
     }
 }
