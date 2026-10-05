@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
+import com.github.laxika.magicalvibes.cards.h.HillGigas;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PromptoArgentum.class, Shock.class, Hurricane.class, GrizzlyBears.class})
+@CardUsed({PromptoArgentum.class, Shock.class, Hurricane.class, GrizzlyBears.class, HillGigas.class})
 class PromptoArgentumTest extends BaseCardTest {
 
     @Test
@@ -26,8 +27,7 @@ class PromptoArgentumTest extends BaseCardTest {
         setUpMainPhase();
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setHand(player1, List.of(new Shock()));
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(treasureTokens()).isZero();
     }
@@ -40,8 +40,7 @@ class PromptoArgentumTest extends BaseCardTest {
         setUpMainPhase();
         harness.addMana(player1, ManaColor.GREEN, 4);
         harness.setHand(player1, List.of(new Hurricane()));
-        harness.castSorcery(player1, 0, 3);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3);
 
         assertThat(treasureTokens()).isOne();
     }
@@ -52,12 +51,47 @@ class PromptoArgentumTest extends BaseCardTest {
         addCreatureReady(player1, new PromptoArgentum());
 
         setUpMainPhase();
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(treasureTokens()).isZero();
+    }
+
+    @Test
+    @DisplayName("Spending six mana on a creature does not create a Treasure")
+    void expensiveCreatureDoesNotCreateTreasure() {
+        addCreatureReady(player1, new PromptoArgentum());
+        setUpMainPhase();
+        harness.castFromHand(player1, new HillGigas(), "{4}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(treasureTokens()).isZero();
+    }
+
+    @Test
+    @DisplayName("Spending three mana on a noncreature spell does not create a Treasure")
+    void threeManaDoesNotMeetThreshold() {
+        addCreatureReady(player1, new PromptoArgentum());
+        setUpMainPhase();
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.setHand(player1, List.of(new Hurricane()));
+        harness.castAndResolveSorcery(player1, 0, 2);
+
+        assertThat(treasureTokens()).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent spending four mana on a noncreature spell does not create a Treasure")
+    void opponentSpellDoesNotCreateTreasure() {
+        addCreatureReady(player1, new PromptoArgentum());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player2, ManaColor.GREEN, 4);
+        harness.setHand(player2, List.of(new Hurricane()));
+        harness.castAndResolveSorcery(player2, 0, 3);
+
+        assertThat(treasureTokens()).isZero();
+        assertThat(countPermanents(player2, "Treasure")).isZero();
     }
 
     private long treasureTokens() {
