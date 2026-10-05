@@ -45,6 +45,8 @@ class LuxurySuiteTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(findPermanent(player1, "Luxury Suite").isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -55,20 +57,39 @@ class LuxurySuiteTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(findPermanent(player1, "Luxury Suite").isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Enters tapped when put onto the battlefield in a two-player game")
+    void entersTappedWhenPutOntoBattlefield() {
+        Permanent permanent = harness.enterBattlefieldAndReturn(player1, new LuxurySuite());
+
+        assertThat(permanent.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Enters untapped when put onto the battlefield with two opponents")
+    void entersUntappedWhenPutOntoBattlefieldWithTwoOpponents() {
+        addThirdPlayer();
+
+        Permanent permanent = harness.enterBattlefieldAndReturn(player1, new LuxurySuite());
+
+        assertThat(permanent.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void playLuxurySuite() {
         harness.setHand(player1, List.of(new LuxurySuite()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
     }
 
-    private Permanent addReadyLuxurySuite() {
-        Permanent permanent = new Permanent(new LuxurySuite());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
-        return permanent;
+    private void addReadyLuxurySuite() {
+        harness.addToBattlefield(player1, new LuxurySuite());
     }
 
     private void addThirdPlayer() {
