@@ -21,6 +21,40 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class MountainGoatTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Mountain Goat cannot be blocked when defending player controls an ordinary Mountain")
+    void cannotBeBlockedWhenDefenderControlsOrdinaryMountain() {
+        harness.addToBattlefield(player2, new Mountain());
+        Permanent blockerPerm = addCreatureReady(player2, new BalduvianBears());
+        Permanent atkPerm = addCreatureReady(player1, new MountainGoat());
+        atkPerm.setAttacking(true);
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("A defending Mountain Goat cannot block Mountain Goat when its controller controls a Mountain")
+    void defendingMountainwalkDoesNotCancelAttackingMountainwalk() {
+        harness.addToBattlefield(player2, new Mountain());
+        Permanent blockerPerm = addCreatureReady(player2, new MountainGoat());
+        Permanent atkPerm = addCreatureReady(player1, new MountainGoat());
+        atkPerm.setAttacking(true);
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
     @DisplayName("Mountain Goat cannot be blocked when defending player controls a Mountain")
     void cannotBeBlockedWhenDefenderControlsMountain() {
         harness.addToBattlefield(player2, new SnowCoveredMountain());
