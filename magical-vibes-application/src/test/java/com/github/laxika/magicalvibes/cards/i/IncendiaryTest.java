@@ -22,6 +22,44 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class IncendiaryTest extends BaseCardTest {
 
     @Test
+    void auraResolvesAttachedToOpponentCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Incendiary()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Incendiary").getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    void opponentUpkeepDoesNotAddFuseCounter() {
+        Permanent incendiary = addIncendiaryAttachedTo(player1, player2);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(incendiary.getCounterCount(CounterType.FUSE)).isZero();
+    }
+
+    @Test
+    void deathWithoutFuseCountersStillRequiresTargetButDealsNoDamage() {
+        Permanent incendiary = addIncendiaryAttachedTo(player1, player1);
+        int lifeBefore = gd.getLife(player2.getId());
+
+        killCreature(findAttachedCreature(incendiary));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+        harness.assertInGraveyard(player1, "Incendiary");
+    }
+
+    @Test
     @DisplayName("Accepting the upkeep trigger puts a fuse counter on Incendiary")
     void upkeepAcceptedAddsFuseCounter() {
         Permanent incendiary = addIncendiaryAttachedTo(player1, player1);
@@ -119,9 +157,8 @@ class IncendiaryTest extends BaseCardTest {
 
     private Permanent addIncendiaryAttachedTo(Player auraController, Player creatureController) {
         Permanent creature = harness.addToBattlefieldAndReturn(creatureController, new GrizzlyBears());
-        Permanent incendiary = new Permanent(new Incendiary());
+        Permanent incendiary = harness.addToBattlefieldAndReturn(auraController, new Incendiary());
         incendiary.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(auraController.getId()).add(incendiary);
         return incendiary;
     }
 
