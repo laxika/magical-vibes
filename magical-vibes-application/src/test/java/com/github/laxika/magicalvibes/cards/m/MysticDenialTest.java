@@ -22,13 +22,11 @@ class MysticDenialTest extends BaseCardTest {
     @DisplayName("Counters a creature spell")
     void countersCreatureSpell() {
         ForestBear bears = new ForestBear();
-        harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.setHand(player2, List.of(new MysticDenial()));
         harness.addMana(player2, ManaColor.BLUE, 3);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, bears, "{1}{G}");
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, bears.getId());
 
@@ -40,13 +38,11 @@ class MysticDenialTest extends BaseCardTest {
     @DisplayName("Counters a sorcery spell")
     void countersSorcerySpell() {
         StrategicPlanning strategicPlanning = new StrategicPlanning();
-        harness.setHand(player1, List.of(strategicPlanning));
-        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.setHand(player2, List.of(new MysticDenial()));
         harness.addMana(player2, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, strategicPlanning, "{1}{U}");
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, strategicPlanning.getId());
 
@@ -93,14 +89,12 @@ class MysticDenialTest extends BaseCardTest {
     @DisplayName("Fizzles if the target spell leaves the stack before resolution")
     void fizzlesIfTargetSpellRemoved() {
         ForestBear bears = new ForestBear();
-        harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.GREEN, 2);
 
         MysticDenial mysticDenial = new MysticDenial();
         harness.setHand(player2, List.of(mysticDenial));
         harness.addMana(player2, ManaColor.BLUE, 3);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, bears, "{1}{G}");
         harness.passPriority(player1);
         harness.castInstant(player2, 0, bears.getId());
         gd.stack.removeIf(entry -> entry.getCard().getId().equals(bears.getId()));
@@ -109,6 +103,45 @@ class MysticDenialTest extends BaseCardTest {
 
         assertThat(gameLogContains("fizzles")).isTrue();
         harness.assertInGraveyard(player2, "Mystic Denial");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can counter its controller's own creature spell")
+    void countersOwnCreatureSpell() {
+        ForestBear bear = new ForestBear();
+        harness.castFromHand(player1, bear, "{1}{G}");
+
+        harness.setHand(player1, List.of(new MysticDenial()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        harness.assertInGraveyard(player1, "Forest Bear");
+        harness.assertInGraveyard(player1, "Mystic Denial");
+        harness.assertNotOnBattlefield(player1, "Forest Bear");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not resolve when another counterspell removes its target")
+    void targetCounteredInResponse() {
+        StrategicPlanning planning = new StrategicPlanning();
+        harness.castFromHand(player1, planning, "{1}{U}");
+        harness.setHand(player1, List.of(new Extinguish()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.setHand(player2, List.of(new MysticDenial()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, planning.getId());
+        harness.passPriority(player2);
+        harness.castAndResolveInstant(player1, 0, planning.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Strategic Planning");
+        harness.assertInGraveyard(player1, "Extinguish");
+        harness.assertInGraveyard(player2, "Mystic Denial");
+        assertThat(gameLogContains("fizzles")).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 }
