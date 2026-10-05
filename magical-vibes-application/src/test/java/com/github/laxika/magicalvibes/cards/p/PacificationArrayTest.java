@@ -1,24 +1,24 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.d.DruidOfTheCowl;
+import com.github.laxika.magicalvibes.cards.i.IceOver;
+import com.github.laxika.magicalvibes.cards.i.ImplementOfImprovement;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PacificationArray.class, DruidOfTheCowl.class, ImplementOfImprovement.class, IceOver.class})
 class PacificationArrayTest extends BaseCardTest {
 
     @Test
     void tapsTargetCreature() {
-        addReadyPacificationArray(player1);
-        Permanent target = addPermanent(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new PacificationArray());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DruidOfTheCowl());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -29,8 +29,8 @@ class PacificationArrayTest extends BaseCardTest {
 
     @Test
     void tapsTargetArtifact() {
-        addReadyPacificationArray(player1);
-        Permanent target = addPermanent(player2, new AngelsFeather());
+        harness.addToBattlefield(player1, new PacificationArray());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ImplementOfImprovement());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -41,8 +41,9 @@ class PacificationArrayTest extends BaseCardTest {
 
     @Test
     void cannotTargetEnchantment() {
-        addReadyPacificationArray(player1);
-        Permanent target = addPermanent(player2, new Pacifism());
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new PacificationArray());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new IceOver());
+        target.setAttachedTo(source.getId());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -52,8 +53,8 @@ class PacificationArrayTest extends BaseCardTest {
 
     @Test
     void activationConsumesTwoManaAndTapsSource() {
-        Permanent source = addReadyPacificationArray(player1);
-        Permanent target = addPermanent(player2, new GrizzlyBears());
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new PacificationArray());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DruidOfTheCowl());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -62,19 +63,99 @@ class PacificationArrayTest extends BaseCardTest {
         assertThat(harness.getGameData().playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
-    private Permanent addReadyPacificationArray(Player player) {
-        return addPermanent(player, new PacificationArray(), false);
+    @Test
+    void canActivateOnTheTurnItEnters() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new PacificationArray());
+        source.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DruidOfTheCowl());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
     }
 
-    private Permanent addPermanent(Player player, Card card) {
-        return addPermanent(player, card, true);
+    @Test
+    void canTargetItself() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new PacificationArray());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, source.getId());
+        harness.passBothPriorities();
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
-    private Permanent addPermanent(Player player, Card card,
-                                   boolean clearSummoningSickness) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(!clearSummoningSickness);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void canTapOwnCreature() {
+        harness.addToBattlefield(player1, new PacificationArray());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DruidOfTheCowl());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void canTargetAlreadyTappedCreature() {
+        harness.addToBattlefield(player1, new PacificationArray());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DruidOfTheCowl());
+        target.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateTappedSource() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new PacificationArray());
+        source.setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DruidOfTheCowl());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWithOnlyOneMana() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new PacificationArray());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DruidOfTheCowl());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(source.isTapped()).isFalse();
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new PacificationArray());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DruidOfTheCowl());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
     }
 }
