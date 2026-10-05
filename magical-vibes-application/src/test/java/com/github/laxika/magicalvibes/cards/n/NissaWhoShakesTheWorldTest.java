@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PrimordialWurm;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -13,7 +14,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -24,7 +24,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NissaWhoShakesTheWorld.class, Forest.class, GrizzlyBears.class})
+@CardUsed({NissaWhoShakesTheWorld.class, Forest.class, PrimordialWurm.class, Plains.class})
 class NissaWhoShakesTheWorldTest extends BaseCardTest {
 
     @Test
@@ -79,7 +79,7 @@ class NissaWhoShakesTheWorldTest extends BaseCardTest {
     void plusOneRestrictsTargets() {
         addReadyNissa(player1, 3);
         Permanent opponentForest = addLand(player2);
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new PrimordialWurm());
 
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
                 player1, 0, 0, List.of(opponentForest.getId())))
@@ -97,7 +97,7 @@ class NissaWhoShakesTheWorldTest extends BaseCardTest {
         Permanent opponentForest = addLand(player2);
         Card forest1 = new Forest();
         Card forest2 = new Forest();
-        harness.setLibrary(player1, List.of(forest1, new GrizzlyBears(), forest2));
+        harness.setLibrary(player1, List.of(forest1, new PrimordialWurm(), forest2));
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
@@ -112,8 +112,8 @@ class NissaWhoShakesTheWorldTest extends BaseCardTest {
         assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.BATTLEFIELD_TAPPED);
         assertThat(search.params().cards()).containsExactly(forest1, forest2);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         List<Permanent> fetchedForests = gd.playerBattlefields.get(player1.getId()).stream()
@@ -123,14 +123,136 @@ class NissaWhoShakesTheWorldTest extends BaseCardTest {
         assertThat(fetchedForests).allMatch(permanent ->
                 gqs.hasKeyword(gd, permanent, Keyword.INDESTRUCTIBLE));
         assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
-                .containsExactly("Grizzly Bears");
+                .containsExactly("Primordial Wurm");
+    }
+
+    @Test
+    void opponentsForestDoesNotProduceExtraMana() {
+        harness.addToBattlefield(player1, new NissaWhoShakesTheWorld());
+        harness.addToBattlefield(player2, new Forest());
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
+
+        harness.tapPermanent(player2, 0);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    void nonForestDoesNotProduceExtraGreen() {
+        harness.addToBattlefield(player1, new NissaWhoShakesTheWorld());
+        harness.addToBattlefield(player1, new Plains());
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    void animatedForestRetainsItsManaAbility() {
+        addReadyNissa(player1, 3);
+        Permanent forest = addLand(player1);
+        forest.setSummoningSick(true);
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(forest.getId()));
+        harness.passBothPriorities();
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+    }
+
+    @Test
+    void plusOneCannotTargetAnAlreadyAnimatedLand() {
+        Permanent nissa = addReadyNissa(player1, 3);
+        Permanent forest = addLand(player1);
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(forest.getId()));
+        harness.passBothPriorities();
+        nissa.setLoyaltyActivationsThisTurn(0);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, List.of(forest.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void removedTargetDoesNotAnimateAnotherLand() {
+        Permanent nissa = addReadyNissa(player1, 3);
+        Permanent target = addLand(player1);
+        Permanent otherLand = addLand(player1);
+        otherLand.tap();
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(target.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerGraveyards.get(player1.getId()).add(target.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(nissa.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        assertThat(otherLand.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(otherLand.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, otherLand)).isFalse();
+    }
+
+    @Test
+    void ultimateMayFindZeroForests() {
+        addReadyNissa(player1, 8);
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.emblems).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Nissa, Who Shakes the World");
+    }
+
+    @Test
+    void ultimateMayStopAfterFindingOneForest() {
+        addReadyNissa(player1, 8);
+        Card forest1 = new Forest();
+        Card forest2 = new Forest();
+        harness.setLibrary(player1, List.of(forest1, forest2));
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest2);
+        List<Permanent> lands = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> gqs.isLand(gd, permanent)).toList();
+        assertThat(lands).hasSize(1);
+        assertThat(lands.getFirst().getCard()).isSameAs(forest1);
+        assertThat(lands.getFirst().isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, lands.getFirst(), Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    void animationRemainsAfterNissaLeavesTheBattlefield() {
+        Permanent nissa = addReadyNissa(player1, 3);
+        Permanent forest = addLand(player1);
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(forest.getId()));
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(nissa);
+        gd.playerGraveyards.get(player1.getId()).add(nissa.getCard());
+
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+        assertThat(gqs.isLand(gd, forest)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.HASTE)).isTrue();
     }
 
     private Permanent addReadyNissa(Player player, int loyalty) {
-        Permanent permanent = new Permanent(new NissaWhoShakesTheWorld());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new NissaWhoShakesTheWorld());
         permanent.setCounterCount(CounterType.LOYALTY, loyalty);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -138,8 +260,6 @@ class NissaWhoShakesTheWorldTest extends BaseCardTest {
     }
 
     private Permanent addLand(Player player) {
-        Permanent permanent = new Permanent(new Forest());
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return harness.addToBattlefieldAndReturn(player, new Forest());
     }
 }
