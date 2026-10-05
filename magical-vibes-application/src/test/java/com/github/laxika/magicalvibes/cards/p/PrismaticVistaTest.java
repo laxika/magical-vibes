@@ -15,8 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 
@@ -72,6 +70,49 @@ class PrismaticVistaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
     }
+
+    @Test
+    @DisplayName("A basic land may be left unfound even when one is available")
+    void canDeclineAvailableBasicLand() {
+        Forest forest = new Forest();
+        activate(List.of(forest));
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        harness.assertInGraveyard(player1, "Prismatic Vista");
+    }
+
+    @Test
+    @DisplayName("Nonbasic lands are excluded from the search")
+    void excludesNonbasicLands() {
+        Forest forest = new Forest();
+        activate(List.of(new PrismaticVista(), forest));
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(forest);
+    }
+
+    @Test
+    @DisplayName("A tapped Vista cannot activate or pay its other costs")
+    void tappedVistaCannotActivate() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new PrismaticVista());
+        findPermanent(player1, "Prismatic Vista").setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        harness.assertOnBattlefield(player1, "Prismatic Vista");
+        harness.assertNotInGraveyard(player1, "Prismatic Vista");
+        assertThat(gd.stack).isEmpty();
+    }
 }
 
 @CardUsed({PrismaticVista.class, Forest.class, Island.class, Plains.class, GrizzlyBears.class})
@@ -115,8 +156,7 @@ class Mh1PrismaticVistaTest extends BaseCardTest {
         setupLibrary();
 
         harness.passBothPriorities();
-        harness.getGameService().handleInteractionAnswer(
-                gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().getName().equals("Plains"))
@@ -142,8 +182,7 @@ class Mh1PrismaticVistaTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Forest(), new Island(), new GrizzlyBears()));
+        harness.setLibrary(player1,
+                List.of(new Plains(), new Forest(), new Island(), new GrizzlyBears()));
     }
 }
