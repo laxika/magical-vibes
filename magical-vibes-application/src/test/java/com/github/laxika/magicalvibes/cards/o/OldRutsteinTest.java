@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.b.BruvacTheGrandiloquent;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +17,8 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OldRutstein.class, Forest.class, GrizzlyBears.class, Shock.class})
+@CardUsed({OldRutstein.class, Forest.class, GrizzlyBears.class, Shock.class, Card.class,
+        RestInPeace.class, BruvacTheGrandiloquent.class})
 class OldRutsteinTest extends BaseCardTest {
 
     @Test
@@ -92,13 +94,68 @@ class OldRutsteinTest extends BaseCardTest {
         Forest forest = new Forest();
         harness.setLibrary(player1, List.of(forest));
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(player2);
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Treasure")).isZero();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+    }
+
+    @Test
+    @DisplayName("An empty library creates no tokens")
+    void emptyLibraryCreatesNoTokens() {
+        harness.setLibrary(player1, List.of());
+
+        castAndResolve();
+
+        assertThat(countPermanents(player1, "Treasure")).isZero();
+        assertThat(countPermanents(player1, "Insect")).isZero();
+        assertThat(countPermanents(player1, "Blood")).isZero();
+    }
+
+    @Test
+    @DisplayName("A land milled into exile still creates a Treasure")
+    void exiledMilledLandCreatesTreasure() {
+        harness.addToBattlefield(player2, new RestInPeace());
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+
+        castAndResolve();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(forest);
+        harness.assertNotInGraveyard(player1, "Forest");
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Insect")).isZero();
+        assertThat(countPermanents(player1, "Blood")).isZero();
+    }
+
+    @Test
+    @DisplayName("Doubled milling checks both cards for token types")
+    void doubledMillCreatesTokensForBothCardTypes() {
+        harness.addToBattlefield(player2, new BruvacTheGrandiloquent());
+        harness.setLibrary(player1, List.of(new Forest(), new OldRutstein()));
+
+        castAndResolve();
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Old Rutstein");
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Insect")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Blood")).isZero();
+    }
+
+    @Test
+    @DisplayName("Doubled milling of two lands creates only one Treasure")
+    void doubledMillOfSameTypeCreatesOneToken() {
+        harness.addToBattlefield(player2, new BruvacTheGrandiloquent());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+
+        castAndResolve();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Insect")).isZero();
+        assertThat(countPermanents(player1, "Blood")).isZero();
     }
 
     private void castAndResolve() {
