@@ -72,8 +72,7 @@ class PlatedPegasusTest extends BaseCardTest {
     @DisplayName("Does not prevent damage from an activated ability")
     void doesNotPreventAbilityDamage() {
         harness.addToBattlefield(player1, new PlatedPegasus());
-        Permanent sorcerer = harness.addToBattlefieldAndReturn(player2, new FledglingMawcor());
-        sorcerer.setSummoningSick(false);
+        Permanent sorcerer = addCreatureReady(player2, new FledglingMawcor());
         harness.forceActivePlayer(player2);
 
         harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(sorcerer),
@@ -143,5 +142,53 @@ class PlatedPegasusTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
         harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Multiple Pegasi prevent damage cumulatively for every spell")
+    void multiplePegasiPreventDamageForEachSpell() {
+        harness.addToBattlefield(player1, new PlatedPegasus());
+        harness.addToBattlefield(player2, new PlatedPegasus());
+        harness.setHand(player2, List.of(new SuddenShock(), new SuddenShock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Prevents spell damage to itself")
+    void preventsSpellDamageToItself() {
+        Permanent pegasus = harness.addToBattlefieldAndReturn(player1, new PlatedPegasus());
+        harness.setHand(player2, List.of(new SuddenShock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player2, 0, pegasus.getId());
+
+        assertThat(pegasus.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(pegasus);
+    }
+
+    @Test
+    @DisplayName("Can enter in response to a spell and prevent its damage")
+    void flashPreventsDamageFromPendingSpell() {
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new OrcishCannonade()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new PlatedPegasus()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 18);
     }
 }
