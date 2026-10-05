@@ -4,12 +4,12 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AdelizTheCinderWind;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
+import com.github.laxika.magicalvibes.cards.m.MemorialToFolly;
+import com.github.laxika.magicalvibes.cards.p.PutridImp;
+import com.github.laxika.magicalvibes.cards.t.TheFlameOfKeld;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,28 +18,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LingeringPhantom.class, AdelizTheCinderWind.class, GrizzlyBears.class, Spellbook.class,
+        MemorialToFolly.class, PutridImp.class, TheFlameOfKeld.class})
 class LingeringPhantomTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has graveyard spell-cast trigger with historic filter and {B} mana cost")
-    void hasCorrectStructure() {
-        LingeringPhantom card = new LingeringPhantom();
-
-        assertThat(card.getEffects(EffectSlot.GRAVEYARD_ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.GRAVEYARD_ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(SpellCastTriggerEffect.class);
-
-        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect)
-                card.getEffects(EffectSlot.GRAVEYARD_ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.spellFilter()).isInstanceOf(CardIsHistoricPredicate.class);
-        assertThat(trigger.manaCost()).isEqualTo("{B}");
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
-
-    // ===== Trigger from graveyard on historic spell cast =====
 
     @Test
     @DisplayName("Casting an artifact triggers may-pay prompt when Lingering Phantom is in graveyard")
@@ -68,10 +49,8 @@ class LingeringPhantomTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayPayMana trigger -> may prompt
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getId().equals(phantom.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getId().equals(phantom.getId()));
+        harness.assertInHand(player1, "Lingering Phantom");
+        harness.assertNotInGraveyard(player1, "Lingering Phantom");
         // Black mana spent
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(0);
     }
@@ -87,10 +66,8 @@ class LingeringPhantomTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayPayMana trigger -> may prompt
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getId().equals(phantom.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getId().equals(phantom.getId()));
+        harness.assertNotInHand(player1, "Lingering Phantom");
+        harness.assertInGraveyard(player1, "Lingering Phantom");
     }
 
     @Test
@@ -108,10 +85,8 @@ class LingeringPhantomTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayPayMana trigger -> may prompt
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getId().equals(phantom.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getId().equals(phantom.getId()));
+        harness.assertInHand(player1, "Lingering Phantom");
+        harness.assertNotInGraveyard(player1, "Lingering Phantom");
     }
 
     @Test
@@ -126,8 +101,7 @@ class LingeringPhantomTest extends BaseCardTest {
 
         // Only the creature spell on the stack, no triggered ability
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getId().equals(phantom.getId()));
+        harness.assertInGraveyard(player1, "Lingering Phantom");
     }
 
     @Test
@@ -145,8 +119,7 @@ class LingeringPhantomTest extends BaseCardTest {
 
         // Only the artifact spell on the stack, no triggered ability
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getId().equals(phantom.getId()));
+        harness.assertInGraveyard(player1, "Lingering Phantom");
     }
 
     @Test
@@ -174,7 +147,81 @@ class LingeringPhantomTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // accept without mana
 
         // Phantom should remain in graveyard
+        harness.assertInGraveyard(player1, "Lingering Phantom");
+    }
+
+    @Test
+    @DisplayName("Casting a Saga returns the phantom before the Saga resolves")
+    void sagaCastReturnsBeforeSagaResolves() {
+        harness.setGraveyard(player1, List.of(new LingeringPhantom()));
+        harness.setHand(player1, List.of(new TheFlameOfKeld()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Lingering Phantom");
+        harness.assertNotInGraveyard(player1, "Lingering Phantom");
+        harness.assertNotOnBattlefield(player1, "The Flame of Keld");
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Each graveyard phantom has a separate optional payment")
+    void multiplePhantomsReturnOnlyThePaidForCopy() {
+        LingeringPhantom first = new LingeringPhantom();
+        LingeringPhantom second = new LingeringPhantom();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new Spellbook()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castArtifact(player1, 0);
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .filteredOn(c -> c instanceof LingeringPhantom).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getId().equals(phantom.getId()));
+                .filteredOn(c -> c instanceof LingeringPhantom).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .filteredOn(c -> c instanceof LingeringPhantom).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(c -> c instanceof LingeringPhantom).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("An old trigger cannot return a phantom that left and reentered the graveyard")
+    void oldTriggerDoesNotReturnReenteredPhantom() {
+        LingeringPhantom phantom = new LingeringPhantom();
+        harness.setGraveyard(player1, List.of(phantom));
+        harness.addToBattlefield(player1, new MemorialToFolly());
+        harness.addToBattlefield(player1, new PutridImp());
+        harness.setHand(player1, List.of(new Spellbook()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castArtifact(player1, 0);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.assertInHand(player1, "Lingering Phantom");
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Lingering Phantom");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Lingering Phantom");
+        harness.assertNotInHand(player1, "Lingering Phantom");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
     }
 }
