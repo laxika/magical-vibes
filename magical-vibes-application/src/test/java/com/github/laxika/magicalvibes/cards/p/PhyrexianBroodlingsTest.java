@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({PhyrexianBroodlings.class, YavimayaWurm.class, IronMaiden.class})
 class PhyrexianBroodlingsTest extends BaseCardTest {
@@ -68,5 +69,76 @@ class PhyrexianBroodlingsTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Phyrexian Broodlings");
         harness.assertInGraveyard(player1, "Phyrexian Broodlings");
         assertThat(broodlings.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void sacrificeIsPaidBeforeTheCounterAbilityResolves() {
+        Permanent broodlings = addCreatureReady(player1, new PhyrexianBroodlings());
+        Permanent sacrifice = addCreatureReady(player1, new YavimayaWurm());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, sacrifice.getId());
+
+        harness.assertNotOnBattlefield(player1, "Yavimaya Wurm");
+        harness.assertInGraveyard(player1, "Yavimaya Wurm");
+        assertThat(broodlings.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(broodlings.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void opponentsCreaturesCannotPayTheSacrificeCost() {
+        Permanent broodlings = addCreatureReady(player1, new PhyrexianBroodlings());
+        Permanent sacrifice = addCreatureReady(player1, new YavimayaWurm());
+        Permanent opposingCreature = addCreatureReady(player2, new YavimayaWurm());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).containsExactlyInAnyOrder(broodlings.getId(), sacrifice.getId());
+        assertThat(choice.validPermanentIds()).doesNotContain(opposingCreature.getId());
+
+        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.passBothPriorities();
+
+        assertThat(broodlings.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Yavimaya Wurm");
+    }
+
+    @Test
+    void abilityCanBeActivatedWhileTappedAndSummoningSick() {
+        Permanent broodlings = harness.addToBattlefieldAndReturn(player1, new PhyrexianBroodlings());
+        broodlings.setSummoningSick(true);
+        broodlings.setTapped(true);
+        Permanent sacrifice = addCreatureReady(player1, new YavimayaWurm());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.passBothPriorities();
+
+        assertThat(broodlings.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(broodlings.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Yavimaya Wurm");
+    }
+
+    @Test
+    void abilityCannotBeActivatedWithoutMana() {
+        Permanent broodlings = addCreatureReady(player1, new PhyrexianBroodlings());
+        addCreatureReady(player1, new YavimayaWurm());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(broodlings.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertOnBattlefield(player1, "Phyrexian Broodlings");
+        harness.assertOnBattlefield(player1, "Yavimaya Wurm");
     }
 }
