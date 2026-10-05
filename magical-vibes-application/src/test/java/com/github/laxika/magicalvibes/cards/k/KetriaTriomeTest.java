@@ -14,6 +14,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({KetriaTriome.class, GrizzlyBears.class})
 class KetriaTriomeTest extends BaseCardTest {
@@ -33,9 +34,7 @@ class KetriaTriomeTest extends BaseCardTest {
     @ValueSource(strings = {"GREEN", "BLUE", "RED"})
     @DisplayName("Mana ability adds the chosen color")
     void addsChosenManaColor(String color) {
-        Permanent triome = new Permanent(new KetriaTriome());
-        triome.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(triome);
+        Permanent triome = addCreatureReady(player1, new KetriaTriome());
 
         harness.activateAbility(player1, 0, null, null);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
@@ -59,5 +58,66 @@ class KetriaTriomeTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Ketria Triome");
         harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cannot activate the mana ability while tapped")
+    void cannotActivateManaAbilityWhileTapped() {
+        harness.setHand(player1, List.of(new KetriaTriome()));
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        for (ManaColor color : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isZero();
+        }
+    }
+
+    @Test
+    @DisplayName("Cycling requires three mana and leaves the card in hand if unpaid")
+    void cyclingRequiresThreeMana() {
+        KetriaTriome triome = new KetriaTriome();
+        harness.setHand(player1, List.of(triome));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(triome);
+        harness.assertNotInGraveyard(player1, "Ketria Triome");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cycling pays and discards immediately but draws only on resolution")
+    void cyclingCostsArePaidBeforeResolution() {
+        KetriaTriome cycled = new KetriaTriome();
+        KetriaTriome drawn = new KetriaTriome();
+        harness.setHand(player1, List.of(cycled));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(cycled);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.stack).hasSize(1);
+        for (ManaColor color : List.of(ManaColor.GREEN, ManaColor.BLUE, ManaColor.RED)) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isZero();
+        }
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(cycled);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }
