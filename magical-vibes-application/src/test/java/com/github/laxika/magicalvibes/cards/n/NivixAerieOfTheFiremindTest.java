@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.b.BeanstalkGiant;
 import com.github.laxika.magicalvibes.cards.c.CullingSun;
+import com.github.laxika.magicalvibes.cards.f.FertileFootsteps;
 import com.github.laxika.magicalvibes.cards.q.Quicken;
 import com.github.laxika.magicalvibes.cards.s.SkarrganPitSkulk;
 import com.github.laxika.magicalvibes.model.Card;
@@ -90,10 +92,116 @@ class NivixAerieOfTheFiremindTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("An exiled adventurer card receives permission to cast its sorcery Adventure")
+    @CardUsed({BeanstalkGiant.class, FertileFootsteps.class})
+    void permitsCastingSorceryAdventure() {
+        Card giant = activateExileAbility(new BeanstalkGiant());
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(giant);
+        assertThat(harness.getCastingPermissionService()
+                .hasExilePlayPermission(gd, player1.getId(), giant.getId())).isTrue();
+    }
+
+    @Test
+    @DisplayName("The casting permission does not waive the spell's mana cost")
+    void requiresManaToCastExiledInstant() {
+        Card quicken = activateExileAbility(new Quicken());
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, quicken.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(quicken);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An exiled sorcery cannot be cast during the opponent's turn")
+    void sorceryStillRequiresNormalTiming() {
+        Card cullingSun = activateExileAbility(new CullingSun());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, cullingSun.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(cullingSun);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The opponent cannot use the controller's casting permission")
+    void onlyControllerCanCastExiledCard() {
+        Card quicken = activateExileAbility(new Quicken());
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player2, quicken.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(quicken);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent activation or cause a failed draw")
+    void emptyLibraryExilesNothing() {
+        Permanent nivix = addReadyNivix();
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(nivix.isTapped()).isTrue();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.status).isEqualTo(com.github.laxika.magicalvibes.model.GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("The ability exiles the top card at resolution, even if Nivix has left")
+    void exilesCurrentTopCardAfterSourceLeaves() {
+        Permanent nivix = addReadyNivix();
+        Card originalTop = new Quicken();
+        Card currentTop = new CullingSun();
+        harness.setLibrary(player1, List.of(originalTop, currentTop));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+
+        harness.setLibrary(player1, List.of(currentTop, originalTop));
+        gd.playerBattlefields.get(player1.getId()).remove(nivix);
+        gd.playerGraveyards.get(player1.getId()).add(nivix.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(currentTop);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(originalTop);
+        assertThat(gd.exilePlayPermissions).containsEntry(currentTop.getId(), player1.getId());
+    }
+
+    @Test
+    @DisplayName("Insufficient activation mana leaves Nivix untapped and the library untouched")
+    void requiresFullActivationCost() {
+        Permanent nivix = addReadyNivix();
+        Card topCard = new Quicken();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(nivix.isTapped()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyNivix() {
-        Permanent nivix = harness.addToBattlefieldAndReturn(player1, new NivixAerieOfTheFiremind());
-        nivix.setSummoningSick(false);
-        return nivix;
+        return addCreatureReady(player1, new NivixAerieOfTheFiremind());
     }
 
     private Card activateExileAbility(Card topCard) {
