@@ -30,7 +30,7 @@ class InvasionOfPyruleaTest extends BaseCardTest {
     @DisplayName("Scrying to a land makes the Siege draw it")
     void scriesThenDrawsLand() {
         Forest forest = new Forest();
-        setLibrary(List.of(forest, new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(forest, new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
         castInvasion();
         finishScryKeepingAllCardsOnTop();
@@ -43,7 +43,7 @@ class InvasionOfPyruleaTest extends BaseCardTest {
     @DisplayName("A double-faced top card also makes the Siege draw")
     void scriesThenDrawsDoubleFacedCard() {
         InvasionOfPyrulea doubleFacedCard = new InvasionOfPyrulea();
-        setLibrary(List.of(doubleFacedCard, new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(doubleFacedCard, new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
         castInvasion();
         finishScryKeepingAllCardsOnTop();
@@ -55,7 +55,7 @@ class InvasionOfPyruleaTest extends BaseCardTest {
     @DisplayName("A nonland, nondouble-faced top card is not drawn")
     void doesNotDrawNonMatchingTopCard() {
         GrizzlyBears topCard = new GrizzlyBears();
-        setLibrary(List.of(topCard, new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(topCard, new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
         castInvasion();
         finishScryKeepingAllCardsOnTop();
@@ -122,6 +122,108 @@ class InvasionOfPyruleaTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(slabhorn);
     }
 
+    @Test
+    void drawsTheLandMovedToTheTopByScry() {
+        GrizzlyBears first = new GrizzlyBears();
+        Forest land = new Forest();
+        GrizzlyBears third = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(first, land, third));
+
+        castInvasion();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(1, 0, 2), List.of()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, third);
+    }
+
+    @Test
+    void revealsAndDrawsTheFourthCardWhenAllScryCardsGoToTheBottom() {
+        GrizzlyBears first = new GrizzlyBears();
+        GrizzlyBears second = new GrizzlyBears();
+        GrizzlyBears third = new GrizzlyBears();
+        Forest land = new Forest();
+        harness.setLibrary(player1, List.of(first, second, third, land));
+
+        castInvasion();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0, 1, 2)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, second, third);
+    }
+
+    @Test
+    void canScryAndDrawWithOnlyOneCardInTheLibrary() {
+        Forest land = new Forest();
+        harness.setLibrary(player1, List.of(land));
+
+        castInvasion();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void emptyLibraryDoesNotCauseADraw() {
+        harness.setLibrary(player1, List.of());
+
+        castInvasion();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Invasion of Pyrulea");
+    }
+
+    @Test
+    void doesNotGrantTrampleOrWardToAnUntransformedCreature() {
+        addTransformedPyrulea();
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bear);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void doesNotGrantTrampleToAnOpponentsTransformedPermanent() {
+        addTransformedPyrulea();
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new LoyalCatharUnhallowedCathar());
+        other.setCard(other.getOriginalCard().getBackFaceCard());
+        other.setTransformed(true);
+
+        assertThat(gqs.hasKeyword(gd, other, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    void itsWardCountersShockWithoutDealingDamage() {
+        Permanent slabhorn = addTransformedPyrulea();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, slabhorn.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(slabhorn.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player2, "Shock");
+    }
+
     private void castInvasion() {
         harness.setHand(player1, List.of(new InvasionOfPyrulea()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -134,11 +236,6 @@ class InvasionOfPyruleaTest extends BaseCardTest {
     private void finishScryKeepingAllCardsOnTop() {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0, 1, 2), List.of()));
-    }
-
-    private void setLibrary(List<com.github.laxika.magicalvibes.model.Card> cards) {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(cards);
     }
 
     private Permanent addTransformedPyrulea() {
