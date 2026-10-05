@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(MinamoScrollkeeper.class)
+@CardUsed({MinamoScrollkeeper.class, Humility.class})
 class MinamoScrollkeeperTest extends BaseCardTest {
 
     @Test
@@ -70,6 +71,36 @@ class MinamoScrollkeeperTest extends BaseCardTest {
         gs.advanceStep(gd);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Controller must discard cards above the increased maximum hand size")
+    void controllerDiscardsAboveEightCards() {
+        harness.addToBattlefield(player1, new MinamoScrollkeeper());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player1, handOfSize(10));
+
+        gs.advanceStep(gd);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
+                .isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Losing all abilities removes the maximum hand size increase")
+    void humilityRemovesMaximumHandSizeIncrease() {
+        harness.addToBattlefield(player1, new MinamoScrollkeeper());
+        harness.addToBattlefield(player2, new Humility());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player1, handOfSize(8));
+
+        gs.advanceStep(gd);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
+                .isEqualTo(1);
     }
 
     private List<Card> handOfSize(int size) {
