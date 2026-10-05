@@ -2,12 +2,16 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.Nekrataal;
+import com.github.laxika.magicalvibes.cards.p.PlagueWind;
+import com.github.laxika.magicalvibes.cards.p.Puppeteer;
 import com.github.laxika.magicalvibes.cards.r.RoyalAssassin;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.Terror;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -19,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({KarplusanStrider.class, Boomerang.class, GrizzlyBears.class, RoyalAssassin.class,
-        Shock.class, Terror.class})
+        Shock.class, Terror.class, PlagueWind.class, Puppeteer.class, Nekrataal.class})
 class KarplusanStriderTest extends BaseCardTest {
 
     
@@ -98,5 +102,54 @@ class KarplusanStriderTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Karplusan Strider");
         harness.assertInGraveyard(player1, "Karplusan Strider");
+    }
+
+    @Test
+    @DisplayName("Blue activated abilities can still target Karplusan Strider")
+    void blueActivatedAbilitiesCanTarget() {
+        Permanent strider = addCreatureReady(player2, new KarplusanStrider());
+        addCreatureReady(player1, new Puppeteer());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, strider.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(strider.isTapped()).isTrue();
+        harness.assertOnBattlefield(player2, "Karplusan Strider");
+    }
+
+    @Test
+    @DisplayName("Untargeted black spells still affect Karplusan Strider")
+    void untargetedBlackSpellCanDestroy() {
+        harness.addToBattlefield(player2, new KarplusanStrider());
+        harness.setHand(player1, List.of(new PlagueWind()));
+        harness.addMana(player1, ManaColor.BLACK, 9);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertNotOnBattlefield(player2, "Karplusan Strider");
+        harness.assertInGraveyard(player2, "Karplusan Strider");
+    }
+
+    @Test
+    @DisplayName("Black triggered abilities can still target Karplusan Strider")
+    void blackTriggeredAbilitiesCanTarget() {
+        Permanent strider = harness.addToBattlefieldAndReturn(player2, new KarplusanStrider());
+        harness.setHand(player1, List.of(new Nekrataal()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(strider.getId());
+        harness.handlePermanentChosen(player1, strider.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Karplusan Strider");
+        harness.assertInGraveyard(player2, "Karplusan Strider");
     }
 }
