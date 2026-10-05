@@ -2,10 +2,13 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
+import com.github.laxika.magicalvibes.cards.s.SilvercoatLion;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KnightOfInfamy.class, GrizzlyBears.class, HolyStrength.class, SilvercoatLion.class})
 class KnightOfInfamyTest extends BaseCardTest {
 
     @Test
@@ -75,13 +79,8 @@ class KnightOfInfamyTest extends BaseCardTest {
     @Test
     @DisplayName("Protection from white — cannot be enchanted by a white aura")
     void cannotBeEnchantedByWhiteAura() {
-        Permanent knight = new Permanent(new KnightOfInfamy());
-        knight.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(knight);
-
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        Permanent knight = addCreatureReady(player2, new KnightOfInfamy());
+        addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new HolyStrength()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -89,5 +88,70 @@ class KnightOfInfamyTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, knight.getId(), null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from white");
+    }
+
+    @Test
+    void multipleExaltedAbilitiesBoostTheSameAttacker() {
+        Permanent knight = addCreatureReady(player1, new KnightOfInfamy());
+        addCreatureReady(player1, new KnightOfInfamy());
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(3);
+    }
+
+    @Test
+    void whiteAllyReceivesExaltedBonusWithoutBeingTargeted() {
+        addCreatureReady(player1, new KnightOfInfamy());
+        Permanent lion = addCreatureReady(player1, new SilvercoatLion());
+
+        declareAttackers(player1, List.of(1));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, lion)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, lion)).isEqualTo(3);
+    }
+
+    @Test
+    void opposingAttackerDoesNotReceiveExaltedBonus() {
+        addCreatureReady(player1, new KnightOfInfamy());
+        Permanent lion = addCreatureReady(player2, new SilvercoatLion());
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, lion)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lion)).isEqualTo(2);
+    }
+
+    @Test
+    void whiteCreatureCannotBlockKnight() {
+        addCreatureReady(player1, new KnightOfInfamy());
+        addCreatureReady(player2, new SilvercoatLion());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        resolveAllTriggers();
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    void knightCanBlockWhiteCreatureAndPreventsItsDamage() {
+        addCreatureReady(player1, new SilvercoatLion());
+        Permanent knight = addCreatureReady(player2, new KnightOfInfamy());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player2, "Knight of Infamy");
+        assertThat(knight.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Silvercoat Lion");
+        harness.assertLife(player2, 20);
     }
 }
