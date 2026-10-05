@@ -12,8 +12,60 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PrideOfLions.class, GrizzlyBears.class})
+@CardUsed({PrideOfLions.class, GrizzlyBears.class, PrimalRage.class})
 class PrideOfLionsTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Unblocked Pride of Lions deals its combat damage normally")
+    void unblockedPrideOfLionsDealsDamage() {
+        harness.setLife(player2, 20);
+        Permanent prideOfLions = addCreatureReady(player1, new PrideOfLions());
+        prideOfLions.setAttacking(true);
+
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("Pride of Lions can bypass multiple blockers but still receives their damage")
+    void assignsDamagePastMultipleBlockers() {
+        harness.setLife(player2, 20);
+        Permanent prideOfLions = addCreatureReady(player1, new PrideOfLions());
+        Permanent firstBlocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent secondBlocker = addCreatureReady(player2, new GrizzlyBears());
+        prideOfLions.setAttacking(true);
+        firstBlocker.setBlocking(true);
+        firstBlocker.addBlockingTarget(0);
+        secondBlocker.setBlocking(true);
+        secondBlocker.addBlockingTarget(0);
+
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(player2.getId(), 4));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        harness.assertInGraveyard(player1, "Pride of Lions");
+        assertThat(countPermanents(player2, "Grizzly Bears")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Gaining trample does not prevent Pride of Lions from bypassing its blocker")
+    void canAssignAllDamageToPlayerWithTrample() {
+        harness.setLife(player2, 20);
+        Permanent prideOfLions = addCreatureReady(player1, new PrideOfLions());
+        harness.addToBattlefield(player1, new PrimalRage());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        prideOfLions.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(player2.getId(), 4));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        assertThat(prideOfLions.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
 
     @Test
     @DisplayName("Blocked Pride of Lions can assign combat damage to defending player")
