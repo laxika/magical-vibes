@@ -67,9 +67,8 @@ class KeyToTheArchiveTest extends BaseCardTest {
     @Test
     @DisplayName("Adds two mana with independently chosen colors")
     void addsTwoManaInAnyColorCombination() {
-        Permanent key = new Permanent(new KeyToTheArchive());
+        Permanent key = harness.addToBattlefieldAndReturn(player1, new KeyToTheArchive());
         key.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(key);
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleListChoice(player1, ManaColor.RED.name());
@@ -79,5 +78,52 @@ class KeyToTheArchiveTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
         assertThat(key.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("With no other cards in hand, the drafted card must be discarded")
+    void discardsDraftedCardFromOtherwiseEmptyHand() {
+        harness.setHand(player1, List.of(new KeyToTheArchive()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        PendingInteraction.SpellbookDraftChoice draft =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
+        assertThat(draft).isNotNull();
+        assertThat(draft.playerId()).isEqualTo(player1.getId());
+        assertThat(draft.cards()).hasSize(3);
+        assertThat(draft.cards()).extracting(Card::getName).doesNotHaveDuplicates();
+
+        Card drafted = draft.cards().getFirst();
+        harness.handleMultipleCardsChosen(player1, List.of(drafted.getId()));
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drafted);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(drafted);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Both mana may have the same color and the mana ability resolves without the stack")
+    void addsTwoManaOfTheSameColorImmediately() {
+        Permanent key = harness.addToBattlefieldAndReturn(player1, new KeyToTheArchive());
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.stack).isEmpty();
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(key.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
