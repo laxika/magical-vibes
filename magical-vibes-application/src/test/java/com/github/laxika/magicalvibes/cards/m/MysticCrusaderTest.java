@@ -127,6 +127,67 @@ class MysticCrusaderTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Cabal Inquisitor");
     }
 
+    @Test
+    @DisplayName("Threshold turns on immediately when the seventh card enters the graveyard")
+    void gainsThresholdWhileOnBattlefield() {
+        harness.setGraveyard(player1, graveyardCards(6));
+        harness.addToBattlefield(player1, new MysticCrusader());
+        assertStats(2, 1);
+        assertThat(gqs.hasKeyword(gd, findCrusader(), Keyword.FLYING)).isFalse();
+
+        gd.playerGraveyards.get(player1.getId()).add(new FlameBurst());
+
+        assertStats(3, 2);
+        assertThat(gqs.hasKeyword(gd, findCrusader(), Keyword.FLYING)).isTrue();
+
+        gd.playerGraveyards.get(player1.getId()).add(new GhastlyDemise());
+
+        assertStats(3, 2);
+        assertThat(gqs.hasKeyword(gd, findCrusader(), Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Black creatures cannot block even before threshold")
+    void blackCreatureCannotBlock() {
+        addCreatureReady(player1, new MysticCrusader());
+        addCreatureReady(player2, new DuskImp());
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Threshold flying prevents a nonflying white creature from blocking")
+    void thresholdFlyingRestrictsBlocking() {
+        harness.setGraveyard(player1, graveyardCards(7));
+        addCreatureReady(player1, new MysticCrusader());
+        addCreatureReady(player2, new MysticCrusader());
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("flying");
+    }
+
+    @Test
+    @DisplayName("Protection prevents red combat damage without threshold")
+    void takesNoCombatDamageFromRedCreature() {
+        Permanent crusader = addCreatureReady(player1, new MysticCrusader());
+        Permanent firecat = addCreatureReady(player2, new PardicFirecat());
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player2);
+
+        assertThat(crusader.getMarkedDamage()).isZero();
+        assertThat(firecat.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Mystic Crusader");
+        harness.assertOnBattlefield(player2, "Pardic Firecat");
+    }
+
     private List<Card> graveyardCards(int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
