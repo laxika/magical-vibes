@@ -27,8 +27,7 @@ class JadedResponseTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
 
         assertThat(gd.stack).noneMatch(se -> se.getCard().getId().equals(target.getId()));
         harness.assertInGraveyard(player1, "Coastal Drake");
@@ -47,8 +46,7 @@ class JadedResponseTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Dodecapod");
@@ -67,13 +65,51 @@ class JadedResponseTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
 
         assertThat(gd.stack).noneMatch(se -> se.getCard().getId().equals(target.getId()));
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Index");
         harness.assertInGraveyard(player2, "Jaded Response");
+    }
+
+    @Test
+    void doesNotUseOpponentsMatchingCreature() {
+        harness.addToBattlefield(player1, new CoastalDrake());
+
+        CoastalDrake target = new CoastalDrake();
+        harness.castFromHand(player1, target, "{2}{U}");
+
+        harness.setHand(player2, List.of(new JadedResponse()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+
+        assertThat(gd.stack).anyMatch(se -> se.getCard().getId().equals(target.getId()));
+        harness.assertInGraveyard(player2, "Jaded Response");
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(target.getId()));
+    }
+
+    @Test
+    void colorlessCreatureDoesNotShareColorWithBlueSpell() {
+        harness.addToBattlefield(player2, new Dodecapod());
+
+        CoastalDrake target = new CoastalDrake();
+        harness.castFromHand(player1, target, "{2}{U}");
+
+        harness.setHand(player2, List.of(new JadedResponse()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+
+        assertThat(gd.stack).anyMatch(se -> se.getCard().getId().equals(target.getId()));
+        harness.assertInGraveyard(player2, "Jaded Response");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Coastal Drake");
     }
 
     @Test
