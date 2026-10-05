@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(OjutaiMonument.class)
 class OjutaiMonumentTest extends BaseCardTest {
@@ -72,10 +73,72 @@ class OjutaiMonumentTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, monument, Keyword.FLYING)).isFalse();
     }
 
+    @Test
+    @DisplayName("A newly entered noncreature Monument can tap for blue mana")
+    void newlyEnteredMonumentAddsBlueMana() {
+        Permanent monument = harness.addToBattlefieldAndReturn(player1, new OjutaiMonument());
+        monument.setSummoningSick(true);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(monument.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Monument can animate without untapping")
+    void tappedMonumentCanAnimate() {
+        Permanent monument = addReadyMonument();
+        monument.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(gqs.isCreature(gd, monument)).isFalse();
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, monument)).isTrue();
+        assertThat(monument.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A newly entered Monument can animate but cannot then tap for mana")
+    void animatedNewMonumentCannotTapForMana() {
+        Permanent monument = harness.addToBattlefieldAndReturn(player1, new OjutaiMonument());
+        monument.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, monument)).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(monument.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An animated Monument retains its mana ability")
+    void animatedMonumentCanAddMana() {
+        Permanent monument = addReadyMonument();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(monument.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, monument)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyMonument() {
-        Permanent monument = new Permanent(new OjutaiMonument());
-        monument.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(monument);
-        return monument;
+        return addCreatureReady(player1, new OjutaiMonument());
     }
 }
