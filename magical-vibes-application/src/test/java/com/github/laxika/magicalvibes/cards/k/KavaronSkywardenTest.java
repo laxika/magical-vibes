@@ -68,18 +68,97 @@ class KavaronSkywardenTest extends BaseCardTest {
         assertThat(skywarden.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    void putsOnlyOneCounterAfterMultipleNonlandPermanentsLeave() {
+        Permanent skywarden = addReadySkywarden();
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new KavaronSkywarden());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new KavaronSkywarden());
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, first);
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, second);
+        });
+
+        advanceToEndStep();
+
+        assertThat(skywarden.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void putsCounterAfterNonlandPermanentReturnsToHandBeforeSkywardenEnters() {
+        Permanent departed = harness.addToBattlefieldAndReturn(player2, new KavaronSkywarden());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, departed));
+        Permanent skywarden = addReadySkywarden();
+
+        advanceToEndStep();
+
+        assertThat(skywarden.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsEndStep() {
+        Permanent skywarden = addReadySkywarden();
+        Permanent departed = harness.addToBattlefieldAndReturn(player2, new KavaronSkywarden());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, departed));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(skywarden.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void departureAfterEndStepBeginsDoesNotTriggerRetroactively() {
+        Permanent skywarden = addReadySkywarden();
+        Permanent departed = harness.addToBattlefieldAndReturn(player2, new KavaronSkywarden());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).isEmpty();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, departed));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(skywarden.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void pendingTriggerDoesNotPutCounterOnSourceThatLeftAndReturned() {
+        Permanent skywarden = addReadySkywarden();
+        Permanent departed = harness.addToBattlefieldAndReturn(player2, new KavaronSkywarden());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, departed));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, skywarden));
+        harness.setHand(player1, List.of());
+        Permanent returned = harness.enterBattlefieldAndReturn(player1, skywarden.getCard());
+        harness.passBothPriorities();
+
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private Permanent addReadySkywarden() {
         harness.setHand(player1, List.<Card>of());
-        Permanent skywarden = harness.addToBattlefieldAndReturn(player1, new KavaronSkywarden());
-        skywarden.setSummoningSick(false);
-        return skywarden;
+        return addCreatureReady(player1, new KavaronSkywarden());
     }
 
     private void advanceToEndStep() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 }
