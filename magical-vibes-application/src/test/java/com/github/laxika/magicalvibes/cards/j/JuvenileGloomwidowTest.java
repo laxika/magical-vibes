@@ -58,4 +58,41 @@ class JuvenileGloomwidowTest extends BaseCardTest {
 
         assertThat(widow.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Deals wither damage while blocking a flyer and receives normal damage")
+    void witherDealsCountersWhileBlockingFlyer() {
+        Permanent widow = addCreatureReady(player2, new JuvenileGloomwidow());
+        Permanent flyer = addCreatureReady(player1, new FaerieMacabre());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(flyer.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(flyer.getMarkedDamage()).isZero();
+        assertThat(widow.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(widow.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(flyer);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(widow);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Wither counters kill a blocker whose toughness becomes zero")
+    void witherKillsBlockerWithExistingMinusCounter() {
+        Permanent widow = addCreatureReady(player1, new JuvenileGloomwidow());
+        Permanent blocker = addCreatureReady(player2, new SafeholdSentry());
+        blocker.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player2, "Safehold Sentry");
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(widow);
+        assertThat(widow.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
 }
