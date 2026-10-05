@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(IrrigationDitch.class)
 class IrrigationDitchTest extends BaseCardTest {
@@ -49,6 +50,43 @@ class IrrigationDitchTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Irrigation Ditch");
+    }
+
+    @Test
+    @DisplayName("A tapped Irrigation Ditch cannot activate either mana ability")
+    void tappedLandCannotActivateEitherAbility() {
+        Permanent ditch = harness.addToBattlefieldAndReturn(player1, new IrrigationDitch());
+        ditch.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+
+        harness.assertOnBattlefield(player1, "Irrigation Ditch");
+        harness.assertNotInGraveyard(player1, "Irrigation Ditch");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Sacrificing Irrigation Ditch is an immediate mana ability")
+    void sacrificeManaAbilityResolvesWithoutUsingStack() {
+        harness.addToBattlefield(player1, new IrrigationDitch());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Irrigation Ditch");
+        harness.assertInGraveyard(player1, "Irrigation Ditch");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isZero();
     }
 
 }
