@@ -2,13 +2,12 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.h.HexgoldHalberd;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MoltenRebuke.class, GrizzlyBears.class, ChandraNalaar.class, HexgoldHalberd.class})
 class MoltenRebukeTest extends BaseCardTest {
 
     @Test
@@ -32,9 +32,8 @@ class MoltenRebukeTest extends BaseCardTest {
     @Test
     @DisplayName("Damage mode deals 5 damage to a planeswalker")
     void damageModeDealsFiveDamageToPlaneswalker() {
-        Permanent planeswalker = new Permanent(new ChandraNalaar());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
         planeswalker.setCounterCount(CounterType.LOYALTY, 6);
-        gd.playerBattlefields.get(player2.getId()).add(planeswalker);
         cast(new int[]{0}, List.of(planeswalker.getId()));
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
@@ -80,6 +79,55 @@ class MoltenRebukeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Equipment is still destroyed when the damage target leaves")
+    void equipmentModeResolvesWhenCreatureLeaves() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent equipment = addEquipment(player2);
+        harness.setHand(player1, List.of(new MoltenRebuke()));
+        addMana();
+        harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{0, 1},
+                List.of(creature.getId(), equipment.getId()), null);
+
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        harness.setExile(player2, List.of(creature.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(equipment);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(equipment.getCard());
+    }
+
+    @Test
+    @DisplayName("Damage is still dealt when the Equipment target leaves")
+    void damageModeResolvesWhenEquipmentLeaves() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 6);
+        Permanent equipment = addEquipment(player2);
+        harness.setHand(player1, List.of(new MoltenRebuke()));
+        addMana();
+        harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{0, 1},
+                List.of(planeswalker.getId(), equipment.getId()), null);
+
+        gd.playerBattlefields.get(player2.getId()).remove(equipment);
+        harness.setExile(player2, List.of(equipment.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(planeswalker);
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(equipment.getCard());
+    }
+
+    @Test
+    @DisplayName("Damage mode cannot target a player")
+    void damageModeRejectsPlayer() {
+        harness.setHand(player1, List.of(new MoltenRebuke()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castModalSorceryWithModes(
+                player1, 0, 1, 2, new int[]{0}, List.of(player2.getId()), null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void cast(int[] modes, List<java.util.UUID> targetIds) {
         harness.setHand(player1, List.of(new MoltenRebuke()));
         addMana();
@@ -93,12 +141,6 @@ class MoltenRebukeTest extends BaseCardTest {
     }
 
     private Permanent addEquipment(com.github.laxika.magicalvibes.model.Player player) {
-        Card equipmentCard = new Card();
-        equipmentCard.setName("Test Equipment");
-        equipmentCard.setType(CardType.ARTIFACT);
-        equipmentCard.setSubtypes(List.of(CardSubtype.EQUIPMENT));
-        Permanent equipment = new Permanent(equipmentCard);
-        gd.playerBattlefields.get(player.getId()).add(equipment);
-        return equipment;
+        return harness.addToBattlefieldAndReturn(player, new HexgoldHalberd());
     }
 }
