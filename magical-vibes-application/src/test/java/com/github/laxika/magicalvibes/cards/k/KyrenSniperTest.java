@@ -120,4 +120,39 @@ class KyrenSniperTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
     }
+
+    @Test
+    @DisplayName("The upkeep ability still deals damage after its source leaves the battlefield")
+    void abilityResolvesAfterSourceLeaves() {
+        Permanent sniper = harness.addToBattlefieldAndReturn(player1, new KyrenSniper());
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, sniper);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An ability whose planeswalker target has left does not resolve or ask for a may choice")
+    void abilityDoesNotResolveAfterTargetLeaves() {
+        harness.addToBattlefield(player1, new KyrenSniper());
+        Permanent liliana = harness.addToBattlefieldAndReturn(player2, new LilianaVess());
+        liliana.setCounterCount(CounterType.LOYALTY, 5);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, liliana.getId());
+        harness.getPermanentRemovalService().removePermanentToHand(gd, liliana);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        harness.assertInHand(player2, "Liliana Vess");
+    }
 }
