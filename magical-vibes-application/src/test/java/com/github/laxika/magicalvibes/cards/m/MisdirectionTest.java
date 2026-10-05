@@ -23,6 +23,72 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class MisdirectionTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Misdirection can redirect Counterspell to the resolving Misdirection")
+    void redirectsCounterspellToItselfWhileResolving() {
+        Island island = new Island();
+        harness.addToBattlefield(player1, island);
+        UUID islandId = harness.getPermanentId(player1, "Island");
+        Hoodwink hoodwink = new Hoodwink();
+        harness.setHand(player1, List.of(hoodwink));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, islandId);
+        harness.passPriority(player1);
+
+        Counterspell counterspell = new Counterspell();
+        harness.setHand(player2, List.of(counterspell));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castInstant(player2, 0, hoodwink.getId());
+        harness.passPriority(player2);
+
+        Misdirection misdirection = new Misdirection();
+        harness.setHand(player1, List.of(misdirection));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castInstant(player1, 0, counterspell.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(misdirection.getId())
+                .doesNotContain(counterspell.getId(), hoodwink.getId());
+        harness.handlePermanentChosen(player1, misdirection.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Island");
+        harness.assertNotOnBattlefield(player1, "Island");
+        harness.assertInGraveyard(player1, "Misdirection");
+        harness.assertInGraveyard(player2, "Counterspell");
+    }
+
+    @Test
+    @DisplayName("Misdirection leaves the target unchanged when no alternative is legal")
+    void noLegalAlternativeLeavesOriginalTarget() {
+        Island island = new Island();
+        harness.addToBattlefield(player1, island);
+        UUID islandId = harness.getPermanentId(player1, "Island");
+        Hoodwink hoodwink = new Hoodwink();
+        harness.setHand(player1, List.of(hoodwink));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, islandId);
+        harness.passPriority(player1);
+
+        harness.setHand(player2, List.of(new Misdirection()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castInstant(player2, 0, hoodwink.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player2, "Misdirection");
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Island");
+        harness.assertNotOnBattlefield(player1, "Island");
+    }
+
+    @Test
     @DisplayName("Casting Misdirection requires targeting a spell with a single target")
     void castingRequiresSingleTargetSpell() {
         Brainstorm brainstorm = new Brainstorm();
