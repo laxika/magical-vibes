@@ -3,12 +3,14 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.c.CarapaceForger;
+import com.github.laxika.magicalvibes.cards.m.Memnite;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.o.ObstinateBaloth;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,18 +18,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PainfulQuandary.class, CarapaceForger.class, Memnite.class})
 class PainfulQuandaryTest extends BaseCardTest {
-
-    // ===== Trigger only on opponent's spells =====
 
     @Test
     @DisplayName("Does NOT trigger when controller casts a spell")
     void doesNotTriggerOnControllerSpell() {
         harness.addToBattlefield(player1, new PainfulQuandary());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CarapaceForger(), "{1}{G}");
 
         // No triggered ability — only the creature spell on the stack
         assertThat(gd.stack).hasSize(1);
@@ -44,18 +42,13 @@ class PainfulQuandaryTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new CarapaceForger(), "{1}{G}");
 
         // Triggered ability should be on the stack (on top of the creature spell)
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Painful Quandary");
     }
-
-    // ===== Opponent has cards: chooses to discard =====
 
     @Test
     @DisplayName("Opponent with cards in hand is prompted to discard or lose life")
@@ -96,10 +89,8 @@ class PainfulQuandaryTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
 
         // The card was discarded
-        harness.assertInGraveyard(player2, "Suntail Hawk");
+        harness.assertInGraveyard(player2, "Memnite");
     }
-
-    // ===== Opponent has cards: declines discard =====
 
     @Test
     @DisplayName("Opponent declines discard — loses 5 life")
@@ -127,8 +118,6 @@ class PainfulQuandaryTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handSizeBefore);
     }
 
-    // ===== Opponent has no cards: auto life loss =====
-
     @Test
     @DisplayName("Auto-loses 5 life when opponent has empty hand")
     void autoLosesLifeWithEmptyHand() {
@@ -138,12 +127,9 @@ class PainfulQuandaryTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new CarapaceForger(), "{1}{G}");
 
         // Hand is now empty (creature was cast from hand)
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
@@ -160,8 +146,6 @@ class PainfulQuandaryTest extends BaseCardTest {
                 && log.contains("loses 5 life"));
     }
 
-    // ===== Multiple Painful Quandaries =====
-
     @Test
     @DisplayName("Multiple Painful Quandaries each trigger independently")
     void multipleTriggerIndependently() {
@@ -172,7 +156,7 @@ class PainfulQuandaryTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new GrizzlyBears(), new SuntailHawk(), new SuntailHawk()));
+        harness.setHand(player2, List.of(new CarapaceForger(), new Memnite(), new Memnite()));
         harness.addMana(player2, ManaColor.GREEN, 2);
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
@@ -201,8 +185,6 @@ class PainfulQuandaryTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
     }
 
-    // ===== Life loss can kill opponent =====
-
     @Test
     @DisplayName("Life loss from declining can reduce opponent to 0 or below")
     void lifeLossCanKill() {
@@ -213,10 +195,8 @@ class PainfulQuandaryTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.setLife(player2, 3);
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
 
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new CarapaceForger(), "{1}{G}");
 
         // Hand is empty — auto life loss
         harness.passBothPriorities();
@@ -224,7 +204,67 @@ class PainfulQuandaryTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(-2);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Artifact creature spells also trigger the ability")
+    void artifactCreatureSpellTriggers() {
+        harness.addToBattlefield(player1, new PainfulQuandary());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player2, new Memnite(), "{0}");
+        harness.setLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 15);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Memnite");
+    }
+
+    @Test
+    @DisplayName("Discarding the last card to one trigger leaves life loss for the other")
+    void multipleTriggersRecheckHandAtResolution() {
+        harness.addToBattlefield(player1, new PainfulQuandary());
+        harness.addToBattlefield(player1, new PainfulQuandary());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setLife(player2, 20);
+        harness.setHand(player2, List.of(new CarapaceForger(), new Memnite()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castCreature(player2, 0);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player2, 0);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.passBothPriorities();
+        harness.assertLife(player2, 15);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @CardUsed(ObstinateBaloth.class)
+    @DisplayName("Discard to an opponent's Quandary applies Obstinate Baloth's replacement")
+    void discardIsCausedByOpponentsAbility() {
+        harness.addToBattlefield(player1, new PainfulQuandary());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setLife(player2, 20);
+        harness.setHand(player2, List.of(new CarapaceForger(), new ObstinateBaloth()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertOnBattlefield(player2, "Obstinate Baloth");
+        harness.assertNotInGraveyard(player2, "Obstinate Baloth");
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 24);
+    }
 
     /**
      * Sets up: player1 has Painful Quandary on battlefield, player2 casts a spell
@@ -238,7 +278,7 @@ class PainfulQuandaryTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new GrizzlyBears(), new SuntailHawk()));
+        harness.setHand(player2, List.of(new CarapaceForger(), new Memnite()));
         harness.addMana(player2, ManaColor.GREEN, 2);
 
         harness.castCreature(player2, 0);
