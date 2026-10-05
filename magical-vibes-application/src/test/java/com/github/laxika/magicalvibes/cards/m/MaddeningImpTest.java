@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MaddeningImp.class, GrizzlyBears.class, WallOfAir.class})
+@CardUsed({MaddeningImp.class, GrizzlyBears.class, WallOfAir.class, WallOfWonder.class, RagingGoblin.class})
 class MaddeningImpTest extends BaseCardTest {
 
     /** player1 controls a ready Imp; it's player2's turn, in a step that precedes combat. */
@@ -53,8 +53,7 @@ class MaddeningImpTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttackedThisTurn(true);
         Permanent wall = addCreatureReady(player2, new WallOfAir());
-        Permanent summoningSick = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(summoningSick);
+        Permanent summoningSick = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         primeImp();
         harness.activateAbility(player1, 0, null, null);
@@ -121,5 +120,52 @@ class MaddeningImpTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("before combat");
+    }
+
+    @Test
+    @DisplayName("The player who activated the Imp controls its delayed destruction trigger")
+    void activatorControlsDelayedTrigger() {
+        addCreatureReady(player2, new GrizzlyBears());
+        primeImp();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Destroys tapped nonattackers but leaves the Imp controller's creatures alone")
+    void destroysTappedNonattackerOnlyForActivePlayer() {
+        Permanent tapped = addCreatureReady(player2, new GrizzlyBears());
+        tapped.setTapped(true);
+        Permanent ownBear = addCreatureReady(player1, new GrizzlyBears());
+        primeImp();
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        runEndStep();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(tapped);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownBear);
+    }
+
+    @Test
+    @DisplayName("Destroys a non-Wall creature entering after the ability resolves")
+    void destroysLaterSummoningSickCreature() {
+        primeImp();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        Permanent lateBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        runEndStep();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(lateBear);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 }
