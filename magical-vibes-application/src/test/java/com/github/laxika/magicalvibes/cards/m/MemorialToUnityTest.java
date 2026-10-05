@@ -1,16 +1,16 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalothGorger;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.ShivanFire;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,18 +19,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MemorialToUnity.class, LlanowarElves.class, BalothGorger.class, ShivanFire.class, Plains.class, Swamp.class})
 class MemorialToUnityTest extends BaseCardTest {
-
-    
-
     @Test
     @DisplayName("Activating ability sacrifices Memorial to Unity and offers creature cards from top five")
     void activatingOffersCreatureCards() {
         harness.addToBattlefield(player1, new MemorialToUnity());
-        setupTopFive(List.of(
+        harness.setLibrary(player1, List.of(
                 new LlanowarElves(),
-                new Shock(),
-                new GrizzlyBears(),
+                new ShivanFire(),
+                new BalothGorger(),
                 new Plains(),
                 new Swamp()
         ));
@@ -46,22 +44,29 @@ class MemorialToUnityTest extends BaseCardTest {
 
         // Should offer creature cards from top five
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isTrue();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(2);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))
-                .containsExactlyInAnyOrder("Llanowar Elves", "Grizzly Bears");
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.LibrarySearch search) {
+            assertThat(search.params().playerId()).isEqualTo(player1.getId());
+            assertThat(search.params().canFailToFind()).isTrue();
+            assertThat(search.params().cards().stream().map(Card::getName))
+                    .containsExactlyInAnyOrder("Llanowar Elves", "Baloth Gorger");
+        } else {
+            var choice = gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+            assertThat(choice.playerId()).isEqualTo(player1.getId());
+            assertThat(choice.minCount()).isZero();
+            assertThat(choice.maxCount()).isEqualTo(1);
+            assertThat(choice.allCards().stream().filter(card -> choice.validCardIds().contains(card.getId()))
+                    .map(Card::getName)).containsExactlyInAnyOrder("Llanowar Elves", "Baloth Gorger");
+        }
     }
 
     @Test
-    @DisplayName("Choosing a creature puts it into hand then orders rest on bottom")
+    @DisplayName("Choosing a creature puts it into hand and randomly bottoms the rest")
     void choosingCreaturePutsIntoHand() {
         harness.addToBattlefield(player1, new MemorialToUnity());
-        setupTopFive(List.of(
+        harness.setLibrary(player1, List.of(
                 new LlanowarElves(),
-                new Shock(),
-                new GrizzlyBears(),
+                new ShivanFire(),
+                new BalothGorger(),
                 new Plains(),
                 new Swamp()
         ));
@@ -73,21 +78,22 @@ class MemorialToUnityTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Choose Llanowar Elves
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        chooseCreature(0);
 
         harness.assertInHand(player1, "Llanowar Elves");
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(4);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId()).stream().map(Card::getName))
+                .containsExactlyInAnyOrder("Shivan Fire", "Baloth Gorger", "Plains", "Swamp");
     }
 
     @Test
     @DisplayName("You may choose no creature card")
     void mayChooseNoCreature() {
         harness.addToBattlefield(player1, new MemorialToUnity());
-        setupTopFive(List.of(
+        harness.setLibrary(player1, List.of(
                 new LlanowarElves(),
-                new Shock(),
-                new GrizzlyBears(),
+                new ShivanFire(),
+                new BalothGorger(),
                 new Plains(),
                 new Swamp()
         ));
@@ -99,22 +105,22 @@ class MemorialToUnityTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        chooseCreature(-1);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(5);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
     }
 
     @Test
-    @DisplayName("If no creature cards in top five, directly go to reorder")
-    void noCreaturesGoesToReorder() {
+    @DisplayName("If no creature cards in top five, randomly bottom all five")
+    void noCreaturesGoToBottomWithoutReorder() {
         harness.addToBattlefield(player1, new MemorialToUnity());
-        setupTopFive(List.of(
-                new Shock(),
+        harness.setLibrary(player1, List.of(
+                new ShivanFire(),
                 new Plains(),
                 new Swamp(),
-                new Shock(),
+                new ShivanFire(),
                 new Plains()
         ));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -124,15 +130,15 @@ class MemorialToUnityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(5);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
     }
 
     @Test
     @DisplayName("Memorial to Unity is sacrificed as a cost before resolution")
     void sacrificedAsCostBeforeResolution() {
         harness.addToBattlefield(player1, new MemorialToUnity());
-        setupTopFive(List.of(new LlanowarElves(), new Shock(), new GrizzlyBears(), new Plains(), new Swamp()));
+        harness.setLibrary(player1, List.of(new LlanowarElves(), new ShivanFire(), new BalothGorger(), new Plains(), new Swamp()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -149,7 +155,7 @@ class MemorialToUnityTest extends BaseCardTest {
     void cannotActivateWithoutEnoughMana() {
         harness.addToBattlefield(player1, new MemorialToUnity());
         harness.addMana(player1, ManaColor.GREEN, 1);
-        // Only 1G, need 2G+1 colorless
+        // Only one green mana is available; the cost is {2}{G}.
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -169,9 +175,77 @@ class MemorialToUnityTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
-    private void setupTopFive(List<Card> cards) {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(cards);
+
+    @Test
+    void entersTapped() {
+        harness.setHand(player1, List.of(new MemorialToUnity()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.playLand(player1, 0);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+    }
+
+    @Test
+    void tapProducesGreenManaWithoutUsingStack() {
+        harness.addToBattlefield(player1, new MemorialToUnity());
+        harness.tapPermanent(player1, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotInGraveyard(player1, "Memorial to Unity");
+    }
+
+    @Test
+    void shortLibraryAllowsDecliningTheOnlyCreature() {
+        harness.addToBattlefield(player1, new MemorialToUnity());
+        var creature = new LlanowarElves();
+        var land = new Plains();
+        harness.setLibrary(player1, List.of(creature, land));
+        int handSize = gd.playerHands.get(player1.getId()).size();
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        chooseCreature(-1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(creature, land);
+    }
+
+    @Test
+    void emptyLibraryResolvesWithoutDrawingOrLosing() {
+        harness.addToBattlefield(player1, new MemorialToUnity());
+        harness.setLibrary(player1, List.of());
+        int handSize = gd.playerHands.get(player1.getId()).size();
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Memorial to Unity");
+        assertThat(gd.status).isEqualTo(com.github.laxika.magicalvibes.model.GameStatus.RUNNING);
+    }
+
+    @Test
+    void onlyTheTopFiveAreExaminedAndTheUnexaminedCardStaysOnTop() {
+        harness.addToBattlefield(player1, new MemorialToUnity());
+        var sixth = new BalothGorger();
+        harness.setLibrary(player1, List.of(new ShivanFire(), new Plains(), new Swamp(),
+                new Plains(), new Swamp(), sixth));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(6).first().isSameAs(sixth);
+        harness.assertNotInHand(player1, "Baloth Gorger");
+    }
+
+    private void chooseCreature(int index) {
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.LibraryRevealChoice choice) {
+            harness.handleMultipleCardsChosen(player1,
+                    index < 0 ? List.of() : List.of(choice.validCardIds().get(index)));
+        } else {
+            harness.handleCardChosen(player1, index);
+        }
     }
 }
