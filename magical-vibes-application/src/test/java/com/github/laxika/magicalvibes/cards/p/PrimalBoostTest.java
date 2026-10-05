@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.w.WirewoodLodge;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -84,6 +85,38 @@ class PrimalBoostTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Spell can boost an opponent's creature and expires at end of turn")
+    void spellBoostsOpponentCreatureUntilEndOfTurn() {
+        Permanent warrior = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
+        harness.setHand(player1, List.of(new PrimalBoost()));
+        addCyclingMana();
+
+        harness.castAndResolveInstant(player1, 0, warrior.getId());
+
+        assertThat(warrior.getPowerModifier()).isEqualTo(4);
+        assertThat(warrior.getToughnessModifier()).isEqualTo(4);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        assertThat(warrior.getPowerModifier()).isZero();
+        assertThat(warrior.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Cycling can boost an opponent's creature and expires at end of turn")
+    void cyclingBoostsOpponentCreatureUntilEndOfTurn() {
+        Permanent warrior = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
+        prepareCycle();
+
+        cycleAndChoose(warrior, true);
+
+        assertThat(warrior.getPowerModifier()).isEqualTo(1);
+        assertThat(warrior.getToughnessModifier()).isEqualTo(1);
+        harness.assertInHand(player1, "Elvish Warrior");
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        assertThat(warrior.getPowerModifier()).isZero();
+        assertThat(warrior.getToughnessModifier()).isZero();
     }
 
     private void prepareCycle() {
