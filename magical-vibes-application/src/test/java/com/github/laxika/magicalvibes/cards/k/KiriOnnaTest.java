@@ -105,7 +105,52 @@ class KiriOnnaTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addKiriOnna() {
-        return harness.addToBattlefieldAndReturn(player1, new KiriOnna());
+    @Test
+    @DisplayName("The enter trigger can return a creature you control")
+    void entersByReturningOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new InnerChamberGuard());
+        harness.setHand(player1, List.of(new KiriOnna()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Inner-Chamber Guard");
+        harness.assertNotOnBattlefield(player1, "Inner-Chamber Guard");
+        harness.assertOnBattlefield(player1, "Kiri-Onna");
+    }
+
+    @Test
+    @DisplayName("An opponent's Arcane spell does not trigger Kiri-Onna")
+    void opponentsArcaneSpellDoesNotTrigger() {
+        addKiriOnna();
+        harness.castFromHand(player2, new SpiritualVisit(), "{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Kiri-Onna");
+        harness.assertInGraveyard(player2, "Spiritual Visit");
+    }
+
+    @Test
+    @DisplayName("Creating a Spirit token does not trigger the cast ability")
+    void spiritTokenEnteringDoesNotTrigger() {
+        addKiriOnna();
+        harness.castFromHand(player1, new SpiritualVisit(), "{W}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Kiri-Onna");
+        harness.assertInGraveyard(player1, "Spiritual Visit");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+    }
+
+    private void addKiriOnna() {
+        harness.addToBattlefield(player1, new KiriOnna());
     }
 }
