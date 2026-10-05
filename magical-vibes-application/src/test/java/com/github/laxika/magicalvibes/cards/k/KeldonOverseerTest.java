@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalothGorger;
+import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,12 +19,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KeldonOverseer.class, BalothGorger.class, IcyManipulator.class})
 class KeldonOverseerTest extends BaseCardTest {
 
-    // ===== Cast without kicker =====
 
     @Nested
     @DisplayName("Cast without kicker")
+    @CardUsed({KeldonOverseer.class, BalothGorger.class})
     class WithoutKicker {
 
         @Test
@@ -55,11 +59,48 @@ class KeldonOverseerTest extends BaseCardTest {
         }
     }
 
-    // ===== Cast with kicker =====
 
     @Nested
     @DisplayName("Cast with kicker")
+    @CardUsed({KeldonOverseer.class, BalothGorger.class, IcyManipulator.class})
     class WithKicker {
+
+        @Test
+        void targetChoiceExcludesNoncreaturePermanents() {
+            Permanent creature = addCreature(player2);
+            Permanent artifact = harness.addToBattlefieldAndReturn(player2, new IcyManipulator());
+            castKicked(null);
+
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+            PendingInteraction.PermanentChoice choice =
+                    (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+            assertThat(choice.validPermanentIds()).contains(creature.getId()).doesNotContain(artifact.getId());
+        }
+
+        @Test
+        void canUntapAndGrantHasteToOwnCreature() {
+            Permanent target = addCreature(player1);
+            target.tap();
+            castKicked(target.getId());
+            harness.passBothPriorities();
+
+            harness.assertOnBattlefield(player1, "Baloth Gorger");
+            assertThat(target.isTapped()).isFalse();
+            assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        }
+
+        @Test
+        void triggerResolvesAfterSourceLeavesBattlefield() {
+            Permanent target = addCreature(player2);
+            target.tap();
+            castKicked(target.getId());
+            gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getCard() instanceof KeldonOverseer);
+            harness.passBothPriorities();
+
+            harness.assertOnBattlefield(player1, "Baloth Gorger");
+            assertThat(target.isTapped()).isFalse();
+            assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        }
 
         @Test
         @DisplayName("ETB triggered ability goes on the stack when kicked")
@@ -127,12 +168,10 @@ class KeldonOverseerTest extends BaseCardTest {
         }
     }
 
-    // ===== Helpers =====
 
     private Permanent addCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new BalothGorger());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
