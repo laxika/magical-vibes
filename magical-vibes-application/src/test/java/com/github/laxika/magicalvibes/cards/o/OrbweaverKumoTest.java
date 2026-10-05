@@ -86,6 +86,51 @@ class OrbweaverKumoTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Forestwalk is granted by the trigger before the Spirit spell resolves")
+    void triggerResolvesBeforeSpiritSpell() {
+        Permanent kumo = addKumo();
+        harness.setHand(player1, List.of(new KamiOfTheHunt()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gqs.hasKeyword(gd, kumo, Keyword.FORESTWALK)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, kumo, Keyword.FORESTWALK)).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(kumo);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Casting Kumo does not trigger its own ability before it enters")
+    void doesNotTriggerForItsOwnCast() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new OrbweaverKumo()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        Permanent kumo = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(gqs.hasKeyword(gd, kumo, Keyword.FORESTWALK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Opponent Arcane spells do not grant forestwalk")
+    void noTriggerOnOpponentArcaneSpell() {
+        Permanent kumo = addKumo();
+        harness.setHand(player2, List.of(new DampenThought()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(gqs.hasKeyword(gd, kumo, Keyword.FORESTWALK)).isFalse();
+    }
+
+    @Test
     @DisplayName("Forestwalk wears off at end of turn")
     void forestwalkWearsOff() {
         Permanent kumo = addKumo();
@@ -97,8 +142,7 @@ class OrbweaverKumoTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, kumo, Keyword.FORESTWALK)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
 
         Permanent afterCleanup = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(gqs.hasKeyword(gd, afterCleanup, Keyword.FORESTWALK)).isFalse();
