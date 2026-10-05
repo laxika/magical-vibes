@@ -84,4 +84,38 @@ class MerfolkSeerTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()))
                 .noneMatch(card -> card.getId().equals(drawnCard.getId()));
     }
+
+    @Test
+    @DisplayName("Two blue mana pay the cost and draw exactly one card")
+    void paysGenericCostWithBlueMana() {
+        Card drawnCard = new NettletoothDjinn();
+        Card remainingCard = new MerfolkSeer();
+        harness.setLibrary(player1, List.of(drawnCard, remainingCard));
+        harness.setHand(player1, List.of());
+
+        killInCombatUntilMayPrompt();
+
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(drawnCard);
+    }
+
+    @Test
+    @DisplayName("Two colorless mana cannot pay the required blue mana")
+    void cannotPayWithoutBlueMana() {
+        Card drawnCard = new NettletoothDjinn();
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        killInCombatUntilMayPrompt();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawnCard);
+    }
 }
