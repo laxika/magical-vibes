@@ -84,6 +84,87 @@ class MindmoilTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An empty library is replenished before the ordered hand is drawn")
+    void drawsBottomedCardsWhenLibraryWasEmpty() {
+        Forest firstHandCard = new Forest();
+        Mountain secondHandCard = new Mountain();
+
+        harness.addToBattlefield(player1, new Mindmoil());
+        harness.setHand(player1, List.of(new BirdsOfParadise(), firstHandCard, secondHandCard));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(secondHandCard, firstHandCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The hand is exchanged at resolution, including cards drawn after casting")
+    void usesHandAtResolution() {
+        Forest originalHandCard = new Forest();
+        Mountain cardDrawnBeforeResolution = new Mountain();
+        Forest firstReplacementCard = new Forest();
+        Mountain secondReplacementCard = new Mountain();
+
+        harness.addToBattlefield(player1, new Mindmoil());
+        harness.setHand(player1, List.of(new BirdsOfParadise(), originalHandCard));
+        harness.setLibrary(player1, List.of(cardDrawnBeforeResolution, firstReplacementCard, secondReplacementCard));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castCreature(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(originalHandCard);
+        harness.getDrawService().resolveDrawCards(gd, player1.getId(), 1);
+        harness.passBothPriorities();
+
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder).isNotNull();
+        assertThat(reorder.cards()).containsExactly(originalHandCard, cardDrawnBeforeResolution);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstReplacementCard, secondReplacementCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(originalHandCard, cardDrawnBeforeResolution);
+    }
+
+    @Test
+    @DisplayName("Mindmoil does not trigger from its own casting")
+    void doesNotTriggerForItsOwnCasting() {
+        Forest handCard = new Forest();
+        Mountain libraryCard = new Mountain();
+        harness.setHand(player1, List.of(new Mindmoil(), handCard));
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Mindmoil");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(handCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+    }
+
+    @Test
+    @DisplayName("Playing a land does not trigger Mindmoil")
+    void playingLandDoesNotTrigger() {
+        Forest land = new Forest();
+        Mountain handCard = new Mountain();
+        Forest libraryCard = new Forest();
+        harness.addToBattlefield(player1, new Mindmoil());
+        harness.setHand(player1, List.of(land, handCard));
+        harness.setLibrary(player1, List.of(libraryCard));
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(handCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+    }
+
+    @Test
     @DisplayName("An opponent's spell does not trigger Mindmoil")
     void opponentSpellDoesNotTrigger() {
         Forest player1LibraryCard = new Forest();
