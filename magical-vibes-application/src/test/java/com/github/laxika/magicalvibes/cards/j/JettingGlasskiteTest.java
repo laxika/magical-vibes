@@ -48,9 +48,7 @@ class JettingGlasskiteTest extends BaseCardTest {
     void countersTargetingAbility() {
         UUID glasskiteId = addGlasskite();
 
-        harness.addToBattlefield(player2, new MatsuTribeSniper());
-        Permanent sniper = findPermanent(player2, "Matsu-Tribe Sniper");
-        sniper.setSummoningSick(false);
+        Permanent sniper = addCreatureReady(player2, new MatsuTribeSniper());
 
         harness.activateAbility(player2,
                 gd.playerBattlefields.get(player2.getId()).indexOf(sniper), null, glasskiteId);
@@ -110,9 +108,7 @@ class JettingGlasskiteTest extends BaseCardTest {
     void spellAfterAbilitySameTurnIsNotCountered() {
         UUID glasskiteId = addGlasskite();
 
-        harness.addToBattlefield(player2, new MatsuTribeSniper());
-        Permanent sniper = findPermanent(player2, "Matsu-Tribe Sniper");
-        sniper.setSummoningSick(false);
+        Permanent sniper = addCreatureReady(player2, new MatsuTribeSniper());
         harness.setHand(player2, List.of(new FirstVolley()));
         harness.addMana(player2, ManaColor.RED, 2);
 
@@ -140,8 +136,7 @@ class JettingGlasskiteTest extends BaseCardTest {
         harness.castInstant(player2, 0, glasskiteId);
         harness.passBothPriorities();
 
-        declareAttackers(List.of());
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         harness.addMana(player2, ManaColor.RED, 2);
 
         harness.castInstant(player2, 0, glasskiteId);
@@ -151,5 +146,65 @@ class JettingGlasskiteTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "First Volley");
         assertThat(findPermanent(player1, "Jetting Glasskite").getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Countering the targeting ability removes it from the stack")
+    void targetingAbilityIsRemovedFromStack() {
+        UUID glasskiteId = addGlasskite();
+        Permanent sniper = addCreatureReady(player2, new MatsuTribeSniper());
+
+        harness.activateAbility(player2,
+                gd.playerBattlefields.get(player2.getId()).indexOf(sniper), null, glasskiteId);
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanent(player1, "Jetting Glasskite").getMarkedDamage()).isZero();
+        assertThat(sniper.isTapped()).isTrue();
+        harness.assertOnBattlefield(player2, "Matsu-Tribe Sniper");
+    }
+
+    @Test
+    @DisplayName("Each Glasskite has its own first-target protection")
+    void separateGlasskitesEachCounterTheirFirstSpell() {
+        Permanent first = addCreatureReady(player1, new JettingGlasskite());
+        Permanent second = addCreatureReady(player1, new JettingGlasskite());
+        harness.setHand(player2, List.of(new FirstVolley(), new FirstVolley()));
+        harness.addMana(player2, ManaColor.RED, 4);
+
+        harness.castInstant(player2, 0, first.getId());
+        harness.passBothPriorities();
+        harness.castInstant(player2, 0, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(first.getMarkedDamage()).isZero();
+        assertThat(second.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("An ability after the first targeting spell resolves normally")
+    void abilityAfterSpellSameTurnIsNotCountered() {
+        UUID glasskiteId = addGlasskite();
+        Permanent sniper = addCreatureReady(player2, new MatsuTribeSniper());
+        harness.setHand(player2, List.of(new FirstVolley()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castInstant(player2, 0, glasskiteId);
+        harness.passBothPriorities();
+        harness.activateAbility(player2,
+                gd.playerBattlefields.get(player2.getId()).indexOf(sniper), null, glasskiteId);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent glasskite = findPermanent(player1, "Jetting Glasskite");
+        assertThat(glasskite.getMarkedDamage()).isEqualTo(1);
+        assertThat(glasskite.isTapped()).isTrue();
+        harness.assertLife(player1, 20);
     }
 }
