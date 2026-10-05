@@ -91,4 +91,37 @@ class PaupersCageTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
     }
+
+    @Test
+    @DisplayName("A hand shrinking after upkeep begins does not create a trigger")
+    void handShrinkingAfterUpkeepDoesNotTrigger() {
+        harness.addToBattlefield(player1, new PaupersCage());
+        harness.setHand(player2, List.of(new PaupersCage(), new PaupersCage(), new PaupersCage()));
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).isEmpty();
+        harness.setHand(player2, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Multiple Cages trigger independently and only damage the opponent")
+    void multipleCagesDealDamageIndependently() {
+        harness.addToBattlefield(player1, new PaupersCage());
+        harness.addToBattlefield(player1, new PaupersCage());
+        harness.setHand(player2, List.of(new PaupersCage()));
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+        int controllerLifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore - 4);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(controllerLifeBefore);
+    }
 }
