@@ -86,4 +86,63 @@ class PhyrexianSnowcrusherTest extends BaseCardTest {
     private Permanent addReadySnowcrusher(Player player) {
         return addCreatureReady(player, new PhyrexianSnowcrusher());
     }
+
+    @Test
+    @DisplayName("A summoning-sick Snowcrusher does not have to attack")
+    void doesNotHaveToAttackWhileSummoningSick() {
+        Permanent snowcrusher = harness.addToBattlefieldAndReturn(player1, new PhyrexianSnowcrusher());
+        snowcrusher.setSummoningSick(true);
+
+        declareAttackers(List.of());
+
+        assertThat(snowcrusher.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Colored snow mana can pay both activation symbols")
+    void coloredSnowManaCanPayEntireActivation() {
+        Permanent snowcrusher = addReadySnowcrusher(player1);
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.BLUE, 2);
+        int originalPower = gqs.getEffectivePower(gd, snowcrusher);
+        int originalToughness = gqs.getEffectiveToughness(gd, snowcrusher);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, snowcrusher)).isEqualTo(originalPower + 1);
+        assertThat(gqs.getEffectiveToughness(gd, snowcrusher)).isEqualTo(originalToughness);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("One snow mana cannot pay both the generic and snow symbols")
+    void oneSnowManaIsInsufficient() {
+        addReadySnowcrusher(player1);
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Snowcrusher can activate repeatedly")
+    void powerBoostStacksWithoutTapOrSummoningSicknessRestriction() {
+        Permanent snowcrusher = addReadySnowcrusher(player1);
+        snowcrusher.tap();
+        snowcrusher.setSummoningSick(true);
+        int originalPower = gqs.getEffectivePower(gd, snowcrusher);
+        int originalToughness = gqs.getEffectiveToughness(gd, snowcrusher);
+
+        for (int i = 0; i < 2; i++) {
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.RED, 1);
+            harness.activateAbility(player1, 0, 0, null, null);
+            harness.passBothPriorities();
+        }
+
+        assertThat(gqs.getEffectivePower(gd, snowcrusher)).isEqualTo(originalPower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, snowcrusher)).isEqualTo(originalToughness);
+        assertThat(snowcrusher.isTapped()).isTrue();
+    }
 }
