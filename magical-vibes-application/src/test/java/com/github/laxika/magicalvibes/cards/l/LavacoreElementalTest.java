@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.n.NeedlepeakSpider;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.cards.t.Timecrafting;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LavacoreElemental.class, NeedlepeakSpider.class, ProdigalPyromancer.class})
+@CardUsed({LavacoreElemental.class, NeedlepeakSpider.class, ProdigalPyromancer.class, Timecrafting.class})
 class LavacoreElementalTest extends BaseCardTest {
 
     @Test
@@ -28,8 +29,7 @@ class LavacoreElementalTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent elemental = findPermanent(player1, "Lavacore Elemental");
 
@@ -123,6 +123,60 @@ class LavacoreElementalTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Lavacore Elemental");
         harness.assertInGraveyard(player1, "Lavacore Elemental");
+    }
+
+    @Test
+    void getsTimeCounterFromItsOwnCombatDamage() {
+        Permanent elemental = addReadyElemental();
+
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(elemental)));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+        assertThat(elemental.getCounterCount(CounterType.TIME)).isEqualTo(2);
+    }
+
+    @Test
+    void getsOneTimeCounterForEachCreatureDealingCombatDamage() {
+        Permanent elemental = addReadyElemental();
+        Permanent first = addCreatureReady(player1, new NeedlepeakSpider());
+        Permanent second = addCreatureReady(player1, new NeedlepeakSpider());
+
+        declareAttackersAndPrepareBlockers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(first),
+                gd.playerBattlefields.get(player1.getId()).indexOf(second)));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
+        assertThat(elemental.getCounterCount(CounterType.TIME)).isEqualTo(3);
+    }
+
+    @Test
+    void sacrificesWhenTimecraftingRemovesLastTimeCounter() {
+        Permanent elemental = addReadyElemental();
+        harness.setHand(player1, List.of(new Timecrafting()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castModalInstantForX(player1, 0, 0, 1, elemental.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Lavacore Elemental");
+        harness.assertInGraveyard(player1, "Lavacore Elemental");
+    }
+
+    @Test
+    void doesNotTriggerUpkeepWithoutTimeCounters() {
+        Permanent elemental = addReadyElemental();
+        elemental.setCounterCount(CounterType.TIME, 0);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(elemental);
     }
 
     private Permanent addReadyElemental() {
