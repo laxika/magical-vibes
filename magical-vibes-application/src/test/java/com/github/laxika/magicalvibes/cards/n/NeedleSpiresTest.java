@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(NeedleSpires.class)
+@CardUsed({NeedleSpires.class})
 class NeedleSpiresTest extends BaseCardTest {
 
     @Test
@@ -38,6 +38,73 @@ class NeedleSpiresTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
         assertThat(spires.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Needle Spires can produce white mana without using the stack")
+    void tappingAddsWhiteManaImmediately() {
+        Permanent spires = addReadySpires(player1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(spires.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Animation uses the stack and affects only the activated Needle Spires")
+    void animationAffectsOnlyItsSourceOnResolution() {
+        Permanent spires = addReadySpires(player1);
+        Permanent other = addReadySpires(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.isCreature(gd, spires)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, spires)).isTrue();
+        assertThat(spires.isTapped()).isFalse();
+        assertThat(gqs.isCreature(gd, other)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Needle Spires can animate without untapping")
+    void animatesWhileTapped() {
+        Permanent spires = addReadySpires(player1);
+        spires.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, spires)).isTrue();
+        assertThat(spires.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Animated Needle Spires deals four damage when unblocked")
+    void doubleStrikeDealsDamageInBothCombatDamageSteps() {
+        addReadySpires(player1);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 
     @Test
@@ -81,9 +148,8 @@ class NeedleSpiresTest extends BaseCardTest {
     }
 
     private Permanent addReadySpires(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent permanent = new Permanent(new NeedleSpires());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new NeedleSpires());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
