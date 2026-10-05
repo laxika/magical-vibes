@@ -73,4 +73,77 @@ class KravenTheHunterTest extends BaseCardTest {
         assertThat(kraven.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
+
+    @Test
+    @DisplayName("Only the greatest-power creature qualifies when unequal creatures die simultaneously")
+    void simultaneousDeathsUsePowerBeforeTheEvent() {
+        Permanent kraven = harness.addToBattlefieldAndReturn(player1, new KravenTheHunter());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Forest drawnCard = new Forest();
+        Forest remainingCard = new Forest();
+        harness.setLibrary(player1, List.of(drawnCard, remainingCard));
+        giant.setMarkedDamage(3);
+        bears.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(kraven.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+    }
+
+    @Test
+    @DisplayName("The opponent's only creature qualifies even when its power is negative")
+    void triggersForOnlyCreatureWithNegativePower() {
+        Permanent kraven = harness.addToBattlefieldAndReturn(player1, new KravenTheHunter());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        bears.setPowerModifier(-3);
+        Forest drawnCard = new Forest();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(kraven.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    @DisplayName("A creature controlled by Kraven's controller does not trigger the ability")
+    void doesNotTriggerForOwnCreature() {
+        Permanent kraven = harness.addToBattlefieldAndReturn(player1, new KravenTheHunter());
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castInstant(player1, 0, giant.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(kraven.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Draws even if Kraven dies at the same time as the opponent's creature")
+    void drawsWhenKravenDiesSimultaneously() {
+        Permanent kraven = harness.addToBattlefieldAndReturn(player1, new KravenTheHunter());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Forest drawnCard = new Forest();
+        harness.setLibrary(player1, List.of(drawnCard));
+        kraven.setMarkedDamage(3);
+        giant.setMarkedDamage(3);
+
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Kraven the Hunter");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
 }
