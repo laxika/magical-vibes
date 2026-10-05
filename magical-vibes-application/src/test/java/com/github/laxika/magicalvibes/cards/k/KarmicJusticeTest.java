@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.n.NevinyrralsDisk;
 import com.github.laxika.magicalvibes.cards.m.Meekstone;
 import com.github.laxika.magicalvibes.cards.p.PlanarCleansing;
 import com.github.laxika.magicalvibes.cards.r.RayOfDistortion;
+import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.cards.w.Werebear;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -23,10 +24,11 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({KarmicJustice.class, Demolish.class, DoomBlade.class, Firebolt.class, Forest.class,
         Meekstone.class, NevinyrralsDisk.class, PlanarCleansing.class, RayOfDistortion.class,
-        Werebear.class})
+        RestInPeace.class, Werebear.class})
 class KarmicJusticeTest extends BaseCardTest {
 
     private void resolveDemolish(Player caster, UUID targetId) {
@@ -106,14 +108,12 @@ class KarmicJusticeTest extends BaseCardTest {
     void massDestructionTriggersKarmicJustice() {
         harness.addToBattlefield(player1, new KarmicJustice());
         harness.addToBattlefield(player2, new Forest());
-        harness.setHand(player2, List.of(new PlanarCleansing()));
-        harness.addMana(player2, ManaColor.WHITE, 3);
-        harness.addMana(player2, ManaColor.COLORLESS, 3);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         UUID forestId = harness.getPermanentId(player2, "Forest");
-        harness.castAndResolveSorcery(player2, 0, 0);
+        harness.castFromHand(player2, new PlanarCleansing(), "{3}{W}{W}{W}");
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, forestId);
@@ -135,7 +135,7 @@ class KarmicJusticeTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         UUID bearsId = harness.getPermanentId(player1, "Werebear");
-        harness.castAndResolveInstant(player2, 0, bearsId);
+        harness.castAndResolveSorcery(player2, 0, 0, bearsId);
 
         harness.assertInGraveyard(player1, "Werebear");
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -203,13 +203,11 @@ class KarmicJusticeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Meekstone());
         Permanent firstForest = harness.addToBattlefieldAndReturn(player2, new Forest());
         Permanent secondForest = harness.addToBattlefieldAndReturn(player2, new Forest());
-        harness.setHand(player2, List.of(new PlanarCleansing()));
-        harness.addMana(player2, ManaColor.WHITE, 3);
-        harness.addMana(player2, ManaColor.COLORLESS, 3);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castAndResolveSorcery(player2, 0, 0);
+        harness.castFromHand(player2, new PlanarCleansing(), "{3}{W}{W}{W}");
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, firstForest.getId());
@@ -225,5 +223,81 @@ class KarmicJusticeTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()).stream()
                 .filter(card -> card.getName().equals("Forest")))
                 .hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Destruction still triggers when Rest in Peace replaces the graveyard destination")
+    void destructionWithExileReplacementTriggers() {
+        harness.addToBattlefield(player1, new KarmicJustice());
+        harness.addToBattlefield(player1, new RestInPeace());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent opponentForest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        resolveDemolish(player2, forest.getId());
+
+        assertThat(gd.findExiledCard(forest.getCard().getId())).isNotNull();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, opponentForest.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player2, "Forest");
+        assertThat(gd.findExiledCard(opponentForest.getCard().getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Destruction of Karmic Justice itself still triggers with an exile replacement")
+    void selfDestructionWithExileReplacementTriggers() {
+        Permanent justice = harness.addToBattlefieldAndReturn(player1, new KarmicJustice());
+        harness.addToBattlefield(player1, new RestInPeace());
+        Permanent opponentForest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player2, List.of(new RayOfDistortion()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castAndResolveInstant(player2, 0, justice.getId());
+
+        assertThat(gd.findExiledCard(justice.getCard().getId())).isNotNull();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, opponentForest.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.findExiledCard(opponentForest.getCard().getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("The triggered ability cannot target a permanent you control")
+    void cannotTargetOwnPermanent() {
+        Permanent justice = harness.addToBattlefieldAndReturn(player1, new KarmicJustice());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent opponentForest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        resolveDemolish(player2, forest.getId());
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, justice.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, opponentForest.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Karmic Justice");
+        harness.assertInGraveyard(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("No target choice is offered when the destroying opponent controls no permanents")
+    void noLegalTargetDoesNotLeavePendingInteraction() {
+        harness.addToBattlefield(player1, new KarmicJustice());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        resolveDemolish(player2, forest.getId());
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Karmic Justice");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 }
