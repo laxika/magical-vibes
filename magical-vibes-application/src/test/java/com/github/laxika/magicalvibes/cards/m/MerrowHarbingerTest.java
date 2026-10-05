@@ -18,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MerrowHarbinger.class, DeeptreadMerrow.class, GoldmeadowStalwart.class, Plains.class, Island.class})
+@CardUsed({MerrowHarbinger.class, MerrowCommerce.class, DeeptreadMerrow.class, GoldmeadowStalwart.class, Plains.class, Island.class})
 class MerrowHarbingerTest extends BaseCardTest {
 
     @Test
@@ -106,6 +106,57 @@ class MerrowHarbingerTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(Card::getName)
                 .containsExactlyInAnyOrder("Goldmeadow Stalwart", "Plains", "Island");
+    }
+
+    @Test
+    @DisplayName("The search can find a noncreature Merfolk card")
+    void findsNoncreatureMerfolk() {
+        setupAndCast();
+        Card commerce = new MerrowCommerce();
+        Card island = new Island();
+        harness.setLibrary(player1, List.of(island, commerce));
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(harness.getGameData().playerDecks.get(player1.getId()))
+                .containsExactly(commerce, island);
+        assertThat(harness.getGameData().interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The controller may fail to find even when a Merfolk is available")
+    void mayFailToFindAvailableMerfolk() {
+        setupAndCast();
+        Card merrow = new DeeptreadMerrow();
+        Card island = new Island();
+        harness.setLibrary(player1, List.of(merrow, island));
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(harness.getGameData().playerDecks.get(player1.getId()))
+                .containsExactlyInAnyOrder(merrow, island);
+        assertThat(harness.getGameData().interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Searching an empty library completes without a card choice")
+    void searchingEmptyLibraryCompletes() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(harness.getGameData().playerDecks.get(player1.getId())).isEmpty();
+        assertThat(harness.getGameData().interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Merrow Harbinger");
     }
 
     private void setupAndCast() {
