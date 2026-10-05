@@ -84,6 +84,48 @@ class QuirionTrailblazerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("ETB search may fail to find even when a basic land is available")
+    void etbMayFailToFindAvailableBasicLand() {
+        harness.setHand(player1, List.of(new QuirionTrailblazer()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        Plains plains = new Plains();
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(plains, forest));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(plains, forest);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().hasType(CardType.LAND));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB search resolves with an empty library")
+    void etbSearchesEmptyLibrary() {
+        harness.setHand(player1, List.of(new QuirionTrailblazer()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.setLibrary(player1, List.of());
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().hasType(CardType.LAND));
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Quirion Trailblazer");
+    }
+
     private void setupLibrary() {
         harness.setLibrary(player1, List.of(new Plains(), new Forest(), new QuirionSentinel()));
     }
