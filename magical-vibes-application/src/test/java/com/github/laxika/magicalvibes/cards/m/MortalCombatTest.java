@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MortalCombat.class, GrizzlyBears.class, Plains.class, MindRot.class})
+@CardUsed({MortalCombat.class, GrizzlyBears.class, Plains.class, MindRot.class, Naturalize.class})
 class MortalCombatTest extends BaseCardTest {
 
     private List<Card> createCreatureCards(int count) {
@@ -216,6 +218,61 @@ class MortalCombatTest extends BaseCardTest {
 
         // 20 creature cards in the pile, but one is a token — a token that hits a graveyard
         // ceases to exist, so it can never be one of the "twenty or more creature cards".
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Destroying Mortal Combat after it triggers does not stop the win")
+    void winsAfterSourceIsDestroyed() {
+        harness.addToBattlefield(player1, new MortalCombat());
+        harness.setGraveyard(player1, createCreatureCards(20));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Mortal Combat"));
+
+        harness.assertNotOnBattlefield(player1, "Mortal Combat");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("The threshold can be restored before the upkeep ability resolves")
+    void winsWhenThresholdIsRestoredBeforeResolution() {
+        harness.addToBattlefield(player1, new MortalCombat());
+        harness.setGraveyard(player1, createCreatureCards(20));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setGraveyard(player1, createCreatureCards(19));
+        harness.setGraveyard(player1, createCreatureCards(20));
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Reaching twenty creatures after upkeep begins does not create a trigger")
+    void doesNotTriggerWhenThresholdIsReachedLaterInUpkeep() {
+        harness.addToBattlefield(player1, new MortalCombat());
+        harness.setGraveyard(player1, createCreatureCards(19));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+
+        harness.setGraveyard(player1, createCreatureCards(20));
+        harness.passBothPriorities();
+
         assertThat(gd.stack).isEmpty();
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
     }
