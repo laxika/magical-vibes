@@ -2,12 +2,15 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 import java.util.UUID;
@@ -15,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KhalniAmbush.class, KhalniTerritory.class, GrizzlyBears.class, LlanowarElves.class})
+@CardUsed({KhalniAmbush.class, KhalniTerritory.class, GrizzlyBears.class, LlanowarElves.class, Unsummon.class})
 class KhalniAmbushTest extends BaseCardTest {
 
     @Test
@@ -48,6 +51,42 @@ class KhalniAmbushTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 0, List.of(bearsId, elvesId)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void bothCreaturesDealLethalDamage() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new KhalniAmbush()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castModalInstant(player1, 0, 0, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Khalni Ambush");
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void neitherCreatureDealsDamageWhenEitherTargetLeaves(boolean returnFirstTarget) {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new KhalniAmbush(), new Unsummon()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castModalInstant(player1, 0, 0, List.of(first.getId(), second.getId()));
+        harness.castInstant(player1, 0, returnFirstTarget ? first.getId() : second.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent remaining = returnFirstTarget ? second : first;
+        harness.assertOnBattlefield(returnFirstTarget ? player2 : player1, "Grizzly Bears");
+        harness.assertInHand(returnFirstTarget ? player1 : player2, "Grizzly Bears");
+        assertThat(remaining.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Khalni Ambush");
     }
 
     @Test
