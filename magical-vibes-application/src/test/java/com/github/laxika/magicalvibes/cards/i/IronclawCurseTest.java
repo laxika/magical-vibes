@@ -124,6 +124,47 @@ class IronclawCurseTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Increasing the enchanted creature's toughness changes which attackers it can block")
+    void restrictionUsesBoostedBlockerToughness() {
+        Permanent spider = cursedSpider();
+        Permanent hillGiant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent crawWurm = harness.addToBattlefieldAndReturn(player2, new CrawWurm());
+
+        assertThat(bls.canBlockAttacker(gd, spider, hillGiant,
+                gd.playerBattlefields.get(player1.getId()))).isFalse();
+
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, spider.getId());
+
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(6);
+        assertThat(bls.canBlockAttacker(gd, spider, hillGiant,
+                gd.playerBattlefields.get(player1.getId()))).isTrue();
+        assertThat(bls.canBlockAttacker(gd, spider, crawWurm,
+                gd.playerBattlefields.get(player1.getId()))).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opposing player's Ironclaw Curse affects the enchanted creature")
+    void opposingAuraControllerDoesNotChangeEffects() {
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        Permanent hillGiant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new IronclawCurse()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castEnchantment(player1, 0, spider.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Ironclaw Curse").getAttachedTo()).isEqualTo(spider.getId());
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(3);
+        assertThat(bls.canBlockAttacker(gd, spider, hillGiant,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+        assertThat(bls.canBlockAttacker(gd, spider, bears,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
+    }
+
+    @Test
     @DisplayName("Cannot target a noncreature permanent with Ironclaw Curse")
     void cannotTargetNonCreature() {
         harness.addToBattlefield(player1, new FountainOfYouth());
