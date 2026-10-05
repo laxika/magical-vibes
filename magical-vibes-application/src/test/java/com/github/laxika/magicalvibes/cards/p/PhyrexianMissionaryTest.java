@@ -66,6 +66,86 @@ class PhyrexianMissionaryTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Cruel Edict");
     }
 
+    @Test
+    void kickedWithEmptyGraveyardStillEnters() {
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new PhyrexianMissionary()));
+        addKickedMana();
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Phyrexian Missionary");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void kickedCannotReturnCreatureFromOpponentsGraveyard() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new PhyrexianMissionary()));
+        harness.setHand(player1, List.of(new PhyrexianMissionary()));
+        addKickedMana();
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Phyrexian Missionary");
+        harness.assertInGraveyard(player2, "Phyrexian Missionary");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void lifelinkGainsLifeFromCombatDamage() {
+        addCreatureReady(player1, new PhyrexianMissionary());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void kickedReturnsOnlyTheSelectedCreature() {
+        Card chosen = new PhyrexianMissionary();
+        Card other = new PhyrexianMissionary();
+        harness.setGraveyard(player1, List.of(chosen, other));
+        harness.setHand(player1, List.of(new PhyrexianMissionary()));
+        addKickedMana();
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(chosen).doesNotContain(other);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(other).doesNotContain(chosen);
+    }
+
+    @Test
+    void removedTargetDoesNotReturnAnotherCreature() {
+        Card chosen = new PhyrexianMissionary();
+        Card other = new PhyrexianMissionary();
+        harness.setGraveyard(player1, List.of(chosen, other));
+        harness.setHand(player1, List.of(new PhyrexianMissionary()));
+        addKickedMana();
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+        harness.setGraveyard(player1, List.of(other));
+        harness.setExile(player1, List.of(chosen));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(chosen, other);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void addBaseMana() {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
