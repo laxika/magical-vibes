@@ -2,30 +2,29 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GlintHawkIdol;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.cards.i.IndomitableArchangel;
+import com.github.laxika.magicalvibes.cards.s.SphereOfTheSuns;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Mirrorworks.class, GlintHawkIdol.class, SphereOfTheSuns.class, IndomitableArchangel.class})
 class MirrorworksTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting another artifact triggers may-pay ability")
     void castingAnotherArtifactTriggersMayPayAbility() {
         addMirrorworksReady(player1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4); // 2 for Glint Hawk Idol + 2 for may-pay
-
-        harness.setHand(player1, List.of(new GlintHawkIdol()));
-        harness.castArtifact(player1, 0);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFromHand(player1, new GlintHawkIdol(), "{2}");
         harness.passBothPriorities(); // resolve artifact spell, artifact enters, MayPayManaEffect on stack
         harness.passBothPriorities(); // resolve MayPayManaEffect from stack -> may prompt
 
@@ -37,14 +36,12 @@ class MirrorworksTest extends BaseCardTest {
     @DisplayName("Paying {2} creates a token copy of the entering artifact")
     void payingCreatesTokenCopy() {
         addMirrorworksReady(player1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4); // 2 for Glint Hawk Idol + 2 for may-pay
-
-        harness.setHand(player1, List.of(new GlintHawkIdol()));
-        harness.castArtifact(player1, 0);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFromHand(player1, new GlintHawkIdol(), "{2}");
         harness.passBothPriorities(); // resolve artifact spell, artifact enters, MayPayManaEffect on stack
         harness.passBothPriorities(); // resolve MayPayManaEffect from stack -> may prompt
 
-        // Accept and pay {2} — inner effect resolves inline
+        // Accept and pay {2}; the copy effect resolves inline.
         harness.handleMayAbilityChosen(player1, true);
 
         // Should have Mirrorworks + original Glint Hawk Idol + token copy = 3 permanents
@@ -62,10 +59,7 @@ class MirrorworksTest extends BaseCardTest {
     @DisplayName("Declining does not create a token")
     void decliningDoesNotCreateToken() {
         addMirrorworksReady(player1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2); // just enough for Glint Hawk Idol
-
-        harness.setHand(player1, List.of(new GlintHawkIdol()));
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new GlintHawkIdol(), "{2}");
         harness.passBothPriorities(); // resolve artifact spell, artifact enters, MayPayManaEffect on stack
         harness.passBothPriorities(); // resolve MayPayManaEffect from stack -> may prompt
 
@@ -81,10 +75,7 @@ class MirrorworksTest extends BaseCardTest {
     @DisplayName("Cannot pay if not enough mana")
     void cannotPayIfNotEnoughMana() {
         addMirrorworksReady(player1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2); // just enough for Glint Hawk Idol, none for may-pay
-
-        harness.setHand(player1, List.of(new GlintHawkIdol()));
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new GlintHawkIdol(), "{2}");
         harness.passBothPriorities(); // resolve artifact spell, artifact enters, MayPayManaEffect on stack
         harness.passBothPriorities(); // resolve MayPayManaEffect from stack -> may prompt
 
@@ -100,14 +91,12 @@ class MirrorworksTest extends BaseCardTest {
     @DisplayName("Token copy entering does not trigger Mirrorworks again (nontoken)")
     void tokenCopyDoesNotRetrigger() {
         addMirrorworksReady(player1);
-        harness.addMana(player1, ManaColor.COLORLESS, 6); // 2 for idol + 2 for may-pay + 2 extra
-
-        harness.setHand(player1, List.of(new GlintHawkIdol()));
-        harness.castArtifact(player1, 0);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castFromHand(player1, new GlintHawkIdol(), "{2}");
         harness.passBothPriorities(); // resolve artifact spell, artifact enters, MayPayManaEffect on stack
         harness.passBothPriorities(); // resolve MayPayManaEffect from stack -> may prompt
 
-        // Accept and pay {2} — inner effect resolves inline, creating token copy
+        // Accept and pay {2}; the copy effect resolves inline.
         harness.handleMayAbilityChosen(player1, true);
 
         // The token entering should NOT trigger Mirrorworks again (nontoken restriction)
@@ -119,10 +108,7 @@ class MirrorworksTest extends BaseCardTest {
     @Test
     @DisplayName("Does not trigger on itself entering")
     void doesNotTriggerOnItself() {
-        harness.setHand(player1, List.of(new Mirrorworks()));
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new Mirrorworks(), "{5}");
         harness.passBothPriorities(); // resolve Mirrorworks spell
 
         // Should not prompt for may ability (no other artifact with the trigger)
@@ -131,16 +117,15 @@ class MirrorworksTest extends BaseCardTest {
 
     @Test
     @DisplayName("Token copy has same abilities as the original")
+    @CardUsed({SphereOfTheSuns.class})
     void tokenCopyHasSameAbilities() {
         addMirrorworksReady(player1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.setHand(player1, List.of(new GlintHawkIdol()));
-        harness.castArtifact(player1, 0);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFromHand(player1, new GlintHawkIdol(), "{2}");
         harness.passBothPriorities(); // resolve artifact spell, artifact enters, MayPayManaEffect on stack
         harness.passBothPriorities(); // resolve MayPayManaEffect from stack -> may prompt
 
-        // Accept and pay {2} — inner effect resolves inline
+        // Accept and pay {2}; the copy effect resolves inline.
         harness.handleMayAbilityChosen(player1, true);
 
         // Find the token copy
@@ -148,20 +133,108 @@ class MirrorworksTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Glint Hawk Idol") && p.getCard().isToken())
                 .findFirst().orElseThrow();
 
-        // Token should have the same activated ability as the original
-        assertThat(tokenCopy.getCard().getActivatedAbilities()).hasSize(1);
-        assertThat(tokenCopy.getCard().getActivatedAbilities().get(0).getManaCost()).isEqualTo("{W}");
+        // The original Idol triggers when its token copy enters.
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
-        // Token should have the same triggered ability
-        var triggerEffects = tokenCopy.getCard().getEffects(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD);
-        assertThat(triggerEffects).hasSize(1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(tokenCopy), null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, tokenCopy)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, tokenCopy)).isEqualTo(2);
+
+        harness.enterBattlefieldAndReturn(player1, new SphereOfTheSuns());
+        assertThat(gd.stack).hasSize(3);
+        for (int i = 0; i < 3; i++) {
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, false);
+        }
+        assertThat(gd.stack).isEmpty();
+        assertThat(countPermanents(player1, "Sphere of the Suns")).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed({Mirrorworks.class, SphereOfTheSuns.class})
+    void copiesArtifactThatLeftBeforeResolution() {
+        addMirrorworksReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        Permanent sphere = harness.enterBattlefieldAndReturn(player1, new SphereOfTheSuns());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, sphere));
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().isToken() && p.getCard().getName().equals("Sphere of the Suns"))
+                .singleElement().satisfies(token -> {
+                    assertThat(token.isTapped()).isTrue();
+                    assertThat(token.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+                });
+    }
+
+    @Test
+    @CardUsed({Mirrorworks.class, SphereOfTheSuns.class})
+    void copiedArtifactAppliesItsOwnEntryAbilities() {
+        addMirrorworksReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        Permanent sphere = harness.enterBattlefieldAndReturn(player1, new SphereOfTheSuns());
+        sphere.setCounterCount(CounterType.CHARGE, 1);
+        sphere.setTapped(false);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().isToken())
+                .singleElement().satisfies(token -> {
+                    assertThat(token.isTapped()).isTrue();
+                    assertThat(token.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+                });
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @CardUsed({Mirrorworks.class, SphereOfTheSuns.class})
+    void opponentsArtifactDoesNotTrigger() {
+        addMirrorworksReady(player1);
+        harness.enterBattlefieldAndReturn(player2, new SphereOfTheSuns());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @CardUsed({Mirrorworks.class, SphereOfTheSuns.class})
+    void triggerResolvesAfterMirrorworksLeaves() {
+        Permanent mirrorworks = addMirrorworksReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.enterBattlefieldAndReturn(player1, new SphereOfTheSuns());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, mirrorworks));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(countPermanents(player1, "Sphere of the Suns")).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed({Mirrorworks.class, SphereOfTheSuns.class, IndomitableArchangel.class})
+    void copiesArtifactWithShroudWithoutTargetingIt() {
+        addMirrorworksReady(player1);
+        harness.addToBattlefield(player1, new IndomitableArchangel());
+        harness.addToBattlefield(player1, new SphereOfTheSuns());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.enterBattlefieldAndReturn(player1, new SphereOfTheSuns());
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(countPermanents(player1, "Sphere of the Suns")).isEqualTo(3);
     }
 
     private Permanent addMirrorworksReady(Player player) {
-        Mirrorworks card = new Mirrorworks();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Mirrorworks());
     }
 }
