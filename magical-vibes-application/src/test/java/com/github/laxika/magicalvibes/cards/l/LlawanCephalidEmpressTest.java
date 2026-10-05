@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.c.ChurningEddy;
 import com.github.laxika.magicalvibes.cards.h.HydromorphGull;
 import com.github.laxika.magicalvibes.cards.o.ObsessiveSearch;
 import com.github.laxika.magicalvibes.cards.t.TaintedIsle;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({LlawanCephalidEmpress.class, HydromorphGull.class, BaskingRootwalla.class,
-        ObsessiveSearch.class, ChurningEddy.class, TaintedIsle.class})
+        ObsessiveSearch.class, ChurningEddy.class, TaintedIsle.class, TurnToFrog.class})
 class LlawanCephalidEmpressTest extends BaseCardTest {
 
     @Test
@@ -93,8 +94,7 @@ class LlawanCephalidEmpressTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         prepareOpponentTurn();
-        harness.castSorcery(player2, 0, List.of(llawan.getId(), land.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, List.of(llawan.getId(), land.getId()));
 
         harness.assertNotOnBattlefield(player1, "Llawan, Cephalid Empress");
         harness.assertInHand(player1, "Llawan, Cephalid Empress");
@@ -105,6 +105,39 @@ class LlawanCephalidEmpressTest extends BaseCardTest {
         harness.castFromHand(player2, new HydromorphGull(), "{3}{U}{U}");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
+
+    @Test
+    @DisplayName("Losing all abilities disables Llawan's casting restriction")
+    void losingAbilitiesDisablesCastingRestriction() {
+        Permanent llawan = harness.addToBattlefieldAndReturn(player1, new LlawanCephalidEmpress());
+        prepareOpponentTurn();
+        harness.setHand(player2, List.of(new TurnToFrog()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, llawan.getId());
+
+        harness.castFromHand(player2, new HydromorphGull(), "{3}{U}{U}");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
+
+    @Test
+    @DisplayName("Entering without opposing blue creatures still establishes the restriction")
+    void entersWithoutOpposingBlueCreatures() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new LlawanCephalidEmpress(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Llawan, Cephalid Empress");
+        assertThat(gd.stack).isEmpty();
+
+        prepareOpponentTurn();
+        assertThatThrownBy(() -> harness.castFromHand(player2, new HydromorphGull(), "{3}{U}{U}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
     }
 
     private void prepareOpponentTurn() {
