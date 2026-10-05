@@ -1,15 +1,20 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RovingKeep;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.stream.IntStream;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MadRatter.class, GrizzlyBears.class})
+@CardUsed({MadRatter.class, RovingKeep.class})
 class MadRatterTest extends BaseCardTest {
 
     @Test
@@ -46,10 +51,77 @@ class MadRatterTest extends BaseCardTest {
         assertThat(ratter.getCard().isToken()).isFalse();
     }
 
+    @Test
+    @DisplayName("The controller can trigger Mad Ratter on an opponent's turn")
+    void triggersOnOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        harness.addToBattlefield(player1, new MadRatter());
+        addCardsToDeck(2);
+
+        draw();
+        draw();
+        assertThat(gd.stack).hasSize(1);
+        resolveTopOfStack();
+
+        assertThat(findPermanents(player1, "Rat")).hasSize(2).allSatisfy(token -> {
+            assertThat(token.getCard().isToken()).isTrue();
+            assertThat(token.getCard().hasType(CardType.CREATURE)).isTrue();
+            assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
+            assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.RAT);
+            assertThat(token.getCard().getPower()).isEqualTo(1);
+            assertThat(token.getCard().getToughness()).isEqualTo(1);
+            assertThat(token.isTapped()).isFalse();
+        });
+        assertThat(findPermanents(player2, "Rat")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent drawing two cards does not trigger Mad Ratter")
+    void opponentsDrawsDoNotTrigger() {
+        harness.addToBattlefield(player1, new MadRatter());
+        harness.setLibrary(player2, IntStream.range(0, 2)
+                .mapToObj(i -> new RovingKeep()).toList());
+
+        harness.inMutationScope(() -> {
+            harness.getDrawService().resolveDrawCard(gd, player2.getId());
+            harness.getDrawService().resolveDrawCard(gd, player2.getId());
+        });
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Rat")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A first draw before Mad Ratter enters still counts")
+    void firstDrawBeforeEnteringCounts() {
+        addCardsToDeck(2);
+        draw();
+        harness.addToBattlefield(player1, new MadRatter());
+
+        draw();
+        assertThat(gd.stack).hasSize(1);
+        resolveTopOfStack();
+
+        assertThat(findPermanents(player1, "Rat")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Entering after the second draw does not trigger on the third")
+    void enteringAfterSecondDrawDoesNotTrigger() {
+        addCardsToDeck(3);
+        draw();
+        draw();
+        harness.addToBattlefield(player1, new MadRatter());
+
+        draw();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Rat")).isEmpty();
+    }
+
     private void addCardsToDeck(int count) {
-        for (int i = 0; i < count; i++) {
-            gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        }
+        harness.setLibrary(player1, IntStream.range(0, count)
+                .mapToObj(i -> new RovingKeep()).toList());
     }
 
     private void draw() {
