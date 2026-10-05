@@ -70,6 +70,94 @@ class OfHerbsAndStewedRabbitTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
     }
 
+    @Test
+    void enteringWithoutCreaturesStillCreatesFood() {
+        harness.castFromHand(player1, new OfHerbsAndStewedRabbit(), "{2}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Food")).hasSize(1);
+        assertThat(findPermanents(player1, "Of Herbs and Stewed Rabbit"))
+                .singleElement().satisfies(saga ->
+                        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1));
+    }
+
+    @Test
+    void chapterICanDeclineAnAvailableCreatureTarget() {
+        addSagaWithLore(0);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        triggerNextChapter();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(findPermanents(player1, "Food")).hasSize(1);
+    }
+
+    @Test
+    void chapterICanTargetAnOpponentsCreature() {
+        addSagaWithLore(0);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        triggerNextChapter();
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanents(player1, "Food")).hasSize(1);
+        assertThat(findPermanents(player2, "Food")).isEmpty();
+    }
+
+    @Test
+    void chapterICreatesNoFoodWhenItsChosenTargetLeaves() {
+        addSagaWithLore(0);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        triggerNextChapter();
+        harness.handlePermanentChosen(player1, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Food")).isEmpty();
+    }
+
+    @Test
+    void chapterIIIWithNoFoodCreatesNoHalflingsAndSacrificesSaga() {
+        Permanent saga = addSagaWithLore(2);
+
+        triggerNextChapter();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Halfling")).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(saga.getCard());
+    }
+
+    @Test
+    void chapterIIICountsOnlyFoodControlledAtResolution() {
+        Permanent saga = addSagaWithLore(0);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        triggerNextChapter();
+        harness.passBothPriorities();
+        triggerNextChapter();
+        harness.passBothPriorities();
+        List<Permanent> foods = findPermanents(player1, "Food");
+        assertThat(foods).hasSize(2);
+
+        triggerNextChapter();
+        gd.playerBattlefields.get(player1.getId()).remove(foods.getFirst());
+        gd.playerBattlefields.get(player2.getId()).add(foods.getFirst());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Halfling")).hasSize(1);
+        assertThat(findPermanents(player2, "Halfling")).isEmpty();
+        assertThat(findPermanents(player1, "Food")).hasSize(1);
+        assertThat(findPermanents(player2, "Food")).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
+    }
+
     private Permanent addSagaWithLore(int loreCounters) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new OfHerbsAndStewedRabbit());
         saga.setCounterCount(CounterType.LORE, loreCounters);
