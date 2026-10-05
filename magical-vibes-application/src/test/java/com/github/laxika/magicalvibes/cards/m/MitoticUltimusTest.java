@@ -45,15 +45,62 @@ class MitoticUltimusTest extends BaseCardTest {
     @Test
     void deathTriggerConjuresTwoRealMitoticSlimes() {
         harness.addToBattlefield(player1, new MitoticUltimus());
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
+        harness.castFromHand(player1, new WrathOfGod(), "{W}{W}{W}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
         List<Permanent> slimes = findPermanents(player1, "Mitotic Slime");
         assertThat(slimes).hasSize(2);
         assertThat(slimes).allSatisfy(slime -> assertThat(slime.getCard().isToken()).isFalse());
+    }
+
+    @Test
+    void usesGreatestPowerRatherThanTotalPower() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new MitoticSlime());
+
+        harness.castFromHand(player1, new MitoticUltimus(), "{3}{G}{G}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void stillRequiresBothGreenManaWhenPowerExceedsGenericCost() {
+        harness.addToBattlefield(player1, new MitoticUltimus());
+        harness.setHand(player1, List.of(new MitoticUltimus()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void paysFullCostWithoutControlledCreatures() {
+        harness.castFromHand(player1, new MitoticUltimus(), "{7}{G}{G}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void deathTriggerConjuresForTheDyingCreaturesController() {
+        harness.addToBattlefield(player2, new MitoticUltimus());
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Mitotic Slime")).isEmpty();
+        assertThat(findPermanents(player2, "Mitotic Slime")).hasSize(2)
+                .allSatisfy(slime -> {
+                    assertThat(slime.getCard().isToken()).isFalse();
+                    assertThat(slime.getCard().getOwnerId()).isEqualTo(player2.getId());
+                });
     }
 }
