@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.cards.b.BenalishCavalry;
+import com.github.laxika.magicalvibes.cards.b.BrassGnat;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({IvoryGiant.class, AshcoatBear.class, BenalishCavalry.class, Forest.class})
+@CardUsed({IvoryGiant.class, AshcoatBear.class, BenalishCavalry.class, BrassGnat.class, Forest.class})
 class IvoryGiantTest extends BaseCardTest {
 
     @Test
@@ -30,8 +31,7 @@ class IvoryGiantTest extends BaseCardTest {
         Permanent opposingForest = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.castFromHand(player1, new IvoryGiant(), "{5}{W}{W}");
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(ownBears.isTapped()).isTrue();
         assertThat(opposingBears.isTapped()).isTrue();
@@ -107,6 +107,40 @@ class IvoryGiantTest extends BaseCardTest {
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getCard)
                 .doesNotContain(card);
+    }
+
+    @Test
+    @DisplayName("The enter trigger taps colorless creatures and leaves Ivory Giant untapped")
+    void enterTriggerTapsColorlessCreatures() {
+        Permanent gnat = harness.addToBattlefieldAndReturn(player2, new BrassGnat());
+        harness.castFromHand(player1, new IvoryGiant(), "{5}{W}{W}");
+
+        resolveAllTriggers();
+
+        assertThat(gnat.isTapped()).isTrue();
+        assertThat(findPermanent(player1, "Ivory Giant").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Ivory Giant cast through suspend still taps nonwhite creatures on entry")
+    void suspendedGiantTriggersOnEntry() {
+        suspendCard();
+        for (int i = 0; i < 4; i++) {
+            removeOneTimeCounter();
+        }
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new AshcoatBear());
+        Permanent cavalry = harness.addToBattlefieldAndReturn(player2, new BenalishCavalry());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(bear.isTapped()).isTrue();
+        assertThat(cavalry.isTapped()).isFalse();
+        Permanent giant = findPermanent(player1, "Ivory Giant");
+        assertThat(giant.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, giant, Keyword.HASTE)).isTrue();
     }
 
     private IvoryGiant suspendCard() {
