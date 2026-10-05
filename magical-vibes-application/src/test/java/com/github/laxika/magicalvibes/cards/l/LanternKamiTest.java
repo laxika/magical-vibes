@@ -36,8 +36,20 @@ class LanternKamiTest extends BaseCardTest {
         addCreatureReady(player1, new LanternKami());
         Permanent blocker = addCreatureReady(player2, new LanternKami());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Lantern Kami can block a creature without flying")
+    void canBlockNonFlyingCreature() {
+        addCreatureReady(player1, new IsamaruHoundOfKonda());
+        Permanent blocker = addCreatureReady(player2, new LanternKami());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
