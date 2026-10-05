@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.d.DarkBanishing;
 import com.github.laxika.magicalvibes.cards.f.FolkOfThePines;
 import com.github.laxika.magicalvibes.cards.f.FyndhornElves;
+import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.cards.w.WordOfUndoing;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -21,7 +22,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({KrovikanVampire.class, BalduvianBears.class, DarkBanishing.class,
-        FolkOfThePines.class, FyndhornElves.class, WordOfUndoing.class})
+        FolkOfThePines.class, FyndhornElves.class, WordOfUndoing.class, RayOfCommand.class})
 class KrovikanVampireTest extends BaseCardTest {
 
     /** Krovikan Vampire blocks and kills a Balduvian Bears in combat. */
@@ -29,8 +30,7 @@ class KrovikanVampireTest extends BaseCardTest {
         addCreatureReady(player1, new KrovikanVampire());
         addCreatureReady(player2, new BalduvianBears());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         harness.passUntil(player2, TurnStep.POSTCOMBAT_MAIN);
     }
@@ -109,6 +109,10 @@ class KrovikanVampireTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(vampire);
         harness.runStateBasedActions();
 
+        harness.assertOnBattlefield(player1, "Balduvian Bears");
+        assertThat(gd.stack).isNotEmpty();
+        harness.passBothPriorities();
+
         harness.assertNotOnBattlefield(player1, "Balduvian Bears");
         harness.assertInGraveyard(player2, "Balduvian Bears");
     }
@@ -170,8 +174,8 @@ class KrovikanVampireTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A returned creature remains when the Vampire leaves the battlefield")
-    void returnedCreatureRemainsWhenVampireLeaves() {
+    @DisplayName("A returned creature is sacrificed when the Vampire leaves the battlefield")
+    void sacrificesReturnedCreatureWhenVampireLeaves() {
         vampireKillsBearsInCombat();
         advanceToEndStepAndResolve();
 
@@ -180,9 +184,69 @@ class KrovikanVampireTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castInstant(player1, 0, vampire.getId());
         harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Balduvian Bears");
+        harness.assertInGraveyard(player2, "Balduvian Bears");
+        harness.assertNotOnBattlefield(player1, "Krovikan Vampire");
+    }
+
+    @Test
+    @DisplayName("The sacrifice trigger allows a response after control of the Vampire changes")
+    void canBounceReturnedCreatureInResponseToSacrificeTrigger() {
+        vampireKillsBearsInCombat();
+        advanceToEndStepAndResolve();
+
+        Permanent vampire = findPermanent(player1, "Krovikan Vampire");
+        Permanent bears = findPermanent(player1, "Balduvian Bears");
+        harness.setHand(player2, List.of(new RayOfCommand()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.castInstant(player2, 0, vampire.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Krovikan Vampire");
+        harness.assertOnBattlefield(player1, "Balduvian Bears");
+        assertThat(gd.stack).isNotEmpty();
+        harness.setHand(player1, List.of(new WordOfUndoing()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertInHand(player2, "Balduvian Bears");
+        harness.assertNotInGraveyard(player2, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("Removing the Vampire in response to its end-step trigger does not stop the return")
+    void returnsCreatureIfVampireLeavesAfterTriggering() {
+        vampireKillsBearsInCombat();
+        harness.passUntil(player2, TurnStep.END_STEP);
+        assertThat(gd.stack).isNotEmpty();
+
+        Permanent vampire = findPermanent(player1, "Krovikan Vampire");
+        harness.setHand(player1, List.of(new WordOfUndoing()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, vampire.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Balduvian Bears");
-        harness.assertNotOnBattlefield(player1, "Krovikan Vampire");
+        harness.assertNotInGraveyard(player2, "Balduvian Bears");
+        harness.assertInHand(player1, "Krovikan Vampire");
+    }
+
+    @Test
+    @DisplayName("A creature damaged by the Vampire that survives does not change controllers")
+    void doesNotReturnDamagedCreatureThatSurvives() {
+        addCreatureReady(player1, new KrovikanVampire());
+        addCreatureReady(player2, new FolkOfThePines());
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        advanceToEndStepAndResolve();
+
+        harness.assertOnBattlefield(player2, "Folk of the Pines");
+        harness.assertNotOnBattlefield(player1, "Folk of the Pines");
     }
 
     @Test
