@@ -44,11 +44,83 @@ class MahadiEmporiumMasterTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
     }
 
+    @Test
+    void countsCreaturesThatDiedBeforeMahadiEntered() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+
+        harness.addToBattlefield(player1, new MahadiEmporiumMaster());
+        advanceToEndStep(player1);
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+    }
+
+    @Test
+    void doesNotTriggerOnOpponentsEndStep() {
+        harness.addToBattlefield(player1, new MahadiEmporiumMaster());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.castInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        assertThat(findPermanents(player2, "Treasure")).isEmpty();
+    }
+
+    @Test
+    void countsDeathInResponseEvenWhenNoCreatureHadDiedAtTriggerTime() {
+        harness.addToBattlefield(player1, new MahadiEmporiumMaster());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+    }
+
+    @Test
+    void triggerResolvesAndCountsMahadiWhenMahadiDiesInResponse() {
+        Permanent mahadi = harness.addToBattlefieldAndReturn(player1, new MahadiEmporiumMaster());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, mahadi.getId());
+        harness.passBothPriorities();
+        harness.castInstant(player1, 0, mahadi.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Mahadi, Emporium Master");
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+    }
+
     private void advanceToEndStep(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player, TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 }
