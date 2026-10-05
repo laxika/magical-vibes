@@ -35,8 +35,7 @@ class LeatherArmorTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
 
-        harness.castInstant(player2, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, creature.getId());
         harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
@@ -54,8 +53,7 @@ class LeatherArmorTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
 
-        harness.castInstant(player2, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, creature.getId());
         harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
 
@@ -107,7 +105,94 @@ class LeatherArmorTest extends BaseCardTest {
         return addCreatureReady(player, new GrizzlyBears());
     }
 
+    @Test
+    @DisplayName("Ward does not trigger for the creature controller's spell")
+    void friendlySpellDoesNotTriggerWard() {
+        Permanent creature = addCreatureReady(player1);
+        Permanent armor = addArmorReady(player1);
+        armor.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
+        harness.castInstant(player1, 0, creature.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Paying ward lets an opponent's activated ability resolve")
+    void payingWardLetsAbilityResolve() {
+        Permanent creature = addCreatureReady(player1);
+        Permanent armor = addArmorReady(player1);
+        armor.setAttachedTo(creature.getId());
+        addCreatureReady(player2, new ProdigalSorcerer());
+        prepareOpponentTurn();
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player2, 0, null, creature.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Equip becomes available next turn and moves both bonuses")
+    void equipResetsNextTurnAndMovesBonuses() {
+        Permanent armor = addArmorReady(player1);
+        Permanent firstCreature = addCreatureReady(player1);
+        Permanent secondCreature = addCreatureReady(player1);
+        harness.activateAbility(player1, 0, null, firstCreature.getId());
+        harness.passBothPriorities();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, secondCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(armor.getAttachedTo()).isEqualTo(secondCreature.getId());
+        assertThat(gqs.getEffectiveToughness(gd, firstCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, secondCreature)).isEqualTo(3);
+
+        prepareOpponentTurn();
+        harness.setHand(player2, List.of(new GiantGrowth(), new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, firstCreature.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectiveToughness(gd, firstCreature)).isEqualTo(5);
+
+        harness.castInstant(player2, 0, secondCreature.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gqs.getEffectiveToughness(gd, secondCreature)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Equip cannot target an opponent's creature")
+    void equipRejectsOpponentsCreature() {
+        addArmorReady(player1);
+        Permanent creature = addCreatureReady(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Equip cannot be activated during combat")
+    void equipRequiresSorceryTiming() {
+        addArmorReady(player1);
+        Permanent creature = addCreatureReady(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
 
     private void prepareOpponentTurn() {
         harness.forceActivePlayer(player2);
