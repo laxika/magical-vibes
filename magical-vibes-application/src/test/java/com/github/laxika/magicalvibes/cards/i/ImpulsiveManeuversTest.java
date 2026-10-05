@@ -50,10 +50,7 @@ class ImpulsiveManeuversTest extends BaseCardTest {
         resolveAllTriggers();
         boolean wonFlip = coinFlipWon();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         harness.assertLife(player2, wonFlip ? 16 : 20);
         assertThat(attacker.getMarkedDamage()).isZero();
@@ -68,7 +65,7 @@ class ImpulsiveManeuversTest extends BaseCardTest {
         Permanent victim = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(1));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, this::resolveAllTriggers);
         boolean wonFlip = coinFlipWon();
 
         attacker.untap();
@@ -76,10 +73,7 @@ class ImpulsiveManeuversTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(victim.getMarkedDamage()).isEqualTo(1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         harness.assertLife(player2, wonFlip ? 18 : 20);
     }
@@ -110,6 +104,30 @@ class ImpulsiveManeuversTest extends BaseCardTest {
                 blocker2.getId(), 1));
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker1, blocker2);
+    }
+
+    @Test
+    @DisplayName("Two winning flips from separate enchantments both double the same combat damage")
+    void multipleWinningFlipsMultiplyCombatDamage() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new ImpulsiveManeuvers());
+        addCreatureReady(player1, new EdgarKingOfFigaro());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new ImpulsiveManeuvers());
+        addCreatureReady(player2, new EdgarKingOfFigaro());
+
+        declareAttackers(player1, List.of(2));
+        assertThat(gd.stack).hasSize(2);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, this::resolveAllTriggers);
+        assertThat(gd.gameLog.stream()
+                .filter(entry -> entry.plainText().contains("wins the coin flip for Impulsive Maneuvers")))
+                .hasSize(2);
+
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        harness.assertLife(player2, 12);
     }
 
     private boolean coinFlipWon() {
