@@ -45,9 +45,67 @@ class OrcishSiegemasterTest extends BaseCardTest {
         assertThat(siegemaster.getToughnessModifier()).isZero();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(siegemaster.getPowerModifier()).isZero();
+    }
+
+    @Test
+    void usesPowerAtResolutionAndKeepsTheResolvedBoost() {
+        Permanent siegemaster = addCreatureReady(player1, new OrcishSiegemaster());
+        Permanent goblin = addCreatureReady(player1, new GreatGoblinFoulHearted());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0)));
+        assertThat(gd.stack).hasSize(1);
+        goblin.setPlusOnePlusOneCounters(2);
+        resolveAllTriggers();
+
+        assertThat(siegemaster.getPowerModifier()).isEqualTo(5);
+        assertThat(siegemaster.getToughnessModifier()).isZero();
+
+        gd.playerBattlefields.get(player1.getId()).remove(goblin);
+        assertThat(gqs.getEffectivePower(gd, siegemaster)).isEqualTo(5);
+    }
+
+    @Test
+    void ignoresOpposingPowerAndIncludesItsOwnPower() {
+        Permanent siegemaster = addCreatureReady(player1, new OrcishSiegemaster());
+        siegemaster.setPlusOnePlusOneCounters(2);
+        Permanent opponent = addCreatureReady(player2, new GreatGoblinFoulHearted());
+        opponent.setPlusOnePlusOneCounters(4);
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(siegemaster.getPowerModifier()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, siegemaster)).isEqualTo(4);
+    }
+
+    @Test
+    void recalculatesGreatestPowerWhenStrongestCreatureLeavesBeforeResolution() {
+        Permanent siegemaster = addCreatureReady(player1, new OrcishSiegemaster());
+        Permanent goblin = addCreatureReady(player1, new GreatGoblinFoulHearted());
+        addCreatureReady(player1, new BilboUnexpectedAdventurer());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0)));
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(goblin);
+        resolveAllTriggers();
+
+        assertThat(siegemaster.getPowerModifier()).isEqualTo(2);
+        assertThat(siegemaster.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void grantedTrampleEndsWhenSiegemasterLeaves() {
+        Permanent siegemaster = addCreatureReady(player1, new OrcishSiegemaster());
+        Permanent goblin = addCreatureReady(player1, new GreatGoblinFoulHearted());
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.TRAMPLE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(siegemaster);
+
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.TRAMPLE)).isFalse();
     }
 }
