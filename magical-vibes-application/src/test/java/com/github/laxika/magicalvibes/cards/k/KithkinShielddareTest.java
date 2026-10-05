@@ -101,6 +101,79 @@ class KithkinShielddareTest extends BaseCardTest {
         assertThat(blocker.getToughnessModifier()).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("Can boost itself while blocking even though activation taps it")
+    void boostsItselfWhileBlocking() {
+        setupShielddare();
+        Permanent shielddare = findPermanent(player1, "Kithkin Shielddare");
+        shielddare.setBlocking(true);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+        harness.activateAbility(player1, 0, null, shielddare.getId());
+        harness.passBothPriorities();
+
+        assertThat(shielddare.isTapped()).isTrue();
+        assertThat(shielddare.getPowerModifier()).isEqualTo(2);
+        assertThat(shielddare.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Ability resolves after its source leaves the battlefield")
+    void resolvesWithoutSource() {
+        setupShielddare();
+        Permanent blocker = addBlockingGuardian(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(blocker.getPowerModifier()).isEqualTo(2);
+        assertThat(blocker.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        setupShielddare();
+        findPermanent(player1, "Kithkin Shielddare").setSummoningSick(true);
+        Permanent blocker = addBlockingGuardian(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, blocker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while already tapped")
+    void cannotActivateWhileTapped() {
+        setupShielddare();
+        findPermanent(player1, "Kithkin Shielddare").setTapped(true);
+        Permanent blocker = addBlockingGuardian(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, blocker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate without white mana")
+    void cannotActivateWithoutWhiteMana() {
+        addCreatureReady(player1, new KithkinShielddare());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player1);
+        Permanent blocker = addBlockingGuardian(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, blocker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanent(player1, "Kithkin Shielddare").isTapped()).isFalse();
+    }
+
     private void setupShielddare() {
         addCreatureReady(player1, new KithkinShielddare());
         harness.addMana(player1, ManaColor.WHITE, 1);
