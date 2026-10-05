@@ -77,4 +77,87 @@ class MoggAssassinTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, ownCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void abilityStillResolvesAfterAssassinLeavesTheBattlefield() {
+        Permanent assassin = addCreatureReady(player1, new MoggAssassin());
+        Permanent target = addCreatureReady(player2, new MonstrousHound());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handlePermanentChosen(player2, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, assassin));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Mogg Assassin");
+        harness.assertNotOnBattlefield(player2, "Monstrous Hound");
+        harness.assertInGraveyard(player2, "Monstrous Hound");
+    }
+
+    @Test
+    void noCoinIsFlippedWhenTheSharedTargetLeavesTheBattlefield() {
+        addCreatureReady(player1, new MoggAssassin());
+        Permanent target = addCreatureReady(player2, new MonstrousHound());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handlePermanentChosen(player2, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, target));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Monstrous Hound");
+        harness.assertOnBattlefield(player1, "Mogg Assassin");
+        assertThat(gd.gameLog).noneMatch(entry -> entry.plainText().contains("coin flip"));
+    }
+
+    @Test
+    void losingTheFlipDoesNotDestroyTheFirstTargetWhenTheSecondTargetIsGone() {
+        addCreatureReady(player1, new MoggAssassin());
+        Permanent firstTarget = addCreatureReady(player2, new MonstrousHound());
+        Permanent secondTarget = addCreatureReady(player1, new MonstrousHound());
+
+        harness.activateAbility(player1, 0, null, firstTarget.getId());
+        harness.handlePermanentChosen(player2, secondTarget.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, secondTarget));
+        harness.passBothPriorities();
+
+        boolean wonFlip = gd.gameLog.stream()
+                .anyMatch(entry -> entry.plainText().contains("wins the coin flip for Mogg Assassin"));
+        assertThat(gd.gameLog).anyMatch(entry -> entry.plainText().contains("coin flip for Mogg Assassin"));
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactlyElementsOf(
+                wonFlip ? java.util.List.of() : java.util.List.of(firstTarget));
+        harness.assertInHand(player1, "Monstrous Hound");
+        harness.assertNotInGraveyard(player1, "Monstrous Hound");
+    }
+
+    @Test
+    void summoningSickAssassinCannotActivate() {
+        Permanent assassin = harness.addToBattlefieldAndReturn(player1, new MoggAssassin());
+        Permanent target = addCreatureReady(player2, new MonstrousHound());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(assassin.isTapped()).isFalse();
+    }
+
+    @Test
+    void winningTheFlipDoesNotDestroyTheSecondTargetWhenTheFirstTargetIsGone() {
+        addCreatureReady(player1, new MoggAssassin());
+        Permanent firstTarget = addCreatureReady(player2, new MonstrousHound());
+        Permanent secondTarget = addCreatureReady(player1, new MonstrousHound());
+
+        harness.activateAbility(player1, 0, null, firstTarget.getId());
+        harness.handlePermanentChosen(player2, secondTarget.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, firstTarget));
+        harness.passBothPriorities();
+
+        boolean wonFlip = gd.gameLog.stream()
+                .anyMatch(entry -> entry.plainText().contains("wins the coin flip for Mogg Assassin"));
+        assertThat(gd.gameLog).anyMatch(entry -> entry.plainText().contains("coin flip for Mogg Assassin"));
+        assertThat(gd.playerBattlefields.get(player1.getId()).contains(secondTarget)).isEqualTo(wonFlip);
+        harness.assertInHand(player2, "Monstrous Hound");
+        harness.assertNotInGraveyard(player2, "Monstrous Hound");
+    }
 }
