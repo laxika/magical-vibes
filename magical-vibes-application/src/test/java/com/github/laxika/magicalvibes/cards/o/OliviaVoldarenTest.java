@@ -1,10 +1,15 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.cards.a.ArtificialEvolution;
+import com.github.laxika.magicalvibes.cards.b.Bitterblossom;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 
 import com.github.laxika.magicalvibes.cards.b.BaronyVampire;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.cards.t.TraitorousBlood;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,20 +25,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({OliviaVoldaren.class, GrizzlyBears.class, LlanowarElves.class, BaronyVampire.class, Unsummon.class})
 class OliviaVoldarenTest extends BaseCardTest {
 
-    // ===== First ability: {1}{R} ping + Vampire + counter =====
 
     @Nested
     @DisplayName("First ability: {1}{R} ping")
+    @CardUsed({OliviaVoldaren.class, GrizzlyBears.class, LlanowarElves.class, Unsummon.class})
     class FirstAbility {
 
         @Test
         @DisplayName("Deals 1 damage to target creature, makes it a Vampire, puts +1/+1 counter on Olivia")
         void fullFirstAbilityResolution() {
-            harness.addToBattlefield(player1, new OliviaVoldaren());
-            Permanent olivia = findPermanent(player1, "Olivia Voldaren");
-            olivia.setSummoningSick(false);
+            Permanent olivia = addCreatureReady(player1, new OliviaVoldaren());
 
             Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
@@ -57,11 +61,46 @@ class OliviaVoldarenTest extends BaseCardTest {
         }
 
         @Test
+        void illegalTargetPreventsCounterAsWellAsDamage() {
+            Permanent olivia = harness.addToBattlefieldAndReturn(player1, new OliviaVoldaren());
+            Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            harness.addMana(player1, ManaColor.RED, 1);
+            harness.activateAbility(player1, 0, null, bears.getId());
+            harness.setHand(player2, List.of(new Unsummon()));
+            harness.addMana(player2, ManaColor.BLUE, 1);
+            harness.passPriority(player1);
+            harness.castInstant(player2, 0, bears.getId());
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            assertThat(olivia.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        }
+
+        @Test
+        void damageAndSubtypeStillResolveAfterOliviaLeaves() {
+            Permanent olivia = harness.addToBattlefieldAndReturn(player1, new OliviaVoldaren());
+            Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            harness.addMana(player1, ManaColor.RED, 1);
+            harness.activateAbility(player1, 0, null, bears.getId());
+            harness.setHand(player2, List.of(new Unsummon()));
+            harness.addMana(player2, ManaColor.BLUE, 1);
+            harness.passPriority(player1);
+            harness.castInstant(player2, 0, olivia.getId());
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            assertThat(bears.getMarkedDamage()).isEqualTo(1);
+            assertThat(gqs.hasEffectiveSubtype(gd, bears, CardSubtype.VAMPIRE)).isTrue();
+            harness.assertNotOnBattlefield(player1, "Olivia Voldaren");
+        }
+
+        @Test
         @DisplayName("Cannot target Olivia herself (must be 'another' creature)")
         void cannotTargetSelf() {
-            harness.addToBattlefield(player1, new OliviaVoldaren());
-            Permanent olivia = findPermanent(player1, "Olivia Voldaren");
-            olivia.setSummoningSick(false);
+            Permanent olivia = addCreatureReady(player1, new OliviaVoldaren());
 
             harness.addMana(player1, ManaColor.COLORLESS, 1);
             harness.addMana(player1, ManaColor.RED, 1);
@@ -76,9 +115,7 @@ class OliviaVoldarenTest extends BaseCardTest {
         @Test
         @DisplayName("Can activate multiple times to accumulate counters")
         void multipleActivations() {
-            harness.addToBattlefield(player1, new OliviaVoldaren());
-            Permanent olivia = findPermanent(player1, "Olivia Voldaren");
-            olivia.setSummoningSick(false);
+            Permanent olivia = addCreatureReady(player1, new OliviaVoldaren());
 
             // Add two creatures as targets
             Permanent target1 = addCreatureReady(player2, new GrizzlyBears());
@@ -105,13 +142,10 @@ class OliviaVoldarenTest extends BaseCardTest {
         @Test
         @DisplayName("Kills a 1-toughness creature with the damage")
         void killsOneToughnessCreature() {
-            harness.addToBattlefield(player1, new OliviaVoldaren());
-            Permanent olivia = findPermanent(player1, "Olivia Voldaren");
-            olivia.setSummoningSick(false);
+            Permanent olivia = addCreatureReady(player1, new OliviaVoldaren());
 
             // Llanowar Elves is 1/1
-            harness.addToBattlefield(player2, new com.github.laxika.magicalvibes.cards.l.LlanowarElves());
-            Permanent elves = findPermanent(player2, "Llanowar Elves");
+            Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
 
             harness.addMana(player1, ManaColor.COLORLESS, 1);
             harness.addMana(player1, ManaColor.RED, 1);
@@ -128,23 +162,40 @@ class OliviaVoldarenTest extends BaseCardTest {
         }
     }
 
-    // ===== Second ability: {3}{B}{B} gain control of Vampire =====
 
     @Nested
     @DisplayName("Second ability: {3}{B}{B} steal Vampire")
+    @CardUsed({OliviaVoldaren.class, BaronyVampire.class, GrizzlyBears.class, Unsummon.class})
     class SecondAbility {
+
+        @Test
+        @CardUsed({OliviaVoldaren.class, Bitterblossom.class, ArtificialEvolution.class})
+        void canGainControlOfNoncreatureVampirePermanent() {
+            harness.addToBattlefield(player1, new OliviaVoldaren());
+            Permanent blossom = harness.addToBattlefieldAndReturn(player2, new Bitterblossom());
+            harness.setHand(player1, List.of(new ArtificialEvolution()));
+            harness.addMana(player1, ManaColor.BLUE, 1);
+            harness.castInstant(player1, 0, blossom.getId());
+            harness.passBothPriorities();
+            harness.handleListChoice(player1, "FAERIE");
+            harness.handleListChoice(player1, "VAMPIRE");
+
+            harness.addMana(player1, ManaColor.COLORLESS, 3);
+            harness.addMana(player1, ManaColor.BLACK, 2);
+            harness.activateAbility(player1, 0, 1, null, blossom.getId());
+            harness.passBothPriorities();
+
+            harness.assertOnBattlefield(player1, "Bitterblossom");
+            harness.assertNotOnBattlefield(player2, "Bitterblossom");
+        }
 
         @Test
         @DisplayName("Gains control of target Vampire")
         void gainsControlOfVampire() {
-            harness.addToBattlefield(player1, new OliviaVoldaren());
-            Permanent olivia = findPermanent(player1, "Olivia Voldaren");
-            olivia.setSummoningSick(false);
+            Permanent olivia = addCreatureReady(player1, new OliviaVoldaren());
 
             // Add a Vampire to opponent's battlefield
-            harness.addToBattlefield(player2, new BaronyVampire());
-            Permanent barony = findPermanent(player2, "Barony Vampire");
-            barony.setSummoningSick(false);
+            Permanent barony = addCreatureReady(player2, new BaronyVampire());
 
             harness.addMana(player1, ManaColor.COLORLESS, 3);
             harness.addMana(player1, ManaColor.BLACK, 2);
@@ -167,9 +218,7 @@ class OliviaVoldarenTest extends BaseCardTest {
         @Test
         @DisplayName("Cannot target a non-Vampire creature")
         void cannotTargetNonVampire() {
-            harness.addToBattlefield(player1, new OliviaVoldaren());
-            Permanent olivia = findPermanent(player1, "Olivia Voldaren");
-            olivia.setSummoningSick(false);
+            Permanent olivia = addCreatureReady(player1, new OliviaVoldaren());
 
             Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
@@ -186,9 +235,7 @@ class OliviaVoldarenTest extends BaseCardTest {
         @Test
         @DisplayName("Can target a creature that was made a Vampire by Olivia's first ability")
         void canTargetCreatureMadeVampireByFirstAbility() {
-            harness.addToBattlefield(player1, new OliviaVoldaren());
-            Permanent olivia = findPermanent(player1, "Olivia Voldaren");
-            olivia.setSummoningSick(false);
+            Permanent olivia = addCreatureReady(player1, new OliviaVoldaren());
 
             Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
@@ -212,15 +259,36 @@ class OliviaVoldarenTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed({OliviaVoldaren.class, BaronyVampire.class, TraitorousBlood.class})
+        void stolenVampireReturnsWhenOpponentGainsControlOfOlivia() {
+            Permanent olivia = harness.addToBattlefieldAndReturn(player1, new OliviaVoldaren());
+            Permanent vampire = harness.addToBattlefieldAndReturn(player2, new BaronyVampire());
+            harness.addMana(player1, ManaColor.COLORLESS, 3);
+            harness.addMana(player1, ManaColor.BLACK, 2);
+            harness.activateAbility(player1, 0, 1, null, vampire.getId());
+            harness.passBothPriorities();
+            harness.assertOnBattlefield(player1, "Barony Vampire");
+
+            gd.activePlayerId = player2.getId();
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            harness.clearPriorityPassed();
+            harness.setHand(player2, List.of(new TraitorousBlood()));
+            harness.addMana(player2, ManaColor.COLORLESS, 1);
+            harness.addMana(player2, ManaColor.RED, 2);
+            harness.castSorcery(player2, 0, olivia.getId());
+            harness.passBothPriorities();
+
+            harness.assertOnBattlefield(player2, "Olivia Voldaren");
+            harness.assertOnBattlefield(player2, "Barony Vampire");
+            harness.assertNotOnBattlefield(player1, "Barony Vampire");
+        }
+
+        @Test
         @DisplayName("Stolen creature returns when Olivia is bounced")
         void stolenCreatureReturnsWhenOliviaBounced() {
-            harness.addToBattlefield(player1, new OliviaVoldaren());
-            Permanent olivia = findPermanent(player1, "Olivia Voldaren");
-            olivia.setSummoningSick(false);
+            Permanent olivia = addCreatureReady(player1, new OliviaVoldaren());
 
-            harness.addToBattlefield(player2, new BaronyVampire());
-            Permanent barony = findPermanent(player2, "Barony Vampire");
-            barony.setSummoningSick(false);
+            Permanent barony = addCreatureReady(player2, new BaronyVampire());
 
             // Steal the Vampire
             harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -257,13 +325,9 @@ class OliviaVoldarenTest extends BaseCardTest {
         @Test
         @DisplayName("Ability resolves with no effect if Olivia leaves before resolution (ruling)")
         void abilityNoEffectIfOliviaLeavesBeforeResolution() {
-            harness.addToBattlefield(player1, new OliviaVoldaren());
-            Permanent olivia = findPermanent(player1, "Olivia Voldaren");
-            olivia.setSummoningSick(false);
+            Permanent olivia = addCreatureReady(player1, new OliviaVoldaren());
 
-            harness.addToBattlefield(player2, new BaronyVampire());
-            Permanent barony = findPermanent(player2, "Barony Vampire");
-            barony.setSummoningSick(false);
+            Permanent barony = addCreatureReady(player2, new BaronyVampire());
 
             // Activate steal ability
             harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -288,6 +352,5 @@ class OliviaVoldarenTest extends BaseCardTest {
         }
     }
 
-    // ===== Helpers =====
 
 }
