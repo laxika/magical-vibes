@@ -44,9 +44,7 @@ class MindFlayerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Unsummon()));
         harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.passPriority(player1);
-        harness.castInstant(player2, 0, mindFlayer.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, mindFlayer.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
@@ -59,6 +57,70 @@ class MindFlayerTest extends BaseCardTest {
         assertThatThrownBy(() -> castMindFlayer(forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    void doesNotGainControlWhenSourceLeavesBeforeTriggerResolves() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castMindFlayer(bears.getId());
+        harness.passBothPriorities();
+        Permanent mindFlayer = findPermanent(player1, "Mind Flayer");
+
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, mindFlayer.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
+        harness.assertInHand(player1, "Mind Flayer");
+    }
+
+    @Test
+    void doesNotGainControlWhenTargetLeavesBeforeTriggerResolves() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castMindFlayer(bears.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Mind Flayer");
+    }
+
+    @Test
+    void losingControlOfSourceEndsTheEffectPermanently() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castMindFlayer(bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        Permanent firstMindFlayer = findPermanent(player1, "Mind Flayer");
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new MindFlayer()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castCreature(player2, 0, 0, firstMindFlayer.getId());
+        harness.passBothPriorities();
+        Permanent secondMindFlayer = gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(p -> p.getCard() instanceof MindFlayer).findFirst().orElseThrow();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears, firstMindFlayer);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears, firstMindFlayer);
+
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, secondMindFlayer.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(firstMindFlayer).doesNotContain(bears);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears).doesNotContain(firstMindFlayer);
     }
 
     private void castMindFlayer(UUID targetId) {
