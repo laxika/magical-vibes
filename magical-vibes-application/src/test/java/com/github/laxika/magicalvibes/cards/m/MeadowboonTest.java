@@ -32,8 +32,6 @@ class MeadowboonTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Meadowboon");
     }
 
-    // ===== Evoke =====
-
     @Test
     @DisplayName("Evoke: sacrificed on entry, LTB puts +1/+1 on each creature the targeted controller controls")
     void evokeBuffsOwnCreatures() {
@@ -55,8 +53,6 @@ class MeadowboonTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Meadowboon");
         harness.assertInGraveyard(player1, "Meadowboon");
     }
-
-    // ===== Leaves the battlefield (non-evoke) — target opponent =====
 
     @Test
     @DisplayName("LTB fires on any leave and can target an opponent: only that player's creatures get counters")
@@ -80,5 +76,44 @@ class MeadowboonTest extends BaseCardTest {
         assertThat(oppCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(oppNonCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Returning Meadowboon to hand triggers counters without dying")
+    void returnedToHandBuffsCreatures() {
+        Permanent ally = harness.addToBattlefieldAndReturn(player1, new IndomitableAncients());
+        Permanent meadowboon = harness.addToBattlefieldAndReturn(player1, new Meadowboon());
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToHand(gd, meadowboon));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(ally.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertInHand(player1, "Meadowboon");
+        harness.assertNotInGraveyard(player1, "Meadowboon");
+    }
+
+    @Test
+    @DisplayName("Exiling Meadowboon triggers counters on creatures present at resolution")
+    void exileCountsCreaturesAtResolution() {
+        Permanent departing = harness.addToBattlefieldAndReturn(player2, new IndomitableAncients());
+        Permanent meadowboon = harness.addToBattlefieldAndReturn(player1, new Meadowboon());
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToExile(gd, meadowboon));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToHand(gd, departing));
+        Permanent arriving = harness.addToBattlefieldAndReturn(player2, new IndomitableAncients());
+        resolveAllTriggers();
+
+        assertThat(arriving.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(departing.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertNotOnBattlefield(player1, "Meadowboon");
+        harness.assertNotInGraveyard(player1, "Meadowboon");
     }
 }
