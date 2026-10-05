@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +16,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -71,19 +71,19 @@ class QuirionBeastcallerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Death distribution can be declined")
-    void deathDistributionCanBeDeclined() {
+    @DisplayName("Death distribution can choose zero targets")
+    void deathDistributionCanChooseZeroTargets() {
         Permanent beastcaller = addCreatureReady(player1, new QuirionBeastcaller());
         beastcaller.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         beastcaller.tap();
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        gd.pendingETBDamageAssignments = Map.of(bears.getId(), 3);
+        gd.pendingETBDamageAssignments = Map.of();
 
         killBeastcaller(beastcaller);
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
@@ -97,14 +97,14 @@ class QuirionBeastcallerTest extends BaseCardTest {
         Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opponentGiant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
 
-        gd.pendingETBDamageAssignments = Map.of(ownBears.getId(), 1, opponentGiant.getId(), 2);
+        gd.pendingETBDamageAssignments = Map.of(ownBears.getId(), 3);
 
         killBeastcaller(beastcaller);
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(ownBears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(ownBears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(opponentGiant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -113,10 +113,87 @@ class QuirionBeastcallerTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new Assassinate()));
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveSorcery(player1, 0, beastcaller.getId());
+    }
 
-        UUID beastcallerId = beastcaller.getId();
-        gs.playCard(gd, player1, 0, 0, beastcallerId, null);
+    @Test
+    @DisplayName("Opponent creature spells do not give a counter")
+    void opponentCreatureSpellDoesNotGiveCounter() {
+        Permanent beastcaller = addCreatureReady(player1, new QuirionBeastcaller());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(beastcaller.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Putting a creature onto the battlefield does not trigger the cast ability")
+    void creatureEnteringWithoutBeingCastDoesNotGiveCounter() {
+        Permanent beastcaller = addCreatureReady(player1, new QuirionBeastcaller());
+
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        resolveAllTriggers();
+
+        assertThat(beastcaller.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The cast trigger resolves before the creature spell")
+    void counterIsPlacedBeforeCreatureSpellResolves() {
+        Permanent beastcaller = addCreatureReady(player1, new QuirionBeastcaller());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+
         harness.passBothPriorities();
+
+        assertThat(beastcaller.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("An announced death distribution is not optional at resolution")
+    void announcedDistributionCannotBeDeclinedAtResolution() {
+        Permanent beastcaller = addCreatureReady(player1, new QuirionBeastcaller());
+        beastcaller.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        beastcaller.tap();
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        gd.pendingETBDamageAssignments = Map.of(bears.getId(), 3);
+
+        killBeastcaller(beastcaller);
+        harness.passBothPriorities();
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A recipient gaining shroud in response loses its allocated counters")
+    void recipientGainingShroudDoesNotReceiveCounters() {
+        Permanent beastcaller = addCreatureReady(player1, new QuirionBeastcaller());
+        beastcaller.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        beastcaller.tap();
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        gd.pendingETBDamageAssignments = Map.of(bears.getId(), 2, giant.getId(), 1);
+
+        killBeastcaller(beastcaller);
+        bears.getPersistentGrantedKeywords().add(Keyword.SHROUD);
+        harness.passBothPriorities();
+        if (!gd.pendingMayAbilities.isEmpty()) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(giant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }
