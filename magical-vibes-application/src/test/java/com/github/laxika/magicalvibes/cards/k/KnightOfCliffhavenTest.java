@@ -7,12 +7,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KnightOfCliffhaven.class})
 class KnightOfCliffhavenTest extends BaseCardTest {
 
     @Test
@@ -21,7 +23,7 @@ class KnightOfCliffhavenTest extends BaseCardTest {
         Permanent knight = addCreatureReady(player1, new KnightOfCliffhaven());
 
         assertStats(knight, 2, 2);
-        assertThat(gqs.hasKeyword(gd, knight, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, knight, Keyword.VIGILANCE)).isFalse();
 
         prepareForLeveling(player1);
@@ -55,6 +57,62 @@ class KnightOfCliffhavenTest extends BaseCardTest {
                 .hasMessageContaining("sorcery speed");
 
         assertThat(knight.getCounterCount(CounterType.LEVEL)).isZero();
+    }
+
+    @Test
+    @DisplayName("Levels one through three have flying without vigilance")
+    void intermediateLevelsHaveFlying() {
+        Permanent knight = addCreatureReady(player1, new KnightOfCliffhaven());
+        prepareForLeveling(player1);
+
+        for (int level = 1; level <= 3; level++) {
+            levelUp(player1);
+            assertThat(knight.getCounterCount(CounterType.LEVEL)).isEqualTo(level);
+            assertStats(knight, 2, 3);
+            assertThat(gqs.hasKeyword(gd, knight, Keyword.FLYING)).isTrue();
+            assertThat(gqs.hasKeyword(gd, knight, Keyword.VIGILANCE)).isFalse();
+        }
+    }
+
+    @Test
+    @DisplayName("Level up uses the stack and cannot be activated with a nonempty stack")
+    void levelUpWaitsForResolution() {
+        Permanent knight = addCreatureReady(player1, new KnightOfCliffhaven());
+        prepareForLeveling(player1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(knight.getCounterCount(CounterType.LEVEL)).isZero();
+        assertStats(knight, 2, 2);
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.FLYING)).isFalse();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+
+        harness.passBothPriorities();
+
+        assertThat(knight.getCounterCount(CounterType.LEVEL)).isEqualTo(1);
+        assertStats(knight, 2, 3);
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped Knight can level up beyond level four")
+    void canLevelUpWhileTappedAndBeyondFinalThreshold() {
+        Permanent knight = addCreatureReady(player1, new KnightOfCliffhaven());
+        knight.setTapped(true);
+        prepareForLeveling(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        for (int i = 0; i < 5; i++) {
+            levelUp(player1);
+        }
+
+        assertThat(knight.getCounterCount(CounterType.LEVEL)).isEqualTo(5);
+        assertThat(knight.isTapped()).isTrue();
+        assertStats(knight, 4, 4);
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.VIGILANCE)).isTrue();
     }
 
     private void prepareForLeveling(Player player) {
