@@ -58,9 +58,43 @@ class JadeAvengerTest extends BaseCardTest {
         assertThat(avenger.getToughnessModifier()).isZero();
     }
 
+    @Test
+    @DisplayName("Bushido triggers only once when multiple creatures block Jade Avenger")
+    void multipleBlockersGiveOnlyOneBonus() {
+        Permanent avenger = addCreatureReady(player1, new JadeAvenger());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(avenger.getPowerModifier()).isZero();
+        assertThat(avenger.getToughnessModifier()).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(avenger.getPowerModifier()).isEqualTo(2);
+        assertThat(avenger.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An unblocked Jade Avenger does not get a bushido bonus")
+    void unblockedAttackDoesNotTriggerBushido() {
+        Permanent avenger = addCreatureReady(player1, new JadeAvenger());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(avenger.getPowerModifier()).isZero();
+        assertThat(avenger.getToughnessModifier()).isZero();
+    }
+
     private void declareBlockers(List<BlockerAssignment> assignments) {
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, assignments);
         harness.passBothPriorities();
     }
