@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -92,6 +94,70 @@ class PhyrexianDevourerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough cards in library to exile");
+    }
+
+    @Test
+    @DisplayName("Exile is paid immediately, even while the creature is tapped")
+    void paysExileCostBeforeResolutionWhileTapped() {
+        Permanent devourer = addCreatureReady(player1, new PhyrexianDevourer());
+        devourer.setTapped(true);
+        AshnodsCylix topCard = new AshnodsCylix();
+        harness.setLibrary(player1, List.of(topCard));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
+        assertThat(devourer.getCounters().getOrDefault(CounterType.PLUS_ONE_PLUS_ONE, 0)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(devourer.getCounters().getOrDefault(CounterType.PLUS_ONE_PLUS_ONE, 0)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Phyrexian Devourer");
+    }
+
+    @Test
+    @DisplayName("Can grow further in response to sacrifice without duplicating the trigger")
+    void canActivateInResponseToSacrificeTrigger() {
+        Permanent devourer = addCreatureReady(player1, new PhyrexianDevourer());
+        devourer.getCounters().put(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        harness.setLibrary(player1, List.of(new AshnodsCylix(), new AshnodsCylix()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Phyrexian Devourer");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(devourer.getCounters().getOrDefault(CounterType.PLUS_ONE_PLUS_ONE, 0)).isEqualTo(8);
+        harness.assertOnBattlefield(player1, "Phyrexian Devourer");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Phyrexian Devourer");
+        harness.assertInGraveyard(player1, "Phyrexian Devourer");
+    }
+
+    @Test
+    @DisplayName("Sacrifice still resolves if power drops below seven after triggering")
+    void sacrificesEvenIfPowerDropsAfterTriggering() {
+        Permanent devourer = addCreatureReady(player1, new PhyrexianDevourer());
+        devourer.getCounters().put(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        harness.setLibrary(player1, List.of(new AshnodsCylix()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        devourer.getCounters().put(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Phyrexian Devourer");
+        harness.assertInGraveyard(player1, "Phyrexian Devourer");
     }
 
 }
