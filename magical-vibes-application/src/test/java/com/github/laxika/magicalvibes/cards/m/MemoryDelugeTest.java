@@ -6,21 +6,20 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MemoryDeluge.class, GrizzlyBears.class, Shock.class})
 class MemoryDelugeTest extends BaseCardTest {
 
-    private List<Card> setupTopCards(Card... top) {
-        List<Card> cards = List.of(top);
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(cards);
-        return cards;
+    private void setupTopCards(Card... top) {
+        harness.setLibrary(player1, List.of(top));
     }
 
     @Test
@@ -33,11 +32,7 @@ class MemoryDelugeTest extends BaseCardTest {
         Card untouched = new GrizzlyBears();
         setupTopCards(c0, c1, c2, c3, untouched);
 
-        harness.setHand(player1, List.of(new MemoryDeluge()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new MemoryDeluge(), "{2}{U}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction())
@@ -65,11 +60,7 @@ class MemoryDelugeTest extends BaseCardTest {
         Card only = new GrizzlyBears();
         setupTopCards(only);
 
-        harness.setHand(player1, List.of(new MemoryDeluge()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new MemoryDeluge(), "{2}{U}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -106,5 +97,53 @@ class MemoryDelugeTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Memory Deluge"));
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(6)
                 .contains(top[7]);
+    }
+
+    @Test
+    @DisplayName("An empty library resolves without a choice or a draw")
+    void emptyLibraryResolvesWithoutChoice() {
+        harness.setLibrary(player1, List.of());
+        harness.castFromHand(player1, new MemoryDeluge(), "{2}{U}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Memory Deluge");
+    }
+
+    @Test
+    @DisplayName("Exactly two available library cards both go to hand")
+    void exactlyTwoCardsGoToHandWithoutChoice() {
+        Card first = new GrizzlyBears();
+        Card second = new Shock();
+        setupTopCards(first, second);
+        harness.castFromHand(player1, new MemoryDeluge(), "{2}{U}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Choosing fewer than two is rejected when enough cards are available")
+    void mustChooseTwoCardsWhenAvailable() {
+        Card first = new GrizzlyBears();
+        Card second = new Shock();
+        Card third = new GrizzlyBears();
+        setupTopCards(first, second, third);
+        harness.castFromHand(player1, new MemoryDeluge(), "{2}{U}{U}");
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(first.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
