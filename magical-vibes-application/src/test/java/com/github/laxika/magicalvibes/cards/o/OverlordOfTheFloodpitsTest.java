@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.m.MycosynthLattice;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OverlordOfTheFloodpits.class})
+@CardUsed({OverlordOfTheFloodpits.class, MycosynthLattice.class})
 class OverlordOfTheFloodpitsTest extends BaseCardTest {
 
     @Test
@@ -45,6 +46,72 @@ class OverlordOfTheFloodpitsTest extends BaseCardTest {
 
         assertThat(overlord.getCounterCount(CounterType.TIME)).isEqualTo(4);
         assertThat(gqs.isCreature(gd, overlord)).isFalse();
+    }
+
+    @Test
+    void impendingPreservesOtherCardTypes() {
+        harness.addToBattlefield(player1, new MycosynthLattice());
+
+        Permanent overlord = castWithImpending();
+
+        assertThat(gqs.isCreature(gd, overlord)).isFalse();
+        assertThat(gqs.isEnchantment(gd, overlord)).isTrue();
+        assertThat(gqs.isArtifact(gd, overlord)).isTrue();
+    }
+
+    @Test
+    void opponentsEndStepDoesNotRemoveTimeCounter() {
+        Permanent overlord = castWithImpending();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(overlord.getCounterCount(CounterType.TIME)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void ownEndStepRemovesExactlyOneTimeCounter() {
+        Permanent overlord = castWithImpending();
+
+        advanceToOwnEndStep();
+
+        assertThat(overlord.getCounterCount(CounterType.TIME)).isEqualTo(3);
+        assertThat(gqs.isCreature(gd, overlord)).isFalse();
+    }
+
+    @Test
+    void timeCounterAddedAfterLastCounterRestoresImpendingRestriction() {
+        Permanent overlord = castWithImpending();
+        overlord.setCounterCount(CounterType.TIME, 1);
+        advanceToOwnEndStep();
+        assertThat(gqs.isCreature(gd, overlord)).isTrue();
+
+        overlord.setCounterCount(CounterType.TIME, 1);
+
+        assertThat(gqs.isCreature(gd, overlord)).isFalse();
+    }
+
+    @Test
+    void normalCastDoesNotHaveImpendingRestrictionsEvenWithTimeCounter() {
+        harness.setHand(player1, List.of(new OverlordOfTheFloodpits()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        PendingInteraction.DiscardChoice discard =
+                gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, discard.validIndices().getFirst());
+        Permanent overlord = findPermanent(player1, "Overlord of the Floodpits");
+        assertThat(overlord.getCounterCount(CounterType.TIME)).isZero();
+        overlord.setCounterCount(CounterType.TIME, 1);
+
+        advanceToOwnEndStep();
+
+        assertThat(gqs.isCreature(gd, overlord)).isTrue();
+        assertThat(overlord.getCounterCount(CounterType.TIME)).isEqualTo(1);
     }
 
     @Test
@@ -96,8 +163,7 @@ class OverlordOfTheFloodpitsTest extends BaseCardTest {
     private void advanceToOwnEndStep() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 }
