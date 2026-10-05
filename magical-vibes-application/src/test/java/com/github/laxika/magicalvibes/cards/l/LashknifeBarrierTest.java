@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.a.AlphaKavu;
+import com.github.laxika.magicalvibes.cards.e.Excruciator;
 import com.github.laxika.magicalvibes.cards.m.MagmaBurst;
 import com.github.laxika.magicalvibes.cards.s.SeaSnidd;
 import com.github.laxika.magicalvibes.cards.s.Singe;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({LashknifeBarrier.class, AlphaKavu.class, MagmaBurst.class, SeaSnidd.class,
-        Singe.class, SlingshotGoblin.class})
+        Singe.class, SlingshotGoblin.class, Excruciator.class})
 class LashknifeBarrierTest extends BaseCardTest {
 
     @Test
@@ -31,8 +32,7 @@ class LashknifeBarrierTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castEnchantment(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
     }
@@ -140,6 +140,41 @@ class LashknifeBarrierTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(seaSnidd);
         assertThat(seaSnidd.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Reduces simultaneous combat damage separately for each source")
+    void reducesCombatDamageFromEachBlocker() {
+        addBarrier(player1);
+        Permanent attacker = addCreatureReady(player1, new SeaSnidd());
+        Permanent firstBlocker = addCreatureReady(player2, new AlphaKavu());
+        Permanent secondBlocker = addCreatureReady(player2, new AlphaKavu());
+        attacker.setAttacking(true);
+        firstBlocker.setBlocking(true);
+        firstBlocker.addBlockingTarget(1);
+        secondBlocker.setBlocking(true);
+        secondBlocker.addBlockingTarget(1);
+
+        resolveCombat(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Reduces combat damage even when the source's damage cannot be prevented")
+    void reducesUnpreventableCombatDamage() {
+        addBarrier(player1);
+        Permanent blocker = addCreatureReady(player1, new Excruciator());
+        Permanent attacker = addCreatureReady(player2, new Excruciator());
+        attacker.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat(player2);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(blocker);
+        assertThat(blocker.getMarkedDamage()).isEqualTo(6);
     }
 
     private void addBarrier(Player player) {
