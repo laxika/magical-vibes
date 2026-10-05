@@ -49,8 +49,7 @@ class JestersCapTest extends BaseCardTest {
         // The exiled cards are owned by the target player and are face up.
         assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(3);
         assertThat(gd.exiledCards).noneMatch(com.github.laxika.magicalvibes.model.ExiledCardEntry::faceDown);
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(entry -> entry.contains("Library is shuffled."));
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
         // No further interaction pending
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         // Jester's Cap was sacrificed
@@ -125,9 +124,8 @@ class JestersCapTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(entry -> entry.contains("searches " + gd.playerIdToName.get(player2.getId())
-                        + "'s library but it is empty. Library is shuffled."));
+        assertThat(gameLogContains("searches " + gd.playerIdToName.get(player2.getId())
+                + "'s library but it is empty. Library is shuffled.")).isTrue();
         harness.assertInGraveyard(player1, "Jester's Cap");
     }
 
@@ -186,5 +184,61 @@ class JestersCapTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(3);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(opponentLibrary);
+    }
+
+    @Test
+    @DisplayName("Can choose cards anywhere in the library, including repeated names")
+    void choosesCardsBeyondTheTop() {
+        Card first = new Swamp();
+        Card second = new GrizzlyBears();
+        Card third = new Swamp();
+        Card fourth = new JestersCap();
+        Card fifth = new Swamp();
+        harness.setLibrary(player2, List.of(first, second, third, fourth, fifth));
+
+        addCapReady();
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 4);
+        harness.handleCardChosen(player1, 2);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .containsExactlyInAnyOrder(fifth, third, second);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyInAnyOrder(first, fourth);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice or tap the cap when there is insufficient mana")
+    void insufficientManaLeavesCapOnBattlefield() {
+        Permanent cap = harness.addToBattlefieldAndReturn(player1, new JestersCap());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(cap);
+        assertThat(cap.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        harness.assertNotInGraveyard(player1, "Jester's Cap");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A noncreature cap can activate on the turn it enters")
+    void newlyEnteredCapCanActivate() {
+        harness.setLibrary(player2, List.of(new Swamp()));
+        harness.enterBattlefieldAndReturn(player1, new JestersCap());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Jester's Cap");
     }
 }
