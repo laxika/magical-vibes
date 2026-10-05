@@ -36,6 +36,42 @@ class QuicksilverBehemothTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Affinity reduces the cost by exactly the number of artifacts")
+    void partialAffinityReduction() {
+        harness.addToBattlefield(player1, new DarksteelCitadel());
+        harness.addToBattlefield(player1, new DarksteelCitadel());
+        harness.addToBattlefield(player1, new CrazedGoblin());
+        harness.setHand(player1, List.of(new QuicksilverBehemoth()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Affinity cannot reduce the blue mana requirement")
+    void excessArtifactsDoNotReduceColoredCost() {
+        for (int i = 0; i < 7; i++) {
+            harness.addToBattlefield(player1, new DarksteelCitadel());
+        }
+        harness.setHand(player1, List.of(new QuicksilverBehemoth()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Affinity counts only artifacts controlled by the spell's controller")
     void affinityCountsOnlyControlledArtifacts() {
         for (int i = 0; i < 6; i++) {
