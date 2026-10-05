@@ -1,17 +1,14 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(PalaceSentinels.class)
+@CardUsed({PalaceSentinels.class})
 class PalaceSentinelsTest extends BaseCardTest {
 
     @Test
@@ -32,14 +29,52 @@ class PalaceSentinelsTest extends BaseCardTest {
         assertThat(gd.monarchPlayerId).isEqualTo(player1.getId());
     }
 
+    @Test
+    @DisplayName("The other player becomes monarch when their Sentinels enters")
+    void makesOtherControllerMonarch() {
+        gd.monarchPlayerId = player1.getId();
+
+        castPalaceSentinels(player2);
+
+        assertThat(gd.monarchPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Entering while already monarch preserves the designation")
+    void alreadyMonarchRemainsMonarch() {
+        gd.monarchPlayerId = player1.getId();
+
+        castPalaceSentinels(player1);
+
+        assertThat(gd.monarchPlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("The monarch changes only when the enter trigger resolves")
+    void monarchChangesOnTriggerResolution() {
+        gd.monarchPlayerId = player2.getId();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new PalaceSentinels(), "{3}{W}");
+
+        assertThat(gd.monarchPlayerId).isEqualTo(player2.getId());
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Palace Sentinels");
+        assertThat(gd.monarchPlayerId).isEqualTo(player2.getId());
+
+        resolveAllTriggers();
+
+        assertThat(gd.monarchPlayerId).isEqualTo(player1.getId());
+    }
+
     private void castPalaceSentinels(com.github.laxika.magicalvibes.model.Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player, List.of(new PalaceSentinels()));
-        harness.addMana(player, ManaColor.WHITE, 1);
-        harness.addMana(player, ManaColor.COLORLESS, 3);
-        harness.castCreature(player, 0);
+        harness.castFromHand(player, new PalaceSentinels(), "{3}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.passBothPriorities();
