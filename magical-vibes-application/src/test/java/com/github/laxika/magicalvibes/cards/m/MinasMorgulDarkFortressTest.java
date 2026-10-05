@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NimrodelWatcher;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MinasMorgulDarkFortress.class, GrizzlyBears.class})
+@CardUsed({MinasMorgulDarkFortress.class, NimrodelWatcher.class})
 class MinasMorgulDarkFortressTest extends BaseCardTest {
 
     @Test
@@ -37,7 +38,7 @@ class MinasMorgulDarkFortressTest extends BaseCardTest {
     @DisplayName("Puts a shadow counter on a creature and grants Wraith while it remains")
     void putsShadowCounterAndGrantsWraithWhileCounterRemains() {
         Permanent fortress = harness.addToBattlefieldAndReturn(player1, new MinasMorgulDarkFortress());
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new NimrodelWatcher());
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
@@ -65,5 +66,40 @@ class MinasMorgulDarkFortressTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
         assertThat(fortress.isTapped()).isFalse();
         assertThat(noncreature.getCounterCount(CounterType.SHADOW)).isZero();
+    }
+
+    @Test
+    void shadowCounterGrantsShadowUntilRemoved() {
+        harness.addToBattlefield(player1, new MinasMorgulDarkFortress());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new NimrodelWatcher());
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, 0, 1, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.SHADOW)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, creature, CardSubtype.ELF)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, creature, CardSubtype.SCOUT)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, creature, CardSubtype.WRAITH)).isTrue();
+
+        creature.setCounterCount(CounterType.SHADOW, 0);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.SHADOW)).isFalse();
+    }
+
+    @Test
+    void wraithDurationDoesNotRestartWhenShadowCounterReturns() {
+        harness.addToBattlefield(player1, new MinasMorgulDarkFortress());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new NimrodelWatcher());
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.activateAbility(player1, 0, 1, null, creature.getId());
+        harness.passBothPriorities();
+
+        creature.setCounterCount(CounterType.SHADOW, 0);
+        harness.runStateBasedActions();
+        assertThat(gqs.hasEffectiveSubtype(gd, creature, CardSubtype.WRAITH)).isFalse();
+
+        creature.setCounterCount(CounterType.SHADOW, 1);
+        harness.runStateBasedActions();
+        assertThat(gqs.hasEffectiveSubtype(gd, creature, CardSubtype.WRAITH)).isFalse();
     }
 }
