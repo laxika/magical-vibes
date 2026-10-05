@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.b.BoundByMoonsilver;
 import com.github.laxika.magicalvibes.cards.g.GnatMiser;
 import com.github.laxika.magicalvibes.cards.p.PithingNeedle;
 import com.github.laxika.magicalvibes.cards.s.SunderFromWithin;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Kuon.class, KuonsEssence.class, GnatMiser.class, KikusShadow.class,
-        PithingNeedle.class, SunderFromWithin.class})
+        PithingNeedle.class, SunderFromWithin.class, BoundByMoonsilver.class})
 class KuonTest extends BaseCardTest {
 
     @Test
@@ -35,8 +36,7 @@ class KuonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 6);
 
         for (Permanent target : List.of(first, second, third)) {
-            harness.castSorcery(player1, 0, target.getId());
-            harness.passBothPriorities();
+            harness.castAndResolveSorcery(player1, 0, target.getId());
         }
 
         advanceToEndStep();
@@ -59,8 +59,7 @@ class KuonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 4);
 
         for (Permanent target : List.of(first, second)) {
-            harness.castSorcery(player1, 0, target.getId());
-            harness.passBothPriorities();
+            harness.castAndResolveSorcery(player1, 0, target.getId());
         }
 
         advanceToEndStep();
@@ -105,8 +104,7 @@ class KuonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 12);
 
         for (Permanent target : List.of(first, second, third)) {
-            harness.castSorcery(player1, 0, target.getId());
-            harness.passBothPriorities();
+            harness.castAndResolveSorcery(player1, 0, target.getId());
         }
 
         advanceToEndStep();
@@ -135,6 +133,77 @@ class KuonTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getId().equals(firstCreature.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(secondCreature.getId()));
+    }
+
+    @Test
+    @DisplayName("Kuon can flip while Bound by Moonsilver prevents transformation")
+    void flipsWhileTransformationIsPrevented() {
+        Permanent kuon = harness.addToBattlefieldAndReturn(player1, new Kuon());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new BoundByMoonsilver());
+        aura.setAttachedTo(kuon.getId());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GnatMiser());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GnatMiser());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new GnatMiser());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new KikusShadow(), new KikusShadow(), new KikusShadow()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        for (Permanent target : List.of(first, second, third)) {
+            harness.castAndResolveSorcery(player1, 0, target.getId());
+        }
+
+        advanceToEndStep();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Kuon's Essence");
+        assertThat(kuon.isTransformed()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Kuon's Essence does not sacrifice another player's creature when the active player has none")
+    void essenceDoesNothingWhenActivePlayerHasNoCreatures() {
+        Permanent kuon = harness.addToBattlefieldAndReturn(player1, new Kuon());
+        kuon.setTransformed(true);
+        kuon.setCard(kuon.getOriginalCard().getBackFaceCard());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GnatMiser());
+        Permanent opponentArtifact = harness.addToBattlefieldAndReturn(player2, new PithingNeedle());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(ownCreature.getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(opponentArtifact.getId()));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Counts both players' creature deaths before Kuon enters, including at an opponent's end step")
+    void countsEarlierDeathsAtOpponentsEndStep() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GnatMiser());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GnatMiser());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new GnatMiser());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new KikusShadow(), new KikusShadow(), new KikusShadow()));
+        harness.addMana(player2, ManaColor.BLACK, 6);
+
+        for (Permanent target : List.of(first, second, third)) {
+            harness.castAndResolveSorcery(player2, 0, target.getId());
+        }
+        Permanent kuon = harness.addToBattlefieldAndReturn(player1, new Kuon());
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Kuon's Essence");
+        assertThat(kuon.isTransformed()).isTrue();
     }
 
     private void advanceToEndStep() {
