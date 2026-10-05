@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KarnScionOfUrza;
 import com.github.laxika.magicalvibes.cards.m.MoxAmber;
+import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.cards.s.ShizoDeathsStorehouse;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -21,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({KethisTheHiddenHand.class, Forest.class, GrizzlyBears.class, KarnScionOfUrza.class,
-        MoxAmber.class, ShizoDeathsStorehouse.class})
+        MoxAmber.class, Murder.class, ShizoDeathsStorehouse.class})
 class KethisTheHiddenHandTest extends BaseCardTest {
 
     @Test
@@ -120,8 +121,73 @@ class KethisTheHiddenHandTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
+        prepareMainPhase();
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void opponentsLegendarySpellsAreNotReduced() {
+        harness.addToBattlefield(player2, new KethisTheHiddenHand());
+        harness.setHand(player1, List.of(new KarnScionOfUrza()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        prepareMainPhase();
+
+        assertThatThrownBy(() -> harness.castPlaneswalker(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void reductionDoesNotPayColoredMana() {
+        harness.addToBattlefield(player1, new KethisTheHiddenHand());
+        harness.setHand(player1, List.of(new KethisTheHiddenHand()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        prepareMainPhase();
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void legendarySpellsCastFromGraveyardReceiveCostReduction() {
+        MoxAmber first = new MoxAmber();
+        MoxAmber second = new MoxAmber();
+        KarnScionOfUrza karn = new KarnScionOfUrza();
+        harness.addToBattlefield(player1, new KethisTheHiddenHand());
+        harness.setGraveyard(player1, List.of(first, second, karn));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        prepareMainPhase();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+        harness.castFromGraveyard(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Karn, Scion of Urza");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWithOnlyOneLegendaryCardInGraveyard() {
+        MoxAmber legend = new MoxAmber();
+        Forest forest = new Forest();
+        harness.addToBattlefield(player1, new KethisTheHiddenHand());
+        harness.setGraveyard(player1, List.of(legend, forest));
+        prepareMainPhase();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(legend, forest);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -143,6 +209,38 @@ class KethisTheHiddenHandTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .containsExactly(forest, first, second, third);
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void permissionSurvivesSourceLeavingButDoesNotIncludeLaterGraveyardArrivals() {
+        KethisTheHiddenHand kethis = new KethisTheHiddenHand();
+        Murder murder = new Murder();
+        MoxAmber first = new MoxAmber();
+        MoxAmber second = new MoxAmber();
+        MoxAmber playable = new MoxAmber();
+        harness.addToBattlefield(player1, kethis);
+        harness.setGraveyard(player1, List.of(first, second, playable));
+        harness.setHand(player1, List.of(murder));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        prepareMainPhase();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player1, "Kethis, the Hidden Hand"));
+
+        harness.assertInGraveyard(player1, "Kethis, the Hidden Hand");
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 1))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.castFromGraveyard(player1, 0);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Mox Amber");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(kethis, murder);
     }
 
     private void prepareMainPhase() {
