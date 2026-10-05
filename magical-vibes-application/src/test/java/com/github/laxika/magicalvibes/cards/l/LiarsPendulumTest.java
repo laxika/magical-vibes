@@ -38,7 +38,7 @@ class LiarsPendulumTest extends BaseCardTest {
     }
 
     @Test
-    void correctGuessDoesNotOfferRevealOrDraw() {
+    void correctGuessStillOffersRevealButDoesNotDraw() {
         addReadyPendulum();
         harness.setHand(player1, List.of(new MyrRetriever()));
         harness.setLibrary(player1, List.of(new Bonesplitter()));
@@ -47,11 +47,15 @@ class LiarsPendulumTest extends BaseCardTest {
         activateAndChooseName("Myr Retriever");
         harness.handleListChoice(player2, "Yes");
 
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
         harness.assertInHand(player1, "Myr Retriever");
         harness.assertNotInHand(player1, "Bonesplitter");
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .noneMatch(log -> log.contains("reveals their hand"));
+                .anyMatch(log -> log.contains("reveals their hand"));
     }
 
     @Test
@@ -75,7 +79,7 @@ class LiarsPendulumTest extends BaseCardTest {
     }
 
     @Test
-    void correctGuessWhenNamedCardIsAbsentDoesNotOfferRevealOrDraw() {
+    void correctGuessWhenNamedCardIsAbsentStillOffersRevealButDoesNotDraw() {
         addReadyPendulum();
         harness.setHand(player1, List.of(new MyrRetriever()));
         harness.setLibrary(player1, List.of(new Bonesplitter()));
@@ -84,11 +88,15 @@ class LiarsPendulumTest extends BaseCardTest {
         activateAndChooseName("Bonesplitter");
         harness.handleListChoice(player2, "No");
 
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
         harness.assertInHand(player1, "Myr Retriever");
         harness.assertNotInHand(player1, "Bonesplitter");
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .noneMatch(log -> log.contains("reveals their hand"));
+                .anyMatch(log -> log.contains("reveals their hand"));
     }
 
     @Test
@@ -104,6 +112,41 @@ class LiarsPendulumTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Myr Retriever");
         harness.assertNotInHand(player1, "Bonesplitter");
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .noneMatch(log -> log.contains("reveals their hand"));
+    }
+
+    @Test
+    void wrongGuessWithEmptyHandCanRevealAndDraw() {
+        addReadyPendulum();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Bonesplitter()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        activateAndChooseName("Myr Retriever");
+        harness.handleListChoice(player2, "Yes");
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Bonesplitter");
+    }
+
+    @Test
+    void correctGuessCanDeclineReveal() {
+        addReadyPendulum();
+        harness.setHand(player1, List.of(new MyrRetriever()));
+        harness.setLibrary(player1, List.of(new Bonesplitter()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        activateAndChooseName("Myr Retriever");
+        harness.handleListChoice(player2, "Yes");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInHand(player1, "Myr Retriever");
+        harness.assertNotInHand(player1, "Bonesplitter");
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .noneMatch(log -> log.contains("reveals their hand"));
     }
