@@ -4,12 +4,16 @@ import com.github.laxika.magicalvibes.cards.a.AuraOfSilence;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -88,6 +92,86 @@ class KappaTechWreckerTest extends BaseCardTest {
         assertThat(kappa.getCounterCount(CounterType.DEATHTOUCH)).isZero();
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Ninjutsu returns the attacker as a cost and enters tapped and attacking with a counter")
+    void ninjutsuEntersWithDeathtouchCounter() {
+        Permanent attacker = addCreatureReady(player1, new KappaTechWrecker());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        KappaTechWrecker incoming = new KappaTechWrecker();
+        harness.setHand(player1, List.of(incoming));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateHandAbility(player1, 0, attacker.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(gd.playerHands.get(player1.getId())).contains(attacker.getCard(), incoming);
+
+        harness.passBothPriorities();
+
+        Permanent kappa = findPermanent(player1, "Kappa Tech-Wrecker");
+        assertThat(kappa.isTapped()).isTrue();
+        assertThat(kappa.isAttacking()).isTrue();
+        assertThat(kappa.getAttackTarget()).isEqualTo(player2.getId());
+        assertThat(kappa.getCounterCount(CounterType.DEATHTOUCH)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(incoming);
+    }
+
+    @Test
+    @DisplayName("Combat damage cannot exile a permanent without a deathtouch counter")
+    void cannotExileWithoutCounter() {
+        Permanent kappa = addAttackingKappa();
+        kappa.setCounterCount(CounterType.DEATHTOUCH, 0);
+        harness.addToBattlefield(player2, new Spellbook());
+
+        resolveCombat();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player2, "Spellbook");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Removing one of multiple deathtouch counters still exiles an enchantment")
+    void removesOnlyOneCounterAndExilesEnchantment() {
+        Permanent kappa = addAttackingKappa();
+        kappa.setCounterCount(CounterType.DEATHTOUCH, 2);
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new AuraOfSilence());
+
+        resolveCombat();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(kappa.getCounterCount(CounterType.DEATHTOUCH)).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Aura of Silence");
+        harness.handlePermanentChosen(player1, enchantment.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Aura of Silence");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(enchantment.getCard());
+    }
+
+    @Test
+    @DisplayName("Leaving the battlefield before counter removal prevents the exile ability")
+    void sourceLeavesBeforeCounterRemoval() {
+        Permanent kappa = addAttackingKappa();
+        harness.addToBattlefield(player2, new Spellbook());
+
+        resolveCombat();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, kappa);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Kappa Tech-Wrecker");
+        harness.assertOnBattlefield(player2, "Spellbook");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }
 
     private Permanent addAttackingKappa() {
