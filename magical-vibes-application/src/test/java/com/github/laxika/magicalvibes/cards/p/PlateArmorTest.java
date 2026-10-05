@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PlateArmor.class, PaladinsShield.class, GrizzlyBears.class, GiantGrowth.class})
+@CardUsed({PlateArmor.class, PaladinsShield.class, GrizzlyBears.class, GiantGrowth.class, ProdigalPyromancer.class})
 class PlateArmorTest extends BaseCardTest {
 
     @Test
@@ -68,8 +68,7 @@ class PlateArmorTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player2, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, creature.getId());
         harness.handleMayAbilityChosen(player2, false);
 
         harness.assertInGraveyard(player2, "Giant Growth");
@@ -88,13 +87,125 @@ class PlateArmorTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player2, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, creature.getId());
         harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(8);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(8);
+    }
+
+    @Test
+    void equipCanBeFreeWithMoreThanThreeOtherEquipment() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent armor = harness.addToBattlefieldAndReturn(player1, new PlateArmor());
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, new PlateArmor());
+        }
+
+        harness.activateAbility(player1, 1, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(armor.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void opponentsEquipmentDoesNotReduceEquipCost() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new PlateArmor());
+        harness.addToBattlefield(player2, new PlateArmor());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    void equipCannotTargetOpponentsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent armor = harness.addToBattlefieldAndReturn(player1, new PlateArmor());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(armor.getAttachedTo()).isNull();
+    }
+
+    @Test
+    void equipCannotBeActivatedDuringCombat() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new PlateArmor());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void controllersSpellDoesNotTriggerWard() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent armor = harness.addToBattlefieldAndReturn(player1, new PlateArmor());
+        armor.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(8);
+    }
+
+    @Test
+    void reequippingMovesBoostAndWardToNewCreature() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent replacement = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent armor = harness.addToBattlefieldAndReturn(player1, new PlateArmor());
+        armor.setAttachedTo(original.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 2, null, replacement.getId());
+        harness.passBothPriorities();
+
+        assertThat(armor.getAttachedTo()).isEqualTo(replacement.getId());
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, replacement)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, replacement)).isEqualTo(5);
+
+        prepareOpponentTurn();
+        harness.setHand(player2, List.of(new GiantGrowth(), new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, original.getId());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(5);
+
+        harness.castAndResolveInstant(player2, 0, replacement.getId());
+        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, replacement)).isEqualTo(5);
+    }
+
+    @Test
+    void wardCountersOpponentsActivatedAbility() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent armor = harness.addToBattlefieldAndReturn(player1, new PlateArmor());
+        armor.setAttachedTo(creature.getId());
+        Permanent pyromancer = harness.addToBattlefieldAndReturn(player2, new ProdigalPyromancer());
+        pyromancer.setSummoningSick(false);
+        prepareOpponentTurn();
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player2, 0, null, creature.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(creature.getMarkedDamage()).isZero();
     }
 
     private Permanent addCreatureReady(Player player) {
