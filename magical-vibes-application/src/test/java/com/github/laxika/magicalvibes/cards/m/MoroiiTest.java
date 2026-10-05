@@ -56,4 +56,42 @@ class MoroiiTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
     }
+
+    @Test
+    @DisplayName("Upkeep life loss affects the controller rather than the owner")
+    void upkeepMakesControllerRatherThanOwnerLoseLife() {
+        Moroii moroii = new Moroii();
+        moroii.setOwnerId(player1.getId());
+        addCreatureReady(player2, moroii);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Upkeep trigger still resolves after Moroii dies")
+    void upkeepTriggerResolvesAfterSourceDies() {
+        var moroii = addCreatureReady(player1, new Moroii());
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+
+        moroii.setToughnessModifier(-4);
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(moroii.getCard());
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
 }
