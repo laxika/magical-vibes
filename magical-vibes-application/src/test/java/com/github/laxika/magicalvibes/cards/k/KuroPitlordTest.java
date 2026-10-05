@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.c.ConsumingVortex;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,10 +10,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KuroPitlord.class, KamiOfAncientLaw.class, Forest.class})
+@CardUsed({KuroPitlord.class, KamiOfAncientLaw.class, Forest.class, ConsumingVortex.class})
 class KuroPitlordTest extends BaseCardTest {
 
     @Test
@@ -125,5 +128,89 @@ class KuroPitlordTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Life is paid immediately, before the creature penalty resolves")
+    void lifeIsPaidBeforeResolution() {
+        harness.addToBattlefield(player1, new KuroPitlord());
+        Permanent kami = harness.addToBattlefieldAndReturn(player2, new KamiOfAncientLaw());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, kami.getId());
+
+        harness.assertLife(player1, 19);
+        assertThat(gqs.getEffectiveToughness(gd, kami)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        assertThat(gqs.getEffectiveToughness(gd, kami)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Kuro can target itself while tapped and summoning sick")
+    void canTargetItselfWhileTappedAndSummoningSick() {
+        Permanent kuro = harness.addToBattlefieldAndReturn(player1, new KuroPitlord());
+        kuro.setTapped(true);
+        kuro.setSummoningSick(true);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, kuro.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        assertThat(gqs.getEffectivePower(gd, kuro)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, kuro)).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("The creature penalty still resolves after Kuro leaves the battlefield")
+    void abilityResolvesWithoutKuro() {
+        Permanent kuro = harness.addToBattlefieldAndReturn(player1, new KuroPitlord());
+        Permanent kami = harness.addToBattlefieldAndReturn(player2, new KamiOfAncientLaw());
+        harness.setLife(player1, 20);
+        harness.setHand(player2, List.of(new ConsumingVortex()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, kami.getId());
+        harness.castAndResolveInstant(player2, 0, kuro.getId());
+        harness.assertInHand(player1, "Kuro, Pitlord");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        assertThat(gqs.getEffectiveToughness(gd, kami)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An illegal target does not refund the life already paid")
+    void removedTargetDoesNotRefundLife() {
+        harness.addToBattlefield(player1, new KuroPitlord());
+        Permanent kami = harness.addToBattlefieldAndReturn(player2, new KamiOfAncientLaw());
+        harness.setLife(player1, 20);
+        harness.setHand(player2, List.of(new ConsumingVortex()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, kami.getId());
+        harness.castAndResolveInstant(player2, 0, kami.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertInHand(player2, "Kami of Ancient Law");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Four mana of the wrong color cannot pay the upkeep cost")
+    void wrongColorCannotPayUpkeep() {
+        harness.addToBattlefield(player1, new KuroPitlord());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Kuro, Pitlord");
+        harness.assertInGraveyard(player1, "Kuro, Pitlord");
     }
 }
