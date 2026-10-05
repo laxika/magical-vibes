@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.a.AncientDen;
+import com.github.laxika.magicalvibes.cards.d.DreamsGrip;
 import com.github.laxika.magicalvibes.cards.l.LumengridWarden;
 import com.github.laxika.magicalvibes.cards.y.YotianSoldier;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,13 +15,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
 
-@CardUsed({InertiaBubble.class, AncientDen.class, LumengridWarden.class, YotianSoldier.class})
+@CardUsed({InertiaBubble.class, AncientDen.class, LumengridWarden.class, YotianSoldier.class, DreamsGrip.class})
 class InertiaBubbleTest extends BaseCardTest {
 
     @Test
     void canTargetAndAttachToArtifact() {
-        harness.addToBattlefield(player2, new AncientDen());
-        Permanent artifact = findPermanent(player2, "Ancient Den");
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new AncientDen());
 
         castBubbleAt(artifact);
 
@@ -32,8 +32,7 @@ class InertiaBubbleTest extends BaseCardTest {
 
     @Test
     void canTargetArtifactCreature() {
-        harness.addToBattlefield(player2, new YotianSoldier());
-        Permanent artifactCreature = findPermanent(player2, "Yotian Soldier");
+        Permanent artifactCreature = harness.addToBattlefieldAndReturn(player2, new YotianSoldier());
 
         castBubbleAt(artifactCreature);
 
@@ -57,13 +56,11 @@ class InertiaBubbleTest extends BaseCardTest {
 
     @Test
     void enchantedArtifactDoesNotUntap() {
-        harness.addToBattlefield(player2, new AncientDen());
-        Permanent artifact = findPermanent(player2, "Ancient Den");
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new AncientDen());
         artifact.tap();
 
-        Permanent aura = new Permanent(new InertiaBubble());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new InertiaBubble());
         aura.setAttachedTo(artifact.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         advanceToUpkeep(player2);
 
@@ -72,17 +69,13 @@ class InertiaBubbleTest extends BaseCardTest {
 
     @Test
     void otherArtifactUntapsNormally() {
-        harness.addToBattlefield(player2, new AncientDen());
-        harness.addToBattlefield(player2, new AncientDen());
-        List<Permanent> artifacts = gd.playerBattlefields.get(player2.getId());
-        Permanent enchantedArtifact = artifacts.get(0);
-        Permanent otherArtifact = artifacts.get(1);
+        Permanent enchantedArtifact = harness.addToBattlefieldAndReturn(player2, new AncientDen());
+        Permanent otherArtifact = harness.addToBattlefieldAndReturn(player2, new AncientDen());
         enchantedArtifact.tap();
         otherArtifact.tap();
 
-        Permanent aura = new Permanent(new InertiaBubble());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new InertiaBubble());
         aura.setAttachedTo(enchantedArtifact.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         advanceToUpkeep(player2);
 
@@ -92,18 +85,54 @@ class InertiaBubbleTest extends BaseCardTest {
 
     @Test
     void artifactUntapsAfterAuraIsRemoved() {
-        harness.addToBattlefield(player2, new AncientDen());
-        Permanent artifact = findPermanent(player2, "Ancient Den");
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new AncientDen());
         artifact.tap();
 
-        Permanent aura = new Permanent(new InertiaBubble());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new InertiaBubble());
         aura.setAttachedTo(artifact.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
         advanceToUpkeep(player2);
 
         assertThat(artifact.isTapped()).isFalse();
+    }
+
+    @Test
+    void ownEnchantedArtifactDoesNotUntap() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AncientDen());
+        artifact.tap();
+
+        castBubbleAt(artifact);
+        advanceToUpkeep(player1);
+
+        assertThat(artifact.isTapped()).isTrue();
+        assertThat(findPermanent(player1, "Inertia Bubble").getAttachedTo()).isEqualTo(artifact.getId());
+    }
+
+    @Test
+    void resolvingAuraDoesNotTapArtifact() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new AncientDen());
+
+        castBubbleAt(artifact);
+
+        assertThat(artifact.isTapped()).isFalse();
+        advanceToUpkeep(player2);
+        assertThat(artifact.isTapped()).isFalse();
+    }
+
+    @Test
+    void enchantedArtifactCanBeUntappedBySpell() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new AncientDen());
+        artifact.tap();
+        castBubbleAt(artifact);
+
+        harness.setHand(player1, List.of(new DreamsGrip()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{1}, List.of(artifact.getId()));
+        harness.passBothPriorities();
+
+        assertThat(artifact.isTapped()).isFalse();
+        assertThat(findPermanent(player1, "Inertia Bubble").getAttachedTo()).isEqualTo(artifact.getId());
     }
 
     private void castBubbleAt(Permanent target) {
