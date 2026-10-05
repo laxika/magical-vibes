@@ -24,8 +24,7 @@ class MuscleBurstTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MuscleBurst()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
 
         assertThat(bear.getPowerModifier()).isEqualTo(3);
         assertThat(bear.getToughnessModifier()).isEqualTo(3);
@@ -40,8 +39,7 @@ class MuscleBurstTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MuscleBurst()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
 
         assertThat(bear.getPowerModifier()).isEqualTo(5);
         assertThat(bear.getToughnessModifier()).isEqualTo(5);
@@ -54,12 +52,10 @@ class MuscleBurstTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MuscleBurst(), new MuscleBurst()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
         assertThat(bear.getPowerModifier()).isEqualTo(3);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
 
         assertThat(bear.getPowerModifier()).isEqualTo(7);
         assertThat(bear.getToughnessModifier()).isEqualTo(7);
@@ -72,8 +68,7 @@ class MuscleBurstTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MuscleBurst()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -91,8 +86,7 @@ class MuscleBurstTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MuscleBurst()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
 
         assertThat(bear.getPowerModifier()).isEqualTo(3);
         assertThat(bear.getToughnessModifier()).isEqualTo(3);
@@ -110,5 +104,39 @@ class MuscleBurstTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Can boost an opponent's creature")
+    void canTargetOpponentsCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WoodlandDruid());
+        harness.setHand(player1, List.of(new MuscleBurst()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getPowerModifier()).isEqualTo(3);
+        assertThat(target.getToughnessModifier()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Counts graveyard cards at resolution and fixes the boost afterward")
+    void graveyardCountIsDeterminedAtResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new WoodlandDruid());
+        harness.setHand(player1, List.of(new MuscleBurst()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.setGraveyard(player2, List.of(new MuscleBurst(), new MuscleBurst()));
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(5);
+        assertThat(target.getToughnessModifier()).isEqualTo(5);
+
+        harness.setGraveyard(player2, List.of());
+        harness.setGraveyard(player1, List.of());
+
+        assertThat(target.getPowerModifier()).isEqualTo(5);
+        assertThat(target.getToughnessModifier()).isEqualTo(5);
     }
 }
