@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -19,7 +17,7 @@ class MaestrosInitiateTest extends BaseCardTest {
 
     @Test
     void activationExilesSourceAndDrawsThenDiscards() {
-        setDeck(player1, List.of(new Island(), new Island()));
+        harness.setLibrary(player1, List.of(new Island(), new Island()));
         MaestrosInitiate initiate = new MaestrosInitiate();
         harness.setGraveyard(player1, List.of(initiate));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -53,8 +51,58 @@ class MaestrosInitiateTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Maestros Initiate");
     }
 
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+    @Test
+    void canPayHybridCostWithRedManaAndDiscardADrawnCard() {
+        harness.setHand(player1, List.of());
+        Island firstDraw = new Island();
+        Island secondDraw = new Island();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        MaestrosInitiate initiate = new MaestrosInitiate();
+        harness.setGraveyard(player1, List.of(initiate));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateGraveyardAbility(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(initiate);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(firstDraw, secondDraw);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(secondDraw);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(firstDraw);
+    }
+
+    @Test
+    void cannotPayHybridCostWithBlackMana() {
+        MaestrosInitiate initiate = new MaestrosInitiate();
+        harness.setGraveyard(player1, List.of(initiate));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(initiate);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(initiate);
+    }
+
+    @Test
+    void cannotActivateExiledSourceAgainBeforeResolution() {
+        harness.setLibrary(player1, List.of(new Island(), new Island()));
+        MaestrosInitiate initiate = new MaestrosInitiate();
+        harness.setGraveyard(player1, List.of(initiate));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateGraveyardAbility(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(initiate);
     }
 }
