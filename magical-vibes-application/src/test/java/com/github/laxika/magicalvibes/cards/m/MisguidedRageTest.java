@@ -82,11 +82,49 @@ class MisguidedRageTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void sacrificeIsMandatoryAndOnlyTargetPlayerCanChoose() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GoblinBrigand());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Stabilizer());
+        castMisguidedRage(player2.getId());
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player2, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player2,
+                List.of(creature.getId(), artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(creature, artifact);
+        harness.handleMultiplePermanentsChosen(player2, List.of(creature.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(artifact);
+        harness.assertInGraveyard(player2, "Goblin Brigand");
+        harness.assertInGraveyard(player1, "Misguided Rage");
+    }
+
+    @Test
+    void targetPlayerCannotSacrificeCastersPermanent() {
+        Permanent castersPermanent = harness.addToBattlefieldAndReturn(player1, new Stabilizer());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GoblinBrigand());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Stabilizer());
+        castMisguidedRage(player2.getId());
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player2, List.of(castersPermanent.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultiplePermanentsChosen(player2, List.of(artifact.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(castersPermanent);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(creature);
+        harness.assertInGraveyard(player2, "Stabilizer");
+        harness.assertNotInGraveyard(player1, "Stabilizer");
+    }
+
     private void castMisguidedRage(java.util.UUID targetId) {
         harness.setHand(player1, List.of(new MisguidedRage()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
     }
 }
