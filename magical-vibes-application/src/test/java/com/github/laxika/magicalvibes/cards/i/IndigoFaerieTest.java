@@ -5,12 +5,14 @@ import com.github.laxika.magicalvibes.cards.t.TwilightMire;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({IndigoFaerie.class, DuskdaleWurm.class, TwilightMire.class})
 class IndigoFaerieTest extends BaseCardTest {
@@ -56,12 +58,69 @@ class IndigoFaerieTest extends BaseCardTest {
 
         assertThat(gqs.getEffectiveColors(gd, wurm)).contains(CardColor.BLUE);
 
-        // The floating layer-5 color effect expires at cleanup, leaving only the intrinsic color.
-        gd.expireEndOfTurnFloatingEffects();
-        wurm.resetModifiers();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectiveColors(gd, wurm))
                 .containsExactly(CardColor.GREEN);
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Faerie can target itself")
+    void tappedSummoningSickFaerieCanTargetItself() {
+        Permanent faerie = harness.addToBattlefieldAndReturn(player1, new IndigoFaerie());
+        faerie.setSummoningSick(true);
+        faerie.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, faerie.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveColors(gd, faerie)).containsExactly(CardColor.BLUE);
+        assertThat(faerie.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Colorless mana cannot pay the blue activation cost")
+    void activationRequiresBlueMana() {
+        Permanent faerie = harness.addToBattlefieldAndReturn(player1, new IndigoFaerie());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, faerie.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability resolves after Indigo Faerie leaves the battlefield")
+    void abilityResolvesWithoutItsSource() {
+        Permanent faerie = harness.addToBattlefieldAndReturn(player1, new IndigoFaerie());
+        Permanent wurm = harness.addToBattlefieldAndReturn(player2, new DuskdaleWurm());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, wurm.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, faerie));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveColors(gd, wurm))
+                .containsExactlyInAnyOrder(CardColor.GREEN, CardColor.BLUE);
+    }
+
+    @Test
+    @DisplayName("An ability targeting a departed permanent does not affect its replacement")
+    void departedTargetDoesNotColorANewPermanent() {
+        harness.addToBattlefield(player1, new IndigoFaerie());
+        Permanent original = harness.addToBattlefieldAndReturn(player2, new DuskdaleWurm());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, original.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, original));
+        Permanent replacement = harness.addToBattlefieldAndReturn(player2, new DuskdaleWurm());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveColors(gd, replacement)).containsExactly(CardColor.GREEN);
+        assertThat(gd.stack).isEmpty();
     }
 
 }
