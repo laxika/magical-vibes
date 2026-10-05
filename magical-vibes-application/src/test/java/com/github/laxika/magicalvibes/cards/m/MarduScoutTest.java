@@ -4,9 +4,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MarduScout.class})
 class MarduScoutTest extends BaseCardTest {
 
     @Test
@@ -28,9 +28,7 @@ class MarduScoutTest extends BaseCardTest {
         Permanent scout = findPermanent(player1, "Mardu Scout");
         assertThat(scout.hasKeyword(Keyword.HASTE)).isFalse();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         assertThat(findPermanent(player1, "Mardu Scout")).isSameAs(scout);
     }
@@ -43,20 +41,61 @@ class MarduScoutTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent scout = findPermanent(player1, "Mardu Scout");
         assertThat(scout.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(action -> action.permanentId().equals(scout.getId())
-                        && action.kind() == DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP);
-
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
 
         harness.assertInHand(player1, "Mardu Scout");
         harness.assertNotOnBattlefield(player1, "Mardu Scout");
+    }
+
+    @Test
+    @DisplayName("Dash establishes its return without an enters-the-battlefield trigger")
+    void dashDoesNotCreateAnEntryTrigger() {
+        harness.setHand(player1, List.of(new MarduScout()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Mardu Scout");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Dash returns the creature only when its end-step trigger resolves")
+    void dashReturnUsesTheStack() {
+        harness.setHand(player1, List.of(new MarduScout()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
+        resolveAllTriggers();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Mardu Scout");
+        harness.assertNotInHand(player1, "Mardu Scout");
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        harness.assertInHand(player1, "Mardu Scout");
+        harness.assertNotOnBattlefield(player1, "Mardu Scout");
+    }
+
+    @Test
+    @DisplayName("A creature cast with dash can attack the turn it enters")
+    void dashedScoutCanAttackImmediately() {
+        harness.setHand(player1, List.of(new MarduScout()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
+        resolveAllTriggers();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(findPermanent(player1, "Mardu Scout").isAttacking()).isTrue();
     }
 }
