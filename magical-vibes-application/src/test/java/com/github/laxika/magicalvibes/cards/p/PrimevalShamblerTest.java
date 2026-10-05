@@ -123,4 +123,50 @@ class PrimevalShamblerTest extends BaseCardTest {
         assertThat(shambler.getPowerModifier()).isEqualTo(1);
         assertThat(shambler.getToughnessModifier()).isEqualTo(1);
     }
+    @Test
+    @DisplayName("Can activate while tapped without untapping the source")
+    void canActivateWhileTapped() {
+        Permanent shambler = addReadyShambler(player1);
+        shambler.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(shambler.isTapped()).isTrue();
+        assertThat(shambler.getPowerModifier()).isEqualTo(1);
+        assertThat(shambler.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Multiple pending activations resolve separately and boost only their source")
+    void pendingActivationsBoostOnlyTheirSource() {
+        Permanent shambler = addReadyShambler(player1);
+        Permanent otherShambler = addReadyShambler(player1);
+        Permanent opposingShambler = addReadyShambler(player2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(shambler.getPowerModifier()).isZero();
+        assertThat(shambler.getToughnessModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(shambler.getPowerModifier()).isEqualTo(1);
+        assertThat(shambler.getToughnessModifier()).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(shambler.getPowerModifier()).isEqualTo(2);
+        assertThat(shambler.getToughnessModifier()).isEqualTo(2);
+        assertThat(otherShambler.getPowerModifier()).isZero();
+        assertThat(otherShambler.getToughnessModifier()).isZero();
+        assertThat(opposingShambler.getPowerModifier()).isZero();
+        assertThat(opposingShambler.getToughnessModifier()).isZero();
+    }
 }
