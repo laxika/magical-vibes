@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,7 +10,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -20,10 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PreyseizerDragonTest extends BaseCardTest {
 
     private void castDragon() {
-        harness.setHand(player1, new ArrayList<>(List.of(new PreyseizerDragon())));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PreyseizerDragon(), "{4}{R}{R}");
     }
 
     private Permanent dragon() {
@@ -62,5 +57,43 @@ class PreyseizerDragonTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
         assertThat(dragon().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+    @Test
+    void mayDeclineDevourWithCreaturesAvailable() {
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new PreyseizerDragon());
+        castDragon();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2).contains(fodder);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .allSatisfy(permanent -> assertThat(permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero());
+    }
+
+    @Test
+    void entersWithoutOtherCreaturesAndAttackDealsNoDamage() {
+        castDragon();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(dragon().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        dragon().setSummoningSick(false);
+        harness.setLife(player2, 20);
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void attackCountsCurrentPlusOneCountersAtResolution() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new PreyseizerDragon());
+        attacker.setSummoningSick(false);
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        attacker.setCounterCount(CounterType.CHARGE, 7);
+        harness.setLife(player2, 20);
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, player2.getId());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 15);
     }
 }
