@@ -4,13 +4,19 @@ import com.github.laxika.magicalvibes.cards.a.AvacynsPilgrim;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
+import com.github.laxika.magicalvibes.cards.f.FiresOfUndeath;
+import com.github.laxika.magicalvibes.cards.s.SilverclawGriffin;
+import com.github.laxika.magicalvibes.cards.t.TragicSlip;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
+import com.github.laxika.magicalvibes.cards.y.YoungWolf;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +24,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MikaeusTheUnhallowed.class, AvacynsPilgrim.class, EliteVanguard.class,
+        GrizzlyBears.class, LightningBolt.class, WalkingCorpse.class, FiresOfUndeath.class,
+        SilverclawGriffin.class, TragicSlip.class, TurnToFrog.class, YoungWolf.class,
+        ProdigalPyromancer.class})
 class MikaeusTheUnhallowedTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Other non-Human creatures you control get +1/+1 and undying")
@@ -44,6 +52,7 @@ class MikaeusTheUnhallowedTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, mikaeus)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, mikaeus)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, mikaeus, Keyword.UNDYING)).isFalse();
     }
 
     @Test
@@ -55,9 +64,10 @@ class MikaeusTheUnhallowedTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Walking Corpse"));
-        resolveUntilStackEmpty();
+        resolveAllTriggers();
+        assertThat(gd.stack).isEmpty();
 
-        Permanent returned = findPermanentByName(player1, "Walking Corpse");
+        Permanent returned = findPermanent(player1, "Walking Corpse");
         assertThat(returned).isNotNull();
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(4);
@@ -72,6 +82,7 @@ class MikaeusTheUnhallowedTest extends BaseCardTest {
         attacker.setAttacking(true);
 
         resolveCombat(player1);
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         harness.assertNotOnBattlefield(player1, "Elite Vanguard");
@@ -91,17 +102,90 @@ class MikaeusTheUnhallowedTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
-    private void resolveUntilStackEmpty() {
-        for (int i = 0; i < 12 && !gd.stack.isEmpty(); i++) {
-            harness.passBothPriorities();
-        }
-        assertThat(gd.stack).isEmpty();
+    @Test
+    void ownHumanDealingNoncombatDamageIsDestroyed() {
+        harness.addToBattlefield(player1, new MikaeusTheUnhallowed());
+        addCreatureReady(player1, new ProdigalPyromancer());
+
+        harness.activateAbility(player1, 1, null, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        harness.assertNotOnBattlefield(player1, "Prodigal Pyromancer");
+        harness.assertInGraveyard(player1, "Prodigal Pyromancer");
     }
 
-    private Permanent findPermanentByName(Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(name))
-                .findFirst()
-                .orElse(null);
+    @Test
+    void innateAndGrantedUndyingTriggerIndependently() {
+        harness.addToBattlefield(player1, new MikaeusTheUnhallowed());
+        Permanent wolf = harness.addToBattlefieldAndReturn(player1, new YoungWolf());
+        harness.setHand(player2, List.of(new FiresOfUndeath()));
+        harness.addMana(player2, ManaColor.RED, 3);
+
+        harness.castInstant(player2, 0, wolf.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Young Wolf");
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+        assertThat(findPermanent(player1, "Young Wolf").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(1);
+    }
+
+    @Test
+    void humanDamageDoesNotTriggerAfterMikaeusLosesAbilities() {
+        Permanent mikaeus = harness.addToBattlefieldAndReturn(player2, new MikaeusTheUnhallowed());
+        Permanent attacker = addCreatureReady(player1, new EliteVanguard());
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0, mikaeus.getId());
+        resolveAllTriggers();
+
+        attacker.setAttacking(true);
+        resolveCombat(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertOnBattlefield(player1, "Elite Vanguard");
+    }
+
+    @Test
+    void creatureWithPlusOneCounterDoesNotReturn() {
+        harness.addToBattlefield(player1, new MikaeusTheUnhallowed());
+        Permanent griffin = harness.addToBattlefieldAndReturn(player1, new SilverclawGriffin());
+        griffin.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setHand(player2, List.of(new FiresOfUndeath(), new FiresOfUndeath()));
+        harness.addMana(player2, ManaColor.RED, 6);
+
+        harness.castInstant(player2, 0, griffin.getId());
+        resolveAllTriggers();
+        harness.castInstant(player2, 0, griffin.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Silverclaw Griffin");
+        harness.assertInGraveyard(player1, "Silverclaw Griffin");
+    }
+
+    @Test
+    void grantedUndyingResolvesAfterMikaeusLeavesBattlefield() {
+        Permanent mikaeus = harness.addToBattlefieldAndReturn(player1, new MikaeusTheUnhallowed());
+        Permanent griffin = harness.addToBattlefieldAndReturn(player1, new SilverclawGriffin());
+        harness.setHand(player2, List.of(new FiresOfUndeath(), new FiresOfUndeath(), new TragicSlip()));
+        harness.addMana(player2, ManaColor.RED, 6);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.castInstant(player2, 0, griffin.getId());
+        resolveAllTriggers();
+        harness.castInstant(player2, 0, griffin.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Silverclaw Griffin");
+
+        harness.castInstant(player2, 0, mikaeus.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Mikaeus, the Unhallowed");
+        Permanent returned = findPermanent(player1, "Silverclaw Griffin");
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.UNDYING)).isFalse();
     }
 }
