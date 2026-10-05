@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +17,9 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PiousEvangel.class, GrizzlyBears.class, Forest.class, Shock.class, Murder.class})
 class PiousEvangelTest extends BaseCardTest {
 
     @Test
@@ -54,8 +57,7 @@ class PiousEvangelTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrifices another permanent and transforms")
     void sacrificesAnotherPermanentAndTransforms() {
-        Permanent evangel = harness.addToBattlefieldAndReturn(player1, new PiousEvangel());
-        evangel.setSummoningSick(false);
+        Permanent evangel = addCreatureReady(player1, new PiousEvangel());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         forceMainPhase();
@@ -91,7 +93,7 @@ class PiousEvangelTest extends BaseCardTest {
     @Test
     @DisplayName("When Wayward Disciple dies, target opponent loses life and you gain life")
     void selfDeathDrainsOpponent() {
-        Permanent disciple = putTransformedDiscipleOnBattlefield();
+        putTransformedDiscipleOnBattlefield();
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
@@ -107,15 +109,13 @@ class PiousEvangelTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 
-    private Permanent putTransformedDiscipleOnBattlefield() {
-        Permanent disciple = harness.addToBattlefieldAndReturn(player1, new PiousEvangel());
-        disciple.setSummoningSick(false);
+    private void putTransformedDiscipleOnBattlefield() {
+        Permanent disciple = addCreatureReady(player1, new PiousEvangel());
         harness.addToBattlefield(player1, new Forest());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         forceMainPhase();
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(disciple), null, null);
         harness.passBothPriorities();
-        return disciple;
     }
 
     private void killWithShock(String targetName) {
@@ -139,6 +139,107 @@ class PiousEvangelTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player1, targetName);
         harness.castInstant(player2, 0, targetId);
         harness.passBothPriorities();
+    }
+
+    @Test
+    void opposingCreatureEnteringDoesNotGainLife() {
+        harness.addToBattlefield(player1, new PiousEvangel());
+        harness.setLife(player1, 20);
+        harness.enterBattlefieldAndReturn(player2, new PiousEvangel());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 21);
+    }
+
+    @Test
+    void cannotSacrificeItselfOrAnOpponentsPermanent() {
+        Permanent evangel = addCreatureReady(player1, new PiousEvangel());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        forceMainPhase();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(evangel);
+        assertThat(evangel.isTransformed()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Forest");
+    }
+
+    @Test
+    void sacrificesCreatureBeforeTransformingWithoutDrainingLife() {
+        Permanent evangel = addCreatureReady(player1, new PiousEvangel());
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new PiousEvangel());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        forceMainPhase();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrifice.getCard());
+        assertThat(evangel.isTapped()).isTrue();
+        assertThat(evangel.isTransformed()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        assertThat(evangel.isTransformed()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void transformedFaceDoesNotGainLifeWhenAnAllyEnters() {
+        putTransformedDiscipleOnBattlefield();
+        harness.setLife(player1, 20);
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent evangel = harness.addToBattlefieldAndReturn(player1, new PiousEvangel());
+        evangel.setSummoningSick(true);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        forceMainPhase();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(evangel, forest);
+        assertThat(evangel.isTransformed()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opposingCreatureDeathDoesNotDrainLife() {
+        putTransformedDiscipleOnBattlefield();
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        forceMainPhase();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, opposingCreature.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void forceMainPhase() {
