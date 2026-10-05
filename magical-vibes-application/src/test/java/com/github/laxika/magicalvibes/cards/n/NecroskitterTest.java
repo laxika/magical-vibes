@@ -121,4 +121,124 @@ class NecroskitterTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
     }
+
+    @Test
+    @DisplayName("Returns a creature you own that an opponent controlled when it died")
+    void returnsOwnCardControlledByOpponent() {
+        harness.addToBattlefield(player1, new Necroskitter());
+        Permanent dying = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        gd.playerBattlefields.get(player1.getId()).remove(dying);
+        gd.playerBattlefields.get(player2.getId()).add(dying);
+        gd.stolenCreatures.put(dying.getId(), player1.getId());
+        dying.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, dying.getId());
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Lethal wither damage triggers the return and the returned creature has no counters")
+    void lethalWitherReturnsFreshPermanent() {
+        Permanent attacker = addCreatureReady(player1, new Necroskitter());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
+        assertThat(returned.getId()).isNotEqualTo(blocker.getId());
+        assertThat(returned.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(returned.getMarkedDamage()).isZero();
+        assertThat(returned.isSummoningSick()).isTrue();
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The return still triggers when Necroskitter dies in the same combat damage event")
+    void triggersWhenNecroskitterDiesSimultaneously() {
+        Permanent attacker = addCreatureReady(player1, new Necroskitter());
+        attacker.setAttacking(true);
+        attacker.setMarkedDamage(3);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+        harness.assertInGraveyard(player1, "Necroskitter");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Necroskitter");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Wither deals normal damage to a player")
+    void witherDealsNormalDamageToPlayer() {
+        Permanent attacker = addCreatureReady(player1, new Necroskitter());
+        attacker.setAttacking(true);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Returns a creature that dies from zero toughness with several -1/-1 counters")
+    void returnsCreatureWithZeroToughness() {
+        harness.addToBattlefield(player1, new Necroskitter());
+        Permanent dying = harness.addToBattlefieldAndReturn(player2, new Necroskitter());
+        dying.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 4);
+
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(countPermanents(player1, "Necroskitter")).isEqualTo(2);
+        assertThat(findPermanents(player1, "Necroskitter"))
+                .allSatisfy(permanent -> assertThat(permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero());
+        harness.assertNotInGraveyard(player2, "Necroskitter");
+        harness.assertNotOnBattlefield(player2, "Necroskitter");
+    }
+
+    @Test
+    @DisplayName("Uses counters before the simultaneous death and counter cancellation")
+    void triggersWhenCountersCancelAsCreatureDies() {
+        harness.addToBattlefield(player1, new Necroskitter());
+        Permanent dying = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        dying.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        dying.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        dying.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
+        assertThat(returned.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+    }
 }
