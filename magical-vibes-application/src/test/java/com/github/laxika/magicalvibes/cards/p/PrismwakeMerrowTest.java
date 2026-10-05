@@ -113,6 +113,46 @@ class PrismwakeMerrowTest extends BaseCardTest {
 
     // ===== Helpers =====
 
+    @Test
+    @DisplayName("Flash allows casting during the opponent's upkeep")
+    void canCastDuringOpponentsUpkeep() {
+        Permanent druid = harness.addToBattlefieldAndReturn(player2, new DevotedDruid());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.ensurePriority(player1);
+
+        resolveMerrowAndChoose(druid.getId(), "RED", "DONE");
+
+        harness.assertOnBattlefield(player1, "Prismwake Merrow");
+        assertThat(gqs.getEffectiveColors(gd, druid)).containsExactly(CardColor.RED);
+    }
+
+    @Test
+    @DisplayName("Choosing all five colors completes the choice without DONE")
+    void canChooseAllFiveColors() {
+        Permanent druid = harness.addToBattlefieldAndReturn(player2, new DevotedDruid());
+
+        resolveMerrowAndChoose(druid.getId(), "WHITE", "BLUE", "BLACK", "RED", "GREEN");
+
+        assertThat(gqs.getEffectiveColors(gd, druid)).containsExactlyInAnyOrder(
+                CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A later color change replaces all colors chosen by an earlier trigger")
+    void laterColorChangeReplacesEarlierColors() {
+        Permanent druid = harness.addToBattlefieldAndReturn(player2, new DevotedDruid());
+        resolveMerrowAndChoose(druid.getId(), "WHITE", "BLUE", "DONE");
+
+        resolveMerrowAndChoose(druid.getId(), "BLACK", "RED", "DONE");
+
+        assertThat(gqs.getEffectiveColors(gd, druid))
+                .containsExactlyInAnyOrder(CardColor.BLACK, CardColor.RED);
+    }
+
     private void castMerrow(UUID targetId) {
         harness.setHand(player1, List.of(new PrismwakeMerrow()));
         harness.addMana(player1, ManaColor.BLUE, 3);
