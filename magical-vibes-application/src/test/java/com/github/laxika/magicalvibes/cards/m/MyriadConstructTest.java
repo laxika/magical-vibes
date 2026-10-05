@@ -60,8 +60,7 @@ class MyriadConstructTest extends BaseCardTest {
     @Test
     void becomingTargetOfAbilityDoesNotTriggerIt() {
         Permanent myriad = harness.addToBattlefieldAndReturn(player1, new MyriadConstruct());
-        harness.addToBattlefield(player2, new ProdigalPyromancer());
-        Permanent pyromancer = findPermanent(player2, "Prodigal Pyromancer");
+        Permanent pyromancer = harness.addToBattlefieldAndReturn(player2, new ProdigalPyromancer());
         pyromancer.setSummoningSick(false);
 
         harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(pyromancer),
@@ -70,5 +69,53 @@ class MyriadConstructTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(myriad);
         assertThat(findPermanents(player1, "Construct")).isEmpty();
+    }
+
+    @Test
+    void unkickedEntersWithoutCountersDespiteOpponentsNonbasicLand() {
+        harness.addToBattlefield(player2, new AdarkarWastes());
+        harness.setHand(player1, List.of(new MyriadConstruct()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Myriad Construct")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void kickedDoesNotCountControllersNonbasicLands() {
+        harness.addToBattlefield(player1, new AdarkarWastes());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new MyriadConstruct()));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Myriad Construct")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void eachSpellTargetingItCreatesTokensEvenAfterAnEarlierTriggerSacrificesIt() {
+        Permanent myriad = harness.addToBattlefieldAndReturn(player1, new MyriadConstruct());
+        myriad.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, myriad.getId());
+        harness.castInstant(player1, 0, myriad.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Myriad Construct");
+        assertThat(findPermanents(player1, "Construct")).hasSize(6);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Construct")).hasSize(12);
     }
 }
