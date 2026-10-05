@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.g.GoblinSpelunkers;
-import com.github.laxika.magicalvibes.cards.k.KjeldoranSkyknight;
+import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -13,13 +13,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BalduvianBears.class, GoblinSpelunkers.class, KjeldoranSkyknight.class, PegasusCharger.class, PitTrap.class})
+@CardUsed({GoblinSpelunkers.class, WindDrake.class, PitTrap.class})
 class PitTrapTest extends BaseCardTest {
 
     private Permanent addReadyTrap(Player player) {
-        Permanent trap = new Permanent(new PitTrap());
+        Permanent trap = harness.addToBattlefieldAndReturn(player, new PitTrap());
         trap.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(trap);
         return trap;
     }
 
@@ -72,7 +71,7 @@ class PitTrapTest extends BaseCardTest {
     @DisplayName("Cannot target an attacking creature with flying")
     void cannotTargetFlyingAttacker() {
         Permanent trap = addReadyTrap(player1);
-        Permanent flyer = addAttacker(player2, new PegasusCharger());
+        Permanent flyer = addAttacker(player2, new WindDrake());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() ->
@@ -97,7 +96,7 @@ class PitTrapTest extends BaseCardTest {
     @DisplayName("Cannot activate without paying the generic mana cost")
     void cannotActivateWithoutMana() {
         Permanent trap = addReadyTrap(player1);
-        Permanent attacker = addAttacker(player2, new BalduvianBears());
+        Permanent attacker = addAttacker(player2, new GoblinSpelunkers());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() ->
@@ -105,14 +104,14 @@ class PitTrapTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         harness.assertOnBattlefield(player1, "Pit Trap");
-        harness.assertOnBattlefield(player2, "Balduvian Bears");
+        harness.assertOnBattlefield(player2, "Goblin Spelunkers");
     }
 
     @Test
     @DisplayName("Does not destroy the target if it stops attacking before resolution")
     void targetMustStillBeAttackingOnResolution() {
         Permanent trap = addReadyTrap(player1);
-        Permanent attacker = addAttacker(player2, new BalduvianBears());
+        Permanent attacker = addAttacker(player2, new GoblinSpelunkers());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, idxOf(player1, trap), 0, null, attacker.getId());
@@ -120,7 +119,7 @@ class PitTrapTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Pit Trap");
-        harness.assertOnBattlefield(player2, "Balduvian Bears");
+        harness.assertOnBattlefield(player2, "Goblin Spelunkers");
     }
 
     @Test
@@ -152,5 +151,70 @@ class PitTrapTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Pit Trap");
         harness.assertOnBattlefield(player2, "Goblin Spelunkers");
+    }
+
+    @Test
+    @DisplayName("Does not destroy a target that gains flying before resolution")
+    void targetGainingFlyingBecomesIllegal() {
+        Permanent trap = addReadyTrap(player1);
+        Permanent attacker = addAttacker(player2, new GoblinSpelunkers());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, idxOf(player1, trap), 0, null, attacker.getId());
+        attacker.getGrantedKeywords().add(Keyword.FLYING);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Pit Trap");
+        harness.assertOnBattlefield(player2, "Goblin Spelunkers");
+    }
+
+    @Test
+    @DisplayName("Cannot destroy an indestructible attacking creature")
+    void indestructibleAttackerSurvives() {
+        Permanent trap = addReadyTrap(player1);
+        Permanent attacker = addAttacker(player2, new GoblinSpelunkers());
+        attacker.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, idxOf(player1, trap), 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Pit Trap");
+        harness.assertOnBattlefield(player2, "Goblin Spelunkers");
+    }
+
+    @Test
+    @DisplayName("A newly entered noncreature trap can activate and is sacrificed immediately")
+    void newlyEnteredTrapPaysSacrificeBeforeResolution() {
+        Permanent trap = harness.addToBattlefieldAndReturn(player1, new PitTrap());
+        trap.setSummoningSick(true);
+        Permanent attacker = addAttacker(player2, new GoblinSpelunkers());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, idxOf(player1, trap), 0, null, attacker.getId());
+
+        harness.assertNotOnBattlefield(player1, "Pit Trap");
+        harness.assertInGraveyard(player1, "Pit Trap");
+        harness.assertOnBattlefield(player2, "Goblin Spelunkers");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Goblin Spelunkers");
+    }
+
+    @Test
+    @DisplayName("Can destroy its controller's own attacking creature")
+    void canTargetOwnAttacker() {
+        Permanent trap = addReadyTrap(player1);
+        Permanent attacker = addCreatureReady(player1, new GoblinSpelunkers());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, idxOf(player1, trap), 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Pit Trap");
+        harness.assertInGraveyard(player1, "Goblin Spelunkers");
     }
 }
