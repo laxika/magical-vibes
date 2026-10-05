@@ -22,6 +22,41 @@ import static org.assertj.core.api.Assertions.assertThat;
 class NoRestForTheWickedTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Can activate with no creature cards in the graveyard")
+    void resolvesWithNoEligibleCards() {
+        harness.addToBattlefield(player1, new NoRestForTheWicked());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "No Rest for the Wicked");
+    }
+
+    @Test
+    @DisplayName("Returns a creature that dies after activation but before resolution")
+    void determinesEligibleCardsAtResolution() {
+        Card creature = new GrizzlyBears();
+        harness.addToBattlefield(player1, new NoRestForTheWicked());
+        UUID creatureId = harness.addToBattlefieldAndReturn(player1, creature).getId();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.castAndResolveInstant(player1, 0, creatureId);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactly(creature.getId());
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
     @DisplayName("Activating the ability sacrifices No Rest for the Wicked and puts the ability on the stack")
     void activationSacrificesAndStacksAbility() {
         harness.addToBattlefield(player1, new NoRestForTheWicked());
@@ -48,8 +83,7 @@ class NoRestForTheWickedTest extends BaseCardTest {
         UUID targetCreatureId = harness.addToBattlefieldAndReturn(player1, diedThisTurn).getId();
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, targetCreatureId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetCreatureId);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -69,8 +103,7 @@ class NoRestForTheWickedTest extends BaseCardTest {
         UUID targetCreatureId = harness.addToBattlefieldAndReturn(player2, opponentsCreature).getId();
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, targetCreatureId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetCreatureId);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -90,8 +123,7 @@ class NoRestForTheWickedTest extends BaseCardTest {
         UUID targetCreatureId = harness.addToBattlefieldAndReturn(player1, diedLastTurn).getId();
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, targetCreatureId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetCreatureId);
 
         harness.forceStep(TurnStep.CLEANUP);
         harness.clearPriorityPassed();
@@ -120,12 +152,10 @@ class NoRestForTheWickedTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock(), new Shock()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, firstTargetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, firstTargetId);
 
         UUID secondTargetId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, secondTargetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, secondTargetId);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -149,10 +179,8 @@ class NoRestForTheWickedTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, noncreaturePermanent.getId());
-        harness.passBothPriorities();
-        harness.castInstant(player1, 0, creaturePermanent.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, noncreaturePermanent.getId());
+        harness.castAndResolveInstant(player1, 0, creaturePermanent.getId());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -173,8 +201,7 @@ class NoRestForTheWickedTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, targetCreatureId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetCreatureId);
         harness.addToBattlefield(player1, new NoRestForTheWicked());
 
         harness.activateAbility(player1, 0, null, null);
