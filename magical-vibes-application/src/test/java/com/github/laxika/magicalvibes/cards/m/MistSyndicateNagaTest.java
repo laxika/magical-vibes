@@ -25,9 +25,7 @@ class MistSyndicateNagaTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .filteredOn(permanent -> permanent.getCard().getName().equals("Mist-Syndicate Naga"))
-                .hasSize(2);
+        assertThat(findPermanents(player1, "Mist-Syndicate Naga")).hasSize(2);
     }
 
     @Test
@@ -42,14 +40,58 @@ class MistSyndicateNagaTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MistSyndicateNaga()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.DECLARE_BLOCKERS));
-        harness.activateHandAbility(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            harness.activateHandAbility(player1, 0, bears.getId());
+            harness.passBothPriorities();
+        });
 
         harness.assertInHand(player1, "Grizzly Bears");
         Permanent naga = findPermanent(player1, "Mist-Syndicate Naga");
         assertThat(naga.isTapped()).isTrue();
         assertThat(naga.isAttacking()).isTrue();
         assertThat(naga.getAttackTarget()).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("A token copy enters untapped and outside combat and can create another copy")
+    void tokenCopyCanCreateAnotherCopy() {
+        Permanent naga = addCreatureReady(player1, new MistSyndicateNaga());
+        naga.setAttacking(true);
+        resolveCombat();
+        resolveAllTriggers();
+
+        Permanent token = findPermanents(player1, "Mist-Syndicate Naga").stream()
+                .filter(permanent -> !permanent.getId().equals(naga.getId()))
+                .findFirst().orElseThrow();
+        assertThat(token.isTapped()).isFalse();
+        assertThat(token.isAttacking()).isFalse();
+        assertThat(token.isSummoningSick()).isTrue();
+
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        declareAttackers(List.of(1));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Mist-Syndicate Naga")).hasSize(3);
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    @DisplayName("Combat damage to a creature does not create a token copy")
+    void blockedNagaDoesNotCreateToken() {
+        addCreatureReady(player1, new MistSyndicateNaga());
+        addCreatureReady(player2, new MistSyndicateNaga());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, java.util.Map.of(0, 0));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Mist-Syndicate Naga")).isEmpty();
+        assertThat(findPermanents(player2, "Mist-Syndicate Naga")).isEmpty();
+        harness.assertInGraveyard(player1, "Mist-Syndicate Naga");
+        harness.assertInGraveyard(player2, "Mist-Syndicate Naga");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }
