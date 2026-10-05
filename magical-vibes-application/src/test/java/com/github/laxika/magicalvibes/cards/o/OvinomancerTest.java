@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.FlyingMen;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Pendelhaven;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.StuffyDoll;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -25,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Ovinomancer.class, Forest.class, Island.class, Plains.class, Pendelhaven.class,
-        FlyingMen.class})
+        FlyingMen.class, StuffyDoll.class})
 class OvinomancerTest extends BaseCardTest {
 
     private long basicLandsControlledBy(UUID playerId) {
@@ -41,8 +42,7 @@ class OvinomancerTest extends BaseCardTest {
 
     private void castOvinomancer() {
         harness.castFromHand(player1, new Ovinomancer(), "{2}{U}");
-        harness.passBothPriorities(); // resolve creature spell → ETB on stack
-        harness.passBothPriorities(); // resolve ETB
+        resolveAllTriggers();
     }
 
     @Test
@@ -242,5 +242,64 @@ class OvinomancerTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard().isToken() && p.getCard().getName().equals("Sheep"))).isTrue();
         assertThat(gd.playerBattlefields.get(player2.getId()).stream()
                 .noneMatch(p -> p.getCard().isToken() && p.getCard().getName().equals("Sheep"))).isTrue();
+    }
+
+    @Test
+    @DisplayName("An indestructible target survives and its controller still creates a Sheep")
+    void indestructibleTargetStillCreatesSheep() {
+        addCreatureReady(player1, new Ovinomancer());
+        harness.addToBattlefield(player2, new StuffyDoll());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, battlefieldIndex(player1, "Ovinomancer"), null,
+                harness.getPermanentId(player2, "Stuffy Doll"));
+
+        harness.assertInHand(player1, "Ovinomancer");
+        assertThat(countPermanents(player2, "Sheep")).isZero();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Stuffy Doll");
+        assertThat(countPermanents(player2, "Sheep")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Sheep")).isZero();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents paying the tap cost and leaves Ovinomancer in play")
+    void summoningSicknessPreventsActivation() {
+        harness.addToBattlefield(player1, new Ovinomancer());
+        harness.addToBattlefield(player2, new FlyingMen());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                battlefieldIndex(player1, "Ovinomancer"), null,
+                harness.getPermanentId(player2, "Flying Men")))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        harness.assertOnBattlefield(player1, "Ovinomancer");
+        harness.assertNotInHand(player1, "Ovinomancer");
+        harness.assertOnBattlefield(player2, "Flying Men");
+    }
+
+    @Test
+    @DisplayName("Tapped basic lands can be returned, including a land owned by the opponent")
+    void returnsTappedBasicLandsToTheirOwners() {
+        Island borrowedIsland = new Island();
+        borrowedIsland.setOwnerId(player2.getId());
+        harness.addToBattlefieldAndReturn(player1, borrowedIsland).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new Plains()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new Forest()).setTapped(true);
+        castOvinomancer();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Ovinomancer");
+        assertThat(basicLandsControlledBy(player1.getId())).isZero();
+        harness.assertInHand(player2, "Island");
+        harness.assertNotInHand(player1, "Island");
+        harness.assertInHand(player1, "Plains");
+        harness.assertInHand(player1, "Forest");
     }
 }
