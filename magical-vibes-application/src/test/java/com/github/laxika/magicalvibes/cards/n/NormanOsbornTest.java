@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Humble;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -23,7 +24,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NormanOsborn.class, GreenGoblin.class, GrizzlyBears.class, MindStone.class, Mountain.class})
+@CardUsed({NormanOsborn.class, GreenGoblin.class, GrizzlyBears.class, Humble.class, MindStone.class, Mountain.class})
 class NormanOsbornTest extends BaseCardTest {
 
     @Test
@@ -32,10 +33,7 @@ class NormanOsbornTest extends BaseCardTest {
         Permanent norman = addFrontReady(player1);
         norman.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
@@ -49,10 +47,7 @@ class NormanOsbornTest extends BaseCardTest {
     void transformsIntoBackFace() {
         Permanent norman = addFrontReady(player1);
         prepareMainPhase();
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
+        addTransformationMana();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -105,6 +100,169 @@ class NormanOsbornTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void discardingLandDuringConniveDoesNotAddCounter() {
+        Permanent norman = addFrontReady(player1);
+        Mountain land = new Mountain();
+        GrizzlyBears drawn = new GrizzlyBears();
+        harness.setHand(player1, List.of(land));
+        harness.setLibrary(player1, List.of(drawn));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, gd.playerHands.get(player1.getId()).indexOf(land));
+
+        assertThat(norman.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(land);
+    }
+
+    @Test
+    void greenGoblinCannotBeBlockedByGroundCreature() {
+        Permanent goblin = addBackReady(player1);
+        goblin.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        prepareDeclareBlockers();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("flying");
+    }
+
+    @Test
+    void greenGoblinCannotBeBlockedByOnlyOneFlyingCreature() {
+        Permanent goblin = addBackReady(player1);
+        goblin.setAttacking(true);
+        Permanent blocker = addBackReady(player2);
+        prepareDeclareBlockers();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("menace");
+    }
+
+    @Test
+    void transformationPreservesCountersAndTappedState() {
+        Permanent norman = addFrontReady(player1);
+        norman.setTapped(true);
+        norman.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        prepareMainPhase();
+        addTransformationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(norman.isTransformed()).isTrue();
+        assertThat(norman.isTapped()).isTrue();
+        assertThat(norman.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void cannotTransformDuringCombat() {
+        addFrontReady(player1);
+        prepareMainPhase();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        addTransformationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void mayhemDoesNotReduceColoredMana() {
+        addBackReady(player1);
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(bears.getId())));
+        prepareMainPhase();
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castFromGraveyard(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(bears.getId()));
+    }
+
+    @Test
+    void mayhemDoesNotAllowArtifactsAtInstantSpeed() {
+        addBackReady(player1);
+        MindStone stone = new MindStone();
+        harness.setGraveyard(player1, List.of(stone));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(stone.getId())));
+        prepareMainPhase();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void mayhemDoesNotAllowLands() {
+        addBackReady(player1);
+        Mountain land = new Mountain();
+        harness.setGraveyard(player1, List.of(land));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(land.getId())));
+        prepareMainPhase();
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void graveyardReductionDoesNotApplyToHand() {
+        addBackReady(player1);
+        harness.setHand(player1, List.of(new MindStone()));
+        prepareMainPhase();
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void opponentDoesNotReceiveMayhem() {
+        addBackReady(player2);
+        MindStone stone = new MindStone();
+        harness.setGraveyard(player1, List.of(stone));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(stone.getId())));
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void losingAbilitiesRemovesMayhemPermission() {
+        Permanent goblin = addBackReady(player1);
+        MindStone stone = new MindStone();
+        harness.setGraveyard(player1, List.of(stone));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(stone.getId())));
+        prepareMainPhase();
+        harness.setHand(player1, List.of(new Humble()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, goblin.getId());
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    private void addTransformationMana() {
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
     }
 
     private Permanent addFrontReady(Player player) {
