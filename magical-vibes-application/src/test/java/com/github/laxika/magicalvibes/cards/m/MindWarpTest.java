@@ -23,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MindWarp.class, DarkRitual.class, Forest.class, GiantGrowth.class})
+@CardUsed({MindWarp.class, DarkRitual.class, Forest.class, GiantGrowth.class, AbyssalSpecter.class, Dodecapod.class})
 class MindWarpTest extends BaseCardTest {
 
     @Test
@@ -52,8 +52,7 @@ class MindWarpTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindWarp()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 
-        harness.castSorcery(player1, 0, 2, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2, player2.getId());
 
         PendingInteraction.RevealedHandChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
@@ -73,8 +72,7 @@ class MindWarpTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindWarp()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 1, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1, player2.getId());
 
         assertThat(gd.gameLog.stream().map(log -> log.plainText()))
                 .noneMatch(log -> log.contains(forest.getName()) || log.contains(giantGrowth.getName()));
@@ -90,8 +88,7 @@ class MindWarpTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindWarp()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 
-        harness.castSorcery(player1, 0, 2, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2, player2.getId());
 
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
@@ -111,8 +108,7 @@ class MindWarpTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindWarp()));
         harness.addMana(player1, ManaColor.BLACK, 8);
 
-        harness.castSorcery(player1, 0, 4, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 4, player2.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).remainingCount())
                 .isEqualTo(2);
@@ -184,8 +180,7 @@ class MindWarpTest extends BaseCardTest {
         harness.setHand(player1, new ArrayList<>(List.of(mindWarp, forest, giantGrowth)));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 1, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1, player1.getId());
 
         harness.handleCardChosen(player1, 0);
 
@@ -218,8 +213,7 @@ class MindWarpTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindWarp()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 
-        harness.castSorcery(player1, 0, 1, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1, player2.getId());
 
         assertThatThrownBy(() -> harness.handleCardChosen(player1, 5))
                 .isInstanceOf(IllegalStateException.class)
@@ -236,8 +230,7 @@ class MindWarpTest extends BaseCardTest {
         harness.setHand(player1, new ArrayList<>(List.of(mindWarp, dodecapod)));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 1, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1, player1.getId());
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -254,8 +247,7 @@ class MindWarpTest extends BaseCardTest {
         harness.setHand(player1, List.of(mindWarp));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 1, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1, player2.getId());
         harness.handleCardChosen(player1, 0);
 
         Permanent enteredDodecapod = gd.playerBattlefields.get(player2.getId()).stream()
@@ -276,11 +268,52 @@ class MindWarpTest extends BaseCardTest {
         harness.setHand(player1, List.of(mindWarp));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 1, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1, player2.getId());
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(mindWarp);
+    }
+
+    @Test
+    @DisplayName("The caster can choose cards in any order and leave the unchosen card in hand")
+    void choosesCardsInAnyOrder() {
+        Card forest = new Forest();
+        Card giantGrowth = new GiantGrowth();
+        Card specter = new AbyssalSpecter();
+        harness.setHand(player2, List.of(forest, giantGrowth, specter));
+        harness.setHand(player1, List.of(new MindWarp()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castAndResolveSorcery(player1, 0, 2, player2.getId());
+        harness.handleCardChosen(player1, 2);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(giantGrowth);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .containsExactlyInAnyOrder(forest, specter);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The target cannot choose or decline the caster's mandatory card choice")
+    void onlyCasterCanMakeMandatoryChoice() {
+        Card forest = new Forest();
+        harness.setHand(player2, List.of(forest));
+        harness.setHand(player1, List.of(new MindWarp()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, 1, player2.getId());
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(forest);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(forest);
     }
 }
