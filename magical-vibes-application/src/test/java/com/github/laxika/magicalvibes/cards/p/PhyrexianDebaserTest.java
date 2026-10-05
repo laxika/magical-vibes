@@ -95,4 +95,41 @@ class PhyrexianDebaserTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Phyrexian Broodlings");
         harness.assertInGraveyard(player2, "Phyrexian Broodlings");
     }
+
+    @Test
+    @DisplayName("Sacrifice is paid immediately and the ability can target your own creature")
+    void sacrificeIsPaidBeforeResolvingAgainstOwnCreature() {
+        addCreatureReady(player1, new PhyrexianDebaser());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GangOfElk());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Phyrexian Debaser");
+        harness.assertInGraveyard(player1, "Phyrexian Debaser");
+        assertThat(target.getEffectivePower()).isEqualTo(5);
+        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Debaser can target itself even though paying the cost removes its target")
+    void abilityCanTargetItsOwnSource() {
+        Permanent source = addCreatureReady(player1, new PhyrexianDebaser());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new GangOfElk());
+
+        harness.activateAbility(player1, 0, null, source.getId());
+
+        harness.assertNotOnBattlefield(player1, "Phyrexian Debaser");
+        harness.assertInGraveyard(player1, "Phyrexian Debaser");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(otherCreature.getEffectivePower()).isEqualTo(5);
+        assertThat(otherCreature.getEffectiveToughness()).isEqualTo(4);
+    }
 }
