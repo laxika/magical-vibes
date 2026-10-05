@@ -2,12 +2,15 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({NoggleHedgeMage.class, GrizzlyBears.class, Island.class, Mountain.class})
 class NoggleHedgeMageTest extends BaseCardTest {
-
-    // ===== Islands gate: may tap two target permanents =====
 
     @Test
     @DisplayName("With two Islands, ETB may tap two target permanents")
@@ -67,8 +69,6 @@ class NoggleHedgeMageTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
-    // ===== Mountains gate: may deal 2 damage to target player or planeswalker =====
-
     @Test
     @DisplayName("With two Mountains, ETB may deal 2 damage to target player")
     void mountainsGateDealsTwoDamage() {
@@ -112,8 +112,6 @@ class NoggleHedgeMageTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
-    // ===== Neither gate met =====
-
     @Test
     @DisplayName("With no Islands or Mountains, neither ability triggers")
     void neitherGateTriggers() {
@@ -125,8 +123,6 @@ class NoggleHedgeMageTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Noggle Hedge-Mage");
     }
-
-    // ===== Both gates met: independent tap + damage both resolve =====
 
     @Test
     @DisplayName("With two Islands and two Mountains, both abilities may resolve")
@@ -141,16 +137,95 @@ class NoggleHedgeMageTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bear1.getId());
         harness.handlePermanentChosen(player1, bear2.getId());
         harness.handlePermanentChosen(player1, player2.getId()); // damage target
-        harness.passBothPriorities(); // resolve bundled ETB -> first may prompt (tap)
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleMayAbilityChosen(player1, true); // second may prompt (damage)
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(bear1.isTapped()).isTrue();
         assertThat(bear2.isTapped()).isTrue();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
-    // ===== Helpers =====
+    @Test
+    void losingAnIslandBeforeResolutionPreventsTapping() {
+        addLands(player1, 2, 0);
+        Permanent bear1 = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bear2 = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castNoggle();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bear1.getId());
+        harness.handlePermanentChosen(player1, bear2.getId());
+        gd.playerBattlefields.get(player1.getId()).removeFirst();
+        harness.passBothPriorities();
+
+        assertThat(bear1.isTapped()).isFalse();
+        assertThat(bear2.isTapped()).isFalse();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void losingAMountainBeforeResolutionPreventsDamage() {
+        addLands(player1, 0, 2);
+        harness.setLife(player2, 20);
+        castNoggle();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).removeFirst();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void oneRemainingLegalTapTargetStillGetsTapped() {
+        addLands(player1, 2, 0);
+        Permanent bear1 = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bear2 = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castNoggle();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bear1.getId());
+        harness.handlePermanentChosen(player1, bear2.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(bear1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bear2.isTapped()).isTrue();
+    }
+
+    @Test
+    void damageCanTargetItsController() {
+        addLands(player1, 0, 2);
+        harness.setLife(player1, 20);
+        castNoggle();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @CardUsed(JaceBeleren.class)
+    void damageCanTargetAPlaneswalker() {
+        addLands(player1, 0, 2);
+        Permanent jace = harness.enterBattlefieldAndReturn(player2, new JaceBeleren());
+        castNoggle();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, jace.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Jace Beleren");
+    }
 
     private void castNoggle() {
         harness.setHand(player1, List.of(new NoggleHedgeMage()));
