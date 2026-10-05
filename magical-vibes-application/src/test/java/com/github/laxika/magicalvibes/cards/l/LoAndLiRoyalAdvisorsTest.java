@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.d.Distress;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PersistentPetitioners;
+import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({LoAndLiRoyalAdvisors.class, PersistentPetitioners.class, Distress.class,
-        GrizzlyBears.class})
+        GrizzlyBears.class, RestInPeace.class})
 class LoAndLiRoyalAdvisorsTest extends BaseCardTest {
 
     @Test
@@ -29,8 +30,7 @@ class LoAndLiRoyalAdvisorsTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
@@ -55,5 +55,103 @@ class LoAndLiRoyalAdvisorsTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyElementsOf(library);
         assertThat(loAndLi.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isOne();
         assertThat(petitioners.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isOne();
+    }
+
+    @Test
+    void selfMillDoesNotTriggerAndCanBePaidWithBlackMana() {
+        Permanent loAndLi = harness.addToBattlefieldAndReturn(player1, new LoAndLiRoyalAdvisors());
+        List<Card> library = List.of(new LoAndLiRoyalAdvisors(), new LoAndLiRoyalAdvisors(),
+                new LoAndLiRoyalAdvisors(), new LoAndLiRoyalAdvisors());
+        harness.setLibrary(player1, library);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(library);
+        assertThat(loAndLi.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void emptyOpponentLibraryDoesNotTrigger() {
+        Permanent loAndLi = harness.addToBattlefieldAndReturn(player1, new LoAndLiRoyalAdvisors());
+        harness.setLibrary(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(loAndLi.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void controllerDiscardDoesNotTrigger() {
+        Permanent loAndLi = harness.addToBattlefieldAndReturn(player1, new LoAndLiRoyalAdvisors());
+        Card discardedCard = new GrizzlyBears();
+        harness.setHand(player1, List.of(new Distress(), discardedCard));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discardedCard);
+        assertThat(loAndLi.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void shortOpponentLibraryStillTriggersOnceAndOnlyControlledAdvisorsGetCounters() {
+        Permanent loAndLi = harness.addToBattlefieldAndReturn(player1, new LoAndLiRoyalAdvisors());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingAdvisor = harness.addToBattlefieldAndReturn(player2, new PersistentPetitioners());
+        Card lastCard = new LoAndLiRoyalAdvisors();
+        harness.setLibrary(player2, List.of(lastCard));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(lastCard);
+        assertThat(loAndLi.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isOne();
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opposingAdvisor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void abilityCanBeActivatedRepeatedlyWithoutTapping() {
+        Permanent loAndLi = harness.addToBattlefieldAndReturn(player1, new LoAndLiRoyalAdvisors());
+        List<Card> library = List.of(new LoAndLiRoyalAdvisors(), new LoAndLiRoyalAdvisors(),
+                new LoAndLiRoyalAdvisors(), new LoAndLiRoyalAdvisors(),
+                new LoAndLiRoyalAdvisors(), new LoAndLiRoyalAdvisors(),
+                new LoAndLiRoyalAdvisors(), new LoAndLiRoyalAdvisors());
+        harness.setLibrary(player2, library);
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        resolveAllTriggers();
+        harness.activateAbility(player1, 0, null, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyElementsOf(library);
+        assertThat(loAndLi.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(loAndLi.isTapped()).isFalse();
+    }
+
+    @Test
+    @CardUsed({LoAndLiRoyalAdvisors.class, RestInPeace.class})
+    void opponentMillStillTriggersWhenCardsAreExiledInsteadOfEnteringGraveyard() {
+        Permanent loAndLi = harness.addToBattlefieldAndReturn(player1, new LoAndLiRoyalAdvisors());
+        harness.addToBattlefield(player1, new RestInPeace());
+        List<Card> library = List.of(new LoAndLiRoyalAdvisors(), new LoAndLiRoyalAdvisors(),
+                new LoAndLiRoyalAdvisors(), new LoAndLiRoyalAdvisors());
+        harness.setLibrary(player2, library);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactlyElementsOf(library);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(loAndLi.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isOne();
     }
 }
