@@ -8,8 +8,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -44,9 +42,7 @@ class LeafLeapGuideTest extends BaseCardTest {
                 .filter(card -> card.getName().equals("Grizzly Bears"))
                 .findFirst()
                 .orElseThrow();
-        harness.setHand(player1, List.of(enteringCard));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, enteringCard, "{1}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -60,9 +56,48 @@ class LeafLeapGuideTest extends BaseCardTest {
     @Test
     void cannotReturnTheGuideItself() {
         Permanent guide = harness.enterBattlefieldAndReturn(player1, new LeafLeapGuide());
+        guide.setSummoningSick(false);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, guide.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotTriggerForItselfOrAnOpponentsCreature() {
+        Permanent guide = harness.enterBattlefieldAndReturn(player1, new LeafLeapGuide());
+        assertThat(gd.stack).isEmpty();
+        Permanent opponent = harness.enterBattlefieldAndReturn(player2, new LeafLeapGuide());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, guide)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(1);
+    }
+
+    @Test
+    void cannotReturnAnOpponentsCreature() {
+        Permanent guide = harness.addToBattlefieldAndReturn(player1, new LeafLeapGuide());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new LeafLeapGuide());
+        guide.setSummoningSick(false);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, opponent.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void eachGuideBoostsItselfAndTheEnteringCreature() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new LeafLeapGuide());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new LeafLeapGuide());
+        Permanent entering = harness.enterBattlefieldAndReturn(player1, new LeafLeapGuide());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, entering)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, entering)).isEqualTo(3);
     }
 }
