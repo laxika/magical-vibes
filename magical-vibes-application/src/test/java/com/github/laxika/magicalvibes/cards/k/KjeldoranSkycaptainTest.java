@@ -26,8 +26,7 @@ class KjeldoranSkycaptainTest extends BaseCardTest {
         Permanent skycaptain = addCreatureReady(player1, new KjeldoranSkycaptain());
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
@@ -40,11 +39,9 @@ class KjeldoranSkycaptainTest extends BaseCardTest {
         Permanent skycaptain = addCreatureReady(player1, new KjeldoranSkycaptain());
         Permanent blocker = addCreatureReady(player2, new MesaPegasus());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(skycaptain);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
@@ -66,8 +63,7 @@ class KjeldoranSkycaptainTest extends BaseCardTest {
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         PendingInteraction.CombatDamageAssignment prompt =
                 gd.interaction.activeInteraction(PendingInteraction.CombatDamageAssignment.class);
@@ -80,5 +76,47 @@ class KjeldoranSkycaptainTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(skycaptain);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+    }
+
+    @Test
+    @DisplayName("A banding blocker lets its controller divide attacker damage without a lethal assignment")
+    void bandingBlockerLetsDefenderSplitDamage() {
+        Permanent attacker = addCreatureReady(player1, new KjeldoranRoyalGuard());
+        Permanent skycaptain = addCreatureReady(player2, new KjeldoranSkycaptain());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveCombat();
+
+        PendingInteraction.CombatDamageAssignment prompt =
+                gd.interaction.activeInteraction(PendingInteraction.CombatDamageAssignment.class);
+        assertThat(prompt).isNotNull();
+        assertThat(prompt.playerId()).isEqualTo(player2.getId());
+        assertThat(prompt.totalDamage()).isEqualTo(2);
+
+        harness.handleCombatDamageAssigned(player2, 0, Map.of(skycaptain.getId(), 1, bears.getId(), 1));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(skycaptain, bears);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An attacking band cannot include two creatures without banding")
+    void rejectsBandWithTwoNonBandingCreatures() {
+        addCreatureReady(player1, new KjeldoranSkycaptain());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0, 1, 2),
+                null, List.of(List.of(0, 1, 2))))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
