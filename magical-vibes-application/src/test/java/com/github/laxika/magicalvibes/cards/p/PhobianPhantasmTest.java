@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.b.BorealGriffin;
 import com.github.laxika.magicalvibes.cards.c.ChillingShade;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.r.RimeboundDead;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PhobianPhantasm.class, BorealGriffin.class, ChillingShade.class, Ornithopter.class})
+@CardUsed({PhobianPhantasm.class, BorealGriffin.class, ChillingShade.class, Ornithopter.class, RimeboundDead.class})
 class PhobianPhantasmTest extends BaseCardTest {
 
     @Test
@@ -96,8 +96,7 @@ class PhobianPhantasmTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(log -> log.contains("declares 1 blocker"));
+        assertThat(gameLogContains("declares 1 blocker")).isTrue();
     }
 
     @Test
@@ -110,7 +109,63 @@ class PhobianPhantasmTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(log -> log.contains("declares 1 blocker"));
+        assertThat(gameLogContains("declares 1 blocker")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep does not trigger on the opponent's upkeep")
+    void opponentUpkeepDoesNotAddAgeCounter() {
+        Permanent phantasm = harness.addToBattlefieldAndReturn(player1, new PhobianPhantasm());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(phantasm.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(phantasm);
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep includes age counters already on the permanent")
+    void upkeepCountsExistingAgeCounters() {
+        Permanent phantasm = harness.addToBattlefieldAndReturn(player1, new PhobianPhantasm());
+        phantasm.setCounterCount(CounterType.AGE, 2);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(phantasm.getCounterCount(CounterType.AGE)).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(phantasm);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("Insufficient mana cannot partially pay cumulative upkeep")
+    void insufficientManaCannotPartiallyPayUpkeep() {
+        Permanent phantasm = harness.addToBattlefieldAndReturn(player1, new PhobianPhantasm());
+        phantasm.setCounterCount(CounterType.AGE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(phantasm);
+        harness.assertInGraveyard(player1, "Phobian Phantasm");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Flying still prevents a black creature without flying or reach from blocking")
+    void flyingPreventsBlackGroundBlocker() {
+        addCreatureReady(player1, new PhobianPhantasm());
+        addCreatureReady(player2, new RimeboundDead());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("(flying)");
     }
 }
