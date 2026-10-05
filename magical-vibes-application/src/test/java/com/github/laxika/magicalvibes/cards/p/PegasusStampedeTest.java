@@ -100,6 +100,61 @@ class PegasusStampedeTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Forest");
     }
 
+    @Test
+    @DisplayName("Buyback sacrifices a tapped land while casting, before creating the token")
+    void buybackSacrificeIsPaidBeforeResolution() {
+        Permanent land = addLand(player1);
+        harness.tapPermanent(player1, 0);
+        harness.setHand(player1, List.of(new PegasusStampede()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castSorceryWithSacrificeAndBuyback(player1, 0, land.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(land);
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertNotInHand(player1, "Pegasus Stampede");
+        assertThat(findPermanents(player1, "Pegasus")).isEmpty();
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Pegasus Stampede");
+        assertThat(findPermanents(player1, "Pegasus")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A returned spell can be cast again without paying buyback")
+    void recastingWithoutBuybackDoesNotRetainPreviousPayment() {
+        Permanent land = addLand(player1);
+        cast(true, land);
+        addManaForSpell(player1);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Pegasus")).hasSize(2);
+        harness.assertNotInHand(player1, "Pegasus Stampede");
+        harness.assertInGraveyard(player1, "Pegasus Stampede");
+    }
+
+    @Test
+    @DisplayName("Buyback cannot sacrifice a Pegasus creature token instead of a land")
+    void buybackRejectsNonlandPermanent() {
+        harness.castFromHand(player1, new PegasusStampede(), "{1}{W}");
+        harness.passBothPriorities();
+        Permanent token = findPermanent(player1, "Pegasus");
+        harness.setHand(player1, List.of(new PegasusStampede()));
+        addManaForSpell(player1);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrificeAndBuyback(
+                player1, 0, token.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
+        harness.assertInHand(player1, "Pegasus Stampede");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addLand(Player player) {
         return harness.addToBattlefieldAndReturn(player, new Forest());
     }
