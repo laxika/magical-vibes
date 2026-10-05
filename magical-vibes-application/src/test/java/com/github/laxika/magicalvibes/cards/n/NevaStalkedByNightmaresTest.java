@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.PhyrexianArena;
+import com.github.laxika.magicalvibes.cards.a.ArmoryMice;
+import com.github.laxika.magicalvibes.cards.u.UpTheBeanstalk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,13 +19,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NevaStalkedByNightmares.class, GrizzlyBears.class, PhyrexianArena.class, Forest.class})
+@CardUsed({NevaStalkedByNightmares.class, ArmoryMice.class, UpTheBeanstalk.class, Forest.class})
 class NevaStalkedByNightmaresTest extends BaseCardTest {
 
     @Test
     @DisplayName("Returns a target creature card from the graveyard to hand when it enters")
     void returnsTargetCreatureCardToHand() {
-        Card creature = new GrizzlyBears();
+        Card creature = new ArmoryMice();
         harness.setGraveyard(player1, List.of(creature));
 
         castNeva();
@@ -34,14 +34,14 @@ class NevaStalkedByNightmaresTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities();
 
-        harness.assertInHand(player1, "Grizzly Bears");
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Armory Mice");
+        harness.assertNotInGraveyard(player1, "Armory Mice");
     }
 
     @Test
     @DisplayName("Returns a target enchantment card from the graveyard to hand when it enters")
     void returnsTargetEnchantmentCardToHand() {
-        Card enchantment = new PhyrexianArena();
+        Card enchantment = new UpTheBeanstalk();
         harness.setGraveyard(player1, List.of(enchantment));
 
         castNeva();
@@ -49,14 +49,14 @@ class NevaStalkedByNightmaresTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(enchantment.getId()));
         harness.passBothPriorities();
 
-        harness.assertInHand(player1, "Phyrexian Arena");
-        harness.assertNotInGraveyard(player1, "Phyrexian Arena");
+        harness.assertInHand(player1, "Up the Beanstalk");
+        harness.assertNotInGraveyard(player1, "Up the Beanstalk");
     }
 
     @Test
     @DisplayName("Does not target a card that is neither a creature nor an enchantment")
     void doesNotTargetInvalidGraveyardCard() {
-        Card creature = new GrizzlyBears();
+        Card creature = new ArmoryMice();
         Card land = new Forest();
         harness.setGraveyard(player1, List.of(land, creature));
 
@@ -71,7 +71,7 @@ class NevaStalkedByNightmaresTest extends BaseCardTest {
     @DisplayName("Puts a counter on itself and scries when your enchantment goes to the graveyard")
     void controlledEnchantmentDyingAddsCounterAndScries() {
         Permanent neva = harness.addToBattlefieldAndReturn(player1, new NevaStalkedByNightmares());
-        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new PhyrexianArena());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new UpTheBeanstalk());
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, enchantment));
@@ -80,7 +80,7 @@ class NevaStalkedByNightmaresTest extends BaseCardTest {
         assertThat(neva.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1,
+        gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(0), List.of()));
         assertThat(gd.stack).isEmpty();
     }
@@ -89,12 +89,81 @@ class NevaStalkedByNightmaresTest extends BaseCardTest {
     @DisplayName("Does not trigger for an opponent's enchantment")
     void opponentEnchantmentDoesNotTrigger() {
         Permanent neva = harness.addToBattlefieldAndReturn(player1, new NevaStalkedByNightmares());
-        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new PhyrexianArena());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new UpTheBeanstalk());
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, enchantment));
 
         assertThat(neva.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only your graveyard is searched for the enters ability")
+    void cannotReturnOpponentsGraveyardCard() {
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.setGraveyard(player2, List.of(new ArmoryMice()));
+
+        castNeva();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player2, "Armory Mice");
+        harness.assertNotInHand(player1, "Armory Mice");
+    }
+
+    @Test
+    @DisplayName("A graveyard target that leaves before resolution is not returned")
+    void missingGraveyardTargetIsNotReturned() {
+        Card creature = new ArmoryMice();
+        harness.setGraveyard(player1, List.of(creature));
+        castNeva();
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(creature));
+
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Armory Mice");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Still scries when Neva leaves after its enchantment-death ability triggers")
+    void scriesWithoutNevaOnBattlefield() {
+        Permanent neva = harness.addToBattlefieldAndReturn(player1, new NevaStalkedByNightmares());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new UpTheBeanstalk());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, enchantment);
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, neva);
+        });
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Scries when Neva and its controller's enchantment die simultaneously")
+    void simultaneousDeathStillTriggersScry() {
+        Permanent neva = harness.addToBattlefieldAndReturn(player1, new NevaStalkedByNightmares());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new UpTheBeanstalk());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().performSimultaneousRemovals(
+                gd, List.of(neva, enchantment), () -> {
+                    harness.getPermanentRemovalService().removePermanentToGraveyard(gd, neva);
+                    harness.getPermanentRemovalService().removePermanentToGraveyard(gd, enchantment);
+                }));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
         assertThat(gd.stack).isEmpty();
     }
 
