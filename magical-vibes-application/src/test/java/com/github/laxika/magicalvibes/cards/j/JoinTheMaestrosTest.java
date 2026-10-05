@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GirderGoons;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({JoinTheMaestros.class, GrizzlyBears.class, LlanowarElves.class})
+@CardUsed({JoinTheMaestros.class, GrizzlyBears.class, LlanowarElves.class, GirderGoons.class})
 class JoinTheMaestrosTest extends BaseCardTest {
 
     @Test
@@ -25,8 +26,7 @@ class JoinTheMaestrosTest extends BaseCardTest {
         harness.setHand(player1, List.of(new JoinTheMaestros()));
         addMana();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -70,6 +70,38 @@ class JoinTheMaestrosTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, casualtyCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("power 2");
+    }
+
+    @Test
+    @DisplayName("Casualty can be declined even with an eligible creature")
+    void declinesCasualtyWithEligibleCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GirderGoons());
+        harness.setHand(player1, List.of(new JoinTheMaestros()));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(creature.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's creature to pay casualty")
+    void rejectsOpponentsCreatureForCasualty() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GirderGoons());
+        harness.setHand(player1, List.of(new JoinTheMaestros()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(creature.getId()));
+        harness.assertInHand(player1, "Join the Maestros");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addMana() {
