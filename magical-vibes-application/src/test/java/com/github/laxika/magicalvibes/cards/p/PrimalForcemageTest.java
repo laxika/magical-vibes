@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
-import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.cards.s.StonewoodInvocation;
+import com.github.laxika.magicalvibes.cards.s.SuddenShock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PrimalForcemage.class, AshcoatBear.class, PentarchWard.class})
+@CardUsed({PrimalForcemage.class, AshcoatBear.class, StonewoodInvocation.class, SuddenShock.class})
 class PrimalForcemageTest extends BaseCardTest {
 
     @Test
@@ -97,27 +98,77 @@ class PrimalForcemageTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Boosts the entering creature even if it gains protection from green")
-    void boostsEnteringCreatureWithProtectionFromGreen() {
+    @DisplayName("Boosts the entering creature even if it gains shroud before resolution")
+    void boostsEnteringCreatureWithShroud() {
         harness.addToBattlefield(player1, new PrimalForcemage());
 
         harness.castFromHand(player1, new AshcoatBear(), "{1}{G}");
         harness.passBothPriorities();
 
         Permanent enteringBear = findPermanent(player1, "Ashcoat Bear");
-        harness.setHand(player1, List.of(new PentarchWard()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-        harness.castEnchantment(player1, 0, enteringBear.getId());
-        harness.passBothPriorities();
-        harness.handleListChoice(player1, "GREEN");
+        assertThat(enteringBear.getPowerModifier()).isEqualTo(0);
+        assertThat(enteringBear.getToughnessModifier()).isEqualTo(0);
+        harness.setHand(player1, List.of(new StonewoodInvocation()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castAndResolveInstant(player1, 0, enteringBear.getId());
+
+        assertThat(enteringBear.getPowerModifier()).isEqualTo(5);
+        assertThat(enteringBear.getToughnessModifier()).isEqualTo(5);
+        resolveAllTriggers();
+
+        assertThat(enteringBear.getPowerModifier()).isEqualTo(8);
+        assertThat(enteringBear.getToughnessModifier()).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("Multiple Forcemages each boost the entering creature")
+    void multipleForcemagesStackTheirBoosts() {
+        harness.addToBattlefield(player1, new PrimalForcemage());
+        harness.addToBattlefield(player1, new PrimalForcemage());
+
+        harness.castFromHand(player1, new AshcoatBear(), "{1}{G}");
+        resolveAllTriggers();
+
+        Permanent bear = findPermanent(player1, "Ashcoat Bear");
+        assertThat(bear.getPowerModifier()).isEqualTo(6);
+        assertThat(bear.getToughnessModifier()).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("The trigger resolves even after Forcemage dies")
+    void boostResolvesAfterSourceDies() {
+        Permanent forcemage = harness.addToBattlefieldAndReturn(player1, new PrimalForcemage());
+        harness.castFromHand(player1, new AshcoatBear(), "{1}{G}");
         harness.passBothPriorities();
 
-        assertThat(gqs.hasProtectionFrom(gd, enteringBear, CardColor.GREEN)).isTrue();
+        harness.setHand(player1, List.of(new SuddenShock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, forcemage.getId());
+        assertThat(findPermanents(player1, "Primal Forcemage")).isEmpty();
+        resolveAllTriggers();
 
+        Permanent bear = findPermanent(player1, "Ashcoat Bear");
+        assertThat(bear.getPowerModifier()).isEqualTo(3);
+        assertThat(bear.getToughnessModifier()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An entering creature can die before the boost resolves")
+    void enteringCreatureDiesBeforeBoostResolves() {
+        Permanent forcemage = harness.addToBattlefieldAndReturn(player1, new PrimalForcemage());
+        harness.castFromHand(player1, new AshcoatBear(), "{1}{G}");
         harness.passBothPriorities();
+        Permanent bear = findPermanent(player1, "Ashcoat Bear");
 
-        assertThat(enteringBear.getPowerModifier()).isEqualTo(3);
-        assertThat(enteringBear.getToughnessModifier()).isEqualTo(3);
+        harness.setHand(player1, List.of(new SuddenShock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Ashcoat Bear")).isEmpty();
+        assertThat(forcemage.getPowerModifier()).isEqualTo(0);
+        assertThat(forcemage.getToughnessModifier()).isEqualTo(0);
+        assertThat(gd.stack).isEmpty();
     }
 
 }
