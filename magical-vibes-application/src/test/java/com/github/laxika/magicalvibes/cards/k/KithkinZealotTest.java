@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.c.CrumblingAshes;
 import com.github.laxika.magicalvibes.cards.n.NettleSentinel;
 import com.github.laxika.magicalvibes.cards.s.Spitemare;
 import com.github.laxika.magicalvibes.cards.s.StigmaLasher;
+import com.github.laxika.magicalvibes.cards.u.Unmake;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -21,7 +22,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         CrumblingAshes.class,
         NettleSentinel.class,
         Spitemare.class,
-        StigmaLasher.class
+        StigmaLasher.class,
+        Unmake.class
 })
 class KithkinZealotTest extends BaseCardTest {
 
@@ -117,6 +119,46 @@ class KithkinZealotTest extends BaseCardTest {
         castKithkinZealot();
 
         harness.assertLife(player1, 21);
+    }
+
+    @Test
+    @DisplayName("Does not count a permanent exiled before the trigger resolves")
+    void ignoresPermanentRemovedInResponse() {
+        harness.setLife(player1, 20);
+        var lasher = harness.addToBattlefieldAndReturn(player2, new StigmaLasher());
+        harness.setHand(player1, List.of(new KithkinZealot()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Unmake()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castInstant(player1, 0, lasher.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The trigger still gains life after Kithkin Zealot is exiled")
+    void triggerResolvesWithoutSource() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player2, new StigmaLasher());
+        harness.setHand(player1, List.of(new KithkinZealot()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Unmake()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castInstant(player1, 0, findPermanent(player1, "Kithkin Zealot").getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
     }
 
     @Test
