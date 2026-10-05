@@ -18,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MasterOfWinds.class, Forest.class, Island.class, GrizzlyBears.class, Shock.class, WizardReplica.class})
+@CardUsed({MasterOfWinds.class, MindDrain.class, Forest.class, Island.class, GrizzlyBears.class, Shock.class, WizardReplica.class})
 class MasterOfWindsTest extends BaseCardTest {
 
     @Test
@@ -38,8 +38,7 @@ class MasterOfWindsTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard().getName().equals("Master of Winds"));
+        harness.assertOnBattlefield(player1, "Master of Winds");
     }
 
     @Test
@@ -49,8 +48,7 @@ class MasterOfWindsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
@@ -71,12 +69,12 @@ class MasterOfWindsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.handleListChoice(player1, "4/1");
 
+        harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -114,6 +112,56 @@ class MasterOfWindsTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(master.getEffectivePower()).isEqualTo(1);
+        assertThat(master.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Casting a sorcery offers the base power and toughness choice")
+    void castingSorceryOffersChoice() {
+        Permanent master = addMasterOfWinds();
+        harness.setHand(player1, List.of(new MindDrain()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "4/1");
+
+        assertThat(master.getEffectivePower()).isEqualTo(4);
+        assertThat(master.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Declining the optional change leaves power and toughness unchanged")
+    void decliningChangeLeavesPowerAndToughnessUnchanged() {
+        Permanent master = addMasterOfWinds();
+        harness.setHand(player1, List.of(new MindDrain()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(master.getEffectivePower()).isEqualTo(1);
+        assertThat(master.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An opponent's instant does not trigger Master of Winds")
+    void opponentsInstantDoesNotTrigger() {
+        Permanent master = addMasterOfWinds();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player1, 18);
         assertThat(master.getEffectivePower()).isEqualTo(1);
         assertThat(master.getEffectiveToughness()).isEqualTo(4);
     }
