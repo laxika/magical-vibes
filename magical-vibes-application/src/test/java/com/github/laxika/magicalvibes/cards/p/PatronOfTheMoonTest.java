@@ -3,6 +3,10 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.Floodbringer;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.s.SphereOfResistance;
+import com.github.laxika.magicalvibes.cards.v.ValakutTheMoltenPinnacle;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,8 +17,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PatronOfTheMoon.class, Forest.class, Island.class, Floodbringer.class})
+@CardUsed({PatronOfTheMoon.class, Forest.class, Island.class, Floodbringer.class, Mountain.class, ValakutTheMoltenPinnacle.class, SphereOfResistance.class})
 class PatronOfTheMoonTest extends BaseCardTest {
 
     @Test
@@ -108,5 +113,74 @@ class PatronOfTheMoonTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Patron of the Moon");
         harness.assertNotOnBattlefield(player1, "Floodbringer");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Both Mountains enter together and each sees five other Mountains")
+    void simultaneousMountainsTriggerValakutTwice() {
+        harness.addToBattlefield(player1, new PatronOfTheMoon());
+        harness.addToBattlefield(player1, new ValakutTheMoltenPinnacle());
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, new Mountain());
+        }
+        harness.setHand(player1, List.of(new Mountain(), new Mountain()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, player2.getId());
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    @DisplayName("Moonfolk offering still pays the cost increase from Sphere of Resistance")
+    void offeringPaysSpellCostIncrease() {
+        Permanent moonfolk = harness.addToBattlefieldAndReturn(player1, new Floodbringer());
+        harness.addToBattlefield(player2, new SphereOfResistance());
+        harness.setHand(player1, List.of(new PatronOfTheMoon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castCreatureWithAlternateCost(player1, 0, List.of(moonfolk.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Patron of the Moon");
+        harness.assertInGraveyard(player1, "Floodbringer");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped Patron may activate and cannot put a nonland from hand onto the battlefield")
+    void tappedPatronOnlyPutsLands() {
+        Permanent patron = harness.addToBattlefieldAndReturn(player1, new PatronOfTheMoon());
+        patron.tap();
+        harness.setHand(player1, List.of(new Floodbringer(), new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleCardChosen(player1, 1);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(findPermanent(player1, "Forest").isTapped()).isTrue();
+        harness.assertInHand(player1, "Floodbringer");
+        harness.assertNotOnBattlefield(player1, "Floodbringer");
+        assertThat(patron.isTapped()).isTrue();
     }
 }
