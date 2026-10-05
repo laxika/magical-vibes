@@ -37,8 +37,8 @@ class OnakkeCatacombTest extends BaseCardTest {
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent opposingCreature = addCreatureReady(player2, new GrizzlyBears());
 
-        assertThat(gqs.getEffectiveColors(gd, ownCreature)).contains(CardColor.BLACK);
-        assertThat(gqs.getEffectiveColors(gd, opposingCreature)).contains(CardColor.BLACK);
+        assertThat(gqs.getEffectiveColors(gd, ownCreature)).containsExactly(CardColor.BLACK);
+        assertThat(gqs.getEffectiveColors(gd, opposingCreature)).containsExactly(CardColor.BLACK);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.DEATHTOUCH)).isTrue();
         assertThat(gqs.hasKeyword(gd, opposingCreature, Keyword.DEATHTOUCH)).isTrue();
     }
@@ -62,5 +62,44 @@ class OnakkeCatacombTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    void chaosCreatesOneTriggeredAbilityForBothBenefits() {
+        addCreatureReady(player1, new GrizzlyBears());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+    }
+
+    @Test
+    void creaturesEnteringAfterChaosResolvesDoNotReceiveItsBenefits() {
+        Permanent originalCreature = addCreatureReady(player1, new GrizzlyBears());
+        harness.inMutationScope(() -> planar.chaos(gd));
+        resolveAllTriggers();
+
+        Permanent laterCreature = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, originalCreature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, originalCreature, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.DEATHTOUCH)).isTrue();
+    }
+
+    @Test
+    void leavingThePlaneRemovesStaticEffectsButNotResolvedChaosBenefits() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.inMutationScope(() -> planar.chaos(gd));
+        resolveAllTriggers();
+
+        harness.inMutationScope(() -> gd.planechase.faceUp.clear());
+
+        assertThat(gqs.getEffectiveColors(gd, creature)).containsExactly(CardColor.GREEN);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
     }
 }
