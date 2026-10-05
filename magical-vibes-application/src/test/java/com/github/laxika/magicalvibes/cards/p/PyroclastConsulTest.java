@@ -78,4 +78,38 @@ class PyroclastConsulTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(consul.getMarkedDamage()).isZero();
     }
+
+    @Test
+    @DisplayName("Kinship still deals damage when the Consul leaves before resolution")
+    void kinshipResolvesAfterSourceLeavesBattlefield() {
+        Permanent consul = addCreatureReady(player1, new PyroclastConsul());
+        harness.addToBattlefield(player2, new KinsbaileCavalier());
+        PyroclastConsul topCard = new PyroclastConsul();
+        harness.setLibrary(player1, List.of(topCard));
+
+        advanceToUpkeep(player1);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, consul);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Pyroclast Consul");
+        harness.assertNotOnBattlefield(player2, "Kinsbaile Cavalier");
+        harness.assertInGraveyard(player2, "Kinsbaile Cavalier");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @DisplayName("Kinship does not trigger during the opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent consul = addCreatureReady(player1, new PyroclastConsul());
+        harness.setLibrary(player1, List.of(new PyroclastConsul()));
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(consul.getMarkedDamage()).isZero();
+    }
 }
