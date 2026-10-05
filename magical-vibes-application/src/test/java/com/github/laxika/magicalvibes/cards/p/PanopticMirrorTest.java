@@ -54,8 +54,7 @@ class PanopticMirrorTest extends BaseCardTest {
     void upkeepCopiesAndCastsImprintedCard() {
         PanopticMirror mirrorCard = new PanopticMirror();
         AetherSnap snapCard = new AetherSnap();
-        harness.addToBattlefield(player1, mirrorCard);
-        Permanent mirror = findPermanent(player1, "Panoptic Mirror");
+        Permanent mirror = harness.addToBattlefieldAndReturn(player1, mirrorCard);
         gd.setImprintedCard(mirrorCard, snapCard);
         gd.exiledCards.add(new ExiledCardEntry(snapCard, player1.getId(), mirror.getId()));
 
@@ -122,5 +121,170 @@ class PanopticMirrorTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         assertThat(gd.getCardsExiledByPermanent(findPermanent(player1, "Panoptic Mirror").getId()))
                 .extracting(card -> card.getId()).containsExactly(truthCard.getId(), decayCard.getId());
+    }
+
+    @Test
+    void decliningImprintStillTapsMirror() {
+        Permanent mirror = harness.addToBattlefieldAndReturn(player1, new PanopticMirror());
+        harness.setHand(player1, List.of(new EchoingTruth()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 2, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(mirror.isTapped()).isTrue();
+        harness.assertInHand(player1, "Echoing Truth");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void imprintRejectsArtifactWithMatchingManaValue() {
+        harness.addToBattlefield(player1, new PanopticMirror());
+        harness.setHand(player1, List.of(new PanopticMirror(), new AetherSnap()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, 5, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ImprintFromHandChoice.class)
+                .validIndices()).containsExactly(1);
+        harness.handleCardChosen(player1, 1);
+        harness.assertInHand(player1, "Panoptic Mirror");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(card -> card.getName()).containsExactly("Aether Snap");
+    }
+
+    @Test
+    void decliningUpkeepCopyLeavesOriginalExiled() {
+        PanopticMirror mirrorCard = new PanopticMirror();
+        AetherSnap snapCard = new AetherSnap();
+        Permanent mirror = harness.addToBattlefieldAndReturn(player1, mirrorCard);
+        gd.setImprintedCard(mirrorCard, snapCard);
+        gd.exiledCards.add(new ExiledCardEntry(snapCard, player1.getId(), mirror.getId()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(snapCard);
+    }
+
+    @Test
+    void opponentUpkeepDoesNotTriggerMirror() {
+        PanopticMirror mirrorCard = new PanopticMirror();
+        AetherSnap snapCard = new AetherSnap();
+        Permanent mirror = harness.addToBattlefieldAndReturn(player1, mirrorCard);
+        gd.setImprintedCard(mirrorCard, snapCard);
+        gd.exiledCards.add(new ExiledCardEntry(snapCard, player1.getId(), mirror.getId()));
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(snapCard);
+    }
+
+    @Test
+    void imprintStillResolvesAfterMirrorIsReturnedToHand() {
+        Permanent mirror = harness.addToBattlefieldAndReturn(player1, new PanopticMirror());
+        AetherSnap snapCard = new AetherSnap();
+        harness.setHand(player1, List.of(new EchoingTruth(), snapCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 5, null);
+        harness.castAndResolveInstant(player1, 0, mirror.getId());
+        harness.assertInHand(player1, "Panoptic Mirror");
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.ImprintFromHandChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ImprintFromHandChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIndices()).containsExactly(0);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(snapCard);
+        harness.assertNotInHand(player1, "Aether Snap");
+    }
+
+    @Test
+    void cardImprintedInResponseToUpkeepTriggerCanBeCopied() {
+        harness.addToBattlefield(player1, new PanopticMirror());
+        harness.setHand(player1, List.of(new AetherSnap()));
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, 5, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).anyMatch(entry -> entry.isCopy()
+                && entry.getCard().getName().equals("Aether Snap"));
+        harness.passBothPriorities();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(card -> card.getName()).containsExactly("Aether Snap");
+    }
+
+    @Test
+    void upkeepCopyCanChooseTargetAndReturnMirror() {
+        PanopticMirror mirrorCard = new PanopticMirror();
+        EchoingTruth truthCard = new EchoingTruth();
+        Permanent mirror = harness.addToBattlefieldAndReturn(player1, mirrorCard);
+        gd.setImprintedCard(mirrorCard, truthCard);
+        gd.exiledCards.add(new ExiledCardEntry(truthCard, player1.getId(), mirror.getId()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, mirror.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Panoptic Mirror");
+        harness.assertInHand(player1, "Panoptic Mirror");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(truthCard);
+        harness.assertNotInGraveyard(player1, "Echoing Truth");
+    }
+
+    @Test
+    void upkeepWithoutImprintedCardsCreatesNoCopy() {
+        harness.addToBattlefield(player1, new PanopticMirror());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void decliningToCastCopyRemovesOnlyTheCopy() {
+        PanopticMirror mirrorCard = new PanopticMirror();
+        AetherSnap snapCard = new AetherSnap();
+        Permanent mirror = harness.addToBattlefieldAndReturn(player1, mirrorCard);
+        gd.setImprintedCard(mirrorCard, snapCard);
+        gd.exiledCards.add(new ExiledCardEntry(snapCard, player1.getId(), mirror.getId()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(snapCard);
+        harness.assertNotInGraveyard(player1, "Aether Snap");
     }
 }
