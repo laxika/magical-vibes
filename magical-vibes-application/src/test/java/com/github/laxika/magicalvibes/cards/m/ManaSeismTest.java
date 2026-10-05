@@ -94,6 +94,49 @@ class ManaSeismTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 
+    @Test
+    @DisplayName("Lands are sacrificed during resolution, not as a casting cost")
+    void sacrificeHappensDuringResolution() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        castManaSeism();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(forest);
+        harness.assertNotInGraveyard(player1, "Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Mana Seism");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("All lands can be sacrificed, including tapped lands, without affecting other permanents")
+    void sacrificesAllLandsIncludingTappedLands() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent orchard = harness.addToBattlefieldAndReturn(player1, new ForbiddenOrchard());
+        forest.setTapped(true);
+        orchard.setTapped(true);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new WanderingOnes());
+        Permanent opposingLand = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        castManaSeism();
+        harness.passBothPriorities();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId(), orchard.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(opposingLand);
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forbidden Orchard");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void castManaSeism() {
         harness.castFromHand(player1, new ManaSeism(), "{1}{R}");
     }
