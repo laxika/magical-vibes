@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.a.ArcaneDenial;
+import com.github.laxika.magicalvibes.cards.m.MakeshiftMannequin;
 import com.github.laxika.magicalvibes.cards.w.WildAesthir;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KrovikanHorror.class, WildAesthir.class, ArcaneDenial.class})
+@CardUsed({KrovikanHorror.class, WildAesthir.class, ArcaneDenial.class, MakeshiftMannequin.class})
 class KrovikanHorrorTest extends BaseCardTest {
 
     @Test
@@ -168,10 +169,94 @@ class KrovikanHorrorTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Wild Aesthir");
     }
 
+    @Test
+    @DisplayName("A noncreature put directly above it before resolution prevents the return")
+    void noncreatureAbovePreventsReturnAtResolution() {
+        KrovikanHorror horror = new KrovikanHorror();
+        WildAesthir creature = new WildAesthir();
+        harness.setGraveyard(player1, List.of(horror, creature));
+
+        advanceToEndStep(player1);
+        harness.setGraveyard(player1, List.of(horror, new ArcaneDenial(), creature));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Krovikan Horror");
+        harness.assertNotInHand(player1, "Krovikan Horror");
+    }
+
+    @Test
+    @DisplayName("The creature directly above it need not be the same creature at resolution")
+    void differentCreatureAboveStillAllowsReturn() {
+        KrovikanHorror horror = new KrovikanHorror();
+        harness.setGraveyard(player1, List.of(horror, new WildAesthir()));
+
+        advanceToEndStep(player1);
+        harness.setGraveyard(player1, List.of(horror, new WildAesthir()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Krovikan Horror");
+        harness.assertNotInGraveyard(player1, "Krovikan Horror");
+        harness.assertInGraveyard(player1, "Wild Aesthir");
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Horror can activate and pays the sacrifice before damage resolves")
+    void summoningSickSourceCanActivateAndPaysSacrificeImmediately() {
+        harness.addToBattlefield(player1, new KrovikanHorror());
+        harness.addToBattlefield(player1, new WildAesthir());
+        UUID fodder = harness.getPermanentId(player1, "Wild Aesthir");
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.handlePermanentChosen(player1, fodder);
+
+        harness.assertInGraveyard(player1, "Wild Aesthir");
+        harness.assertNotOnBattlefield(player1, "Wild Aesthir");
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertOnBattlefield(player1, "Krovikan Horror");
+    }
+
+    @Test
+    @DisplayName("An old end-step trigger cannot return a Horror that left and reentered the graveyard")
+    void oldTriggerCannotReturnNewGraveyardObject() {
+        KrovikanHorror horror = new KrovikanHorror();
+        harness.setGraveyard(player1, List.of(horror, new WildAesthir()));
+        harness.addToBattlefield(player1, new KrovikanHorror());
+        harness.addToBattlefield(player1, new WildAesthir());
+        UUID fodder = harness.getPermanentId(player1, "Wild Aesthir");
+        harness.setHand(player1, List.of(new MakeshiftMannequin()));
+
+        advanceToEndStep(player1);
+        harness.addMana(player1, ManaColor.BLACK, 6);
+        harness.castInstant(player1, 0, horror.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        UUID returnedHorror = gd.playerBattlefields.get(player1.getId()).get(2).getId();
+        harness.activateAbility(player1, 2, null, player2.getId());
+        harness.handlePermanentChosen(player1, returnedHorror);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handlePermanentChosen(player1, fodder);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotInHand(player1, "Krovikan Horror");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getId().equals(horror.getId()));
+    }
+
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
     }
 }
