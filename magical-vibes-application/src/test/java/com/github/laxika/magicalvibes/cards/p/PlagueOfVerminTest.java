@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.m.MysticReflection;
 import com.github.laxika.magicalvibes.cards.s.StaffOfTheStoryteller;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -7,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,8 +18,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PlagueOfVermin.class})
+@CardUsed({PlagueOfVermin.class, StaffOfTheStoryteller.class, PlatinumEmperion.class, MysticReflection.class})
 class PlagueOfVerminTest extends BaseCardTest {
 
     private void cast(Player caster) {
@@ -27,8 +30,7 @@ class PlagueOfVerminTest extends BaseCardTest {
         harness.setHand(caster, List.of(plague));
         harness.addMana(caster, ManaColor.BLACK, 1);
         harness.addMana(caster, ManaColor.COLORLESS, 6);
-        harness.castSorcery(caster, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(caster, 0, 0);
     }
 
     private long ratCount(Player player) {
@@ -80,9 +82,14 @@ class PlagueOfVerminTest extends BaseCardTest {
         harness.handleXValueChosen(player2, 0);
         harness.handleXValueChosen(player1, 0);
 
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleXValueChosen(player2, 2);
+        harness.handleXValueChosen(player1, 0);
+        harness.handleXValueChosen(player2, 0);
+
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(ratCount(player1)).isEqualTo(3);
-        assertThat(ratCount(player2)).isEqualTo(2);
+        assertThat(ratCount(player2)).isEqualTo(4);
     }
 
     @Test
@@ -119,8 +126,9 @@ class PlagueOfVerminTest extends BaseCardTest {
         cast(player1);
 
         harness.handleXValueChosen(player1, 2);
-        harness.handleXValueChosen(player2, 0);
+        harness.handleXValueChosen(player2, 1);
         harness.handleXValueChosen(player1, 0);
+        harness.handleXValueChosen(player2, 0);
         resolveAllTriggers();
 
         assertThat(staff.getCounterCount(CounterType.STORY)).isEqualTo(1);
@@ -161,5 +169,109 @@ class PlagueOfVerminTest extends BaseCardTest {
         harness.assertLife(player2, 0);
         assertThat(ratCount(player1)).isEqualTo(5);
         assertThat(ratCount(player2)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Life payments accumulate across rounds and Rats enter only after all payments finish")
+    void accumulatesPaymentsBeforeCreatingTokens() {
+        cast(player1);
+
+        harness.handleXValueChosen(player1, 2);
+        harness.assertLife(player1, 18);
+        harness.handleXValueChosen(player2, 1);
+        harness.handleXValueChosen(player1, 3);
+        harness.assertLife(player1, 15);
+        harness.handleXValueChosen(player2, 2);
+        harness.assertLife(player2, 17);
+        assertThat(ratCount(player1)).isZero();
+        assertThat(ratCount(player2)).isZero();
+
+        harness.handleXValueChosen(player1, 0);
+        harness.handleXValueChosen(player2, 0);
+
+        assertThat(ratCount(player1)).isEqualTo(5);
+        assertThat(ratCount(player2)).isEqualTo(3);
+        harness.assertInGraveyard(player1, "Plague of Vermin");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A player cannot pay more life than they currently have")
+    void rejectsPaymentAboveCurrentLife() {
+        harness.setLife(player1, 5);
+        cast(player1);
+
+        assertThatThrownBy(() -> harness.handleXValueChosen(player1, 6))
+                .isInstanceOf(IllegalArgumentException.class);
+        harness.assertLife(player1, 5);
+        harness.handleXValueChosen(player1, 2);
+        harness.handleXValueChosen(player2, 1);
+        assertThatThrownBy(() -> harness.handleXValueChosen(player1, 4))
+                .isInstanceOf(IllegalArgumentException.class);
+        harness.assertLife(player1, 3);
+        harness.handleXValueChosen(player1, 0);
+        harness.handleXValueChosen(player2, 0);
+
+        assertThat(ratCount(player1)).isEqualTo(2);
+        assertThat(ratCount(player2)).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed({PlagueOfVermin.class, PlatinumEmperion.class})
+    @DisplayName("A player whose life total cannot change may only pay zero life")
+    void cannotPayLifeWithPlatinumEmperion() {
+        harness.addToBattlefield(player1, new PlatinumEmperion());
+        cast(player1);
+
+        PendingInteraction.XValueChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
+        assertThat(choice).isNotNull();
+        if (choice.playerId().equals(player1.getId())) {
+            assertThat(choice.maxValue()).isZero();
+            assertThatThrownBy(() -> harness.handleXValueChosen(player1, 1))
+                    .isInstanceOf(IllegalArgumentException.class);
+            harness.handleXValueChosen(player1, 0);
+        }
+        harness.handleXValueChosen(player2, 2);
+        choice = gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
+        assertThat(choice).isNotNull();
+        if (choice.playerId().equals(player1.getId())) {
+            assertThat(choice.maxValue()).isZero();
+            harness.handleXValueChosen(player1, 0);
+        }
+        harness.handleXValueChosen(player2, 0);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+        assertThat(ratCount(player1)).isZero();
+        assertThat(ratCount(player2)).isEqualTo(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({PlagueOfVermin.class, PlatinumEmperion.class, MysticReflection.class})
+    @DisplayName("All Rats enter together and receive the same next-entry replacement")
+    void allRatsEnterSimultaneouslyWithMysticReflection() {
+        Permanent emperion = harness.addToBattlefieldAndReturn(player2, new PlatinumEmperion());
+        harness.setHand(player1, List.of(new MysticReflection()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, emperion.getId());
+
+        cast(player1);
+        harness.handleXValueChosen(player1, 3);
+        PendingInteraction.XValueChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
+        if (choice.playerId().equals(player2.getId())) {
+            harness.handleXValueChosen(player2, 0);
+        }
+        harness.handleXValueChosen(player1, 0);
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleXValueChosen(player2, 0);
+        }
+
+        assertThat(countPermanents(player1, "Platinum Emperion")).isEqualTo(3);
+        assertThat(ratCount(player1)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
