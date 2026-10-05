@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({JoyousRespite.class, Forest.class, HumbleBudoka.class})
@@ -52,5 +54,23 @@ class JoyousRespiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+    }
+
+    @Test
+    @DisplayName("Counts tapped lands but excludes land cards outside the battlefield")
+    void countsTappedLandsOnlyOnBattlefield() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.tapPermanent(player1, 0);
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.setExile(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLife(player1, 20);
+
+        harness.castFromHand(player1, new JoyousRespite(), "{3}{G}");
+        harness.setHand(player1, List.of(new Forest()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
     }
 }
