@@ -17,4 +17,19 @@ class NourishTest extends BaseCardTest {
 
         harness.assertLife(player1, 16);
     }
+
+    @Test
+    @DisplayName("Only its controller gains life, even above the starting life total")
+    void otherPlayerGainsLifeAboveStartingTotal() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        harness.castFromHand(player2, new Nourish(), "{G}{G}");
+
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 26);
+        harness.assertInGraveyard(player2, "Nourish");
+    }
 }
