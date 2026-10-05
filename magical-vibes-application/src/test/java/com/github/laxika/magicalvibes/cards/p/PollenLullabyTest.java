@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.k.KithkinGreatheart;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -25,6 +26,8 @@ class PollenLullabyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castAndResolveInstant(player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
     }
 
     @Test
@@ -54,7 +57,7 @@ class PollenLullabyTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
         assertThat(attacker.getMarkedDamage()).isZero();
         assertThat(blocker.getMarkedDamage()).isZero();
     }
@@ -155,6 +158,36 @@ class PollenLullabyTest extends BaseCardTest {
         castPollenLullaby();
 
         assertThat(opponentCreature.getSkipUntapCount()).isZero();
+    }
+
+    @Test
+    @DisplayName("Prevents damage from an unblocked attacker even after losing the clash")
+    void preventsUnblockedCombatDamageAfterLostClash() {
+        addCreatureReady(player1, new KithkinGreatheart());
+        harness.setLife(player2, 20);
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new KithkinGreatheart()));
+
+        castPollenLullaby();
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The untap restriction expires after the opponent's next untap step")
+    void untapRestrictionExpiresAfterOneStep() {
+        harness.setLibrary(player1, List.of(new KithkinGreatheart()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        Permanent creature = addCreatureReady(player2, new KithkinGreatheart());
+        creature.tap();
+
+        castPollenLullaby();
+        harness.performUntapStep(player2);
+        assertThat(creature.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(creature.isTapped()).isFalse();
     }
 
 }
