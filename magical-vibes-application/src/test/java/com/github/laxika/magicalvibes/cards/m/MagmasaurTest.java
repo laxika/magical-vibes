@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.c.CanyonWildcat;
 import com.github.laxika.magicalvibes.cards.c.Capsize;
+import com.github.laxika.magicalvibes.cards.l.Lifelink;
+import com.github.laxika.magicalvibes.cards.s.SpinalGraft;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Magmasaur.class, CanyonWildcat.class, WindDrake.class, Capsize.class})
+@CardUsed({Magmasaur.class, CanyonWildcat.class, WindDrake.class, Capsize.class,
+        SpinalGraft.class, Lifelink.class})
 class MagmasaurTest extends BaseCardTest {
 
     @Test
@@ -86,8 +89,7 @@ class MagmasaurTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Capsize()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, magmasaur.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, magmasaur.getId());
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Magmasaur");
@@ -116,7 +118,9 @@ class MagmasaurTest extends BaseCardTest {
     @Test
     @DisplayName("With no +1/+1 counters left Magmasaur is sacrificed without a prompt and deals no damage")
     void noCountersSacrificesWithoutPrompt() {
-        addMagmasaur(player1, 0);
+        Permanent magmasaur = addMagmasaur(player1, 0);
+        Permanent graft = harness.addToBattlefieldAndReturn(player1, new SpinalGraft());
+        graft.setAttachedTo(magmasaur.getId());
         Permanent wildcat = harness.addToBattlefieldAndReturn(player2, new CanyonWildcat());
 
         advanceToUpkeep(player1);
@@ -127,6 +131,52 @@ class MagmasaurTest extends BaseCardTest {
         assertThat(wildcat.getMarkedDamage()).isZero();
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Removing the last counter causes Magmasaur to die without blasting")
+    void removingLastCounterDoesNotDealDamage() {
+        addMagmasaur(player1, 1);
+        Permanent wildcat = harness.addToBattlefieldAndReturn(player2, new CanyonWildcat());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Magmasaur");
+        harness.assertInGraveyard(player1, "Magmasaur");
+        assertThat(wildcat.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Magmasaur does not trigger during its opponent's upkeep")
+    void doesNotTriggerOnOpponentsUpkeep() {
+        Permanent magmasaur = addMagmasaur(player1, 5);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(magmasaur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        harness.assertOnBattlefield(player1, "Magmasaur");
+    }
+
+    @Test
+    @DisplayName("Magmasaur's blast retains lifelink after it is sacrificed")
+    void sacrificedMagmasaurRetainsLifelinkForDamage() {
+        Permanent magmasaur = addMagmasaur(player1, 5);
+        Permanent lifelink = harness.addToBattlefieldAndReturn(player1, new Lifelink());
+        lifelink.setAttachedTo(magmasaur.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Magmasaur");
+        harness.assertLife(player1, 25);
+        harness.assertLife(player2, 15);
     }
 
     private Permanent addMagmasaur(Player player, int counters) {
