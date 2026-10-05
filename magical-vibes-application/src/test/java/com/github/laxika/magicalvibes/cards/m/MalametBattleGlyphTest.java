@@ -32,8 +32,7 @@ class MalametBattleGlyphTest extends BaseCardTest {
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID elvesId = harness.getPermanentId(player2, "Llanowar Elves");
-        harness.castSorcery(player1, 0, List.of(bearId, elvesId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(bearId, elvesId));
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
@@ -51,8 +50,7 @@ class MalametBattleGlyphTest extends BaseCardTest {
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID elvesId = harness.getPermanentId(player2, "Llanowar Elves");
-        harness.castSorcery(player1, 0, List.of(bearId, elvesId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(bearId, elvesId));
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
@@ -74,5 +72,106 @@ class MalametBattleGlyphTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(opposingGiantId, ownBearId)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature you control");
+    }
+
+    @Test
+    void counterIncreasesToughnessBeforeFight() {
+        harness.setHand(player1, List.of(new GrizzlyBears(), new MalametBattleGlyph()));
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        UUID ownBearId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID opposingBearId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.castAndResolveSorcery(player1, 0, List.of(ownBearId, opposingBearId));
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(bear.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void counterIncreasesPowerBeforeFight() {
+        harness.setHand(player1, List.of(new GrizzlyBears(), new MalametBattleGlyph()));
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.castAndResolveSorcery(player1, 0, List.of(bearId, giant.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Hill Giant");
+    }
+
+    @Test
+    void rejectsSecondTargetControlledByCaster() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        harness.setHand(player1, List.of(new MalametBattleGlyph()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(bear.getId(), elves.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature you don't control");
+    }
+
+    @Test
+    void creaturesThatDidNotEnterThisTurnDealLethalFightDamageToEachOther() {
+        Permanent ownBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MalametBattleGlyph()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(ownBear.getId(), opposingBear.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void stillPlacesCounterWhenOpposingTargetLeavesBeforeResolution() {
+        harness.setHand(player1, List.of(new GrizzlyBears(), new MalametBattleGlyph()));
+        Permanent opposingBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent ownBear = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.castSorcery(player1, 0, List.of(ownBear.getId(), opposingBear.getId()));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, opposingBear));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(ownBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(ownBear.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Malamet Battle Glyph");
+    }
+
+    @Test
+    void doesNotFightOrPutCounterOnOpponentWhenOwnTargetLeaves() {
+        harness.setHand(player1, List.of(new GrizzlyBears(), new MalametBattleGlyph()));
+        Permanent opposingBear = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent ownBear = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.castSorcery(player1, 0, List.of(ownBear.getId(), opposingBear.getId()));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, ownBear));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(opposingBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opposingBear.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Malamet Battle Glyph");
     }
 }
