@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(Kookus.class)
+@CardUsed({Kookus.class, KeeperOfKookus.class})
 class KookusTest extends BaseCardTest {
 
     @Test
@@ -120,5 +120,63 @@ class KookusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(kookus.getPowerModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Kookus does not trigger during its opponent's upkeep")
+    void opponentsUpkeepDoesNotTrigger() {
+        Permanent kookus = addCreatureReady(player1, new Kookus());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(kookus.isMustAttackThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Repeated pump activations each cost one red mana and accumulate")
+    void pumpActivationsAccumulate() {
+        Permanent kookus = addCreatureReady(player1, new Kookus());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(kookus.getPowerModifier()).isEqualTo(2);
+        assertThat(kookus.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The upkeep trigger still deals damage after Kookus leaves the battlefield")
+    void upkeepDamageSurvivesSourceLeaving() {
+        harness.setLife(player1, 20);
+        Permanent kookus = addCreatureReady(player1, new Kookus());
+        advanceToUpkeep(player1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(kookus);
+        gd.playerGraveyards.get(player1.getId()).add(kookus.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("An old upkeep trigger does not force a returned Kookus to attack")
+    void upkeepRequirementDoesNotFollowSourceThroughZoneChange() {
+        harness.setLife(player1, 20);
+        Kookus card = new Kookus();
+        Permanent original = addCreatureReady(player1, card);
+        advanceToUpkeep(player1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(original);
+        gd.playerGraveyards.get(player1.getId()).add(card);
+        gd.playerGraveyards.get(player1.getId()).remove(card);
+        Permanent returned = addCreatureReady(player1, card);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        assertThat(returned.isMustAttackThisTurn()).isFalse();
     }
 }
