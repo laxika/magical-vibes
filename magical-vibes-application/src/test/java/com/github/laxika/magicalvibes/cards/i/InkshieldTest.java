@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.l.LowlandGiant;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.f.Fog;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Inkshield.class, LowlandGiant.class})
+@CardUsed({Inkshield.class, LowlandGiant.class, Fog.class, LightningBolt.class})
 class InkshieldTest extends BaseCardTest {
 
     @Test
@@ -38,6 +41,74 @@ class InkshieldTest extends BaseCardTest {
             assertThat(inkling.getCard().getSubtypes()).contains(CardSubtype.INKLING);
             assertThat(gqs.hasKeyword(gd, inkling, Keyword.FLYING)).isTrue();
         }
+    }
+
+    @Test
+    void createsTokensForAllUnblockedAttackers() {
+        addCreatureReady(player2, new LowlandGiant());
+        addCreatureReady(player2, new LowlandGiant());
+        castOnOpponentsTurn();
+
+        declareAttackers(player2, List.of(0, 1));
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
+        assertThat(findPermanents(player1, "Inkling")).hasSize(8);
+    }
+
+    @Test
+    void doesNotPreventCombatDamageToCreatures() {
+        addCreatureReady(player2, new LowlandGiant());
+        addCreatureReady(player1, new LowlandGiant());
+        castOnOpponentsTurn();
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player2);
+
+        harness.assertInGraveyard(player1, "Lowland Giant");
+        harness.assertInGraveyard(player2, "Lowland Giant");
+        harness.assertLife(player1, 20);
+        assertThat(findPermanents(player1, "Inkling")).isEmpty();
+    }
+
+    @Test
+    void competingFogRequiresDefendersPreventionChoice() {
+        addCreatureReady(player2, new LowlandGiant());
+        castOnOpponentsTurn();
+        harness.setHand(player2, List.of(new Fog()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player2, 0);
+
+        declareAttackers(player2, List.of(0));
+        resolveCombat(player2);
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+    }
+
+    @Test
+    void doesNotPreventNoncombatDamage() {
+        castOnOpponentsTurn();
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 17);
+        assertThat(findPermanents(player1, "Inkling")).isEmpty();
+    }
+
+    @Test
+    void preventionExpiresAfterTheTurn() {
+        castOnOpponentsTurn();
+        harness.passUntilWithNoAttackers(player2, com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
+        harness.passUntil(com.github.laxika.magicalvibes.model.TurnStep.UPKEEP);
+        addCreatureReady(player2, new LowlandGiant());
+
+        declareAttackers(player2, List.of(0));
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 16);
+        assertThat(findPermanents(player1, "Inkling")).isEmpty();
     }
 
     private void castOnOpponentsTurn() {
