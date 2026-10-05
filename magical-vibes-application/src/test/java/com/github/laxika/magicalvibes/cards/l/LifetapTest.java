@@ -2,15 +2,19 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.t.Twiddle;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Lifetap.class, Forest.class, Island.class})
+@CardUsed({Lifetap.class, Forest.class, Island.class, Twiddle.class})
 class LifetapTest extends BaseCardTest {
 
     // "Whenever a Forest an opponent controls becomes tapped, you gain 1 life."
@@ -25,7 +29,7 @@ class LifetapTest extends BaseCardTest {
 
         harness.tapPermanent(player2, 0);
 
-        resolveDeferredTapTrigger();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
     }
@@ -39,10 +43,10 @@ class LifetapTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         harness.tapPermanent(player2, 0);
-        resolveDeferredTapTrigger();
+        resolveAllTriggers();
         forest.untap();
         harness.tapPermanent(player2, 0);
-        resolveDeferredTapTrigger();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
     }
@@ -75,8 +79,52 @@ class LifetapTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 
-    private void resolveDeferredTapTrigger() {
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+    @Test
+    @DisplayName("A spell tapping an opponent's Forest triggers Lifetap without producing mana")
+    void forcedForestTapGainsLife() {
+        harness.addToBattlefield(player1, new Lifetap());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castAndResolveInstant(player1, 0, forest.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Untapping an opponent's Forest does not trigger Lifetap")
+    void untappingForestDoesNotGainLife() {
+        harness.addToBattlefield(player1, new Lifetap());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        forest.tap();
+        harness.setHand(player1, List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castAndResolveInstant(player1, 0, forest.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(forest.isTapped()).isFalse();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Each Lifetap triggers independently for the same Forest tap")
+    void multipleCopiesGainLifeSeparately() {
+        harness.addToBattlefield(player1, new Lifetap());
+        harness.addToBattlefield(player1, new Lifetap());
+        harness.addToBattlefield(player2, new Forest());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.tapPermanent(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
     }
 }
