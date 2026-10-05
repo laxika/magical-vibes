@@ -75,4 +75,58 @@ class MindBurstTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getName)
                 .containsExactly("Dusk Imp", "Dusk Imp");
     }
+
+    @Test
+    @DisplayName("The controller may target themselves and choose which card to discard")
+    void canTargetSelf() {
+        harness.setHand(player1, List.of(new MindBurst(), new Forest(), new Island()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Forest");
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Mind Burst", "Island");
+    }
+
+    @Test
+    @DisplayName("An empty hand creates no discard choice")
+    void resolvesAgainstEmptyHand() {
+        harness.setGraveyard(player2, List.of(new MindBurst()));
+        harness.setHand(player1, List.of(new MindBurst()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Mind Burst");
+    }
+
+    @Test
+    @DisplayName("Discarding a Mind Burst does not increase the already determined discard count")
+    void discardedMindBurstDoesNotIncreaseCount() {
+        harness.setGraveyard(player1, List.of(new MindBurst()));
+        harness.setHand(player1, List.of(new MindBurst()));
+        harness.setHand(player2, List.of(new MindBurst(), new Forest(), new Island()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
+                .isEqualTo(2);
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName)
+                .containsExactly("Island");
+        assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getName)
+                .containsExactly("Mind Burst", "Forest");
+    }
 }
