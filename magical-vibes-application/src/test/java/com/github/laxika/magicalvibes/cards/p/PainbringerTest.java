@@ -101,6 +101,60 @@ class PainbringerTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(firebolt);
     }
 
+    @Test
+    void mayChooseZeroCardsFromANonemptyGraveyard() {
+        Permanent painbringer = setupPainbringer();
+        Firebolt firebolt = new Firebolt();
+        harness.setGraveyard(player1, List.of(firebolt));
+        Permanent target = addCreatureReady(player2, new FledglingImp());
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(firebolt);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(painbringer.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    void selectedSubsetIsPaidBeforeResolutionAndDeterminesX() {
+        setupPainbringer();
+        Firebolt firebolt = new Firebolt();
+        DwarvenGrunt dwarvenGrunt = new DwarvenGrunt();
+        harness.setGraveyard(player1, List.of(firebolt, dwarvenGrunt));
+        Permanent target = addCreatureReady(player2, new FledglingImp());
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(dwarvenGrunt.getId()));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(firebolt);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(dwarvenGrunt);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+    }
+
+    @Test
+    void canTargetItself() {
+        Permanent painbringer = setupPainbringer();
+        Firebolt firebolt = new Firebolt();
+        harness.setGraveyard(player1, List.of(firebolt));
+
+        harness.activateAbility(player1, 0, 0, null, painbringer.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(firebolt.getId()));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Painbringer");
+        harness.assertInGraveyard(player1, "Painbringer");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(firebolt);
+    }
+
     private Permanent setupPainbringer() {
         return addCreatureReady(player1, new Painbringer());
     }
