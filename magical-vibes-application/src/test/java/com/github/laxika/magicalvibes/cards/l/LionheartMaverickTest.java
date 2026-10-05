@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -80,6 +82,57 @@ class LionheartMaverickTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Vigilance allows attacking without tapping")
+    void attackingDoesNotTap() {
+        Permanent maverick = addCreatureReady(player1, new LionheartMaverick());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(maverick.isAttacking()).isTrue();
+        assertThat(maverick.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent maverick = harness.addToBattlefieldAndReturn(player1, new LionheartMaverick());
+        maverick.setSummoningSick(true);
+        maverick.setTapped(true);
+        addAbilityMana(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(maverick.getPowerModifier()).isEqualTo(1);
+        assertThat(maverick.getToughnessModifier()).isEqualTo(2);
+        assertThat(maverick.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability boosts only its source and only after resolving")
+    void boostsOnlySourceOnResolution() {
+        Permanent other = addCreatureReady(player1, new LionheartMaverick());
+        Permanent source = addCreatureReady(player1, new LionheartMaverick());
+        Permanent opponent = addCreatureReady(player2, new LionheartMaverick());
+        addAbilityMana(player1);
+
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(source.getPowerModifier()).isZero();
+        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(source.getToughnessModifier()).isEqualTo(2);
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(opponent.getToughnessModifier()).isZero();
     }
 
     private void addAbilityMana(Player player) {
