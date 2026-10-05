@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.Rancor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -16,13 +18,13 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({IndomitableMight.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({IndomitableMight.class, GrizzlyBears.class, FountainOfYouth.class, Rancor.class})
 class IndomitableMightTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enchanted creature gets +3/+3")
     void enchantedCreatureGetsBoost() {
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         attachAura(creature);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
@@ -33,9 +35,9 @@ class IndomitableMightTest extends BaseCardTest {
     @DisplayName("Blocked enchanted creature may assign combat damage to defending player")
     void blockedEnchantedCreatureAssignsDamageAsThoughUnblocked() {
         harness.setLife(player2, 20);
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         attachAura(creature);
-        Permanent blocker = addCreatureReady(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         declareBlockers(creature, blocker);
 
         resolveCombat();
@@ -59,12 +61,76 @@ class IndomitableMightTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private Permanent addCreatureReady(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
-        creature.setSummoningSick(false);
-        return creature;
+    @Test
+    @DisplayName("Controller may decline assigning damage as though unblocked")
+    void mayAssignAllDamageToBlocker() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        attachAura(creature);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        declareBlockers(creature, blocker);
+
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 5));
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Without trample damage cannot be split between blocker and player")
+    void cannotSplitDamageBetweenBlockerAndPlayer() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        attachAura(creature);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        declareBlockers(creature, blocker);
+
+        resolveCombat();
+        assertThatThrownBy(() -> harness.handleCombatDamageAssigned(
+                player1, 0, Map.of(blocker.getId(), 2, player2.getId(), 3)))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(player2.getId(), 5));
+
+        harness.assertLife(player2, 15);
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Trample does not prevent assigning all damage as though unblocked")
+    void creatureWithTrampleCanIgnoreBlocker() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        attachAura(creature);
+        Permanent rancor = harness.addToBattlefieldAndReturn(player1, new Rancor());
+        rancor.setAttachedTo(creature.getId());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        declareBlockers(creature, blocker);
+
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(player2.getId(), 7));
+
+        harness.assertLife(player2, 13);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Flash allows enchanting an opponent's creature on their turn")
+    void canCastOnOpponentsTurnAndCreature() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new IndomitableMight()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passPriority(player2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Indomitable Might");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
+    }
     private void attachAura(Permanent creature) {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new IndomitableMight());
         aura.setAttachedTo(creature.getId());
