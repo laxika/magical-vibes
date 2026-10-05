@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({NimGrotesque.class, ConjurersBauble.class})
@@ -55,5 +57,33 @@ class NimGrotesqueTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, bauble));
 
         assertThat(gqs.getEffectivePower(gd, nim)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Bonus updates immediately when a controlled artifact enters")
+    void updatesWhenArtifactEnters() {
+        Permanent nim = harness.addToBattlefieldAndReturn(player1, new NimGrotesque());
+
+        assertThat(gqs.getEffectivePower(gd, nim)).isEqualTo(3);
+
+        harness.enterBattlefieldAndReturn(player1, new ConjurersBauble());
+
+        assertThat(gqs.getEffectivePower(gd, nim)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, nim)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Nonartifact creatures and artifact cards outside the battlefield do not count")
+    void countsOnlyArtifactsOnBattlefield() {
+        Permanent nim = harness.addToBattlefieldAndReturn(player1, new NimGrotesque());
+        harness.addToBattlefield(player1, new NimGrotesque());
+        harness.addToBattlefield(player1, new ConjurersBauble());
+        harness.setHand(player1, List.of(new ConjurersBauble()));
+        harness.setLibrary(player1, List.of(new ConjurersBauble()));
+        harness.setGraveyard(player1, List.of(new ConjurersBauble()));
+        harness.setExile(player1, List.of(new ConjurersBauble()));
+
+        assertThat(gqs.getEffectivePower(gd, nim)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, nim)).isEqualTo(6);
     }
 }
