@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.c.Clockspinning;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(OmenpathToNaya.class)
+@CardUsed({OmenpathToNaya.class, Clockspinning.class})
 class OmenpathToNayaTest extends BaseCardTest {
 
     @Test
@@ -57,6 +58,45 @@ class OmenpathToNayaTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(omenpath);
+    }
+
+    @Test
+    void doesNotTriggerDuringUpkeepWithoutTimeCounters() {
+        harness.addToBattlefield(player1, new OmenpathToNaya());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Omenpath to Naya");
+    }
+
+    @Test
+    void doesNotRemoveCountersDuringOpponentsUpkeep() {
+        Permanent omenpath = harness.addToBattlefieldAndReturn(player1, new OmenpathToNaya());
+        omenpath.setCounterCount(CounterType.TIME, 4);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(omenpath.getCounterCount(CounterType.TIME)).isEqualTo(4);
+        harness.assertOnBattlefield(player1, "Omenpath to Naya");
+    }
+
+    @Test
+    @CardUsed({OmenpathToNaya.class, Clockspinning.class})
+    void sacrificesWhenAnotherSpellRemovesItsLastTimeCounter() {
+        Permanent omenpath = harness.addToBattlefieldAndReturn(player1, new OmenpathToNaya());
+        omenpath.setCounterCount(CounterType.TIME, 1);
+        harness.setHand(player1, List.of(new Clockspinning()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, omenpath.getId());
+        harness.handleListChoice(player1, "time counters");
+        harness.handleListChoice(player1, "REMOVE");
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Omenpath to Naya");
+        harness.assertInGraveyard(player1, "Omenpath to Naya");
     }
 
     @Test
