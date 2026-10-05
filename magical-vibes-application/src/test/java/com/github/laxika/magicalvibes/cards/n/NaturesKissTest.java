@@ -46,6 +46,44 @@ class NaturesKissTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Exiles the top graveyard card as a cost before the boost resolves")
+    void exilesBeforeResolution() {
+        Permanent knight = addCreatureReady(player1, new BenalishKnight());
+        attachKissTo(knight);
+        Card topCard = new ThranTome();
+        harness.setGraveyard(player1, List.of(topCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).anyMatch(exiled -> exiled.card() == topCard);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Cannot activate without paying the mana cost")
+    void requiresMana() {
+        Permanent knight = addCreatureReady(player1, new BenalishKnight());
+        attachKissTo(knight);
+        Card topCard = new ThranTome();
+        harness.setGraveyard(player1, List.of(topCard));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.exiledCards).noneMatch(exiled -> exiled.card() == topCard);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Boost stacks across multiple activations")
     void boostStacks() {
         Permanent knight = addCreatureReady(player1, new BenalishKnight());
