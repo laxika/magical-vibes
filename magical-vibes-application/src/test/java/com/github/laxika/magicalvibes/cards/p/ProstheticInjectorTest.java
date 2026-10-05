@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.b.BranchblightStalker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -7,11 +8,13 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ProstheticInjector.class, GrizzlyBears.class, BranchblightStalker.class})
 class ProstheticInjectorTest extends BaseCardTest {
 
     @Test
@@ -35,10 +38,7 @@ class ProstheticInjectorTest extends BaseCardTest {
         injector.setAttachedTo(creature.getId());
 
         creature.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
@@ -55,10 +55,7 @@ class ProstheticInjectorTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TOXIC)).isFalse();
 
         creature.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
@@ -78,9 +75,55 @@ class ProstheticInjectorTest extends BaseCardTest {
     }
 
     private Permanent addInjector(Player player) {
-        Permanent permanent = new Permanent(new ProstheticInjector());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return harness.addToBattlefieldAndReturn(player, new ProstheticInjector());
+    }
+
+    @Test
+    @DisplayName("Toxic applies poison with combat damage without using the stack")
+    void poisonIsAppliedBeforePlayersReceivePriority() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        addInjector(player1).setAttachedTo(creature.getId());
+        creature.setAttacking(true);
+
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
+            resolveCombat();
+            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+            assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+            assertThat(gd.stack).isEmpty();
+        });
+    }
+
+    @Test
+    @DisplayName("Granted toxic adds to a creature's existing toxic value")
+    void grantedToxicAddsToExistingToxic() {
+        Permanent creature = addCreatureReady(player1, new BranchblightStalker());
+        addInjector(player1).setAttachedTo(creature.getId());
+        creature.setAttacking(true);
+
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
+            resolveCombat();
+            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+            assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(3);
+            assertThat(gd.stack).isEmpty();
+        });
+    }
+
+    @Test
+    @DisplayName("Moving the equipment removes its bonuses from the previous creature")
+    void reequippingMovesBonuses() {
+        Permanent injector = addInjector(player1);
+        Permanent previous = addCreatureReady(player1, new GrizzlyBears());
+        Permanent next = addCreatureReady(player1, new GrizzlyBears());
+        injector.setAttachedTo(previous.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, next.getId());
+        harness.passBothPriorities();
+
+        assertThat(injector.getAttachedTo()).isEqualTo(next.getId());
+        assertThat(gqs.getEffectiveToughness(gd, previous)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, previous, Keyword.TOXIC)).isFalse();
+        assertThat(gqs.getEffectiveToughness(gd, next)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, next, Keyword.TOXIC)).isTrue();
     }
 }
