@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.b.BoggartBrute;
+
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,19 +19,20 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({NivixBarrier.class, BoggartBrute.class})
 class NivixBarrierTest extends BaseCardTest {
 
-    private Permanent addAttacker(Permanent attacker) {
+    private Permanent addAttacker() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new BoggartBrute());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
         return attacker;
     }
 
     @Test
     @DisplayName("Can be cast during the opponent's declare attackers step thanks to Flash")
     void canCastAtInstantSpeed() {
-        Permanent attacker = addAttacker(new Permanent(new HillGiant()));
+        Permanent attacker = addAttacker();
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -39,7 +41,7 @@ class NivixBarrierTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         harness.passPriority(player1);
 
-        gs.playCard(gd, player2, 0, 0, attacker.getId(), null);
+        harness.castCreature(player2, 0, attacker.getId());
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -50,7 +52,7 @@ class NivixBarrierTest extends BaseCardTest {
     @Test
     @DisplayName("ETB gives the target attacking creature -4/-0")
     void etbWeakensAttacker() {
-        Permanent attacker = addAttacker(new Permanent(new HillGiant()));
+        Permanent attacker = addAttacker();
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -59,7 +61,7 @@ class NivixBarrierTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         harness.passPriority(player1);
 
-        gs.playCard(gd, player2, 0, 0, attacker.getId(), null);
+        harness.castCreature(player2, 0, attacker.getId());
         harness.passBothPriorities(); // creature resolves, ETB trigger goes on the stack
         harness.passBothPriorities(); // ETB resolves
 
@@ -67,15 +69,15 @@ class NivixBarrierTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Nivix Barrier");
         assertThat(attacker.getPowerModifier()).isEqualTo(-4);
         assertThat(attacker.getToughnessModifier()).isEqualTo(0);
-        // A 3/3 given -4/-0 is a -1/3 creature; power is not floored at 0 (CR 107.1b).
+        // Power can become negative after the reduction.
         assertThat(attacker.getEffectivePower()).isEqualTo(-1);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Power reduction wears off at end of turn")
     void debuffWearsOff() {
-        Permanent attacker = addAttacker(new Permanent(new HillGiant()));
+        Permanent attacker = addAttacker();
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -84,7 +86,7 @@ class NivixBarrierTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         harness.passPriority(player1);
 
-        gs.playCard(gd, player2, 0, 0, attacker.getId(), null);
+        harness.castCreature(player2, 0, attacker.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -105,8 +107,8 @@ class NivixBarrierTest extends BaseCardTest {
     @Test
     @DisplayName("A non-attacking creature is not a legal target")
     void cannotTargetNonAttackingCreature() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.addToBattlefield(player1, new BoggartBrute());
+        UUID nonAttackerId = harness.getPermanentId(player1, "Boggart Brute");
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -115,7 +117,7 @@ class NivixBarrierTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         harness.passPriority(player1);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player2, 0, 0, bearsId, null))
+        assertThatThrownBy(() -> harness.castCreature(player2, 0, nonAttackerId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an attacking creature");
 
@@ -125,7 +127,7 @@ class NivixBarrierTest extends BaseCardTest {
     @Test
     @DisplayName("ETB fizzles if the target attacker leaves before resolution")
     void etbFizzlesIfTargetRemoved() {
-        Permanent attacker = addAttacker(new Permanent(new HillGiant()));
+        Permanent attacker = addAttacker();
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -134,7 +136,7 @@ class NivixBarrierTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         harness.passPriority(player1);
 
-        gs.playCard(gd, player2, 0, 0, attacker.getId(), null);
+        harness.castCreature(player2, 0, attacker.getId());
         harness.passBothPriorities(); // creature resolves, ETB trigger on the stack
 
         gd.playerBattlefields.get(player1.getId()).clear();
@@ -143,5 +145,50 @@ class NivixBarrierTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+    }
+    @Test
+    @DisplayName("Can resolve without any attacking creature")
+    void canCastWithoutAttackers() {
+        harness.setHand(player1, List.of(new NivixBarrier()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Nivix Barrier");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An attacker removed from combat is no longer a legal trigger target")
+    void targetMustStillBeAttackingAtResolution() {
+        Permanent attacker = addAttacker();
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.setHand(player2, List.of(new NivixBarrier()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player2, 0, attacker.getId());
+        harness.passBothPriorities();
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(attacker.getPowerModifier()).isZero();
+        harness.assertOnBattlefield(player2, "Nivix Barrier");
+    }
+
+    @Test
+    @DisplayName("Defender prevents Nivix Barrier from attacking")
+    void cannotAttack() {
+        Permanent barrier = harness.addToBattlefieldAndReturn(player1, new NivixBarrier());
+        barrier.setSummoningSick(false);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.beginAttackerDeclarationInput();
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(barrier.isAttacking()).isFalse();
     }
 }
