@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LayClaim;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({OketrasAvenger.class, GrizzlyBears.class, ProdigalSorcerer.class, LayClaim.class})
 class OketrasAvengerTest extends BaseCardTest {
 
     @Test
@@ -79,12 +83,89 @@ class OketrasAvengerTest extends BaseCardTest {
         assertThat(avenger.getSkipUntapCount()).isGreaterThan(0);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Exert is paid before the prevention trigger resolves")
+    void exertIsPaidBeforePreventionResolves() {
+        Permanent avenger = addCreatureReady(player1, new OketrasAvenger());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+
+            assertThat(avenger.getSkipUntapCount()).isPositive();
+            assertThat(gd.creaturesWithCombatDamagePrevented).doesNotContain(avenger.getId());
+        });
+    }
+
+    @Test
+    @DisplayName("Exert skips exactly the next untap step of the player who exerted")
+    void exertSkipsOnlyOneUntapStep() {
+        Permanent avenger = addCreatureReady(player1, new OketrasAvenger());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.performUntapStep(player2);
+        assertThat(avenger.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(avenger.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(avenger.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Exert does not prevent untapping during a new controller's untap step")
+    void exertRestrictionDoesNotFollowNewController() {
+        Permanent avenger = addCreatureReady(player1, new OketrasAvenger());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new LayClaim()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 5);
+        harness.ensurePriority(player2);
+        harness.castEnchantment(player2, 0, avenger.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(avenger);
+        harness.performUntapStep(player2);
+        assertThat(avenger.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Combat prevention expires at end of turn")
+    void preventionExpiresAtEndOfTurn() {
+        Permanent avenger = addCreatureReady(player1, new OketrasAvenger());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        harness.setLibrary(player2, List.of(new OketrasAvenger()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        avenger.setTapped(false);
+
+        declareAttackers(player2, List.of(0));
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(avenger);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(attacker);
+    }
 
     private void blockAndResolveCombat(int blockerIndex, int attackerIndex) {
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
         harness.passBothPriorities();
     }
