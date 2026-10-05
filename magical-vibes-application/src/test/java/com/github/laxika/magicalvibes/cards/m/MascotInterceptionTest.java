@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.EagerFirstYear;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MascotInterception.class, GrizzlyBears.class})
+@CardUsed({MascotInterception.class, EagerFirstYear.class})
 class MascotInterceptionTest extends BaseCardTest {
 
     @Test
@@ -29,8 +29,7 @@ class MascotInterceptionTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new MascotInterception()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castSorcery(player1, 0, token.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, token.getId());
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
@@ -42,7 +41,7 @@ class MascotInterceptionTest extends BaseCardTest {
     @Test
     @DisplayName("Requires the full cost when targeting a nontoken creature")
     void fullCostForNontokenTarget() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new EagerFirstYear());
 
         harness.setHand(player1, List.of(new MascotInterception()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -54,13 +53,12 @@ class MascotInterceptionTest extends BaseCardTest {
     @Test
     @DisplayName("Steals, untaps, boosts, and hastes the target creature")
     void resolvesAllEffects() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new EagerFirstYear());
         creature.tap();
 
         harness.setHand(player1, List.of(new MascotInterception()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
@@ -76,8 +74,7 @@ class MascotInterceptionTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new MascotInterception()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castSorcery(player1, 0, token.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, token.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -106,6 +103,47 @@ class MascotInterceptionTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, enchantment.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
+    }
+
+    @Test
+    @DisplayName("Can target your own creature token for the reduced cost")
+    void canTargetOwnToken() {
+        Permanent token = addToken(player1);
+        token.tap();
+
+        harness.setHand(player1, List.of(new MascotInterception()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveSorcery(player1, 0, token.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(token);
+        assertThat(token.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Does not affect another creature when the target leaves before resolution")
+    void targetLeavesBeforeResolution() {
+        Permanent target = addToken(player2);
+        Permanent other = addToken(player2);
+        other.tap();
+
+        harness.setHand(player1, List.of(new MascotInterception()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castSorcery(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Mascot Interception");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(other);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(other);
+        assertThat(other.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.HASTE)).isFalse();
     }
 
     private Permanent addToken(com.github.laxika.magicalvibes.model.Player controller) {
