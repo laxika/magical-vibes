@@ -107,6 +107,31 @@ class MyojinOfSeeingWindsTest extends BaseCardTest {
                 .hasMessageContaining("Not enough counters");
     }
 
+    @Test
+    @DisplayName("A newly cast Myojin can activate, paying its counter before drawing")
+    void newlyCastMyojinPaysCounterImmediately() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new MyojinOfSeeingWinds(), "{7}{U}{U}{U}");
+        harness.passBothPriorities();
+
+        Permanent myojin = findPermanent(player1, "Myojin of Seeing Winds");
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(myojin.getCounterCount(CounterType.DIVINITY)).isZero();
+        assertThat(gqs.hasKeyword(gd, myojin, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough counters");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
     private Permanent addReadyMyojin(Player player) {
         Permanent myojin = addCreatureReady(player, new MyojinOfSeeingWinds());
         myojin.setCounterCount(CounterType.DIVINITY, 1);
