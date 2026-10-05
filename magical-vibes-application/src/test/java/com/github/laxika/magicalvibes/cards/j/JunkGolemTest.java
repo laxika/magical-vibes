@@ -148,4 +148,78 @@ class JunkGolemTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(golem);
     }
 
+    @Test
+    @DisplayName("Removing the last counter pays upkeep but the zero-toughness Golem dies")
+    void removingLastCounterCausesDeath() {
+        Permanent golem = addCreatureReady(player1, new JunkGolem());
+        golem.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(golem.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(golem);
+        harness.assertInGraveyard(player1, "Junk Golem");
+    }
+
+    @Test
+    @DisplayName("Removing the last counter does not sacrifice a Golem kept alive by Blessed Orator")
+    void removingLastCounterWithToughnessBoostSurvives() {
+        harness.enterBattlefieldAndReturn(player1, new BlessedOrator());
+        Permanent golem = addCreatureReady(player1, new JunkGolem());
+        golem.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(golem.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(golem);
+    }
+
+    @Test
+    @DisplayName("A counter added in response to upkeep can pay the upkeep cost")
+    void addsCounterInResponseToUpkeep() {
+        harness.enterBattlefieldAndReturn(player1, new BlessedOrator());
+        Permanent golem = addCreatureReady(player1, new JunkGolem());
+        harness.setHand(player1, List.of(new AvenFisher()));
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 1, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Aven Fisher");
+        assertThat(golem.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+        assertThat(golem.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(golem.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(golem);
+    }
+
+    @Test
+    @DisplayName("The counter ability works while tapped and summoning sick")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent golem = harness.enterBattlefieldAndReturn(player1, new JunkGolem());
+        golem.setTapped(true);
+        golem.setSummoningSick(true);
+        harness.setHand(player1, List.of(new AvenFisher()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(golem.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(golem.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Aven Fisher");
+    }
 }
