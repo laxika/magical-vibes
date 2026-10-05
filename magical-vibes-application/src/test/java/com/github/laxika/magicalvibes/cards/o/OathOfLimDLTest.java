@@ -74,8 +74,7 @@ class OathOfLimDLTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 2);
         harness.setLife(player1, 20);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
@@ -105,15 +104,15 @@ class OathOfLimDLTest extends BaseCardTest {
         harness.handleListChoice(player1, ChoiceContext.OathOfLimDulPenaltyChoice.SACRIFICE);
         harness.handlePermanentChosen(player1, forestId);
 
-        // Second life point: only discard remains (Oath can't be sacrificed) — auto-starts discard.
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
-        harness.handleCardChosen(player1, 0);
+        // Discarding is optional even when the remaining sacrifice is impossible.
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, ChoiceContext.OathOfLimDulPenaltyChoice.SACRIFICE);
 
         harness.assertNotOnBattlefield(player1, "Forest");
-        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInHand(player1, "Balduvian Bears");
         harness.assertInGraveyard(player1, "Forest");
-        harness.assertInGraveyard(player1, "Balduvian Bears");
         harness.assertOnBattlefield(player1, "Oath of Lim-Dûl");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test
@@ -176,6 +175,81 @@ class OathOfLimDLTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
+    }
+
+    @Test
+    @DisplayName("May decline to discard when only Oath remains")
+    void mayKeepHandWhenNoOtherPermanentCanBeSacrificed() {
+        harness.addToBattlefield(player1, new OathOfLimDL());
+        harness.setHand(player1, List.of(new Forest()));
+
+        loseLife(1);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, ChoiceContext.OathOfLimDulPenaltyChoice.SACRIFICE);
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Oath of Lim-Dûl");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent losing life does not trigger Oath")
+    void opponentLifeLossDoesNotTrigger() {
+        harness.addToBattlefield(player1, new OathOfLimDL());
+        harness.addToBattlefield(player1, new BalduvianBears());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setLife(player2, 20);
+
+        harness.inMutationScope(() -> harness.getLifeSupport()
+                .applyLifeLoss(gd, player2.getId(), 2, "test"));
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Balduvian Bears");
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Paying life triggers the ability for the amount paid")
+    void payingLifeTriggersPenalty() {
+        harness.addToBattlefield(player1, new OathOfLimDL());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of());
+        harness.setLife(player1, 20);
+
+        harness.inMutationScope(() -> harness.getLifeSupport()
+                .applyLifePayment(gd, player1.getId(), 1, "test"));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, forest.getId());
+
+        harness.assertLife(player1, 19);
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Oath of Lim-Dûl");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A different Oath can be sacrificed to satisfy the trigger")
+    void anotherOathCanBeSacrificed() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new OathOfLimDL());
+        harness.setHand(player1, List.of());
+
+        harness.inMutationScope(() -> harness.getLifeSupport()
+                .applyLifeLoss(gd, player1.getId(), 1, "test"));
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new OathOfLimDL());
+        harness.passBothPriorities();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).containsExactly(second.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsOnly(first);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void loseLife(int amount) {
