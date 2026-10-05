@@ -50,4 +50,33 @@ class LotusGuardianTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sickness");
     }
+
+    @Test
+    @DisplayName("Cannot activate Lotus Guardian again while it is tapped")
+    void cannotActivateAgainWhileTapped() {
+        addCreatureReady(player1, new LotusGuardian());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Lotus Guardian adds mana only to its controller's pool")
+    void manaGoesToController() {
+        Permanent guardian = addCreatureReady(player2, new LotusGuardian());
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.handleListChoice(player2, "RED");
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(guardian.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }
