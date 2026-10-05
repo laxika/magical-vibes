@@ -23,10 +23,8 @@ class PrimalGrowthTest extends BaseCardTest {
     @Test
     @DisplayName("Without kicker, it puts one basic land onto the battlefield")
     void putsOneBasicLandOntoBattlefieldWithoutKicker() {
-        castPrimalGrowth();
         harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears()));
-
-        harness.passBothPriorities();
+        castAndResolvePrimalGrowth();
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -119,10 +117,92 @@ class PrimalGrowthTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
-    private void castPrimalGrowth() {
+    @Test
+    @DisplayName("Without kicker, it may fail to find even when a basic land is available")
+    void mayFindNoLandWithoutKicker() {
+        Forest land = new Forest();
+        harness.setLibrary(player1, List.of(land));
+        castAndResolvePrimalGrowth();
+
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
+        harness.assertInGraveyard(player1, "Primal Growth");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("With kicker, it may find zero lands after paying the sacrifice cost")
+    void mayFindNoLandsWithKicker() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Forest land = new Forest();
+        harness.setLibrary(player1, List.of(land));
         harness.setHand(player1, List.of(new PrimalGrowth()));
         addMana();
-        harness.castSorcery(player1, 0, 0);
+        harness.castKickedSorceryWithSacrificeNoKickerTarget(player1, 0, null, sacrifice.getId());
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
+        harness.assertInGraveyard(player1, "Primal Growth");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The two kicked lands enter together after both have been selected")
+    void kickedLandsEnterSimultaneously() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new PrimalGrowth()));
+        addMana();
+        harness.castKickedSorceryWithSacrificeNoKickerTarget(player1, 0, null, sacrifice.getId());
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .hasSize(2)
+                .allMatch(permanent -> !permanent.isTapped());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent the spell from resolving")
+    void resolvesWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        castAndResolvePrimalGrowth();
+
+        harness.assertInGraveyard(player1, "Primal Growth");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Kicker cannot sacrifice a creature controlled by an opponent")
+    void cannotSacrificeOpponentsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PrimalGrowth()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castKickedSorceryWithSacrificeNoKickerTarget(
+                player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("control");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    private void castAndResolvePrimalGrowth() {
+        harness.setHand(player1, List.of(new PrimalGrowth()));
+        addMana();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     private void addMana() {
