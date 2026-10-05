@@ -18,6 +18,24 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class LeafDancerTest extends BaseCardTest {
 
     @Test
+    @DisplayName("A tapped Forest still prevents Leaf Dancer from being blocked")
+    void cannotBeBlockedWhenDefendersForestIsTapped() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        forest.setTapped(true);
+        Permanent blocker = addCreatureReady(player2, new NantukoElder());
+        Permanent leafDancer = addCreatureReady(player1, new LeafDancer());
+
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(leafDancer);
+        declareAttackersAndPrepareBlockers(List.of(attackerIndex));
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        assertThatThrownBy(() -> gs.declareBlockers(
+                gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
     @DisplayName("Leaf Dancer cannot be blocked when defending player controls a Forest")
     void cannotBeBlockedWhenDefenderControlsForest() {
         harness.addToBattlefield(player2, new Forest());
