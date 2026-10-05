@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.b.Bonesplitter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SigilOfDistinction;
+import com.github.laxika.magicalvibes.cards.t.TreeOfTales;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NahiriForgedInFury.class, Bonesplitter.class, GrizzlyBears.class})
+@CardUsed({NahiriForgedInFury.class, Bonesplitter.class, GrizzlyBears.class, SigilOfDistinction.class, TreeOfTales.class})
 class NahiriForgedInFuryTest extends BaseCardTest {
 
     @Test
@@ -54,15 +55,15 @@ class NahiriForgedInFuryTest extends BaseCardTest {
     @Test
     @DisplayName("An attack exiles the top card and lets the controller cast an Equipment for free")
     void attackExilesTopCardAndCastsEquipmentForFree() {
-        Permanent attacker = addReady(player1, new GrizzlyBears());
-        Permanent nahiri = addReady(player1, new NahiriForgedInFury());
-        Permanent equipment = addReady(player1, new Bonesplitter());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nahiri = addCreatureReady(player1, new NahiriForgedInFury());
+        Permanent equipment = addCreatureReady(player1, new Bonesplitter());
         equipment.setAttachedTo(attacker.getId());
         Card topCard = new Bonesplitter();
         harness.setLibrary(player1, List.of(topCard));
 
         declareAttackers(player1, List.of(0));
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
 
@@ -80,15 +81,15 @@ class NahiriForgedInFuryTest extends BaseCardTest {
     @Test
     @DisplayName("An exiled non-Equipment card keeps its normal casting cost")
     void attackExilesNonEquipmentWithNormalCastingCost() {
-        Permanent attacker = addReady(player1, new GrizzlyBears());
-        Permanent equipment = addReady(player1, new Bonesplitter());
-        addReady(player1, new NahiriForgedInFury());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent equipment = addCreatureReady(player1, new Bonesplitter());
+        addCreatureReady(player1, new NahiriForgedInFury());
         equipment.setAttachedTo(attacker.getId());
         Card topCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(topCard));
 
         declareAttackers(player1, List.of(0));
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        resolveAllTriggers();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -108,9 +109,9 @@ class NahiriForgedInFuryTest extends BaseCardTest {
     @Test
     @DisplayName("An Equipment controlled by Nahiri does not trigger for an opponent's equipped creature")
     void doesNotTriggerForOpponentEquippedCreature() {
-        Permanent attacker = addReady(player2, new GrizzlyBears());
-        addReady(player1, new NahiriForgedInFury());
-        Permanent equipment = addReady(player1, new Bonesplitter());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new NahiriForgedInFury());
+        Permanent equipment = addCreatureReady(player1, new Bonesplitter());
         equipment.setAttachedTo(attacker.getId());
         harness.setLibrary(player1, List.of(new Bonesplitter()));
         harness.forceActivePlayer(player2);
@@ -121,10 +122,149 @@ class NahiriForgedInFuryTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Nahiri, Forged in Fury"));
     }
 
-    private Permanent addReady(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void unequippedCreatureDoesNotTrigger() {
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new NahiriForgedInFury());
+        harness.addToBattlefield(player1, new Bonesplitter());
+        Card topCard = new Bonesplitter();
+        harness.setLibrary(player1, List.of(topCard));
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void multipleEquipmentOnOneAttackerExilesOnlyOneCard() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new NahiriForgedInFury());
+        for (int i = 0; i < 2; i++) {
+            Permanent equipment = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
+            equipment.setAttachedTo(attacker.getId());
+        }
+        Card first = new Bonesplitter();
+        Card second = new Bonesplitter();
+        harness.setLibrary(player1, List.of(first, second));
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second);
+    }
+
+    @Test
+    void eachEquippedAttackerExilesOneCard() {
+        Permanent firstAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondAttacker = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new NahiriForgedInFury());
+        Permanent firstEquipment = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
+        Permanent secondEquipment = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
+        firstEquipment.setAttachedTo(firstAttacker.getId());
+        secondEquipment.setAttachedTo(secondAttacker.getId());
+        Card first = new Bonesplitter();
+        Card second = new Bonesplitter();
+        harness.setLibrary(player1, List.of(first, second));
+
+        declareAttackers(player1, List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void opponentsEquipmentOnYourAttackerStillTriggers() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new NahiriForgedInFury());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new Bonesplitter());
+        equipment.setAttachedTo(attacker.getId());
+        Card topCard = new Bonesplitter();
+        harness.setLibrary(player1, List.of(topCard));
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    void freeEquipmentCastCannotChooseNonzeroX() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new NahiriForgedInFury());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
+        equipment.setAttachedTo(attacker.getId());
+        Card topCard = new SigilOfDistinction();
+        harness.setLibrary(player1, List.of(topCard));
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.ensurePriority(player1);
+
+        assertThatThrownBy(() -> gs.playCardFromExile(gd, player1, topCard.getId(), 3, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
+        assertThat(gd.stack).isEmpty();
+    }
+    @Test
+    void exiledLandCanBePlayedButDoesNotGrantAnExtraLandPlay() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondAttacker = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new NahiriForgedInFury());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
+        Permanent secondEquipment = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
+        equipment.setAttachedTo(attacker.getId());
+        secondEquipment.setAttachedTo(secondAttacker.getId());
+        Card first = new TreeOfTales();
+        Card second = new TreeOfTales();
+        harness.setLibrary(player1, List.of(first, second));
+
+        declareAttackers(player1, List.of(0, 1));
+        resolveAllTriggers();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromExile(player1, first.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(first.getId()));
+        assertThatThrownBy(() -> harness.castFromExile(player1, second.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(second);
+    }
+
+    @Test
+    void emptyLibraryDoesNotPreventAttackTriggerFromResolving() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new NahiriForgedInFury());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
+        equipment.setAttachedTo(attacker.getId());
+        harness.setLibrary(player1, List.of());
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void removingEquipmentAfterDeclarationDoesNotStopTrigger() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new NahiriForgedInFury());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
+        equipment.setAttachedTo(attacker.getId());
+        Card topCard = new Bonesplitter();
+        harness.setLibrary(player1, List.of(topCard));
+
+        declareAttackers(player1, List.of(0));
+        equipment.setAttachedTo(null);
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard);
     }
 }
