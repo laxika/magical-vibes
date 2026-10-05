@@ -81,6 +81,56 @@ class NantukoTracerTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Nantuko Tracer");
     }
 
+    @Test
+    @DisplayName("A creature in your graveyard can be chosen while both graveyards contain cards")
+    void choosesOwnCreatureFromBothGraveyards() {
+        Card target = new NantukoTracer();
+        Card unchosen = new KrosanReclamation();
+        Card existingLibraryCard = new KrosanReclamation();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setGraveyard(player2, List.of(unchosen));
+        harness.setLibrary(player1, List.of(existingLibraryCard));
+
+        castTracer();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(target.getId(), unchosen.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactly(existingLibraryCard.getId(), target.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(Card::getId).containsExactly(unchosen.getId());
+    }
+
+    @Test
+    @DisplayName("An exiled target makes the ability fail without offering a may choice or a new target")
+    void targetLeavingGraveyardBeforeResolution() {
+        Card target = new KrosanReclamation();
+        Card otherCard = new NantukoTracer();
+        harness.setGraveyard(player2, List.of(target, otherCard));
+        harness.setLibrary(player2, List.of());
+
+        castTracer();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player2, List.of(otherCard));
+        harness.setExile(player2, List.of(target));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(Card::getId).containsExactly(otherCard.getId());
+        assertThat(gd.findExiledCard(target.getId())).isNotNull();
+    }
     private void castTracer() {
         harness.forceActivePlayer(player1);
         harness.castFromHand(player1, new NantukoTracer(), "{1}{G}");
