@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.ClericOfLifesBond;
+import com.github.laxika.magicalvibes.cards.k.KazanduStomper;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LullmagesDomination.class, GrizzlyBears.class})
+@CardUsed({LullmagesDomination.class, GrizzlyBears.class, ClericOfLifesBond.class, KazanduStomper.class})
 class LullmagesDominationTest extends BaseCardTest {
 
     @Test
@@ -49,6 +51,107 @@ class LullmagesDominationTest extends BaseCardTest {
         harness.setGraveyard(player1, graveyardWithCards(8));
         harness.setHand(player1, List.of(new LullmagesDomination()));
         harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 2, targetId))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void graveyardThresholdIsNotAResolutionCondition() {
+        harness.addToBattlefield(player2, new ClericOfLifesBond());
+        var targetId = harness.getPermanentId(player2, "Cleric of Life's Bond");
+        harness.setGraveyard(player2, java.util.stream.IntStream.range(0, 8)
+                .mapToObj(ignored -> (Card) new ClericOfLifesBond()).toList());
+        harness.setHand(player1, List.of(new LullmagesDomination()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castSorcery(player1, 0, 2, targetId);
+        harness.setGraveyard(player2, List.of());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Cleric of Life's Bond");
+        harness.assertNotOnBattlefield(player2, "Cleric of Life's Bond");
+    }
+
+    @Test
+    void canTargetOwnCreatureAndUseOwnGraveyardForDiscount() {
+        harness.addToBattlefield(player1, new ClericOfLifesBond());
+        var targetId = harness.getPermanentId(player1, "Cleric of Life's Bond");
+        harness.setGraveyard(player1, java.util.stream.IntStream.range(0, 8)
+                .mapToObj(ignored -> (Card) new ClericOfLifesBond()).toList());
+        harness.setHand(player1, List.of(new LullmagesDomination()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 2, targetId);
+
+        harness.assertOnBattlefield(player1, "Cleric of Life's Bond");
+        harness.assertInGraveyard(player1, "Lullmage's Domination");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void gainsControlWhenPayingFullCostWithoutDiscount() {
+        harness.addToBattlefield(player2, new ClericOfLifesBond());
+        var targetId = harness.getPermanentId(player2, "Cleric of Life's Bond");
+        harness.setHand(player1, List.of(new LullmagesDomination()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 2, targetId);
+
+        harness.assertOnBattlefield(player1, "Cleric of Life's Bond");
+        harness.assertNotOnBattlefield(player2, "Cleric of Life's Bond");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void rejectsCreatureWithManaValueLessThanX() {
+        harness.addToBattlefield(player2, new ClericOfLifesBond());
+        var targetId = harness.getPermanentId(player2, "Cleric of Life's Bond");
+        harness.setHand(player1, List.of(new LullmagesDomination()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 3, targetId))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void rejectsCreatureWithManaValueGreaterThanX() {
+        harness.addToBattlefield(player2, new ClericOfLifesBond());
+        var targetId = harness.getPermanentId(player2, "Cleric of Life's Bond");
+        harness.setHand(player1, List.of(new LullmagesDomination()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, targetId))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void reductionSubtractsThreeFromXWithoutChangingTargetManaValue() {
+        harness.addToBattlefield(player2, new KazanduStomper());
+        var targetId = harness.getPermanentId(player2, "Kazandu Stomper");
+        harness.setGraveyard(player2, java.util.stream.IntStream.range(0, 8)
+                .mapToObj(ignored -> (Card) new ClericOfLifesBond()).toList());
+        harness.setHand(player1, List.of(new LullmagesDomination()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 6, targetId);
+
+        harness.assertOnBattlefield(player1, "Kazandu Stomper");
+        harness.assertNotOnBattlefield(player2, "Kazandu Stomper");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void discountCannotPayBlueManaRequirements() {
+        harness.addToBattlefield(player2, new ClericOfLifesBond());
+        var targetId = harness.getPermanentId(player2, "Cleric of Life's Bond");
+        harness.setGraveyard(player2, java.util.stream.IntStream.range(0, 8)
+                .mapToObj(ignored -> (Card) new ClericOfLifesBond()).toList());
+        harness.setHand(player1, List.of(new LullmagesDomination()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 2, targetId))
                 .isInstanceOf(IllegalStateException.class);
