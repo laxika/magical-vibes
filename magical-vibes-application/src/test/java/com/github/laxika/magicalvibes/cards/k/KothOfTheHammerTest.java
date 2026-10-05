@@ -1,17 +1,17 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.Emblem;
-import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,26 +19,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({KothOfTheHammer.class, Mountain.class, Forest.class})
 class KothOfTheHammerTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has three loyalty abilities")
-    void hasThreeAbilities() {
-        KothOfTheHammer card = new KothOfTheHammer();
-        assertThat(card.getActivatedAbilities()).hasSize(3);
-    }
-
-    
-
-    
-
-    
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Resolving puts planeswalker on battlefield with 3 loyalty")
@@ -55,8 +38,6 @@ class KothOfTheHammerTest extends BaseCardTest {
         Permanent koth = bf.stream().filter(p -> p.getCard().getName().equals("Koth of the Hammer")).findFirst().orElseThrow();
         assertThat(koth.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
     }
-
-    // ===== +1 ability: Untap target Mountain, make it a 4/4 =====
 
     @Test
     @DisplayName("+1 untaps target Mountain and makes it a 4/4 red Elemental creature")
@@ -94,9 +75,7 @@ class KothOfTheHammerTest extends BaseCardTest {
     void plusOneCannotTargetNonMountain() {
         addReadyKoth(player1);
         // Add a Forest (not a Mountain)
-        com.github.laxika.magicalvibes.cards.f.Forest forest = new com.github.laxika.magicalvibes.cards.f.Forest();
-        Permanent forestPerm = new Permanent(forest);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(forestPerm);
+        Permanent forestPerm = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, forestPerm.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -117,8 +96,6 @@ class KothOfTheHammerTest extends BaseCardTest {
         assertThat(opponentMountain.isAnimatedUntilEndOfTurn()).isTrue();
         assertThat(opponentMountain.getAnimatedPower()).isEqualTo(4);
     }
-
-    // ===== -2 ability: Add {R} for each Mountain you control =====
 
     @Test
     @DisplayName("-2 adds red mana for each Mountain controlled")
@@ -163,8 +140,6 @@ class KothOfTheHammerTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
     }
 
-    // ===== -5 ability: Emblem =====
-
     @Test
     @DisplayName("-5 creates an emblem")
     void minusFiveCreatesEmblem() {
@@ -180,25 +155,21 @@ class KothOfTheHammerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Emblem contains GrantActivatedAbilityEffect for Mountains with OWN_PERMANENTS scope")
-    void emblemContainsCorrectEffect() {
+    @DisplayName("Emblem lets a Mountain tap to deal damage after Koth dies")
+    void emblemLetsMountainDealDamage() {
         Permanent koth = addReadyKoth(player1);
         koth.setCounterCount(CounterType.LOYALTY, 5);
+        Permanent mountain = addMountain(player1);
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.emblems).hasSize(1);
-        Emblem emblem = gd.emblems.getFirst();
-        assertThat(emblem.controllerId()).isEqualTo(player1.getId());
-        assertThat(emblem.staticEffects()).hasSize(1);
-        assertThat(emblem.staticEffects().getFirst()).isInstanceOf(GrantActivatedAbilityEffect.class);
-        GrantActivatedAbilityEffect grant = (GrantActivatedAbilityEffect) emblem.staticEffects().getFirst();
-        assertThat(grant.scope()).isEqualTo(GrantScope.OWN_PERMANENTS);
-        assertThat(grant.filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN));
-        assertThat(grant.ability().getDescription()).contains("1 damage");
-        assertThat(grant.ability().isRequiresTap()).isTrue();
+        harness.assertNotOnBattlefield(player1, "Koth of the Hammer");
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        assertThat(mountain.isTapped()).isTrue();
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -219,8 +190,6 @@ class KothOfTheHammerTest extends BaseCardTest {
         assertThat(gd.emblems.getFirst().controllerId()).isEqualTo(player1.getId());
     }
 
-    // ===== Loyalty ability restrictions =====
-
     @Test
     @DisplayName("Cannot activate -5 with only 3 loyalty")
     void cannotActivateUltimateWithInsufficientLoyalty() {
@@ -232,7 +201,7 @@ class KothOfTheHammerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Koth dies when -2 brings loyalty to 1 (3 - 2 = 1, survives)")
+    @DisplayName("Koth survives when -2 brings loyalty to 1")
     void minusTwoFromThreeLoyaltySurvives() {
         Permanent koth = addReadyKoth(player1);
         addMountain(player1);
@@ -244,23 +213,136 @@ class KothOfTheHammerTest extends BaseCardTest {
         assertThat(koth.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
     }
 
-    // ===== Helpers =====
+    @Test
+    void animationRetainsLandTypeAndManaAbilityAndExpires() {
+        addReadyKoth(player1);
+        Permanent mountain = addMountain(player1);
+        mountain.setSummoningSick(false);
+
+        harness.activateAbility(player1, 0, 0, null, mountain.getId());
+        harness.passBothPriorities();
+
+        var query = harness.getGameQueryService();
+        GameData gd = harness.getGameData();
+        assertThat(query.isCreature(gd, mountain)).isTrue();
+        assertThat(query.isLand(gd, mountain)).isTrue();
+        assertThat(query.getEffectivePower(gd, mountain)).isEqualTo(4);
+        assertThat(query.getEffectiveToughness(gd, mountain)).isEqualTo(4);
+        assertThat(query.getEffectiveColors(gd, mountain)).containsExactly(CardColor.RED);
+        harness.tapPermanent(player1, 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        assertThat(query.isCreature(gd, mountain)).isFalse();
+        assertThat(query.isLand(gd, mountain)).isTrue();
+        assertThat(query.getEffectiveColors(gd, mountain)).isEmpty();
+        assertThat(mountain.getTransientSubtypes()).doesNotContain(CardSubtype.ELEMENTAL);
+    }
+
+    @Test
+    void animatedNewMountainCannotTapForMana() {
+        addReadyKoth(player1);
+        Permanent mountain = addMountain(player1);
+        mountain.setSummoningSick(true);
+        harness.activateAbility(player1, 0, 0, null, mountain.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.tapPermanent(player1, 1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(mountain.isTapped()).isFalse();
+        assertThat(harness.getGameData().playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    void cannotActivateAnotherLoyaltyAbilityInSameTurn() {
+        addReadyKoth(player1);
+        Permanent mountain = addMountain(player1);
+        harness.activateAbility(player1, 0, 0, null, mountain.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void minusTwoUsesStackAndCountsMountainsAtResolution() {
+        addReadyKoth(player1);
+        addMountain(player1);
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        addMountain(player1);
+        harness.passBothPriorities();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+    }
+
+    @Test
+    void emblemAppliesToMountainsEnteringLaterButNotForestsOrOpponentsMountains() {
+        Permanent koth = addReadyKoth(player1);
+        koth.setCounterCount(CounterType.LOYALTY, 5);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        Permanent mountain = addMountain(player1);
+        harness.addToBattlefield(player1, new Forest());
+        addMountain(player2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+        assertThat(mountain.isTapped()).isTrue();
+        harness.assertLife(player2, 19);
+
+        harness.forceActivePlayer(player2);
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void emblemDamageCanTargetPlaneswalkers() {
+        Permanent target = addReadyKoth(player2);
+        Permanent koth = addReadyKoth(player1);
+        koth.setCounterCount(CounterType.LOYALTY, 5);
+        addMountain(player1);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+    }
+
+    @Test
+    void emblemDamageCanTargetAnimatedMountains() {
+        addReadyKoth(player2);
+        Permanent target = addMountain(player2);
+        harness.activateAbility(player2, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        Permanent koth = addReadyKoth(player1);
+        koth.setCounterCount(CounterType.LOYALTY, 5);
+        addMountain(player1);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Mountain");
+    }
 
     private Permanent addReadyKoth(Player player) {
-        KothOfTheHammer card = new KothOfTheHammer();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new KothOfTheHammer());
         perm.setCounterCount(CounterType.LOYALTY, 3);
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
     }
 
     private Permanent addMountain(Player player) {
-        Mountain mountain = new Mountain();
-        Permanent perm = new Permanent(mountain);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Mountain());
     }
 }
