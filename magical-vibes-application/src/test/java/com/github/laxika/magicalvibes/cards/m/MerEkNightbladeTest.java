@@ -8,12 +8,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MerEkNightblade.class, GrizzlyBears.class})
 class MerEkNightbladeTest extends BaseCardTest {
 
     @Test
@@ -83,6 +85,77 @@ class MerEkNightbladeTest extends BaseCardTest {
         creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Outlast does not grant its counter or deathtouch until resolution")
+    void outlastCounterIsAddedOnResolution() {
+        Permanent nightblade = addNightbladeReady(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(nightblade.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, nightblade, Keyword.DEATHTOUCH)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(nightblade.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, nightblade, Keyword.DEATHTOUCH)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Outlast cannot be activated while summoning sick")
+    void outlastRequiresNoSummoningSickness() {
+        Permanent nightblade = addNightbladeReady(player1);
+        nightblade.setSummoningSick(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(nightblade.isTapped()).isFalse();
+        assertThat(nightblade.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Outlast cannot be activated when already tapped")
+    void outlastRequiresUntappedCreature() {
+        Permanent nightblade = addNightbladeReady(player1);
+        nightblade.setTapped(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+
+        assertThat(nightblade.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Deathtouch ends when Mer-Ek Nightblade leaves the battlefield")
+    void deathtouchEndsWhenSourceLeaves() {
+        Permanent nightblade = addNightbladeReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(nightblade);
+        gd.playerGraveyards.get(player1.getId()).add(nightblade.getCard());
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     private Permanent addNightbladeReady(Player player) {
