@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -23,13 +25,20 @@ class KnightLuminaryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent token = findPermanent(player1, "Human Soldier");
         assertThat(token).isNotNull();
         assertThat(token.getCard().getPower()).isEqualTo(1);
         assertThat(token.getCard().getToughness()).isEqualTo(1);
+        assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
+        assertThat(token.getCard().getSubtypes()).containsExactlyInAnyOrder(CardSubtype.HUMAN, CardSubtype.SOLDIER);
+        assertThat(countPermanents(player1, "Human Soldier")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Human Soldier")).isZero();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Knight Luminary");
     }
 
     @Test
@@ -41,13 +50,41 @@ class KnightLuminaryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(gd.findExiledCard(knight.getId())).isNotNull();
+        harness.assertNotOnBattlefield(player1, "Knight Luminary");
+        assertThat(countPermanents(player1, "Human Soldier")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A warped Knight can be cast on a later turn for its normal cost and stays in play")
+    void castFromExileCreatesAnotherTokenAndDoesNotExileAgain() {
+        harness.setLibrary(player1, List.of(new KnightLuminary(), new KnightLuminary()));
+        harness.setLibrary(player2, List.of(new KnightLuminary(), new KnightLuminary()));
+        KnightLuminary knight = new KnightLuminary();
+        harness.setHand(player1, List.of(knight));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        resolveAllTriggers();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castFromExile(player1, knight.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.findExiledCard(knight.getId())).isNull();
+        harness.assertOnBattlefield(player1, "Knight Luminary");
+        assertThat(countPermanents(player1, "Human Soldier")).isEqualTo(2);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Knight Luminary");
     }
 }
