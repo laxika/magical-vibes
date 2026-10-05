@@ -122,4 +122,42 @@ class KrosanVorineTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be blocked by more than 1 creature");
     }
+
+    @Test
+    @DisplayName("Provoke can force an already untapped creature to block instead of another creature")
+    void provokeForcesAlreadyUntappedCreatureToBlock() {
+        addCreatureReady(player1, new KrosanVorine());
+        Permanent chosenBlocker = addCreatureReady(player2, new FugitiveWizard());
+        addCreatureReady(player2, new FugitiveWizard());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, chosenBlocker.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        prepareDeclareBlockers();
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(chosenBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A provoked creature that becomes tapped before blockers are declared need not block")
+    void tappedProvokedCreatureNeedNotBlock() {
+        addCreatureReady(player1, new KrosanVorine());
+        Permanent chosenBlocker = addCreatureReady(player2, new FugitiveWizard());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, chosenBlocker.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        chosenBlocker.tap();
+
+        prepareDeclareBlockers();
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
+                .doesNotThrowAnyException();
+        assertThat(chosenBlocker.isBlocking()).isFalse();
+    }
 }
