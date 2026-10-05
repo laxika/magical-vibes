@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -27,15 +28,13 @@ class NettleGuardTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castInstant(player1, 0, nettleGuard.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(nettleGuard.getPowerModifier()).isEqualTo(3);
         assertThat(nettleGuard.getToughnessModifier()).isEqualTo(5);
 
         harness.castInstant(player1, 0, nettleGuard.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(nettleGuard.getPowerModifier()).isEqualTo(6);
         assertThat(nettleGuard.getToughnessModifier()).isEqualTo(8);
@@ -47,8 +46,7 @@ class NettleGuardTest extends BaseCardTest {
         Permanent nettleGuard = addCreatureReady(player1, new NettleGuard());
 
         harness.activateAbility(player1, 0, null, nettleGuard.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(nettleGuard.getToughnessModifier()).isEqualTo(2);
         harness.assertOnBattlefield(player1, "Nettle Guard");
@@ -103,5 +101,117 @@ class NettleGuardTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         harness.assertOnBattlefield(player1, "Nettle Guard");
+    }
+
+    @Test
+    void valiantTriggersOnlyOnceWhenTwoSpellsAreCastBeforeItResolves() {
+        Permanent nettleGuard = harness.addToBattlefieldAndReturn(player1, new NettleGuard());
+        harness.setHand(player1, List.of(new GiantGrowth(), new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, nettleGuard.getId());
+        harness.castInstant(player1, 0, nettleGuard.getId());
+        resolveAllTriggers();
+
+        assertThat(nettleGuard.getPowerModifier()).isEqualTo(6);
+        assertThat(nettleGuard.getToughnessModifier()).isEqualTo(8);
+    }
+
+    @Test
+    void opponentsSpellDoesNotConsumeValiantForYourSpell() {
+        Permanent nettleGuard = harness.addToBattlefieldAndReturn(player1, new NettleGuard());
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.castInstant(player2, 0, nettleGuard.getId());
+        resolveAllTriggers();
+
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, nettleGuard.getId());
+        resolveAllTriggers();
+
+        assertThat(nettleGuard.getPowerModifier()).isEqualTo(6);
+        assertThat(nettleGuard.getToughnessModifier()).isEqualTo(8);
+    }
+
+    @Test
+    void valiantFromAnAbilityConsumesTheSameLimitAsASpell() {
+        addCreatureReady(player1, new ZuranSpellcaster());
+        Permanent nettleGuard = harness.addToBattlefieldAndReturn(player1, new NettleGuard());
+        harness.activateAbility(player1, 0, null, nettleGuard.getId());
+        resolveAllTriggers();
+
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, nettleGuard.getId());
+        resolveAllTriggers();
+
+        assertThat(nettleGuard.getPowerModifier()).isEqualTo(3);
+        assertThat(nettleGuard.getToughnessModifier()).isEqualTo(5);
+    }
+
+    @Test
+    void valiantExpiresAndCanTriggerAgainOnTheOpponentsTurn() {
+        Permanent nettleGuard = harness.addToBattlefieldAndReturn(player1, new NettleGuard());
+        harness.setHand(player1, List.of(new GiantGrowth(), new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, nettleGuard.getId());
+        resolveAllTriggers();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        assertThat(nettleGuard.getPowerModifier()).isZero();
+        assertThat(nettleGuard.getToughnessModifier()).isZero();
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, nettleGuard.getId());
+        resolveAllTriggers();
+
+        assertThat(nettleGuard.getPowerModifier()).isEqualTo(3);
+        assertThat(nettleGuard.getToughnessModifier()).isEqualTo(5);
+    }
+
+    @Test
+    void canSacrificeWhileSummoningSickAndTappedToDestroyYourOwnArtifact() {
+        Permanent nettleGuard = harness.addToBattlefieldAndReturn(player1, new NettleGuard());
+        nettleGuard.setTapped(true);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+
+        harness.assertInGraveyard(player1, "Nettle Guard");
+        harness.assertOnBattlefield(player1, "Leonin Scimitar");
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Leonin Scimitar");
+    }
+
+    @Test
+    void opponentsAbilityDoesNotTriggerValiant() {
+        addCreatureReady(player2, new ZuranSpellcaster());
+        Permanent nettleGuard = harness.addToBattlefieldAndReturn(player1, new NettleGuard());
+
+        harness.activateAbility(player2, 0, null, nettleGuard.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Nettle Guard");
+    }
+
+    @Test
+    void eachNettleGuardHasItsOwnValiantLimit() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new NettleGuard());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new NettleGuard());
+        harness.setHand(player1, List.of(new GiantGrowth(), new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, first.getId());
+        resolveAllTriggers();
+        harness.castInstant(player1, 0, second.getId());
+        resolveAllTriggers();
+
+        assertThat(first.getPowerModifier()).isEqualTo(3);
+        assertThat(first.getToughnessModifier()).isEqualTo(5);
+        assertThat(second.getPowerModifier()).isEqualTo(3);
+        assertThat(second.getToughnessModifier()).isEqualTo(5);
     }
 }
