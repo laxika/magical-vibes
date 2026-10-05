@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NoviceInspector;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,13 +14,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MeticulousArchive.class, GrizzlyBears.class})
+@CardUsed({MeticulousArchive.class, NoviceInspector.class})
 class MeticulousArchiveTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enters tapped and surveils 1")
     void entersTappedAndSurveilsOne() {
-        Card topCard = new GrizzlyBears();
+        Card topCard = new NoviceInspector();
         harness.setLibrary(player1, List.of(topCard));
         harness.setHand(player1, List.of(new MeticulousArchive()));
 
@@ -34,6 +34,40 @@ class MeticulousArchiveTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @DisplayName("Surveil can leave the card on top without changing library order")
+    void canKeepTopCard() {
+        Card topCard = new NoviceInspector();
+        Card nextCard = new MeticulousArchive();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        harness.setHand(player1, List.of(new MeticulousArchive()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, nextCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Surveil resolves with an empty library without requesting a choice")
+    void surveilsEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new MeticulousArchive()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Meticulous Archive");
     }
 
     @Test
@@ -59,9 +93,6 @@ class MeticulousArchiveTest extends BaseCardTest {
     }
 
     private Permanent addReadyArchive() {
-        Permanent archive = new Permanent(new MeticulousArchive());
-        archive.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(archive);
-        return archive;
+        return harness.addToBattlefieldAndReturn(player1, new MeticulousArchive());
     }
 }
