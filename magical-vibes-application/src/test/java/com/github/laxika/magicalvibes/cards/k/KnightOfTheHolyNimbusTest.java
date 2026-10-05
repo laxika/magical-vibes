@@ -123,6 +123,62 @@ class KnightOfTheHolyNimbusTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Knight of the Holy Nimbus");
     }
 
+    @Test
+    @DisplayName("Intrinsic regeneration can replace destruction repeatedly in the same turn")
+    void regeneratesFromRepeatedDestruction() {
+        Permanent knight = addCreatureReady(player1, new KnightOfTheHolyNimbus());
+        harness.setHand(player2, List.of(new StranglingSoot(), new StranglingSoot()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        addStranglingSootMana();
+        harness.castAndResolveInstant(player2, 0, knight.getId());
+        addStranglingSootMana();
+        harness.castAndResolveInstant(player2, 0, knight.getId());
+
+        harness.assertOnBattlefield(player1, "Knight of the Holy Nimbus");
+        harness.assertNotInGraveyard(player1, "Knight of the Holy Nimbus");
+        assertThat(knight.isTapped()).isTrue();
+        assertThat(knight.getTimesRegeneratedThisTurn()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Lethal combat damage regenerates both Knights and removes them from combat")
+    void regeneratesFromLethalCombatDamage() {
+        Permanent attacker = addCreatureReady(player1, new KnightOfTheHolyNimbus());
+        Permanent blocker = addCreatureReady(player2, new KnightOfTheHolyNimbus());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player1, "Knight of the Holy Nimbus");
+        harness.assertOnBattlefield(player2, "Knight of the Holy Nimbus");
+        assertThat(attacker.isTapped()).isTrue();
+        assertThat(blocker.isTapped()).isTrue();
+        assertThat(attacker.isAttacking()).isFalse();
+        assertThat(blocker.isBlocking()).isFalse();
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(attacker.getTimesRegeneratedThisTurn()).isEqualTo(1);
+        assertThat(blocker.getTimesRegeneratedThisTurn()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An opponent can disable a tapped, summoning-sick Knight without affecting another Knight")
+    void activationOnlyAffectsItsSourceAndRequiresNoTap() {
+        Permanent knight = harness.addToBattlefieldAndReturn(player1, new KnightOfTheHolyNimbus());
+        Permanent otherKnight = addCreatureReady(player1, new KnightOfTheHolyNimbus());
+        knight.tap();
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(knight.isCantRegenerateThisTurn()).isTrue();
+        assertThat(otherKnight.isCantRegenerateThisTurn()).isFalse();
+    }
     private void addStranglingSootMana() {
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
