@@ -51,6 +51,47 @@ class PeerlessRopemasterTest extends BaseCardTest {
                 .hasMessageContaining("tapped creature");
     }
 
+    @Test
+    @DisplayName("Can return your own tapped creature")
+    void returnsOwnTappedCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new PeerlessRopemaster());
+        target.tap();
+
+        castPeerlessRopemaster(List.of(target.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        harness.assertInHand(player1, "Peerless Ropemaster");
+    }
+
+    @Test
+    @DisplayName("May decline to target even when a tapped creature is available")
+    void mayDeclineLegalTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PeerlessRopemaster());
+        target.tap();
+
+        castPeerlessRopemaster(List.of());
+
+        harness.assertOnBattlefield(player2, "Peerless Ropemaster");
+        harness.assertNotInHand(player2, "Peerless Ropemaster");
+    }
+
+    @Test
+    @DisplayName("Does not return a target that becomes untapped before resolution")
+    void targetUntappedBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PeerlessRopemaster());
+        target.tap();
+        harness.setHand(player1, List.of(new PeerlessRopemaster()));
+        addMana();
+        harness.castCreature(player1, 0, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        target.untap();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Peerless Ropemaster");
+        harness.assertNotInHand(player2, "Peerless Ropemaster");
+        assertThat(gd.stack).isEmpty();
+    }
     private void castPeerlessRopemaster(List<UUID> targetIds) {
         harness.setHand(player1, List.of(new PeerlessRopemaster()));
         addMana();
