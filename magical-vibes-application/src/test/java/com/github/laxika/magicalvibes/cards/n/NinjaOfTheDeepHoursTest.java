@@ -74,9 +74,8 @@ class NinjaOfTheDeepHoursTest extends BaseCardTest {
     void ninjutsuSwapsTheUnblockedAttacker() {
         Permanent attacker = addCreatureReady(player1, new GnarledMass());
         addCreatureReady(player2, new GnarledMass());
-        declareAttackers(List.of(0));
-
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> gs.declareBlockers(gd, player2, List.of()));
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new NinjaOfTheDeepHours()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -89,6 +88,76 @@ class NinjaOfTheDeepHoursTest extends BaseCardTest {
         assertThat(ninja.isTapped()).isTrue();
         assertThat(ninja.isAttacking()).isTrue();
         assertThat(ninja.getAttackTarget()).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("The attacker is returned as a cost before the Ninja enters")
+    void attackerReturnsBeforeNinjutsuResolves() {
+        Permanent attacker = addCreatureReady(player1, new GnarledMass());
+        addCreatureReady(player2, new GnarledMass());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> gs.declareBlockers(gd, player2, List.of()));
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new NinjaOfTheDeepHours()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, attacker.getId());
+
+        harness.assertInHand(player1, "Gnarled Mass");
+        harness.assertInHand(player1, "Ninja of the Deep Hours");
+        harness.assertNotOnBattlefield(player1, "Gnarled Mass");
+        harness.assertNotOnBattlefield(player1, "Ninja of the Deep Hours");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setLibrary(player1, List.of(new GnarledMass(), new GnarledMass()));
+        harness.passBothPriorities();
+        resolveCombat();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Ninjutsu cannot be activated before blockers are declared")
+    void ninjutsuRejectsAttackerBeforeBlockers() {
+        Permanent attacker = addCreatureReady(player1, new GnarledMass());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.setHand(player1, List.of(new NinjaOfTheDeepHours()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Gnarled Mass");
+        harness.assertInHand(player1, "Ninja of the Deep Hours");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An unaffordable ninjutsu activation does not return the attacker")
+    void insufficientManaDoesNotReturnAttacker() {
+        Permanent attacker = addCreatureReady(player1, new GnarledMass());
+        addCreatureReady(player2, new GnarledMass());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> gs.declareBlockers(gd, player2, List.of()));
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new NinjaOfTheDeepHours()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Gnarled Mass");
+        harness.assertNotInHand(player1, "Gnarled Mass");
+        harness.assertInHand(player1, "Ninja of the Deep Hours");
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
