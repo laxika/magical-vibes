@@ -1,28 +1,27 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.d.DuskLegionDreadnought;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JukaiTrainee;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MobilizerMech.class, DuskLegionDreadnought.class, GrizzlyBears.class})
+@CardUsed({MobilizerMech.class, MechtitanCore.class, JukaiTrainee.class})
 class MobilizerMechTest extends BaseCardTest {
 
     @Test
     void crewTriggerTargetsAnotherVehicleYouControl() {
-        Permanent mobilizer = addReadyMobilizer(player1);
-        Permanent ownVehicle = addReadyVehicle(player1);
-        Permanent opponentVehicle = addReadyVehicle(player2);
-        addCreatureReady(player1, new GrizzlyBears());
-        addCreatureReady(player1, new GrizzlyBears());
+        Permanent mobilizer = addCreatureReady(player1, new MobilizerMech());
+        Permanent ownVehicle = addCreatureReady(player1, new MechtitanCore());
+        Permanent opponentVehicle = addCreatureReady(player2, new MechtitanCore());
+        addCreatureReady(player1, new JukaiTrainee());
+        addCreatureReady(player1, new JukaiTrainee());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -45,10 +44,10 @@ class MobilizerMechTest extends BaseCardTest {
 
     @Test
     void crewTriggerMayBeDeclined() {
-        addReadyMobilizer(player1);
-        Permanent ownVehicle = addReadyVehicle(player1);
-        addCreatureReady(player1, new GrizzlyBears());
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new MobilizerMech());
+        Permanent ownVehicle = addCreatureReady(player1, new MechtitanCore());
+        addCreatureReady(player1, new JukaiTrainee());
+        addCreatureReady(player1, new JukaiTrainee());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -60,10 +59,10 @@ class MobilizerMechTest extends BaseCardTest {
 
     @Test
     void targetAnimationEndsAtEndOfTurn() {
-        addReadyMobilizer(player1);
-        Permanent ownVehicle = addReadyVehicle(player1);
-        addCreatureReady(player1, new GrizzlyBears());
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new MobilizerMech());
+        Permanent ownVehicle = addCreatureReady(player1, new MechtitanCore());
+        addCreatureReady(player1, new JukaiTrainee());
+        addCreatureReady(player1, new JukaiTrainee());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -77,15 +76,79 @@ class MobilizerMechTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, ownVehicle)).isFalse();
     }
 
-    private Permanent addReadyMobilizer(Player player) {
-        Permanent mobilizer = harness.addToBattlefieldAndReturn(player, new MobilizerMech());
-        mobilizer.setSummoningSick(false);
-        return mobilizer;
+    @Test
+    void crewWithNoOtherVehicleStillAnimatesMobilizer() {
+        Permanent mobilizer = addCreatureReady(player1, new MobilizerMech());
+        Permanent opponentVehicle = addCreatureReady(player2, new MechtitanCore());
+        addCreatureReady(player1, new JukaiTrainee());
+        addCreatureReady(player1, new JukaiTrainee());
+
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gqs.isCreature(gd, mobilizer)).isTrue();
+        assertThat(gqs.isCreature(gd, opponentVehicle)).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
-    private Permanent addReadyVehicle(Player player) {
-        Permanent vehicle = harness.addToBattlefieldAndReturn(player, new DuskLegionDreadnought());
-        vehicle.setSummoningSick(false);
-        return vehicle;
+    @Test
+    void crewRequiresAtLeastThreeTotalPower() {
+        Permanent mobilizer = addCreatureReady(player1, new MobilizerMech());
+        Permanent trainee = addCreatureReady(player1, new JukaiTrainee());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(trainee.isTapped()).isFalse();
+        assertThat(gqs.isCreature(gd, mobilizer)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void crewingAgainTriggersEvenWhenMobilizerIsAlreadyACreature() {
+        Permanent mobilizer = addCreatureReady(player1, new MobilizerMech());
+        Permanent firstVehicle = addCreatureReady(player1, new MechtitanCore());
+        Permanent secondVehicle = addCreatureReady(player1, new MechtitanCore());
+        addCreatureReady(player1, new JukaiTrainee());
+        addCreatureReady(player1, new JukaiTrainee());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, firstVehicle.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, mobilizer)).isTrue();
+        assertThat(gqs.isCreature(gd, secondVehicle)).isFalse();
+
+        firstVehicle.tap();
+        addCreatureReady(player1, new JukaiTrainee());
+        addCreatureReady(player1, new JukaiTrainee());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, secondVehicle.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, firstVehicle)).isTrue();
+        assertThat(gqs.isCreature(gd, secondVehicle)).isTrue();
+    }
+
+    @Test
+    void animatingAnotherMobilizerDoesNotTriggerItsCrewAbility() {
+        addCreatureReady(player1, new MobilizerMech());
+        Permanent otherMobilizer = addCreatureReady(player1, new MobilizerMech());
+        Permanent thirdVehicle = addCreatureReady(player1, new MechtitanCore());
+        addCreatureReady(player1, new JukaiTrainee());
+        addCreatureReady(player1, new JukaiTrainee());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, otherMobilizer.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, otherMobilizer)).isTrue();
+        assertThat(gqs.isCreature(gd, thirdVehicle)).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }
