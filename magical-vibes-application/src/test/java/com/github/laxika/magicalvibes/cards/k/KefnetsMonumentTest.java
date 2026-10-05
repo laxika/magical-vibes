@@ -1,13 +1,17 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HekmaSentinels;
+import com.github.laxika.magicalvibes.cards.s.SlitherBlade;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +20,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KefnetsMonument.class, AirElemental.class, GrizzlyBears.class, Spellbook.class,
+        HekmaSentinels.class, SlitherBlade.class, Cancel.class})
 class KefnetsMonumentTest extends BaseCardTest {
-
-    // ===== Cost reduction =====
 
     @Test
     @DisplayName("Blue creature spells cost {1} less")
@@ -57,8 +61,6 @@ class KefnetsMonumentTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Creature-cast skip-untap trigger =====
-
     @Test
     @DisplayName("Casting a creature locks a chosen opponent creature out of its next untap step")
     void castingCreatureSkipsOpponentUntap() {
@@ -95,21 +97,147 @@ class KefnetsMonumentTest extends BaseCardTest {
         assertThat(ownCreature.getSkipUntapCount()).isZero();
     }
 
-    // ===== Non-creature spell does not trigger =====
-
     @Test
     @DisplayName("Casting a non-creature spell does not trigger the skip-untap")
     void nonCreatureSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new KefnetsMonument());
         addCreatureReady(player2, new GrizzlyBears()); // a legal target exists
-        // Spellbook is a {2} artifact — not a creature spell
+        // Spellbook is a {0} artifact, not a creature spell.
         harness.setHand(player1, List.of(new Spellbook()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castArtifact(player1, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
+    }
+
+    @Test
+    void reductionDoesNotPayColoredMana() {
+        harness.addToBattlefield(player1, new KefnetsMonument());
+        harness.setHand(player1, List.of(new SlitherBlade()));
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Slither Blade");
+    }
+
+    @Test
+    void opponentCreatureSpellsAreNeitherReducedNorTriggerMonument() {
+        harness.addToBattlefield(player1, new KefnetsMonument());
+        addCreatureReady(player1, new SlitherBlade());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new HekmaSentinels()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castCreature(player2, 0);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Hekma Sentinels");
+    }
+
+    @Test
+    void blueNoncreatureSpellIsNotReduced() {
+        harness.addToBattlefield(player1, new KefnetsMonument());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new SlitherBlade()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castCreature(player2, 0);
+        harness.setHand(player1, List.of(new Cancel()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, gd.stack.getFirst().getCard().getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void triggerDoesNotTapAndExpiresAfterExactlyOneControllerUntapStep() {
+        harness.addToBattlefield(player1, new KefnetsMonument());
+        Permanent target = addCreatureReady(player2, new SlitherBlade());
+        harness.setHand(player1, List.of(new SlitherBlade()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        harness.passBothPriorities();
+        target.setTapped(true);
+        harness.performUntapStep(player1);
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void repeatedTriggersBeforeUntapDoNotSkipAdditionalUntapSteps() {
+        harness.addToBattlefield(player1, new KefnetsMonument());
+        Permanent target = addCreatureReady(player2, new SlitherBlade());
+        target.setTapped(true);
+        harness.setHand(player1, List.of(new SlitherBlade(), new SlitherBlade()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        for (int i = 0; i < 2; i++) {
+            harness.castCreature(player1, 0);
+            harness.handlePermanentChosen(player1, target.getId());
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+        }
+
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void castTriggerStillAppliesWhenCreatureSpellIsCountered() {
+        harness.addToBattlefield(player1, new KefnetsMonument());
+        Permanent target = addCreatureReady(player2, new SlitherBlade());
+        target.setTapped(true);
+        SlitherBlade spell = new SlitherBlade();
+        harness.setHand(player1, List.of(spell));
+        harness.setHand(player2, List.of(new Cancel()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.castAndResolveInstant(player2, 0, spell.getId());
+        harness.assertInGraveyard(player1, "Slither Blade");
+        harness.passBothPriorities();
+
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void untapRestrictionExpiresEvenIfTargetWasAlreadyUntapped() {
+        harness.addToBattlefield(player1, new KefnetsMonument());
+        Permanent target = addCreatureReady(player2, new SlitherBlade());
+        harness.setHand(player1, List.of(new SlitherBlade()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isFalse();
+        target.setTapped(true);
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isFalse();
     }
 }
