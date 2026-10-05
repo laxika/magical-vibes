@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.cards.t.TempleOfCyclicalTime;
 import com.github.laxika.magicalvibes.model.Card;
@@ -20,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OjerPakpatiq.class, TempleOfCyclicalTime.class, DarkRitual.class, GrizzlyBears.class, Murder.class})
+@CardUsed({OjerPakpatiq.class, TempleOfCyclicalTime.class, DarkRitual.class, Murder.class})
 class OjerPakpatiqTest extends BaseCardTest {
 
     @Test
@@ -32,7 +31,7 @@ class OjerPakpatiqTest extends BaseCardTest {
         harness.setHand(player1, List.of(spell));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castInstant(player1, 0);
+        harness.castAndResolveInstant(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(spell.getId())).isNotNull();
@@ -41,6 +40,120 @@ class OjerPakpatiqTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        assertThat(gd.findExiledCard(spell.getId())).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
+    }
+
+    @Test
+    @DisplayName("Casting an instant creates a separate rebound-granting trigger")
+    void reboundGrantUsesTheStack() {
+        harness.addToBattlefield(player1, new OjerPakpatiq());
+        harness.setHand(player1, List.of(new DarkRitual()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("An instant that destroys Ojer retains the rebound it gained")
+    void reboundSurvivesOjerDyingDuringResolution() {
+        Permanent ojer = harness.addToBattlefieldAndReturn(player1, new OjerPakpatiq());
+        Murder spell = new Murder();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, ojer.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(spell.getId())).isNotNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(spell);
+    }
+
+    @Test
+    @DisplayName("Ojer entering after an instant was cast does not grant it rebound")
+    void doesNotGrantReboundRetroactively() {
+        DarkRitual spell = new DarkRitual();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castInstant(player1, 0);
+        harness.addToBattlefield(player1, new OjerPakpatiq());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(spell.getId())).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
+    }
+
+    @Test
+    @DisplayName("Declining rebound leaves the card exiled")
+    void canDeclineRebound() {
+        harness.addToBattlefield(player1, new OjerPakpatiq());
+        DarkRitual spell = new DarkRitual();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAndResolveInstant(player1, 0);
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.findExiledCard(spell.getId())).isNotNull();
+        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+    }
+
+    @Test
+    @DisplayName("Ojer does not give an opponent's instant rebound")
+    void doesNotGrantOpponentRebound() {
+        harness.addToBattlefield(player1, new OjerPakpatiq());
+        DarkRitual spell = new DarkRitual();
+        harness.setHand(player2, List.of(spell));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveInstant(player2, 0);
+
+        assertThat(gd.findExiledCard(spell.getId())).isNull();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(spell);
+    }
+
+    @Test
+    @DisplayName("Temple produces blue mana even without time counters")
+    void producesManaWithoutTimeCounters() {
+        Permanent temple = returnOjerAsTemple();
+        temple.setCounterCount(CounterType.TIME, 0);
+        temple.untap();
+        harness.forceActivePlayer(player1);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, battlefieldIndex(temple), 0, null, null);
+
+        assertThat(temple.isTapped()).isTrue();
+        assertThat(temple.getCounterCount(CounterType.TIME)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Temple cannot transform during upkeep even with no time counters")
+    void transformRequiresSorceryTiming() {
+        Permanent temple = returnOjerAsTemple();
+        temple.setCounterCount(CounterType.TIME, 0);
+        temple.untap();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(temple), 1, null, null))
+                .isInstanceOf(RuntimeException.class);
+        assertThat(temple.isTransformed()).isTrue();
     }
 
     @Test
@@ -108,8 +221,7 @@ class OjerPakpatiqTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Murder()));
         harness.addMana(player2, ManaColor.BLACK, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, ojer.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, ojer.getId());
         harness.passBothPriorities();
     }
 
