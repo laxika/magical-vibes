@@ -20,11 +20,11 @@ class ProwlingNightstalkerTest extends BaseCardTest {
     @Test
     @DisplayName("Prowling Nightstalker cannot be blocked by a non-black creature")
     void cannotBeBlockedByNonBlackCreature() {
-        Permanent nightstalker = attackingNightstalker();
+        addCreatureReady(player1, new ProwlingNightstalker());
 
         addCreatureReady(player2, new VolunteerMilitia());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -34,19 +34,28 @@ class ProwlingNightstalkerTest extends BaseCardTest {
     @Test
     @DisplayName("Prowling Nightstalker can be blocked by a black creature")
     void canBeBlockedByBlackCreature() {
-        Permanent nightstalker = attackingNightstalker();
+        addCreatureReady(player1, new ProwlingNightstalker());
 
         Permanent blocker = addCreatureReady(player2, new BrutalNightstalker());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
     }
 
-    private Permanent attackingNightstalker() {
-        Permanent nightstalker = addCreatureReady(player1, new ProwlingNightstalker());
-        nightstalker.setAttacking(true);
-        return nightstalker;
+    @Test
+    @DisplayName("A black blocker does not allow a non-black creature to block alongside it")
+    void eachBlockerMustBeBlack() {
+        addCreatureReady(player1, new ProwlingNightstalker());
+        addCreatureReady(player2, new BrutalNightstalker());
+        addCreatureReady(player2, new VolunteerMilitia());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can only be blocked by black creatures");
     }
 }
