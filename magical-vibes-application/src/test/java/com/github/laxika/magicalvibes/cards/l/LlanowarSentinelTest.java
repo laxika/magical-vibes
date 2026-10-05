@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MindlockOrb;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LlanowarSentinel.class, GrizzlyBears.class})
+@CardUsed({LlanowarSentinel.class, GrizzlyBears.class, MindlockOrb.class})
 class LlanowarSentinelTest extends BaseCardTest {
 
     @Test
@@ -140,6 +141,59 @@ class LlanowarSentinelTest extends BaseCardTest {
         assertThat(countSentinelsOnBattlefield()).isEqualTo(3);
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Paying with no matching card still spends mana and shuffles")
+    void payingWithNoMatchingCardStillSpendsManaAndShuffles() {
+        setupAndCast(5);
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(countSentinelsOnBattlefield()).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("Library is shuffled"));
+    }
+
+    @Test
+    @DisplayName("Two mana without green cannot pay for the entry ability")
+    void twoManaWithoutGreenCannotPay() {
+        setupAndCast(3);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        setupLibraryWithSentinels();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(countSentinelsOnBattlefield()).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("Accepting payment spends mana even when Mindlock Orb prevents searching")
+    @CardUsed({LlanowarSentinel.class, GrizzlyBears.class, MindlockOrb.class})
+    void paymentStillHappensWhenSearchingIsProhibited() {
+        harness.addToBattlefield(player2, new MindlockOrb());
+        setupAndCast(5);
+        setupLibraryWithSentinels();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(countSentinelsOnBattlefield()).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
     }
 
     private void setupAndCast(int greenMana) {
