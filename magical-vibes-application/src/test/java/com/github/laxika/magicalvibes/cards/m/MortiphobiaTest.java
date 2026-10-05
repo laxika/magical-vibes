@@ -87,4 +87,57 @@ class MortiphobiaTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(source);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(target);
     }
+    @Test
+    @DisplayName("Discard ability can exile a noncreature card from its controller's graveyard")
+    void discardAbilityExilesNoncreatureFromControllersGraveyard() {
+        Card source = new Mortiphobia();
+        Card target = new Mortiphobia();
+        Card discard = new PutridImp();
+        harness.addToBattlefield(player1, source);
+        harness.setHand(player1, List.of(discard));
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(target, discard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(target);
+        harness.assertOnBattlefield(player1, "Mortiphobia");
+    }
+
+    @Test
+    @DisplayName("Sacrificing Mortiphobia in response exiles the shared target and does not refund the discard cost")
+    void sacrificeInResponseLeavesDiscardCostPaidWhenTargetIsGone() {
+        Card source = new Mortiphobia();
+        Card target = new Gravegouger();
+        Card discard = new PutridImp();
+        harness.addToBattlefield(player1, source);
+        harness.setHand(player1, List.of(discard));
+        harness.setGraveyard(player2, List.of(target));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
+        harness.handleCardChosen(player1, 0);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 1, List.of(target.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discard, source);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(target);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discard, source);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(target);
+    }
 }
