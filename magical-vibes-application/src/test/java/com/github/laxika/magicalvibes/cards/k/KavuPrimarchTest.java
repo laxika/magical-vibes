@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -45,7 +47,7 @@ class KavuPrimarchTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KavuPrimarch()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(convokeCreature.getId()));
+        harness.castInstantWithConvoke(player1, 0, List.of(), List.of(convokeCreature.getId()));
         assertThat(convokeCreature.isTapped()).isTrue();
 
         harness.passBothPriorities();
@@ -60,12 +62,49 @@ class KavuPrimarchTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KavuPrimarch()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(convokeCreature.getId()));
+        harness.castInstantWithConvoke(player1, 0, List.of(), List.of(convokeCreature.getId()));
         assertThat(convokeCreature.isTapped()).isTrue();
 
         harness.passBothPriorities();
 
         Permanent kavu = findPermanent(player1, "Kavu Primarch");
         assertThat(kavu.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void summoningSickCreaturesCanConvokeTheEntireUnkickedCost() {
+        List<UUID> creatureIds = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            Permanent creature = harness.addToBattlefieldAndReturn(player1, new NessianCourser());
+            creature.setSummoningSick(true);
+            creatureIds.add(creature.getId());
+        }
+        harness.setHand(player1, List.of(new KavuPrimarch()));
+
+        harness.castInstantWithConvoke(player1, 0, List.of(), creatureIds);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Kavu Primarch")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(findPermanents(player1, "Nessian Courser")).allMatch(Permanent::isTapped);
+    }
+
+    @Test
+    void convokeCanPayTheEntireCostIncludingKicker() {
+        List<UUID> creatureIds = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            Permanent creature = harness.addToBattlefieldAndReturn(player1, new NessianCourser());
+            creatureIds.add(creature.getId());
+        }
+        harness.setHand(player1, List.of(new KavuPrimarch()));
+
+        harness.ensurePriority(player1);
+        gs.playCard(gd, player1, 0, 0, null, null, List.of(), creatureIds,
+                false, null, null, null, null, null, true);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Kavu Primarch")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(findPermanents(player1, "Nessian Courser")).allMatch(Permanent::isTapped);
     }
 }
