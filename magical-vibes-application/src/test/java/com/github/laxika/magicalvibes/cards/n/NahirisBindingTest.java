@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -30,21 +29,13 @@ class NahirisBindingTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         attachBinding(player2, creature);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
 
         Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player2);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player1,
                 List.of(new BlockerAssignment(0, 1))))
@@ -103,6 +94,29 @@ class NahirisBindingTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature or planeswalker");
+    }
+
+    @Test
+    @DisplayName("Enchanted mana creature is not an available mana source")
+    void enchantedManaCreatureIsNotAvailableForManaPlanning() {
+        Permanent elves = addCreatureReady(player1, new LlanowarElves());
+        attachBinding(player2, elves);
+
+        assertThat(harness.getGameQueryService().canActivateManaAbility(gd, elves)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Removing the Aura allows the creature to activate its mana ability again")
+    void manaAbilityWorksAfterBindingLeavesBattlefield() {
+        Permanent elves = addCreatureReady(player1, new LlanowarElves());
+        Permanent binding = attachBinding(player2, elves);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, binding));
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(elves.isTapped()).isTrue();
     }
 
     private Permanent attachBinding(com.github.laxika.magicalvibes.model.Player controller,
