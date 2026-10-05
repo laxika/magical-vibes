@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -82,6 +84,29 @@ class QuirionElvesTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @ParameterizedTest
+    @EnumSource(CardColor.class)
+    @DisplayName("Each color chosen on entry is used by the second mana ability")
+    void entryChoiceDeterminesProducedMana(CardColor color) {
+        harness.castFromHand(player1, new QuirionElves(), "{1}{G}");
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+
+        harness.handleListChoice(player1, color.name());
+        Permanent elves = findPermanent(player1, "Quirion Elves");
+        elves.setSummoningSick(false);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        for (ManaColor manaColor : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor))
+                    .isEqualTo(manaColor.name().equals(color.name()) ? 1 : 0);
+        }
+        assertThat(elves.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private Permanent addReadyElves(Player player, CardColor chosenColor) {
