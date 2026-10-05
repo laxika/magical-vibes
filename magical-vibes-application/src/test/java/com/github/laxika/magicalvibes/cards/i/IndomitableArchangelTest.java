@@ -1,72 +1,64 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.cards.g.GoldMyr;
+import com.github.laxika.magicalvibes.cards.a.AlphaTyrranax;
+import com.github.laxika.magicalvibes.cards.a.AccordersShield;
+import com.github.laxika.magicalvibes.cards.m.Memnite;
+import com.github.laxika.magicalvibes.cards.s.Shatter;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({IndomitableArchangel.class, Memnite.class, AccordersShield.class, GoldMyr.class, AlphaTyrranax.class, Shatter.class})
 class IndomitableArchangelTest extends BaseCardTest {
-
-    // ===== Without metalcraft =====
 
     @Test
     @DisplayName("Without metalcraft, artifacts do not have shroud")
     void noShroudWithoutMetalcraft() {
         harness.addToBattlefield(player1, new IndomitableArchangel());
-        harness.addToBattlefield(player1, new Spellbook());
+        Permanent memnite = harness.addToBattlefieldAndReturn(player1, new Memnite());
 
-        Permanent spellbook = findPermanent(player1, "Spellbook");
-
-        assertThat(gqs.hasKeyword(gd, spellbook, Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, memnite, Keyword.SHROUD)).isFalse();
     }
 
     @Test
     @DisplayName("With only two artifacts, artifacts do not have shroud")
     void noShroudWithTwoArtifacts() {
         harness.addToBattlefield(player1, new IndomitableArchangel());
-        harness.addToBattlefield(player1, new Spellbook());
-        harness.addToBattlefield(player1, new LeoninScimitar());
+        Permanent memnite = harness.addToBattlefieldAndReturn(player1, new Memnite());
+        harness.addToBattlefield(player1, new AccordersShield());
 
-        Permanent spellbook = findPermanent(player1, "Spellbook");
-
-        assertThat(gqs.hasKeyword(gd, spellbook, Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, memnite, Keyword.SHROUD)).isFalse();
     }
-
-    // ===== With metalcraft =====
 
     @Test
     @DisplayName("With metalcraft, artifacts you control have shroud")
     void artifactsHaveShroudWithMetalcraft() {
         harness.addToBattlefield(player1, new IndomitableArchangel());
-        harness.addToBattlefield(player1, new Spellbook());
-        harness.addToBattlefield(player1, new LeoninScimitar());
-        harness.addToBattlefield(player1, new BottleGnomes());
+        Permanent memnite = harness.addToBattlefieldAndReturn(player1, new Memnite());
+        Permanent shield = harness.addToBattlefieldAndReturn(player1, new AccordersShield());
+        Permanent myr = harness.addToBattlefieldAndReturn(player1, new GoldMyr());
 
-        Permanent spellbook = findPermanent(player1, "Spellbook");
-        Permanent scimitar = findPermanent(player1, "Leonin Scimitar");
-        Permanent gnomes = findPermanent(player1, "Bottle Gnomes");
-
-        assertThat(gqs.hasKeyword(gd, spellbook, Keyword.SHROUD)).isTrue();
-        assertThat(gqs.hasKeyword(gd, scimitar, Keyword.SHROUD)).isTrue();
-        assertThat(gqs.hasKeyword(gd, gnomes, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, memnite, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, shield, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, myr, Keyword.SHROUD)).isTrue();
     }
 
     @Test
     @DisplayName("Indomitable Archangel itself does not get shroud (not an artifact)")
     void archangelDoesNotGetShroud() {
-        harness.addToBattlefield(player1, new IndomitableArchangel());
-        harness.addToBattlefield(player1, new Spellbook());
-        harness.addToBattlefield(player1, new LeoninScimitar());
-        harness.addToBattlefield(player1, new BottleGnomes());
-
-        Permanent archangel = findPermanent(player1, "Indomitable Archangel");
+        Permanent archangel = harness.addToBattlefieldAndReturn(player1, new IndomitableArchangel());
+        harness.addToBattlefield(player1, new Memnite());
+        harness.addToBattlefield(player1, new AccordersShield());
+        harness.addToBattlefield(player1, new GoldMyr());
 
         assertThat(gqs.hasKeyword(gd, archangel, Keyword.SHROUD)).isFalse();
     }
@@ -75,67 +67,103 @@ class IndomitableArchangelTest extends BaseCardTest {
     @DisplayName("Non-artifact creatures do not get shroud")
     void nonArtifactCreatureDoesNotGetShroud() {
         harness.addToBattlefield(player1, new IndomitableArchangel());
-        harness.addToBattlefield(player1, new Spellbook());
-        harness.addToBattlefield(player1, new LeoninScimitar());
-        harness.addToBattlefield(player1, new BottleGnomes());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Memnite());
+        harness.addToBattlefield(player1, new AccordersShield());
+        harness.addToBattlefield(player1, new GoldMyr());
+        Permanent tyrranax = harness.addToBattlefieldAndReturn(player1, new AlphaTyrranax());
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
-
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, tyrranax, Keyword.SHROUD)).isFalse();
     }
-
-    // ===== Opponent's artifacts =====
 
     @Test
     @DisplayName("Opponent's artifacts do not get shroud")
     void opponentArtifactsDoNotGetShroud() {
         harness.addToBattlefield(player1, new IndomitableArchangel());
-        harness.addToBattlefield(player1, new Spellbook());
-        harness.addToBattlefield(player1, new LeoninScimitar());
-        harness.addToBattlefield(player1, new BottleGnomes());
+        harness.addToBattlefield(player1, new Memnite());
+        harness.addToBattlefield(player1, new AccordersShield());
+        harness.addToBattlefield(player1, new GoldMyr());
 
-        harness.addToBattlefield(player2, new Spellbook());
+        Permanent opponentMemnite = harness.addToBattlefieldAndReturn(player2, new Memnite());
 
-        Permanent opponentSpellbook = findPermanent(player2, "Spellbook");
-
-        assertThat(gqs.hasKeyword(gd, opponentSpellbook, Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentMemnite, Keyword.SHROUD)).isFalse();
     }
-
-    // ===== Metalcraft lost =====
 
     @Test
     @DisplayName("Shroud is lost when artifact count drops below three")
     void shroudLostWhenArtifactRemoved() {
         harness.addToBattlefield(player1, new IndomitableArchangel());
-        harness.addToBattlefield(player1, new Spellbook());
-        harness.addToBattlefield(player1, new LeoninScimitar());
-        harness.addToBattlefield(player1, new BottleGnomes());
-
-        Permanent spellbook = findPermanent(player1, "Spellbook");
+        Permanent memnite = harness.addToBattlefieldAndReturn(player1, new Memnite());
+        harness.addToBattlefield(player1, new AccordersShield());
+        harness.addToBattlefield(player1, new GoldMyr());
 
         // With 3 artifacts, has shroud
-        assertThat(gqs.hasKeyword(gd, spellbook, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, memnite, Keyword.SHROUD)).isTrue();
 
         // Remove one artifact — now only 2
-        gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getCard().getName().equals("Bottle Gnomes"));
+        gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getCard().getName().equals("Gold Myr"));
 
-        assertThat(gqs.hasKeyword(gd, spellbook, Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, memnite, Keyword.SHROUD)).isFalse();
     }
-
-    // ===== Opponent's artifacts don't count for metalcraft =====
 
     @Test
     @DisplayName("Opponent's artifacts don't count for metalcraft")
     void opponentArtifactsDontCountForMetalcraft() {
         harness.addToBattlefield(player1, new IndomitableArchangel());
-        harness.addToBattlefield(player1, new Spellbook());
+        Permanent memnite = harness.addToBattlefieldAndReturn(player1, new Memnite());
         // Only 1 artifact controlled by player1; 2 more on opponent's side
-        harness.addToBattlefield(player2, new LeoninScimitar());
-        harness.addToBattlefield(player2, new BottleGnomes());
+        harness.addToBattlefield(player2, new AccordersShield());
+        harness.addToBattlefield(player2, new GoldMyr());
 
-        Permanent spellbook = findPermanent(player1, "Spellbook");
+        assertThat(gqs.hasKeyword(gd, memnite, Keyword.SHROUD)).isFalse();
+    }
 
-        assertThat(gqs.hasKeyword(gd, spellbook, Keyword.SHROUD)).isFalse();
+    @Test
+    void shroudPreventsBothPlayersFromTargetingArtifacts() {
+        harness.addToBattlefield(player1, new IndomitableArchangel());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Memnite());
+        harness.addToBattlefield(player1, new AccordersShield());
+        harness.addToBattlefield(player1, new GoldMyr());
+        harness.setHand(player1, List.of(new Shatter()));
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("shroud");
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("shroud");
+    }
+
+    @Test
+    void spellOnStackLosesItsTargetWhenMetalcraftBecomesActive() {
+        harness.addToBattlefield(player1, new IndomitableArchangel());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Memnite());
+        harness.addToBattlefield(player1, new AccordersShield());
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castInstant(player2, 0, artifact.getId());
+
+        harness.addToBattlefield(player1, new GoldMyr());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Memnite");
+        harness.assertInGraveyard(player2, "Shatter");
+    }
+
+    @Test
+    void artifactsCanBeTargetedAfterArchangelLeaves() {
+        Permanent archangel = harness.addToBattlefieldAndReturn(player1, new IndomitableArchangel());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Memnite());
+        harness.addToBattlefield(player1, new AccordersShield());
+        harness.addToBattlefield(player1, new GoldMyr());
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.SHROUD)).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, archangel));
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, artifact.getId());
+
+        harness.assertNotOnBattlefield(player1, "Memnite");
+        harness.assertInGraveyard(player1, "Memnite");
     }
 }
