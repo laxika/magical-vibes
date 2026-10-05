@@ -25,10 +25,10 @@ class MoonsnareSpecialistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Moonsnare Specialist");
     }
 
@@ -41,29 +41,96 @@ class MoonsnareSpecialistTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Moonsnare Specialist");
+        harness.assertNotInHand(player1, "Moonsnare Specialist");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
     @DisplayName("Ninjutsu returns the unblocked attacker and puts Moonsnare Specialist in tapped and attacking")
     void ninjutsuSwapsTheUnblockedAttacker() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
-        declareAttackers(List.of(0));
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        MoonsnareSpecialist ninja = new MoonsnareSpecialist();
+        harness.setHand(player1, List.of(ninja));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
+        harness.activateHandAbility(player1, 0, attacker.getId());
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).contains(ninja);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, harness::passBothPriorities);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, this::resolveAllTriggers);
+
+        Permanent specialist = findPermanent(player1, "Moonsnare Specialist");
+        assertThat(specialist.isTapped()).isTrue();
+        assertThat(specialist.isAttacking()).isTrue();
+        assertThat(specialist.getAttackTarget()).isEqualTo(player2.getId());
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(attacker.getCard());
+    }
+
+    @Test
+    @CardUsed(MoonsnareSpecialist.class)
+    @DisplayName("Moonsnare Specialist can return itself to hand with its ETB ability")
+    void etbCanBounceItself() {
+        MoonsnareSpecialist card = new MoonsnareSpecialist();
+        Permanent specialist = harness.enterBattlefieldAndReturn(player1, card);
+
+        harness.handlePermanentChosen(player1, specialist.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Moonsnare Specialist");
+        assertThat(gd.playerHands.get(player1.getId())).contains(card);
+    }
+
+    @Test
+    @CardUsed(MoonsnareSpecialist.class)
+    @DisplayName("ETB can return another creature you control")
+    void etbCanBounceAnotherOwnCreature() {
+        MoonsnareSpecialist targetCard = new MoonsnareSpecialist();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, targetCard);
+        Permanent source = harness.enterBattlefieldAndReturn(player1, new MoonsnareSpecialist());
+
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(targetCard);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(source).doesNotContain(target);
+    }
+
+    @Test
+    @DisplayName("Entering through ninjutsu also triggers the creature bounce")
+    void ninjutsuEntryBouncesOpposingCreature() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new MoonsnareSpecialist()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
+
         harness.activateHandAbility(player1, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, harness::passBothPriorities);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, this::resolveAllTriggers);
 
         harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         Permanent specialist = findPermanent(player1, "Moonsnare Specialist");
         assertThat(specialist.isTapped()).isTrue();
         assertThat(specialist.isAttacking()).isTrue();
-        assertThat(specialist.getAttackTarget()).isEqualTo(player2.getId());
     }
 }
