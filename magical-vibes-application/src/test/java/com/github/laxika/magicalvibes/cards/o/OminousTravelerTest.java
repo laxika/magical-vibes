@@ -57,7 +57,7 @@ class OminousTravelerTest extends BaseCardTest {
         resolveAllTriggers();
         PendingInteraction.SpellbookDraftChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
-        Card drafted = choice.cards().getFirst();
+        Card drafted = chooseCardWithoutEnterChoices(choice);
         harness.handleMultipleCardsChosen(player1, List.of(drafted.getId()));
 
         harness.addMana(player1, ManaColor.COLORLESS, 8);
@@ -70,5 +70,61 @@ class OminousTravelerTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, drafted.getName());
         harness.assertInHand(player1, "Ominous Traveler");
+    }
+
+    @Test
+    void canReturnADifferentTravelerAndLeavesTheOriginalAndOpponentsTraveler() {
+        Permanent original = harness.enterBattlefieldAndReturn(player1, new OminousTraveler());
+        resolveAllTriggers();
+        PendingInteraction.SpellbookDraftChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
+        Card drafted = chooseCardWithoutEnterChoices(choice);
+        harness.handleMultipleCardsChosen(player1, List.of(drafted.getId()));
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new OminousTraveler());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new OminousTraveler());
+
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.castCreature(player1, gd.playerHands.get(player1.getId()).indexOf(drafted));
+        resolveAllTriggers();
+        harness.assertNotOnBattlefield(player1, drafted.getName());
+        harness.handlePermanentChosen(player1, other.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(other.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(original).doesNotContain(other);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponent);
+        harness.assertOnBattlefield(player1, drafted.getName());
+    }
+
+    @Test
+    void grantedAbilitiesPersistAcrossZonesAndCastingNeedsNoTraveler() {
+        Permanent traveler = harness.enterBattlefieldAndReturn(player1, new OminousTraveler());
+        resolveAllTriggers();
+        PendingInteraction.SpellbookDraftChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
+        Card drafted = chooseCardWithoutEnterChoices(choice);
+        harness.handleMultipleCardsChosen(player1, List.of(drafted.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(traveler);
+        harness.setGraveyard(player1, List.of(traveler.getCard(), drafted));
+        harness.setHand(player1, List.of());
+        gd.playerGraveyards.get(player1.getId()).remove(drafted);
+        harness.setHand(player1, List.of(drafted));
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new OminousTraveler());
+
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, drafted.getName());
+        harness.assertNotInHand(player1, "Ominous Traveler");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponent);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    private Card chooseCardWithoutEnterChoices(PendingInteraction.SpellbookDraftChoice choice) {
+        return choice.cards().stream()
+                .filter(card -> !(card instanceof DominatingVampire) && !(card instanceof ShipwreckSifters))
+                .findFirst().orElseThrow();
     }
 }
