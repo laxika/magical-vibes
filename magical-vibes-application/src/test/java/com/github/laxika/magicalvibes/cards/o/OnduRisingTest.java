@@ -86,4 +86,72 @@ class OnduRisingTest extends BaseCardTest {
         harness.castFromHand(player1, new OnduRising(), "{1}{W}");
         harness.passBothPriorities();
     }
+
+    @Test
+    void creaturesEnteringAfterResolutionAlsoGainLifelinkWhenTheyAttack() {
+        castNormally();
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonattacker = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, first, Keyword.LIFELINK)).isFalse();
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, first, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, nonattacker, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    void normalCastDoesNotAwakenAnyLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        castNormally();
+
+        assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.isCreature(gd, land)).isFalse();
+    }
+
+    @Test
+    void awakenedLandCanAttackImmediatelyAndAnimationSurvivesCleanup() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new OnduRising()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        gs.playCardWithAlternateCost(gd, player1, 0, 0, null, null, List.of(land.getId()));
+        harness.passBothPriorities();
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        assertThat(gqs.hasKeyword(gd, land, Keyword.LIFELINK)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, land, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    void illegalAwakenTargetPreventsTheEntireSpellFromResolving() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new OnduRising()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        gs.playCardWithAlternateCost(gd, player1, 0, 0, null, null, List.of(land.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(land);
+        harness.passBothPriorities();
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.LIFELINK)).isFalse();
+        harness.assertInGraveyard(player1, "Ondu Rising");
+    }
 }
