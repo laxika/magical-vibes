@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.a.AllThatGlitters;
+import com.github.laxika.magicalvibes.cards.g.Gingerbrute;
+import com.github.laxika.magicalvibes.cards.g.GoldenEgg;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
@@ -16,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Mirrormade.class, GloriousAnthem.class, GrizzlyBears.class, JayemdaeTome.class})
+@CardUsed({Mirrormade.class, GloriousAnthem.class, GrizzlyBears.class, JayemdaeTome.class,
+        AllThatGlitters.class, Gingerbrute.class, GoldenEgg.class})
 class MirrormadeTest extends BaseCardTest {
 
     @Test
@@ -59,11 +63,99 @@ class MirrormadeTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Mirrormade");
     }
 
+    @Test
+    @DisplayName("Mirrormade can decline to copy a valid permanent")
+    void canDeclineCopy() {
+        harness.addToBattlefield(player2, new GoldenEgg());
+        castMirrormade();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Mirrormade");
+        harness.assertNotOnBattlefield(player1, "Golden Egg");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Mirrormade copies an artifact creature without copying its tapped status")
+    void copiesArtifactCreatureWithoutTappedStatus() {
+        Permanent original = harness.addToBattlefieldAndReturn(player2, new Gingerbrute());
+        original.tap();
+        castMirrormade();
+
+        chooseCopy(original);
+
+        Permanent copy = findPermanent(player1, "Gingerbrute");
+        assertThat(copy.isTapped()).isFalse();
+        assertThat(original.isTapped()).isTrue();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 23);
+        harness.assertInGraveyard(player1, "Mirrormade");
+        harness.assertNotOnBattlefield(player1, "Gingerbrute");
+    }
+
+    @Test
+    @DisplayName("Mirrormade triggers the copied artifact's enter ability")
+    void triggersCopiedEnterAbility() {
+        Permanent egg = harness.addToBattlefieldAndReturn(player2, new GoldenEgg());
+        Gingerbrute drawnCard = new Gingerbrute();
+        harness.setLibrary(player1, List.of(drawnCard));
+        castMirrormade();
+
+        chooseCopy(egg);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Golden Egg");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    @DisplayName("Mirrormade copies the current copiable values of another Mirrormade")
+    void copiesExistingCopy() {
+        Permanent egg = harness.addToBattlefieldAndReturn(player2, new GoldenEgg());
+        harness.setLibrary(player1, List.of(new Gingerbrute(), new Gingerbrute()));
+        castMirrormade();
+        chooseCopy(egg);
+        harness.passBothPriorities();
+        Permanent firstCopy = findPermanent(player1, "Golden Egg");
+
+        castMirrormade();
+        chooseCopy(firstCopy);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2)
+                .allSatisfy(copy -> assertThat(copy.getOriginalCard().getName()).isEqualTo("Mirrormade"));
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Mirrormade chooses a recipient before entering as a copy of an Aura")
+    void choosesRecipientForCopiedAura() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new Gingerbrute());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new AllThatGlitters());
+        aura.setAttachedTo(creature.getId());
+        castMirrormade();
+
+        chooseCopy(aura);
+
+        PendingInteraction.PermanentChoice recipientChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(recipientChoice).isNotNull();
+        assertThat(recipientChoice.validPermanentIds()).contains(creature.getId());
+        harness.handlePermanentChosen(player1, creature.getId());
+
+        Permanent copy = findPermanent(player1, "All That Glitters");
+        assertThat(copy.getAttachedTo()).isEqualTo(creature.getId());
+        harness.assertNotInGraveyard(player1, "Mirrormade");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+    }
+
     private void castMirrormade() {
-        harness.setHand(player1, List.of(new Mirrormade()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new Mirrormade(), "{1}{U}{U}");
         harness.passBothPriorities();
     }
 
