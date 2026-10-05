@@ -58,6 +58,64 @@ class NovaClericTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Nova Cleric");
     }
 
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        addCreatureReady(player1, new NovaCleric()).tap();
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Nova Cleric");
+        harness.assertNotInGraveyard(player1, "Nova Cleric");
+    }
+
+    @Test
+    @DisplayName("Three colorless mana cannot pay the white activation requirement")
+    void cannotActivateWithoutWhiteMana() {
+        addCreatureReady(player1, new NovaCleric());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Nova Cleric");
+        harness.assertNotInGraveyard(player1, "Nova Cleric");
+    }
+
+    @Test
+    @DisplayName("Can activate without any enchantments on the battlefield")
+    void canActivateWithoutEnchantments() {
+        addCreatureReady(player1, new NovaCleric());
+        harness.addToBattlefield(player2, new CrudeRampart());
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Nova Cleric");
+        harness.assertNotOnBattlefield(player1, "Nova Cleric");
+        harness.assertOnBattlefield(player2, "Crude Rampart");
+    }
+
+    @Test
+    @DisplayName("Destroys enchantments that enter after activation but before resolution")
+    void destroysEnchantmentsPresentAtResolution() {
+        addCreatureReady(player1, new NovaCleric());
+        addActivationMana();
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.addToBattlefield(player2, new WordsOfWar());
+        harness.assertInGraveyard(player1, "Nova Cleric");
+        harness.assertOnBattlefield(player2, "Words of War");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Words of War");
+        harness.assertNotOnBattlefield(player2, "Words of War");
+    }
+
     private void addActivationMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.WHITE, 1);
