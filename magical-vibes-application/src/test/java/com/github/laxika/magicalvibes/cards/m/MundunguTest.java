@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.FallenAskari;
+import com.github.laxika.magicalvibes.cards.l.LastWord;
 import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,8 +16,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Mundungu.class, FallenAskari.class})
+@CardUsed({Mundungu.class, FallenAskari.class, PlatinumEmperion.class, LastWord.class})
 class MundunguTest extends BaseCardTest {
 
     @Test
@@ -61,7 +63,6 @@ class MundunguTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(PlatinumEmperion.class)
     @DisplayName("Counters spell when opponent cannot pay 1 life")
     void countersWhenOpponentCannotPayLife() {
         Permanent mundungu = addCreatureReady(player1, new Mundungu());
@@ -140,5 +141,73 @@ class MundunguTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
         harness.assertInGraveyard(player2, "Fallen Askari");
         harness.assertNotOnBattlefield(player2, "Fallen Askari");
+    }
+
+    @Test
+    @DisplayName("Can target its controller's own spell and offer payment to that controller")
+    void canTargetOwnSpell() {
+        addCreatureReady(player1, new Mundungu());
+        FallenAskari askari = new FallenAskari();
+        harness.setHand(player1, List.of(askari));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.castCreature(player1, 0);
+        harness.activateAbility(player1, 0, null, askari.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertLife(player1, lifeBefore - 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Fallen Askari");
+    }
+
+    @Test
+    @DisplayName("Summoning sick Mundungu cannot activate its tap ability")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new Mundungu());
+        findPermanent(player1, "Mundungu").setSummoningSick(true);
+        FallenAskari askari = new FallenAskari();
+        harness.setHand(player1, List.of(askari));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castCreature(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, askari.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanent(player1, "Mundungu").isTapped()).isFalse();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Fallen Askari");
+    }
+
+    @Test
+    @DisplayName("An uncounterable spell's controller may still pay mana and life")
+    void canPayForUncounterableSpell() {
+        addCreatureReady(player1, new Mundungu());
+        FallenAskari askari = new FallenAskari();
+        harness.setHand(player1, List.of(askari));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+
+        LastWord lastWord = new LastWord();
+        harness.setHand(player2, List.of(lastWord));
+        harness.addMana(player2, ManaColor.BLUE, 5);
+        harness.castInstant(player2, 0, askari.getId());
+        harness.passPriority(player2);
+        harness.activateAbility(player1, 0, null, lastWord.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        int lifeBefore = gd.getLife(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        harness.assertLife(player2, lifeBefore - 1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.stack).anySatisfy(entry -> assertThat(entry.getCard()).isSameAs(lastWord));
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Fallen Askari");
+        harness.assertInGraveyard(player2, "Last Word");
     }
 }
