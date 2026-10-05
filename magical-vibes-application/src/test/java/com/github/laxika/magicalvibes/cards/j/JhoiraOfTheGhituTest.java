@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
 import com.github.laxika.magicalvibes.cards.d.DryadArbor;
+import com.github.laxika.magicalvibes.cards.n.Nihilith;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({JhoiraOfTheGhitu.class, BlindPhantasm.class, DryadArbor.class})
+@CardUsed({JhoiraOfTheGhitu.class, BlindPhantasm.class, DryadArbor.class, Nihilith.class})
 class JhoiraOfTheGhituTest extends BaseCardTest {
 
     @Test
@@ -41,12 +42,8 @@ class JhoiraOfTheGhituTest extends BaseCardTest {
         harness.setHand(player1, List.of(first, second));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.activateAbility(player1, 0, null, null);
-        harness.handleCardChosen(player1, 0);
-        resolveAllTriggers();
-        harness.activateAbility(player1, 0, null, null);
-        harness.handleCardChosen(player1, 0);
-        resolveAllTriggers();
+        activate(jhoira, 0);
+        activate(jhoira, 0);
 
         assertThat(gd.exiledCardTimeCounters)
                 .containsEntry(first.getId(), 4)
@@ -113,6 +110,86 @@ class JhoiraOfTheGhituTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(landCreature);
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(landCreature);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    @Test
+    void exileIsPaidBeforeTimeCountersAreAddedAtResolution() {
+        jhoira();
+        BlindPhantasm card = new BlindPhantasm();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(card);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+
+        resolveAllTriggers();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+    }
+
+    @Test
+    void overlappingActivationsRememberTheirOwnExiledCards() {
+        jhoira();
+        BlindPhantasm first = new BlindPhantasm();
+        BlindPhantasm second = new BlindPhantasm();
+        harness.setHand(player1, List.of(first, second));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(first, second);
+        assertThat(gd.exiledCardTimeCounters)
+                .doesNotContainKey(first.getId())
+                .doesNotContainKey(second.getId());
+
+        resolveAllTriggers();
+
+        assertThat(gd.exiledCardTimeCounters)
+                .containsEntry(first.getId(), 4)
+                .containsEntry(second.getId(), 4);
+    }
+
+    @Test
+    void opponentsUpkeepDoesNotRemoveATimeCounter() {
+        Permanent jhoira = jhoira();
+        BlindPhantasm card = new BlindPhantasm();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        activate(jhoira, 0);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 3);
+    }
+
+    @Test
+    void cardWithSuspendGetsFourCountersAndOnlyOneUpkeepTrigger() {
+        Permanent jhoira = jhoira();
+        Nihilith card = new Nihilith();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        activate(jhoira, 0);
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 3);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
     }
 
     private Permanent jhoira() {
