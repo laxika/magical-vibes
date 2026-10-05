@@ -83,10 +83,64 @@ class JudgeUnworthyTest extends BaseCardTest {
                 .hasMessageContaining("attacking or blocking creature");
     }
 
+    @Test
+    @DisplayName("Scry can reorder the top cards before the damage is determined")
+    void reorderedTopCardDeterminesDamage() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new BlindPhantasm());
+        attacker.setAttacking(true);
+        Card land = new RiverOfTears();
+        Card blade = new BladeOfTheSixthPride();
+        Card otherLand = new RiverOfTears();
+        harness.setLibrary(player1, List.of(land, blade, otherLand));
+
+        castJudgeUnworthy(attacker);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(1, 0), List.of(2)));
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(blade, land, otherLand);
+        harness.assertOnBattlefield(player2, "Blind Phantasm");
+    }
+
+    @Test
+    @DisplayName("Revealing a card with sufficient mana value kills the target")
+    void revealedManaValueDealsLethalDamage() {
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new BlindPhantasm());
+        blocker.setBlocking(true);
+        Card revealed = new BlindPhantasm();
+        harness.setLibrary(player1, List.of(revealed));
+
+        castJudgeUnworthy(blocker);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        harness.assertNotOnBattlefield(player2, "Blind Phantasm");
+        harness.assertInGraveyard(player2, "Blind Phantasm");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(revealed);
+    }
+
+    @Test
+    @DisplayName("A target that leaves combat prevents the entire spell from resolving")
+    void targetLeavingCombatPreventsScryAndDamage() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new BlindPhantasm());
+        attacker.setAttacking(true);
+        Card topCard = new BlindPhantasm();
+        harness.setLibrary(player1, List.of(topCard));
+        prepareJudgeUnworthy();
+        harness.castInstant(player1, 0, attacker.getId());
+        attacker.setAttacking(false);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(attacker.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Judge Unworthy");
+    }
+
     private void castJudgeUnworthy(Permanent target) {
         prepareJudgeUnworthy();
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void prepareJudgeUnworthy() {
