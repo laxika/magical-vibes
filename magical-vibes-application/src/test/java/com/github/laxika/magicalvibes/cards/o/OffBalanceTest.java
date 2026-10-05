@@ -56,6 +56,22 @@ class OffBalanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target your own tapped creature without untapping it")
+    void canTargetOwnTappedCreature() {
+        Permanent target = addCreatureReady(player1, new RootwaterCommando());
+        target.setTapped(true);
+        harness.setHand(player1, List.of(new OffBalance()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.isTapped()).isTrue();
+        target.setTapped(false);
+        assertThat(als.canAttack(gd, target, player1.getId())).isFalse();
+        assertThat(bls.canBlock(gd, target)).isFalse();
+    }
+
+    @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
         Permanent nonCreature = harness.addToBattlefieldAndReturn(player2, new KillSwitch());
