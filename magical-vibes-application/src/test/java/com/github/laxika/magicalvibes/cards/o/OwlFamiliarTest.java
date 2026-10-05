@@ -75,6 +75,30 @@ class OwlFamiliarTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Owl Familiar");
     }
 
+    @Test
+    @DisplayName("Entering without being cast draws and discards only for its controller")
+    void enteringWithoutCastingAffectsOnlyController() {
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        harness.enterBattlefieldAndReturn(player2, new OwlFamiliar());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Forest");
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.assertOnBattlefield(player2, "Owl Familiar");
+        assertThat(gd.stack).isEmpty();
+    }
     private void castOwlFamiliar() {
         harness.castFromHand(player1, new OwlFamiliar(), "{1}{U}");
     }
