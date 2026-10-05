@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.c.Cryptex;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PublicThoroughfare.class, Forest.class, Spellbook.class})
+@CardUsed({PublicThoroughfare.class, Forest.class, Cryptex.class})
 class PublicThoroughfareTest extends BaseCardTest {
 
     @Test
@@ -48,14 +48,14 @@ class PublicThoroughfareTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping an untapped artifact keeps Public Thoroughfare on the battlefield")
     void tappingArtifactKeepsIt() {
-        Permanent spellbook = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        Permanent cryptex = harness.addToBattlefieldAndReturn(player1, new Cryptex());
 
         playPublicThoroughfare();
         resolveEnterTrigger();
 
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(spellbook.isTapped()).isTrue();
+        assertThat(cryptex.isTapped()).isTrue();
         assertThat(findThoroughfare(player1)).isNotNull();
     }
 
@@ -69,6 +69,91 @@ class PublicThoroughfareTest extends BaseCardTest {
 
         assertThat(findThoroughfare(player1)).isNull();
         harness.assertInGraveyard(player1, "Public Thoroughfare");
+    }
+
+    @Test
+    @DisplayName("May decline payment even when an untapped land is available")
+    void mayDeclineAvailablePayment() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        playPublicThoroughfare();
+        resolveEnterTrigger();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Public Thoroughfare");
+        harness.assertInGraveyard(player1, "Public Thoroughfare");
+        assertThat(forest.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot pay with Public Thoroughfare when it is the only land")
+    void cannotPayWithTappedSource() {
+        playPublicThoroughfare();
+        resolveEnterTrigger();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Public Thoroughfare");
+        harness.assertInGraveyard(player1, "Public Thoroughfare");
+    }
+
+    @Test
+    @DisplayName("Tapped lands and artifacts cannot pay the entry cost")
+    void tappedPermanentsCannotPay() {
+        harness.addToBattlefieldAndReturn(player1, new Forest()).tap();
+        harness.addToBattlefieldAndReturn(player1, new Cryptex()).tap();
+
+        playPublicThoroughfare();
+        resolveEnterTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Public Thoroughfare");
+        harness.assertInGraveyard(player1, "Public Thoroughfare");
+    }
+
+    @Test
+    @DisplayName("Opponent's lands and artifacts cannot pay the entry cost")
+    void opposingPermanentsCannotPay() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent cryptex = harness.addToBattlefieldAndReturn(player2, new Cryptex());
+
+        playPublicThoroughfare();
+        resolveEnterTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Public Thoroughfare");
+        assertThat(forest.isTapped()).isFalse();
+        assertThat(cryptex.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Only the chosen permanent is tapped when several can pay")
+    void choosesOnePermanentToTap() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent cryptex = harness.addToBattlefieldAndReturn(player1, new Cryptex());
+
+        playPublicThoroughfare();
+        resolveEnterTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, cryptex.getId());
+
+        assertThat(cryptex.isTapped()).isTrue();
+        assertThat(forest.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Public Thoroughfare");
+        harness.assertNotInGraveyard(player1, "Public Thoroughfare");
+    }
+
+    @Test
+    @DisplayName("An untapped Public Thoroughfare can pay its own entry cost")
+    void untappedSourceCanPay() {
+        playPublicThoroughfare();
+        Permanent thoroughfare = findThoroughfare(player1);
+        thoroughfare.untap();
+        resolveEnterTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(thoroughfare.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Public Thoroughfare");
+        harness.assertNotInGraveyard(player1, "Public Thoroughfare");
     }
 
     @Test
@@ -100,9 +185,8 @@ class PublicThoroughfareTest extends BaseCardTest {
     }
 
     private Permanent addThoroughfareReady(Player player) {
-        Permanent thoroughfare = new Permanent(new PublicThoroughfare());
+        Permanent thoroughfare = harness.addToBattlefieldAndReturn(player, new PublicThoroughfare());
         thoroughfare.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(thoroughfare);
         return thoroughfare;
     }
 
