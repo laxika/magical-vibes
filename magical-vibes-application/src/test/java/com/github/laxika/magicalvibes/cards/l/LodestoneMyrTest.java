@@ -136,4 +136,42 @@ class LodestoneMyrTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, myr)).isEqualTo(3);
         assertThat(equipment.isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("A summoning-sick Myr can tap itself to pay for its ability")
+    void summoningSickMyrCanTapItself() {
+        Permanent myr = harness.addToBattlefieldAndReturn(player1, new LodestoneMyr());
+        myr.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(myr.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, myr)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, myr)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, myr)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, myr)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A tapped Myr can tap a summoning-sick artifact creature for its ability")
+    void tappedMyrCanTapSummoningSickArtifact() {
+        Permanent myr = addCreatureReady(player1, new LodestoneMyr());
+        myr.tap();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        artifact.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(artifact.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, myr)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(myr.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, myr)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, myr)).isEqualTo(3);
+    }
 }
