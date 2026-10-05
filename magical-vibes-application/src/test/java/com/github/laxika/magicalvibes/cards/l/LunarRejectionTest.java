@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.c.ChildOfThePack;
+import com.github.laxika.magicalvibes.cards.h.HungryRidgewolf;
+import com.github.laxika.magicalvibes.cards.r.RepositorySkaab;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,30 +14,30 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LunarRejection.class, Forest.class, GrizzlyBears.class})
+@CardUsed({LunarRejection.class, Forest.class,
+        HungryRidgewolf.class, RepositorySkaab.class, ChildOfThePack.class})
 class LunarRejectionTest extends BaseCardTest {
 
     @Test
     void normalCastReturnsWolfOrWerewolfAndDrawsACard() {
         Permanent target = harness.addToBattlefieldAndReturn(player2,
-                creatureWithSubtype("Wolf", CardSubtype.WOLF));
+                new HungryRidgewolf());
         harness.setLibrary(player1, List.of(new Forest()));
         harness.setHand(player1, List.of(new LunarRejection()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
-        harness.assertNotOnBattlefield(player2, "Wolf");
-        harness.assertInHand(player2, "Wolf");
+        harness.assertNotOnBattlefield(player2, "Hungry Ridgewolf");
+        harness.assertInHand(player2, "Hungry Ridgewolf");
         harness.assertInHand(player1, "Forest");
     }
 
     @Test
     void normalCastCannotTargetOtherCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2,
-                creatureWithSubtype("Bear", CardSubtype.BEAR));
+                new RepositorySkaab());
         harness.setHand(player1, List.of(new LunarRejection()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -52,8 +50,8 @@ class LunarRejectionTest extends BaseCardTest {
     @Test
     void cleaveCastReturnsAnyCreatureAndDrawsACard() {
         Permanent target = harness.addToBattlefieldAndReturn(player2,
-                creatureWithSubtype("Bear", CardSubtype.BEAR));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+                new RepositorySkaab());
+        harness.setLibrary(player1, List.of(new Forest()));
         harness.setHand(player1, List.of(new LunarRejection()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -61,9 +59,9 @@ class LunarRejectionTest extends BaseCardTest {
         harness.castInstantWithAlternateCost(player1, 0, target.getId(), List.of());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Bear");
-        harness.assertInHand(player2, "Bear");
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Repository Skaab");
+        harness.assertInHand(player2, "Repository Skaab");
+        harness.assertInHand(player1, "Forest");
     }
 
     @Test
@@ -78,15 +76,69 @@ class LunarRejectionTest extends BaseCardTest {
                 .hasMessageContaining("creature");
     }
 
-    private static Card creatureWithSubtype(String name, CardSubtype subtype) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(CardColor.GREEN);
-        card.setPower(2);
-        card.setToughness(2);
-        card.setSubtypes(List.of(subtype));
-        return card;
+    @Test
+    void normalCastReturnsWerewolfAndDraws() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2,
+                new ChildOfThePack());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new LunarRejection()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Child of the Pack");
+        harness.assertInHand(player2, "Child of the Pack");
+        harness.assertInHand(player1, "Forest");
     }
+
+    @Test
+    void doesNotDrawWhenTheOnlyTargetLeavesTheBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HungryRidgewolf());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new LunarRejection()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Forest");
+        harness.assertInGraveyard(player1, "Lunar Rejection");
+    }
+
+    @Test
+    void returnsCreatureToOwnerInsteadOfItsController() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HungryRidgewolf());
+        gd.stolenCreatures.put(target.getId(), player1.getId());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new LunarRejection()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Hungry Ridgewolf");
+        harness.assertInHand(player1, "Hungry Ridgewolf");
+        harness.assertNotInHand(player2, "Hungry Ridgewolf");
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    void cleaveReturnsRealNonWolfCreatureAndDraws() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RepositorySkaab());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new LunarRejection()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castInstantWithAlternateCost(player1, 0, target.getId(), List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Repository Skaab");
+        harness.assertInHand(player2, "Repository Skaab");
+        harness.assertInHand(player1, "Forest");
+    }
+
 }
