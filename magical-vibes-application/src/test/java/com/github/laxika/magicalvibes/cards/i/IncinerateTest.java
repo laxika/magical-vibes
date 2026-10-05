@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -76,8 +77,7 @@ class IncinerateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Incinerate()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
@@ -90,8 +90,7 @@ class IncinerateTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -109,8 +108,7 @@ class IncinerateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Incinerate()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, hillGiant.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, hillGiant.getId());
 
         harness.assertOnBattlefield(player2, "Hill Giant");
     }
@@ -125,8 +123,7 @@ class IncinerateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Incinerate()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, skelePerm.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, skelePerm.getId());
 
         harness.assertOnBattlefield(player2, "Drudge Skeletons");
 
@@ -149,8 +146,7 @@ class IncinerateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Incinerate()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, skelePerm.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, skelePerm.getId());
 
         // Drudge Skeletons should be destroyed despite regeneration shield
         harness.assertNotOnBattlefield(player2, "Drudge Skeletons");
@@ -166,8 +162,7 @@ class IncinerateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Incinerate()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, skelePerm.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, skelePerm.getId());
 
         harness.assertNotOnBattlefield(player2, "Drudge Skeletons");
         harness.assertInGraveyard(player2, "Drudge Skeletons");
@@ -183,8 +178,7 @@ class IncinerateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Incinerate()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, skelePerm.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, skelePerm.getId());
 
         harness.assertOnBattlefield(player2, "Drudge Skeletons");
         assertThat(skelePerm.getRegenerationShield()).isEqualTo(1);
@@ -208,8 +202,7 @@ class IncinerateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Incinerate()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, skelePerm.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, skelePerm.getId());
 
         harness.assertNotOnBattlefield(player2, "Drudge Skeletons");
         harness.assertInGraveyard(player2, "Drudge Skeletons");
@@ -250,11 +243,62 @@ class IncinerateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Incinerate()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Incinerate");
+    }
+
+    @Test
+    @DisplayName("Incinerate damage redirected from a player prevents regeneration")
+    void damageRedirectedFromPlayerPreventsRegeneration() {
+        Permanent skeleton = addCreatureReady(player1, new DrudgeSkeletons());
+        skeleton.setRegenerationShield(1);
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new SavingGrace()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castEnchantment(player1, 0, skeleton.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Incinerate(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 20);
+        harness.assertOnBattlefield(player1, "Drudge Skeletons");
+        assertThat(skeleton.getMarkedDamage()).isEqualTo(3);
+
+        harness.castAndResolveInstant(player2, 0, skeleton.getId());
+
+        harness.assertNotOnBattlefield(player1, "Drudge Skeletons");
+        harness.assertInGraveyard(player1, "Drudge Skeletons");
+    }
+
+    @Test
+    @DisplayName("Incinerate's regeneration restriction ends with the turn")
+    void regenerationIsAllowedAgainNextTurn() {
+        Permanent skeleton = addCreatureReady(player2, new DrudgeSkeletons());
+        skeleton.setToughnessModifier(3);
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, skeleton.getId());
+        harness.assertOnBattlefield(player2, "Drudge Skeletons");
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, skeleton.getId());
+
+        harness.assertOnBattlefield(player2, "Drudge Skeletons");
+        assertThat(skeleton.getMarkedDamage()).isZero();
+        assertThat(skeleton.getRegenerationShield()).isZero();
+        assertThat(skeleton.isTapped()).isTrue();
     }
 }
