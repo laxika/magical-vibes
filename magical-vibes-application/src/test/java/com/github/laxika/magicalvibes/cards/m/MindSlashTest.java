@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.n.NobleStand;
+import com.github.laxika.magicalvibes.cards.d.DisruptingScepter;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,19 +17,19 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MindSlash.class, Mossdog.class, NobleStand.class})
+@CardUsed({MindSlash.class, GrizzlyBears.class, DisruptingScepter.class, Swamp.class})
 class MindSlashTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrificing a creature reveals opponent's hand and discards the chosen card")
     void sacrificeRevealsHandAndDiscardsChosenCard() {
         int index = setupMindSlashWithCreature(player1);
-        harness.setHand(player2, List.of(new Mossdog(), new NobleStand()));
+        harness.setHand(player2, List.of(new GrizzlyBears(), new DisruptingScepter()));
 
         harness.activateAbility(player1, index, null, player2.getId());
 
         // The lone creature is auto-sacrificed as the cost.
-        harness.assertInGraveyard(player1, "Mossdog");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         harness.passBothPriorities();
 
@@ -38,18 +40,16 @@ class MindSlashTest extends BaseCardTest {
         harness.handleCardChosen(player1, 1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        harness.assertInGraveyard(player2, "Noble Stand");
-        assertThat(gd.playerHands.get(player2.getId()))
-                .singleElement()
-                .extracting(card -> card.getName())
-                .isEqualTo("Mossdog");
+        harness.assertInGraveyard(player2, "Disrupting Scepter");
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 
     @Test
     @DisplayName("Cannot activate at sorcery speed during opponent's turn")
     void cannotActivateDuringOpponentsTurn() {
         int index = addMindSlash(player1);
-        harness.addToBattlefield(player1, new Mossdog());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -83,25 +83,25 @@ class MindSlashTest extends BaseCardTest {
     @DisplayName("Cannot activate without the black mana in its cost")
     void cannotActivateWithoutBlackMana() {
         int index = addMindSlash(player1);
-        harness.addToBattlefield(player1, new Mossdog());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         prepareSorcerySpeedActivation(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, index, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        harness.assertNotInGraveyard(player1, "Mossdog");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
     @DisplayName("Cannot sacrifice a noncreature permanent as the activation cost")
     void cannotSacrificeNoncreaturePermanent() {
         int index = addMindSlash(player1);
-        harness.addToBattlefield(player1, new NobleStand());
+        harness.addToBattlefield(player1, new DisruptingScepter());
         prepareSorcerySpeedActivation(player1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, index, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        harness.assertNotInGraveyard(player1, "Noble Stand");
+        harness.assertNotInGraveyard(player1, "Disrupting Scepter");
     }
 
     @Test
@@ -118,9 +118,104 @@ class MindSlashTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("A land can be chosen for discard")
+    void canDiscardLand() {
+        int index = setupMindSlashWithCreature(player1);
+        harness.setHand(player2, List.of(new Swamp(), new GrizzlyBears()));
+
+        harness.activateAbility(player1, index, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player2, "Swamp");
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A creature can be chosen for discard")
+    void canDiscardCreature() {
+        int index = setupMindSlashWithCreature(player1);
+        harness.setHand(player2, List.of(new GrizzlyBears(), new Swamp()));
+
+        harness.activateAbility(player1, index, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Swamp");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Cannot activate outside a main phase")
+    void cannotActivateDuringUpkeep() {
+        int index = setupMindSlashWithCreature(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, index, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while another ability is on the stack")
+    void cannotActivateWithNonemptyStack() {
+        int index = setupMindSlashWithCreature(player1);
+        harness.setHand(player2, List.of(new Swamp()));
+        harness.activateAbility(player1, index, null, player2.getId());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, index, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsCreature() {
+        int index = addMindSlash(player1);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        prepareSorcerySpeedActivation(player1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, index, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Choosing among creatures sacrifices exactly one before resolution")
+    void choosesOneCreatureToSacrifice() {
+        int index = setupMindSlashWithCreature(player1);
+        var chosen = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Swamp()));
+
+        harness.activateAbility(player1, index, null, player2.getId());
+        harness.handlePermanentChosen(player1, chosen.getId());
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player2, "Swamp");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player2, "Swamp");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private int setupMindSlashWithCreature(Player player) {
         int index = addMindSlash(player);
-        harness.addToBattlefield(player, new Mossdog());
+        harness.addToBattlefield(player, new GrizzlyBears());
         prepareSorcerySpeedActivation(player);
         harness.addMana(player, ManaColor.BLACK, 1);
         return index;
