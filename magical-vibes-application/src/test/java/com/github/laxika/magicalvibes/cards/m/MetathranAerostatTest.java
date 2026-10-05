@@ -82,6 +82,33 @@ class MetathranAerostatTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Stacked activations put both creatures onto the battlefield even after the source returns")
+    void stackedActivationsResolveAfterSourceReturns() {
+        harness.addToBattlefield(player1, new MetathranAerostat());
+        harness.setHand(player1, List.of(new AlabasterLeech(), new BlurredMongoose()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 1, null);
+        harness.activateAbility(player1, 0, 2, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertOnBattlefield(player1, "Blurred Mongoose");
+        harness.assertNotOnBattlefield(player1, "Metathran Aerostat");
+        harness.assertInHand(player1, "Metathran Aerostat");
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Alabaster Leech");
+        harness.assertOnBattlefield(player1, "Blurred Mongoose");
+        harness.assertInHand(player1, "Metathran Aerostat");
+        harness.assertNotInHand(player1, "Alabaster Leech");
+        harness.assertNotInHand(player1, "Blurred Mongoose");
+    }
+
+    @Test
     @DisplayName("Pays X and blue mana without requiring the source to tap")
     void paysManaWithoutTappingSource() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new MetathranAerostat());
