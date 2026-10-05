@@ -37,12 +37,33 @@ class LivingTempestTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Flash allows casting and resolving during an opponent's combat")
+    void canResolveDuringOpponentsCombat() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new LivingTempest()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        gs.passPriority(gd, player2);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Living Tempest");
+        harness.assertNotInHand(player1, "Living Tempest");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Cannot be blocked by a creature without flying")
     void cannotBeBlockedByCreatureWithoutFlying() {
         Permanent attacker = addReadyAttacker(player1, new LivingTempest());
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        prepareCombat();
+        prepareDeclareBlockers();
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
@@ -55,9 +76,9 @@ class LivingTempestTest extends BaseCardTest {
     @DisplayName("Can be blocked by a creature with flying")
     void canBeBlockedByCreatureWithFlying() {
         Permanent attacker = addReadyAttacker(player1, new LivingTempest());
-        Permanent blocker = addReadyCreature(player2, new SuntailHawk());
+        Permanent blocker = addCreatureReady(player2, new SuntailHawk());
 
-        prepareCombat();
+        prepareDeclareBlockers();
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
@@ -69,23 +90,9 @@ class LivingTempestTest extends BaseCardTest {
 
     private Permanent addReadyAttacker(com.github.laxika.magicalvibes.model.Player player,
                                        com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = addReadyCreature(player, card);
+        Permanent permanent = addCreatureReady(player, card);
         permanent.setAttacking(true);
         return permanent;
     }
 
-    private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player,
-                                       com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
-
-    private void prepareCombat() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-    }
 }
