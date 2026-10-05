@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.a.AladdinsRing;
+import com.github.laxika.magicalvibes.cards.b.Bonesplitter;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.f.FreyalisesWinds;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.StealArtifact;
@@ -20,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AladdinsRing.class, FreyalisesWinds.class, GrizzlyBears.class, MagusOfTheUnseen.class,
+@CardUsed({AladdinsRing.class, Bonesplitter.class, Disenchant.class, FreyalisesWinds.class, GrizzlyBears.class, MagusOfTheUnseen.class,
         MesmericOrb.class, StealArtifact.class})
 class MagusOfTheUnseenTest extends BaseCardTest {
 
@@ -77,9 +79,7 @@ class MagusOfTheUnseenTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getId().equals(artifact.getId()));
@@ -104,9 +104,7 @@ class MagusOfTheUnseenTest extends BaseCardTest {
         harness.setHand(player2, List.of(new StealArtifact()));
         harness.addMana(player2, ManaColor.BLUE, 4);
         harness.castEnchantment(player2, 0, artifact.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getId().equals(artifact.getId()));
@@ -126,8 +124,7 @@ class MagusOfTheUnseenTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateAbility(player1, 0, null, artifact.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
@@ -155,6 +152,64 @@ class MagusOfTheUnseenTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an artifact an opponent controls");
+    }
+
+    @Test
+    @DisplayName("The delayed tap trigger survives cleanup while another effect maintains control")
+    void delayedTapSurvivesCleanupWhenAuraMaintainsControl() {
+        addCreatureReady(player1, new MagusOfTheUnseen());
+        Permanent artifact = addArtifact(player2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.activateAbility(player1, 0, null, artifact.getId());
+        resolveAllTriggers();
+
+        harness.setHand(player1, List.of(new StealArtifact()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castEnchantment(player1, 0, artifact.getId());
+        resolveAllTriggers();
+        Permanent aura = findPermanent(player1, "Steal Artifact");
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
+        assertThat(artifact.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.HASTE)).isFalse();
+
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.castInstant(player2, 0, aura.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
+        assertThat(artifact.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Stolen Equipment remains attached when temporary control expires")
+    void equipmentRemainsAttachedWhenControlExpires() {
+        harness.forceActivePlayer(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new Bonesplitter());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, 1, null, creature.getId());
+        resolveAllTriggers();
+        assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
+
+        harness.forceActivePlayer(player1);
+        addCreatureReady(player1, new MagusOfTheUnseen());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.activateAbility(player1, 0, null, equipment.getId());
+        resolveAllTriggers();
+        assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(equipment);
+        assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
     }
 
     private Permanent addArtifact(Player player) {
