@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,14 +16,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KeldonRaider.class, Forest.class, GrizzlyBears.class})
 class KeldonRaiderTest extends BaseCardTest {
-
-    // ===== ETB trigger: accept may, discard then draw =====
 
     @Test
     @DisplayName("When Keldon Raider enters, accepting may prompts discard then draws a card")
     void acceptMayDiscardsThenDraws() {
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -56,8 +56,6 @@ class KeldonRaiderTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Forest");
     }
 
-    // ===== ETB trigger: decline may =====
-
     @Test
     @DisplayName("When Keldon Raider enters, declining may does not discard or draw")
     void declineMayDoesNothing() {
@@ -80,8 +78,6 @@ class KeldonRaiderTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
     }
 
-    // ===== ETB trigger: empty hand, accept may =====
-
     @Test
     @DisplayName("When Keldon Raider enters with empty hand, accepting may does nothing (cannot discard)")
     void acceptMayWithEmptyHandDoesNothing() {
@@ -103,10 +99,32 @@ class KeldonRaiderTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("The controller chooses one card to discard and draws exactly one card afterward")
+    void choosesOneOfMultipleCardsToDiscard() {
+        Card retainedCard = new KeldonRaider();
+        Card discardedCard = new Forest();
+        Card drawnCard = new Forest();
+        Card nextCard = new KeldonRaider();
+        harness.setLibrary(player1, List.of(drawnCard, nextCard));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new KeldonRaider(), retainedCard, discardedCard));
+        harness.addMana(player1, ManaColor.RED, 4);
 
-    private void setDeck(com.github.laxika.magicalvibes.model.Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(retainedCard, discardedCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawnCard, nextCard);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(retainedCard, drawnCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discardedCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
