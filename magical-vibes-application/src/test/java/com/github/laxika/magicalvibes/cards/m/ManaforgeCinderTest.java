@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ManaforgeCinder.class})
 class ManaforgeCinderTest extends BaseCardTest {
 
     @Test
@@ -71,5 +74,66 @@ class ManaforgeCinderTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(p, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no more than 3");
+    }
+
+    @Test
+    @DisplayName("Each Cinder has its own three-activation limit")
+    void separateCopiesHaveIndependentLimits() {
+        harness.addToBattlefield(player1, new ManaforgeCinder());
+        harness.addToBattlefield(player1, new ManaforgeCinder());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        for (int permanentIndex = 0; permanentIndex < 2; permanentIndex++) {
+            for (int activation = 0; activation < 3; activation++) {
+                harness.activateAbility(player1, permanentIndex, 0, null, null);
+                harness.handleListChoice(player1, "BLACK");
+            }
+        }
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(6);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("no more than 3");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("no more than 3");
+    }
+
+    @Test
+    @DisplayName("The activation limit resets on the opponent's turn")
+    void activationLimitResetsOnOpponentsTurn() {
+        harness.addToBattlefield(player1, new ManaforgeCinder());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        for (int activation = 0; activation < 3; activation++) {
+            harness.activateAbility(player1, 0, 0, null, null);
+            harness.handleListChoice(player1, "RED");
+        }
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.passPriority(player2);
+        for (int activation = 0; activation < 3; activation++) {
+            harness.activateAbility(player1, 0, 0, null, null);
+            harness.handleListChoice(player1, "BLACK");
+        }
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(3);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("no more than 3");
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Cinder can activate without untapping")
+    void tappedSummoningSickCinderCanActivate() {
+        var cinder = harness.addToBattlefieldAndReturn(player1, new ManaforgeCinder());
+        cinder.setSummoningSick(true);
+        cinder.tap();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(cinder.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 }
