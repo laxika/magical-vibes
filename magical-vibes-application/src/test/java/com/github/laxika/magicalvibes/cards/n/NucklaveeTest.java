@@ -8,54 +8,45 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Nucklavee.class, LavaAxe.class, Opt.class, Ponder.class, Shock.class})
 class NucklaveeTest extends BaseCardTest {
 
-    /** Casts Nucklavee and resolves it onto the battlefield; the two ETB may triggers sit on the stack. */
     private void castAndResolve() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new Nucklavee()));
         harness.addMana(player1, ManaColor.RED, 6);
-
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → two ETB may triggers on the stack
+        harness.passBothPriorities();
     }
 
     @Test
-    @DisplayName("Resolving Nucklavee puts it on the battlefield")
     void resolvingPutsOnBattlefield() {
         castAndResolve();
-
         harness.assertOnBattlefield(player1, "Nucklavee");
     }
 
     @Test
-    @DisplayName("Both triggers return a red sorcery and a blue instant to hand")
     void returnsRedSorceryAndBlueInstant() {
-        harness.setGraveyard(player1, List.of(new LavaAxe(), new Opt())); // index 0 red sorcery, 1 blue instant
+        LavaAxe axe = new LavaAxe();
+        Opt opt = new Opt();
+        harness.setGraveyard(player1, List.of(axe, opt));
         castAndResolve();
 
-        // Blue-instant trigger resolves first (LIFO)
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(axe.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(opt.getId()));
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        harness.handleGraveyardCardChosen(player1, 1); // Opt
-
-        // Red-sorcery trigger resolves next; graveyard is now [LavaAxe]
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        harness.handleGraveyardCardChosen(player1, 0); // Lava Axe
 
         harness.assertInHand(player1, "Opt");
         harness.assertInHand(player1, "Lava Axe");
@@ -63,14 +54,17 @@ class NucklaveeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Declining both triggers leaves the cards in the graveyard")
     void decliningLeavesCardsInGraveyard() {
-        harness.setGraveyard(player1, List.of(new LavaAxe(), new Opt()));
+        LavaAxe axe = new LavaAxe();
+        Opt opt = new Opt();
+        harness.setGraveyard(player1, List.of(axe, opt));
         castAndResolve();
 
-        harness.passBothPriorities(); // blue trigger
+        harness.handleMultipleCardsChosen(player1, List.of(axe.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(opt.getId()));
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
-        harness.passBothPriorities(); // red trigger
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Lava Axe");
@@ -79,36 +73,99 @@ class NucklaveeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Red-sorcery trigger cannot return a red instant")
     void redTriggerRejectsRedInstant() {
-        // Shock (red instant) must not be a legal target for either trigger; only Lava Axe (red sorcery) is.
-        harness.setGraveyard(player1, List.of(new Shock(), new LavaAxe()));
+        LavaAxe axe = new LavaAxe();
+        harness.setGraveyard(player1, List.of(new Shock(), axe));
         castAndResolve();
 
-        // Blue-instant trigger: no blue instant present, accepting is a no-op (no graveyard choice)
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(axe.getId()));
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
 
-        // Red-sorcery trigger: only Lava Axe is a legal choice; Shock (index 0) is rejected
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, 0)) // Shock
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid card index");
+        harness.assertInHand(player1, "Lava Axe");
+        harness.assertInGraveyard(player1, "Shock");
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
-    @DisplayName("Blue-instant trigger cannot return a blue sorcery")
     void blueTriggerRejectsBlueSorcery() {
-        // Ponder (blue sorcery) must not be a legal target for the blue-instant trigger.
         harness.setGraveyard(player1, List.of(new Ponder()));
         castAndResolve();
 
-        harness.passBothPriorities(); // blue-instant trigger
-        harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertInGraveyard(player1, "Ponder");
+    }
+
+    @Test
+    void blueInstantCanBeReturnedWithoutRedSorcery() {
+        Opt opt = new Opt();
+        harness.setGraveyard(player1, List.of(opt));
+        castAndResolve();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(opt.getId()));
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Opt");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentGraveyardCannotSupplyTargets() {
+        harness.setGraveyard(player2, List.of(new LavaAxe(), new Opt()));
+        castAndResolve();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player2, "Lava Axe");
+        harness.assertInGraveyard(player2, "Opt");
+    }
+
+    @Test
+    void mayChoicesAreIndependent() {
+        LavaAxe axe = new LavaAxe();
+        Opt opt = new Opt();
+        harness.setGraveyard(player1, List.of(axe, opt));
+        castAndResolve();
+
+        harness.handleMultipleCardsChosen(player1, List.of(axe.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(opt.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Opt");
+        harness.assertNotInHand(player1, "Opt");
+        harness.assertInHand(player1, "Lava Axe");
+    }
+
+    @Test
+    void removedTargetCannotBeReplacedWithAnotherCard() {
+        Opt target = new Opt();
+        Opt other = new Opt();
+        harness.setGraveyard(player1, List.of(target, other));
+        castAndResolve();
+
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of(other));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
+    }
+
+    @Test
+    void noLegalTargetsMeansNoAbilitiesOnStack() {
+        castAndResolve();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
