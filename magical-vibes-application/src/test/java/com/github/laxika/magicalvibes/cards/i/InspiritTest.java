@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -86,8 +84,7 @@ class InspiritTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
-        Permanent enchantment = new Permanent(new Pacifism());
-        gd.playerBattlefields.get(player2.getId()).add(enchantment);
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new Pacifism());
         harness.setHand(player1, List.of(new Inspirit()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
@@ -109,7 +106,29 @@ class InspiritTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Multiple Inspirit boosts accumulate and expire together")
+    void multipleBoostsAccumulateAndExpire() {
+        Permanent target = addTappedCreature(player2);
+        harness.setHand(player1, List.of(new Inspirit(), new Inspirit()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.getPowerModifier()).isEqualTo(4);
+        assertThat(target.getToughnessModifier()).isEqualTo(8);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
     }
 
     private Permanent addTappedCreature(Player player) {
