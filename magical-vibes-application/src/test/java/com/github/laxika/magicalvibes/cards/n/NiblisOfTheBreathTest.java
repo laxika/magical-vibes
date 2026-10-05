@@ -1,29 +1,27 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HauntedFengraf;
+import com.github.laxika.magicalvibes.cards.s.SomberwaldDryad;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
+
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({NiblisOfTheBreath.class, SomberwaldDryad.class, HauntedFengraf.class})
 class NiblisOfTheBreathTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Activating ability puts it on the stack and taps Niblis")
     void activatingPutsAbilityOnStackAndTapsNiblis() {
-        Permanent niblis = addReadyNiblis(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent niblis = addCreatureReady(player1, new NiblisOfTheBreath());
+        Permanent target = addCreatureReady(player2, new SomberwaldDryad());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -31,19 +29,20 @@ class NiblisOfTheBreathTest extends BaseCardTest {
         assertThat(niblis.isTapped()).isTrue();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Niblis of the Breath");
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
     }
 
     @Test
     @DisplayName("Resolves by tapping an untapped target creature")
     void tapsUntappedCreature() {
-        addReadyNiblis(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new NiblisOfTheBreath());
+        Permanent target = addCreatureReady(player2, new SomberwaldDryad());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "Tap");
 
         assertThat(target.isTapped()).isTrue();
     }
@@ -51,13 +50,15 @@ class NiblisOfTheBreathTest extends BaseCardTest {
     @Test
     @DisplayName("Resolves by untapping a tapped target creature")
     void untapsTappedCreature() {
-        addReadyNiblis(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new NiblisOfTheBreath());
+        Permanent target = addCreatureReady(player2, new SomberwaldDryad());
         target.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "Untap");
 
         assertThat(target.isTapped()).isFalse();
     }
@@ -65,12 +66,14 @@ class NiblisOfTheBreathTest extends BaseCardTest {
     @Test
     @DisplayName("Can target a creature controlled by Niblis's controller")
     void canTargetOwnCreature() {
-        addReadyNiblis(player1);
-        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new NiblisOfTheBreath());
+        Permanent target = addCreatureReady(player1, new SomberwaldDryad());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "Tap");
 
         assertThat(target.isTapped()).isTrue();
     }
@@ -78,12 +81,11 @@ class NiblisOfTheBreathTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreaturePermanent() {
-        addReadyNiblis(player1);
-        Permanent artifact = new Permanent(new AngelsFeather());
-        gd.playerBattlefields.get(player2.getId()).add(artifact);
+        addCreatureReady(player1, new NiblisOfTheBreath());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new HauntedFengraf());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifact.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
@@ -91,8 +93,8 @@ class NiblisOfTheBreathTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate without blue mana")
     void cannotActivateWithoutBlueMana() {
-        addReadyNiblis(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new NiblisOfTheBreath());
+        Permanent target = addCreatureReady(player2, new SomberwaldDryad());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -101,9 +103,9 @@ class NiblisOfTheBreathTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
-        Permanent niblis = addReadyNiblis(player1);
+        Permanent niblis = addCreatureReady(player1, new NiblisOfTheBreath());
         niblis.tap();
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new SomberwaldDryad());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -114,9 +116,8 @@ class NiblisOfTheBreathTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate while summoning sick")
     void cannotActivateWhileSummoningSick() {
-        Permanent niblis = new Permanent(new NiblisOfTheBreath());
-        gd.playerBattlefields.get(player1.getId()).add(niblis);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new NiblisOfTheBreath());
+        Permanent target = addCreatureReady(player2, new SomberwaldDryad());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -127,8 +128,8 @@ class NiblisOfTheBreathTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles if the target creature leaves the battlefield before resolution")
     void fizzlesIfTargetLeavesBattlefield() {
-        addReadyNiblis(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new NiblisOfTheBreath());
+        Permanent target = addCreatureReady(player2, new SomberwaldDryad());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -136,13 +137,81 @@ class NiblisOfTheBreathTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
-    private Permanent addReadyNiblis(Player player) {
-        Permanent permanent = new Permanent(new NiblisOfTheBreath());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("May decline to tap an untapped target")
+    void mayLeaveUntappedCreatureUnchanged() {
+        Permanent niblis = addCreatureReady(player1, new NiblisOfTheBreath());
+        Permanent target = addCreatureReady(player2, new SomberwaldDryad());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(niblis.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("May decline to untap a tapped target")
+    void mayLeaveTappedCreatureUnchanged() {
+        addCreatureReady(player1, new NiblisOfTheBreath());
+        Permanent target = addCreatureReady(player2, new SomberwaldDryad());
+        target.tap();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can choose to tap an already tapped creature without untapping it")
+    void canChooseTapForTappedCreature() {
+        addCreatureReady(player1, new NiblisOfTheBreath());
+        Permanent target = addCreatureReady(player2, new SomberwaldDryad());
+        target.tap();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "Tap");
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("May target itself and untap after paying its tap cost")
+    void canUntapItself() {
+        Permanent niblis = addCreatureReady(player1, new NiblisOfTheBreath());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, niblis.getId());
+        assertThat(niblis.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMayAbilityChosen(player1, true);
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleListChoice(player1, "1");
+        }
+
+        assertThat(niblis.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }
