@@ -78,11 +78,92 @@ class NexusOfBecomingTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Grizzly Bears")).isEmpty();
     }
 
+    @Test
+    void canExileTheCardJustDrawn() {
+        harness.addToBattlefield(player1, new NexusOfBecoming());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        resolveBeginningOfCombatTrigger();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).singleElement().satisfies(exiled -> {
+            assertThat(exiled.card()).isInstanceOf(GrizzlyBears.class);
+            assertThat(exiled.ownerId()).isEqualTo(player1.getId());
+            assertThat(exiled.faceDown()).isFalse();
+        });
+        Permanent token = findPermanent(player1, "Grizzly Bears");
+        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(token.isSummoningSick()).isTrue();
+        assertThat(token.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
+        assertThat(findPermanents(player2, "Grizzly Bears")).isEmpty();
+    }
+
+    @Test
+    void drawingStillHappensWithNoEligibleCard() {
+        harness.addToBattlefield(player1, new NexusOfBecoming());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        resolveBeginningOfCombatTrigger();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsCombat() {
+        harness.addToBattlefield(player1, new NexusOfBecoming());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(findPermanents(player1, "Grizzly Bears")).isEmpty();
+    }
+
+    @Test
+    void artifactCopyRetainsItsStaticAbility() {
+        harness.addToBattlefield(player1, new NexusOfBecoming());
+        harness.setHand(player1, List.of(new Spellbook()));
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        resolveBeginningOfCombatTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        Permanent token = findPermanent(player1, "Spellbook");
+        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(token.getCard().getSubtypes()).contains(CardSubtype.GOLEM);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
+        harness.setHand(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.forceStep(TurnStep.END_STEP);
+        harness.withAutoStop(TurnStep.CLEANUP, () -> gs.advanceStep(gd));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(8);
+    }
+
     private void resolveBeginningOfCombatTrigger() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+        resolveAllTriggers();
     }
 }
