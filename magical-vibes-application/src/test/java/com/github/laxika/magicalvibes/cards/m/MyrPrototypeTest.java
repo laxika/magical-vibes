@@ -108,4 +108,59 @@ class MyrPrototypeTest extends BaseCardTest {
         assertThat(attacker.isAttacking()).isTrue();
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
+
+    @Test
+    @DisplayName("Each Prototype receives its own upkeep counter")
+    void eachPrototypeGetsAnUpkeepCounter() {
+        Permanent first = addCreatureReady(player1, new MyrPrototype());
+        Permanent second = addCreatureReady(player1, new MyrPrototype());
+        first.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Attacking with two Prototypes pays the sum of their counter costs")
+    void attackCostsAreSummedAcrossPrototypes() {
+        Permanent first = addCreatureReady(player1, new MyrPrototype());
+        Permanent second = addCreatureReady(player1, new MyrPrototype());
+        first.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        second.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0, 1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana to pay attack tax (3 required)");
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        declareAttackers(player1, List.of(0, 1));
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Counters other than +1/+1 counters do not impose combat costs")
+    void unrelatedCountersDoNotRequireCombatPayment() {
+        Permanent attackingMyr = addCreatureReady(player1, new MyrPrototype());
+        Permanent blockingMyr = addCreatureReady(player2, new MyrPrototype());
+        attackingMyr.setCounterCount(CounterType.CHARGE, 3);
+        blockingMyr.setCounterCount(CounterType.CHARGE, 4);
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(attackingMyr.isAttacking()).isTrue();
+        assertThat(blockingMyr.isBlocking()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
 }
