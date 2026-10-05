@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PrimalBellow.class, Forest.class, GrizzlyBears.class, FountainOfYouth.class})
 class PrimalBellowTest extends BaseCardTest {
 
     @Test
@@ -27,8 +29,7 @@ class PrimalBellowTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PrimalBellow()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         assertThat(bears.getPowerModifier()).isEqualTo(2);
         assertThat(bears.getToughnessModifier()).isEqualTo(2);
@@ -42,8 +43,7 @@ class PrimalBellowTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PrimalBellow()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -56,14 +56,65 @@ class PrimalBellowTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        Permanent fountain = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new PrimalBellow()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        Permanent fountain = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThatThrownBy(() -> harness.castInstant(player1, 0, fountain.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+    @Test
+    @DisplayName("An opposing creature is boosted using the caster's Forests")
+    void boostsOpposingCreatureUsingCastersForests() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PrimalBellow()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        assertThat(bears.getPowerModifier()).isEqualTo(1);
+        assertThat(bears.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("No Forests gives no boost, even with other permanents and opposing Forests")
+    void noForestsGivesNoBoost() {
+        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.addToBattlefield(player2, new Forest());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PrimalBellow()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        assertThat(bears.getPowerModifier()).isZero();
+        assertThat(bears.getToughnessModifier()).isZero();
+        harness.assertInGraveyard(player1, "Primal Bellow");
+    }
+
+    @Test
+    @DisplayName("Forests are counted at resolution and the boost is then fixed")
+    void countsForestsAtResolutionAndKeepsBoostFixed() {
+        harness.addToBattlefield(player1, new Forest());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PrimalBellow()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstant(player1, 0, bears.getId());
+        harness.addToBattlefield(player1, new Forest());
+        harness.passBothPriorities();
+
+        assertThat(bears.getPowerModifier()).isEqualTo(2);
+        assertThat(bears.getToughnessModifier()).isEqualTo(2);
+
+        harness.addToBattlefield(player1, new Forest());
+
+        assertThat(bears.getPowerModifier()).isEqualTo(2);
+        assertThat(bears.getToughnessModifier()).isEqualTo(2);
     }
 }
