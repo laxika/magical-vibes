@@ -131,4 +131,30 @@ class PsionicEntityTest extends BaseCardTest {
         harness.assertLife(player2, 18);
         harness.assertNotOnBattlefield(player1, "Psionic Entity");
     }
+
+    @Test
+    void cannotActivateWithSummoningSickness() {
+        Permanent entity = harness.addToBattlefieldAndReturn(player1, new PsionicEntity());
+        entity.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(entity.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canTargetItsController() {
+        addCreatureReady(player1, new PsionicEntity());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertInGraveyard(player1, "Psionic Entity");
+        harness.assertNotOnBattlefield(player1, "Psionic Entity");
+    }
 }
