@@ -80,7 +80,6 @@ class LairOfTheHydraTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, lair)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, lair)).isFalse();
@@ -102,6 +101,72 @@ class LairOfTheHydraTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, lair)).isFalse();
     }
 
+    @Test
+    void entersUntappedWithNoOtherLandsEvenWhenOpponentControlsTwo() {
+        harness.addToBattlefield(player2, new Mountain());
+        harness.addToBattlefield(player2, new Mountain());
+
+        playLair();
+
+        assertThat(findLair().isTapped()).isFalse();
+    }
+
+    @Test
+    void laterAnimationReplacesEarlierPowerAndToughness() {
+        Permanent lair = addLairReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 1, 4, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, lair)).isEqualTo(4);
+
+        harness.activateAbility(player1, 0, 1, 1, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, lair)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, lair)).isEqualTo(1);
+        assertThat(lair.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    void newlyPlayedLandCanAnimateButCannotTapForManaAsCreature() {
+        playLair();
+        Permanent lair = findLair();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 1, 1, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, lair)).isTrue();
+        assertThat(lair.isTapped()).isFalse();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Creature has summoning sickness");
+        assertThat(lair.isTapped()).isFalse();
+    }
+
+    @Test
+    void tappedLandCanAnimateAndRetainsItsManaAbility() {
+        Permanent lair = addLairReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        lair.tap();
+
+        harness.activateAbility(player1, 0, 1, 1, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, lair)).isTrue();
+        assertThat(lair.isTapped()).isTrue();
+        lair.untap();
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(lair.isTapped()).isTrue();
+    }
+
     private void playLair() {
         harness.setHand(player1, List.of(new LairOfTheHydra()));
         harness.forceActivePlayer(player1);
@@ -110,9 +175,8 @@ class LairOfTheHydraTest extends BaseCardTest {
     }
 
     private Permanent addLairReady(Player player) {
-        Permanent lair = new Permanent(new LairOfTheHydra());
+        Permanent lair = harness.addToBattlefieldAndReturn(player, new LairOfTheHydra());
         lair.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(lair);
         return lair;
     }
 
