@@ -48,7 +48,6 @@ class PatrolHoundTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, hound, Keyword.FIRST_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, hound, Keyword.FIRST_STRIKE)).isFalse();
@@ -76,5 +75,59 @@ class PatrolHoundTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Discard is paid before first strike is granted on resolution")
+    void discardIsPaidBeforeResolution() {
+        Permanent hound = addCreatureReady(player1, new PatrolHound());
+        harness.setHand(player1, List.of(new Mountain(), new DuskImp()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.assertInHand(player1, "Dusk Imp");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.hasKeyword(gd, hound, Keyword.FIRST_STRIKE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, hound, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Patrol Hound can activate its ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent hound = harness.addToBattlefieldAndReturn(player1, new PatrolHound());
+        hound.setSummoningSick(true);
+        hound.setTapped(true);
+        harness.setHand(player1, List.of(new Mountain()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Mountain");
+        assertThat(gqs.hasKeyword(gd, hound, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(hound.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("First strike is granted only to the Patrol Hound that activated")
+    void grantsFirstStrikeOnlyToSource() {
+        Permanent source = addCreatureReady(player1, new PatrolHound());
+        Permanent other = addCreatureReady(player1, new PatrolHound());
+        Permanent opponent = addCreatureReady(player2, new PatrolHound());
+        harness.setHand(player1, List.of(new Mountain()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, source, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.FIRST_STRIKE)).isFalse();
     }
 }
