@@ -53,10 +53,7 @@ class IronshellBeetleTest extends BaseCardTest {
     @Test
     @DisplayName("Can be cast onto an empty battlefield and target itself with its ETB")
     void canCastWithoutTarget() {
-        harness.setHand(player1, List.of(new IronshellBeetle()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new IronshellBeetle(), "{1}{G}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Ironshell Beetle");
@@ -82,6 +79,38 @@ class IronshellBeetleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB resolves even if Ironshell Beetle leaves the battlefield")
+    void etbResolvesAfterSourceLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        harness.setHand(player1, List.of(new IronshellBeetle()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        Permanent beetle = findPermanent(player1, "Ironshell Beetle");
+        gd.playerBattlefields.get(player1.getId()).remove(beetle);
+        harness.setGraveyard(player1, List.of(beetle.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entering without being cast still puts a counter on the chosen creature")
+    void etbTriggersWithoutBeingCast() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+
+        Permanent beetle = harness.enterBattlefieldAndReturn(player1, new IronshellBeetle());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(beetle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
