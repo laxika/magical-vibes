@@ -83,4 +83,45 @@ class PavelMalikiTest extends BaseCardTest {
 
         assertThat(pavel.getPowerModifier()).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("Pavel Maliki can activate while summoning sick")
+    void activationDoesNotRequireHaste() {
+        Permanent pavel = harness.addToBattlefieldAndReturn(player1, new PavelMaliki());
+        pavel.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(pavel.getPowerModifier()).isEqualTo(1);
+        assertThat(pavel.getToughnessModifier()).isZero();
+        assertThat(pavel.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Each pending activation boosts Pavel Maliki only when it resolves")
+    void multiplePendingActivationsResolveSeparately() {
+        Permanent pavel = addCreatureReady(player1, new PavelMaliki());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(pavel.getPowerModifier()).isZero();
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+
+        assertThat(pavel.getPowerModifier()).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(pavel.getPowerModifier()).isEqualTo(2);
+        assertThat(pavel.getToughnessModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
 }
