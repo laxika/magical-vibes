@@ -84,4 +84,100 @@ class KrosanGroundshakerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a Beast creature");
     }
+
+    @Test
+    @DisplayName("Can grant itself trample while summoning sick")
+    void canTargetItselfWhileSummoningSick() {
+        Permanent groundshaker = harness.addToBattlefieldAndReturn(player1, new KrosanGroundshaker());
+        groundshaker.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 0, null, groundshaker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, groundshaker, Keyword.TRAMPLE)).isTrue();
+        assertThat(groundshaker.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped")
+    void canActivateWhileTapped() {
+        Permanent groundshaker = addCreatureReady(player1, new KrosanGroundshaker());
+        groundshaker.tap();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 0, null, groundshaker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, groundshaker, Keyword.TRAMPLE)).isTrue();
+        assertThat(groundshaker.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("One green mana pays for exactly one activation")
+    void eachActivationRequiresGreenMana() {
+        Permanent groundshaker = addCreatureReady(player1, new KrosanGroundshaker());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 0, null, groundshaker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, groundshaker, Keyword.TRAMPLE)).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, groundshaker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Does not grant trample when the target is sacrificed in response")
+    void targetSacrificedInResponse() {
+        addCreatureReady(player1, new KrosanGroundshaker());
+        Permanent beast = addCreatureReady(player1, new RavenousBaloth());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 0, null, beast.getId());
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.handlePermanentChosen(player1, beast.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Ravenous Baloth");
+        assertThat(gqs.hasKeyword(gd, beast, Keyword.TRAMPLE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability still resolves after its source is sacrificed")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent groundshaker = addCreatureReady(player1, new KrosanGroundshaker());
+        Permanent beast = addCreatureReady(player1, new RavenousBaloth());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 0, null, beast.getId());
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.handlePermanentChosen(player1, groundshaker.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Krosan Groundshaker");
+        assertThat(gqs.hasKeyword(gd, beast, Keyword.TRAMPLE)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can activate multiple times without tapping")
+    void canGrantTrampleToTwoBeasts() {
+        Permanent groundshaker = addCreatureReady(player1, new KrosanGroundshaker());
+        Permanent beast = addCreatureReady(player1, new RavenousBaloth());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 0, null, groundshaker.getId());
+        harness.activateAbility(player1, 0, 0, null, beast.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, groundshaker, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, beast, Keyword.TRAMPLE)).isTrue();
+        assertThat(groundshaker.isTapped()).isFalse();
+    }
 }
