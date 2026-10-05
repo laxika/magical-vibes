@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.c.CursedScroll;
+import com.github.laxika.magicalvibes.cards.c.Capsize;
 import com.github.laxika.magicalvibes.cards.e.EmmessiTome;
 import com.github.laxika.magicalvibes.cards.f.FightingDrake;
 import com.github.laxika.magicalvibes.cards.f.FlowstoneSculpture;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
+import com.github.laxika.magicalvibes.cards.g.GuardianBeast;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -20,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Legerdemain.class, FightingDrake.class, WindDrake.class, CursedScroll.class,
-        EmmessiTome.class, FlowstoneSculpture.class})
+        EmmessiTome.class, FlowstoneSculpture.class, Capsize.class, GuardianBeast.class})
 class LegerdemainTest extends BaseCardTest {
 
     private void prepare() {
@@ -164,5 +166,57 @@ class LegerdemainTest extends BaseCardTest {
 
         assertThat(response.validPermanentIds()).containsExactly(matching.getId())
                 .doesNotContain(nonMatching.getId());
+    }
+
+    @Test
+    @DisplayName("Exchange does nothing when the first target is returned in response")
+    void doesNothingWhenFirstTargetReturned() {
+        prepare();
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new CursedScroll());
+        Permanent opponents = harness.addToBattlefieldAndReturn(player2, new EmmessiTome());
+        harness.setHand(player2, List.of(new Capsize()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castSorcery(player1, 0, List.of(own.getId(), opponents.getId()));
+        harness.castAndResolveInstant(player2, 0, own.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Cursed Scroll");
+        harness.assertOnBattlefield(player2, "Emmessi Tome");
+        harness.assertNotOnBattlefield(player1, "Emmessi Tome");
+        harness.assertInGraveyard(player1, "Legerdemain");
+    }
+
+    @Test
+    @DisplayName("Exchange does nothing when the first target cannot change controllers")
+    void doesNothingWhenFirstTargetCannotChangeControllers() {
+        prepare();
+        harness.addToBattlefield(player1, new GuardianBeast());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new CursedScroll());
+        Permanent opponents = harness.addToBattlefieldAndReturn(player2, new EmmessiTome());
+
+        harness.castAndResolveSorcery(player1, 0, List.of(own.getId(), opponents.getId()));
+
+        harness.assertOnBattlefield(player1, "Cursed Scroll");
+        harness.assertOnBattlefield(player2, "Emmessi Tome");
+        harness.assertNotOnBattlefield(player2, "Cursed Scroll");
+        harness.assertNotOnBattlefield(player1, "Emmessi Tome");
+    }
+
+    @Test
+    @DisplayName("Exchange does nothing when the second target cannot change controllers")
+    void doesNothingWhenSecondTargetCannotChangeControllers() {
+        prepare();
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new CursedScroll());
+        harness.addToBattlefield(player2, new GuardianBeast());
+        Permanent opponents = harness.addToBattlefieldAndReturn(player2, new EmmessiTome());
+
+        harness.castAndResolveSorcery(player1, 0, List.of(own.getId(), opponents.getId()));
+
+        harness.assertOnBattlefield(player1, "Cursed Scroll");
+        harness.assertOnBattlefield(player2, "Emmessi Tome");
+        harness.assertNotOnBattlefield(player2, "Cursed Scroll");
+        harness.assertNotOnBattlefield(player1, "Emmessi Tome");
     }
 }
