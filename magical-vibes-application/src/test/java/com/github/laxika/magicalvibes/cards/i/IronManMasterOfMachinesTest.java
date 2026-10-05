@@ -52,4 +52,90 @@ class IronManMasterOfMachinesTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
     }
+
+    @Test
+    void ignoresOpponentsArtifactsAndNonartifactsForPower() {
+        Permanent ironMan = addCreatureReady(player1, new IronManMasterOfMachines());
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player1, new Forest());
+
+        assertThat(gqs.getEffectivePower(gd, ironMan)).isEqualTo(1);
+        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.addToBattlefield(player1, new FountainOfYouth());
+        assertThat(gqs.getEffectivePower(gd, ironMan)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ironMan)).isEqualTo(4);
+    }
+
+    @Test
+    void opponentArtifactEntryDoesNotEnableDraw() {
+        addCreatureReady(player1, new IronManMasterOfMachines());
+        harness.setHand(player1, List.of());
+        Forest topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.enterBattlefieldAndReturn(player2, new FountainOfYouth());
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    void nonartifactEntryDoesNotEnableDraw() {
+        addCreatureReady(player1, new IronManMasterOfMachines());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void multipleArtifactEntriesStillDrawOnlyOneCard() {
+        addCreatureReady(player1, new IronManMasterOfMachines());
+        harness.setHand(player1, List.of());
+        Forest first = new Forest();
+        Forest second = new Forest();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.enterBattlefieldAndReturn(player1, new FountainOfYouth());
+        harness.enterBattlefieldAndReturn(player1, new FountainOfYouth());
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second);
+    }
+
+    @Test
+    void ironMansOwnEntryEnablesDraw() {
+        Permanent ironMan = harness.enterBattlefieldAndReturn(player1, new IronManMasterOfMachines());
+        ironMan.setSummoningSick(false);
+        harness.setHand(player1, List.of());
+        Forest topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    void artifactEntryStillCountsAfterArtifactLeavesBattlefield() {
+        Permanent ironMan = addCreatureReady(player1, new IronManMasterOfMachines());
+        harness.setHand(player1, List.of());
+        Forest topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+        Permanent artifact = harness.enterBattlefieldAndReturn(player1, new FountainOfYouth());
+        gd.playerBattlefields.get(player1.getId()).remove(artifact);
+        gd.playerGraveyards.get(player1.getId()).add(artifact.getCard());
+
+        assertThat(gqs.getEffectivePower(gd, ironMan)).isEqualTo(1);
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+    }
 }
