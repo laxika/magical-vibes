@@ -62,6 +62,66 @@ class NecropantherTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingCreature);
     }
 
+    @Test
+    @DisplayName("Mutating can return a creature with mana value exactly three")
+    void mutatingReturnsCreatureAtManaValueLimit() {
+        Permanent panther = addCreatureReady(player1, new Necropanther());
+        Card eligible = new Necropanther();
+        harness.setGraveyard(player1, List.of(eligible));
+
+        triggerMutation(panther);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(eligible.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(eligible.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(eligible.getId())
+                        && !permanent.isTapped());
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A mutation trigger cannot return a target that left the graveyard")
+    void targetLeavingGraveyardIsNotReturned() {
+        Permanent panther = addCreatureReady(player1, new Necropanther());
+        Card target = new Necropanther();
+        harness.setGraveyard(player1, List.of(target));
+
+        triggerMutation(panther);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(target));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(panther);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(target);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Casting Necropanther normally does not trigger its mutation ability")
+    void normalCastDoesNotReturnCreature() {
+        Card target = new Necropanther();
+        harness.setGraveyard(player1, List.of(target));
+        Necropanther spell = new Necropanther();
+
+        harness.castFromHand(player1, spell, "{1}{W}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactly(spell.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(target);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void triggerMutation(Permanent panther) {
         harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
                 gd, panther, List.of(panther.getCard()), player1.getId()));
