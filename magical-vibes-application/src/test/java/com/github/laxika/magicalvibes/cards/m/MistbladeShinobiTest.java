@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GnarledMass;
 import com.github.laxika.magicalvibes.cards.t.TendoIceBridge;
+import com.github.laxika.magicalvibes.cards.v.VeilOfSecrecy;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MistbladeShinobi.class, GnarledMass.class, TendoIceBridge.class})
+@CardUsed({MistbladeShinobi.class, GnarledMass.class, TendoIceBridge.class, VeilOfSecrecy.class})
 class MistbladeShinobiTest extends BaseCardTest {
 
     @Test
@@ -25,6 +26,7 @@ class MistbladeShinobiTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player2, new GnarledMass());
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -43,6 +45,7 @@ class MistbladeShinobiTest extends BaseCardTest {
         addCreatureReady(player2, new GnarledMass());
 
         resolveCombat();
+        resolveAllTriggers();
 
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
@@ -59,6 +62,7 @@ class MistbladeShinobiTest extends BaseCardTest {
         addCreatureReady(player2, new GnarledMass());
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).maxCount())
                 .isEqualTo(1);
@@ -71,6 +75,7 @@ class MistbladeShinobiTest extends BaseCardTest {
         shinobi.setAttacking(true);
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
@@ -85,6 +90,7 @@ class MistbladeShinobiTest extends BaseCardTest {
         blocker.addBlockingTarget(0);
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
     }
@@ -98,6 +104,7 @@ class MistbladeShinobiTest extends BaseCardTest {
         harness.addToBattlefieldAndReturn(player2, new TendoIceBridge());
 
         resolveCombat();
+        resolveAllTriggers();
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -107,6 +114,24 @@ class MistbladeShinobiTest extends BaseCardTest {
 
         harness.assertInHand(player2, "Gnarled Mass");
         harness.assertOnBattlefield(player2, "Tendo Ice Bridge");
+    }
+
+    @Test
+    @DisplayName("A creature with shroud cannot be returned by the targeted combat damage ability")
+    void cannotBounceCreatureWithShroud() {
+        Permanent shinobi = addCreatureReady(player1, new MistbladeShinobi());
+        Permanent creature = addCreatureReady(player2, new GnarledMass());
+        harness.setHand(player2, List.of(new VeilOfSecrecy()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+
+        shinobi.setAttacking(true);
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player2, "Gnarled Mass");
     }
 
     @Test
