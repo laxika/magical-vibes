@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
@@ -14,7 +16,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PlanewideDisaster.class, GrizzlyBears.class, HowlingMine.class, Panopticon.class})
+@CardUsed({PlanewideDisaster.class, GrizzlyBears.class, HowlingMine.class, Panopticon.class,
+        DrudgeSkeletons.class})
 class PlanewideDisasterTest extends BaseCardTest {
 
     private PlanechaseService planar;
@@ -62,5 +65,42 @@ class PlanewideDisasterTest extends BaseCardTest {
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.planechase.faceUp).singleElement().extracting(object -> object.getCard())
                 .isInstanceOf(Panopticon.class);
+    }
+
+    @Test
+    void regenerationSavesCreatureAndEncounterStillPlaneswalksAway() {
+        var skeletons = harness.addToBattlefieldAndReturn(player1, new DrudgeSkeletons());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        gd.planechase.deck.addFirst(new PlanewideDisaster());
+
+        harness.inMutationScope(() -> planar.reveal(gd, true));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Drudge Skeletons");
+        harness.assertNotInGraveyard(player1, "Drudge Skeletons");
+        assertThat(skeletons.isTapped()).isTrue();
+        assertThat(skeletons.getRegenerationShield()).isZero();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.planechase.faceUp).singleElement().extracting(object -> object.getCard())
+                .isInstanceOf(Panopticon.class);
+    }
+
+    @Test
+    void emptyBattlefieldStillPlaneswalksAwayAfterEncounterResolves() {
+        gd.planechase.deck.addFirst(new PlanewideDisaster());
+
+        harness.inMutationScope(() -> planar.reveal(gd, true));
+
+        assertThat(gd.planechase.faceUp).singleElement().extracting(object -> object.getCard())
+                .isInstanceOf(PlanewideDisaster.class);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.planechase.faceUp).singleElement().extracting(object -> object.getCard())
+                .isInstanceOf(Panopticon.class);
+        assertThat(gd.planechase.deck).anyMatch(card -> card instanceof PlanewideDisaster);
     }
 }
