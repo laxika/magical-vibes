@@ -72,7 +72,67 @@ class ImprovisingAerialistTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();
+        harness.passUntil(activePlayer, TurnStep.POSTCOMBAT_MAIN);
+    }
+
+    @Test
+    void untappingBeforeResolutionPreventsBothFlyingGrants() {
+        Permanent aerialist = harness.addToBattlefieldAndReturn(player1, new ImprovisingAerialist());
+        Card creature = new GrizzlyBears();
+        aerialist.tap();
+        harness.setLibrary(player1, List.of(creature));
+
+        advanceToPostcombatMain(player1);
+        assertThat(gd.stack).hasSize(1);
+        aerialist.untap();
         harness.passBothPriorities();
-        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gqs.hasKeyword(gd, aerialist, Keyword.FLYING)).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().hasKeyword(Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    void opponentsSecondMainDoesNotTriggerSurvival() {
+        Permanent aerialist = harness.addToBattlefieldAndReturn(player1, new ImprovisingAerialist());
+        aerialist.tap();
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        advanceToPostcombatMain(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, aerialist, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    void onlyFirstEligibleCreatureGainsFlying() {
+        Permanent aerialist = harness.addToBattlefieldAndReturn(player1, new ImprovisingAerialist());
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        aerialist.tap();
+        harness.setLibrary(player1, List.of(first, second));
+
+        advanceToPostcombatMain(player1);
+        harness.passBothPriorities();
+
+        List<Card> library = gd.playerDecks.get(player1.getId());
+        assertThat(library.get(0).hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(library.get(1)).isSameAs(second);
+        assertThat(library.get(1).hasKeyword(Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    void additionalMainPhaseDoesNotTriggerSurvivalAgain() {
+        Permanent aerialist = harness.addToBattlefieldAndReturn(player1, new ImprovisingAerialist());
+        aerialist.tap();
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        advanceToPostcombatMain(player1);
+        harness.passBothPriorities();
+        gd.additionalCombatMainPhasePairs = 1;
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()).get(1).hasKeyword(Keyword.FLYING)).isFalse();
     }
 }
