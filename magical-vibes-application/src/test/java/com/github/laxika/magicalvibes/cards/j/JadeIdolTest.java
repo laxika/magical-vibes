@@ -49,8 +49,7 @@ class JadeIdolTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(idol.isAnimatedUntilEndOfTurn()).isTrue();
         assertThat(gqs.isCreature(gd, idol)).isTrue();
@@ -64,8 +63,7 @@ class JadeIdolTest extends BaseCardTest {
         harness.setHand(player2, List.of(new ReachThroughMists()));
         harness.addMana(player2, ManaColor.BLUE, 1);
 
-        harness.castInstant(player2, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0);
 
         assertThat(idol.isAnimatedUntilEndOfTurn()).isFalse();
         assertThat(gqs.isCreature(gd, idol)).isFalse();
@@ -96,8 +94,7 @@ class JadeIdolTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         assertThat(idol.isAnimatedUntilEndOfTurn()).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -106,6 +103,64 @@ class JadeIdolTest extends BaseCardTest {
 
         assertThat(idol.isAnimatedUntilEndOfTurn()).isFalse();
         assertThat(gqs.isCreature(gd, idol)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Animation waits for the trigger and resolves before the Spirit spell")
+    void animationResolvesBeforeSpiritSpell() {
+        Permanent idol = addIdol();
+        prepareMainPhase();
+        harness.setHand(player1, List.of(new CallousDeceiver()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gqs.isCreature(gd, idol)).isFalse();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, idol)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, idol)).isEqualTo(4);
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Callous Deceiver");
+    }
+
+    @Test
+    @DisplayName("Your Arcane spell animates your Idol during an opponent's turn")
+    void controllerSpellDuringOpponentTurnAnimatesIdol() {
+        Permanent idol = addIdol();
+        prepareMainPhase(player2);
+        harness.setHand(player1, List.of(new ReachThroughMists()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gqs.isCreature(gd, idol)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, idol)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, idol)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A matching spell animates each of your Idols but no opponent's Idol")
+    void multipleIdolsAnimateIndependently() {
+        Permanent first = addIdol();
+        Permanent second = addIdol();
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new JadeIdol());
+        prepareMainPhase();
+        harness.setHand(player1, List.of(new ReachThroughMists()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0);
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, first)).isTrue();
+        assertThat(gqs.isCreature(gd, second)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.isCreature(gd, opposing)).isFalse();
     }
 
     private Permanent addIdol() {
