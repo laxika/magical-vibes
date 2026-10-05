@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.j.JackOLantern;
+import com.github.laxika.magicalvibes.cards.h.Humility;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
 import com.github.laxika.magicalvibes.cards.m.MikokoroCenterOfTheSea;
 import com.github.laxika.magicalvibes.cards.s.SakuraTribeScout;
 import com.github.laxika.magicalvibes.cards.s.ShinenOfFurysFire;
+import com.github.laxika.magicalvibes.cards.v.VolrathsShapeshifter;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -22,16 +25,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({PithingNeedle.class, SakuraTribeScout.class, MikokoroCenterOfTheSea.class,
-        ShinenOfFurysFire.class, JackOLantern.class})
+        ShinenOfFurysFire.class, JackOLantern.class, VolrathsShapeshifter.class,
+        Humility.class, MarchOfTheMachines.class})
 class PithingNeedleTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting Pithing Needle puts it on the stack as artifact spell")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new PithingNeedle()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new PithingNeedle(), "{1}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -42,10 +43,7 @@ class PithingNeedleTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Pithing Needle awaits card name choice before entering battlefield")
     void resolvingTriggersCardNameChoice() {
-        harness.setHand(player1, List.of(new PithingNeedle()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new PithingNeedle(), "{1}");
         harness.passBothPriorities();
 
         // As this artifact enters, its name choice must be made before it enters.
@@ -58,10 +56,7 @@ class PithingNeedleTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing a card name sets chosenName on the permanent")
     void choosingNameSetsOnPermanent() {
-        harness.setHand(player1, List.of(new PithingNeedle()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new PithingNeedle(), "{1}");
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Sakura-Tribe Scout");
 
@@ -72,10 +67,7 @@ class PithingNeedleTest extends BaseCardTest {
     @Test
     @DisplayName("Card name choice clears awaiting state")
     void cardNameChoiceClearsAwaitingState() {
-        harness.setHand(player1, List.of(new PithingNeedle()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new PithingNeedle(), "{1}");
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Sakura-Tribe Scout");
 
@@ -86,10 +78,7 @@ class PithingNeedleTest extends BaseCardTest {
     @Test
     @DisplayName("Card name choice is logged")
     void cardNameChoiceIsLogged() {
-        harness.setHand(player1, List.of(new PithingNeedle()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new PithingNeedle(), "{1}");
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Sakura-Tribe Scout");
 
@@ -203,8 +192,10 @@ class PithingNeedleTest extends BaseCardTest {
 
         harness.activateGraveyardAbility(player2, 0);
 
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Jack-o'-Lantern");
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotInGraveyard(player2, "Jack-o'-Lantern");
+        harness.handleListChoice(player2, "GREEN");
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 
     @Test
@@ -215,6 +206,75 @@ class PithingNeedleTest extends BaseCardTest {
 
         harness.activateAbility(player2, 0, null, null);
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A source with a changed name is blocked by its current name")
+    void blocksCurrentNameOfShapeshifter() {
+        addReadyPithingNeedle(player1, "Sakura-Tribe Scout");
+        addCreatureReady(player2, new VolrathsShapeshifter());
+        harness.setGraveyard(player2, List.of(new SakuraTribeScout()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
+    }
+
+    @Test
+    @DisplayName("A source that no longer has the chosen name can activate abilities")
+    void doesNotBlockOldNameOfShapeshifter() {
+        addReadyPithingNeedle(player1, "Volrath's Shapeshifter");
+        Permanent shapeshifter = addCreatureReady(player2, new VolrathsShapeshifter());
+        harness.setGraveyard(player2, List.of(new SakuraTribeScout()));
+
+        harness.activateAbility(player2, 0, 0, null, null);
+
+        assertThat(shapeshifter.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An animated Needle stops restricting abilities after Humility removes its abilities")
+    void needleLosingAbilitiesStopsBlocking() {
+        addReadyPithingNeedle(player1, "Mikokoro, Center of the Sea");
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+        harness.addToBattlefield(player1, new Humility());
+        Permanent mikokoro = harness.addToBattlefieldAndReturn(player2, new MikokoroCenterOfTheSea());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player2, 0, 1, null, null);
+
+        assertThat(mikokoro.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Entering without being cast still requires choosing a name before entry")
+    void nonSpellEntryRequiresNameChoice() {
+        harness.enterBattlefieldAndReturn(player1, new PithingNeedle());
+
+        harness.assertNotOnBattlefield(player1, "Pithing Needle");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+
+        harness.handleListChoice(player1, "Sakura-Tribe Scout");
+        addCreatureReady(player2, new SakuraTribeScout());
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
+    }
+
+    @Test
+    @DisplayName("Needle does not remove an ability already on the stack")
+    void doesNotCounterAlreadyActivatedAbility() {
+        Permanent scout = addCreatureReady(player2, new SakuraTribeScout());
+        harness.activateAbility(player2, 0, null, null);
+        addReadyPithingNeedle(player1, "Sakura-Tribe Scout");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(scout.isTapped()).isTrue();
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addReadyPithingNeedle(Player player, String chosenName) {
