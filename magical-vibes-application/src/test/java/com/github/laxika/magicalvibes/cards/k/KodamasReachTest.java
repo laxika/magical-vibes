@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.a.AvenMindcensor;
+import com.github.laxika.magicalvibes.cards.c.CosisTrickster;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -7,7 +9,8 @@ import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -19,7 +22,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KodamasReach.class, Forest.class, HumbleBudoka.class, Island.class, Plains.class})
+@CardUsed({KodamasReach.class, Forest.class, HumbleBudoka.class, Island.class, Plains.class,
+        AvenMindcensor.class, CosisTrickster.class})
 class KodamasReachTest extends BaseCardTest {
 
     @Test
@@ -109,8 +113,60 @@ class KodamasReachTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(entry -> entry.contains("finds no basic land cards"));
+        assertThat(gameLogContains("finds no basic land cards")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Finding only one land is allowed even when more basic lands are available")
+    void decliningHandPickKeepsOnlyBattlefieldLand() {
+        setupAndCast();
+        setupLibraryWithMultipleBasicLands();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(findPermanent(player1, "Forest").isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @CardUsed(CosisTrickster.class)
+    @DisplayName("An empty library is still shuffled and triggers shuffle abilities")
+    void emptyLibraryStillTriggersShuffle() {
+        Permanent trickster = harness.addToBattlefieldAndReturn(player2, new CosisTrickster());
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(trickster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @CardUsed({AvenMindcensor.class, CosisTrickster.class})
+    @DisplayName("Finding no lands in the top four still shuffles the library")
+    void restrictedSearchFindingNothingStillTriggersShuffle() {
+        harness.addToBattlefield(player2, new AvenMindcensor());
+        Permanent trickster = harness.addToBattlefieldAndReturn(player2, new CosisTrickster());
+        setupAndCast();
+        harness.setLibrary(player1, List.of(new HumbleBudoka(), new HumbleBudoka(),
+                new HumbleBudoka(), new HumbleBudoka(), new Forest()));
+
+        harness.passBothPriorities();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(trickster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
     }
 
     private void setupAndCast() {
