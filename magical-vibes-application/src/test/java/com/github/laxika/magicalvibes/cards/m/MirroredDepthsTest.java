@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.c.Cancel;
+import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.e.EdgarKingOfFigaro;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -8,7 +10,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -19,7 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MirroredDepths.class, EdgarKingOfFigaro.class, Forest.class, GrizzlyBears.class})
+@CardUsed({MirroredDepths.class, EdgarKingOfFigaro.class, Forest.class, GrizzlyBears.class,
+        Cancel.class, CounselOfTheSoratami.class})
 class MirroredDepthsTest extends BaseCardTest {
 
     private PlanechaseService planar;
@@ -45,8 +47,7 @@ class MirroredDepthsTest extends BaseCardTest {
 
         assertThat(gd.playersWhoFlippedCoinsThisTurn).contains(player2.getId());
         assertThat(gd.playersWhoFlippedCoinsThisTurn).doesNotContain(player1.getId());
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(permanent -> permanent.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -55,7 +56,7 @@ class MirroredDepthsTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new GrizzlyBears()));
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class)
+        harness.inMutationScope(() -> harness.getTriggerCollectionService()
                 .processNextSpellTargetTrigger(gd));
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
@@ -64,8 +65,7 @@ class MirroredDepthsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -73,7 +73,7 @@ class MirroredDepthsTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Forest()));
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class)
+        harness.inMutationScope(() -> harness.getTriggerCollectionService()
                 .processNextSpellTargetTrigger(gd));
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
@@ -82,5 +82,84 @@ class MirroredDepthsTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId()))
                 .extracting(Card::getName)
                 .containsExactly("Forest");
+    }
+
+    @Test
+    void casterStillFlipsWhenTheirSpellWasAlreadyCountered() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.addToBattlefield(player1, new EdgarKingOfFigaro());
+        harness.addToBattlefield(player2, new EdgarKingOfFigaro());
+        harness.setHand(player2, List.of(bears));
+        harness.setHand(player1, List.of(new Cancel()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.forceActivePlayer(player2);
+
+        harness.castCreature(player2, 0);
+        harness.passPriority(player2);
+        harness.castInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playersWhoFlippedCoinsThisTurn).doesNotContain(player2.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playersWhoFlippedCoinsThisTurn).contains(player2.getId());
+    }
+
+    @Test
+    void chaosCastSorceryReturnsToItsOwnersGraveyard() {
+        harness.addToBattlefield(player1, new EdgarKingOfFigaro());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player2, List.of(new CounselOfTheSoratami()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> harness.getTriggerCollectionService()
+                .processNextSpellTargetTrigger(gd));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getName).containsExactly("Forest", "Forest");
+        harness.assertInGraveyard(player2, "Counsel of the Soratami");
+        harness.assertNotInGraveyard(player1, "Counsel of the Soratami");
+    }
+
+    @Test
+    void decliningChaosCastLeavesTheNonlandOnTop() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(bears, new Forest()));
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> harness.getTriggerCollectionService()
+                .processNextSpellTargetTrigger(gd));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player2.getId())).first().isSameAs(bears);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playersWhoFlippedCoinsThisTurn).isEmpty();
+    }
+
+    @Test
+    void chaosDoesNothingForAnEmptyLibrary() {
+        harness.setLibrary(player2, List.of());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> harness.getTriggerCollectionService()
+                .processNextSpellTargetTrigger(gd));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }
