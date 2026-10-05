@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.a.AncientTomb;
 import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.r.Recoup;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
@@ -17,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ManaSeverance.class, Plains.class, Swamp.class, Counterspell.class})
+@CardUsed({ManaSeverance.class, Plains.class, Swamp.class, Counterspell.class, AncientTomb.class, Recoup.class})
 class ManaSeveranceTest extends BaseCardTest {
 
     @Test
@@ -99,9 +101,7 @@ class ManaSeveranceTest extends BaseCardTest {
     @Test
     @DisplayName("A library with no lands asks for nothing and exiles nothing")
     void noLandsInLibrary() {
-        harness.setHand(player1, List.of(new ManaSeverance()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new ManaSeverance(), "{1}{U}");
 
         harness.setLibrary(player1, List.of(new Counterspell()));
 
@@ -112,10 +112,66 @@ class ManaSeveranceTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
+    @Test
+    @DisplayName("An empty library finishes without a choice")
+    void emptyLibrary() {
+        harness.castFromHand(player1, new ManaSeverance(), "{1}{U}");
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).isEmpty();
+        harness.assertInGraveyard(player1, "Mana Severance");
+    }
+
+    @Test
+    @DisplayName("Nonbasic lands can be exiled and the opponent's library is untouched")
+    void exilesNonbasicLandOnlyFromOwnLibrary() {
+        AncientTomb ownLand = new AncientTomb();
+        AncientTomb opposingLand = new AncientTomb();
+        harness.setLibrary(player1, List.of(ownLand));
+        harness.setLibrary(player2, List.of(opposingLand));
+        harness.castFromHand(player1, new ManaSeverance(), "{1}{U}");
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opposingLand);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(ownLand);
+        harness.assertInGraveyard(player1, "Mana Severance");
+    }
+
+    @Test
+    @DisplayName("Granted flashback still allows choosing multiple lands")
+    void flashbackDoesNotLimitNumberOfLands() {
+        ManaSeverance severance = new ManaSeverance();
+        harness.setGraveyard(player1, List.of(severance));
+        harness.setHand(player1, List.of(new Recoup()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castSorcery(player1, 0, severance.getId());
+        harness.passBothPriorities();
+        harness.setLibrary(player1, List.of(new Plains(), new Swamp()));
+
+        harness.castFlashback(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Plains", "Swamp", "Mana Severance");
+    }
     private void setupAndCast() {
-        harness.setHand(player1, List.of(new ManaSeverance()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new ManaSeverance(), "{1}{U}");
 
         harness.setLibrary(player1, List.of(new Plains(), new Swamp(), new Counterspell()));
     }
