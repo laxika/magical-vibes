@@ -73,4 +73,58 @@ class LeonardoBigBrotherTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of(attacker.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Casting normally does not enter tapped or attacking")
+    void normalCastDoesNotSneak() {
+        harness.castFromHand(player1, new LeonardoBigBrother(), "{2}{W}");
+        harness.passBothPriorities();
+
+        Permanent leonardo = findPermanent(player1, "Leonardo, Big Brother");
+        assertThat(leonardo.isTapped()).isFalse();
+        assertThat(leonardo.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Sneak cannot return an attacker that became blocked")
+    void sneakRejectsBlockedAttacker() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setBlocking(true);
+        blocker.getBlockingTargetIds().add(attacker.getId());
+        harness.setHand(player1, List.of(new LeonardoBigBrother()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of(attacker.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Leonardo, Big Brother");
+    }
+
+    @Test
+    @DisplayName("The power bonus updates when another creature is returned to pay Sneak")
+    void powerUpdatesWhenOtherCreatureLeaves() {
+        Permanent leonardo = harness.addToBattlefieldAndReturn(player1, new LeonardoBigBrother());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        harness.setHand(player1, List.of(new LeonardoBigBrother()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        assertThat(gqs.getEffectivePower(gd, leonardo)).isEqualTo(2);
+
+        harness.castWithAlternateCost(player1, 0, List.of(attacker.getId()));
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, leonardo)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, leonardo)).isEqualTo(3);
+    }
 }
