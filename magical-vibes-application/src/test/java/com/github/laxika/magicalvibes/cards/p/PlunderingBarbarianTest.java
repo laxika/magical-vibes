@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.m.MindStone;
-import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.cards.s.SpareDagger;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,19 +11,19 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PlunderingBarbarian.class, MindStone.class})
+@CardUsed({PlunderingBarbarian.class, SpareDagger.class})
 class PlunderingBarbarianTest extends BaseCardTest {
 
     @Test
     void smashTheChestDestroysTargetArtifact() {
-        Permanent mindStone = harness.addToBattlefieldAndReturn(player2, new MindStone());
+        Permanent dagger = harness.addToBattlefieldAndReturn(player2, new SpareDagger());
         castBarbarian();
 
         harness.handleListChoice(player1, "Smash the Chest \u2014 Destroy target artifact.");
-        harness.handlePermanentChosen(player1, mindStone.getId());
+        harness.handlePermanentChosen(player1, dagger.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Mind Stone");
+        harness.assertNotOnBattlefield(player2, "Spare Dagger");
     }
 
     @Test
@@ -34,11 +33,37 @@ class PlunderingBarbarianTest extends BaseCardTest {
         harness.handleListChoice(player1, "Pry It Open \u2014 Create a Treasure token.");
         harness.passBothPriorities();
 
-        List<Permanent> treasures = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken()
-                        && permanent.getCard().getSubtypes().contains(CardSubtype.TREASURE))
-                .toList();
-        assertThat(treasures).hasSize(1);
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+    }
+
+    @Test
+    void smashTheChestCanDestroyYourOwnArtifact() {
+        Permanent dagger = harness.addToBattlefieldAndReturn(player1, new SpareDagger());
+        castBarbarian();
+
+        harness.handleListChoice(player1, "Smash the Chest \u2014 Destroy target artifact.");
+        harness.handlePermanentChosen(player1, dagger.getId());
+        harness.assertOnBattlefield(player1, "Spare Dagger");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Spare Dagger");
+        harness.assertInGraveyard(player1, "Spare Dagger");
+        harness.assertNotOnBattlefield(player1, "Treasure");
+    }
+
+    @Test
+    void pryItOpenCanBeChosenWhenAnArtifactIsAvailable() {
+        harness.addToBattlefield(player2, new SpareDagger());
+        castBarbarian();
+
+        harness.handleListChoice(player1, "Pry It Open \u2014 Create a Treasure token.");
+        harness.assertNotOnBattlefield(player1, "Treasure");
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        harness.assertNotOnBattlefield(player2, "Treasure");
+        harness.assertOnBattlefield(player2, "Spare Dagger");
+        assertThat(findPermanent(player1, "Treasure").isTapped()).isFalse();
     }
 
     private void castBarbarian() {
