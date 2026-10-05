@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(Morinfen.class)
+@CardUsed({Morinfen.class})
 class MorinfenTest extends BaseCardTest {
 
     @Test
@@ -85,5 +85,57 @@ class MorinfenTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(morinfen);
         harness.assertInGraveyard(player1, "Morinfen");
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep can be paid with exactly the remaining life")
+    void canPayAllRemainingLife() {
+        Permanent morinfen = harness.addToBattlefieldAndReturn(player1, new Morinfen());
+        morinfen.setCounterCount(CounterType.AGE, 1);
+        harness.setLife(player1, 2);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 0);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(morinfen);
+        harness.assertNotInGraveyard(player1, "Morinfen");
+        assertThat(gd.status).isEqualTo(com.github.laxika.magicalvibes.model.GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("The second player's Morinfen charges only its controller")
+    void secondPlayerPaysTheirOwnUpkeep() {
+        Permanent morinfen = harness.addToBattlefieldAndReturn(player2, new Morinfen());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(morinfen.getCounterCount(CounterType.AGE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(morinfen);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Removing Morinfen before the upkeep trigger resolves requires no payment")
+    void removedSourceDoesNotRequirePayment() {
+        Permanent morinfen = harness.addToBattlefieldAndReturn(player1, new Morinfen());
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(morinfen);
+        gd.playerGraveyards.get(player1.getId()).add(morinfen.getCard());
+        harness.passBothPriorities();
+
+        assertThat(morinfen.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Morinfen");
+        harness.assertLife(player1, 20);
     }
 }
