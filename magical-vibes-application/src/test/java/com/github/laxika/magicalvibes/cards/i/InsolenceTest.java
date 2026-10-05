@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.a.AmphibiousKavu;
 import com.github.laxika.magicalvibes.cards.m.ManaCylix;
+import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Insolence.class, AmphibiousKavu.class, ManaCylix.class})
+@CardUsed({Insolence.class, AmphibiousKavu.class, ManaCylix.class, RayOfCommand.class})
 class InsolenceTest extends BaseCardTest {
 
     @Test
@@ -82,5 +84,65 @@ class InsolenceTest extends BaseCardTest {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new Insolence());
         aura.setAttachedTo(creature.getId());
         return creature;
+    }
+
+    @Test
+    @DisplayName("The Aura also damages its controller when enchanting their own creature")
+    void enchantingOwnCreatureDamagesItsController() {
+        addCreatureWithAura(player1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0));
+            resolveAllTriggers();
+        });
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Each attached Insolence triggers separately")
+    void multipleAurasEachDealDamage() {
+        Permanent creature = addCreatureWithAura(player2);
+        Permanent secondAura = harness.addToBattlefieldAndReturn(player1, new Insolence());
+        secondAura.setAttachedTo(creature.getId());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player2, List.of(0));
+            resolveAllTriggers();
+        });
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @CardUsed(RayOfCommand.class)
+    @DisplayName("Damage is dealt to the creature's controller when the trigger resolves")
+    void changingControllerBeforeResolutionChangesDamageRecipient() {
+        Permanent creature = addCreatureWithAura(player2);
+        harness.setHand(player1, List.of(new RayOfCommand()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player2, List.of(0));
+            harness.castInstant(player1, 0, creature.getId());
+            harness.passBothPriorities();
+
+            assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+            assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+
+            resolveAllTriggers();
+        });
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 }
