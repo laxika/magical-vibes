@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({InterplanarTunnel.class, Panopticon.class})
 class InterplanarTunnelTest extends BaseCardTest {
@@ -61,7 +61,7 @@ class InterplanarTunnelTest extends BaseCardTest {
                 planes.stream().map(Card::getId).toList());
 
         Card chosen = planes.get(2);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardsChosen(List.of(chosen.getId())));
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.planechase.faceUp).singleElement().extracting(PlanarObject::getCard)
@@ -69,5 +69,71 @@ class InterplanarTunnelTest extends BaseCardTest {
         assertThat(gd.planechase.deck).containsExactlyInAnyOrder(
                 tunnel, revealedPhenomenon1, revealedPhenomenon2,
                 planes.get(0), planes.get(1), planes.get(3), planes.get(4));
+    }
+
+    @Test
+    void chosenPlaneGoesAboveUnrevealedCards() {
+        List<Card> planes = List.of(
+                new Panopticon(), new Panopticon(), new Panopticon(), new Panopticon(), new Panopticon());
+        Card unrevealedPlane = new Panopticon();
+        gd.planechase.deck.addAll(planes);
+        gd.planechase.deck.add(unrevealedPlane);
+
+        harness.inMutationScope(() -> planar.trigger(gd, source, EffectSlot.ENCOUNTER_TRIGGERED,
+                player1.getId()));
+        harness.passBothPriorities();
+
+        PendingInteraction.PlanarCardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PlanarCardChoice.class);
+        assertThat(choice.revealedCards()).containsExactlyElementsOf(planes);
+        assertThat(gd.planechase.deck).containsExactly(unrevealedPlane);
+
+        Card chosen = planes.get(2);
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(gd.planechase.faceUp).singleElement().extracting(PlanarObject::getCard)
+                .isSameAs(chosen);
+        assertThat(gd.planechase.deck.getFirst()).isSameAs(unrevealedPlane);
+        assertThat(gd.planechase.deck).containsExactlyInAnyOrder(
+                unrevealedPlane, tunnel, planes.get(0), planes.get(1), planes.get(3), planes.get(4));
+    }
+
+    @Test
+    void revealedPhenomenonCannotBeChosenAsTheNextPlane() {
+        Card phenomenon = new InterplanarTunnel();
+        List<Card> planes = List.of(
+                new Panopticon(), new Panopticon(), new Panopticon(), new Panopticon(), new Panopticon());
+        gd.planechase.deck.add(phenomenon);
+        gd.planechase.deck.addAll(planes);
+
+        harness.inMutationScope(() -> planar.trigger(gd, source, EffectSlot.ENCOUNTER_TRIGGERED,
+                player1.getId()));
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(phenomenon.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+
+        harness.handleMultipleCardsChosen(player1, List.of(planes.getFirst().getId()));
+        assertThat(gd.planechase.faceUp).singleElement().extracting(PlanarObject::getCard)
+                .isSameAs(planes.getFirst());
+        assertThat(gd.planechase.deck).contains(phenomenon);
+    }
+
+    @Test
+    void exhaustedDeckWithOnePlaneUsesThatPlaneWithoutAChoice() {
+        Card phenomenon = new InterplanarTunnel();
+        Card plane = new Panopticon();
+        gd.planechase.deck.add(phenomenon);
+        gd.planechase.deck.add(plane);
+
+        harness.inMutationScope(() -> planar.trigger(gd, source, EffectSlot.ENCOUNTER_TRIGGERED,
+                player1.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.planechase.faceUp).singleElement().extracting(PlanarObject::getCard)
+                .isSameAs(plane);
+        assertThat(gd.planechase.deck).containsExactly(phenomenon, tunnel);
     }
 }
