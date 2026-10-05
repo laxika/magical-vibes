@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,8 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({OonasBlackguard.class, ElvishWarrior.class})
 class OonasBlackguardTest extends BaseCardTest {
-
-    // ===== Static: other Rogues you control enter with an additional +1/+1 counter =====
 
     @Test
     @DisplayName("Another Rogue you control enters with an additional +1/+1 counter")
@@ -68,8 +65,6 @@ class OonasBlackguardTest extends BaseCardTest {
         Permanent entered = findPermanent(player2, "Oona's Blackguard");
         assertThat(entered.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
-
-    // ===== Trigger: creature with a +1/+1 counter deals combat damage =====
 
     @Test
     @DisplayName("Creature with a +1/+1 counter deals combat damage — that player discards a card")
@@ -124,10 +119,73 @@ class OonasBlackguardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards to discard"));
+        assertThat(gameLogContains("no cards to discard")).isTrue();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Multiple Blackguards each add a counter to an entering Rogue")
+    void multipleBlackguardsAddCounters() {
+        addReadyBlackguard(player1);
+        addReadyBlackguard(player1);
+        harness.setHand(player1, List.of(new OonasBlackguard()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Oona's Blackguard").get(2)
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A non-Rogue enters without an additional counter")
+    void nonRogueEntersWithoutCounter() {
+        addReadyBlackguard(player1);
+        harness.setHand(player1, List.of(new ElvishWarrior()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Elvish Warrior")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Blackguard's own combat damage triggers discard when it has a counter")
+    void blackguardWithCounterTriggersForItself() {
+        harness.setHand(player2, List.of(new ElvishWarrior(), new OonasBlackguard()));
+        Permanent attacker = addReadyBlackguard(player1);
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        attacker.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player2, 1);
+
+        harness.assertInGraveyard(player2, "Oona's Blackguard");
+        harness.assertInHand(player2, "Elvish Warrior");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Opponent's creature with a counter does not trigger your Blackguard")
+    void opponentCounterCreatureDoesNotTrigger() {
+        addReadyBlackguard(player1);
+        harness.setHand(player1, List.of(new ElvishWarrior()));
+        Permanent attacker = addCreatureReady(player2, new ElvishWarrior());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInHand(player1, "Elvish Warrior");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
 
     private Permanent addReadyBlackguard(Player player) {
         return addCreatureReady(player, new OonasBlackguard());
