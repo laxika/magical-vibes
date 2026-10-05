@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({OrderOfLeitbur.class, ArmorThrull.class, BasalThrull.class, IcatianInfantry.class,
-        IcatianPriest.class})
+        IcatianPriest.class, ThrullRetainer.class})
 class OrderOfLeitburTest extends BaseCardTest {
 
     @Test
@@ -160,7 +160,6 @@ class OrderOfLeitburTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(ThrullRetainer.class)
     @DisplayName("Protection from black prevents a black Aura from enchanting Order of Leitbur")
     void protectionFromBlackPreventsBlackAuraEnchanting() {
         Permanent order = addReadyOrder(player2);
@@ -170,6 +169,65 @@ class OrderOfLeitburTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, order.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from black");
+    }
+
+    @Test
+    @DisplayName("First strike kills a blocker before it can deal normal combat damage")
+    void firstStrikePreventsLethalReturnDamage() {
+        Permanent order = addReadyOrder(player1);
+        Permanent blocker = addReadyOrder(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(order);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        harness.assertInGraveyard(player2, "Order of Leitbur");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Repeated power boosts accumulate and expire together")
+    void repeatedPowerBoostsAccumulate() {
+        Permanent order = addReadyOrder(player1);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, order)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, order)).isEqualTo(1);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, order)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Both abilities can be activated while tapped and summoning sick")
+    void abilitiesWorkWhileTappedAndSummoningSick() {
+        Permanent order = addReadyOrder(player1);
+        order.setSummoningSick(true);
+        order.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, order, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, order)).isEqualTo(3);
+        assertThat(order.isTapped()).isTrue();
     }
 
     private Permanent addReadyOrder(Player player) {
