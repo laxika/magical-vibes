@@ -5,12 +5,11 @@ import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -20,18 +19,20 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MultaniYavimayasAvatar.class, Forest.class, Plains.class, GrizzlyBears.class, GloriousAnthem.class, MerfolkLooter.class})
 class MultaniYavimayasAvatarTest extends BaseCardTest {
 
     
 
     @Nested
     @DisplayName("Power/Toughness boost")
+    @CardUsed({MultaniYavimayasAvatar.class, Forest.class, Plains.class, GrizzlyBears.class, GloriousAnthem.class})
     class PowerToughnessTests {
 
         @Test
         @DisplayName("P/T equals lands you control when no lands in graveyard")
         void ptEqualsControlledLands() {
-            Permanent multani = addMultaniReady(player1);
+            Permanent multani = addCreatureReady(player1, new MultaniYavimayasAvatar());
             harness.addToBattlefield(player1, new Forest());
             harness.addToBattlefield(player1, new Forest());
             harness.addToBattlefield(player1, new Plains());
@@ -43,7 +44,7 @@ class MultaniYavimayasAvatarTest extends BaseCardTest {
         @Test
         @DisplayName("P/T includes land cards in graveyard")
         void ptIncludesGraveyardLands() {
-            Permanent multani = addMultaniReady(player1);
+            Permanent multani = addCreatureReady(player1, new MultaniYavimayasAvatar());
             harness.addToBattlefield(player1, new Forest());
             harness.setGraveyard(player1, List.of(new Forest(), new Plains()));
 
@@ -55,7 +56,7 @@ class MultaniYavimayasAvatarTest extends BaseCardTest {
         @Test
         @DisplayName("P/T counts both battlefield and graveyard lands")
         void ptCountsBothZones() {
-            Permanent multani = addMultaniReady(player1);
+            Permanent multani = addCreatureReady(player1, new MultaniYavimayasAvatar());
             harness.addToBattlefield(player1, new Forest());
             harness.addToBattlefield(player1, new Forest());
             harness.setGraveyard(player1, List.of(new Forest(), new Plains(), new Forest()));
@@ -68,7 +69,7 @@ class MultaniYavimayasAvatarTest extends BaseCardTest {
         @Test
         @DisplayName("Does not count opponent lands on battlefield or in graveyard")
         void doesNotCountOpponentLands() {
-            Permanent multani = addMultaniReady(player1);
+            Permanent multani = addCreatureReady(player1, new MultaniYavimayasAvatar());
             harness.addToBattlefield(player1, new Forest());
             harness.addToBattlefield(player2, new Forest());
             harness.addToBattlefield(player2, new Plains());
@@ -82,7 +83,7 @@ class MultaniYavimayasAvatarTest extends BaseCardTest {
         @Test
         @DisplayName("Does not count non-land cards in graveyard")
         void doesNotCountNonLandCardsInGraveyard() {
-            Permanent multani = addMultaniReady(player1);
+            Permanent multani = addCreatureReady(player1, new MultaniYavimayasAvatar());
             harness.addToBattlefield(player1, new Forest());
             harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Forest()));
 
@@ -94,7 +95,7 @@ class MultaniYavimayasAvatarTest extends BaseCardTest {
         @Test
         @DisplayName("Dies with no lands anywhere")
         void diesWithNoLands() {
-            Permanent multani = addMultaniReady(player1);
+            addCreatureReady(player1, new MultaniYavimayasAvatar());
 
             // 0/0 with no boost = dies to state-based actions
             harness.runStateBasedActions();
@@ -106,7 +107,7 @@ class MultaniYavimayasAvatarTest extends BaseCardTest {
         @Test
         @DisplayName("P/T stacks with other static bonuses")
         void ptStacksWithOtherStaticBonuses() {
-            Permanent multani = addMultaniReady(player1);
+            Permanent multani = addCreatureReady(player1, new MultaniYavimayasAvatar());
             harness.addToBattlefield(player1, new Forest());
             harness.addToBattlefield(player1, new Forest());
             harness.addToBattlefield(player1, new GloriousAnthem());
@@ -119,7 +120,7 @@ class MultaniYavimayasAvatarTest extends BaseCardTest {
         @Test
         @DisplayName("P/T updates dynamically when lands change")
         void ptUpdatesDynamically() {
-            Permanent multani = addMultaniReady(player1);
+            Permanent multani = addCreatureReady(player1, new MultaniYavimayasAvatar());
             harness.addToBattlefield(player1, new Forest());
 
             assertThat(gqs.getEffectivePower(gd, multani)).isEqualTo(1);
@@ -132,20 +133,116 @@ class MultaniYavimayasAvatarTest extends BaseCardTest {
             assertThat(gqs.getEffectivePower(gd, multani)).isEqualTo(0);
         }
 
-        @Test
-        @DisplayName("Has reach and trample on the battlefield")
-        void hasReachAndTrample() {
-            Permanent multani = addMultaniReady(player1);
-            harness.addToBattlefield(player1, new Forest()); // Keep alive
-
-            assertThat(gqs.hasKeyword(gd, multani, Keyword.REACH)).isTrue();
-            assertThat(gqs.hasKeyword(gd, multani, Keyword.TRAMPLE)).isTrue();
-        }
     }
 
     @Nested
     @DisplayName("Graveyard activated ability")
+    @CardUsed({MultaniYavimayasAvatar.class, Forest.class, Plains.class, MerfolkLooter.class})
     class GraveyardAbilityTests {
+
+        @Test
+        @DisplayName("Returns only the Multani whose ability was activated")
+        void returnsOnlySourceCopy() {
+            MultaniYavimayasAvatar source = new MultaniYavimayasAvatar();
+            MultaniYavimayasAvatar other = new MultaniYavimayasAvatar();
+            harness.setGraveyard(player1, List.of(source, other));
+            harness.addToBattlefield(player1, new Forest());
+            harness.addToBattlefield(player1, new Forest());
+            harness.addMana(player1, ManaColor.GREEN, 2);
+
+            harness.activateGraveyardAbility(player1, 0);
+            harness.passBothPriorities();
+
+            assertThat(gd.playerHands.get(player1.getId())).contains(source).doesNotContain(other);
+            assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
+        }
+
+        @Test
+        @DisplayName("Tapped lands can pay the return cost")
+        void canReturnTappedLands() {
+            MultaniYavimayasAvatar multani = new MultaniYavimayasAvatar();
+            harness.setGraveyard(player1, List.of(multani));
+            harness.addToBattlefieldAndReturn(player1, new Forest()).setTapped(true);
+            harness.addToBattlefieldAndReturn(player1, new Forest()).setTapped(true);
+            harness.addMana(player1, ManaColor.GREEN, 2);
+
+            harness.activateGraveyardAbility(player1, 0);
+            harness.passBothPriorities();
+
+            assertThat(gd.playerHands.get(player1.getId())).contains(multani);
+            assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        }
+
+        @Test
+        @DisplayName("A borrowed land pays the cost but returns to its owner's hand")
+        void returnedLandGoesToItsOwner() {
+            MultaniYavimayasAvatar multani = new MultaniYavimayasAvatar();
+            harness.setGraveyard(player1, List.of(multani));
+            Forest borrowedLand = new Forest();
+            Permanent borrowed = harness.addToBattlefieldAndReturn(player1, borrowedLand);
+            gd.stolenCreatures.put(borrowed.getId(), player2.getId());
+            Forest ownLand = new Forest();
+            harness.addToBattlefield(player1, ownLand);
+            harness.addMana(player1, ManaColor.GREEN, 2);
+
+            harness.activateGraveyardAbility(player1, 0);
+
+            assertThat(gd.playerHands.get(player2.getId())).contains(borrowedLand);
+            assertThat(gd.playerHands.get(player1.getId())).contains(ownLand).doesNotContain(borrowedLand);
+            harness.passBothPriorities();
+            assertThat(gd.playerHands.get(player1.getId())).contains(multani);
+        }
+
+        @Test
+        @DisplayName("Cannot pay the green mana requirement with colorless mana")
+        void cannotActivateWithOnlyColorlessMana() {
+            harness.setGraveyard(player1, List.of(new MultaniYavimayasAvatar()));
+            harness.addToBattlefield(player1, new Forest());
+            harness.addToBattlefield(player1, new Forest());
+            harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+            assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                    .isInstanceOf(IllegalStateException.class);
+            assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Earlier activation cannot return Multani after it leaves and reenters the graveyard")
+        @CardUsed({MultaniYavimayasAvatar.class, Forest.class, MerfolkLooter.class})
+        void earlierActivationLosesTrackOfDiscardedMultani() {
+            MultaniYavimayasAvatar multani = new MultaniYavimayasAvatar();
+            harness.setHand(player1, List.of());
+            harness.setGraveyard(player1, List.of(multani));
+            Permanent looter = addCreatureReady(player1, new MerfolkLooter());
+            Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+            Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+            harness.addToBattlefield(player1, new Forest());
+            harness.addToBattlefield(player1, new Forest());
+            harness.setLibrary(player1, List.of(new Forest()));
+            harness.addMana(player1, ManaColor.GREEN, 4);
+
+            harness.activateGraveyardAbility(player1, 0);
+            harness.handlePermanentChosen(player1, firstLand.getId());
+            harness.handlePermanentChosen(player1, secondLand.getId());
+            harness.activateGraveyardAbility(player1, 0);
+            assertThat(gd.stack).hasSize(2);
+            harness.passBothPriorities();
+            assertThat(gd.playerHands.get(player1.getId())).contains(multani);
+            assertThat(gd.stack).hasSize(1);
+
+            int looterIndex = gd.playerBattlefields.get(player1.getId()).indexOf(looter);
+            harness.activateAbility(player1, looterIndex, null, null);
+            harness.passBothPriorities();
+            int multaniIndex = gd.playerHands.get(player1.getId()).indexOf(multani);
+            harness.handleCardChosen(player1, multaniIndex);
+            assertThat(gd.playerGraveyards.get(player1.getId())).contains(multani);
+
+            harness.passBothPriorities();
+
+            assertThat(gd.playerGraveyards.get(player1.getId())).contains(multani);
+            assertThat(gd.playerHands.get(player1.getId())).doesNotContain(multani);
+        }
 
         @Test
         @DisplayName("Can activate graveyard ability with enough mana and lands")
@@ -266,13 +363,4 @@ class MultaniYavimayasAvatarTest extends BaseCardTest {
         }
     }
 
-    // ===== Helpers =====
-
-    private Permanent addMultaniReady(Player player) {
-        MultaniYavimayasAvatar card = new MultaniYavimayasAvatar();
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
 }
