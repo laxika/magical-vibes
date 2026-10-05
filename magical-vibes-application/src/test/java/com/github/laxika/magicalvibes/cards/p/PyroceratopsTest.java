@@ -25,9 +25,7 @@ class PyroceratopsTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
         assertThat(pyroceratops.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -62,5 +60,72 @@ class PyroceratopsTest extends BaseCardTest {
         harness.castInstant(player2, 0, player1.getId());
 
         assertThat(pyroceratops.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The counter trigger resolves before the spell that caused it")
+    void counterResolvesBeforeSpell() {
+        Permanent pyroceratops = harness.addToBattlefieldAndReturn(player1, new Pyroceratops());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        assertThat(pyroceratops.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+        assertThat(pyroceratops.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Every noncreature spell adds a permanent counter")
+    void repeatedCastsAccumulateCounters() {
+        Permanent pyroceratops = harness.addToBattlefieldAndReturn(player1, new Pyroceratops());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(pyroceratops.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each Pyroceratops receives its own counter")
+    void multipleSourcesEachReceiveCounter() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Pyroceratops());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new Pyroceratops());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The controller's noncreature spell triggers during an opponent's turn")
+    void controllerSpellTriggersDuringOpponentTurn() {
+        Permanent pyroceratops = harness.addToBattlefieldAndReturn(player1, new Pyroceratops());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.passPriority(player2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(pyroceratops.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }
