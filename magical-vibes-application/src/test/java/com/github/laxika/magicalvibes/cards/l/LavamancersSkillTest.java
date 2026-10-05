@@ -122,6 +122,65 @@ class LavamancersSkillTest extends BaseCardTest {
                 .hasMessageContaining("summoning sickness");
     }
 
+    @Test
+    void opponentControlsAbilityGrantedByYourAura() {
+        Permanent creature = addCreatureReady(player2, new GlorySeeker());
+        Permanent target = addCreatureReady(player1, new ElvishWarrior());
+        harness.setHand(player1, List.of(new LavamancersSkill()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player2, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(findPermanent(player1, "Lavamancer's Skill").isTapped()).isFalse();
+    }
+
+    @Test
+    void tappingForOneAbilityPreventsActivatingTheOther() {
+        Permanent wizard = addEnchantedCreature(new RiptideBiologist());
+        Permanent target = addCreatureReady(player2, new ElvishWarrior());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(wizard.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.passBothPriorities();
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    void grantedAbilityCanTargetItsOwnSource() {
+        Permanent creature = addEnchantedCreature(new GlorySeeker());
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+    }
+
+    @Test
+    void removingAuraDoesNotStopAlreadyActivatedAbility() {
+        Permanent wizard = addEnchantedCreature(new RiptideBiologist());
+        Permanent target = addCreatureReady(player2, new ElvishWarrior());
+        Permanent aura = findPermanent(player1, "Lavamancer's Skill");
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        gd.playerGraveyards.get(player1.getId()).add(aura.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        wizard.setTapped(false);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private Permanent addEnchantedCreature(Card card) {
         Permanent creature = addCreatureReady(player1, card);
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new LavamancersSkill());
