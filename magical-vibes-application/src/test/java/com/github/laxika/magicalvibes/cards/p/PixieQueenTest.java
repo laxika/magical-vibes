@@ -99,4 +99,54 @@ class PixieQueenTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent pixieQueen = harness.addToBattlefieldAndReturn(player1, new PixieQueen());
+        Permanent target = addCreatureReady(player1, new DurkwoodBoars());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(pixieQueen.isTapped()).isFalse();
+        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Ability resolves even if Pixie Queen leaves the battlefield")
+    void resolvesWithoutSource() {
+        Permanent pixieQueen = addCreatureReady(player1, new PixieQueen());
+        Permanent target = addCreatureReady(player1, new DurkwoodBoars());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+        gd.playerBattlefields.get(player1.getId()).remove(pixieQueen);
+        gd.playerGraveyards.get(player1.getId()).add(pixieQueen.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability does not grant flying when its target leaves the battlefield")
+    void removedTargetDoesNotReceiveFlying() {
+        Permanent pixieQueen = addCreatureReady(player1, new PixieQueen());
+        Permanent target = addCreatureReady(player1, new DurkwoodBoars());
+        Permanent other = addCreatureReady(player1, new DurkwoodBoars());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerGraveyards.get(player1.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(other.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(pixieQueen.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }
