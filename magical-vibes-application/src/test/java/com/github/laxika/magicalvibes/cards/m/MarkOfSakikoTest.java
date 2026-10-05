@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({MarkOfSakiko.class, FrostOgre.class})
@@ -97,6 +99,62 @@ class MarkOfSakikoTest extends BaseCardTest {
         resolveCombatAndTriggers();
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Can be cast on an opponent's creature and attaches on resolution")
+    void castsOnOpponentsCreature() {
+        Permanent creature = addCreatureReady(player2, new FrostOgre());
+        harness.setHand(player1, List.of(new MarkOfSakiko()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Mark of Sakiko").getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("The granted combat damage trigger belongs to the enchanted creature and its controller")
+    void grantedTriggerBelongsToCreature() {
+        Permanent creature = addCreatureReady(player2, new FrostOgre());
+        attachMarkOfSakiko(player1, creature);
+        creature.setAttacking(true);
+
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat(player2));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2.getId());
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Two copies each generate mana for the same combat damage event")
+    void multipleCopiesGenerateManaIndependently() {
+        Permanent creature = addCreatureReady(player1, new FrostOgre());
+        attachMarkOfSakiko(player1, creature);
+        attachMarkOfSakiko(player1, creature);
+        creature.setAttacking(true);
+
+        resolveCombatAndTriggers();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(10);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+    }
+
+    @Test
+    @DisplayName("Unrelated green mana empties while the generated green mana remains")
+    void onlyGeneratedGreenManaPersists() {
+        Permanent creature = addCreatureReady(player1, new FrostOgre());
+        attachMarkOfSakiko(player1, creature);
+        creature.setAttacking(true);
+        resolveCombatAndTriggers();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(5);
     }
 
     private void attachMarkOfSakiko(Player controller, Permanent creature) {
