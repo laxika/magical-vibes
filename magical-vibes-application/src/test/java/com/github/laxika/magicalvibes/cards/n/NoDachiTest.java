@@ -112,4 +112,62 @@ class NoDachiTest extends BaseCardTest {
     private Permanent addNoDachiReady(Player player) {
         return harness.addToBattlefieldAndReturn(player, new NoDachi());
     }
+
+    @Test
+    @DisplayName("Re-equipping moves both bonuses only when the ability resolves")
+    void reEquipMovesBonusesOnResolution() {
+        Permanent noDachi = addNoDachiReady(player1);
+        Permanent first = addCreatureReady(player1, new WanderingOnes());
+        Permanent second = addCreatureReady(player1, new WanderingOnes());
+        noDachi.setAttachedTo(first.getId());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, null, second.getId());
+
+        assertThat(noDachi.getAttachedTo()).isEqualTo(first.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, first, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, second, Keyword.FIRST_STRIKE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(noDachi.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, first, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, second, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("An equip target leaving the battlefield does not detach the original creature")
+    void missingEquipTargetKeepsOriginalAttachment() {
+        Permanent noDachi = addNoDachiReady(player1);
+        Permanent first = addCreatureReady(player1, new WanderingOnes());
+        Permanent second = addCreatureReady(player1, new WanderingOnes());
+        noDachi.setAttachedTo(first.getId());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, null, second.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(second);
+        gd.playerGraveyards.get(player1.getId()).add(second.getCard());
+        harness.passBothPriorities();
+
+        assertThat(noDachi.getAttachedTo()).isEqualTo(first.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, first, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("An attached creature controlled by an opponent still receives both bonuses")
+    void bonusesDoNotRequireCreatureToShareEquipmentController() {
+        Permanent noDachi = addNoDachiReady(player1);
+        Permanent creature = addCreatureReady(player2, new WanderingOnes());
+        noDachi.setAttachedTo(creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+    }
 }
