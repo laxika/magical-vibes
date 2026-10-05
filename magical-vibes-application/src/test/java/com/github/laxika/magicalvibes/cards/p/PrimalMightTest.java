@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PrimalMight.class, GrizzlyBears.class, HillGiant.class, LlanowarElves.class, Unsummon.class})
 class PrimalMightTest extends BaseCardTest {
 
     @Test
@@ -46,8 +49,7 @@ class PrimalMightTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         UUID elvesId = harness.getPermanentId(player1, "Llanowar Elves");
-        harness.castSorcery(player1, 0, 2, List.of(elvesId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2, elvesId);
 
         Permanent elves = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(gqs.getEffectivePower(gd, elves)).isEqualTo(3);
@@ -62,8 +64,7 @@ class PrimalMightTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castSorcery(player1, 0, 3, List.of(bearId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3, bearId);
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(5);
@@ -95,5 +96,70 @@ class PrimalMightTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, List.of(ownBearId, ownElvesId)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("don't control");
+    }
+
+    @Test
+    @DisplayName("X can be zero and both creatures deal fight damage")
+    void zeroXFightsWithoutBoost() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PrimalMight()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        UUID ownId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID opposingId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.castSorcery(player1, 0, 0, List.of(ownId, opposingId));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Removing the opposing target still allows the boost but prevents fighting")
+    void opposingTargetRemovedStillBoosts() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.setHand(player1, List.of(new PrimalMight()));
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        UUID ownId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID opposingId = harness.getPermanentId(player2, "Hill Giant");
+        harness.castSorcery(player1, 0, 2, List.of(ownId, opposingId));
+        harness.castAndResolveInstant(player2, 0, opposingId);
+        harness.passBothPriorities();
+
+        Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
+        assertThat(bear.getMarkedDamage()).isZero();
+        harness.assertInHand(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Removing the friendly target prevents both boosting and fighting")
+    void friendlyTargetRemovedDoesNotBoostOpponent() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.setHand(player1, List.of(new PrimalMight()));
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        UUID ownId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID opposingId = harness.getPermanentId(player2, "Hill Giant");
+        harness.castSorcery(player1, 0, 2, List.of(ownId, opposingId));
+        harness.castAndResolveInstant(player2, 0, ownId);
+        harness.passBothPriorities();
+
+        Permanent giant = gd.playerBattlefields.get(player2.getId()).getFirst();
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
+        assertThat(giant.getMarkedDamage()).isZero();
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 }
