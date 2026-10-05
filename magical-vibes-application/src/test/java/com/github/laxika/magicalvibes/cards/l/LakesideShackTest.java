@@ -39,6 +39,41 @@ class LakesideShackTest extends BaseCardTest {
     }
 
     @Test
+    void entersUntappedWhenControllerHasLessThan13Life() {
+        harness.setLife(player1, 12);
+        playShack();
+
+        assertThat(shack().isTapped()).isFalse();
+    }
+
+    @Test
+    void entersUntappedWhenOpponentHasLessThan13Life() {
+        harness.setLife(player2, 12);
+        playShack();
+
+        assertThat(shack().isTapped()).isFalse();
+    }
+
+    @Test
+    void entersTappedWhenPutOntoBattlefieldWithoutBeingPlayed() {
+        harness.setLife(player1, 14);
+        harness.setLife(player2, 14);
+
+        Permanent shack = harness.enterBattlefieldAndReturn(player1, new LakesideShack());
+
+        assertThat(shack.isTapped()).isTrue();
+    }
+
+    @Test
+    void entersUntappedWhenPutOntoBattlefieldWhileOpponentHas13Life() {
+        harness.setLife(player2, 13);
+
+        Permanent shack = harness.enterBattlefieldAndReturn(player1, new LakesideShack());
+
+        assertThat(shack.isTapped()).isFalse();
+    }
+
+    @Test
     void tappingProducesGreenMana() {
         Permanent shack = addReadyShack();
 
@@ -64,9 +99,8 @@ class LakesideShackTest extends BaseCardTest {
     }
 
     private Permanent addReadyShack() {
-        Permanent shack = new Permanent(new LakesideShack());
+        Permanent shack = harness.addToBattlefieldAndReturn(player1, new LakesideShack());
         shack.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(shack);
         return shack;
     }
 
