@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.cards.k.KothOfTheHammer;
+import com.github.laxika.magicalvibes.cards.r.RevokeExistence;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
@@ -20,6 +24,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PerilousMyr.class, GrizzlyBears.class, WrathOfGod.class, KothOfTheHammer.class, RevokeExistence.class})
 class PerilousMyrTest extends BaseCardTest {
 
     /**
@@ -31,21 +36,16 @@ class PerilousMyrTest extends BaseCardTest {
         myrPerm.setSummoningSick(false);
         myrPerm.setAttacking(true);
 
-        GrizzlyBears bigBear = new GrizzlyBears();
-        bigBear.setPower(3);
-        bigBear.setToughness(3);
-        Permanent blockerPerm = new Permanent(bigBear);
+        Permanent blockerPerm = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        blockerPerm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         blockerPerm.setSummoningSick(false);
         blockerPerm.setBlocking(true);
         blockerPerm.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blockerPerm);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
     }
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Perilous Myr puts it on the battlefield")
@@ -60,8 +60,6 @@ class PerilousMyrTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Perilous Myr");
     }
-
-    // ===== Death trigger — target creature =====
 
     @Test
     @DisplayName("When Perilous Myr dies in combat, controller is prompted to choose any target")
@@ -108,8 +106,6 @@ class PerilousMyrTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
-    // ===== Death trigger — target player =====
-
     @Test
     @DisplayName("Death trigger deals 2 damage to chosen player")
     void deathTriggerDeals2DamageToPlayer() {
@@ -148,10 +144,8 @@ class PerilousMyrTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
 
-    // ===== Death trigger — no valid targets =====
-
     @Test
-    @DisplayName("Death trigger skips if no creatures on battlefield after Wrath of God (targets players only)")
+    @DisplayName("Death trigger still targets a player after Wrath of God destroys all creatures")
     void deathTriggerAfterWrathTargetsPlayer() {
         harness.addToBattlefield(player1, new PerilousMyr());
         harness.setLife(player1, 20);
@@ -160,7 +154,7 @@ class PerilousMyrTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WrathOfGod()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
+        harness.castSorcery(player1, 0);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -175,8 +169,6 @@ class PerilousMyrTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
-
-    // ===== Fizzle =====
 
     @Test
     @DisplayName("Ability fizzles when target creature is removed before resolution")
@@ -201,5 +193,56 @@ class PerilousMyrTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+    }
+
+    @Test
+    @DisplayName("Death trigger deals 2 damage directly to a planeswalker")
+    void deathTriggerDealsDamageToPlaneswalker() {
+        harness.addToBattlefield(player1, new PerilousMyr());
+        Permanent koth = harness.addToBattlefieldAndReturn(player2, new KothOfTheHammer());
+        koth.setCounterCount(CounterType.LOYALTY, 3);
+        setupCombatWhereMyrDies();
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player1, koth.getId());
+        harness.passBothPriorities();
+
+        assertThat(koth.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Koth of the Hammer");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Death trigger can target a creature controlled by its controller")
+    void deathTriggerCanTargetOwnCreature() {
+        harness.addToBattlefield(player1, new PerilousMyr());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        setupCombatWhereMyrDies();
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Exiling Perilous Myr does not trigger its death ability")
+    void exileDoesNotTriggerDeathAbility() {
+        Permanent myr = harness.addToBattlefieldAndReturn(player1, new PerilousMyr());
+        harness.setHand(player1, List.of(new RevokeExistence()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castSorcery(player1, 0, myr.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Perilous Myr");
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(myr.getCard().getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(myr.getCard());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }
