@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(NaturalSelection.class)
+@CardUsed({NaturalSelection.class})
 class NaturalSelectionTest extends BaseCardTest {
 
     @Test
@@ -27,8 +27,7 @@ class NaturalSelectionTest extends BaseCardTest {
         Card top1 = targetDeck.get(1);
         Card top2 = targetDeck.get(2);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         PendingInteraction.LibraryReorder reorder =
                 gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
@@ -43,8 +42,7 @@ class NaturalSelectionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NaturalSelection()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
 
         PendingInteraction.MayAbilityChoice may =
@@ -60,8 +58,7 @@ class NaturalSelectionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         Card originallyThird = gd.playerDecks.get(player2.getId()).get(2);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 0, 1)));
         harness.handleMayAbilityChosen(player1, false);
@@ -76,8 +73,7 @@ class NaturalSelectionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         List<Card> before = List.copyOf(gd.playerDecks.get(player2.getId()));
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
         harness.handleMayAbilityChosen(player1, true);
@@ -95,8 +91,7 @@ class NaturalSelectionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NaturalSelection()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         PendingInteraction.LibraryReorder reorder =
                 gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
@@ -115,12 +110,53 @@ class NaturalSelectionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NaturalSelection()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         PendingInteraction.LibraryReorder reorder =
                 gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
         assertThat(reorder).isNotNull();
         assertThat(reorder.deckOwnerId()).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("An empty target library still offers the optional shuffle")
+    void emptyTargetLibraryStillOffersShuffle() {
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new NaturalSelection()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        PendingInteraction.MayAbilityChoice may =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(may).isNotNull();
+        assertThat(may.playerId()).isEqualTo(player1.getId());
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gameLogContains(player2.getUsername() + " shuffles their library")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Declining shuffle preserves the chosen order and both libraries' other cards")
+    void decliningShufflePreservesCompleteChosenOrder() {
+        Card first = new NaturalSelection();
+        Card second = new NaturalSelection();
+        Card third = new NaturalSelection();
+        Card fourth = new NaturalSelection();
+        harness.setLibrary(player2, List.of(first, second, third, fourth));
+        List<Card> ownLibrary = List.copyOf(gd.playerDecks.get(player1.getId()));
+        harness.setHand(player1, List.of(new NaturalSelection()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 1, 0)));
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(third, second, first, fourth);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(ownLibrary);
+        assertThat(gameLogContains(player2.getUsername() + " shuffles their library")).isFalse();
+        harness.assertInGraveyard(player1, "Natural Selection");
     }
 }
