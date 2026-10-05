@@ -40,8 +40,7 @@ class MomentOfValorTest extends BaseCardTest {
         cast(0, target);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
@@ -67,6 +66,57 @@ class MomentOfValorTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("power 4 or greater");
+    }
+
+    @Test
+    @DisplayName("First mode protects an already untapped creature you control from destruction")
+    void firstModeProtectsUntappedCreatureYouControl() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+
+        cast(0, target);
+        cast(1, target);
+
+        harness.assertOnBattlefield(player1, "Air Elemental");
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Second mode checks current power when choosing a target")
+    void secondModeDestroysCreatureWhosePowerWasIncreasedToFour() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        target.setPowerModifier(1);
+
+        cast(1, target);
+
+        harness.assertInGraveyard(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Second mode does not destroy a creature whose power falls below four before resolution")
+    void secondModeRechecksPowerOnResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new MomentOfValor()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castInstant(player1, 0, 1, target.getId());
+
+        target.setPowerModifier(-1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        harness.assertInGraveyard(player1, "Moment of Valor");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Second mode may destroy a creature you control")
+    void secondModeDestroysCreatureYouControl() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+
+        cast(1, target);
+
+        harness.assertInGraveyard(player1, "Air Elemental");
     }
 
     private void cast(int mode, Permanent target) {
