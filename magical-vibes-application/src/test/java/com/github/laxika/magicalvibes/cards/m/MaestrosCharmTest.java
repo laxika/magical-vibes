@@ -84,6 +84,98 @@ class MaestrosCharmTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Only the top five cards are considered and the sixth stays in the library")
+    void leavesCardsBelowTopFiveUntouched() {
+        Card selected = new Island();
+        Card card1 = new Island();
+        Card card2 = new Island();
+        Card card3 = new Island();
+        Card card4 = new Island();
+        Card sixth = new Island();
+        harness.setLibrary(player1, List.of(selected, card1, card2, card3, card4, sixth));
+
+        castMaestrosCharm(0);
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(selected);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(sixth);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(card1, card2, card3, card4)
+                .doesNotContain(selected, sixth);
+    }
+
+    @Test
+    @DisplayName("With fewer than five cards, choose one and put the remaining cards into the graveyard")
+    void handlesShortLibrary() {
+        Card selected = new Island();
+        Card remaining = new Island();
+        harness.setLibrary(player1, List.of(selected, remaining));
+
+        castMaestrosCharm(0);
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(selected);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(remaining).doesNotContain(selected);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The only card in the library goes directly into hand")
+    void handlesOneCardLibrary() {
+        Card onlyCard = new Island();
+        harness.setLibrary(player1, List.of(onlyCard));
+
+        castMaestrosCharm(0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(onlyCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library does not require a choice or cause a failed draw")
+    void handlesEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+
+        castMaestrosCharm(0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Maestros Charm");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Choosing a card for hand is mandatory when cards are available")
+    void cannotDeclineHandSelection() {
+        Card selected = new Island();
+        Card remaining = new Island();
+        harness.setLibrary(player1, List.of(selected, remaining));
+        castMaestrosCharm(0);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(selected);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(remaining);
+    }
+
+    @Test
+    @DisplayName("The damage mode can target the controller's own creature")
+    void canDamageOwnCreature() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        castMaestrosCharm(2, harness.getPermanentId(player1, "Grizzly Bears"));
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
     private void castMaestrosCharm(int mode) {
         castMaestrosCharm(mode, null);
     }
