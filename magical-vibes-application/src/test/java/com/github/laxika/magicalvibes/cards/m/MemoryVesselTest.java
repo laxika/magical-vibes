@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.e.EonHub;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MemoryVessel.class, Forest.class, GrizzlyBears.class})
+@CardUsed({MemoryVessel.class, Forest.class, GrizzlyBears.class, EonHub.class})
 class MemoryVesselTest extends BaseCardTest {
 
     @Test
@@ -121,5 +122,105 @@ class MemoryVesselTest extends BaseCardTest {
             library.add(new GrizzlyBears());
         }
         return library;
+    }
+
+    @Test
+    @DisplayName("Exile permission expires even when the next upkeep is skipped")
+    void permissionExpiresWhenNextUpkeepIsSkipped() {
+        Card spell = new GrizzlyBears();
+        harness.setLibrary(player1, libraryWith(spell, new Forest()));
+        harness.setLibrary(player2, libraryWith(new Forest(), new GrizzlyBears()));
+        harness.addToBattlefield(player1, new MemoryVessel());
+        harness.addToBattlefield(player1, new EonHub());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, spell.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.findExiledCard(spell.getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("The source is exiled as a cost and cannot be played using its own permission")
+    void sourceIsExiledBeforeResolutionAndCannotBeReplayed() {
+        Card vessel = new MemoryVessel();
+        Card top = new Forest();
+        harness.setLibrary(player1, List.of(top));
+        harness.setLibrary(player2, List.of());
+        harness.addToBattlefield(player1, vessel);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.findExiledCard(vessel.getId())).isNotNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.findExiledCard(top.getId())).isNotNull();
+        harness.addMana(player1, ManaColor.RED, 5);
+        assertThatThrownBy(() -> harness.castFromExile(player1, vessel.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Exiled lands obey the normal land limit and cannot be played by the opponent")
+    void exiledLandsRespectOwnershipAndLandLimit() {
+        Card land = new Forest();
+        Card secondLand = new Forest();
+        harness.setLibrary(player1, List.of(land, secondLand));
+        harness.setLibrary(player2, List.of());
+        harness.addToBattlefield(player1, new MemoryVessel());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
+        assertThatThrownBy(() -> harness.castFromExile(player2, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.forceActivePlayer(player1);
+        harness.clearPriorityPassed();
+        harness.castFromExile(player1, land.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == land);
+        assertThatThrownBy(() -> harness.castFromExile(player1, secondLand.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Exiled creature spells require mana and normal casting timing")
+    void exilePermissionDoesNotWaiveCostsOrTiming() {
+        Card spell = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(spell));
+        harness.setLibrary(player2, List.of());
+        harness.addToBattlefield(player1, new MemoryVessel());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, spell.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        assertThatThrownBy(() -> harness.castFromExile(player1, spell.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.findExiledCard(spell.getId())).isNotNull();
     }
 }
