@@ -74,6 +74,81 @@ class MinionMissileTest extends BaseCardTest {
                 .hasMessageContaining("creature");
     }
 
+    @Test
+    @DisplayName("Cannot cast without discarding a card or sacrificing a creature")
+    void rejectsMissingAdditionalCost() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareHandAndMana(List.of(new MinionMissile()));
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Minion Missile");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice a noncreature to pay the additional cost")
+    void rejectsNoncreatureSacrifice() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new Forest());
+        prepareHandAndMana(List.of(new MinionMissile()));
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(
+                player1, 0, target.getId(), sacrifice.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Minion Missile");
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's creature to pay the additional cost")
+    void rejectsOpponentsCreatureAsSacrifice() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareHandAndMana(List.of(new MinionMissile()));
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(
+                player1, 0, target.getId(), target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Minion Missile");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Can target its controller's creature and damage that player")
+    void destroysOwnCreatureAndDamagesItsController() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        prepareHandAndMana(List.of(new MinionMissile(), new Forest()));
+
+        harness.castInstantWithDiscard(player1, 0, target.getId(), 1);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Sacrificing the targeted creature pays the cost but leaves no legal target")
+    void sacrificingTargetPreventsDamageOnResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        prepareHandAndMana(List.of(new MinionMissile()));
+
+        harness.castSorceryWithSacrifice(player1, 0, target.getId(), target.getId());
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Minion Missile");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
     private void prepareHandAndMana(List<Card> cards) {
         harness.setHand(player1, cards);
         harness.addMana(player1, ManaColor.BLACK, 1);
