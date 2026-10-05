@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.e.EmberShot;
 import com.github.laxika.magicalvibes.cards.f.FlaringPain;
 import com.github.laxika.magicalvibes.cards.l.LavaDart;
+import com.github.laxika.magicalvibes.cards.m.Malignus;
 import com.github.laxika.magicalvibes.cards.s.SuddenStrength;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -20,16 +21,13 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EmberShot.class, FlaringPain.class, LavaDart.class, PhantomFlock.class, SuddenStrength.class, SuntailHawk.class})
+@CardUsed({EmberShot.class, FlaringPain.class, LavaDart.class, Malignus.class, PhantomFlock.class, SuddenStrength.class, SuntailHawk.class})
 class PhantomFlockTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enters with three +1/+1 counters")
     void entersWithThreeCounters() {
-        harness.setHand(player1, List.of(new PhantomFlock()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PhantomFlock(), "{3}{W}{W}");
         harness.passBothPriorities();
 
         Permanent flock = findPermanent(player1, "Phantom Flock");
@@ -137,8 +135,7 @@ class PhantomFlockTest extends BaseCardTest {
         Permanent firstBlocker = addCreatureReady(player2, new SuntailHawk());
         Permanent secondBlocker = addCreatureReady(player2, new SuntailHawk());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
@@ -154,12 +151,44 @@ class PhantomFlockTest extends BaseCardTest {
         assertThat(flock.getMarkedDamage()).isZero();
     }
 
+    @Test
+    @DisplayName("Unpreventable combat damage from Malignus still removes a counter")
+    void sourceSpecificUnpreventableCombatDamageStillRemovesCounter() {
+        harness.setLife(player2, 2);
+        addCreatureReady(player1, new Malignus());
+        Permanent flock = addCreatureReady(player2, new PhantomFlock());
+        flock.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(flock.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(flock.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Phantom Flock");
+    }
+
+    @Test
+    @DisplayName("Removing the last counter prevents damage but puts the unboosted creature in the graveyard")
+    void removingLastCounterCausesZeroToughnessDeath() {
+        Permanent flock = addCreatureReady(player2, new PhantomFlock());
+        flock.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setHand(player1, List.of(new LavaDart()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, flock.getId());
+
+        assertThat(flock.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(flock.getMarkedDamage()).isZero();
+        harness.assertNotOnBattlefield(player2, "Phantom Flock");
+        harness.assertInGraveyard(player2, "Phantom Flock");
+    }
+
     private void dealEmberShotForJudReview(Permanent target) {
         harness.setHand(player1, List.of(new EmberShot()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 6);
         harness.setLibrary(player1, List.of(new SuntailHawk()));
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }
