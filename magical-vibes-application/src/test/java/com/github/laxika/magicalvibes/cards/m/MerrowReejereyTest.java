@@ -18,7 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MerrowReejerey.class, DeeptreadMerrow.class, HillcomberGiant.class, Island.class})
+@CardUsed({MerrowReejerey.class, DeeptreadMerrow.class, HillcomberGiant.class, Island.class, MerrowCommerce.class})
 class MerrowReejereyTest extends BaseCardTest {
 
     @Test
@@ -65,8 +65,8 @@ class MerrowReejereyTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Casting a Merfolk spell triggers may ability prompt")
-    void merfolkCastTriggersMayPrompt() {
+    @DisplayName("Casting a Merfolk spell requires a target before the optional resolution choice")
+    void merfolkCastRequiresTargetBeforeMayChoice() {
         harness.addToBattlefield(player1, new MerrowReejerey());
         harness.setHand(player1, List.of(new DeeptreadMerrow()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -74,16 +74,15 @@ class MerrowReejereyTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
-                .isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
     }
 
     @Test
     @DisplayName("Accepting taps an untapped target permanent")
     void acceptTapsUntappedTarget() {
         harness.addToBattlefield(player1, new MerrowReejerey());
-        harness.addToBattlefield(player2, new HillcomberGiant());
-        Permanent giant = findPermanent(player2, "Hillcomber Giant");
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillcomberGiant());
         UUID giantId = giant.getId();
         assertThat(giant.isTapped()).isFalse();
 
@@ -92,13 +91,13 @@ class MerrowReejereyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, giantId);
 
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getCard().getName().equals("Merrow Reejerey"));
 
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(giant.isTapped()).isTrue();
     }
@@ -107,8 +106,7 @@ class MerrowReejereyTest extends BaseCardTest {
     @DisplayName("Accepting can tap an untapped noncreature permanent")
     void acceptTapsUntappedNoncreaturePermanent() {
         harness.addToBattlefield(player1, new MerrowReejerey());
-        harness.addToBattlefield(player2, new Island());
-        Permanent island = findPermanent(player2, "Island");
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
         UUID islandId = island.getId();
 
         harness.setHand(player1, List.of(new DeeptreadMerrow()));
@@ -116,9 +114,9 @@ class MerrowReejereyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, islandId);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(island.isTapped()).isTrue();
     }
@@ -127,8 +125,7 @@ class MerrowReejereyTest extends BaseCardTest {
     @DisplayName("Accepting untaps a tapped target permanent")
     void acceptUntapsTappedTarget() {
         harness.addToBattlefield(player1, new MerrowReejerey());
-        harness.addToBattlefield(player1, new HillcomberGiant());
-        Permanent giant = findPermanent(player1, "Hillcomber Giant");
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillcomberGiant());
         UUID giantId = giant.getId();
         giant.tap();
 
@@ -137,9 +134,9 @@ class MerrowReejereyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, giantId);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(giant.isTapped()).isFalse();
     }
@@ -148,14 +145,16 @@ class MerrowReejereyTest extends BaseCardTest {
     @DisplayName("Declining does not tap or untap anything")
     void declineDoesNothing() {
         harness.addToBattlefield(player1, new MerrowReejerey());
-        harness.addToBattlefield(player2, new HillcomberGiant());
-        Permanent giant = findPermanent(player2, "Hillcomber Giant");
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillcomberGiant());
 
         harness.setHand(player1, List.of(new DeeptreadMerrow()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, giant.getId());
+        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
@@ -193,5 +192,75 @@ class MerrowReejereyTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getCard().getName().equals("Merrow Reejerey"));
+    }
+
+    @Test
+    @DisplayName("A noncreature Merfolk spell also triggers the ability")
+    void kindredEnchantmentSpellTriggers() {
+        harness.addToBattlefield(player1, new MerrowReejerey());
+        harness.setHand(player1, List.of(new MerrowCommerce()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castEnchantment(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+        harness.handlePermanentChosen(player1, findPermanent(player1, "Merrow Reejerey").getId());
+        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
+    }
+
+    @Test
+    @DisplayName("The controller can decline after the target becomes tapped in response")
+    void canDeclineAfterTargetChangesBeforeResolution() {
+        harness.addToBattlefield(player1, new MerrowReejerey());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillcomberGiant());
+        harness.setHand(player1, List.of(new DeeptreadMerrow()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, target.getId());
+        target.tap();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Casting Reejerey without another Reejerey on the battlefield does not trigger itself")
+    void doesNotTriggerFromItsOwnCast() {
+        harness.setHand(player1, List.of(new MerrowReejerey()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Merrow Reejerey");
+    }
+
+    @Test
+    @DisplayName("Merrow Commerce is not a creature and does not receive the boost")
+    void doesNotBoostNoncreatureMerfolk() {
+        harness.addToBattlefield(player1, new MerrowReejerey());
+        Permanent commerce = harness.addToBattlefieldAndReturn(player1, new MerrowCommerce());
+
+        assertThat(gqs.getEffectivePower(gd, commerce)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, commerce)).isZero();
+    }
+
+    @Test
+    @DisplayName("Two Reejereys boost each other and their bonuses stack")
+    void multipleReejereysStackTheirBoosts() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new MerrowReejerey());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new MerrowReejerey());
+        Permanent merrow = harness.addToBattlefieldAndReturn(player1, new DeeptreadMerrow());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, merrow)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, merrow)).isEqualTo(3);
     }
 }
