@@ -7,12 +7,61 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({PhyrexianAltar.class, RagingKavu.class})
 class PhyrexianAltarTest extends BaseCardTest {
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    @DisplayName("The sacrificed creature's colors do not restrict the chosen mana color")
+    void canProduceEveryColor(ManaColor color) {
+        harness.addToBattlefield(player1, new PhyrexianAltar());
+        harness.addToBattlefield(player1, new RagingKavu());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Raging Kavu");
+        harness.assertNotOnBattlefield(player1, "Raging Kavu");
+        assertThat(gd.stack).isEmpty();
+        harness.handleListChoice(player1, color.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Phyrexian Altar");
+    }
+
+    @Test
+    @DisplayName("A tapped Altar can activate repeatedly by sacrificing tapped creatures")
+    void tappedAltarCanActivateRepeatedly() {
+        var altar = harness.addToBattlefieldAndReturn(player1, new PhyrexianAltar());
+        altar.setTapped(true);
+        var firstCreature = harness.addToBattlefieldAndReturn(player1, new RagingKavu());
+        firstCreature.setTapped(true);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        var secondCreature = harness.addToBattlefieldAndReturn(player1, new RagingKavu());
+        secondCreature.setTapped(true);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        harness.assertNotOnBattlefield(player1, "Raging Kavu");
+        harness.assertOnBattlefield(player1, "Phyrexian Altar");
+        assertThat(altar.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Sacrificing a creature adds one mana of the chosen color")
