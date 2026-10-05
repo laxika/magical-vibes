@@ -76,4 +76,71 @@ class OonasGraceTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castRetrace(player1, 0, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Casting from hand can target its controller without discarding a land")
+    void castFromHandTargetsControllerWithoutDiscard() {
+        FloodedGrove land = new FloodedGrove();
+        DuskdaleWurm drawnCard = new DuskdaleWurm();
+        harness.setHand(player1, List.of(new OonasGrace(), land));
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land, drawnCard);
+        harness.assertInGraveyard(player1, "Oona's Grace");
+        harness.assertNotInGraveyard(player1, "Flooded Grove");
+    }
+
+    @Test
+    @DisplayName("Oona's Grace can be retraced again after resolving")
+    void canRetraceRepeatedly() {
+        OonasGrace grace = new OonasGrace();
+        FloodedGrove firstLand = new FloodedGrove();
+        FloodedGrove secondLand = new FloodedGrove();
+        DuskdaleWurm firstDraw = new DuskdaleWurm();
+        DuskdaleWurm secondDraw = new DuskdaleWurm();
+        harness.setGraveyard(player1, List.of(grace));
+        harness.setHand(player1, List.of(firstLand, secondLand));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(firstDraw, secondDraw));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castRetrace(player1, 0, 0, player2.getId());
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(secondLand);
+        harness.assertInGraveyard(player1, "Flooded Grove");
+        harness.assertNotInGraveyard(player1, "Oona's Grace");
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+
+        int graceIndex = gd.playerGraveyards.get(player1.getId()).indexOf(grace);
+        harness.castRetrace(player1, graceIndex, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyInAnyOrder(firstDraw, secondDraw);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(firstLand, secondLand, grace);
+    }
+
+    @Test
+    @DisplayName("Retrace still requires the full mana cost and does not discard on a rejected cast")
+    void retraceRequiresFullManaCost() {
+        OonasGrace grace = new OonasGrace();
+        FloodedGrove land = new FloodedGrove();
+        harness.setGraveyard(player1, List.of(grace));
+        harness.setHand(player1, List.of(land));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castRetrace(player1, 0, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(grace);
+        assertThat(gd.stack).isEmpty();
+    }
 }
