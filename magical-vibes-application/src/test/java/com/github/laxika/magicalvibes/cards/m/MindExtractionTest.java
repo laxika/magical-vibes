@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.cards.c.CetaDisciple;
 import com.github.laxika.magicalvibes.cards.d.Dodecapod;
 import com.github.laxika.magicalvibes.cards.e.EbonyTreefolk;
 import com.github.laxika.magicalvibes.cards.g.GladeGnarr;
+import com.github.laxika.magicalvibes.cards.s.ShiftingSky;
 import com.github.laxika.magicalvibes.cards.y.YavimayaCoast;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -19,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({MindExtraction.class, BloodfireDwarf.class, CetaDisciple.class, Dodecapod.class,
-        EbonyTreefolk.class, GladeGnarr.class, MournfulZombie.class, YavimayaCoast.class})
+        EbonyTreefolk.class, GladeGnarr.class, MournfulZombie.class, ShiftingSky.class, YavimayaCoast.class})
 class MindExtractionTest extends BaseCardTest {
 
     @Test
@@ -90,4 +92,65 @@ class MindExtractionTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @CardUsed(ShiftingSky.class)
+    void usesSacrificedCreaturesLastKnownColorsAfterAColorChangingEffect() {
+        Permanent sky = harness.addToBattlefieldAndReturn(player1, new ShiftingSky());
+        sky.setChosenColor(CardColor.BLUE);
+        Permanent sacrificed = addCreatureReady(player1, new EbonyTreefolk());
+        Card blueCard = new CetaDisciple();
+        Card greenCard = new GladeGnarr();
+        Card blackCard = new MournfulZombie();
+        harness.setHand(player1, List.of(new MindExtraction()));
+        harness.setHand(player2, List.of(blueCard, greenCard, blackCard));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorceryWithSacrifice(player1, 0, player2.getId(), sacrificed.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(greenCard, blackCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(blueCard);
+    }
+
+    @Test
+    void resolvesAgainstAnEmptyHandAndPaysSacrificeDuringCasting() {
+        Permanent sacrificed = addCreatureReady(player1, new BloodfireDwarf());
+        Card spell = new MindExtraction();
+        harness.setHand(player1, List.of(spell));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorceryWithSacrifice(player1, 0, player2.getId(), sacrificed.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sacrificed);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(sacrificed.getCard());
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(sacrificed.getCard(), spell);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotSacrificeAnOpponentsCreature() {
+        Permanent opponentsCreature = addCreatureReady(player2, new BloodfireDwarf());
+        Card spell = new MindExtraction();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, player2.getId(), opponentsCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentsCreature);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(spell);
+        assertThat(gd.stack).isEmpty();
+    }
+
 }
