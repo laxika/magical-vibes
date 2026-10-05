@@ -12,9 +12,36 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Machinate.class, DarksteelCitadel.class, CrazedGoblin.class})
 class MachinateTest extends BaseCardTest {
+
+    @Test
+    void mustChooseExactlyOneCardAndCanChooseANonartifact() {
+        harness.addToBattlefield(player1, new DarksteelCitadel());
+        harness.addToBattlefield(player1, new DarksteelCitadel());
+
+        Card bottomed = new DarksteelCitadel();
+        Card chosen = new CrazedGoblin();
+        Card untouched = new DarksteelCitadel();
+        harness.setLibrary(player1, List.of(bottomed, chosen, untouched));
+
+        harness.castFromHand(player1, new Machinate(), "{1}{U}{U}");
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(bottomed.getId(), chosen.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched, bottomed);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 
     @Test
     void looksAtAsManyCardsAsArtifactsYouControl() {
