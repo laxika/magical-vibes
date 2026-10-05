@@ -6,9 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -100,13 +98,72 @@ class LightningBlowTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        gd.activePlayerId = player2.getId();
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        advanceToUpkeep(player2);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An illegal creature target prevents the spell from scheduling a draw")
+    void illegalTargetPreventsDelayedDraw() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        harness.setHand(player1, List.of(new LightningBlow()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Lightning Blow");
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        advanceToUpkeep(player2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    @DisplayName("The delayed draw still happens if the creature leaves after the spell resolves")
+    void creatureLeavingAfterResolutionDoesNotPreventDraw() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        harness.setHand(player1, List.of(new LightningBlow()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.setGraveyard(player2, List.of(target.getCard()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An upkeep in the same turn does not draw, and the next turn draws only once")
+    void delayedDrawWaitsForNextTurnAndTriggersOnlyOnce() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        harness.setHand(player1, List.of(new LightningBlow()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToUpkeep(player1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+
+        gd.turnNumber++;
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+
+        gd.turnNumber++;
+        advanceToUpkeep(player2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
 }
