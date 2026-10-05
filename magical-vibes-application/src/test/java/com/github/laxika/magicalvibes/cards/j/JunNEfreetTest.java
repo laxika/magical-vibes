@@ -65,4 +65,34 @@ class JunNEfreetTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Junún Efreet");
     }
+
+    @Test
+    void canDeclinePaymentEvenWithEnoughBlackMana() {
+        harness.addToBattlefield(player1, new JunNEfreet());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Junún Efreet");
+        harness.assertInGraveyard(player1, "Junún Efreet");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
+    }
+
+    @Test
+    void otherColorsCannotPayTheUpkeepCost() {
+        harness.addToBattlefield(player1, new JunNEfreet());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Junún Efreet");
+        harness.assertInGraveyard(player1, "Junún Efreet");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+    }
 }
