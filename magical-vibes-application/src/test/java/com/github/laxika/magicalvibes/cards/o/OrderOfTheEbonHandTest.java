@@ -92,12 +92,51 @@ class OrderOfTheEbonHandTest extends BaseCardTest {
         addCreatureReady(player1, new IcatianPriest());
         addCreatureReady(player2, new OrderOfTheEbonHand());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Order of the Ebon Hand");
         harness.assertInGraveyard(player1, "Icatian Priest");
+    }
+
+    @Test
+    @DisplayName("Repeated power boosts stack and affect only their source")
+    void repeatedPowerBoostsAffectOnlySource() {
+        Permanent order = addCreatureReady(player1, new OrderOfTheEbonHand());
+        Permanent other = addCreatureReady(player1, new OrderOfTheEbonHand());
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, order)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, order)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, order)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("First strike kills a black blocker before it can deal damage")
+    void firstStrikeKillsBlockerBeforeNormalDamage() {
+        addCreatureReady(player1, new OrderOfTheEbonHand());
+        addCreatureReady(player2, new OrderOfTheEbonHand());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Order of the Ebon Hand");
+        harness.assertInGraveyard(player2, "Order of the Ebon Hand");
     }
 }
