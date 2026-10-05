@@ -77,6 +77,72 @@ class MountKeraliaTest extends BaseCardTest {
         assertThat(opponentPlaneswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
     }
 
+    @Test
+    void pressureAccumulatesAtEachPlayersEndStep() {
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
+                .handleEndStepTriggers(gd));
+        harness.passBothPriorities();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
+                .handleEndStepTriggers(gd));
+        harness.passBothPriorities();
+
+        assertThat(source.getCounters()).containsEntry(CounterType.PRESSURE, 2);
+    }
+
+    @Test
+    void noPressureCountersMeansNoDamage() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+
+        planeswalkAway();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(creature.getMarkedDamage()).isZero();
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+    }
+
+    @Test
+    void departureUsesOldCountersAndDoesNotDamagePlayers() {
+        source.getCounters().put(CounterType.PRESSURE, 1);
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        int ownLife = gd.playerLifeTotals.get(player1.getId());
+        int opponentLife = gd.playerLifeTotals.get(player2.getId());
+
+        planeswalkAway();
+
+        assertThat(ownCreature.getMarkedDamage()).isEqualTo(1);
+        assertThat(opponentCreature.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.planechase.faceUp.getFirst().getCounters()).isEmpty();
+        harness.assertLife(player1, ownLife);
+        harness.assertLife(player2, opponentLife);
+    }
+
+    @Test
+    void chaosProtectionPersistsForNewPermanentsOnLaterVisitsUnderAnotherController() {
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+        planeswalkAway();
+
+        PlanarObject revisitedPlane = gd.planechase.faceUp.getFirst();
+        revisitedPlane.getCounters().put(CounterType.PRESSURE, 2);
+        Permanent protectedCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+
+        planeswalkAway();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(protectedCreature);
+        assertThat(protectedCreature.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opponentCreature);
+    }
+
     private void planeswalkAway() {
         harness.inMutationScope(() -> planar.planeswalk(gd));
         harness.passBothPriorities();
