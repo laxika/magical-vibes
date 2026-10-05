@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -53,8 +52,9 @@ class JeskasWillTest extends BaseCardTest {
 
     @Test
     void commanderAllowsBothModes() {
-        gd.playerCommandZones.get(player1.getId()).add(new EdgarMarkov());
-        addCreatureReady(player1, new EdgarMarkov());
+        Card commander = new EdgarMarkov();
+        gd.playerCommanders.put(player1.getId(), List.of(commander));
+        harness.addToBattlefield(player1, commander);
         harness.setHand(player1, List.of(new JeskasWill()));
         harness.setHand(player2, List.of(new Shock(), new Forest()));
         harness.setLibrary(player1, List.of(new Shock(), new Forest(), new GrizzlyBears()));
@@ -87,6 +87,81 @@ class JeskasWillTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castModalSorceryWithModes(player1, 0, 1, 2,
                 new int[]{0}, List.of(player1.getId()), null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void usesOpponentsHandSizeAtResolution() {
+        harness.setHand(player1, List.of(new JeskasWill()));
+        harness.setHand(player2, List.of(new Shock(), new Forest(), new GrizzlyBears()));
+        addMana();
+
+        harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{0},
+                List.of(player2.getId()), null);
+        harness.setHand(player2, List.of(new Forest()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    void emptyOpponentHandAddsNoMana() {
+        harness.setHand(player1, List.of(new JeskasWill()));
+        harness.setHand(player2, List.of());
+        addMana();
+
+        harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{0},
+                List.of(player2.getId()), null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    void exilesAllAvailableCardsFromAShortLibrary() {
+        Card card = new Forest();
+        harness.setHand(player1, List.of(new JeskasWill()));
+        harness.setLibrary(player1, List.of(card));
+        addMana();
+
+        harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{1}, List.of(), null);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(card);
+        assertThat(gd.exilePlayPermissions).containsEntry(card.getId(), player1.getId());
+    }
+
+    @Test
+    void commanderInCommandZoneDoesNotAllowBothModes() {
+        Card commander = new EdgarMarkov();
+        gd.playerCommanders.put(player1.getId(), List.of(commander));
+        gd.playerCommandZones.get(player1.getId()).add(commander);
+        harness.setHand(player1, List.of(new JeskasWill()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castModalSorceryWithModes(player1, 0, 1, 2,
+                new int[]{0, 1}, List.of(player2.getId()), null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void bothModesStillResolveAfterCommanderLeavesBattlefield() {
+        Card commander = new EdgarMarkov();
+        gd.playerCommanders.put(player1.getId(), List.of(commander));
+        harness.addToBattlefield(player1, commander);
+        harness.setHand(player1, List.of(new JeskasWill()));
+        harness.setHand(player2, List.of(new Forest()));
+        Card exiled = new Forest();
+        harness.setLibrary(player1, List.of(exiled));
+        addMana();
+
+        harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{0, 1},
+                List.of(player2.getId()), null);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        gd.playerCommandZones.get(player1.getId()).add(commander);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(exiled);
     }
 
     private void addMana() {
