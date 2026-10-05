@@ -123,11 +123,73 @@ class InvisibleForceFieldTest extends BaseCardTest {
         assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
     }
 
+    @Test
+    void cannotChooseTheSamePermanentTwice() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        prepareCast();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(bear.getId(), bear.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void resolvesForRemainingLegalTargetsWhenOneLeavesTheBattlefield() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        prepareCast();
+        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        harness.setGraveyard(player1, List.of(first.getCard()));
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, second, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gd.exiledCards)
+                .anyMatch(entry -> entry.card().getName().equals("Invisible Force Field"));
+        assertThat(gd.delayedActions).anyMatch(action -> action instanceof ReboundAtNextUpkeep);
+    }
+
+    @Test
+    void doesNotReboundWhenAllTargetsLeaveTheBattlefield() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        prepareCast();
+        harness.castInstant(player1, 0, bear.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(bear);
+        harness.setGraveyard(player1, List.of(bear.getCard()));
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Invisible Force Field");
+        assertThat(gd.exiledCards)
+                .noneMatch(entry -> entry.card().getName().equals("Invisible Force Field"));
+        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+    }
+
+    @Test
+    void decliningReboundLeavesTheCardExiledWithoutAnotherOpportunity() {
+        InvisibleForceField card = new InvisibleForceField();
+        harness.setHand(player1, List.of(card));
+        prepareMana();
+        harness.castAndResolveInstant(player1, 0, List.of());
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        harness.assertNotInGraveyard(player1, "Invisible Force Field");
+        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+    }
+
     private void cast(List<UUID> targetIds) {
         harness.setHand(player1, List.of(new InvisibleForceField()));
         prepareMana();
-        harness.castInstant(player1, 0, targetIds);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetIds);
     }
 
     private void prepareCast() {
