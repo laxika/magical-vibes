@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MentalMisstep.class, GrizzlyBears.class, LlanowarElves.class, Shock.class})
 class MentalMisstepTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Can target a creature spell with mana value 1")
@@ -85,8 +85,6 @@ class MentalMisstepTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Resolving =====
-
     @Test
     @DisplayName("Resolving counters a mana value 1 creature spell")
     void countersManaValue1CreatureSpell() {
@@ -99,8 +97,7 @@ class MentalMisstepTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, elves.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, elves.getId());
 
         harness.assertInGraveyard(player1, "Llanowar Elves");
         harness.assertNotOnBattlefield(player1, "Llanowar Elves");
@@ -118,15 +115,12 @@ class MentalMisstepTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, elves.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, elves.getId());
 
         GameData gd = harness.getGameData();
         harness.assertInGraveyard(player2, "Mental Misstep");
         assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Phyrexian mana =====
 
     @Test
     @DisplayName("Can be cast by paying 2 life instead of blue mana")
@@ -136,21 +130,17 @@ class MentalMisstepTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.setHand(player2, List.of(new MentalMisstep()));
-        // No blue mana — will pay with life
+        // No blue mana; pay with life.
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, elves.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, elves.getId());
 
-        GameData gd = harness.getGameData();
         // Countered spell goes to graveyard
         harness.assertInGraveyard(player1, "Llanowar Elves");
         // Player 2 paid 2 life
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
     }
-
-    // ===== Fizzle =====
 
     @Test
     @DisplayName("Fizzles if target spell is no longer on the stack")
@@ -173,5 +163,48 @@ class MentalMisstepTest extends BaseCardTest {
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         harness.assertInGraveyard(player2, "Mental Misstep");
+    }
+
+    @Test
+    @DisplayName("A Mental Misstep paid for with life still has mana value one")
+    void countersMentalMisstepPaidWithLife() {
+        LlanowarElves elves = new LlanowarElves();
+        harness.setHand(player1, List.of(elves, new MentalMisstep()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player2, List.of(new MentalMisstep()));
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, elves.getId());
+        var opposingMisstepId = harness.getGameData().stack.getLast().getCard().getId();
+        harness.passPriority(player2);
+        harness.castAndResolveInstant(player1, 0, opposingMisstepId);
+
+        harness.assertInGraveyard(player1, "Mental Misstep");
+        harness.assertInGraveyard(player2, "Mental Misstep");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+        assertThat(harness.getGameData().stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("Cannot pay the Phyrexian cost with only one life and no blue mana")
+    void cannotPayPhyrexianCostWithInsufficientLife() {
+        LlanowarElves elves = new LlanowarElves();
+        harness.setHand(player1, List.of(elves));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player2, List.of(new MentalMisstep()));
+        harness.setLife(player2, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, elves.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player2, 1);
+        harness.assertInHand(player2, "Mental Misstep");
+        assertThat(harness.getGameData().stack).hasSize(1);
     }
 }
