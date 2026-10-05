@@ -28,9 +28,8 @@ class KrosanWayfarerTest extends BaseCardTest {
 
     @Test
     void sacrificeAbilityCanBeActivatedWhileSummoningSick() {
-        Permanent wayfarer = new Permanent(new KrosanWayfarer());
+        Permanent wayfarer = harness.addToBattlefieldAndReturn(player1, new KrosanWayfarer());
         wayfarer.setSummoningSick(true);
-        gd.playerBattlefields.get(player1.getId()).add(wayfarer);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -56,10 +55,7 @@ class KrosanWayfarerTest extends BaseCardTest {
         assertThat(choice.validIndices()).containsExactly(0);
         harness.handleCardChosen(player1, 0);
 
-        Permanent battlefieldLand = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() == land)
-                .findFirst()
-                .orElseThrow();
+        Permanent battlefieldLand = findPermanent(player1, "Nantuko Monastery");
         assertThat(battlefieldLand.isTapped()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
     }
@@ -91,5 +87,51 @@ class KrosanWayfarerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(nonlandCard);
         harness.assertInGraveyard(player1, "Krosan Wayfarer");
+    }
+
+    @Test
+    void choosingOneOfMultipleLandsDoesNotUseALandPlay() {
+        addCreatureReady(player1, new KrosanWayfarer());
+        NantukoMonastery firstLand = new NantukoMonastery();
+        NantukoMonastery secondLand = new NantukoMonastery();
+        harness.setHand(player1, List.of(firstLand, secondLand));
+        gd.landsPlayedThisTurn.put(player1.getId(), 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstLand);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard).containsExactly(secondLand);
+        assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tappedWayfarerPutsLandFromItsControllersHand() {
+        Permanent wayfarer = harness.addToBattlefieldAndReturn(player2, new KrosanWayfarer());
+        wayfarer.setTapped(true);
+        NantukoMonastery controllerLand = new NantukoMonastery();
+        NantukoMonastery opponentLand = new NantukoMonastery();
+        harness.setHand(player2, List.of(controllerLand));
+        harness.setHand(player1, List.of(opponentLand));
+        harness.ensurePriority(player2);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertInGraveyard(player2, "Krosan Wayfarer");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(opponentLand);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(Permanent::getCard).containsExactly(controllerLand);
+        harness.assertNotOnBattlefield(player1, "Nantuko Monastery");
     }
 }
