@@ -94,4 +94,35 @@ class LesserGargadonTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Giant Spider");
         harness.assertOnBattlefield(player2, "Mountain");
     }
+    @Test
+    @DisplayName("Blocking without lands is legal and does not sacrifice another permanent")
+    void blockingWithoutLandsIsHarmless() {
+        addCreatureReady(player1, new GiantSpider());
+        addCreatureReady(player2, new LesserGargadon());
+        harness.addToBattlefield(player1, new Mountain());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Lesser Gargadon");
+        harness.assertOnBattlefield(player1, "Mountain");
+        harness.assertNotInGraveyard(player2, "Lesser Gargadon");
+    }
+
+    @Test
+    @DisplayName("Two attacking Gargadons each trigger even when only one land is available")
+    void twoAttackersWithOneLand() {
+        addCreatureReady(player1, new LesserGargadon());
+        addCreatureReady(player1, new LesserGargadon());
+        harness.addToBattlefield(player1, new Mountain());
+
+        declareAttackers(player1, List.of(0, 1));
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Mountain");
+        harness.assertInGraveyard(player1, "Mountain");
+        assertThat(countPermanents(player1, "Lesser Gargadon")).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
 }
