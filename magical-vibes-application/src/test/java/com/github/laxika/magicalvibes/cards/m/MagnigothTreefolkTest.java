@@ -99,6 +99,56 @@ class MagnigothTreefolkTest extends BaseCardTest {
                 .hasMessageContaining("can't be blocked");
     }
 
+    @Test
+    @DisplayName("Can be blocked when the defender's land types do not match")
+    void mismatchedLandTypesAllowBlocking() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Island());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent treefolk = addAttacker(player1);
+
+        prepareDeclareBlockers();
+        declareBlocker(blocker, treefolk);
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Loses forestwalk when its controller's last Forest leaves")
+    void losingLastLandOfTypeAllowsBlocking() {
+        harness.addToBattlefield(player1, new Forest());
+        Permanent forest = findPermanent(player1, "Forest");
+        harness.addToBattlefield(player2, new Forest());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent treefolk = addAttacker(player1);
+
+        prepareDeclareBlockers();
+        assertThatThrownBy(() -> declareBlocker(blocker, treefolk))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+
+        gd.playerBattlefields.get(player1.getId()).remove(forest);
+        declareBlocker(blocker, treefolk);
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Any one matching land type prevents blocking when multiple types are controlled")
+    void oneOfMultipleLandTypesIsEnough() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player2, new Island());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent treefolk = addAttacker(player1);
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> declareBlocker(blocker, treefolk))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
     private Permanent addAttacker(Player player) {
         Permanent treefolk = addCreatureReady(player, new MagnigothTreefolk());
         treefolk.setAttacking(true);
