@@ -70,7 +70,6 @@ class MightOfTheNephilimTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, charger)).isEqualTo(basePower + 2);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, charger)).isEqualTo(basePower);
@@ -88,6 +87,39 @@ class MightOfTheNephilimTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, signet.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Can boost an opponent's creature based on that creature's colors")
+    void boostsOpponentsCreature() {
+        Permanent guildmage = harness.addToBattlefieldAndReturn(player2, new SimicGuildmage());
+        int basePower = gqs.getEffectivePower(gd, guildmage);
+        int baseToughness = gqs.getEffectiveToughness(gd, guildmage);
+
+        castMight(guildmage);
+
+        assertThat(gqs.getEffectivePower(gd, guildmage)).isEqualTo(basePower + 4);
+        assertThat(gqs.getEffectiveToughness(gd, guildmage)).isEqualTo(baseToughness + 4);
+    }
+
+    @Test
+    @DisplayName("Multiple copies give cumulative boosts until end of turn")
+    void multipleBoostsAccumulateAndExpire() {
+        Permanent guildmage = harness.addToBattlefieldAndReturn(player1, new SimicGuildmage());
+        int basePower = gqs.getEffectivePower(gd, guildmage);
+        int baseToughness = gqs.getEffectiveToughness(gd, guildmage);
+
+        castMight(guildmage);
+        castMight(guildmage);
+
+        assertThat(gqs.getEffectivePower(gd, guildmage)).isEqualTo(basePower + 8);
+        assertThat(gqs.getEffectiveToughness(gd, guildmage)).isEqualTo(baseToughness + 8);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, guildmage)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, guildmage)).isEqualTo(baseToughness);
     }
 
     private void castMight(Permanent creature) {
