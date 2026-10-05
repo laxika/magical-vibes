@@ -40,7 +40,7 @@ class PriceOfGloryTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Cabal Pit");
         harness.assertInGraveyard(player2, "Cabal Pit");
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isEqualTo(1);
-        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -65,5 +65,57 @@ class PriceOfGloryTest extends BaseCardTest {
         harness.tapPermanent(player1, 1);
 
         harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Mana is available and the land survives until the destruction trigger resolves")
+    void destructionWaitsForTriggerResolution() {
+        harness.addToBattlefield(player1, new PriceOfGlory());
+        harness.addToBattlefield(player2, new Forest());
+
+        harness.tapPermanent(player2, 0);
+
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertNotInGraveyard(player2, "Forest");
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Destroys the enchantment controller's land tapped during the opponent's turn")
+    void destroysYourLandDuringOpponentsTurn() {
+        harness.addToBattlefield(player1, new PriceOfGlory());
+        harness.addToBattlefield(player1, new Forest());
+        harness.forceActivePlayer(player2);
+
+        harness.tapPermanent(player1, 1);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Each land tapped off turn is destroyed while an untapped land survives")
+    void destroysOnlyTheLandsTappedForMana() {
+        harness.addToBattlefield(player1, new PriceOfGlory());
+        var firstLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+        var secondLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+        var untappedLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        harness.tapPermanent(player2, 0);
+        harness.tapPermanent(player2, 1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .containsExactly(untappedLand)
+                .doesNotContain(firstLand, secondLand);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(2);
     }
 }
