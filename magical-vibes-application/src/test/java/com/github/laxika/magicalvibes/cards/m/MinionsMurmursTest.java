@@ -61,4 +61,21 @@ class MinionsMurmursTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
+
+    @Test
+    @DisplayName("Counts creatures at resolution rather than when cast")
+    void countsCreaturesAtResolution() {
+        harness.addToBattlefield(player1, new BlindPhantasm());
+        harness.setLibrary(player1, List.of(new BlindPhantasm(), new BlindPhantasm(), new BlindPhantasm()));
+        harness.setLife(player1, 20);
+        harness.castFromHand(player1, new MinionsMurmurs(), "{2}{B}{B}");
+
+        harness.addToBattlefield(player1, new BlindPhantasm());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
 }
