@@ -71,4 +71,41 @@ class PyreChargerTest extends BaseCardTest {
 
         assertThat(charger.getPowerModifier()).isEqualTo(0);
     }
+
+    @Test
+    @DisplayName("Queued activations resolve separately and boost only their source")
+    void queuedPumpsOnlyBoostTheirSource() {
+        Permanent charger = harness.addToBattlefieldAndReturn(player1, new PyreCharger());
+        Permanent otherCharger = harness.addToBattlefieldAndReturn(player1, new PyreCharger());
+        Permanent opposingCharger = harness.addToBattlefieldAndReturn(player2, new PyreCharger());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(charger.getPowerModifier()).isZero();
+        harness.passBothPriorities();
+        assertThat(charger.getPowerModifier()).isEqualTo(1);
+        harness.passBothPriorities();
+
+        assertThat(charger.getPowerModifier()).isEqualTo(2);
+        assertThat(charger.getToughnessModifier()).isZero();
+        assertThat(otherCharger.getPowerModifier()).isZero();
+        assertThat(opposingCharger.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped Pyre Charger can activate its pump without untapping")
+    void tappedChargerCanPump() {
+        Permanent charger = harness.addToBattlefieldAndReturn(player1, new PyreCharger());
+        charger.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(charger.getPowerModifier()).isEqualTo(1);
+        assertThat(charger.getToughnessModifier()).isZero();
+        assertThat(charger.isTapped()).isTrue();
+    }
 }
