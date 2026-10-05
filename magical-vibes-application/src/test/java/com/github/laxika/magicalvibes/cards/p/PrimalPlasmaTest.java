@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.e.EssenceWarden;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(PrimalPlasma.class)
+@CardUsed({PrimalPlasma.class, EssenceWarden.class})
 class PrimalPlasmaTest extends BaseCardTest {
 
     private Permanent castAndChoose(String choice) {
@@ -60,5 +61,37 @@ class PrimalPlasmaTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, plasma)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, plasma, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, plasma, Keyword.DEFENDER)).isTrue();
+    }
+
+    @Test
+    void enteringTriggersEssenceWardenAfterChoosingForm() {
+        harness.addToBattlefield(player1, new EssenceWarden());
+        harness.setLife(player1, 20);
+
+        castAndChoose("2/2 with flying");
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    void defenderFormCannotAttackAfterSummoningSicknessEnds() {
+        Permanent plasma = castAndChoose("1/6 with defender");
+        plasma.setSummoningSick(false);
+
+        assertThat(als.canAttack(gd, plasma, player1.getId())).isFalse();
+    }
+
+    @Test
+    void chosenFormSurvivesUntappingOnALaterTurn() {
+        Permanent plasma = castAndChoose("2/2 with flying");
+
+        advanceToUpkeep(player2);
+        advanceToUpkeep(player1);
+
+        assertThat(gqs.getEffectivePower(gd, plasma)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, plasma)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, plasma, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, plasma, Keyword.DEFENDER)).isFalse();
     }
 }
