@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -58,8 +59,7 @@ class MirkwoodMeditatorTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(meditator.getEffectivePower()).isEqualTo(2);
         assertThat(meditator.getEffectiveToughness()).isEqualTo(4);
@@ -78,5 +78,28 @@ class MirkwoodMeditatorTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(meditator.getEffectivePower()).isEqualTo(2);
         assertThat(meditator.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Landfall changes base stats while retaining counters")
+    void landfallRetainsPowerAndToughnessCounters() {
+        Permanent meditator = harness.addToBattlefieldAndReturn(player1, new MirkwoodMeditator());
+        meditator.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.getEffectivePower(gd, meditator)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, meditator)).isEqualTo(4);
+        assertThat(meditator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, meditator)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, meditator)).isEqualTo(6);
+        assertThat(meditator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 }
