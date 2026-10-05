@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -16,6 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RageExtractor.class, GrizzlyBears.class, SuntailHawk.class})
 class RageExtractorTest extends BaseCardTest {
 
     @Test
@@ -57,8 +61,7 @@ class RageExtractorTest extends BaseCardTest {
     @DisplayName("Deals damage equal to spell's mana value to target creature")
     void dealsDamageEqualToManaValueToCreature() {
         harness.addToBattlefield(player1, new RageExtractor());
-        harness.addToBattlefield(player2, new SuntailHawk());
-        UUID hawkId = harness.getPermanentId(player2, "Suntail Hawk");
+        UUID hawkId = harness.addToBattlefieldAndReturn(player2, new SuntailHawk()).getId();
         harness.setHand(player1, List.of(new RageExtractor()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -111,5 +114,59 @@ class RageExtractorTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
+    }
+
+    @Test
+    @DisplayName("Paying life for Phyrexian mana does not reduce the triggered damage")
+    void payingLifeStillDealsFullManaValue() {
+        harness.addToBattlefield(player1, new RageExtractor());
+        harness.setHand(player1, List.of(new RageExtractor()));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castArtifact(player1, 0);
+        harness.assertLife(player1, 18);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 15);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
+    }
+
+    @Test
+    @DisplayName("Rage Extractor does not trigger for its own cast before entering the battlefield")
+    void doesNotTriggerForItsOwnCast() {
+        harness.setHand(player1, List.of(new RageExtractor()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castArtifact(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Rage Extractor");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Triggered damage uses lifelink gained by Rage Extractor")
+    void triggeredDamageUsesSourceLifelink() {
+        Permanent extractor = harness.addToBattlefieldAndReturn(player1, new RageExtractor());
+        extractor.setCounterCount(CounterType.LIFELINK, 1);
+        harness.setHand(player1, List.of(new RageExtractor()));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castArtifact(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 15);
+        harness.assertLife(player1, 25);
     }
 }
