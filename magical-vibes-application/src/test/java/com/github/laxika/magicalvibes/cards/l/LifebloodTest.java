@@ -72,4 +72,54 @@ class LifebloodTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 
+    @Test
+    @DisplayName("Two opponent Mountains each produce a life-gain trigger")
+    void multipleMountainsTriggerIndependently() {
+        harness.addToBattlefield(player1, new Lifeblood());
+        harness.addToBattlefield(player2, new Mountain());
+        harness.addToBattlefield(player2, new Mountain());
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.tapPermanent(player2, 0);
+        harness.tapPermanent(player2, 1);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, lifeBefore + 2);
+        harness.assertLife(player2, opponentLifeBefore);
+    }
+
+    @Test
+    @DisplayName("Each Lifeblood triggers for the same opponent Mountain")
+    void multipleLifebloodsTriggerIndependently() {
+        harness.addToBattlefield(player1, new Lifeblood());
+        harness.addToBattlefield(player1, new Lifeblood());
+        harness.addToBattlefield(player2, new Mountain());
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.tapPermanent(player2, 0);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, lifeBefore + 2);
+    }
+
+    @Test
+    @DisplayName("A pending trigger still gains life after Lifeblood leaves the battlefield")
+    void triggerResolvesWithoutSource() {
+        Permanent lifeblood = harness.addToBattlefieldAndReturn(player1, new Lifeblood());
+        harness.addToBattlefield(player2, new Mountain());
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.tapPermanent(player2, 0);
+        assertThat(gd.stack.size() + gd.pendingManaAbilityTriggers.size()).isEqualTo(1);
+        gd.playerBattlefields.get(player1.getId()).remove(lifeblood);
+        gd.playerGraveyards.get(player1.getId()).add(lifeblood.getCard());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, lifeBefore + 1);
+    }
+
 }
