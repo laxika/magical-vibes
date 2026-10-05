@@ -3,14 +3,13 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredMountain;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredPlains;
-import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.cards.s.SulfurousSprings;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
-import com.github.laxika.magicalvibes.testutil.TestCards;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +18,8 @@ import java.util.EnumSet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KjeldoranGuard.class, BalduvianBears.class, SnowCoveredPlains.class, SnowCoveredMountain.class})
+@CardUsed({KjeldoranGuard.class, BalduvianBears.class, SnowCoveredPlains.class, SnowCoveredMountain.class,
+        SulfurousSprings.class})
 class KjeldoranGuardTest extends BaseCardTest {
 
     private Permanent addGuardReady() {
@@ -39,10 +39,7 @@ class KjeldoranGuardTest extends BaseCardTest {
     }
 
     private Permanent nonSnowLandOnDefender() {
-        Permanent land = new Permanent(new SnowCoveredPlains());
-        TestCards.mutableCard(land).setSupertypes(EnumSet.of(CardSupertype.BASIC));
-        gd.playerBattlefields.get(player2.getId()).add(land);
-        return land;
+        return harness.addToBattlefieldAndReturn(player2, new SulfurousSprings());
     }
 
     private void enterOpponentCombat() {
@@ -237,6 +234,80 @@ class KjeldoranGuardTest extends BaseCardTest {
 
         Permanent after = gqs.findPermanentById(gd, target.getId());
         assertThat(gqs.getEffectivePower(gd, after)).isEqualTo(basePower + 1);
+    }
+
+    @Test
+    void boostExpiresAtEndOfTurn() {
+        Permanent guard = addGuardReady();
+        Permanent target = addCreatureReady(player1, new BalduvianBears());
+        int basePower = gqs.getEffectivePower(gd, target);
+        int baseToughness = gqs.getEffectiveToughness(gd, target);
+
+        enterCombat();
+        harness.activateAbility(player1, indexOf(guard), 0, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower + 1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(baseToughness + 1);
+
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TurnCleanupService.class)
+                .applyCleanupResets(gd));
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(baseToughness);
+    }
+
+    @Test
+    void targetLeavingBeforeResolutionDoesNotRegisterSacrifice() {
+        Permanent guard = addGuardReady();
+        Permanent target = addCreatureReady(player1, new BalduvianBears());
+
+        enterCombat();
+        harness.activateAbility(player1, indexOf(guard), 0, null, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, target));
+        harness.passBothPriorities();
+
+        Permanent returned = harness.addToBattlefieldAndReturn(player1, target.getCard());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, returned));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Kjeldoran Guard");
+        harness.assertNotInGraveyard(player1, "Kjeldoran Guard");
+    }
+
+    @Test
+    void snowLandEnteringAfterActivationDoesNotPreventResolution() {
+        Permanent guard = addGuardReady();
+        Permanent target = addCreatureReady(player1, new BalduvianBears());
+        int basePower = gqs.getEffectivePower(gd, target);
+        int baseToughness = gqs.getEffectiveToughness(gd, target);
+
+        enterCombat();
+        harness.activateAbility(player1, indexOf(guard), 0, null, target.getId());
+        snowLandOnDefender();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower + 1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(baseToughness + 1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, target));
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Kjeldoran Guard");
+    }
+
+    @Test
+    void returnedGuardIsNotSacrificedByItsOldDelayedTrigger() {
+        Permanent guard = addGuardReady();
+        Permanent target = addCreatureReady(player1, new BalduvianBears());
+
+        enterCombat();
+        harness.activateAbility(player1, indexOf(guard), 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, guard));
+        Permanent returned = harness.addToBattlefieldAndReturn(player1, guard.getCard());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, target));
+        harness.passBothPriorities();
+
+        assertThat(gqs.findPermanentById(gd, returned.getId())).isSameAs(returned);
+        harness.assertNotInGraveyard(player1, "Kjeldoran Guard");
     }
 
     private int indexOf(Permanent perm) {
