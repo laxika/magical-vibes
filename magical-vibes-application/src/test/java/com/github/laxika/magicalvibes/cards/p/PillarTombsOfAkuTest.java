@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.w.Warthog;
 import com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity;
+import com.github.laxika.magicalvibes.cards.e.EmeraldCharm;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,10 +12,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PillarTombsOfAku.class, Warthog.class, LeylineOfSanctity.class})
+@CardUsed({PillarTombsOfAku.class, Warthog.class, LeylineOfSanctity.class, EmeraldCharm.class})
 class PillarTombsOfAkuTest extends BaseCardTest {
 
     @Test
@@ -116,15 +119,52 @@ class PillarTombsOfAkuTest extends BaseCardTest {
     @DisplayName("Opponent accepts on their upkeep: opponent sacrifices a creature, Pillar Tombs survives")
     void opponentAcceptsSacrificesTheirCreature() {
         harness.addToBattlefield(player1, new PillarTombsOfAku());
-        Permanent warthog = harness.addToBattlefieldAndReturn(player2, new Warthog());
+        harness.addToBattlefield(player2, new Warthog());
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
 
-        assertThat(gd.playerBattlefields.get(player2.getId()).stream()
-                .noneMatch(p -> p.getId().equals(warthog.getId()))).isTrue();
+        harness.assertNotOnBattlefield(player2, "Warthog");
         harness.assertOnBattlefield(player1, "Pillar Tombs of Aku");
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Removing Pillar Tombs in response does not prevent the upkeep life loss")
+    void sourceRemovedBeforeResolutionStillLosesLife() {
+        Permanent tombs = harness.addToBattlefieldAndReturn(player1, new PillarTombsOfAku());
+        harness.setHand(player2, List.of(new EmeraldCharm()));
+
+        advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.castModalInstant(player2, 0, 1, List.of(tombs.getId()));
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Pillar Tombs of Aku");
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 15);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("After Pillar Tombs is removed, sacrificing a creature still avoids the penalty")
+    void sourceRemovedBeforeResolutionCanStillSacrifice() {
+        Permanent tombs = harness.addToBattlefieldAndReturn(player1, new PillarTombsOfAku());
+        harness.addToBattlefield(player2, new Warthog());
+        harness.setHand(player2, List.of(new EmeraldCharm()));
+
+        advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.castModalInstant(player2, 0, 1, List.of(tombs.getId()));
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Pillar Tombs of Aku");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertInGraveyard(player2, "Warthog");
+        harness.assertNotOnBattlefield(player2, "Warthog");
         harness.assertLife(player2, 20);
         harness.assertLife(player1, 20);
     }
