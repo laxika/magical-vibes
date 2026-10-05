@@ -56,10 +56,7 @@ class LibertyPrimeRechargedTest extends BaseCardTest {
         gd.playerEnergyCounters.put(player1.getId(), 2);
 
         attacker.setAttacking(true);
-        harness.forceActivePlayer(player2);
-        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player2);
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
 
         harness.passBothPriorities();
@@ -89,6 +86,63 @@ class LibertyPrimeRechargedTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1).contains(drawnCard);
         harness.assertInGraveyard(player1, "Spellbook");
         assertThat(prime.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Declining the attack payment sacrifices Liberty Prime without spending energy")
+    void declinesEnergyPaymentWhenAttacking() {
+        addReadyPrime();
+        gd.playerEnergyCounters.put(player1.getId(), 3);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(3);
+        harness.assertNotOnBattlefield(player1, "Liberty Prime, Recharged");
+        harness.assertInGraveyard(player1, "Liberty Prime, Recharged");
+    }
+
+    @Test
+    @DisplayName("Blocking with insufficient energy sacrifices Liberty Prime without spending energy")
+    void sacrificesWhenBlockingWithoutEnoughEnergy() {
+        addReadyPrime();
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        gd.playerEnergyCounters.put(player1.getId(), 1);
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Liberty Prime, Recharged");
+        harness.assertInGraveyard(player1, "Liberty Prime, Recharged");
+    }
+
+    @Test
+    @DisplayName("Liberty Prime can sacrifice itself and its ability still gives energy and draws")
+    void sacrificesItselfForEnergyAndCard() {
+        Permanent prime = addReadyPrime();
+        Permanent otherArtifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        Card drawnCard = new LibertyPrimeRecharged();
+        harness.setLibrary(player1, List.of(drawnCard));
+        gd.playerEnergyCounters.put(player1.getId(), 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, prime.getId());
+
+        harness.assertNotOnBattlefield(player1, "Liberty Prime, Recharged");
+        harness.assertInGraveyard(player1, "Liberty Prime, Recharged");
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawnCard);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(3);
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(otherArtifact);
     }
 
     private Permanent addReadyPrime() {
