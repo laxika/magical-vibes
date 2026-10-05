@@ -77,6 +77,83 @@ class OyobiWhoSplitTheHeavensTest extends BaseCardTest {
         assertThat(spiritTokens()).isEmpty();
     }
 
+    @Test
+    void tokenResolvesBeforeTheSpiritSpell() {
+        addOyobi();
+        prepareMainPhase();
+        harness.castFromHand(player1, new KamiOfFalseHope(), "{W}");
+
+        assertThat(spiritTokens()).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(spiritTokens()).hasSize(1);
+        assertThat(findPermanents(player1, "Kami of False Hope")).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Kami of False Hope")).hasSize(1);
+        assertThat(spiritTokens()).hasSize(1);
+    }
+
+    @Test
+    void castingOyobiDoesNotTriggerItsOwnAbility() {
+        prepareMainPhase();
+        harness.castFromHand(player1, new OyobiWhoSplitTheHeavens(), "{6}{W}");
+
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Oyobi, Who Split the Heavens")).hasSize(1);
+        assertThat(spiritTokens()).isEmpty();
+    }
+
+    @Test
+    void spiritEnteringWithoutBeingCastDoesNotCreateToken() {
+        addOyobi();
+        prepareMainPhase();
+        harness.addToBattlefield(player1, new KamiOfFalseHope());
+
+        harness.passBothPriorities();
+
+        assertThat(spiritTokens()).isEmpty();
+    }
+
+    @Test
+    void opponentArcaneSpellCreatesNoToken() {
+        addOyobi();
+        prepareMainPhase(player2);
+        harness.castFromHand(player2, new VitalSurge(), "{1}{G}");
+
+        resolveAllTriggers();
+
+        assertThat(spiritTokens()).isEmpty();
+        assertThat(findPermanents(player2, "Spirit")).isEmpty();
+    }
+
+    @Test
+    void controllerArcaneSpellDuringOpponentTurnCreatesToken() {
+        addOyobi();
+        prepareMainPhase(player2);
+        harness.castFromHand(player1, new VitalSurge(), "{1}{G}");
+
+        resolveAllTriggers();
+
+        assertThat(spiritTokens()).hasSize(1);
+        assertThat(findPermanents(player2, "Spirit")).isEmpty();
+    }
+
+    @Test
+    void eachQualifyingSpellCreatesAnotherToken() {
+        addOyobi();
+        prepareMainPhase();
+        harness.castFromHand(player1, new KamiOfFalseHope(), "{W}");
+        resolveAllTriggers();
+        harness.castFromHand(player1, new VitalSurge(), "{1}{G}");
+
+        resolveAllTriggers();
+
+        assertThat(spiritTokens()).hasSize(2);
+    }
+
     private List<Permanent> spiritTokens() {
         return findPermanents(player1, "Spirit");
     }
