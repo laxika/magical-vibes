@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.q;
 
 import com.github.laxika.magicalvibes.cards.a.AphettoAlchemist;
+import com.github.laxika.magicalvibes.cards.c.ChainOfVapor;
 import com.github.laxika.magicalvibes.cards.c.ChokingTethers;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SeedsOfStrength;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -18,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({QuicksilverDragon.class, Shock.class, GlorySeeker.class, AphettoAlchemist.class,
-        ChokingTethers.class})
+        ChokingTethers.class, ChainOfVapor.class, SeedsOfStrength.class})
 class QuicksilverDragonTest extends BaseCardTest {
 
     @Test
@@ -125,6 +127,94 @@ class QuicksilverDragonTest extends BaseCardTest {
                 player2, battlefieldIndex(player2, dragon), null, alchemist.getCard().getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("spell");
+    }
+
+    @Test
+    void doesNothingAfterDragonLeavesTheBattlefield() {
+        Permanent dragon = castFaceUpDragon();
+        Permanent replacementCreature = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
+        Shock shock = new Shock();
+        harness.setHand(player1, List.of(shock, new ChainOfVapor()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, dragon.getId());
+        harness.passPriority(player1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.activateAbility(player2, battlefieldIndex(player2, dragon), null, shock.getId());
+        harness.passPriority(player2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, dragon.getId());
+
+        harness.assertNotOnBattlefield(player2, "Quicksilver Dragon");
+        harness.assertInHand(player2, "Quicksilver Dragon");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Glory Seeker");
+        assertThat(replacementCreature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void leavesOriginalTargetUnchangedWhenNoOtherCreatureExists() {
+        Permanent dragon = castFaceUpDragon();
+        Shock shock = new Shock();
+        harness.setHand(player1, List.of(shock));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, dragon.getId());
+        harness.passPriority(player1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.activateAbility(player2, battlefieldIndex(player2, dragon), null, shock.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+
+        assertThat(dragon.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Quicksilver Dragon");
+    }
+
+    @Test
+    void doesNothingWhenSpellTargetsDragonThreeTimes() {
+        Permanent dragon = castFaceUpDragon();
+        Permanent alternate = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
+        SeedsOfStrength seeds = new SeedsOfStrength();
+        harness.setHand(player1, List.of(seeds));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, List.of(dragon.getId(), dragon.getId(), dragon.getId()));
+        harness.passPriority(player1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.activateAbility(player2, battlefieldIndex(player2, dragon), null, seeds.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, alternate)).isEqualTo(2);
+    }
+
+    @Test
+    void faceDownDragonCannotActivateRedirection() {
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new QuicksilverDragon()));
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player2, 0);
+        harness.passBothPriorities();
+        Permanent dragon = findPermanent(player2, "Quicksilver Dragon");
+        harness.forceActivePlayer(player1);
+        harness.clearPriorityPassed();
+        Shock shock = new Shock();
+        harness.setHand(player1, List.of(shock));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, dragon.getId());
+        harness.passPriority(player1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player2, battlefieldIndex(player2, dragon), null, shock.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private Permanent castFaceUpDragon() {
