@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.HashSet;
 import java.util.List;
@@ -78,6 +80,107 @@ class OscorpIndustriesTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.playLandFromGraveyard(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Entering from hand does not cause life loss")
+    void enteringFromHandDoesNotLoseLife() {
+        harness.setHand(player1, List.of(new OscorpIndustries()));
+        prepareMainPhase();
+
+        harness.playLand(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player1, "Oscorp Industries");
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"BLUE", "BLACK"})
+    @DisplayName("Each remaining mana choice produces exactly one mana without using the stack")
+    void producesChosenManaImmediately(ManaColor color) {
+        var land = harness.addToBattlefieldAndReturn(player1, new OscorpIndustries());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, color.name());
+
+        for (ManaColor poolColor : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(poolColor))
+                    .isEqualTo(poolColor == color ? 1 : 0);
+        }
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = TurnStep.class, names = {"UPKEEP", "BEGINNING_OF_COMBAT", "END_STEP"})
+    @DisplayName("Mayhem does not allow a land play outside a main phase")
+    void mayhemRequiresMainPhase(TurnStep step) {
+        OscorpIndustries card = new OscorpIndustries();
+        harness.setGraveyard(player1, List.of(card));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(card.getId())));
+        prepareMainPhase();
+        harness.forceStep(step);
+
+        assertThatThrownBy(() -> harness.playLandFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(card);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Mayhem does not allow playing the land during an opponent's turn")
+    void mayhemRequiresOwnTurn() {
+        OscorpIndustries card = new OscorpIndustries();
+        harness.setGraveyard(player1, List.of(card));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(card.getId())));
+        prepareMainPhase();
+        harness.forceActivePlayer(player2);
+
+        assertThatThrownBy(() -> harness.playLandFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(card);
+    }
+
+    @Test
+    @DisplayName("A Mayhem land play uses the normal land allowance")
+    void mayhemUsesLandPlayAllowance() {
+        OscorpIndustries first = new OscorpIndustries();
+        OscorpIndustries second = new OscorpIndustries();
+        harness.setGraveyard(player1, List.of(first, second));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(),
+                new HashSet<>(Set.of(first.getId(), second.getId())));
+        prepareMainPhase();
+
+        harness.playLandFromGraveyard(player1, 0);
+        resolveAllTriggers();
+        prepareMainPhase();
+
+        assertThatThrownBy(() -> harness.playLandFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Discarding a different copy does not grant Mayhem to this card")
+    void mayhemRequiresThisSpecificCardToBeDiscarded() {
+        OscorpIndustries discarded = new OscorpIndustries();
+        OscorpIndustries other = new OscorpIndustries();
+        harness.setGraveyard(player1, List.of(other, discarded));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(discarded.getId())));
+        prepareMainPhase();
+
+        assertThatThrownBy(() -> harness.playLandFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other, discarded);
     }
 
     private void prepareMainPhase() {
