@@ -165,9 +165,7 @@ class OracleEnVecTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player2, List.of(chosen.getId()));
         advanceTurn();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.inMutationScope(
-                () -> GameTestEngineContext.get().getBean(StepTriggerService.class).handleEndStepTriggers(gd));
+        runEndStep();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(chosen);
         assertThat(gd.stack).hasSize(1);
@@ -226,5 +224,60 @@ class OracleEnVecTest extends BaseCardTest {
                 .doesNotContain(firstChosen, secondChosen);
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .contains(firstChosen.getCard(), secondChosen.getCard());
+    }
+
+    @Test
+    @DisplayName("One resolved ability creates one end-step trigger for all chosen nonattackers")
+    void chosenNonattackersShareOneDestructionTrigger() {
+        addReadyOracle();
+        Permanent first = addCreatureReady(player2, new TrainedArmodon());
+        Permanent second = addCreatureReady(player2, new TrainedArmodon());
+
+        activateOracle();
+        harness.handleMultiplePermanentsChosen(player2, List.of(first.getId(), second.getId()));
+        advanceTurn();
+        runEndStep();
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(first, second);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(first.getCard(), second.getCard());
+    }
+
+    @Test
+    @DisplayName("Oracle's ability controller controls its delayed destruction trigger")
+    void destructionTriggerBelongsToOracleAbilityController() {
+        addReadyOracle();
+        Permanent chosen = addCreatureReady(player2, new TrainedArmodon());
+
+        activateOracle();
+        harness.handleMultiplePermanentsChosen(player2, List.of(chosen.getId()));
+        advanceTurn();
+        runEndStep();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(OracleEnVec.class);
+    }
+
+    @Test
+    @DisplayName("A chosen creature unable to attack is destroyed, but an unchosen nonattacker survives")
+    void unableChosenAttackerDiesWithoutDestroyingUnchosenCreature() {
+        addReadyOracle();
+        Permanent chosen = addCreatureReady(player2, new TrainedArmodon());
+        Permanent unchosen = addCreatureReady(player2, new TrainedArmodon());
+
+        activateOracle();
+        harness.handleMultiplePermanentsChosen(player2, List.of(chosen.getId()));
+        advanceTurn();
+        chosen.setTapped(true);
+        beginDeclareAttackersFor(player2);
+        assertThat(harness.getCombatAttackService().getAttackableCreatureIndices(gd, player2.getId())).isEmpty();
+        declareAttackers(player2, List.of());
+        runEndStep();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(chosen).contains(unchosen);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(chosen.getCard());
     }
 }
