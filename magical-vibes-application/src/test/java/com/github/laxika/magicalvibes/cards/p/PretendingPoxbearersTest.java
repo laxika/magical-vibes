@@ -24,8 +24,7 @@ class PretendingPoxbearersTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, poxbearers.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, poxbearers.getId());
         harness.passBothPriorities();
 
         Permanent token = findPermanents(player1, "Ally").getFirst();
@@ -43,11 +42,30 @@ class PretendingPoxbearersTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, poxbearers.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, poxbearers.getId());
         harness.passBothPriorities();
 
         assertThat(findPermanents(player2, "Ally")).hasSize(1);
         assertThat(findPermanents(player1, "Ally")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The Ally token is created when the death trigger resolves, not when the creature dies")
+    void tokenCreationWaitsForDeathTriggerResolution() {
+        Permanent poxbearers = harness.addToBattlefieldAndReturn(player1, new PretendingPoxbearers());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, poxbearers.getId());
+
+        harness.assertInGraveyard(player1, "Pretending Poxbearers");
+        harness.assertNotOnBattlefield(player1, "Pretending Poxbearers");
+        assertThat(findPermanents(player1, "Ally")).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Ally")).hasSize(1);
+        assertThat(gd.stack).isEmpty();
     }
 }
