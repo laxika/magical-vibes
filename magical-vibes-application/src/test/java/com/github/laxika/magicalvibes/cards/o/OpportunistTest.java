@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.Fireslinger;
 import com.github.laxika.magicalvibes.cards.m.MoggConscripts;
 import com.github.laxika.magicalvibes.cards.s.SoltariFootSoldier;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,8 +15,58 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Opportunist.class, SoltariFootSoldier.class, MoggConscripts.class, Forest.class})
+@CardUsed({Opportunist.class, SoltariFootSoldier.class, MoggConscripts.class, Forest.class, Fireslinger.class})
 class OpportunistTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Finishes a creature damaged by another ability this turn")
+    void finishesCreatureAfterActualDamage() {
+        addCreatureReady(player1, new Opportunist());
+        addCreatureReady(player1, new Fireslinger());
+        harness.addToBattlefield(player2, new MoggConscripts());
+        UUID targetId = harness.getPermanentId(player2, "Mogg Conscripts");
+
+        harness.activateAbility(player1, 1, null, targetId);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Mogg Conscripts");
+        assertThat(findPermanent(player2, "Mogg Conscripts").getMarkedDamage()).isEqualTo(1);
+
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Mogg Conscripts");
+        harness.assertInGraveyard(player2, "Mogg Conscripts");
+    }
+
+    @Test
+    @DisplayName("Can target itself after being dealt damage")
+    void canTargetItselfAfterActualDamage() {
+        Permanent opportunist = addCreatureReady(player1, new Opportunist());
+        addCreatureReady(player1, new Fireslinger());
+
+        harness.activateAbility(player1, 1, null, opportunist.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, opportunist.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Opportunist");
+        harness.assertInGraveyard(player1, "Opportunist");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while already tapped")
+    void cannotActivateWhileTapped() {
+        Permanent opportunist = addCreatureReady(player1, new Opportunist());
+        opportunist.setTapped(true);
+        harness.addToBattlefield(player2, new MoggConscripts());
+        UUID targetId = harness.getPermanentId(player2, "Mogg Conscripts");
+        gd.permanentsDealtDamageThisTurn.add(targetId);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Deals 1 damage to a creature that was dealt damage this turn, killing a 1/1")
