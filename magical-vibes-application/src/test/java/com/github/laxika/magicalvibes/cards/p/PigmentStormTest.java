@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SpinedKarok;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PigmentStorm.class, GrizzlyBears.class})
+@CardUsed({PigmentStorm.class, GrizzlyBears.class, SpinedKarok.class})
 class PigmentStormTest extends BaseCardTest {
 
     @Test
@@ -28,8 +30,7 @@ class PigmentStormTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
@@ -44,8 +45,7 @@ class PigmentStormTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         UUID targetId = harness.getPermanentId(player2, "Large Beast");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertOnBattlefield(player2, "Large Beast");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -59,6 +59,67 @@ class PigmentStormTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void redirectsExcessInsteadOfDealingItToCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SpinedKarok());
+        harness.setHand(player1, List.of(new PigmentStorm()));
+        harness.setLife(player2, 20);
+        addPigmentStormMana();
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+        harness.assertInGraveyard(player2, "Spined Karok");
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void determinesExcessBeforeCreatureDamagePrevention() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SpinedKarok());
+        target.setDamagePreventionShield(4);
+        harness.setHand(player1, List.of(new PigmentStorm()));
+        harness.setLife(player2, 20);
+        addPigmentStormMana();
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertOnBattlefield(player2, "Spined Karok");
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void accountsForMarkedDamageAndDamagesOwnCreatureController() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SpinedKarok());
+        target.setMarkedDamage(2);
+        harness.setHand(player1, List.of(new PigmentStorm()));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addPigmentStormMana();
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertInGraveyard(player1, "Spined Karok");
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void dealsNoDamageWhenTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SpinedKarok());
+        harness.setHand(player1, List.of(new PigmentStorm()));
+        harness.setLife(player2, 20);
+        addPigmentStormMana();
+        harness.castSorcery(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Pigment Storm");
     }
 
     private void addPigmentStormMana() {
