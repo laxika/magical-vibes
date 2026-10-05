@@ -113,6 +113,57 @@ class KingsAssassinTest extends BaseCardTest {
                 .hasMessageContaining("during your turn");
     }
 
+    @Test
+    @DisplayName("Activation taps the Assassin as a cost")
+    void activationPaysTapCost() {
+        setupAssassinOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Permanent target = addTappedBears(player2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(findPermanent(player1, "King's Assassin").isTapped()).isTrue();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while already tapped")
+    void cannotActivateWhileTapped() {
+        setupAssassinOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        findPermanent(player1, "King's Assassin").tap();
+        Permanent target = addTappedBears(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate with summoning sickness")
+    void cannotActivateWithSummoningSickness() {
+        setupAssassinOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        findPermanent(player1, "King's Assassin").setSummoningSick(true);
+        Permanent target = addTappedBears(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate during the postcombat main phase")
+    void cannotActivateDuringPostcombatMain() {
+        setupAssassinOnMyTurn(TurnStep.POSTCOMBAT_MAIN);
+        Permanent target = addTappedBears(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("before attackers are declared");
+    }
+
     private void setupAssassinOnMyTurn(TurnStep step) {
         addCreatureReady(player1, new KingsAssassin());
         harness.forceActivePlayer(player1);
