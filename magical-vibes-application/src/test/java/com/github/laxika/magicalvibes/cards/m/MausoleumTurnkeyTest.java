@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrayscaledGharial;
 import com.github.laxika.magicalvibes.cards.l.LastGasp;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -81,5 +82,70 @@ class MausoleumTurnkeyTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Mausoleum Turnkey");
         harness.assertInGraveyard(player1, "Last Gasp");
+    }
+
+    @Test
+    @DisplayName("Creature cards in the opponent's graveyard are not eligible")
+    void ignoresOpponentsGraveyard() {
+        GrayscaledGharial ownCreature = new GrayscaledGharial();
+        GrayscaledGharial opposingCreature = new GrayscaledGharial();
+        harness.setGraveyard(player1, List.of(ownCreature));
+        harness.setGraveyard(player2, List.of(opposingCreature));
+        castAndResolveEtb();
+
+        PendingInteraction.MultiGraveyardChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(ownCreature.getId());
+        harness.handleMultipleCardsChosen(player2, List.of(ownCreature.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(ownCreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingCreature);
+    }
+
+    @Test
+    @DisplayName("The target is chosen before resolution and is not replaced if it leaves the graveyard")
+    void chosenTargetLeavingGraveyardDoesNotReturnAnotherCard() {
+        GrayscaledGharial chosenCreature = new GrayscaledGharial();
+        GrayscaledGharial otherCreature = new GrayscaledGharial();
+        harness.setGraveyard(player1, List.of(chosenCreature, otherCreature));
+        castAndResolveEtb();
+        harness.handleMultipleCardsChosen(player2, List.of(chosenCreature.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(chosenCreature, otherCreature);
+        assertThat(gd.stack).hasSize(1);
+        harness.setGraveyard(player1, List.of(otherCreature));
+        harness.setExile(player1, List.of(chosenCreature));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(otherCreature);
+        assertThat(gd.findExiledCard(chosenCreature.getId())).isNotNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The chosen card returns even if Turnkey dies in response to its trigger")
+    void triggerResolvesAfterSourceDies() {
+        GrayscaledGharial creature = new GrayscaledGharial();
+        harness.setGraveyard(player1, List.of(creature));
+        castAndResolveEtb();
+        harness.handleMultipleCardsChosen(player2, List.of(creature.getId()));
+
+        harness.setHand(player2, List.of(new LastGasp()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Mausoleum Turnkey"));
+        harness.assertNotOnBattlefield(player1, "Mausoleum Turnkey");
+        harness.assertInGraveyard(player1, "Mausoleum Turnkey");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
+        harness.assertInGraveyard(player1, "Mausoleum Turnkey");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
