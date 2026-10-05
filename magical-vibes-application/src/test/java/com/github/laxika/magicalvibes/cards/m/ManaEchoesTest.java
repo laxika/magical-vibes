@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.a.AvenSoulgazer;
+import com.github.laxika.magicalvibes.cards.c.ChainOfVapor;
 import com.github.laxika.magicalvibes.cards.f.FesteringGoblin;
 import com.github.laxika.magicalvibes.cards.i.Imagecrafter;
 import com.github.laxika.magicalvibes.cards.l.LonelySandbar;
@@ -18,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ManaEchoes.class, FesteringGoblin.class, AvenSoulgazer.class, Imagecrafter.class, LonelySandbar.class})
+@CardUsed({ManaEchoes.class, FesteringGoblin.class, AvenSoulgazer.class, Imagecrafter.class, LonelySandbar.class,
+        ChainOfVapor.class})
 class ManaEchoesTest extends BaseCardTest {
 
     @Test
@@ -102,6 +104,63 @@ class ManaEchoesTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Uses the entering creature's changed types immediately before it leaves")
+    void usesChangedLastKnownTypesAfterEnteringCreatureLeaves() {
+        harness.addToBattlefield(player1, new ManaEchoes());
+        addCreatureReady(player1, new Imagecrafter());
+        harness.addToBattlefield(player1, new AvenSoulgazer());
+        Permanent entering = harness.enterBattlefieldAndReturn(player1, new FesteringGoblin());
+
+        harness.forceActivePlayer(player1);
+        harness.activateAbility(player1, 1, null, entering.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.CLERIC.name());
+
+        harness.setHand(player1, List.of(new ChainOfVapor()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, entering.getId());
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Festering Goblin");
+
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An opposing creature with no matching controlled creatures produces zero mana")
+    void noMatchingCreaturesProducesZeroMana() {
+        harness.addToBattlefield(player1, new ManaEchoes());
+        harness.addToBattlefield(player1, new AvenSoulgazer());
+
+        harness.enterBattlefieldAndReturn(player2, new FesteringGoblin());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The trigger still produces mana after Mana Echoes leaves the battlefield")
+    void triggerResolvesAfterManaEchoesLeaves() {
+        Permanent echoes = harness.addToBattlefieldAndReturn(player1, new ManaEchoes());
+        harness.enterBattlefieldAndReturn(player1, new FesteringGoblin());
+
+        harness.setHand(player1, List.of(new ChainOfVapor()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, echoes.getId());
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Mana Echoes");
+
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
 
     @Test
