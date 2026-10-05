@@ -63,6 +63,34 @@ class LivingArtifactTest extends BaseCardTest {
     }
 
     @Test
+    void separateDamageEventsAccumulateOnAuraOnly() {
+        Permanent aura = enchantArtifact();
+        Permanent artifact = findPermanent(player1, "Meekstone");
+        harness.setHand(player2, List.of(new LightningBolt(), new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(aura.getCounterCount(CounterType.VITALITY)).isEqualTo(6);
+        assertThat(artifact.getCounterCount(CounterType.VITALITY)).isZero();
+    }
+
+    @Test
+    void damageFromControllersOwnSpellAddsCounters() {
+        Permanent aura = enchantArtifact();
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(aura.getCounterCount(CounterType.VITALITY)).isEqualTo(3);
+    }
+
+    @Test
     void lifeLossDoesNotAddVitalityCounters() {
         Permanent aura = enchantArtifact();
         harness.setLife(player1, 20);
@@ -132,6 +160,35 @@ class LivingArtifactTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(aura.getCounterCount(CounterType.VITALITY)).isZero();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void opponentsUpkeepDoesNotRemoveCounterOrGainLife() {
+        Permanent aura = enchantArtifact(player1, player2);
+        aura.setCounterCount(CounterType.VITALITY, 2);
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(aura.getCounterCount(CounterType.VITALITY)).isEqualTo(2);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void upkeepCannotRemoveAnotherCounterType() {
+        Permanent aura = enchantArtifact();
+        aura.setCounterCount(CounterType.CHARGE, 2);
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(aura.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
         assertThat(aura.getCounterCount(CounterType.VITALITY)).isZero();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
