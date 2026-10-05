@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.d.DoomedTraveler;
-import com.github.laxika.magicalvibes.cards.f.FesteringGoblin;
+import com.github.laxika.magicalvibes.cards.b.BloodArtist;
+import com.github.laxika.magicalvibes.cards.c.CordialVampire;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MarchOfTheCanonized.class, DoomedTraveler.class, FesteringGoblin.class})
+@CardUsed({MarchOfTheCanonized.class, BloodArtist.class, CordialVampire.class})
 class MarchOfTheCanonizedTest extends BaseCardTest {
 
     @Test
@@ -26,14 +26,15 @@ class MarchOfTheCanonizedTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         gs.playCard(gd, player1, 0, 2, null, null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
-        List<Permanent> tokens = tokensNamed(player1, "Vampire");
+        List<Permanent> tokens = findPermanents(player1, "Vampire");
         assertThat(tokens).hasSize(2);
         assertThat(tokens).allSatisfy(token -> {
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
             assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.VAMPIRE);
+            assertThat(token.getCard().getPower()).isEqualTo(1);
+            assertThat(token.getCard().getToughness()).isEqualTo(1);
             assertThat(gqs.hasKeyword(gd, token, Keyword.LIFELINK)).isTrue();
         });
     }
@@ -42,16 +43,14 @@ class MarchOfTheCanonizedTest extends BaseCardTest {
     @DisplayName("Creates a flying Vampire Demon when combined white and black devotion reaches seven")
     void upkeepCreatesVampireDemonAtThreshold() {
         harness.addToBattlefield(player1, new MarchOfTheCanonized());
-        harness.addToBattlefield(player1, new DoomedTraveler());
-        harness.addToBattlefield(player1, new DoomedTraveler());
-        harness.addToBattlefield(player1, new DoomedTraveler());
-        harness.addToBattlefield(player1, new FesteringGoblin());
-        harness.addToBattlefield(player1, new FesteringGoblin());
+        harness.addToBattlefield(player1, new CordialVampire());
+        harness.addToBattlefield(player1, new CordialVampire());
+        harness.addToBattlefield(player1, new BloodArtist());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        List<Permanent> tokens = tokensNamed(player1, "Vampire Demon");
+        List<Permanent> tokens = findPermanents(player1, "Vampire Demon");
         assertThat(tokens).hasSize(1);
         Permanent token = tokens.getFirst();
         assertThat(token.getCard().getColors()).containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLACK);
@@ -66,19 +65,80 @@ class MarchOfTheCanonizedTest extends BaseCardTest {
     @DisplayName("Does not create a Vampire Demon below seven combined devotion")
     void upkeepDoesNotCreateVampireDemonBelowThreshold() {
         harness.addToBattlefield(player1, new MarchOfTheCanonized());
-        harness.addToBattlefield(player1, new DoomedTraveler());
-        harness.addToBattlefield(player1, new FesteringGoblin());
+        harness.addToBattlefield(player1, new CordialVampire());
+        harness.addToBattlefield(player1, new BloodArtist());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(tokensNamed(player1, "Vampire Demon")).isEmpty();
+        assertThat(findPermanents(player1, "Vampire Demon")).isEmpty();
     }
 
-    private List<Permanent> tokensNamed(com.github.laxika.magicalvibes.model.Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .filter(permanent -> permanent.getCard().getName().equals(name))
-                .toList();
+    @Test
+    void zeroXCreatesNoVampires() {
+        harness.setHand(player1, List.of(new MarchOfTheCanonized()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        gs.playCard(gd, player1, 0, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Vampire")).isEmpty();
+        assertThat(findPermanents(player1, "March of the Canonized")).hasSize(1);
+    }
+
+    @Test
+    void devotionMustStillBeSevenWhenTriggerResolves() {
+        harness.addToBattlefield(player1, new MarchOfTheCanonized());
+        harness.addToBattlefield(player1, new CordialVampire());
+        harness.addToBattlefield(player1, new CordialVampire());
+        Permanent artist = harness.addToBattlefieldAndReturn(player1, new BloodArtist());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(artist);
+        harness.setHand(player1, List.of(artist.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Vampire Demon")).isEmpty();
+    }
+
+    @Test
+    void gainingDevotionAfterUpkeepBeginsDoesNotTriggerAbility() {
+        harness.addToBattlefield(player1, new MarchOfTheCanonized());
+        harness.addToBattlefield(player1, new CordialVampire());
+        harness.addToBattlefield(player1, new CordialVampire());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+        harness.addToBattlefield(player1, new BloodArtist());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Vampire Demon")).isEmpty();
+    }
+
+    @Test
+    void opponentPermanentsDoNotCountTowardDevotion() {
+        harness.addToBattlefield(player1, new MarchOfTheCanonized());
+        harness.addToBattlefield(player2, new CordialVampire());
+        harness.addToBattlefield(player2, new CordialVampire());
+        harness.addToBattlefield(player2, new BloodArtist());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Vampire Demon")).isEmpty();
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new MarchOfTheCanonized());
+        harness.addToBattlefield(player1, new CordialVampire());
+        harness.addToBattlefield(player1, new CordialVampire());
+        harness.addToBattlefield(player1, new BloodArtist());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Vampire Demon")).isEmpty();
     }
 }
