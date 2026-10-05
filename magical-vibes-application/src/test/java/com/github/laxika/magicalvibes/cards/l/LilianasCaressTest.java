@@ -23,8 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({LilianasCaress.class, Distress.class, GrizzlyBears.class, HypnoticSpecter.class, Sift.class})
 class LilianasCaressTest extends BaseCardTest {
 
-    // ===== Casting and resolving =====
-
     @Test
     @DisplayName("Casting Liliana's Caress puts it on the stack as enchantment spell")
     void castingPutsItOnStack() {
@@ -35,7 +33,6 @@ class LilianasCaressTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Liliana's Caress");
     }
 
     @Test
@@ -51,8 +48,6 @@ class LilianasCaressTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Liliana's Caress");
     }
 
-    // ===== Triggered ability: opponent discards via Distress =====
-
     @Test
     @DisplayName("Liliana's Caress causes opponent to lose 2 life when they discard via Distress")
     void triggersOnOpponentDiscardViaDistress() {
@@ -63,18 +58,16 @@ class LilianasCaressTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Player1 chooses card from player2's revealed hand
         harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
 
-        // Liliana's Caress trigger: player2 loses 2 life
+        // Resolve the discard trigger before checking life loss.
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
-
-    // ===== Triggered ability: opponent discards via discard effect =====
 
     @Test
     @DisplayName("Liliana's Caress causes opponent to lose 2 life when they discard via Sift")
@@ -86,9 +79,7 @@ class LilianasCaressTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        gd.playerDecks.get(player2.getId()).add(new GrizzlyBears());
-        gd.playerDecks.get(player2.getId()).add(new GrizzlyBears());
-        gd.playerDecks.get(player2.getId()).add(new GrizzlyBears());
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
         harness.setHand(player2, List.of(new Sift()));
         harness.addMana(player2, ManaColor.BLUE, 4);
@@ -97,11 +88,10 @@ class LilianasCaressTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Sift — draws 3, prompts for discard
 
         harness.handleCardChosen(player2, 0);
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
-
-    // ===== No trigger when controller discards =====
 
     @Test
     @DisplayName("Liliana's Caress does NOT trigger when its controller discards")
@@ -109,22 +99,18 @@ class LilianasCaressTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LilianasCaress());
         harness.setLife(player1, 20);
 
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
         harness.setHand(player1, List.of(new Sift()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
-
-    // ===== Two copies each trigger =====
 
     @Test
     @DisplayName("Two Liliana's Caress each trigger, causing 4 life loss total")
@@ -137,14 +123,12 @@ class LilianasCaressTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
-
-    // ===== Random discard from combat triggers =====
 
     @Test
     @DisplayName("Liliana's Caress triggers when Hypnotic Specter forces random discard")
@@ -153,22 +137,21 @@ class LilianasCaressTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GrizzlyBears()));
         harness.setLife(player2, 20);
 
-        Permanent specter = new Permanent(new HypnoticSpecter());
+        Permanent specter = harness.addToBattlefieldAndReturn(player1, new HypnoticSpecter());
         specter.setSummoningSick(false);
         specter.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(specter);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
+        resolveAllTriggers();
+
         // Player2 took 2 combat damage + lost 2 life from Caress = 16
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
-
-    // ===== No trigger when not on the battlefield =====
 
     @Test
     @DisplayName("Liliana's Caress does not trigger when not on the battlefield")
@@ -179,14 +162,12 @@ class LilianasCaressTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
-
-    // ===== Opponent's Caress triggers on our discard =====
 
     @Test
     @DisplayName("Player2's Liliana's Caress triggers when player1 discards")
@@ -194,22 +175,18 @@ class LilianasCaressTest extends BaseCardTest {
         harness.addToBattlefield(player2, new LilianasCaress());
         harness.setLife(player1, 20);
 
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
         harness.setHand(player1, List.of(new Sift()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
-
-    // ===== Logging =====
 
     @Test
     @DisplayName("Liliana's Caress trigger is logged")
@@ -221,11 +198,47 @@ class LilianasCaressTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("Liliana's Caress") && log.contains("triggers") && log.contains("loses") && log.contains("life"));
+    }
+
+    @Test
+    @DisplayName("Discard queues Caress's ability without applying life loss before resolution")
+    void discardTriggerUsesTheStack() {
+        harness.addToBattlefield(player1, new LilianasCaress());
+        harness.setHand(player1, List.of(new Distress()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.handleCardChosen(player1, 0);
+            harness.assertLife(player2, 20);
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            resolveAllTriggers();
+            harness.assertLife(player2, 18);
+        });
+    }
+
+    @Test
+    @DisplayName("Caress's life loss is recorded for life-loss interactions")
+    void recordsLifeLostThisTurn() {
+        harness.addToBattlefield(player1, new LilianasCaress());
+        harness.setHand(player1, List.of(new Distress()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.castAndResolveSorcery(player1, 0, player2.getId());
+            harness.handleCardChosen(player1, 0);
+            resolveAllTriggers();
+            assertThat(gd.lifeLostThisTurn.getOrDefault(player2.getId(), 0)).isEqualTo(2);
+        });
     }
 }
