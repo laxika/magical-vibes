@@ -140,7 +140,78 @@ class MeddlingMageTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("A land name cannot be submitted as the chosen name")
+    void rejectsLandNameChoice() {
+        harness.setHand(player1, List.of(new MeddlingMage()));
+        harness.setHand(player2, List.of(new DromarsCavern(), new MoggSentry()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "Dromar's Cavern"))
+                .isInstanceOf(IllegalArgumentException.class);
+        harness.assertNotOnBattlefield(player1, "Meddling Mage");
+        harness.handleListChoice(player1, "Mogg Sentry");
+        harness.assertOnBattlefield(player1, "Meddling Mage");
+    }
+
+    @Test
+    @DisplayName("A nonexistent card name cannot be submitted")
+    void rejectsNonexistentCardName() {
+        harness.setHand(player1, List.of(new MeddlingMage()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "Not an Oracle card name 123456789"))
+                .isInstanceOf(IllegalArgumentException.class);
+        harness.assertNotOnBattlefield(player1, "Meddling Mage");
+        harness.handleListChoice(player1, "Meddling Mage");
+        harness.assertOnBattlefield(player1, "Meddling Mage");
+    }
+
+    @Test
+    @DisplayName("Naming Meddling Mage does not stop the resolving Mage from entering")
+    void canNameItselfAndPreventsAnotherCopy() {
+        harness.setHand(player1, List.of(new MeddlingMage()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Meddling Mage");
+        harness.assertOnBattlefield(player1, "Meddling Mage");
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new MeddlingMage()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player2, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Removing one Mage does not lift another Mage's restriction")
+    void anotherMageKeepsItsRestriction() {
+        Permanent first = addReadyMeddlingMage(player1, "Mogg Sentry");
+        addReadyMeddlingMage(player2, "Mogg Sentry");
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new MoggSentry()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player2, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
 
     private Permanent addReadyMeddlingMage(Player player, String chosenName) {
         Permanent perm = addCreatureReady(player, new MeddlingMage());
