@@ -55,6 +55,46 @@ class NaturesEmbraceTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature or land");
     }
 
+    @Test
+    @DisplayName("An opponent's enchanted land gives mana to its controller")
+    void opponentsLandProducesManaForItsController() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        castAuraOn(forest);
+        harness.ensurePriority(player2);
+        harness.activateAbility(player2, 0, null, null);
+        harness.handleListChoice(player2, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Removing Nature's Embrace ends the creature boost")
+    void removingAuraEndsCreatureBoost() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castAuraOn(bears);
+        Permanent aura = gqs.findPermanentById(gd, harness.getPermanentId(player1, "Nature's Embrace"));
+
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura);
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The enchanted land retains its original mana ability")
+    void enchantedLandRetainsOriginalManaAbility() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        castAuraOn(forest);
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(forest.isTapped()).isTrue();
+    }
     private void castAuraOn(Permanent target) {
         harness.setHand(player1, List.of(new NaturesEmbrace()));
         harness.addMana(player1, ManaColor.GREEN, 1);
