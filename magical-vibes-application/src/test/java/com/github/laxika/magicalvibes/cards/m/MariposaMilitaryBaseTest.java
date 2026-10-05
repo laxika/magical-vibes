@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -67,7 +69,7 @@ class MariposaMilitaryBaseTest extends BaseCardTest {
     void radCountersReduceDrawAbilityCost() {
         addReadyBase(player1);
         gd.playerRadCounters.put(player1.getId(), 3);
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -99,8 +101,83 @@ class MariposaMilitaryBaseTest extends BaseCardTest {
         return base;
     }
 
-    private void setDeck(Player player, List<Forest> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+    @Test
+    @DisplayName("Without rad counters the draw ability costs five mana and taps the land")
+    void drawWithoutRadCountersCostsFiveMana() {
+        Permanent base = addReadyBase(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(base.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertNotInHand(player1, "Forest");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {5, 7})
+    @DisplayName("Five or more rad counters reduce the mana cost to zero but still require tapping")
+    void drawWithEnoughRadCountersCostsNoMana(int counters) {
+        Permanent base = addReadyBase(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gd.playerRadCounters.put(player1.getId(), counters);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(base.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerRadCounters.get(player1.getId())).isEqualTo(counters);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Changing rad counters after activation does not change the paid cost or draw")
+    void radCountersAreCountedWhenAbilityIsActivated() {
+        addReadyBase(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gd.playerRadCounters.put(player1.getId(), 3);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        gd.playerRadCounters.remove(player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Choosing tapped entry adds two rad counters to existing counters")
+    void tappedEntryAddsToExistingRadCounters() {
+        gd.playerRadCounters.put(player1.getId(), 3);
+        harness.setHand(player1, List.of(new MariposaMilitaryBase()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.playLand(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findPermanent(player1, "Mariposa Military Base").isTapped()).isTrue();
+        assertThat(gd.playerRadCounters.get(player1.getId())).isEqualTo(5);
+        assertThat(gd.playerRadCounters.get(player2.getId())).isNull();
     }
 }
