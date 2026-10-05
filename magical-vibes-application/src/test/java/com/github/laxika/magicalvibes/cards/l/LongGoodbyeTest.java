@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.c.Cancel;
+import com.github.laxika.magicalvibes.cards.f.FugitiveCodebreaker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.cards.m.MagnifyingGlass;
+import com.github.laxika.magicalvibes.cards.p.ProjektorInspector;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,8 +18,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LongGoodbye.class, Cancel.class, GrizzlyBears.class, HillGiant.class, JaceBeleren.class})
+@CardUsed({LongGoodbye.class, Cancel.class, GrizzlyBears.class, HillGiant.class, JaceBeleren.class,
+        FugitiveCodebreaker.class, MagnifyingGlass.class, ProjektorInspector.class})
 class LongGoodbyeTest extends BaseCardTest {
 
     @Test
@@ -32,9 +37,8 @@ class LongGoodbyeTest extends BaseCardTest {
     @Test
     @DisplayName("Destroys a target planeswalker with mana value 3 or less")
     void destroysSmallPlaneswalker() {
-        Permanent target = new Permanent(new JaceBeleren());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
         target.setCounterCount(CounterType.LOYALTY, 3);
-        gd.playerBattlefields.get(player2.getId()).add(target);
 
         castLongGoodbye(target);
 
@@ -75,11 +79,56 @@ class LongGoodbyeTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Cancel");
     }
 
+    @Test
+    @DisplayName("Destroys an own creature at the mana value three boundary")
+    void destroysOwnThreeManaCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ProjektorInspector());
+
+        castLongGoodbye(target);
+
+        harness.assertNotOnBattlefield(player1, "Projektor Inspector");
+        harness.assertInGraveyard(player1, "Projektor Inspector");
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature artifact even with mana value three")
+    void rejectsNoncreatureArtifact() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MagnifyingGlass());
+        harness.setHand(player1, List.of(new LongGoodbye()));
+        addCastingMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Destroys a disguised creature without paying ward")
+    void cannotBeCounteredByWard() {
+        FugitiveCodebreaker creature = new FugitiveCodebreaker();
+        harness.setHand(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        Permanent target = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(target.isFaceDown()).isTrue();
+
+        harness.setHand(player2, List.of(new LongGoodbye()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        harness.assertInGraveyard(player1, "Fugitive Codebreaker");
+        harness.assertInGraveyard(player2, "Long Goodbye");
+    }
+
     private void castLongGoodbye(Permanent target) {
         harness.setHand(player1, List.of(new LongGoodbye()));
         addCastingMana();
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void addCastingMana() {
