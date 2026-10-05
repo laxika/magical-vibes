@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.m.Maro;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
@@ -14,12 +15,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LieInWait.class, AirElemental.class, Forest.class, GoblinPiker.class, GrizzlyBears.class})
+@CardUsed({LieInWait.class, AirElemental.class, Forest.class, GoblinPiker.class, GrizzlyBears.class, Maro.class})
 class LieInWaitTest extends BaseCardTest {
 
     private void giveMana() {
@@ -51,15 +51,14 @@ class LieInWaitTest extends BaseCardTest {
     @DisplayName("Deals enough damage to destroy the target creature")
     void destroysTargetCreature() {
         Card graveyardCreature = new GrizzlyBears();
-        harness.addToBattlefield(player2, new GoblinPiker());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoblinPiker());
         harness.setGraveyard(player1, List.of(graveyardCreature));
         harness.setHand(player1, List.of(new LieInWait()));
         giveMana();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        UUID targetId = harness.getPermanentId(player2, "Goblin Piker");
-        harness.castSorcery(player1, 0, graveyardCreature.getId(), List.of(targetId));
+        harness.castSorcery(player1, 0, graveyardCreature.getId(), List.of(target.getId()));
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Goblin Piker");
@@ -117,6 +116,40 @@ class LieInWaitTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, graveyardLand.getId(), List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Uses characteristic-defined power in the graveyard before returning the card")
+    void usesGraveyardPowerForCharacteristicDefiningAbility() {
+        Card graveyardCreature = new Maro();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setGraveyard(player1, List.of(graveyardCreature));
+        harness.setHand(player1, List.of(new LieInWait(), new Forest(), new Forest()));
+        giveMana();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castSorcery(player1, 0, graveyardCreature.getId(), List.of(target.getId()));
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        harness.assertInHand(player1, "Maro");
+        harness.assertNotInGraveyard(player1, "Maro");
+    }
+
+    @Test
+    @DisplayName("Cannot return a creature card from an opponent's graveyard")
+    void cannotTargetOpponentsGraveyard() {
+        Card graveyardCreature = new GrizzlyBears();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setGraveyard(player2, List.of(graveyardCreature));
+        harness.setHand(player1, List.of(new LieInWait()));
+        giveMana();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, graveyardCreature.getId(), List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 }
