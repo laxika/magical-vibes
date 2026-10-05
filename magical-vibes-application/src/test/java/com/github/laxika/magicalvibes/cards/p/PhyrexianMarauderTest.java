@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PhyrexianMarauder.class, Warthog.class})
+@CardUsed({PhyrexianMarauder.class, Warthog.class, Humility.class})
 class PhyrexianMarauderTest extends BaseCardTest {
 
     private Permanent addReadyMarauder(Player controller, int counters) {
@@ -44,7 +44,7 @@ class PhyrexianMarauderTest extends BaseCardTest {
     void entersWith0CountersAndDies() {
         harness.setHand(player1, List.of(new PhyrexianMarauder()));
 
-        gs.playCard(gd, player1, 0, 0, null, null);
+        harness.castArtifact(player1, 0, 0);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Phyrexian Marauder");
@@ -101,5 +101,55 @@ class PhyrexianMarauderTest extends BaseCardTest {
         declareAttackers(List.of(1));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("Attack payment follows the current counters rather than the original X")
+    void attackPaymentUsesCurrentCounters() {
+        harness.setHand(player1, List.of(new PhyrexianMarauder()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castArtifact(player1, 0, 3);
+        harness.passBothPriorities();
+
+        Permanent marauder = findPermanent(player1, "Phyrexian Marauder");
+        marauder.setSummoningSick(false);
+        marauder.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Each attacking Marauder contributes its own counter payment")
+    void multipleMaraudersPayCombinedCost() {
+        addReadyMarauder(player1, 2);
+        addReadyMarauder(player1, 3);
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        declareAttackers(List.of(0, 1));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+    }
+
+    @Test
+    @DisplayName("An unaffordable combined attack cost leaves both creatures and mana unchanged")
+    void insufficientCombinedPaymentIsAtomic() {
+        Permanent first = addReadyMarauder(player1, 2);
+        Permanent second = addReadyMarauder(player1, 3);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0, 1)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isFalse();
+        assertThat(first.isAttacking()).isFalse();
+        assertThat(second.isAttacking()).isFalse();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 }
