@@ -109,7 +109,9 @@ class KodamaOfTheSouthTreeTest extends BaseCardTest {
         Permanent retainer = addCreatureReady(player1, new DevotedRetainer());
 
         harness.castFromHand(player1, new DesperateRitual(), "{1}{R}");
-        harness.passBothPriorities();
+        resolveAllTriggers();
+        assertThat(retainer.getPowerModifier()).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, retainer, Keyword.TRAMPLE)).isTrue();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -117,5 +119,51 @@ class KodamaOfTheSouthTreeTest extends BaseCardTest {
         assertThat(retainer.getPowerModifier()).isZero();
         assertThat(retainer.getToughnessModifier()).isZero();
         assertThat(gqs.hasKeyword(gd, retainer, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The Spirit whose cast triggered Kodama enters without the earlier boost")
+    void triggeringSpiritEntersAfterBoostResolves() {
+        addCreatureReady(player1, new KodamaOfTheSouthTree());
+        Permanent retainer = addCreatureReady(player1, new DevotedRetainer());
+
+        harness.castFromHand(player1, new HarshDeceiver(), "{3}{W}");
+        harness.passBothPriorities();
+
+        assertThat(retainer.getPowerModifier()).isEqualTo(1);
+        assertThat(retainer.getToughnessModifier()).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, retainer, Keyword.TRAMPLE)).isTrue();
+        harness.assertNotOnBattlefield(player1, "Harsh Deceiver");
+
+        resolveAllTriggers();
+
+        Permanent deceiver = findPermanent(player1, "Harsh Deceiver");
+        assertThat(deceiver.getPowerModifier()).isZero();
+        assertThat(deceiver.getToughnessModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, deceiver, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Each qualifying cast adds another boost to creatures present at resolution")
+    void multipleCastsAccumulateBoosts() {
+        Permanent kodama = addCreatureReady(player1, new KodamaOfTheSouthTree());
+        Permanent retainer = addCreatureReady(player1, new DevotedRetainer());
+
+        harness.castFromHand(player1, new HarshDeceiver(), "{3}{W}");
+        resolveAllTriggers();
+        Permanent deceiver = findPermanent(player1, "Harsh Deceiver");
+
+        harness.castFromHand(player1, new DesperateRitual(), "{1}{R}");
+        resolveAllTriggers();
+
+        assertThat(retainer.getPowerModifier()).isEqualTo(2);
+        assertThat(retainer.getToughnessModifier()).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, retainer, Keyword.TRAMPLE)).isTrue();
+        assertThat(deceiver.getPowerModifier()).isEqualTo(1);
+        assertThat(deceiver.getToughnessModifier()).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, deceiver, Keyword.TRAMPLE)).isTrue();
+        assertThat(kodama.getPowerModifier()).isZero();
+        assertThat(kodama.getToughnessModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, kodama, Keyword.TRAMPLE)).isFalse();
     }
 }
