@@ -57,8 +57,7 @@ class LamplightPhoenixTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactly(evidenceOne.getId(), evidenceTwo.getId(), phoenix.getCard().getId());
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getId().equals(phoenix.getCard().getId()));
+        harness.assertNotOnBattlefield(player1, "Lamplight Phoenix");
     }
 
     @Test
@@ -76,7 +75,60 @@ class LamplightPhoenixTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactly(evidence.getId(), phoenix.getCard().getId());
+        harness.assertNotOnBattlefield(player1, "Lamplight Phoenix");
+    }
+
+    @Test
+    void canCollectMoreThanFourManaValueAndLeaveUnselectedEvidence() {
+        Card evidenceOne = new LamplightPhoenix();
+        Card evidenceTwo = new LamplightPhoenix();
+        Card unselected = new LamplightPhoenix();
+        Permanent phoenix = harness.addToBattlefieldAndReturn(player1, new LamplightPhoenix());
+        harness.setGraveyard(player1, List.of(evidenceOne, evidenceTwo, unselected));
+        phoenix.setMarkedDamage(3);
+        harness.runStateBasedActions();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getId).contains(phoenix.getCard().getId());
+        harness.handleMultipleCardsChosen(player1, List.of(evidenceOne.getId(), evidenceTwo.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId).containsExactly(unselected.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getId).containsExactlyInAnyOrder(evidenceOne.getId(), evidenceTwo.getId());
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getId().equals(phoenix.getCard().getId()));
+                .filteredOn(permanent -> permanent.getCard().getId().equals(phoenix.getCard().getId()))
+                .singleElement().satisfies(returned -> assertThat(returned.isTapped()).isTrue());
+    }
+
+    @Test
+    void originalDeathTriggerCannotReturnPhoenixAfterItLeavesAndDiesAgain() {
+        Card evidenceOne = new LamplightPhoenix();
+        Card evidenceTwo = new LamplightPhoenix();
+        Card phoenixCard = new LamplightPhoenix();
+        Permanent first = harness.addToBattlefieldAndReturn(player1, phoenixCard);
+        harness.setGraveyard(player1, List.of(evidenceOne, evidenceTwo));
+        first.setMarkedDamage(3);
+        harness.runStateBasedActions();
+
+        harness.setGraveyard(player1, List.of(evidenceOne, evidenceTwo));
+        Permanent returned = harness.enterBattlefieldAndReturn(player1, phoenixCard);
+        returned.setMarkedDamage(3);
+        harness.runStateBasedActions();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        harness.assertNotOnBattlefield(player1, "Lamplight Phoenix");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactly(evidenceOne.getId(), evidenceTwo.getId(), phoenixCard.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 }
