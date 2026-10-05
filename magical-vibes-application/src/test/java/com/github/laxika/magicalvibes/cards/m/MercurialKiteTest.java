@@ -66,4 +66,44 @@ class MercurialKiteTest extends BaseCardTest {
         assertThat(creature.isTapped()).isFalse();
         assertThat(creature.getSkipUntapCount()).isZero();
     }
+
+    @Test
+    @DisplayName("Tapping and preventing untapping are one combat damage trigger")
+    void combatDamageCreatesOneCombinedTrigger() {
+        Permanent kite = addCreatureReady(player1, new MercurialKite());
+        kite.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new Dragonstalker());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        blocker.addBlockingTargetId(kite.getId());
+        harness.forceActivePlayer(player1);
+
+        harness.resolveCombatDamage();
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(blocker.isTapped()).isTrue();
+        assertThat(blocker.getSkipUntapCount()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Kite also taps and locks an attacker when dealing damage as a blocker")
+    void blockingKiteLocksDamagedAttacker() {
+        Permanent attacker = addCreatureReady(player1, new Dragonstalker());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new MercurialKite());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(attacker.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
+        harness.performUntapStep(player1);
+        assertThat(attacker.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(attacker.isTapped()).isFalse();
+    }
 }
