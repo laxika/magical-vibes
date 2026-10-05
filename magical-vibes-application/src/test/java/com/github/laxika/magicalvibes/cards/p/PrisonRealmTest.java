@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GideonBlackblade;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.n.Naturalize;
+import com.github.laxika.magicalvibes.cards.d.Despark;
+import com.github.laxika.magicalvibes.cards.r.ReturnToNature;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -22,22 +21,20 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PrisonRealm.class, GideonBlackblade.class, GrizzlyBears.class, Naturalize.class, Forest.class})
+@CardUsed({PrisonRealm.class, GideonBlackblade.class, PrimordialWurm.class, ReturnToNature.class, Forest.class, Despark.class})
 class PrisonRealmTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB exiles an opponent's creature and scries 1")
     void exilesCreatureAndScries() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new PrimordialWurm());
+        UUID bearsId = harness.getPermanentId(player2, "Primordial Wurm");
 
         castAndResolve(bearsId);
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Primordial Wurm");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
-        finishScry();
+                .anyMatch(card -> card.getName().equals("Primordial Wurm"));
     }
 
     @Test
@@ -52,31 +49,28 @@ class PrisonRealmTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Gideon Blackblade");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(card -> card.getName().equals("Gideon Blackblade"));
-        finishScry();
     }
 
     @Test
     @DisplayName("Exiled permanent returns when Prison Realm leaves the battlefield")
     void exiledPermanentReturnsWhenSourceLeaves() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new PrimordialWurm());
+        UUID bearsId = harness.getPermanentId(player2, "Primordial Wurm");
 
         castAndResolve(bearsId);
-        finishScry();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new Naturalize()));
+        harness.setHand(player2, List.of(new ReturnToNature()));
         harness.addMana(player2, ManaColor.GREEN, 2);
         UUID prisonRealmId = harness.getPermanentId(player1, "Prison Realm");
-        harness.passPriority(player1);
-        harness.castInstant(player2, 0, prisonRealmId);
+        harness.castModalInstant(player2, 0, 1, List.of(prisonRealmId));
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Primordial Wurm");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .noneMatch(card -> card.getName().equals("Grizzly Bears"));
+                .noneMatch(card -> card.getName().equals("Primordial Wurm"));
     }
 
     @Test
@@ -94,8 +88,8 @@ class PrisonRealmTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a permanent the caster controls")
     void cannotTargetOwnCreature() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.addToBattlefield(player1, new PrimordialWurm());
+        UUID bearsId = harness.getPermanentId(player1, "Primordial Wurm");
         setUpCast();
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, bearsId))
@@ -103,24 +97,117 @@ class PrisonRealmTest extends BaseCardTest {
                 .hasMessageContaining("opponent controls");
     }
 
-    private void castAndResolve(UUID targetId) {
+    @Test
+    @DisplayName("Scry still triggers when no opponent has a creature or planeswalker")
+    void scriesWithoutAnExileTarget() {
+        setUpCast();
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Prison Realm");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        finishScry();
+    }
+
+    @Test
+    @DisplayName("Exile and scry are separate triggered abilities on the stack")
+    void enterAbilitiesUseSeparateStackEntries() {
+        harness.addToBattlefield(player2, new PrimordialWurm());
+        UUID targetId = harness.getPermanentId(player2, "Primordial Wurm");
         setUpCast();
         harness.castEnchantment(player1, 0, targetId);
         harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+        finishScry();
+        resolveAllTriggers();
+        harness.assertNotOnBattlefield(player2, "Primordial Wurm");
+    }
+
+    @Test
+    @DisplayName("Scry still resolves when the exile target leaves in response")
+    void scriesWhenExileTargetBecomesIllegal() {
+        harness.addToBattlefield(player2, new PrimordialWurm());
+        UUID targetId = harness.getPermanentId(player2, "Primordial Wurm");
+        setUpCast();
+        harness.castEnchantment(player1, 0, targetId);
         harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Despark()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.castAndResolveInstant(player2, 0, targetId);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Primordial Wurm");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        finishScry();
+    }
+
+    @Test
+    @DisplayName("Leaving before the exile ability resolves prevents exile but not scry")
+    void sourceLeavesBeforeExileResolves() {
+        harness.addToBattlefield(player2, new PrimordialWurm());
+        UUID targetId = harness.getPermanentId(player2, "Primordial Wurm");
+        setUpCast();
+        harness.castEnchantment(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        UUID sourceId = harness.getPermanentId(player1, "Prison Realm");
+        harness.setHand(player2, List.of(new ReturnToNature()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castModalInstant(player2, 0, 1, List.of(sourceId));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Prison Realm");
+        harness.assertOnBattlefield(player2, "Primordial Wurm");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        finishScry();
+    }
+
+    @Test
+    @DisplayName("Scry can put the top card on the bottom of the library")
+    void scryCanPutCardOnBottom() {
+        harness.addToBattlefield(player2, new PrimordialWurm());
+        UUID targetId = harness.getPermanentId(player2, "Primordial Wurm");
+        setUpCast();
+        Forest top = new Forest();
+        PrimordialWurm next = new PrimordialWurm();
+        harness.setLibrary(player1, List.of(top, next));
+        harness.castEnchantment(player1, 0, targetId);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(next, top);
+        resolveAllTriggers();
+    }
+
+    private void castAndResolve(UUID targetId) {
+        setUpCast();
+        harness.castEnchantment(player1, 0, targetId);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        finishScry();
+        resolveAllTriggers();
     }
 
     private void setUpCast() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new PrisonRealm()));
+        harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
     }
 
     private void finishScry() {
-        GameData gameData = harness.getGameData();
-        harness.getGameService().handleInteractionAnswer(gameData, player1,
+        gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(0), List.of()));
     }
 }
