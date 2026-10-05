@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({RadiantSmite.class, AirElemental.class, GrizzlyBears.class})
 class RadiantSmiteTest extends BaseCardTest {
@@ -81,6 +82,55 @@ class RadiantSmiteTest extends BaseCardTest {
         harness.assertInHand(player1, "Grizzly Bears");
     }
 
+    @Test
+    void startingPlayersCyclingDoesNotPutLifeGainTriggerOnStack() {
+        gd.startingPlayerId = player1.getId();
+        harness.setHand(player1, List.of(new RadiantSmite()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void nonStartingPlayersCyclingLifeGainResolvesBeforeDraw() {
+        gd.startingPlayerId = player1.getId();
+        harness.setHand(player2, List.of(new RadiantSmite()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.activateHandAbility(player2, 0, null);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.assertInGraveyard(player2, "Radiant Smite");
+        harness.passBothPriorities();
+        harness.assertLife(player2, 22);
+        harness.assertNotInHand(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+        harness.assertInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void targetDroppingBelowFourPowerPreventsDestructionAndLifeGain() {
+        gd.startingPlayerId = player1.getId();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        harness.setHand(player2, List.of(new RadiantSmite()));
+        addSpellMana(player2);
+
+        harness.castInstant(player2, 0, target.getId());
+        target.setPowerModifier(-1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Air Elemental");
+        harness.assertInGraveyard(player2, "Radiant Smite");
+        harness.assertLife(player2, 20);
+    }
+
     private void cast(com.github.laxika.magicalvibes.model.Player caster, Permanent target) {
         gd.activePlayerId = caster.getId();
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -88,8 +138,7 @@ class RadiantSmiteTest extends BaseCardTest {
         harness.setHand(caster, List.of(new RadiantSmite()));
         addSpellMana(caster);
 
-        harness.castInstant(caster, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, target.getId());
     }
 
     private void addSpellMana(com.github.laxika.magicalvibes.model.Player caster) {
