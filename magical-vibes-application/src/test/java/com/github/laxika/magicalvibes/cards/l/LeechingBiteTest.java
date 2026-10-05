@@ -4,8 +4,10 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LeechingBite.class, GrizzlyBears.class, LlanowarElves.class})
 class LeechingBiteTest extends BaseCardTest {
 
     @Test
@@ -41,8 +44,7 @@ class LeechingBiteTest extends BaseCardTest {
 
         UUID firstId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID secondId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, List.of(firstId, secondId));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(firstId, secondId));
 
         Permanent first = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(first.getPowerModifier()).isEqualTo(1);
@@ -63,8 +65,7 @@ class LeechingBiteTest extends BaseCardTest {
 
         UUID firstId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID secondId = harness.getPermanentId(player2, "Llanowar Elves");
-        harness.castInstant(player1, 0, List.of(firstId, secondId));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(firstId, secondId));
 
         Permanent first = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(first.getPowerModifier()).isEqualTo(1);
@@ -87,8 +88,7 @@ class LeechingBiteTest extends BaseCardTest {
         List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
         UUID id1 = bf.get(0).getId();
         UUID id2 = bf.get(1).getId();
-        harness.castInstant(player1, 0, List.of(id1, id2));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(id1, id2));
 
         Permanent first = gd.playerBattlefields.get(player1.getId()).get(0);
         assertThat(first.getPowerModifier()).isEqualTo(1);
@@ -160,5 +160,38 @@ class LeechingBiteTest extends BaseCardTest {
         Permanent second = gd.playerBattlefields.get(player2.getId()).getFirst();
         assertThat(second.getPowerModifier()).isEqualTo(-1);
         assertThat(second.getToughnessModifier()).isEqualTo(-1);
+    }
+
+    @Test
+    @DisplayName("Both modifiers expire at end of turn")
+    void modifiersExpireAtEndOfTurn() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new LeechingBite()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player1, 0, List.of(first.getId(), second.getId()));
+        assertThat(first.getPowerModifier()).isEqualTo(1);
+        assertThat(second.getPowerModifier()).isEqualTo(-1);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(first.getPowerModifier()).isZero();
+        assertThat(first.getToughnessModifier()).isZero();
+        assertThat(second.getPowerModifier()).isZero();
+        assertThat(second.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Cannot cast with only one target")
+    void requiresTwoTargets() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new LeechingBite()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Leeching Bite");
     }
 }
