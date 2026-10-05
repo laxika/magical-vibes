@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Otaria.class, Divination.class, Forest.class, Shock.class})
+@CardUsed({Otaria.class, Divination.class, Forest.class, Shock.class, ThinkTwice.class})
 class OtariaTest extends BaseCardTest {
 
     private PlanechaseService planar;
@@ -41,8 +42,7 @@ class OtariaTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(shock));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castFlashback(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player2, 0, player1.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
@@ -83,5 +83,70 @@ class OtariaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.extraTurns).containsExactly(player1.getId());
+    }
+
+    @Test
+    void allowsTheGrantedCostWhenThePrintedFlashbackCostCannotBePaid() {
+        ThinkTwice thinkTwice = new ThinkTwice();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setGraveyard(player1, List.of(thinkTwice));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castFlashback(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(thinkTwice);
+    }
+
+    @Test
+    void stopsGrantingFlashbackWhenOtariaIsNoLongerFaceUp() {
+        Shock shock = new Shock();
+        harness.setGraveyard(player1, List.of(shock));
+        harness.addMana(player1, ManaColor.RED, 1);
+        gd.planechase.faceUp.clear();
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(shock);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void spellAlreadyCastWithFlashbackStillResolvesAndIsExiledAfterOtariaLeaves() {
+        Shock shock = new Shock();
+        harness.setGraveyard(player1, List.of(shock));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castFlashback(player1, 0, player2.getId());
+        gd.planechase.faceUp.clear();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(shock);
+    }
+
+    @Test
+    void chaosTriggerKeepsItsControllerAfterOtariaLeaves() {
+        harness.inMutationScope(() -> planar.chaos(gd));
+        gd.planechase.faceUp.clear();
+        gd.planechase.controllerId = player2.getId();
+        harness.passBothPriorities();
+
+        assertThat(gd.extraTurns).containsExactly(player1.getId());
+    }
+
+    @Test
+    void repeatedChaosGrantsMultipleExtraTurns() {
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+
+        assertThat(gd.extraTurns).containsExactly(player1.getId(), player1.getId());
     }
 }
