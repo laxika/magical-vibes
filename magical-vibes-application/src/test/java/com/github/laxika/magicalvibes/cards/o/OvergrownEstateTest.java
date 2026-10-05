@@ -72,6 +72,50 @@ class OvergrownEstateTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Caves of Koilos");
     }
 
+    @Test
+    @DisplayName("A tapped land is sacrificed immediately but life is gained only on resolution")
+    void tappedLandIsPaidBeforeLifeGainResolves() {
+        harness.addToBattlefield(player1, new OvergrownEstate());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new CavesOfKoilos());
+        land.setTapped(true);
+        prepareAbilityActivation();
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Caves of Koilos");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(land);
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The ability can be activated twice during the opponent's turn")
+    void repeatedActivationOnOpponentsTurn() {
+        Permanent estate = harness.addToBattlefieldAndReturn(player1, new OvergrownEstate());
+        Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new CavesOfKoilos());
+        harness.addToBattlefield(player1, new CavesOfKoilos());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handlePermanentChosen(player1, firstLand.getId());
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(estate);
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 23);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 26);
+        assertThat(estate.isTapped()).isFalse();
+    }
     private void prepareAbilityActivation() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
