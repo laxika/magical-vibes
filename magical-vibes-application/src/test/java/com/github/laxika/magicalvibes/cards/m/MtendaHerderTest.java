@@ -125,4 +125,21 @@ class MtendaHerderTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Flanking does not trigger when Mtenda Herder blocks")
+    void flankingDoesNotTriggerWhileBlocking() {
+        Permanent attacker = addCreatureReady(player1, new FemerefScouts());
+        attacker.setAttacking(true);
+        Permanent herder = addCreatureReady(player2, new MtendaHerder());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(attacker.getEffectivePower()).isEqualTo(1);
+        assertThat(attacker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(herder.getEffectivePower()).isEqualTo(1);
+        assertThat(herder.getEffectiveToughness()).isEqualTo(1);
+    }
+
 }
