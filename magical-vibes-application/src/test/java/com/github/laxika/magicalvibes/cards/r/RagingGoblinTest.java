@@ -65,4 +65,19 @@ class RagingGoblinTest extends BaseCardTest {
         assertThat(goblin.isTapped()).isTrue();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
+
+    @Test
+    @DisplayName("Haste does not allow a tapped creature to attack")
+    void cannotAttackWhileTappedDespiteHaste() {
+        harness.castFromHand(player1, new RagingGoblin(), "{R}");
+        harness.passBothPriorities();
+        Permanent goblin = findPermanent(player1, "Raging Goblin");
+        goblin.setTapped(true);
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
 }
