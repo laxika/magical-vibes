@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GlassGolem;
 import com.github.laxika.magicalvibes.cards.g.GolgariBrownscale;
 import com.github.laxika.magicalvibes.cards.g.GolgariRotwurm;
 import com.github.laxika.magicalvibes.cards.m.Moroii;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.cards.v.ViashinoFangtail;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({InciteHysteria.class, ViashinoFangtail.class, GolgariBrownscale.class, GlassGolem.class,
-        GolgariRotwurm.class, Moroii.class})
+        GolgariRotwurm.class, Moroii.class, TurnToFrog.class})
 class InciteHysteriaTest extends BaseCardTest {
 
     @Test
@@ -115,9 +116,56 @@ class InciteHysteriaTest extends BaseCardTest {
         assertThat(target.isCantBlockThisTurn()).isFalse();
     }
 
+    @Test
+    @DisplayName("Creatures entering after resolution do not gain the ability")
+    void creaturesEnteringAfterResolutionCanBlock() {
+        Permanent target = addCreatureReady(player2, new ViashinoFangtail());
+        castInciteHysteria(target);
+
+        Permanent laterCreature = addCreatureReady(player2, new ViashinoFangtail());
+
+        assertThat(bls.canBlock(gd, target)).isFalse();
+        assertThat(bls.canBlock(gd, laterCreature)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Later ability removal lets the target block again")
+    void laterAbilityRemovalLetsTargetBlock() {
+        Permanent target = addCreatureReady(player2, new ViashinoFangtail());
+        Permanent matchingCreature = addCreatureReady(player2, new ViashinoFangtail());
+        castInciteHysteria(target);
+        assertThat(bls.canBlock(gd, target)).isFalse();
+
+        castTurnToFrog(target);
+
+        assertThat(bls.canBlock(gd, target)).isTrue();
+        assertThat(bls.canBlock(gd, matchingCreature)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Later ability removal also removes the ability from a nontarget creature")
+    void laterAbilityRemovalLetsMatchingCreatureBlock() {
+        Permanent target = addCreatureReady(player2, new ViashinoFangtail());
+        Permanent matchingCreature = addCreatureReady(player2, new ViashinoFangtail());
+        castInciteHysteria(target);
+        assertThat(bls.canBlock(gd, matchingCreature)).isFalse();
+
+        castTurnToFrog(matchingCreature);
+
+        assertThat(bls.canBlock(gd, matchingCreature)).isTrue();
+        assertThat(bls.canBlock(gd, target)).isFalse();
+    }
+
+    private void castTurnToFrog(Permanent target) {
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+    }
+
     private void castInciteHysteria(Permanent target) {
-        castInciteHysteriaWithoutResolving(target);
-        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new InciteHysteria()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 
     private void castInciteHysteriaWithoutResolving(Permanent target) {
