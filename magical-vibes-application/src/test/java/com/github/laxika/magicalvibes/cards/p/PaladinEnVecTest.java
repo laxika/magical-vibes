@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.Terror;
 import com.github.laxika.magicalvibes.cards.u.UnholyStrength;
+import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -25,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({PaladinEnVec.class, BogWraith.class, Bandage.class, GiantSpider.class, GrizzlyBears.class,
         HillGiant.class, HolyStrength.class, Pyroclasm.class, Shock.class, Terror.class,
-        UnholyStrength.class})
+        UnholyStrength.class, ProdigalPyromancer.class, WrathOfGod.class})
 class PaladinEnVecTest extends BaseCardTest {
 
     @Test
@@ -288,6 +289,30 @@ class PaladinEnVecTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard()).isInstanceOf(HolyStrength.class);
+    }
+
+    @Test
+    @DisplayName("Protection from red also rejects targets of red creature abilities")
+    void cannotBeTargetedByRedActivatedAbility() {
+        addCreatureReady(player1, new ProdigalPyromancer());
+        Permanent paladin = addCreatureReady(player2, new PaladinEnVec());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, paladin.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from red");
+    }
+
+    @Test
+    @DisplayName("Protection does not prevent untargeted destruction")
+    void untargetedDestructionKillsPaladin() {
+        addCreatureReady(player2, new PaladinEnVec());
+
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Paladin en-Vec");
+        harness.assertInGraveyard(player2, "Paladin en-Vec");
     }
 }
 
