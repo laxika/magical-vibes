@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.q.QuirionExplorer;
 import com.github.laxika.magicalvibes.cards.r.RadiantKavu;
 import com.github.laxika.magicalvibes.cards.t.TerminalMoraine;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -73,5 +75,61 @@ class MoggJailerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isLessThan(20);
+    }
+
+    @Test
+    @DisplayName("Cannot attack when the defending creature has exactly 2 power")
+    void cannotAttackWhenDefendingCreatureHasExactlyTwoPower() {
+        addCreatureReady(player1, new MoggJailer());
+        addCreatureReady(player2, new MoggJailer());
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("One untapped small creature prevents attacking even alongside tapped and larger creatures")
+    void cannotAttackWhenAnyDefendingCreatureQualifies() {
+        addCreatureReady(player1, new MoggJailer());
+        addCreatureReady(player2, new RadiantKavu());
+        addCreatureReady(player2, new QuirionExplorer()).tap();
+        addCreatureReady(player2, new MoggJailer());
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can block a small attacking creature")
+    void attackRestrictionDoesNotPreventBlocking() {
+        addCreatureReady(player1, new QuirionExplorer());
+        addCreatureReady(player2, new MoggJailer());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Uses increased current power rather than printed power")
+    void canAttackWhenCountersRaiseDefendingCreatureAboveTwoPower() {
+        addCreatureReady(player1, new MoggJailer());
+        Permanent defender = addCreatureReady(player2, new MoggJailer());
+        defender.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        assertThatCode(() -> declareAttackers(player1, List.of(0)))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Uses reduced current power rather than printed power")
+    void cannotAttackWhenCountersReduceDefendingCreatureToTwoPower() {
+        addCreatureReady(player1, new MoggJailer());
+        Permanent defender = addCreatureReady(player2, new RadiantKavu());
+        defender.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
