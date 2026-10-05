@@ -21,10 +21,9 @@ class MurkDwellersTest extends BaseCardTest {
     void unblockedGetsBoost() {
         Permanent dwellers = addCreatureReady(player1, new MurkDwellers());
         int powerBefore = gqs.getEffectivePower(gd, dwellers);
-        dwellers.setAttacking(true);
         addCreatureReady(player2, new GrizzlyBears()); // a potential blocker that declines to block
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of()); // no blocks — Murk Dwellers is unblocked
         harness.passUntil(TurnStep.END_OF_COMBAT);
 
@@ -36,10 +35,9 @@ class MurkDwellersTest extends BaseCardTest {
     void blockedGetsNoBoost() {
         Permanent dwellers = addCreatureReady(player1, new MurkDwellers());
         int powerBefore = gqs.getEffectivePower(gd, dwellers);
-        dwellers.setAttacking(true);
         addCreatureReady(player2, new GrizzlyBears());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -51,9 +49,8 @@ class MurkDwellersTest extends BaseCardTest {
     void boostWearsOffAtEndOfCombat() {
         Permanent dwellers = addCreatureReady(player1, new MurkDwellers());
         int powerBefore = gqs.getEffectivePower(gd, dwellers);
-        dwellers.setAttacking(true);
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
@@ -65,13 +62,46 @@ class MurkDwellersTest extends BaseCardTest {
     void boostAffectsCombatDamageButDoesNotPersist() {
         Permanent dwellers = addCreatureReady(player1, new MurkDwellers());
         int powerBefore = gqs.getEffectivePower(gd, dwellers);
-        dwellers.setAttacking(true);
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertLife(player2, 20 - powerBefore - 2);
+        assertThat(gqs.getEffectivePower(gd, dwellers)).isEqualTo(powerBefore);
+    }
+
+    @Test
+    @DisplayName("Only the unblocked Murk Dwellers gets the boost")
+    void onlyUnblockedCopyGetsBoost() {
+        Permanent blocked = addCreatureReady(player1, new MurkDwellers());
+        Permanent unblocked = addCreatureReady(player1, new MurkDwellers());
+        Permanent nonattacker = addCreatureReady(player1, new MurkDwellers());
+        int powerBefore = gqs.getEffectivePower(gd, unblocked);
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+            resolveAllTriggers();
+        });
+
+        assertThat(gqs.getEffectivePower(gd, blocked)).isEqualTo(powerBefore);
+        assertThat(gqs.getEffectivePower(gd, unblocked)).isEqualTo(powerBefore + 2);
+        assertThat(gqs.getEffectivePower(gd, nonattacker)).isEqualTo(powerBefore);
+    }
+
+    @Test
+    @DisplayName("Murk Dwellers gets its boost when player two attacks")
+    void boostsWhenOtherPlayerAttacks() {
+        Permanent dwellers = addCreatureReady(player2, new MurkDwellers());
+        int powerBefore = gqs.getEffectivePower(gd, dwellers);
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of());
+        harness.passUntil(player2, TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertLife(player1, 20 - powerBefore - 2);
         assertThat(gqs.getEffectivePower(gd, dwellers)).isEqualTo(powerBefore);
     }
 }
