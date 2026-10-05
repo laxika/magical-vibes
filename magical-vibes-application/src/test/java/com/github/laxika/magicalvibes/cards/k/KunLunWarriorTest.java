@@ -72,6 +72,65 @@ class KunLunWarriorTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
     }
 
+    @Test
+    @DisplayName("With both options available, sacrificing preserves the hand card")
+    void choosingSacrificePreservesHandCard() {
+        Shock kept = new Shock();
+        GrizzlyBears drawn = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(drawn));
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        castWarrior(kept);
+
+        acceptMay();
+        harness.handleListChoice(player1, "Sacrifice an artifact");
+        harness.handlePermanentChosen(player1, artifact.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept, drawn);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(artifact.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(artifact);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("With both options available, discarding preserves the artifact")
+    void choosingDiscardPreservesArtifact() {
+        Shock discarded = new Shock();
+        GrizzlyBears drawn = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(drawn));
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        castWarrior(discarded);
+
+        acceptMay();
+        harness.handleListChoice(player1, "Discard a card");
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's artifact and a nonartifact cannot pay for the draw")
+    void noLegalPaymentDoesNotDraw() {
+        Shock undrawn = new Shock();
+        harness.setLibrary(player1, List.of(undrawn));
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingArtifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        castWarrior();
+
+        acceptMay();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingArtifact);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castWarrior(Card... cards) {
         List<Card> hand = new java.util.ArrayList<>(List.of(cards));
         hand.add(new KunLunWarrior());
