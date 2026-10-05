@@ -124,4 +124,38 @@ class KinsbaileBorderguardTest extends BaseCardTest {
             assertThat(token.getCard().getToughness()).isEqualTo(1);
         }
     }
+
+    @Test
+    @DisplayName("Death ability still triggers when there are no counters")
+    void deathWithoutCountersStillPutsAbilityOnStack() {
+        harness.addToBattlefield(player1, new KinsbaileBorderguard());
+        harness.setHand(player1, List.of(new WarrenWeirding()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        harness.assertInGraveyard(player1, "Kinsbaile Borderguard");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertKithkinSoldierTokens(0);
+    }
+
+    @Test
+    @DisplayName("Death ability uses the counter count at death")
+    void deathAbilitySnapshotsCountersBeforeResolution() {
+        Permanent borderguard = harness.addToBattlefieldAndReturn(player1, new KinsbaileBorderguard());
+        borderguard.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player1, List.of(new WarrenWeirding()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.assertInGraveyard(player1, "Kinsbaile Borderguard");
+        assertThat(gd.stack).hasSize(1);
+        borderguard.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+
+        harness.passBothPriorities();
+        assertKithkinSoldierTokens(2);
+    }
 }
