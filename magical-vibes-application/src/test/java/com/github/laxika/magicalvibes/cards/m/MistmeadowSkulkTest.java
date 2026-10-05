@@ -4,7 +4,10 @@ import com.github.laxika.magicalvibes.cards.b.BladeOfTheSixthPride;
 import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
 import com.github.laxika.magicalvibes.cards.f.FatalAttraction;
 import com.github.laxika.magicalvibes.cards.f.FomoriNomad;
+import com.github.laxika.magicalvibes.cards.f.FlowstoneEmbrace;
 import com.github.laxika.magicalvibes.cards.s.SpinIntoMyth;
+import com.github.laxika.magicalvibes.cards.s.SuddenSpoiling;
+import com.github.laxika.magicalvibes.cards.u.UmbralMantle;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -19,7 +22,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({MistmeadowSkulk.class, BlindPhantasm.class, BladeOfTheSixthPride.class,
-        FomoriNomad.class, SpinIntoMyth.class, FatalAttraction.class})
+        FomoriNomad.class, SpinIntoMyth.class, FatalAttraction.class, MoltenDisaster.class,
+        SuddenSpoiling.class, FlowstoneEmbrace.class, UmbralMantle.class})
 class MistmeadowSkulkTest extends BaseCardTest {
 
     @Test
@@ -51,12 +55,11 @@ class MistmeadowSkulkTest extends BaseCardTest {
     @Test
     @DisplayName("Mistmeadow Skulk takes no combat damage from a mana value 3 or greater creature")
     void takesNoDamageFromHighManaValueCreature() {
-        Permanent attacker = addCreatureReady(player1, new FomoriNomad());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new FomoriNomad());
+        addCreatureReady(player2, new MistmeadowSkulk());
 
-        Permanent blocker = addCreatureReady(player2, new MistmeadowSkulk());
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         resolveCombat(player1);
 
@@ -102,5 +105,78 @@ class MistmeadowSkulkTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 11);
+    }
+
+    @Test
+    @DisplayName("Blocked Skulk gains life even when killed by a low mana value blocker")
+    void gainsLifeWhileDyingToLowManaValueBlocker() {
+        harness.setLife(player1, 10);
+        addCreatureReady(player1, new MistmeadowSkulk());
+        addCreatureReady(player2, new BladeOfTheSixthPride());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Mistmeadow Skulk");
+        harness.assertInGraveyard(player2, "Blade of the Sixth Pride");
+        harness.assertLife(player1, 11);
+    }
+
+    @Test
+    @DisplayName("A mana value 2 Aura can target and enchant Skulk")
+    void lowManaValueAuraCanEnchant() {
+        Permanent skulk = harness.addToBattlefieldAndReturn(player1, new MistmeadowSkulk());
+        harness.setHand(player1, List.of(new FlowstoneEmbrace()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castEnchantment(player1, 0, skulk.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Flowstone Embrace").getAttachedTo()).isEqualTo(skulk.getId());
+        harness.assertOnBattlefield(player1, "Mistmeadow Skulk");
+    }
+
+    @Test
+    @DisplayName("A mana value 3 Equipment cannot equip Skulk, even for zero mana")
+    void highManaValueEquipmentCannotEquip() {
+        harness.addToBattlefield(player1, new UmbralMantle());
+        Permanent skulk = harness.addToBattlefieldAndReturn(player1, new MistmeadowSkulk());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, skulk.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Chosen X contributes to the mana value of a damaging spell")
+    void preventsDamageFromXSpellWithManaValueThree() {
+        harness.addToBattlefield(player2, new MistmeadowSkulk());
+        harness.setHand(player1, List.of(new MoltenDisaster()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 1);
+
+        harness.assertOnBattlefield(player2, "Mistmeadow Skulk");
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Skulk loses mana value protection when it loses all abilities")
+    void highManaValueAttackerDamagesSkulkAfterAbilityRemoval() {
+        addCreatureReady(player1, new FomoriNomad());
+        addCreatureReady(player2, new MistmeadowSkulk());
+        harness.setLife(player2, 10);
+        harness.setHand(player1, List.of(new SuddenSpoiling()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player2, "Mistmeadow Skulk");
+        harness.assertLife(player2, 10);
     }
 }
