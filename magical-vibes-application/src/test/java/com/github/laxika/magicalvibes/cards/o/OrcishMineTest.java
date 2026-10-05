@@ -49,7 +49,7 @@ class OrcishMineTest extends BaseCardTest {
         castMineOnOpponentLand();
 
         harness.tapPermanent(player2, 0);
-        resolveStackFully();
+        resolveAllTriggers();
 
         assertThat(findPermanent(player1, "Orcish Mine").getCounterCount(CounterType.ORE)).isEqualTo(2);
         harness.assertOnBattlefield(player2, "Mountain");
@@ -61,7 +61,7 @@ class OrcishMineTest extends BaseCardTest {
         castMineOnOpponentLand();
 
         advanceToUpkeep(player1);
-        resolveStackFully();
+        resolveAllTriggers();
 
         assertThat(findPermanent(player1, "Orcish Mine").getCounterCount(CounterType.ORE)).isEqualTo(2);
     }
@@ -85,7 +85,7 @@ class OrcishMineTest extends BaseCardTest {
         for (int i = 0; i < 3; i++) {
             land.untap();
             harness.tapPermanent(player2, 0);
-            resolveStackFully();
+            resolveAllTriggers();
         }
 
         harness.assertNotOnBattlefield(player2, "Mountain");
@@ -96,8 +96,7 @@ class OrcishMineTest extends BaseCardTest {
     @DisplayName("Removing all ore counters by another effect destroys the land and damages its controller")
     void lastCounterRemovedByAnotherEffectTriggersPayoff() {
         Permanent land = castMineOnOpponentLand();
-        Permanent hexmage = harness.addToBattlefieldAndReturn(player1, new VampireHexmage());
-        hexmage.setSummoningSick(false);
+        harness.addToBattlefield(player1, new VampireHexmage());
         Permanent aura = findPermanent(player1, "Orcish Mine");
 
         harness.activateAbility(player1, 1, null, aura.getId());
@@ -120,13 +119,43 @@ class OrcishMineTest extends BaseCardTest {
         return land;
     }
 
-    /**
-     * Drives priority until the stack and any deferred mana-ability triggers are fully resolved; tapping
-     * a land for mana defers its triggers (CR 603.3) until a player next receives priority.
-     */
-    private void resolveStackFully() {
-        for (int i = 0; i < 8 && (!gd.stack.isEmpty() || !gd.pendingManaAbilityTriggers.isEmpty()); i++) {
-            harness.passBothPriorities();
-        }
+    @Test
+    @DisplayName("Removing the last counter leaves a separate payoff trigger to respond to")
+    void lastCounterPayoffUsesSeparateTrigger() {
+        castMineOnOpponentLand();
+        Permanent aura = findPermanent(player1, "Orcish Mine");
+        aura.setCounterCount(CounterType.ORE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(aura.getCounterCount(CounterType.ORE)).isZero();
+        harness.assertOnBattlefield(player2, "Mountain");
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+        harness.assertNotOnBattlefield(player2, "Mountain");
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Adding ore counters after the payoff triggers neither stops it nor removes another counter")
+    void payoffDoesNotRemoveNewCounters() {
+        castMineOnOpponentLand();
+        harness.addToBattlefield(player1, new VampireHexmage());
+        Permanent aura = findPermanent(player1, "Orcish Mine");
+
+        harness.activateAbility(player1, 1, null, aura.getId());
+        harness.passBothPriorities();
+        assertThat(aura.getCounterCount(CounterType.ORE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        aura.setCounterCount(CounterType.ORE, 2);
+
+        resolveAllTriggers();
+
+        assertThat(aura.getCounterCount(CounterType.ORE)).isEqualTo(2);
+        harness.assertNotOnBattlefield(player2, "Mountain");
+        harness.assertLife(player2, 18);
     }
 }
