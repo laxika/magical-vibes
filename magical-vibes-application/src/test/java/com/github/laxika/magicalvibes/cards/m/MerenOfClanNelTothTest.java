@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -79,8 +78,7 @@ class MerenOfClanNelTothTest extends BaseCardTest {
     private void advanceToEndStep(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player, TurnStep.END_STEP);
     }
     @Test
     void returnsCreatureToBattlefieldWhenManaValueIsWithinExperience() {
@@ -129,19 +127,8 @@ class MerenOfClanNelTothTest extends BaseCardTest {
         assertThat(choice.validCardIds()).containsExactly(target.getId());
     }
 
-    private void killOwnCreature() {
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, com.github.laxika.magicalvibes.model.ManaColor.RED, 1);
-        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Grizzly Bears"));
-        harness.passBothPriorities();
-        resolveAllTriggers();
-    }
-
     private void advanceToEndStep() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToEndStep(player1);
     }
 
     private void chooseGraveyardTarget(Card target) {
@@ -150,6 +137,107 @@ class MerenOfClanNelTothTest extends BaseCardTest {
         assertThat(choice).isNotNull();
         assertThat(choice.validCardIds()).contains(target.getId());
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+    }
+
+    @Test
+    void doesNotGainExperienceForItsOwnDeath() {
+        Permanent meren = addMeren();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, meren));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerExperienceCounters.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    void doesNotGainExperienceForOpponentsCreatureDeath() {
+        addMeren();
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerExperienceCounters.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    void usesExperienceCountersAtResolution() {
+        addMeren();
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        gd.playerExperienceCounters.put(player1.getId(), 1);
+        advanceToEndStep();
+        chooseTarget(target);
+
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+        harness.passBothPriorities();
+        assertThat(gd.playerExperienceCounters).containsEntry(player1.getId(), 2);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.playerExperienceCounters).containsEntry(player1.getId(), 2);
+    }
+
+    @Test
+    void endStepAbilityResolvesAfterMerenLeavesBattlefield() {
+        Permanent meren = addMeren();
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        gd.playerExperienceCounters.put(player1.getId(), 2);
+        advanceToEndStep();
+        chooseTarget(target);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, meren));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerExperienceCounters).containsEntry(player1.getId(), 2);
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsEndStep() {
+        addMeren();
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        gd.playerExperienceCounters.put(player1.getId(), 2);
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void returnsCreatureToHandWithNoExperienceCounters() {
+        addMeren();
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        advanceToEndStep();
+        chooseTarget(target);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void doesNotReturnTargetThatLeftGraveyardBeforeResolution() {
+        addMeren();
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        gd.playerExperienceCounters.put(player1.getId(), 2);
+        advanceToEndStep();
+        chooseTarget(target);
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(target);
     }
 
 }
