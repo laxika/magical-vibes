@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({KjeldoranWarrior.class, BalduvianBears.class, ShamblingStrider.class})
 class KjeldoranWarriorTest extends BaseCardTest {
@@ -56,8 +57,7 @@ class KjeldoranWarriorTest extends BaseCardTest {
         Permanent warrior = addCreatureReady(player2, new KjeldoranWarrior());
         Permanent bears = addCreatureReady(player2, new BalduvianBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
@@ -75,5 +75,48 @@ class KjeldoranWarriorTest extends BaseCardTest {
                 .contains(findPermanent(player1, "Shambling Strider"));
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(warrior);
         harness.assertNotOnBattlefield(player2, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("An attacking band cannot include two creatures without banding")
+    void rejectsBandWithTwoNonBandingCreatures() {
+        addCreatureReady(player1, new KjeldoranWarrior());
+        addCreatureReady(player1, new BalduvianBears());
+        addCreatureReady(player1, new ShamblingStrider());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1,
+                List.of(0, 1, 2), null, List.of(List.of(0, 1, 2))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("at most one creature without banding");
+    }
+
+    @Test
+    @DisplayName("An unblocked band with multiple banding creatures deals each member's damage")
+    void unblockedBandDealsAllMembersDamage() {
+        addCreatureReady(player1, new KjeldoranWarrior());
+        addCreatureReady(player1, new KjeldoranWarrior());
+        addCreatureReady(player1, new BalduvianBears());
+        harness.setLife(player2, 20);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> gs.declareAttackers(gd, player1, List.of(0, 1, 2),
+                        null, List.of(List.of(0, 1, 2))));
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        harness.assertLife(player2, 16);
+        assertThat(countPermanents(player1, "Kjeldoran Warrior")).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Balduvian Bears");
     }
 }
