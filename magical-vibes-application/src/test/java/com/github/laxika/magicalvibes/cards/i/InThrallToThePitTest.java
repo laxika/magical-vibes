@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({InThrallToThePit.class, GrizzlyBears.class, Forest.class})
+@CardUsed({InThrallToThePit.class, GrizzlyBears.class, Forest.class, RayOfCommand.class})
 class InThrallToThePitTest extends BaseCardTest {
 
     @Test
@@ -26,8 +27,7 @@ class InThrallToThePitTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         assertThat(target.isTapped()).isFalse();
         assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
@@ -61,11 +61,42 @@ class InThrallToThePitTest extends BaseCardTest {
         assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
 
+        harness.passUntil(TurnStep.END_STEP);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void cannotSacrificeCreatureAfterOpponentRegainsControl() {
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new InThrallToThePit()));
+        harness.setHand(player2, List.of(new RayOfCommand()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        gs.playCard(gd, player1, 0, 0, target.getId(), null,
+                List.of(), List.of(), false, null, null, null, null, null, true);
+        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -78,5 +109,31 @@ class InThrallToThePitTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    void delayedSacrificeRemainsControlledByTheSpellCaster() {
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new InThrallToThePit()));
+        harness.setHand(player2, List.of(new RayOfCommand()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        gs.playCard(gd, player1, 0, 0, target.getId(), null,
+                List.of(), List.of(), false, null, null, null, null, null, true);
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 }
