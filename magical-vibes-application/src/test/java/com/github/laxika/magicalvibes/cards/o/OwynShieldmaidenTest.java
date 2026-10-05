@@ -44,9 +44,8 @@ class OwynShieldmaidenTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new YouthfulKnight());
         harness.addToBattlefield(player1, new YouthfulKnight());
         harness.addToBattlefield(player1, new YouthfulKnight());
-        harness.addToBattlefield(player1, new YouthfulKnight());
         Card drawnCard = new YouthfulKnight();
-        gd.playerDecks.put(player1.getId(), new java.util.ArrayList<>(List.of(drawnCard)));
+        harness.setLibrary(player1, List.of(drawnCard));
 
         advanceToCombat(player1);
 
@@ -56,11 +55,114 @@ class OwynShieldmaidenTest extends BaseCardTest {
     @Test
     void doesNotTriggerWhenOnlyANonHumanEnters() {
         harness.addToBattlefield(player1, new OwynShieldmaiden());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
 
         advanceToCombat(player1);
 
         assertThat(humanKnightTokens()).isEmpty();
+    }
+
+    @Test
+    void doesNotTriggerWhenOnlyOwynEnters() {
+        harness.enterBattlefieldAndReturn(player1, new OwynShieldmaiden());
+
+        advanceToCombat(player1);
+
+        assertThat(humanKnightTokens()).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotTriggerForAHumanEnteringUnderOpponentsControl() {
+        harness.addToBattlefield(player1, new OwynShieldmaiden());
+        harness.enterBattlefieldAndReturn(player2, new YouthfulKnight());
+
+        advanceToCombat(player1);
+
+        assertThat(humanKnightTokens()).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsCombat() {
+        harness.addToBattlefield(player1, new OwynShieldmaiden());
+        harness.enterBattlefieldAndReturn(player1, new YouthfulKnight());
+
+        advanceToCombat(player2);
+
+        assertThat(humanKnightTokens()).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void createsTokensWithoutDrawingWhenHumanCountRemainsBelowSix() {
+        harness.addToBattlefield(player1, new OwynShieldmaiden());
+        harness.enterBattlefieldAndReturn(player1, new YouthfulKnight());
+        harness.addToBattlefield(player1, new YouthfulKnight());
+        Card drawnCard = new YouthfulKnight();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of());
+
+        advanceToCombat(player1);
+
+        assertThat(humanKnightTokens()).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    void sixHumansAloneDoNotTriggerWithoutAnotherHumanEnteringThisTurn() {
+        harness.addToBattlefield(player1, new OwynShieldmaiden());
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player1, new YouthfulKnight());
+        }
+        Card drawnCard = new YouthfulKnight();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of());
+
+        advanceToCombat(player1);
+
+        assertThat(humanKnightTokens()).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    void stillTriggersAfterTheHumanThatEnteredLeavesTheBattlefield() {
+        harness.addToBattlefield(player1, new OwynShieldmaiden());
+        Permanent human = harness.enterBattlefieldAndReturn(player1, new YouthfulKnight());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, human));
+
+        advanceToCombat(player1);
+
+        assertThat(humanKnightTokens()).hasSize(2);
+    }
+
+    @Test
+    void triggersForAHumanThatEnteredBeforeOwyn() {
+        harness.enterBattlefieldAndReturn(player1, new YouthfulKnight());
+        harness.enterBattlefieldAndReturn(player1, new OwynShieldmaiden());
+
+        advanceToCombat(player1);
+
+        assertThat(humanKnightTokens()).hasSize(2);
+    }
+
+    @Test
+    void resolvesAfterOwynLeavesTheBattlefield() {
+        Permanent owyn = harness.addToBattlefieldAndReturn(player1, new OwynShieldmaiden());
+        harness.enterBattlefieldAndReturn(player1, new YouthfulKnight());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, owyn));
+        harness.passBothPriorities();
+
+        assertThat(humanKnightTokens()).hasSize(2);
     }
 
     private List<Permanent> humanKnightTokens() {
@@ -74,8 +176,7 @@ class OwynShieldmaidenTest extends BaseCardTest {
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
         harness.passBothPriorities();
     }
 }
