@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.d.DazzlingBeauty;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({JohtullWurm.class, GrizzlyBears.class})
+@CardUsed({JohtullWurm.class, GrizzlyBears.class, DazzlingBeauty.class, Unsummon.class})
 class JohtullWurmTest extends BaseCardTest {
 
     @Test
@@ -114,7 +115,6 @@ class JohtullWurmTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(DazzlingBeauty.class)
     @DisplayName("Becoming blocked without a creature blocking it does not apply a penalty")
     void blockedWithoutCreatureNoPenalty() {
         Permanent wurm = addCreatureReady(player1, new JohtullWurm());
@@ -133,5 +133,34 @@ class JohtullWurmTest extends BaseCardTest {
         assertThat(wurm.isBlockedWithoutBlockers()).isTrue();
         assertThat(wurm.getPowerModifier()).isZero();
         assertThat(wurm.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The penalty counts blockers remaining when the trigger resolves")
+    void blockerReturnedBeforeResolutionReducesPenalty() {
+        Permanent wurm = addCreatureReady(player1, new JohtullWurm());
+        wurm.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0),
+                new BlockerAssignment(2, 0)
+        ));
+        assertThat(gd.stack).hasSize(1);
+        assertThat(wurm.getPowerModifier()).isZero();
+        assertThat(wurm.getToughnessModifier()).isZero();
+
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, blocker.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(wurm.getPowerModifier()).isEqualTo(-2);
+        assertThat(wurm.getToughnessModifier()).isEqualTo(-1);
     }
 }
