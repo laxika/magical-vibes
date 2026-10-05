@@ -88,6 +88,62 @@ class ManaChainsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Resolving Mana Chains attaches it and grants cumulative upkeep to the target")
+    void resolvingAuraGrantsCumulativeUpkeep() {
+        Permanent treefolk = harness.addToBattlefieldAndReturn(player2, new RedwoodTreefolk());
+        harness.setHand(player1, List.of(new ManaChains()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castEnchantment(player1, 0, treefolk.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Mana Chains");
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        assertThat(treefolk.getCounterCount(CounterType.AGE)).isEqualTo(1);
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player2, "Redwood Treefolk");
+        harness.assertInGraveyard(player1, "Mana Chains");
+    }
+
+    @Test
+    @DisplayName("The Aura controller's upkeep does not trigger the opposing creature's cumulative upkeep")
+    void auraControllerUpkeepDoesNotTrigger() {
+        Permanent treefolk = harness.addToBattlefieldAndReturn(player2, new RedwoodTreefolk());
+        enchant(treefolk);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(treefolk.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(treefolk);
+    }
+
+    @Test
+    @DisplayName("Two Mana Chains trigger separately and each counts all age counters on the creature")
+    void multipleInstancesShareAgeCounters() {
+        Permanent treefolk = harness.addToBattlefieldAndReturn(player2, new RedwoodTreefolk());
+        enchant(treefolk);
+        enchant(treefolk);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        assertThat(treefolk.getCounterCount(CounterType.AGE)).isEqualTo(1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(2);
+
+        harness.passBothPriorities();
+        assertThat(treefolk.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(treefolk);
+    }
+
+    @Test
     @DisplayName("Mana Chains cannot target a noncreature permanent")
     void cannotEnchantNonCreature() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new MindStone());
