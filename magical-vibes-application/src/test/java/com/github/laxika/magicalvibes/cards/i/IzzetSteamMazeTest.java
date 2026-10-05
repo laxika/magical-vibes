@@ -54,10 +54,7 @@ class IzzetSteamMazeTest extends BaseCardTest {
 
     @Test
     void doesNotCopyCreatureSpells() {
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{G}{G}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack).noneMatch(StackEntry::isCopy);
@@ -88,5 +85,91 @@ class IzzetSteamMazeTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
+    }
+
+    @Test
+    void originalAndCopyBothDealDamageWithoutCastingTheCopyAgain() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void copiesAnUntargetedSorceryAndBothSpellsResolve() {
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears()));
+        harness.castFromHand(player1, new Divination(), "{2}{U}");
+
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack).anyMatch(StackEntry::isCopy);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void choosingANewTargetForTheCopyLeavesTheOriginalTargetUnchanged() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void chaosDoesNotReduceCreatureCosts() {
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void chaosDoesNotReduceColoredManaCosts() {
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new LightningBolt()));
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void chaosDiscountExpiresAtEndOfTurn() {
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Divination()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
