@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({JourneyersKite.class, Forest.class, Plains.class, ForbiddenOrchard.class,
         AkkiAvalanchers.class})
@@ -84,6 +85,52 @@ class JourneyersKiteTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(Card::getName)
                 .containsExactlyInAnyOrder("Forbidden Orchard", "Akki Avalanchers");
+    }
+
+    @Test
+    @DisplayName("An empty library resolves without a choice or a card in hand")
+    void emptyLibrary() {
+        activateSearch(List.of());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Activation requires three mana")
+    void insufficientManaCannotActivate() {
+        harness.addToBattlefield(player1, new JourneyersKite());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(findPermanent(player1, "Journeyer's Kite").isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Kite cannot activate again")
+    void cannotActivateWhileTapped() {
+        activateSearch();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void activateSearch() {
