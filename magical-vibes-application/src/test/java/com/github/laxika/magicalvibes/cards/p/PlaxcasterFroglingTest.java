@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.a.AzoriusSignet;
 import com.github.laxika.magicalvibes.cards.m.MistralCharger;
+import com.github.laxika.magicalvibes.cards.s.Solemnity;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PlaxcasterFrogling.class, MistralCharger.class, AzoriusSignet.class})
+@CardUsed({PlaxcasterFrogling.class, MistralCharger.class, AzoriusSignet.class, Solemnity.class})
 class PlaxcasterFroglingTest extends BaseCardTest {
 
     @Test
@@ -81,7 +82,7 @@ class PlaxcasterFroglingTest extends BaseCardTest {
     @DisplayName("Gives a target creature with a +1/+1 counter shroud until end of turn")
     void grantsShroudUntilEndOfTurn() {
         addFrogling(player1);
-        Permanent target = addReadyCreature(player1, new MistralCharger());
+        Permanent target = addCreatureReady(player1, new MistralCharger());
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         harness.forceActivePlayer(player1);
@@ -103,7 +104,7 @@ class PlaxcasterFroglingTest extends BaseCardTest {
     @DisplayName("Cannot target a creature without a +1/+1 counter")
     void cannotTargetCreatureWithoutCounter() {
         addFrogling(player1);
-        Permanent target = addReadyCreature(player1, new MistralCharger());
+        Permanent target = addCreatureReady(player1, new MistralCharger());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -134,7 +135,7 @@ class PlaxcasterFroglingTest extends BaseCardTest {
     @DisplayName("Can target an opponent's creature with a +1/+1 counter")
     void grantsShroudToOpponentsCreature() {
         addFrogling(player1);
-        Permanent target = addReadyCreature(player2, new MistralCharger());
+        Permanent target = addCreatureReady(player2, new MistralCharger());
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         harness.forceActivePlayer(player1);
@@ -146,13 +147,71 @@ class PlaxcasterFroglingTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, target, Keyword.SHROUD)).isTrue();
     }
 
+    @Test
+    @DisplayName("Graft leaves the source counter in place when counters cannot be placed")
+    @CardUsed({PlaxcasterFrogling.class, MistralCharger.class, Solemnity.class})
+    void graftDoesNotRemoveCounterWhenPlacementIsProhibited() {
+        Permanent frogling = addFrogling(player1);
+        harness.addToBattlefield(player1, new Solemnity());
+        harness.castFromHand(player1, new MistralCharger(), "{1}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        Permanent charger = findPermanent(player1, "Mistral Charger");
+        assertThat(frogling.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Frogling can give itself shroud while summoning sick")
+    void grantsShroudToItselfWhileSummoningSick() {
+        Permanent frogling = addFrogling(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, frogling.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, frogling, Keyword.SHROUD)).isTrue();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, frogling.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+    }
+
+    @Test
+    @DisplayName("The shroud ability does not resolve if the target loses its last +1/+1 counter")
+    void targetLosingLastCounterBeforeResolutionIsIllegal() {
+        addFrogling(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new MistralCharger());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.SHROUD)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Shroud already granted remains when the target loses its last +1/+1 counter")
+    void grantedShroudDoesNotDependOnKeepingCounter() {
+        addFrogling(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new MistralCharger());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.SHROUD)).isTrue();
+    }
+
     private Permanent addFrogling(Player player) {
         return harness.enterBattlefieldAndReturn(player, new PlaxcasterFrogling());
     }
 
-    private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player, card);
-        creature.setSummoningSick(false);
-        return creature;
-    }
 }
