@@ -50,8 +50,7 @@ class LurkerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Fissure()));
         addFissureMana(player1);
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         harness.castAndResolveInstant(player1, 0, lurker.getId());
@@ -91,6 +90,49 @@ class LurkerTest extends BaseCardTest {
         assertThat(hunter.isTapped()).isTrue();
         harness.assertNotOnBattlefield(player2, "Lurker");
         harness.assertInHand(player2, "Lurker");
+    }
+
+    @Test
+    void controllersSpellsCannotTargetBeforeAttackingOrBlocking() {
+        Permanent lurker = addCreatureReady(player1, new Lurker());
+        harness.setHand(player1, List.of(new Fissure()));
+        addFissureMana(player1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, lurker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be the target of spells");
+    }
+
+    @Test
+    void canStillBeTargetedAfterCombatEnds() {
+        Permanent lurker = addCreatureReady(player1, new Lurker());
+        harness.setHand(player1, List.of(new Fissure()));
+
+        declareAttackers(List.of(0));
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        addFissureMana(player1);
+        harness.castAndResolveInstant(player1, 0, lurker.getId());
+
+        harness.assertInGraveyard(player1, "Lurker");
+    }
+
+    @Test
+    void blockingHistoryDoesNotAllowTargetingOnNextTurn() {
+        addCreatureReady(player1, new WitchHunter());
+        Permanent lurker = addCreatureReady(player2, new Lurker());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new Fissure()));
+        addFissureMana(player2);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, lurker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be the target of spells");
+        harness.assertOnBattlefield(player2, "Lurker");
     }
 
     private void addFissureMana(Player player) {
