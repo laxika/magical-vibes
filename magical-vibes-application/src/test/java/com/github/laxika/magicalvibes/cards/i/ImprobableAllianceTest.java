@@ -59,7 +59,7 @@ class ImprobableAllianceTest extends BaseCardTest {
     @Test
     @DisplayName("The activated ability draws a card, then prompts for a discard")
     void activatedAbilityLoots() {
-        addReadyAlliance(player1);
+        harness.addToBattlefield(player1, new ImprobableAlliance());
         harness.setHand(player1, List.of(new GrizzlyBears()));
         setDeck(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -80,11 +80,106 @@ class ImprobableAllianceTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
-    private Permanent addReadyAlliance(Player player) {
-        Permanent permanent = new Permanent(new ImprobableAlliance());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void firstDrawDoesNotCreateToken() {
+        harness.addToBattlefield(player1, new ImprobableAlliance());
+        addCardsToDeck(1);
+
+        draw();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(countPermanents(player1, "Faerie")).isZero();
+    }
+
+    @Test
+    void opponentsDrawsDoNotTriggerAlliance() {
+        harness.addToBattlefield(player1, new ImprobableAlliance());
+        setDeck(player2, List.of(new Forest(), new Forest()));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player2.getId(), 2));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(countPermanents(player1, "Faerie")).isZero();
+        assertThat(countPermanents(player2, "Faerie")).isZero();
+    }
+
+    @Test
+    void secondDrawOnOpponentsTurnCreatesToken() {
+        harness.forceActivePlayer(player2);
+        harness.addToBattlefield(player1, new ImprobableAlliance());
+        addCardsToDeck(2);
+
+        draw();
+        draw();
+        resolveTopOfStack();
+
+        assertThat(countPermanents(player1, "Faerie")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Faerie")).isZero();
+    }
+
+    @Test
+    void countsDrawBeforeAllianceEnteredBattlefield() {
+        addCardsToDeck(2);
+        draw();
+        harness.addToBattlefield(player1, new ImprobableAlliance());
+
+        draw();
+        resolveTopOfStack();
+
+        assertThat(countPermanents(player1, "Faerie")).isEqualTo(1);
+    }
+
+    @Test
+    void enteringAfterSecondDrawDoesNotTriggerOnThirdDraw() {
+        addCardsToDeck(3);
+        draw();
+        draw();
+        harness.addToBattlefield(player1, new ImprobableAlliance());
+
+        draw();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(countPermanents(player1, "Faerie")).isZero();
+    }
+
+    @Test
+    void eachAllianceTriggersForSameSecondDraw() {
+        harness.addToBattlefield(player1, new ImprobableAlliance());
+        harness.addToBattlefield(player1, new ImprobableAlliance());
+        addCardsToDeck(2);
+
+        draw();
+        draw();
+        resolveTopOfStack();
+        resolveTopOfStack();
+
+        assertThat(countPermanents(player1, "Faerie")).isEqualTo(2);
+    }
+
+    @Test
+    void activatedSecondDrawFinishesDiscardBeforeTokenResolves() {
+        harness.addToBattlefield(player1, new ImprobableAlliance());
+        harness.setHand(player1, List.of());
+        setDeck(player1, List.of(new Forest(), new Forest()));
+        draw();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(countPermanents(player1, "Faerie")).isZero();
+
+        harness.handleCardChosen(player1, 1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(countPermanents(player1, "Faerie")).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void addCardsToDeck(int count) {
