@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
+import com.github.laxika.magicalvibes.cards.a.ArcticTreeline;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RavenousLindwurm;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -9,14 +11,16 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MoritteOfTheFrost.class, GrizzlyBears.class, DarksteelRelic.class,
+        ArcticTreeline.class, RavenousLindwurm.class})
 class MoritteOfTheFrostTest extends BaseCardTest {
 
     @Test
@@ -27,8 +31,7 @@ class MoritteOfTheFrostTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.handlePermanentChosen(player1, targetId);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Grizzly Bears"));
 
         Permanent copy = morittePermanent();
         assertThat(copy.getCard().getSupertypes())
@@ -47,8 +50,7 @@ class MoritteOfTheFrostTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        UUID targetId = harness.getPermanentId(player1, "Darksteel Relic");
-        harness.handlePermanentChosen(player1, targetId);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Darksteel Relic"));
 
         Permanent copy = morittePermanent();
         assertThat(copy.getCard().hasType(CardType.ARTIFACT)).isTrue();
@@ -69,6 +71,72 @@ class MoritteOfTheFrostTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Moritte of the Frost");
         harness.assertInGraveyard(player1, "Moritte of the Frost");
+    }
+
+    @Test
+    void decliningCopyDoesNotGrantCounters() {
+        harness.addToBattlefield(player1, new RavenousLindwurm());
+        castMoritte();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Moritte of the Frost");
+        harness.assertInGraveyard(player1, "Moritte of the Frost");
+        harness.assertOnBattlefield(player1, "Ravenous Lindwurm");
+    }
+
+    @Test
+    void doesNotCopyCountersOrTappedState() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new RavenousLindwurm());
+        original.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+        original.tap();
+        castMoritte();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, original.getId());
+
+        Permanent copy = morittePermanent();
+        assertThat(copy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(copy.getEffectivePower()).isEqualTo(8);
+        assertThat(copy.getEffectiveToughness()).isEqualTo(8);
+        assertThat(copy.isTapped()).isFalse();
+        assertThat(original.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(original.isTapped()).isTrue();
+    }
+
+    @Test
+    void copiedEntersAbilityTriggers() {
+        harness.addToBattlefield(player1, new RavenousLindwurm());
+        harness.setLife(player1, 12);
+        harness.setLife(player2, 17);
+        castMoritte();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Ravenous Lindwurm"));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 17);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void copiesLandAndItsEntersTappedReplacement() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new ArcticTreeline());
+        original.untap();
+        castMoritte();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, original.getId());
+
+        Permanent copy = morittePermanent();
+        assertThat(copy.getCard().hasType(CardType.LAND)).isTrue();
+        assertThat(copy.getCard().hasType(CardType.CREATURE)).isFalse();
+        assertThat(copy.getCard().getSupertypes()).contains(CardSupertype.LEGENDARY, CardSupertype.SNOW);
+        assertThat(copy.getCard().getKeywords()).doesNotContain(Keyword.CHANGELING);
+        assertThat(copy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(copy.isTapped()).isTrue();
+        assertThat(original.isTapped()).isFalse();
     }
 
     private void castMoritte() {
