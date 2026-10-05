@@ -2,8 +2,11 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WoodlandChangeling;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,22 +18,22 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MudbuttonTorchrunner.class, WoodlandChangeling.class, GarrukWildspeaker.class})
 class MudbuttonTorchrunnerTest extends BaseCardTest {
 
     /**
      * Sets up combat where Mudbutton Torchrunner (player1, 1/1) attacks and is blocked by
-     * a 2/2 Grizzly Bears (player2), so the Torchrunner dies from combat damage.
+     * a 2/2 Woodland Changeling (player2), so the Torchrunner dies from combat damage.
      */
     private void setupCombatWhereTorchrunnerDies() {
         Permanent torchrunner = findPermanent(player1, "Mudbutton Torchrunner");
         torchrunner.setSummoningSick(false);
         torchrunner.setAttacking(true);
 
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
+        Permanent blockerPerm = harness.addToBattlefieldAndReturn(player2, new WoodlandChangeling());
         blockerPerm.setSummoningSick(false);
         blockerPerm.setBlocking(true);
         blockerPerm.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blockerPerm);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -41,9 +44,9 @@ class MudbuttonTorchrunnerTest extends BaseCardTest {
     @DisplayName("Death trigger deals 3 damage to chosen creature and destroys it if lethal")
     void deathTriggerDeals3DamageAndKillsCreature() {
         harness.addToBattlefield(player1, new MudbuttonTorchrunner());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new WoodlandChangeling());
 
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID bearsId = harness.getPermanentId(player2, "Woodland Changeling");
 
         setupCombatWhereTorchrunnerDies();
         harness.passBothPriorities();
@@ -62,7 +65,7 @@ class MudbuttonTorchrunnerTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(bearsId));
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Woodland Changeling");
     }
 
     @Test
@@ -80,6 +83,37 @@ class MudbuttonTorchrunnerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player2, 17);
+    }
+    @Test
+    @DisplayName("Death trigger can target its own controller")
+    void deathTriggerDealsDamageToController() {
+        harness.addToBattlefield(player1, new MudbuttonTorchrunner());
+        harness.setLife(player1, 20);
+
+        setupCombatWhereTorchrunnerDies();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Death trigger deals damage to a planeswalker")
+    void deathTriggerKillsPlaneswalkerWithThreeLoyalty() {
+        harness.addToBattlefield(player1, new MudbuttonTorchrunner());
+        Permanent garruk = harness.addToBattlefieldAndReturn(player2, new GarrukWildspeaker());
+        garruk.setCounterCount(CounterType.LOYALTY, 3);
+
+        setupCombatWhereTorchrunnerDies();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, garruk.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Garruk Wildspeaker");
+        harness.assertInGraveyard(player2, "Garruk Wildspeaker");
+        harness.assertLife(player2, 20);
     }
 }
