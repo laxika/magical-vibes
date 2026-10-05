@@ -61,6 +61,67 @@ class KessigTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 
+    @Test
+    void chaosAffectsOnlyCreaturesControlledAtResolution() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        resolveAllTriggers();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        for (Permanent affected : new Permanent[]{own, beforeResolution}) {
+            assertThat(gqs.getEffectivePower(gd, affected)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, affected)).isEqualTo(4);
+            assertThat(gqs.hasKeyword(gd, affected, Keyword.TRAMPLE)).isTrue();
+            assertThat(gqs.effectiveCreatureSubtypes(gd, affected))
+                    .contains(CardSubtype.BEAR, CardSubtype.WEREWOLF);
+        }
+        for (Permanent unaffected : new Permanent[]{opponent, afterResolution}) {
+            assertThat(gqs.getEffectivePower(gd, unaffected)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, unaffected)).isEqualTo(2);
+            assertThat(gqs.hasKeyword(gd, unaffected, Keyword.TRAMPLE)).isFalse();
+            assertThat(gqs.effectiveCreatureSubtypes(gd, unaffected)).doesNotContain(CardSubtype.WEREWOLF);
+        }
+    }
+
+    @Test
+    void chaosBonusesStackAndAllExpireAtEndOfTurn() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        resolveAllTriggers();
+        harness.inMutationScope(() -> planar.chaos(gd));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, creature)).contains(CardSubtype.WEREWOLF);
+
+        harness.forceStep(TurnStep.CLEANUP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, creature))
+                .contains(CardSubtype.BEAR).doesNotContain(CardSubtype.WEREWOLF);
+    }
+
+    @Test
+    void preventionEndsWhenKessigLeavesTheCommandZone() {
+        addAttacker(player1);
+        harness.setLife(player2, 20);
+        harness.inMutationScope(() -> gd.planechase.faceUp.clear());
+
+        resolveCombat(player1);
+
+        harness.assertLife(player2, 18);
+    }
+
     private Permanent addAttacker(Player owner) {
         Permanent attacker = harness.addToBattlefieldAndReturn(owner, new GrizzlyBears());
         attacker.setSummoningSick(false);
