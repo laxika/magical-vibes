@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.cards.b.BlackbladeReforged;
 import com.github.laxika.magicalvibes.cards.g.GeistOfSaintTraft;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HistoryOfBenalia;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +15,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({JhoirasFamiliar.class, GeistOfSaintTraft.class, GrizzlyBears.class,
+        HistoryOfBenalia.class, BlackbladeReforged.class})
 class JhoirasFamiliarTest extends BaseCardTest {
 
     // ===== Cost reduction: artifact spells =====
@@ -122,5 +126,73 @@ class JhoirasFamiliarTest extends BaseCardTest {
         // Only 3 colorless mana — not enough for {4} since opponent's spells are not affected
         assertThatThrownBy(() -> harness.castArtifact(player2, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A Familiar in hand does not reduce its own cost")
+    void familiarDoesNotReduceItsOwnCost() {
+        harness.setHand(player1, List.of(new JhoirasFamiliar()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A Familiar in the graveyard does not reduce spell costs")
+    void familiarInGraveyardDoesNotReduceCosts() {
+        harness.setGraveyard(player1, List.of(new JhoirasFamiliar()));
+        harness.setHand(player1, List.of(new JhoirasFamiliar()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Excess generic reduction cannot pay colored mana costs")
+    void excessReductionDoesNotReduceColoredCosts() {
+        harness.addToBattlefield(player1, new JhoirasFamiliar());
+        harness.addToBattlefield(player1, new JhoirasFamiliar());
+        harness.setHand(player1, List.of(new HistoryOfBenalia()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castEnchantment(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Excess reductions allow a generic-only spell to be cast for no mana")
+    void genericCostCanBeReducedToZero() {
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player1, new JhoirasFamiliar());
+        }
+        harness.setHand(player1, List.of(new JhoirasFamiliar()));
+
+        harness.castArtifact(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Being both legendary and an artifact still gives only one reduction")
+    void multipleHistoricQualitiesDoNotMultiplyReduction() {
+        harness.addToBattlefield(player1, new JhoirasFamiliar());
+        harness.setHand(player1, List.of(new BlackbladeReforged()));
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castArtifact(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 }
