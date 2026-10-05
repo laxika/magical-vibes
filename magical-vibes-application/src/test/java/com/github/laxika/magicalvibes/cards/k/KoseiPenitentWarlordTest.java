@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
@@ -60,6 +61,81 @@ class KoseiPenitentWarlordTest extends BaseCardTest {
         kosei.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         attachAuraAndEquipment(kosei);
         return kosei;
+    }
+
+    @Test
+    void missingAuraDisablesTrigger() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        Permanent kosei = addCreatureReady(player1, new KoseiPenitentWarlord());
+        kosei.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
+        equipment.setAttachedTo(kosei.getId());
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    void missingEquipmentDisablesTrigger() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        Permanent kosei = addCreatureReady(player1, new KoseiPenitentWarlord());
+        kosei.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
+        aura.setAttachedTo(kosei.getId());
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void nonPowerCounterEnablesTriggerInTwoPlayerGame() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        Permanent kosei = addCreatureReady(player1, new KoseiPenitentWarlord());
+        kosei.setCounterCount(CounterType.CHARGE, 1);
+        attachAuraAndEquipment(kosei);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    void losingConditionsAfterDamageDoesNotStopTriggerOrChangeItsAmount() {
+        Player player3 = addThirdPlayer();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        Permanent kosei = addKoseiWithAllConditions();
+        kosei.setAttacking(true);
+        kosei.setAttackTarget(player2.getId());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+
+        harness.resolveCombatDamage();
+        assertThat(gd.stack).hasSize(1);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        kosei.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        gd.playerBattlefields.get(player1.getId()).removeIf(p -> p != kosei);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 16);
+        harness.assertLife(player3, 16);
     }
 
     private void attachAuraAndEquipment(Permanent kosei) {
