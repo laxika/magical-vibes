@@ -16,6 +16,77 @@ import static org.assertj.core.api.Assertions.assertThat;
 class OppressionTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Oppression does not trigger for its own casting")
+    void doesNotTriggerForItsOwnCasting() {
+        harness.setHand(player1, List.of(new Oppression(), new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Oppression");
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The caster chooses exactly one card before the spell resolves")
+    void casterChoosesOneCardBeforeSpellResolves() {
+        harness.addToBattlefield(player1, new Oppression());
+        harness.setHand(player1, List.of(new GrizzlyBears(), new Forest(), new HealingSalve()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInGraveyard(player1, "Healing Salve");
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Each Oppression independently makes the caster discard")
+    void multipleCopiesEachTrigger() {
+        harness.addToBattlefield(player1, new Oppression());
+        harness.addToBattlefield(player2, new Oppression());
+        harness.setHand(player1, List.of(new GrizzlyBears(), new Forest(), new HealingSalve()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Healing Salve");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Activating a mana ability does not trigger Oppression")
+    void manaAbilityDoesNotTrigger() {
+        harness.addToBattlefield(player1, new Oppression());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of(new HealingSalve()));
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInHand(player1, "Healing Salve");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("When the controller casts a spell, they discard a card")
     void controllerCastingDiscards() {
         harness.addToBattlefield(player1, new Oppression());
