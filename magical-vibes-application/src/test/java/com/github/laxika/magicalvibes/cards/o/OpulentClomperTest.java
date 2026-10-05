@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Set;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -63,5 +64,50 @@ class OpulentClomperTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.getEffectiveColors(gd, clomper)).containsExactlyInAnyOrder(
                 CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN);
+    }
+
+    @Test
+    @DisplayName("Counts each color once and ignores opponents' permanents and cards outside the battlefield")
+    void countsOnlyDistinctColorsOfControlledPermanents() {
+        Permanent clomper = addCreatureReady(player1, new OpulentClomper());
+        harness.addToBattlefield(player1, new SuntailHawk());
+        harness.addToBattlefield(player1, new SuntailHawk());
+        harness.addToBattlefield(player2, new CloudSprite());
+        harness.setHand(player1, List.of(new CloudSprite()));
+        harness.setGraveyard(player1, List.of(new CloudSprite()));
+
+        assertThat(gqs.getEffectivePower(gd, clomper)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, clomper)).isEqualTo(2);
+
+        harness.addToBattlefield(player1, new CloudSprite());
+
+        assertThat(gqs.getEffectivePower(gd, clomper)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, clomper)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An opponent's upkeep does not trigger a color gain")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent clomper = addCreatureReady(player1, new OpulentClomper());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectiveColors(gd, clomper)).containsExactly(CardColor.GREEN);
+    }
+
+    @Test
+    @DisplayName("Colors gained on successive upkeeps increase its power and toughness")
+    void gainedColorsIncreasePowerAndToughness() {
+        Permanent clomper = addCreatureReady(player1, new OpulentClomper());
+
+        for (int expectedSize = 2; expectedSize <= 5; expectedSize++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+
+            assertThat(gqs.getEffectiveColors(gd, clomper)).hasSize(expectedSize);
+            assertThat(gqs.getEffectivePower(gd, clomper)).isEqualTo(expectedSize);
+            assertThat(gqs.getEffectiveToughness(gd, clomper)).isEqualTo(expectedSize);
+        }
     }
 }
