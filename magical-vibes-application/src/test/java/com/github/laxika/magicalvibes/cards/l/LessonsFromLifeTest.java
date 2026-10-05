@@ -49,4 +49,46 @@ class LessonsFromLifeTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Forest");
         harness.assertInHand(player1, "Forest");
     }
+
+    @Test
+    @DisplayName("A land drawn by the spell can be chosen, and only one land enters")
+    void canChooseNewlyDrawnLand() {
+        Forest first = new Forest();
+        Forest second = new Forest();
+        LessonsFromLife otherCard = new LessonsFromLife();
+        harness.setLibrary(player1, List.of(first, second, otherCard));
+        harness.castFromHand(player1, new LessonsFromLife(), "{2}{G}{U}");
+
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second, otherCard);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(findPermanent(player1, "Forest").getCard()).isSameAs(second);
+        assertThat(findPermanent(player1, "Forest").isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, otherCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Drawing still completes when no land is available")
+    void resolvesWithoutLandInHand() {
+        LessonsFromLife first = new LessonsFromLife();
+        LessonsFromLife second = new LessonsFromLife();
+        LessonsFromLife third = new LessonsFromLife();
+        harness.setLibrary(player1, List.of(first, second, third));
+        harness.castFromHand(player1, new LessonsFromLife(), "{2}{G}{U}");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second, third);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+    }
 }
