@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.s.ShieldSphere;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,8 +15,65 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PrimitiveJustice.class, GrizzlyBears.class, Ornithopter.class})
+@CardUsed({PrimitiveJustice.class, GrizzlyBears.class, Ornithopter.class, ShieldSphere.class})
 class PrimitiveJusticeTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("An illegal additional target does not prevent life gain while the base target remains legal")
+    void gainsLifeWhenAdditionalTargetLeavesBattlefield() {
+        Permanent baseTarget = harness.addToBattlefieldAndReturn(player2, new ShieldSphere());
+        Permanent additionalTarget = harness.addToBattlefieldAndReturn(player2, new ShieldSphere());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new PrimitiveJustice()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castSorceryWithRepeatedCosts(player1, 0, List.of("{1}{G}"),
+                List.of(baseTarget.getId(), additionalTarget.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(additionalTarget);
+        gd.playerHands.get(player2.getId()).add(additionalTarget.getCard());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Shield Sphere");
+        harness.assertInGraveyard(player2, "Shield Sphere");
+        harness.assertInHand(player2, "Shield Sphere");
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    @DisplayName("No life is gained when every artifact target becomes illegal")
+    void gainsNoLifeWhenAllTargetsLeaveBattlefield() {
+        Permanent baseTarget = harness.addToBattlefieldAndReturn(player2, new ShieldSphere());
+        Permanent additionalTarget = harness.addToBattlefieldAndReturn(player2, new ShieldSphere());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new PrimitiveJustice()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castSorceryWithRepeatedCosts(player1, 0, List.of("{1}{G}"),
+                List.of(baseTarget.getId(), additionalTarget.getId()));
+        gd.playerBattlefields.get(player2.getId()).removeAll(List.of(baseTarget, additionalTarget));
+        gd.playerHands.get(player2.getId()).addAll(List.of(baseTarget.getCard(), additionalTarget.getCard()));
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player2, "Shield Sphere");
+        harness.assertInGraveyard(player1, "Primitive Justice");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Artifacts controlled by the caster are legal targets")
+    void canDestroyOwnArtifact() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new ShieldSphere());
+        harness.setHand(player1, List.of(new PrimitiveJustice()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castSorceryWithRepeatedCosts(player1, 0, List.of(), List.of(artifact.getId()));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Shield Sphere");
+        harness.assertInGraveyard(player1, "Shield Sphere");
+    }
 
     @Test
     @DisplayName("With no additional payment, destroys a single target artifact and gains no life")
