@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,13 +15,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PredatorsGambit.class, GrizzlyBears.class, FountainOfYouth.class})
 class PredatorsGambitTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Predator's Gambit attaches it and gives the creature +2/+1")
     void resolvingAttachesAndBoosts() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new PredatorsGambit()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -38,12 +39,10 @@ class PredatorsGambitTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature has intimidate while its controller controls no other creatures")
     void grantsIntimidateWhenSoleCreature() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        Permanent aura = new Permanent(new PredatorsGambit());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new PredatorsGambit());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.INTIMIDATE)).isTrue();
     }
@@ -51,13 +50,11 @@ class PredatorsGambitTest extends BaseCardTest {
     @Test
     @DisplayName("Another creature under the same controller turns intimidate off")
     void noIntimidateWithAnotherCreature() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new GrizzlyBears()));
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent aura = new Permanent(new PredatorsGambit());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new PredatorsGambit());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.INTIMIDATE)).isFalse();
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
@@ -66,17 +63,15 @@ class PredatorsGambitTest extends BaseCardTest {
     @Test
     @DisplayName("Creatures the Aura's controller controls don't matter — only the enchanted creature's controller")
     void opponentCreatureCountedForItsOwnController() {
-        Permanent opponentBears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(opponentBears);
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new GrizzlyBears()));
+        Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent aura = new Permanent(new PredatorsGambit());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new PredatorsGambit());
         aura.setAttachedTo(opponentBears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.hasKeyword(gd, opponentBears, Keyword.INTIMIDATE)).isTrue();
 
-        gd.playerBattlefields.get(player2.getId()).add(new Permanent(new GrizzlyBears()));
+        harness.addToBattlefield(player2, new GrizzlyBears());
 
         assertThat(gqs.hasKeyword(gd, opponentBears, Keyword.INTIMIDATE)).isFalse();
     }
@@ -84,12 +79,10 @@ class PredatorsGambitTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses the boost and intimidate when Predator's Gambit is removed")
     void effectsStopWhenRemoved() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        Permanent aura = new Permanent(new PredatorsGambit());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new PredatorsGambit());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
@@ -111,5 +104,36 @@ class PredatorsGambitTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    void intimidateReturnsWhenOtherCreatureLeaves() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PredatorsGambit()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INTIMIDATE)).isFalse();
+        gd.playerBattlefields.get(player1.getId()).remove(other);
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INTIMIDATE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+    }
+
+    @Test
+    void noncreaturePermanentsDoNotPreventIntimidate() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.setHand(player1, List.of(new PredatorsGambit()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INTIMIDATE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
     }
 }
