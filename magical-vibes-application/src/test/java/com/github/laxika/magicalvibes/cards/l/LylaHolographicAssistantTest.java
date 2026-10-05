@@ -57,6 +57,39 @@ class LylaHolographicAssistantTest extends BaseCardTest {
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
+    @Test
+    void canTargetItselfOnEachDraw() {
+        Permanent lyla = harness.addToBattlefieldAndReturn(player1, new LylaHolographicAssistant());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        advanceToDraw(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, lyla.getId());
+        harness.passBothPriorities();
+
+        assertThat(lyla.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+
+        advanceToDraw(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, lyla.getId());
+        harness.passBothPriorities();
+
+        assertThat(lyla.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void opponentsDrawDoesNotTrigger() {
+        Permanent lyla = harness.addToBattlefieldAndReturn(player1, new LylaHolographicAssistant());
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+
+        advanceToDraw(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(lyla.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInHand(player2, "Grizzly Bears");
+    }
     private void advanceToDraw(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2;
