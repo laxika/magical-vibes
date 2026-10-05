@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.b.BanditsHaul;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
@@ -17,7 +18,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MysticalTether.class, GrizzlyBears.class, Ornithopter.class, Forest.class, Naturalize.class})
+@CardUsed({MysticalTether.class, GrizzlyBears.class, Ornithopter.class, Forest.class, Naturalize.class,
+        BanditsHaul.class, MuldrothaTheGravetide.class})
 class MysticalTetherTest extends BaseCardTest {
 
     @Test
@@ -81,6 +83,61 @@ class MysticalTetherTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void canExileNoncreatureArtifact() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BanditsHaul());
+        castNormally(target.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target.getCard());
+    }
+
+    @Test
+    void doesNotExileIfTetherLeavesBeforeItsTriggerResolves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareToCastNormally();
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        destroyTether(harness.getPermanentId(player1, "Mystical Tether"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Mystical Tether");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(target.getCard());
+    }
+
+    @Test
+    void cannotPayFlashSurchargeWithOnlyNormalCost() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareToCastNormally();
+        harness.forceActivePlayer(player2);
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Mystical Tether");
+    }
+
+    @Test
+    void canPayFlashSurchargeWhenCastingFromGraveyardDuringOwnCombat() {
+        harness.addToBattlefield(player1, new MuldrothaTheGravetide());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+        harness.setGraveyard(player1, List.of(new MysticalTether()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castFromGraveyardTargeting(player1, 0, target.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Mystical Tether");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target.getCard());
+    }
+
     private Permanent castNormally(UUID targetId) {
         prepareToCastNormally();
         harness.castEnchantment(player1, 0, targetId);
@@ -117,7 +174,6 @@ class MysticalTetherTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Naturalize()));
         harness.addMana(player2, ManaColor.GREEN, 2);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, tetherId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, tetherId);
     }
 }
