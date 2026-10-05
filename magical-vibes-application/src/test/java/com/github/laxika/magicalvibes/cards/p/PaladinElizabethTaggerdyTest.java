@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -42,12 +43,9 @@ class PaladinElizabethTaggerdyTest extends BaseCardTest {
         assertThat(choice.validIndices()).containsExactly(1);
         harness.handleCardChosen(player1, 1);
 
-        Permanent entered = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(valid.getId()))
-                .findFirst()
-                .orElseThrow();
+        Permanent entered = findPermanents(player1, "Grizzly Bears").getLast();
         assertThat(entered.isTapped()).isTrue();
-        assertThat(entered.isAttackedThisTurn()).isTrue();
+        assertThat(entered.isAttacking()).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).contains(tooExpensive);
     }
 
@@ -63,5 +61,128 @@ class PaladinElizabethTaggerdyTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawn);
+    }
+
+    @Test
+    @DisplayName("The creature drawn by battalion can be put onto the battlefield")
+    void canPutTheDrawnCreatureOntoTheBattlefield() {
+        addCreatureReady(player1, new PaladinElizabethTaggerdy());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        GrizzlyBears drawn = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+
+        declareAttackers(List.of(0, 1, 2));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        Permanent entered = findPermanents(player1, "Grizzly Bears").getLast();
+        assertThat(entered.getCard().getId()).isEqualTo(drawn.getId());
+        assertThat(entered.isTapped()).isTrue();
+        assertThat(entered.isAttacking()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Declining the optional creature does not undo the draw")
+    void mayDeclinePuttingCreatureOntoTheBattlefield() {
+        addCreatureReady(player1, new PaladinElizabethTaggerdy());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        GrizzlyBears creature = new GrizzlyBears();
+        Forest drawn = new Forest();
+        harness.setHand(player1, List.of(creature));
+        harness.setLibrary(player1, List.of(drawn));
+
+        declareAttackers(List.of(0, 1, 2));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature, drawn);
+        assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Battalion uses Taggerdy's power at resolution, including the exact limit")
+    void usesPowerAtResolution() {
+        Permanent taggerdy = addCreatureReady(player1, new PaladinElizabethTaggerdy());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HillGiant()));
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        declareAttackers(List.of(0, 1, 2));
+        taggerdy.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        Permanent entered = findPermanent(player1, "Hill Giant");
+        assertThat(entered.isTapped()).isTrue();
+        assertThat(entered.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Three other attackers do not trigger battalion when Taggerdy stays behind")
+    void taggerdyMustAttack() {
+        addCreatureReady(player1, new PaladinElizabethTaggerdy());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        Forest drawn = new Forest();
+        harness.setLibrary(player1, List.of(drawn));
+
+        declareAttackers(List.of(1, 2, 3));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawn);
+    }
+
+    @Test
+    @DisplayName("Battalion uses last known power after Taggerdy leaves the battlefield")
+    void usesLastKnownPowerAfterSourceLeaves() {
+        Permanent taggerdy = addCreatureReady(player1, new PaladinElizabethTaggerdy());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HillGiant()));
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        declareAttackers(List.of(0, 1, 2));
+        taggerdy.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.getPermanentRemovalService().removePermanentToHand(gd, taggerdy);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        PendingInteraction.HandChoice choice =
+                (PendingInteraction.HandChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validIndices()).contains(0);
+        harness.handleCardChosen(player1, 0);
+
+        Permanent entered = findPermanent(player1, "Hill Giant");
+        assertThat(entered.isTapped()).isTrue();
+        assertThat(entered.isAttacking()).isTrue();
+        harness.assertNotOnBattlefield(player1, "Paladin Elizabeth Taggerdy");
+    }
+
+    @Test
+    @DisplayName("Battalion still resolves after another attacker leaves the battlefield")
+    void battalionDoesNotRecheckAttackerCount() {
+        addCreatureReady(player1, new PaladinElizabethTaggerdy());
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        Forest drawn = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+
+        declareAttackers(List.of(0, 1, 2));
+        harness.getPermanentRemovalService().removePermanentToHand(gd, other);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
