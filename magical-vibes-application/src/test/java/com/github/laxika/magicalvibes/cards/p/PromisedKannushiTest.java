@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.b.BounteousKirin;
 import com.github.laxika.magicalvibes.cards.d.DeathknellKami;
 import com.github.laxika.magicalvibes.cards.h.HandOfHonor;
 import com.github.laxika.magicalvibes.cards.m.MirenTheMoaningWell;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({PromisedKannushi.class, DeathknellKami.class, HandOfHonor.class,
-        MirenTheMoaningWell.class, SekkiSeasonsGuide.class})
+        MirenTheMoaningWell.class, SekkiSeasonsGuide.class, BounteousKirin.class})
 class PromisedKannushiTest extends BaseCardTest {
 
     private void sacrificeKannushi(Permanent kannushi) {
@@ -45,6 +46,9 @@ class PromisedKannushiTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
         harness.assertInHand(player1, "Deathknell Kami");
         harness.assertNotInGraveyard(player1, "Deathknell Kami");
     }
@@ -68,7 +72,7 @@ class PromisedKannushiTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Soulshift may be declined")
+    @DisplayName("Soulshift may be declined during resolution after choosing its target")
     void soulshiftMayBeDeclined() {
         Permanent kannushi = harness.addToBattlefieldAndReturn(player1, new PromisedKannushi());
         Card spirit = new DeathknellKami();
@@ -78,11 +82,49 @@ class PromisedKannushiTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
         harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Deathknell Kami");
         harness.assertNotInHand(player1, "Deathknell Kami");
+    }
+
+    @Test
+    @DisplayName("Soulshift requires one target when an eligible Spirit exists")
+    void soulshiftRequiresTargetBeforeResolution() {
+        Permanent kannushi = harness.addToBattlefieldAndReturn(player1, new PromisedKannushi());
+        harness.setGraveyard(player1, List.of(new DeathknellKami()));
+
+        sacrificeKannushi(kannushi);
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.minCount()).isEqualTo(1);
+        assertThat(choice.maxCount()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Soulshift 7 can return a Spirit with mana value exactly seven")
+    void returnsSpiritAtManaValueLimit() {
+        Permanent kannushi = harness.addToBattlefieldAndReturn(player1, new PromisedKannushi());
+        Card spirit = new BounteousKirin();
+        harness.setGraveyard(player1, List.of(spirit));
+
+        sacrificeKannushi(kannushi);
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(spirit.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Bounteous Kirin");
+        harness.assertNotInGraveyard(player1, "Bounteous Kirin");
     }
 
     @Test
