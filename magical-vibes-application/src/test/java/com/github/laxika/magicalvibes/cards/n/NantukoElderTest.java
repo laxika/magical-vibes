@@ -46,4 +46,20 @@ class NantukoElderTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
+
+    @Test
+    @DisplayName("Mana is added only to the activating controller's pool")
+    void manaGoesToController() {
+        harness.forceActivePlayer(player2);
+        Permanent elder = addCreatureReady(player2, new NantukoElder());
+
+        harness.activateAbility(player2, 0, 0, null, null);
+
+        assertThat(elder.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
 }
