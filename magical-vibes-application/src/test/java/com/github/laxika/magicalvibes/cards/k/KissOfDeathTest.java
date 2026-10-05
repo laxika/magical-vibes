@@ -79,4 +79,43 @@ class KissOfDeathTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Gains the full 4 life when damage kills an opponent's planeswalker")
+    void gainsFullLifeWhenPlaneswalkerDies() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+
+        harness.setHand(player1, List.of(new KissOfDeath()));
+        addManaForKissOfDeath();
+        harness.castSorcery(player1, 0, planeswalker.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Jace Beleren");
+        harness.assertInGraveyard(player2, "Jace Beleren");
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Kiss of Death");
+    }
+
+    @Test
+    @DisplayName("Does not gain life when the only target leaves before resolution")
+    void doesNotGainLifeWhenTargetLeaves() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+
+        harness.setHand(player1, List.of(new KissOfDeath()));
+        addManaForKissOfDeath();
+        harness.castSorcery(player1, 0, planeswalker.getId());
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, planeswalker);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Kiss of Death");
+    }
 }
