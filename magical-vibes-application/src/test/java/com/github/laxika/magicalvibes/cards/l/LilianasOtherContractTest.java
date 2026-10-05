@@ -64,6 +64,61 @@ class LilianasOtherContractTest extends BaseCardTest {
         assertThat(minion.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
     }
 
+    @Test
+    void entryLifeLossReturnsContractTransformedWithoutDrawingAgain() {
+        harness.setLibrary(player1, List.of(
+                new LilianasOtherContract(), new LilianasOtherContract(), new LilianasOtherContract()));
+        harness.setLife(player1, 3);
+        harness.castFromHand(player1, new LilianasOtherContract(), "{4}{B}");
+        resolveAllTriggers();
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Liliana's Undead Minion");
+        harness.assertNotOnBattlefield(player1, "Liliana's Other Contract");
+        harness.assertLife(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    void drawingFromEmptyLibraryTransformsContractAndStillLosesThreeLife() {
+        harness.setLibrary(player1, List.of());
+        harness.castFromHand(player1, new LilianasOtherContract(), "{4}{B}");
+        resolveAllTriggers();
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Liliana's Undead Minion");
+        harness.assertLife(player1, 17);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    void poisonLossReturnsContractTransformedAndMinionPreventsFurtherLoss() {
+        harness.addToBattlefield(player1, new LilianasOtherContract());
+        gd.playerPoisonCounters.put(player1.getId(), 10);
+
+        harness.runStateBasedActions();
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Liliana's Undead Minion");
+        assertThat(gd.playerPoisonCounters.get(player1.getId())).isEqualTo(10);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    void minionPreventsItsControllerLosingButNotItsOpponent() {
+        addTransformedMinion();
+        harness.setLife(player1, 0);
+        harness.runStateBasedActions();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+
+        harness.setLife(player2, 0);
+        harness.runStateBasedActions();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
     private Permanent addTransformedMinion() {
         LilianasOtherContract front = new LilianasOtherContract();
         Permanent minion = harness.addToBattlefieldAndReturn(player1, front);
