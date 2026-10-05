@@ -10,10 +10,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(Necravolver.class)
+@CardUsed({Necravolver.class})
 class NecravolverTest extends BaseCardTest {
 
     @Test
@@ -88,6 +89,67 @@ class NecravolverTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(25);
     }
 
+    @Test
+    @DisplayName("White kicker grants its ability during entry without an enters trigger")
+    void whiteKickerDoesNotCreateAnEntersTrigger() {
+        castWithWhiteKicker();
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Without the white kicker, damage does not gain life")
+    void greenKickerDoesNotGainLife() {
+        Permanent attacker = castWithGreenKicker();
+        prepareAttacker(attacker);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        resolveCombatAndTrigger();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Both kickers gain life for damage to both blocker and player")
+    void bothKickersGainLifeFromAllTrampleDamage() {
+        Permanent attacker = castWithBothKickers();
+        Permanent blocker = addCreatureReady(player2, new Necravolver());
+        prepareAttacker(attacker);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0,
+                Map.of(blocker.getId(), 2, player2.getId(), 3));
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(25);
+        harness.assertInGraveyard(player2, "Necravolver");
+    }
+
+    @Test
+    @DisplayName("Entering without being cast grants neither kicker benefit")
+    void enteringWithoutCastingHasNoKickerBenefits() {
+        Permanent necravolver = harness.enterBattlefieldAndReturn(player1, new Necravolver());
+
+        assertThat(necravolver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, necravolver, Keyword.TRAMPLE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+
+        prepareAttacker(necravolver);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        resolveCombatAndTrigger();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
     private Permanent castNecravolver() {
         harness.castFromHand(player1, new Necravolver(), "{2}{B}");
         harness.passBothPriorities();
@@ -109,9 +171,7 @@ class NecravolverTest extends BaseCardTest {
         addMana(ManaColor.BLACK, 1);
         addMana(ManaColor.WHITE, 1);
         harness.setHand(player1, List.of(new Necravolver()));
-        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(), false,
-                null, null, null, null, null, false, null, null, null, null,
-                List.of("{W}"), false);
+        harness.castCreatureWithRepeatedCosts(player1, 0, List.of("{W}"));
         harness.passBothPriorities();
         return findNecravolver();
     }
