@@ -20,8 +20,23 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class IvoryCharmTest extends BaseCardTest {
 
     @Nested
+    @CardUsed({IvoryCharm.class, IronTuskElephant.class})
     @DisplayName("Mode 0: All creatures get -2/-0 until end of turn")
     class WeakenAllMode {
+
+        @Test
+        void doesNotWeakenCreaturesEnteringAfterResolution() {
+            Permanent original = harness.addToBattlefieldAndReturn(player1, new IronTuskElephant());
+            harness.setHand(player1, List.of(new IvoryCharm()));
+            harness.addMana(player1, ManaColor.WHITE, 1);
+
+            harness.castInstant(player1, 0, 0, null);
+            harness.passBothPriorities();
+
+            Permanent newcomer = harness.enterBattlefieldAndReturn(player2, new IronTuskElephant());
+            assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(3);
+        }
 
         @Test
         @DisplayName("Weakens creatures on both battlefields")
@@ -60,6 +75,7 @@ class IvoryCharmTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({IvoryCharm.class, IronTuskElephant.class, Island.class})
     @DisplayName("Mode 1: Tap target creature")
     class TapMode {
 
@@ -101,8 +117,33 @@ class IvoryCharmTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({IvoryCharm.class, IronTuskElephant.class, VolcanicDragon.class, Incinerate.class, Island.class})
     @DisplayName("Mode 2: Prevent the next 1 damage to any target")
     class PreventDamageMode {
+
+        @Test
+        void unusedShieldsExpireAtEndOfTurn() {
+            Permanent creature = harness.addToBattlefieldAndReturn(player2, new VolcanicDragon());
+            harness.setHand(player1, List.of(new IvoryCharm(), new IvoryCharm()));
+            harness.addMana(player1, ManaColor.WHITE, 2);
+
+            harness.castInstant(player1, 0, 2, creature.getId());
+            harness.passBothPriorities();
+            harness.castInstant(player1, 0, 2, player2.getId());
+            harness.passBothPriorities();
+
+            harness.forceStep(TurnStep.END_STEP);
+            harness.clearPriorityPassed();
+            harness.passBothPriorities();
+
+            harness.setHand(player1, List.of(new Incinerate(), new Incinerate()));
+            harness.addMana(player1, ManaColor.RED, 4);
+            harness.castAndResolveInstant(player1, 0, creature.getId());
+            harness.castAndResolveInstant(player1, 0, player2.getId());
+
+            assertThat(creature.getMarkedDamage()).isEqualTo(3);
+            harness.assertLife(player2, 17);
+        }
 
         @Test
         @DisplayName("Adds a 1-damage prevention shield to a target creature")
