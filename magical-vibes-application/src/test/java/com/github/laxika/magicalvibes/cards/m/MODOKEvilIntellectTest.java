@@ -83,6 +83,55 @@ class MODOKEvilIntellectTest extends BaseCardTest {
                 .hasMessageContaining("Invalid permanent");
     }
 
+    @Test
+    @DisplayName("An opponent with only tokens sacrifices nothing")
+    void tokenOnlyBattlefieldIsUnaffected() {
+        harness.addToBattlefield(player1, new MODOKEvilIntellect());
+        harness.addToBattlefield(player2, tokenCreature("Zombie Token"));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        draw(player1);
+        draw(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Zombie Token");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cards drawn before M.O.D.O.K. enters still count toward the second draw")
+    void countsDrawBeforeEntering() {
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        draw(player1);
+        harness.addToBattlefield(player1, new MODOKEvilIntellect());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        draw(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("An opponent's second draw does not trigger M.O.D.O.K.")
+    void opponentDrawDoesNotTrigger() {
+        harness.addToBattlefield(player1, new MODOKEvilIntellect());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        draw(player2);
+        draw(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
     private void draw(Player player) {
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player.getId()));
     }
