@@ -54,11 +54,83 @@ class NightmareUnmakingTest extends BaseCardTest {
         harness.addToBattlefield(player2, new AirElemental());
     }
 
+    @Test
+    void greaterModeWithEmptyHandExilesCreaturesOnBothBattlefieldsButNotLands() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AirElemental());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of(new NightmareUnmaking()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Air Elemental");
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getName).contains("Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(Card::getName).contains("Air Elemental");
+    }
+
+    @Test
+    void lessModeWithEmptyHandLeavesPositivePowerCreatures() {
+        addCreatures();
+        harness.setHand(player1, List.of(new NightmareUnmaking()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, 1);
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void greaterModeUsesHandSizeAtResolution() {
+        addCreatures();
+        harness.setHand(player1, List.of(
+                new NightmareUnmaking(), new Forest(), new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.castSorcery(player1, 0, 0);
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        harness.assertNotOnBattlefield(player2, "Air Elemental");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(Card::getName).containsExactlyInAnyOrder("Hill Giant", "Air Elemental");
+    }
+
+    @Test
+    void lessModeUsesCastersCurrentHandForBothBattlefields() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        addCreatures();
+        harness.setHand(player1, List.of(new NightmareUnmaking(), new Forest()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.castSorcery(player1, 0, 1);
+        harness.setHand(player1, List.of(new Forest(), new Forest(), new Forest()));
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getName).contains("Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(Card::getName).containsExactly("Grizzly Bears");
+    }
+
     private void cast(int modeIndex) {
         harness.setHand(player1, List.of(
                 new NightmareUnmaking(), new Forest(), new Forest(), new Forest()));
         harness.addMana(player1, ManaColor.BLACK, 5);
-        harness.castSorcery(player1, 0, modeIndex);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, modeIndex);
     }
 }
