@@ -105,10 +105,47 @@ class LumberingFallsTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, falls, Keyword.HEXPROOF)).isFalse();
     }
 
+    @Test
+    @DisplayName("Lumbering Falls can animate while tapped without untapping")
+    void canAnimateWhileTapped() {
+        harness.setHand(player1, List.of(new LumberingFalls()));
+        harness.playLand(player1, 0);
+        Permanent falls = findPermanent(player1, "Lumbering Falls");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(gqs.isCreature(gd, falls)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, falls)).isTrue();
+        assertThat(falls.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, falls, Keyword.HEXPROOF)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Animated Lumbering Falls retains its mana ability")
+    void animatedFallsCanProduceMana() {
+        Permanent falls = addFallsReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        assertThat(falls.isTapped()).isFalse();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(falls.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, falls)).isTrue();
+    }
+
     private Permanent addFallsReady(Player player) {
-        Permanent falls = new Permanent(new LumberingFalls());
+        Permanent falls = harness.addToBattlefieldAndReturn(player, new LumberingFalls());
         falls.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(falls);
         return falls;
     }
 }
