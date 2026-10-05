@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -25,7 +24,7 @@ class IrreverentGremlinTest extends BaseCardTest {
         Card drawn = new HillGiant();
         harness.addToBattlefield(player1, new IrreverentGremlin());
         harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears(), discarded)));
-        setDeck(player1, List.of(drawn));
+        harness.setLibrary(player1, List.of(drawn));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
@@ -47,7 +46,7 @@ class IrreverentGremlinTest extends BaseCardTest {
         Card drawn = new HillGiant();
         harness.addToBattlefield(player1, new IrreverentGremlin());
         harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears(), discarded)));
-        setDeck(player1, List.of(drawn));
+        harness.setLibrary(player1, List.of(drawn));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
@@ -93,7 +92,7 @@ class IrreverentGremlinTest extends BaseCardTest {
         Card drawn = new HillGiant();
         harness.addToBattlefield(player1, new IrreverentGremlin());
         harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears(), discarded, new GrizzlyBears())));
-        setDeck(player1, List.of(drawn, new HillGiant()));
+        harness.setLibrary(player1, List.of(drawn, new HillGiant()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.castCreature(player1, 0);
@@ -111,8 +110,74 @@ class IrreverentGremlinTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
     }
 
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+    @Test
+    void decliningFirstOpportunityAllowsDiscardOnLaterEntry() {
+        Card discarded = new Forest();
+        Card drawn = new HillGiant();
+        harness.addToBattlefield(player1, new IrreverentGremlin());
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(drawn));
+
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+    }
+
+    @Test
+    void multipleEntriesCanQueueTriggersBeforeAnyDiscard() {
+        harness.addToBattlefield(player1, new IrreverentGremlin());
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    void emptyHandDoesNotUseUpDiscardOpportunity() {
+        Card discarded = new Forest();
+        Card drawn = new HillGiant();
+        harness.addToBattlefield(player1, new IrreverentGremlin());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+
+        harness.setHand(player1, List.of(discarded));
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+    }
+
+    @Test
+    void opponentsSmallCreatureDoesNotTriggerAbility() {
+        harness.addToBattlefield(player1, new IrreverentGremlin());
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
