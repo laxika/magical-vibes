@@ -18,9 +18,8 @@ class MorgueThrullTest extends BaseCardTest {
     void sacrificingMillsThreeCards() {
         harness.addToBattlefield(player1, new MorgueThrull());
         List<Card> deck = gd.playerDecks.get(player1.getId());
-        while (deck.size() > 5) {
-            deck.removeFirst();
-        }
+        harness.setLibrary(player1, deck.subList(deck.size() - 5, deck.size()));
+        deck = gd.playerDecks.get(player1.getId());
         int deckSizeBefore = deck.size();
 
         harness.activateAbility(player1, 0, null, null);
@@ -36,9 +35,8 @@ class MorgueThrullTest extends BaseCardTest {
     void millsOnlyCardsRemainingInShortLibrary() {
         harness.addToBattlefield(player1, new MorgueThrull());
         List<Card> deck = gd.playerDecks.get(player1.getId());
-        while (deck.size() > 2) {
-            deck.removeFirst();
-        }
+        harness.setLibrary(player1, deck.subList(deck.size() - 2, deck.size()));
+        deck = gd.playerDecks.get(player1.getId());
         int graveyardSizeBefore = gd.playerGraveyards.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, null, null);
@@ -71,5 +69,41 @@ class MorgueThrullTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Morgue Thrull");
+    }
+
+    @Test
+    @DisplayName("Morgue Thrull can be sacrificed with an empty library")
+    void canActivateWithEmptyLibrary() {
+        harness.addToBattlefield(player1, new MorgueThrull());
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Morgue Thrull");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Morgue Thrull controlled by the second player mills only that player's top three cards")
+    void tappedThrullMillsItsControllersTopThreeCards() {
+        harness.addToBattlefield(player2, new MorgueThrull());
+        findPermanent(player2, "Morgue Thrull").setTapped(true);
+        List<Card> library = List.of(new MorgueThrull(), new MorgueThrull(),
+                new MorgueThrull(), new MorgueThrull());
+        harness.setLibrary(player2, library);
+        List<Card> opponentLibrary = List.copyOf(gd.playerDecks.get(player1.getId()));
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(library.get(3));
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .hasSize(4).containsAll(library.subList(0, 3));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(opponentLibrary);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.assertNotOnBattlefield(player2, "Morgue Thrull");
     }
 }
