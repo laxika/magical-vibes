@@ -7,12 +7,14 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PerplexingChimera.class, GrizzlyBears.class, Shock.class})
 class PerplexingChimeraTest extends BaseCardTest {
 
     @Test
@@ -83,10 +85,8 @@ class PerplexingChimeraTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(card -> card.getName().equals("Shock"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(card -> card.getName().equals("Shock"));
+        harness.assertInGraveyard(player2, "Shock");
+        harness.assertNotInGraveyard(player1, "Shock");
     }
 
     @Test
@@ -99,6 +99,63 @@ class PerplexingChimeraTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    void exchangeDecisionIsMadeOnlyWhenTheTriggerResolves() {
+        harness.addToBattlefield(player1, new PerplexingChimera());
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        preparePlayerTwoMainPhase();
+
+        harness.castCreature(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+    }
+
+    @Test
+    void earlierTriggerCannotExchangeObjectsNowControlledByTheSamePlayer() {
+        harness.addToBattlefield(player1, new PerplexingChimera());
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        preparePlayerTwoMainPhase();
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Perplexing Chimera");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.passBothPriorities();
+        harness.assertLife(player1, 16);
+        harness.assertOnBattlefield(player2, "Perplexing Chimera");
+    }
+
+    @Test
+    void exchangeDoesNothingWhenTheChimeraHasLeftTheBattlefield() {
+        Permanent chimera = harness.addToBattlefieldAndReturn(player1, new PerplexingChimera());
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        preparePlayerTwoMainPhase();
+
+        harness.castCreature(player2, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        gd.playerBattlefields.get(player1.getId()).remove(chimera);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     private void preparePlayerTwoMainPhase() {
