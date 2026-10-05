@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CrawWurm;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
+import com.github.laxika.magicalvibes.cards.w.WallOfFrost;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -8,6 +10,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MasterOfTheWildHunt.class, RuneclawBear.class, CrawWurm.class, WallOfFrost.class})
 class MasterOfTheWildHuntTest extends BaseCardTest {
-
-    // ===== Upkeep trigger: token creation =====
 
     @Test
     @DisplayName("Creates a 2/2 green Wolf token at beginning of controller's upkeep")
@@ -53,17 +55,15 @@ class MasterOfTheWildHuntTest extends BaseCardTest {
         assertThat(getTokens(player1)).hasSize(2);
     }
 
-    // ===== Activated ability: basic pack hunt =====
-
     @Test
     @DisplayName("Wolves deal damage equal to their power to target creature")
     void wolvesDealDamageToTarget() {
-        Permanent master = addReadyMaster(player1);
-        Permanent wolf1 = addReadyWolf(player1);
-        Permanent wolf2 = addReadyWolf(player1);
+        addReadyMaster(player1);
+        addReadyWolf(player1);
+        addReadyWolf(player1);
 
         // Opponent has a 2/2
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new RuneclawBear());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities(); // resolve ability
@@ -71,7 +71,7 @@ class MasterOfTheWildHuntTest extends BaseCardTest {
         // Two 2/2 wolves deal 4 total damage to the 2/2 — lethal
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(target.getId()));
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Runeclaw Bear");
     }
 
     @Test
@@ -81,7 +81,7 @@ class MasterOfTheWildHuntTest extends BaseCardTest {
         Permanent wolf1 = addReadyWolf(player1);
         Permanent wolf2 = addReadyWolf(player1);
 
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new RuneclawBear());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -96,7 +96,7 @@ class MasterOfTheWildHuntTest extends BaseCardTest {
         Permanent master = addReadyMaster(player1);
         addReadyWolf(player1);
 
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new RuneclawBear());
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -104,49 +104,34 @@ class MasterOfTheWildHuntTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Target creature deals damage back divided evenly among wolves")
-    void targetDealsDamageBackToWolves() {
+    @DisplayName("A lethally damaged target still deals damage back to the sole Wolf")
+    void lethallyDamagedTargetDealsDamageBack() {
         addReadyMaster(player1);
-        Permanent wolf1 = addReadyWolf(player1);
-        Permanent wolf2 = addReadyWolf(player1);
-
-        // Opponent's 2/2 deals 2 damage divided among 2 wolves = 1 each
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent wolf = addReadyWolf(player1);
+        Permanent target = addCreatureReady(player2, new RuneclawBear());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        // Each wolf takes 1 damage (2/2 = 1 per wolf), both survive
-        assertThat(wolf1.getMarkedDamage()).isEqualTo(1);
-        assertThat(wolf2.getMarkedDamage()).isEqualTo(1);
+        assertThat(wolf.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(wolf);
+        harness.assertInGraveyard(player2, "Runeclaw Bear");
     }
 
     @Test
-    @DisplayName("Target creature with high power can kill wolves with damage back")
-    void highPowerTargetKillsWolves() {
+    @DisplayName("A high-power target kills the sole Wolf and survives its damage")
+    void highPowerTargetKillsWolf() {
         addReadyMaster(player1);
-        Permanent wolf1 = addReadyWolf(player1);
-        Permanent wolf2 = addReadyWolf(player1);
-
-        // Opponent's creature with 5 power, 5 toughness
-        Permanent target = addReadyCreatureWithStats(player2, "Big Creature", 5, 5);
+        Permanent wolf = addReadyWolf(player1);
+        Permanent target = addCreatureReady(player2, new CrawWurm());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        // Two 2/2 wolves deal 4 total to 5/5 — not lethal, target survives with 4 damage
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getId().equals(target.getId()));
-        assertThat(target.getMarkedDamage()).isEqualTo(4);
-
-        // 5 damage divided among 2 wolves = 3 and 2 — both wolves die (2 toughness)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getId().equals(wolf1.getId()));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getId().equals(wolf2.getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(wolf);
     }
-
-    // ===== Edge cases =====
 
     @Test
     @DisplayName("Already-tapped wolves are not tapped again and don't deal damage")
@@ -173,7 +158,7 @@ class MasterOfTheWildHuntTest extends BaseCardTest {
         addReadyMaster(player1);
         // No wolves on the battlefield
 
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new RuneclawBear());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -223,7 +208,7 @@ class MasterOfTheWildHuntTest extends BaseCardTest {
     void onlyWolvesTapped() {
         addReadyMaster(player1);
         Permanent wolf = addReadyWolf(player1);
-        Permanent nonWolf = addCreatureReady(player1, new GrizzlyBears()); // Bear, not Wolf
+        Permanent nonWolf = addCreatureReady(player1, new RuneclawBear()); // Bear, not Wolf
 
         Permanent target = addReadyCreatureWithStats(player2, "Target", 1, 4);
 
@@ -254,13 +239,80 @@ class MasterOfTheWildHuntTest extends BaseCardTest {
         assertThat(target.getMarkedDamage()).isEqualTo(2);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("The target controller must choose how to distribute return damage")
+    void targetControllerChoosesReturnDamage() {
+        addReadyMaster(player1);
+        addReadyWolf(player1);
+        addReadyWolf(player1);
+        Permanent target = addCreatureReady(player2, new RuneclawBear());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput())
+                .as("The target controller can put both damage on one Wolf instead of splitting it")
+                .isTrue();
+    }
+
+    @Test
+    @DisplayName("A creature that gained Wolf subtype participates in the hunt")
+    void creatureWithGrantedWolfSubtypeParticipates() {
+        addReadyMaster(player1);
+        Permanent wolf = addCreatureReady(player1, new RuneclawBear());
+        wolf.getTransientSubtypes().add(CardSubtype.WOLF);
+        Permanent target = addCreatureReady(player2, new WallOfFrost());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(wolf.isTapped()).isTrue();
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An illegal target prevents the Wolves from being tapped")
+    void illegalTargetDoesNotTapWolves() {
+        addReadyMaster(player1);
+        Permanent wolf = addReadyWolf(player1);
+        Permanent target = addCreatureReady(player2, new RuneclawBear());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(wolf.isTapped()).isFalse();
+        assertThat(wolf.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("The upkeep ability does not trigger on the opponent's upkeep")
+    void noTokenOnOpponentUpkeep() {
+        addReadyMaster(player1);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(getTokens(player1)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Summoning-sick Wolves can be tapped by the resolving ability")
+    void summoningSickWolfParticipates() {
+        addReadyMaster(player1);
+        Permanent wolf = addReadyWolf(player1);
+        wolf.setSummoningSick(true);
+        Permanent target = addCreatureReady(player2, new WallOfFrost());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(wolf.isTapped()).isTrue();
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
 
     private Permanent addReadyMaster(Player player) {
-        Permanent perm = new Permanent(new MasterOfTheWildHunt());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new MasterOfTheWildHunt());
     }
 
     private Permanent addReadyWolf(Player player) {
@@ -274,10 +326,7 @@ class MasterOfTheWildHuntTest extends BaseCardTest {
         card.setPower(power);
         card.setToughness(toughness);
         card.setManaCost("");
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, card);
     }
 
     private Permanent addReadyCreatureWithSubtype(Player player, String name, int power, int toughness, CardSubtype subtype) {
@@ -288,10 +337,7 @@ class MasterOfTheWildHuntTest extends BaseCardTest {
         card.setToughness(toughness);
         card.setManaCost("");
         card.setSubtypes(List.of(subtype));
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, card);
     }
 
     private List<Permanent> getTokens(Player player) {
