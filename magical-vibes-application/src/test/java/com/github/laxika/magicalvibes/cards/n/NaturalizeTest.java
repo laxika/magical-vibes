@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 
-@CardUsed({Naturalize.class, HowlingMine.class, GloriousAnthem.class, GlorySeeker.class})
+@CardUsed({Naturalize.class, HowlingMine.class, GloriousAnthem.class, GlorySeeker.class, Ornithopter.class})
 class NaturalizeTest extends BaseCardTest {
 
     @Test
@@ -88,6 +89,20 @@ class NaturalizeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.gameLog).anyMatch(log -> log.plainText().contains("fizzles"));
+        harness.assertInGraveyard(player1, "Naturalize");
+    }
+
+    @Test
+    @DisplayName("Can destroy an artifact creature")
+    void destroysArtifactCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
+        harness.assertInGraveyard(player2, "Ornithopter");
         harness.assertInGraveyard(player1, "Naturalize");
     }
 
