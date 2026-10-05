@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MalcatorPurityOverseer.class, Ornithopter.class, MalcatorsWatcher.class})
 class MalcatorPurityOverseerTest extends BaseCardTest {
 
     @Test
@@ -66,11 +68,57 @@ class MalcatorPurityOverseerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    void opponentEndStepDoesNotCreateGolem() {
+        harness.addToBattlefield(player1, new MalcatorPurityOverseer());
+        gd.permanentsEnteredBattlefieldThisTurn.put(player1.getId(), new ArrayList<>(List.of(
+                new MalcatorsWatcher(), new MalcatorsWatcher(), new MalcatorsWatcher())));
+
+        advanceToEndStep(player2);
+
+        assertThat(countPermanents(player1, "Phyrexian Golem")).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void nonartifactEntriesDoNotMeetThreshold() {
+        harness.addToBattlefield(player1, new MalcatorPurityOverseer());
+        gd.permanentsEnteredBattlefieldThisTurn.put(player1.getId(), new ArrayList<>(List.of(
+                new MalcatorsWatcher(), new MalcatorsWatcher(), new MalcatorPurityOverseer())));
+
+        advanceToEndStep(player1);
+
+        assertThat(countPermanents(player1, "Phyrexian Golem")).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void enteringGolemCountsTowardThreshold() {
+        harness.setHand(player1, List.of(
+                new MalcatorsWatcher(), new MalcatorsWatcher(), new MalcatorPurityOverseer()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Phyrexian Golem")).isEqualTo(1);
+
+        advanceToEndStep(player1);
+
+        assertThat(countPermanents(player1, "Phyrexian Golem")).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 }
