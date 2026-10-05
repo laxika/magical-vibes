@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({MajorTeroh.class, NantukoShade.class, TerohsFaithful.class, BaskingRootwalla.class, TaintedField.class})
 class MajorTerohTest extends BaseCardTest {
@@ -70,6 +71,52 @@ class MajorTerohTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(majorTeroh);
         harness.assertInGraveyard(player1, "Major Teroh");
         assertThat(gd.stack).hasSize(1);
+    }
+
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Major Teroh can activate its ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent majorTeroh = harness.addToBattlefieldAndReturn(player1, new MajorTeroh());
+        majorTeroh.setTapped(true);
+        majorTeroh.setSummoningSick(true);
+        Permanent blackCreature = addCreatureReady(player2, new NantukoShade());
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Major Teroh");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(blackCreature.getCard());
+    }
+
+    @Test
+    @DisplayName("Black creatures entering after activation are exiled on resolution")
+    void checksCreaturesAtResolution() {
+        addCreatureReady(player1, new MajorTeroh());
+        addAbilityMana();
+        harness.activateAbility(player1, 0, null, null);
+
+        Permanent blackCreature = addCreatureReady(player2, new NantukoShade());
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(blackCreature.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blackCreature);
+    }
+
+    @Test
+    @DisplayName("Activation requires two white mana and does not sacrifice when mana is insufficient")
+    void insufficientWhiteManaDoesNotSacrifice() {
+        Permanent majorTeroh = addCreatureReady(player1, new MajorTeroh());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(majorTeroh);
+        harness.assertNotInGraveyard(player1, "Major Teroh");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addAbilityMana() {
