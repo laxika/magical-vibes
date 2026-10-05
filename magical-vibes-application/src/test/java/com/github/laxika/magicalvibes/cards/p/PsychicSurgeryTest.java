@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PsychicSurgery.class, Island.class, Forest.class, GrizzlyBears.class})
+@CardUsed({PsychicSurgery.class, Island.class, Forest.class})
 class PsychicSurgeryTest extends BaseCardTest {
 
     @Test
@@ -49,7 +48,7 @@ class PsychicSurgeryTest extends BaseCardTest {
     void decliningMayAbilityDoesNothing() {
         harness.addToBattlefield(player1, new PsychicSurgery());
         int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
-        int exileSizeBefore = gd.getPlayerExiledCards(player1.getId()).size();
+        int exileSizeBefore = gd.getPlayerExiledCards(player2.getId()).size();
 
         LibraryShuffleHelper.shuffleLibrary(gd, player2.getId());
 
@@ -59,7 +58,7 @@ class PsychicSurgeryTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
-        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(exileSizeBefore);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(exileSizeBefore);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -78,10 +77,8 @@ class PsychicSurgeryTest extends BaseCardTest {
         // Set up known cards on top of player2's deck after shuffle
         Card topCard = new Island();
         Card secondCard = new Forest();
-        Card thirdCard = new GrizzlyBears();
-        List<Card> deck = gd.playerDecks.get(player2.getId());
-        deck.clear();
-        deck.addAll(List.of(topCard, secondCard, thirdCard));
+        Card thirdCard = new Island();
+        harness.setLibrary(player2, List.of(topCard, secondCard, thirdCard));
 
         // Begin and accept may ability
         harness.passBothPriorities();
@@ -98,7 +95,7 @@ class PsychicSurgeryTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getId().equals(topCard.getId()));
 
-        // Forest should be on top of player2's library, GrizzlyBears after it
+        // Forest should be on top of player2's library, the third card after it
         List<Card> deckAfter = gd.playerDecks.get(player2.getId());
         assertThat(deckAfter.getFirst().getId()).isEqualTo(secondCard.getId());
         assertThat(deckAfter.get(1).getId()).isEqualTo(thirdCard.getId());
@@ -119,12 +116,10 @@ class PsychicSurgeryTest extends BaseCardTest {
         // Set up known cards on top of player2's deck after shuffle
         Card topCard = new Island();
         Card secondCard = new Forest();
-        Card thirdCard = new GrizzlyBears();
-        List<Card> deck = gd.playerDecks.get(player2.getId());
-        deck.clear();
-        deck.addAll(List.of(topCard, secondCard, thirdCard));
+        Card thirdCard = new Island();
+        harness.setLibrary(player2, List.of(topCard, secondCard, thirdCard));
 
-        int exileSizeBefore = gd.getPlayerExiledCards(player1.getId()).size();
+        int exileSizeBefore = gd.getPlayerExiledCards(player2.getId()).size();
 
         // Begin and accept may ability
         harness.passBothPriorities();
@@ -137,7 +132,7 @@ class PsychicSurgeryTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         // Nothing should be exiled
-        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(exileSizeBefore);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(exileSizeBefore);
 
         // Should be in LIBRARY_REORDER state to reorder the 2 cards on top
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -162,7 +157,7 @@ class PsychicSurgeryTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         // Empty the opponent's library
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player2, List.of());
 
         // Trigger shuffle
         LibraryShuffleHelper.shuffleLibrary(gd, player2.getId());
@@ -190,9 +185,7 @@ class PsychicSurgeryTest extends BaseCardTest {
 
         // Set player2's deck to single card
         Card onlyCard = new Island();
-        List<Card> deck = gd.playerDecks.get(player2.getId());
-        deck.clear();
-        deck.add(onlyCard);
+        harness.setLibrary(player2, List.of(onlyCard));
 
         // Begin and accept may ability
         harness.passBothPriorities();
@@ -210,5 +203,65 @@ class PsychicSurgeryTest extends BaseCardTest {
 
         // Library should be empty
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Declining exile allows reversing the two cards without disturbing the rest")
+    void canReverseCardsWithoutExiling() {
+        harness.addToBattlefield(player1, new PsychicSurgery());
+        LibraryShuffleHelper.shuffleLibrary(gd, player2.getId());
+        Card first = new Island();
+        Card second = new Forest();
+        Card third = new Island();
+        harness.setLibrary(player2, List.of(first, second, third));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(second, first, third);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exiling the second card preserves the first card on top")
+    void canExileSecondCard() {
+        harness.addToBattlefield(player1, new PsychicSurgery());
+        LibraryShuffleHelper.shuffleLibrary(gd, player2.getId());
+        Card first = new Island();
+        Card second = new Forest();
+        Card third = new Island();
+        harness.setLibrary(player2, List.of(first, second, third));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(1));
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(first, third);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(second);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Declining exile with a one-card library returns that card without reordering")
+    void canDeclineExileWithSingleCard() {
+        harness.addToBattlefield(player1, new PsychicSurgery());
+        LibraryShuffleHelper.shuffleLibrary(gd, player2.getId());
+        Card onlyCard = new Island();
+        harness.setLibrary(player2, List.of(onlyCard));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(onlyCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }
