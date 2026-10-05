@@ -146,4 +146,57 @@ class NightmareTest extends BaseCardTest {
 
         assertThat(blocker.getBlockingTargetIds()).containsExactly(nightmare.getId());
     }
+
+    @Test
+    @DisplayName("Nightmare counts tapped Swamps as well as untapped Swamps")
+    void countsTappedSwamps() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        swamp.setTapped(true);
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent nightmare = addCreatureReady(player1, new Nightmare());
+
+        assertThat(gqs.getEffectivePower(gd, nightmare)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, nightmare)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Nightmare's defining ability works in hand and graveyard using its owner's Swamps")
+    void definingAbilityWorksOutsideBattlefield() {
+        Nightmare inHand = new Nightmare();
+        Nightmare inGraveyard = new Nightmare();
+        harness.setHand(player1, List.of(inHand));
+        harness.setGraveyard(player1, List.of(inGraveyard));
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player2, new Swamp());
+        harness.addToBattlefield(player2, new Swamp());
+
+        assertThat(gqs.getEffectiveCardPower(gd, inHand)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardToughness(gd, inHand)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardPower(gd, inGraveyard)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardToughness(gd, inGraveyard)).isEqualTo(1);
+
+        harness.addToBattlefield(player1, new Swamp());
+
+        assertThat(gqs.getEffectiveCardPower(gd, inHand)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, inHand)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardPower(gd, inGraveyard)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, inGraveyard)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A flying creature can block Nightmare")
+    void flyingAllowsBlocking() {
+        harness.addToBattlefield(player2, new Swamp());
+        Permanent blocker = addCreatureReady(player2, new Nightmare());
+        Permanent nightmare = addCreatureReady(player1, new Nightmare());
+        harness.addToBattlefield(player1, new Swamp());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(nightmare);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.getBlockingTargetIds()).containsExactly(nightmare.getId());
+    }
 }
