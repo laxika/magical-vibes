@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,13 +16,11 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({NovaChaser.class, FlamekinBladewhirl.class, GrizzlyBears.class, Unsummon.class})
 class NovaChaserTest extends BaseCardTest {
 
     private void castNovaChaser() {
-        harness.setHand(player1, List.of(new NovaChaser()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new NovaChaser(), "{3}{R}");
         harness.passBothPriorities(); // resolve creature spell -> ETB on stack
     }
 
@@ -93,13 +92,64 @@ class NovaChaserTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID novaId = harness.getPermanentId(player1, "Nova Chaser");
-        harness.castInstant(player1, 0, novaId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, novaId);
 
         harness.assertNotOnBattlefield(player1, "Nova Chaser");
+        harness.assertNotOnBattlefield(player1, "Flamekin Bladewhirl");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities(); // resolve the separate leaves-the-battlefield trigger
         harness.assertOnBattlefield(player1, "Flamekin Bladewhirl");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Flamekin Bladewhirl"));
+        assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Controller may sacrifice Nova Chaser instead of exiling an available Elemental")
+    void mayDeclineChampionWithAvailableElemental() {
+        harness.addToBattlefield(player1, new FlamekinBladewhirl());
+        castNovaChaser();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Nova Chaser");
+        harness.assertNotOnBattlefield(player1, "Nova Chaser");
+        harness.assertOnBattlefield(player1, "Flamekin Bladewhirl");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's Elemental cannot be championed")
+    void opponentsElementalDoesNotSatisfyChampion() {
+        harness.addToBattlefield(player2, new FlamekinBladewhirl());
+        castNovaChaser();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Nova Chaser");
+        harness.assertOnBattlefield(player2, "Flamekin Bladewhirl");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An Elemental exiled after Nova Chaser has left remains exiled")
+    void championAfterSourceLeavesDoesNotReturnElemental() {
+        harness.addToBattlefield(player1, new FlamekinBladewhirl());
+        castNovaChaser();
+        UUID novaId = harness.getPermanentId(player1, "Nova Chaser");
+        UUID elementalId = harness.getPermanentId(player1, "Flamekin Bladewhirl");
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, novaId);
+        harness.assertInHand(player1, "Nova Chaser");
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, elementalId);
+
+        harness.assertNotOnBattlefield(player1, "Flamekin Bladewhirl");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Flamekin Bladewhirl"));
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
     }
 }
