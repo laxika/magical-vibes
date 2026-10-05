@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -89,11 +90,137 @@ class LongRiverLurkerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0, 0, bears.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(bears.isCantBeBlocked()).isTrue();
         return bears;
+    }
+
+    @Test
+    void payingOneManaLetsSpellDamageLurker() {
+        Permanent lurker = addCreatureReady(player1, new LongRiverLurker());
+        castOpponentShock(lurker);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        resolveAllTriggers();
+
+        assertThat(lurker.getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player2, "Shock");
+    }
+
+    @Test
+    void payingGrantedWardLetsSpellKillOtherFrog() {
+        addCreatureReady(player1, new LongRiverLurker());
+        Permanent frog = addCreatureReady(player1, new Frogmite());
+        castOpponentShock(frog);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Frogmite");
+        harness.assertInGraveyard(player2, "Shock");
+    }
+
+    @Test
+    void doesNotGrantWardToNonFrogs() {
+        addCreatureReady(player1, new LongRiverLurker());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        castOpponentShock(bears);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void doesNotGrantWardToOpponentsFrogs() {
+        addCreatureReady(player2, new LongRiverLurker());
+        Permanent frog = addCreatureReady(player1, new Frogmite());
+        castOpponentShock(frog);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Frogmite");
+    }
+
+    @Test
+    void ownSpellDoesNotTriggerGrantedWard() {
+        addCreatureReady(player1, new LongRiverLurker());
+        Permanent frog = addCreatureReady(player1, new Frogmite());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, frog.getId());
+
+        harness.assertInGraveyard(player1, "Frogmite");
+        harness.assertInGraveyard(player1, "Shock");
+    }
+
+    @Test
+    void delayedFlickerWorksAfterLurkerLeavesBattlefield() {
+        Permanent bears = castLurkerTargetingBears();
+        UUID oldId = bears.getId();
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Long River Lurker"));
+        bears.setAttacking(true);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Grizzly Bears").getId()).isNotEqualTo(oldId);
+    }
+
+    @Test
+    void flickerReturnsBorrowedCreatureToItsOwner() {
+        Permanent bears = castLurkerTargetingBears();
+        UUID oldId = bears.getId();
+        gd.stolenCreatures.put(oldId, player2.getId());
+        bears.setAttacking(true);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(findPermanent(player2, "Grizzly Bears").getId()).isNotEqualTo(oldId);
+    }
+
+    @Test
+    void delayedFlickerExpiresAtEndOfTurn() {
+        Permanent bears = castLurkerTargetingBears();
+        UUID oldId = bears.getId();
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThat(bears.isCantBeBlocked()).isFalse();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        bears.setAttacking(true);
+        harness.resolveCombatDamage();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(findPermanent(player1, "Grizzly Bears").getId()).isEqualTo(oldId);
+    }
+
+    @Test
+    void delayedFlickerDoesNotFollowReturnedCreature() {
+        Permanent bears = castLurkerTargetingBears();
+        bears.setAttacking(true);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
+        UUID newId = returned.getId();
+        returned.setAttacking(true);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(findPermanent(player1, "Grizzly Bears").getId()).isEqualTo(newId);
     }
 
     private void castOpponentShock(Permanent target) {
