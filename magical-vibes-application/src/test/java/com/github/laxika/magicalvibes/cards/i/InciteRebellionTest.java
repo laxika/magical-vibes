@@ -4,18 +4,16 @@ import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.p.PaladinEnVec;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GiantSpider.class, GrizzlyBears.class, HillGiant.class, InciteRebellion.class, Mountain.class})
+@CardUsed({GiantSpider.class, GrizzlyBears.class, HillGiant.class, InciteRebellion.class, Mountain.class, PaladinEnVec.class})
 class InciteRebellionTest extends BaseCardTest {
 
     @Test
@@ -28,10 +26,7 @@ class InciteRebellionTest extends BaseCardTest {
         Permanent opponentMountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.setHand(player1, List.of(new InciteRebellion()));
-        harness.addMana(player1, ManaColor.RED, 6);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new InciteRebellion(), "{4}{R}{R}");
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
@@ -48,14 +43,61 @@ class InciteRebellionTest extends BaseCardTest {
     void killsCreaturesWithLethalDamage() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new InciteRebellion()));
-        harness.addMana(player1, ManaColor.RED, 6);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new InciteRebellion(), "{4}{R}{R}");
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).extracting(card -> card.getName())
                 .containsExactlyInAnyOrder("Incite Rebellion", "Grizzly Bears", "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A player with no creatures takes no damage while the other player is still affected")
+    void playerWithoutCreaturesTakesNoDamage() {
+        harness.addToBattlefield(player1, new Mountain());
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castFromHand(player1, new InciteRebellion(), "{4}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+        assertThat(spider.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Resolves harmlessly when neither player controls creatures")
+    void noCreaturesMeansNoDamage() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castFromHand(player1, new InciteRebellion(), "{4}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Incite Rebellion");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Protection prevents creature damage without reducing the creature count")
+    void protectedCreaturesStillCountTowardDamage() {
+        Permanent paladin = harness.addToBattlefieldAndReturn(player2, new PaladinEnVec());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castFromHand(player1, new InciteRebellion(), "{4}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+        assertThat(paladin.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Paladin en-Vec");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 }
