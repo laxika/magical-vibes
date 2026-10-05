@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.c.CorpseExplosion;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RabbleRousing.class, GrizzlyBears.class})
+@CardUsed({RabbleRousing.class, GrizzlyBears.class, Plains.class, CorpseExplosion.class})
 class RabbleRousingTest extends BaseCardTest {
 
     @Test
@@ -34,7 +34,7 @@ class RabbleRousingTest extends BaseCardTest {
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(2));
+        harness.handleCardChosen(player1, 2);
 
         Permanent rabbleRousing = findPermanent(player1, "Rabble Rousing");
         ExiledCardEntry exiled = gd.findExiledCard(chosen.getId());
@@ -98,12 +98,129 @@ class RabbleRousingTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(9);
     }
 
+    @Test
+    @DisplayName("An exiled land can be played during combat when a land play remains")
+    void playsExiledLandWithAvailableLandPlay() {
+        Card imprinted = new Plains();
+        addRabbleRousingWithImprint(imprinted);
+        for (int i = 0; i < 9; i++) {
+            addReadyCreature(new GrizzlyBears());
+        }
+        gd.landsPlayedThisTurn.put(player1.getId(), 0);
+
+        declareAttackers(List.of(1));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findPermanents(player1, "Plains")).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(imprinted);
+        assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An exiled land cannot be played when the turn's land play is already used")
+    void cannotPlayExiledLandAfterUsingLandPlay() {
+        Card imprinted = new Plains();
+        Permanent source = addRabbleRousingWithImprint(imprinted);
+        for (int i = 0; i < 9; i++) {
+            addReadyCreature(new GrizzlyBears());
+        }
+        gd.landsPlayedThisTurn.put(player1.getId(), 1);
+
+        declareAttackers(List.of(1));
+        harness.passBothPriorities();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(findPermanents(player1, "Citizen")).hasSize(1);
+        assertThat(findPermanents(player1, "Plains")).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(imprinted);
+        assertThat(gd.getImprintedCard(source.getCard())).isSameAs(imprinted);
+        assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Opponents' creatures do not count toward the ten-creature threshold")
+    void doesNotCountOpponentsCreatures() {
+        Card imprinted = new GrizzlyBears();
+        addRabbleRousingWithImprint(imprinted);
+        for (int i = 0; i < 8; i++) {
+            addReadyCreature(new GrizzlyBears());
+        }
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(1));
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Citizen")).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(imprinted);
+    }
+
+    @Test
+    @DisplayName("Attacker count is fixed when attackers are declared")
+    void countsDeclaredAttackersEvenIfOneLeaves() {
+        addRabbleRousingWithImprint(new GrizzlyBears());
+        Permanent removedAttacker = addReadyCreature(new GrizzlyBears());
+        addReadyCreature(new GrizzlyBears());
+
+        declareAttackers(List.of(1, 2));
+        gd.playerBattlefields.get(player1.getId()).remove(removedAttacker);
+        gd.playerGraveyards.get(player1.getId()).add(removedAttacker.getCard());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Citizen")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Hideaway with a one-card library exiles that card without a choice")
+    void hideawayWithOneCardLibrary() {
+        Card chosen = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(chosen));
+        harness.setHand(player1, List.of(new RabbleRousing()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent source = findPermanent(player1, "Rabble Rousing");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.findExiledCard(chosen.getId())).isNotNull();
+        assertThat(gd.findExiledCard(chosen.getId()).faceDown()).isTrue();
+        assertThat(gd.getImprintedCard(source.getCard())).isSameAs(chosen);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An uncastable exiled spell stays linked for a later attack")
+    void failedAdditionalCostDoesNotForgetExiledCard() {
+        Card imprinted = new CorpseExplosion();
+        Permanent source = addRabbleRousingWithImprint(imprinted);
+        gd.playerGraveyards.get(player1.getId()).clear();
+        for (int i = 0; i < 9; i++) {
+            addReadyCreature(new GrizzlyBears());
+        }
+
+        declareAttackers(List.of(1));
+        harness.passBothPriorities();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(imprinted);
+        assertThat(gd.getImprintedCard(source.getCard())).isSameAs(imprinted);
+        assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(9);
+        assertThat(findPermanents(player1, "Citizen")).hasSize(1);
+    }
+
     private Permanent addRabbleRousingWithImprint(Card imprinted) {
         harness.addToBattlefield(player1, new RabbleRousing());
-        GameData gameData = harness.getGameData();
         Permanent rabbleRousing = findPermanent(player1, "Rabble Rousing");
-        gameData.setImprintedCard(rabbleRousing.getCard(), imprinted);
-        gameData.addToExile(player1.getId(), imprinted);
+        gd.setImprintedCard(rabbleRousing.getCard(), imprinted);
+        gd.addToExile(player1.getId(), imprinted);
         return rabbleRousing;
     }
 
