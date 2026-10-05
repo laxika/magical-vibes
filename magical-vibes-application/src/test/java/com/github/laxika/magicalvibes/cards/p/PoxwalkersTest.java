@@ -44,4 +44,64 @@ class PoxwalkersTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Poxwalkers");
     }
+
+    @Test
+    @DisplayName("An opponent's flashback spell does not return Poxwalkers")
+    void doesNotReturnForOpponentCast() {
+        harness.setGraveyard(player1, List.of(new Poxwalkers()));
+        harness.setGraveyard(player2, List.of(new CallOfTheHerd()));
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.castFlashback(player2, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Poxwalkers");
+        harness.assertNotOnBattlefield(player1, "Poxwalkers");
+        harness.assertOnBattlefield(player2, "Elephant");
+    }
+
+    @Test
+    @DisplayName("Each graveyard copy returns only itself when its own trigger resolves")
+    void multipleCopiesReturnSeparately() {
+        harness.setGraveyard(player1, List.of(new Poxwalkers(), new Poxwalkers(), new CallOfTheHerd()));
+        harness.setGraveyard(player2, List.of(new Poxwalkers()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castFlashback(player1, 2);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Poxwalkers")).hasSize(1);
+        harness.assertInGraveyard(player1, "Poxwalkers");
+        harness.assertNotOnBattlefield(player1, "Elephant");
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Poxwalkers"))
+                .hasSize(2)
+                .allSatisfy(permanent -> assertThat(permanent.isTapped()).isTrue());
+        harness.assertNotInGraveyard(player1, "Poxwalkers");
+        harness.assertInGraveyard(player2, "Poxwalkers");
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Elephant");
+    }
+
+    @Test
+    @DisplayName("Casting outside the hand does not tap Poxwalkers already on the battlefield")
+    void battlefieldCopyDoesNotTrigger() {
+        Permanent poxwalkers = harness.addToBattlefieldAndReturn(player1, new Poxwalkers());
+        harness.setGraveyard(player1, List.of(new CallOfTheHerd()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castFlashback(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Elephant");
+        assertThat(findPermanents(player1, "Poxwalkers")).containsExactly(poxwalkers);
+        assertThat(poxwalkers.isTapped()).isFalse();
+    }
 }
