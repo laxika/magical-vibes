@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.MarbleDiamond;
+import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.cards.v.ViashinoWarrior;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PhyrexianVault.class, ViashinoWarrior.class, MarbleDiamond.class, Forest.class})
+@CardUsed({PhyrexianVault.class, ViashinoWarrior.class, MarbleDiamond.class, Forest.class, Shatter.class})
 class PhyrexianVaultTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -327,6 +328,58 @@ class PhyrexianVaultTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gameLogContains("draws a card")).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick creature can be sacrificed before the draw resolves")
+    void canSacrificeTappedSummoningSickCreature() {
+        harness.addToBattlefield(player1, new PhyrexianVault());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ViashinoWarrior());
+        creature.tap();
+        creature.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.setHand(player1, List.of());
+        Forest drawnCard = new Forest();
+        Forest remainingCard = new Forest();
+        harness.setLibrary(player1, List.of(drawnCard, remainingCard));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Viashino Warrior");
+        harness.assertNotOnBattlefield(player1, "Viashino Warrior");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawnCard, remainingCard);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+    }
+
+    @Test
+    @DisplayName("Destroying the Vault in response does not stop its activated draw")
+    void drawsAfterVaultIsDestroyedInResponse() {
+        Permanent vault = harness.addToBattlefieldAndReturn(player1, new PhyrexianVault());
+        harness.addToBattlefield(player1, new ViashinoWarrior());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.setHand(player1, List.of());
+        Forest drawnCard = new Forest();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.castAndResolveInstant(player2, 0, vault.getId());
+
+        harness.assertInGraveyard(player1, "Phyrexian Vault");
+        harness.assertNotOnBattlefield(player1, "Phyrexian Vault");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.stack).isEmpty();
     }
 }
 
