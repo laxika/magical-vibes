@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.a.AssaultZeppelid;
+import com.github.laxika.magicalvibes.cards.s.SpreadingSeas;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,8 +15,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Nightcreep.class, AssaultZeppelid.class, NovijenHeartOfProgress.class})
+@CardUsed({Nightcreep.class, AssaultZeppelid.class, NovijenHeartOfProgress.class, SpreadingSeas.class})
 class NightcreepTest extends BaseCardTest {
 
     @Test
@@ -71,12 +73,59 @@ class NightcreepTest extends BaseCardTest {
 
         castNightcreep();
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasColor(gd, creature, CardColor.BLACK)).isFalse();
         assertThat(gqs.computeStaticBonus(gd, land).grantedSubtypes())
                 .doesNotContain(CardSubtype.SWAMP);
+    }
+
+    @Test
+    @DisplayName("Swamp conversion removes the land's printed nonmana ability")
+    void removesPrintedNonmanaAbility() {
+        harness.addToBattlefield(player1, new NovijenHeartOfProgress());
+
+        castNightcreep();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid ability index");
+    }
+
+    @Test
+    @DisplayName("A later land-type setter takes precedence over Nightcreep")
+    void laterLandTypeSetterTakesPrecedence() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new NovijenHeartOfProgress());
+        harness.setLibrary(player1, List.of(new AssaultZeppelid()));
+
+        castNightcreep();
+        harness.setHand(player1, List.of(new SpreadingSeas()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, land.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("The land's original mana ability returns after cleanup")
+    void originalManaAbilityReturnsAfterCleanup() {
+        harness.addToBattlefield(player1, new NovijenHeartOfProgress());
+
+        castNightcreep();
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
+        harness.passBothPriorities();
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
     }
 
     private void castNightcreep() {
