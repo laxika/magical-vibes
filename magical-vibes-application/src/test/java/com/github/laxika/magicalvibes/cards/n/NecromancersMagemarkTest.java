@@ -115,6 +115,76 @@ class NecromancersMagemarkTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).noneMatch(card -> card.getId().equals(dyingCard.getId()));
     }
 
+    @Test
+    @DisplayName("Returns its own enchanted creature while the Magemark goes to the graveyard")
+    void returnsItsOwnEnchantedCreature() {
+        Permanent creature = addCreatureReady(player1, new OstiaryThrull());
+        Card creatureCard = creature.getCard();
+        Card magemark = new NecromancersMagemark();
+        attach(magemark, creature, player1);
+
+        destroyWithMortify(creature);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+        assertThat(gd.playerHands.get(player1.getId())).contains(creatureCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(magemark).doesNotContain(creatureCard);
+    }
+
+    @Test
+    @DisplayName("An opponent's Aura also qualifies a creature for both abilities")
+    void appliesToCreatureWithOpponentControlledAura() {
+        Permanent sourceCreature = addCreatureReady(player1, new OstiaryThrull());
+        Permanent creature = addCreatureReady(player1, new OstiaryThrull());
+        Card creatureCard = creature.getCard();
+        Card pillory = new PilloryOfTheSleepless();
+        attach(new NecromancersMagemark(), sourceCreature, player1);
+        attach(pillory, creature, player2);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        destroyWithMortify(creature);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(creatureCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(creatureCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(pillory);
+    }
+
+    @Test
+    @DisplayName("Returns a stolen enchanted creature to its owner's hand")
+    void returnsStolenCreatureToOwner() {
+        Permanent creature = addCreatureReady(player1, new OstiaryThrull());
+        Card creatureCard = creature.getCard();
+        gd.stolenCreatures.put(creature.getId(), player2.getId());
+        attach(new NecromancersMagemark(), creature, player1);
+
+        destroyWithMortify(creature);
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(creatureCard);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(creatureCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(creatureCard);
+    }
+
+    @Test
+    @DisplayName("Both abilities end when the Magemark is destroyed")
+    void losesBoostAndReplacementWhenMagemarkLeaves() {
+        Permanent creature = addCreatureReady(player1, new OstiaryThrull());
+        Card creatureCard = creature.getCard();
+        attach(new NecromancersMagemark(), creature, player1);
+        attach(new PilloryOfTheSleepless(), creature, player1);
+        Permanent magemark = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof NecromancersMagemark)
+                .findFirst().orElseThrow();
+
+        destroyWithMortify(magemark);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        destroyWithMortify(creature);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creatureCard);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(creatureCard);
+    }
+
     private void attach(Card auraCard, Permanent creature, Player controller) {
         Permanent aura = harness.addToBattlefieldAndReturn(controller, auraCard);
         aura.setAttachedTo(creature.getId());
