@@ -25,8 +25,7 @@ class MizzixsMasteryTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MizzixsMastery()));
         addNormalMana();
 
-        harness.castSorcery(player1, 0, List.of(counsel.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(counsel.getId()));
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -75,6 +74,106 @@ class MizzixsMasteryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(creature.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Declining the copy leaves the original exiled and draws no cards")
+    void declinesTargetedCopy() {
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        harness.setGraveyard(player1, List.of(counsel));
+        harness.setHand(player1, List.of(new MizzixsMastery()));
+        addNormalMana();
+
+        harness.castAndResolveSorcery(player1, 0, List.of(counsel.getId()));
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactlyInAnyOrder("Counsel of the Soratami", "Mizzix's Mastery");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Overload casts all copies without paying their mana costs")
+    void overloadCastsMultipleCopies() {
+        CounselOfTheSoratami first = new CounselOfTheSoratami();
+        CounselOfTheSoratami second = new CounselOfTheSoratami();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new MizzixsMastery()));
+        addOverloadMana();
+
+        harness.castWithOverload(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactlyInAnyOrder("Counsel of the Soratami", "Counsel of the Soratami",
+                        "Mizzix's Mastery");
+    }
+
+    @Test
+    @DisplayName("Overload allows declining one copy and casting another")
+    void overloadDeclinesOneCopyIndependently() {
+        harness.setGraveyard(player1,
+                List.of(new CounselOfTheSoratami(), new CounselOfTheSoratami()));
+        harness.setHand(player1, List.of(new MizzixsMastery()));
+        addOverloadMana();
+
+        harness.castWithOverload(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactlyInAnyOrder("Counsel of the Soratami", "Counsel of the Soratami",
+                        "Mizzix's Mastery");
+    }
+
+    @Test
+    @DisplayName("Overload needs no target and exiles Mastery with an empty graveyard")
+    void overloadsWithEmptyGraveyard() {
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new MizzixsMastery()));
+        addOverloadMana();
+
+        harness.castWithOverload(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getName).containsExactly("Mizzix's Mastery");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An illegal target prevents all effects, including Mastery's self-exile")
+    void missingTargetMakesMasteryGoToGraveyard() {
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        harness.setGraveyard(player1, List.of(counsel));
+        harness.setHand(player1, List.of(new MizzixsMastery()));
+        addNormalMana();
+
+        harness.castSorcery(player1, 0, List.of(counsel.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Mizzix's Mastery");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addNormalMana() {
