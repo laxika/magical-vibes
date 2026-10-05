@@ -51,8 +51,7 @@ class MisstepTest extends BaseCardTest {
     @DisplayName("Does not affect non-creatures or creatures controlled by another player")
     void affectsOnlyTargetPlayersCreatures() {
         Permanent ownCreature = addCreatureReady(player1, new DeadlyInsect());
-        harness.addToBattlefield(player2, new MercadianAtlas());
-        Permanent targetArtifact = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent targetArtifact = harness.addToBattlefieldAndReturn(player2, new MercadianAtlas());
         ownCreature.tap();
         targetArtifact.tap();
 
@@ -82,6 +81,51 @@ class MisstepTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, UUID.randomUUID()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Non-creatures and the other player's creatures untap normally")
+    void unaffectedPermanentsUntapNormally() {
+        Permanent ownCreature = addCreatureReady(player1, new DeadlyInsect());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new MercadianAtlas());
+        ownCreature.tap();
+        artifact.tap();
+
+        castMisstep(player2.getId());
+
+        advanceToUpkeep(player1);
+        assertThat(ownCreature.isTapped()).isFalse();
+        advanceToUpkeep(player2);
+        assertThat(artifact.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Two Missteps before the same untap step do not lock a second untap step")
+    void overlappingRestrictionsExpireTogether() {
+        Permanent creature = addCreatureReady(player2, new DeadlyInsect());
+        creature.tap();
+
+        castMisstep(player2.getId());
+        castMisstep(player2.getId());
+
+        advanceToUpkeep(player2);
+        assertThat(creature.isTapped()).isTrue();
+        advanceToUpkeep(player1);
+        advanceToUpkeep(player2);
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not tap an untapped creature and still locks it if it taps later")
+    void doesNotTapCreaturesOnResolution() {
+        Permanent creature = addCreatureReady(player2, new DeadlyInsect());
+
+        castMisstep(player2.getId());
+
+        assertThat(creature.isTapped()).isFalse();
+        creature.tap();
+        advanceToUpkeep(player2);
+        assertThat(creature.isTapped()).isTrue();
     }
 
     private void castMisstep(UUID targetPlayerId) {
