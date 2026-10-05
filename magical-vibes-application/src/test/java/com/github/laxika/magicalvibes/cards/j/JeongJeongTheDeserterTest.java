@@ -47,7 +47,7 @@ class JeongJeongTheDeserterTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         resolveAllTriggers();
 
         assertThat(target.getMarkedDamage()).isZero();
@@ -60,6 +60,96 @@ class JeongJeongTheDeserterTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(target.getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
+    void lessonCopyCanChooseANewTargetAndOnlyTheNextLessonIsCopied() {
+        Permanent jeongJeong = addCreatureReady(player1, new JeongJeongTheDeserter());
+        Permanent opposingJeongJeong = addCreatureReady(player2, new JeongJeongTheDeserter());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new FirebendingLesson(), new FirebendingLesson()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castInstant(player1, 0, opposingJeongJeong.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, jeongJeong.getId());
+        resolveAllTriggers();
+
+        assertThat(jeongJeong.getMarkedDamage()).isEqualTo(2);
+        assertThat(opposingJeongJeong.getMarkedDamage()).isEqualTo(2);
+
+        harness.castAndResolveInstant(player1, 0, jeongJeong.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(jeongJeong.getMarkedDamage()).isEqualTo(4);
+        harness.assertNotOnBattlefield(player1, "Jeong Jeong, the Deserter");
+        harness.assertInGraveyard(player1, "Jeong Jeong, the Deserter");
+    }
+
+    @Test
+    void opponentsLessonDoesNotConsumeTheDelayedCopy() {
+        Permanent jeongJeong = addCreatureReady(player1, new JeongJeongTheDeserter());
+        Permanent opposingJeongJeong = addCreatureReady(player2, new JeongJeongTheDeserter());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new FirebendingLesson()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, jeongJeong.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(jeongJeong.getMarkedDamage()).isEqualTo(2);
+
+        harness.setHand(player1, List.of(new FirebendingLesson()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, opposingJeongJeong.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Jeong Jeong, the Deserter");
+        harness.assertInGraveyard(player2, "Jeong Jeong, the Deserter");
+    }
+
+    @Test
+    void delayedCopyExpiresAtTheEndOfTheTurn() {
+        addCreatureReady(player1, new JeongJeongTheDeserter());
+        Permanent target = addCreatureReady(player2, new JeongJeongTheDeserter());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setLibrary(player2, List.of(new FirebendingLesson()));
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        harness.setHand(player1, List.of(new FirebendingLesson()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Jeong Jeong, the Deserter");
+    }
+
+    @Test
+    void exhaustActivationCannotBeRepeatedWhileItIsStillOnTheStack() {
+        addCreatureReady(player1, new JeongJeongTheDeserter());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once");
+
+        resolveAllTriggers();
     }
 
     @Test
