@@ -89,6 +89,53 @@ class LifeOfToshiroUmezawaTest extends BaseCardTest {
                 com.github.laxika.magicalvibes.model.ManaColor.BLACK)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Chapter I triggers when the Saga enters from being cast")
+    void castingSagaTriggersFirstChapter() {
+        harness.castFromHand(player1, new LifeOfToshiroUmezawa(), "{1}{B}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "You gain 2 life.");
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(22);
+        assertThat(findPermanent(player1, "Life of Toshiro Umezawa")
+                .getCounterCount(CounterType.LORE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The chapter boost expires at end of turn")
+    void chapterBoostExpiresAtEndOfTurn() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        addSagaWithLore(0);
+        advanceToNextChapter();
+        harness.handleListChoice(player1, "Target creature gets +2/+2 until end of turn.");
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Chapter III returns a new untapped creature without lore counters")
+    void transformationReturnsNewSummoningSickPermanent() {
+        Permanent saga = addSagaWithLore(2);
+        saga.setTapped(true);
+        advanceToNextChapter();
+        harness.passBothPriorities();
+
+        Permanent memory = findPermanent(player1, "Memory of Toshiro");
+        assertThat(memory).isNotNull();
+        assertThat(memory.getId()).isNotEqualTo(saga.getId());
+        assertThat(memory.isTapped()).isFalse();
+        assertThat(memory.isSummoningSick()).isTrue();
+        assertThat(memory.getCounterCount(CounterType.LORE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
+    }
+
     private Permanent addSagaWithLore(int loreCounters) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new LifeOfToshiroUmezawa());
         saga.setCounterCount(CounterType.LORE, loreCounters);
@@ -99,7 +146,6 @@ class LifeOfToshiroUmezawaTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.PRECOMBAT_MAIN);
     }
 }
