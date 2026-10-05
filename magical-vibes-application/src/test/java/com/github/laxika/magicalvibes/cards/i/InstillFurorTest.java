@@ -90,12 +90,61 @@ class InstillFurorTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        gs.advanceStep(gd);
+        harness.passUntil(player1, TurnStep.END_STEP);
         gd.playerBattlefields.get(player1.getId()).remove(aura);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+    }
+
+    @Test
+    @DisplayName("The ability still triggers when the enchanted creature attacked")
+    void attackerStillTriggersAtEndStep() {
+        Permanent creature = addCreatureReady(player1, new Watchwolf());
+        attachAura(player1, creature);
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(creature)));
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(creature.getId());
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+    }
+
+    @Test
+    @DisplayName("An attack before Instill Furor was attached still prevents sacrifice")
+    void remembersAttackBeforeAuraWasCast() {
+        Permanent creature = addCreatureReady(player1, new Watchwolf());
+        harness.withAutoStop(TurnStep.POSTCOMBAT_MAIN,
+                () -> declareAttackers(player1,
+                        List.of(gd.playerBattlefields.get(player1.getId()).indexOf(creature))));
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.setHand(player1, List.of(new InstillFuror()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.withAutoStop(TurnStep.POSTCOMBAT_MAIN, harness::passBothPriorities);
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(findPermanent(player1, "Instill Furor").getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("The Aura goes to its owner's graveyard when the opposing creature is sacrificed")
+    void sacrificeRemovesAuraToItsOwnersGraveyard() {
+        Permanent creature = addCreatureReady(player2, new Watchwolf());
+        attachAura(player1, creature);
+
+        advanceToEndStep(player2);
+
+        harness.assertInGraveyard(player2, "Watchwolf");
+        harness.assertInGraveyard(player1, "Instill Furor");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 
     private Permanent attachAura(Player controller, Permanent creature) {
@@ -109,8 +158,7 @@ class InstillFurorTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        gs.advanceStep(gd);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
+        resolveAllTriggers();
     }
 }
