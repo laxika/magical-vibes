@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.s.SkywhalersShot;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -13,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MasterTrinketeer.class, MaskwoodNexus.class, SkywhalersShot.class})
 class MasterTrinketeerTest extends BaseCardTest {
 
     @Test
@@ -71,10 +74,69 @@ class MasterTrinketeerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.SERVO))
-                .count()).isEqualTo(2);
+        assertThat(countPermanents(player1, "Servo")).isEqualTo(2);
+    }
+
+    @Test
+    void receivesItsOwnBonusWhenItIsAServoAndThopter() {
+        Permanent trinketeer = harness.addToBattlefieldAndReturn(player1, new MasterTrinketeer());
+        harness.addToBattlefield(player1, new MaskwoodNexus());
+
+        assertThat(gqs.getEffectivePower(gd, trinketeer)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, trinketeer)).isEqualTo(3);
+    }
+
+    @Test
+    void multipleTrinketeersStackTheirBonuses() {
+        harness.addToBattlefield(player1, new MasterTrinketeer());
+        harness.addToBattlefield(player1, new MasterTrinketeer());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Servo")).isEqualTo(1);
+        assertThat(powerOf(player1, "Servo")).isEqualTo(3);
+        assertThat(toughnessOf(player1, "Servo")).isEqualTo(3);
+    }
+
+    @Test
+    void tokenAbilityResolvesAfterSourceIsDestroyed() {
+        Permanent trinketeer = harness.addToBattlefieldAndReturn(player1, new MasterTrinketeer());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player2, List.of(new SkywhalersShot()));
+        harness.setLibrary(player2, List.of());
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null);
+        harness.castAndResolveInstant(player2, 0, trinketeer.getId());
+        harness.assertInGraveyard(player1, "Master Trinketeer");
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Servo")).isEqualTo(1);
+        assertThat(powerOf(player1, "Servo")).isEqualTo(1);
+        assertThat(toughnessOf(player1, "Servo")).isEqualTo(1);
+    }
+
+    @Test
+    void existingTokenLosesBonusWhenTrinketeerIsDestroyed() {
+        Permanent trinketeer = harness.addToBattlefieldAndReturn(player1, new MasterTrinketeer());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, 0, null);
+        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new SkywhalersShot()));
+        harness.setLibrary(player2, List.of());
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player2, 0, trinketeer.getId());
+
+        assertThat(powerOf(player1, "Servo")).isEqualTo(1);
+        assertThat(toughnessOf(player1, "Servo")).isEqualTo(1);
     }
 
     @Test
