@@ -50,6 +50,51 @@ class MasterOfCeremoniesTest extends BaseCardTest {
         harness.assertInHand(player2, "Grizzly Bears");
     }
 
+    @Test
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new MasterOfCeremonies());
+        gd.turnNumber = 2;
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(countPermanents(player1, "Treasure")).isZero();
+        assertThat(countPermanents(player2, "Treasure")).isZero();
+    }
+
+    @Test
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        harness.addToBattlefield(player1, new MasterOfCeremonies());
+        gd.turnNumber = 2;
+        advanceToUpkeep(player1);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        resolveAllTriggers();
+
+        harness.handleListChoice(player2, ChoiceContext.MasterOfCeremoniesChoice.MONEY);
+
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Treasure")).isEqualTo(1);
+    }
+
+    @Test
+    void otherControllerTriggersOnTheirOwnUpkeepAndOpponentChooses() {
+        harness.addToBattlefield(player2, new MasterOfCeremonies());
+        gd.turnNumber = 2;
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        harness.handleListChoice(player1, ChoiceContext.MasterOfCeremoniesChoice.FRIENDS);
+
+        assertThat(countPermanents(player1, "Citizen")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Citizen")).isEqualTo(1);
+    }
+
     private void beginChoice() {
         harness.addToBattlefield(player1, new MasterOfCeremonies());
         gd.turnNumber = 2;
