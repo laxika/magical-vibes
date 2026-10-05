@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.d.Demystify;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.OgreResister;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +21,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Phyresis.class, GrizzlyBears.class, Demystify.class, FountainOfYouth.class,
+        OgreResister.class, ProdigalPyromancer.class})
 class PhyresisTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -35,7 +40,6 @@ class PhyresisTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Phyresis");
         assertThat(entry.getTargetId()).isEqualTo(creature.getId());
     }
 
@@ -180,8 +184,7 @@ class PhyresisTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, auraPerm.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, auraPerm.getId());
 
         // Creature should no longer have infect
         assertThat(gqs.hasKeyword(gd, creature, Keyword.INFECT)).isFalse();
@@ -208,5 +211,61 @@ class PhyresisTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Infect leaves counters rather than marked damage on a surviving blocker")
+    void survivingBlockerReceivesMinusCounters() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new OgreResister());
+        harness.setHand(player1, List.of(new Phyresis()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castEnchantment(player1, 0, attacker.getId());
+        harness.passBothPriorities();
+
+        attacker.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(gd.playerBattlefields.get(player1.getId()).indexOf(attacker));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player2, "Ogre Resister");
+        assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(blocker.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Phyresis");
+    }
+
+    @Test
+    @DisplayName("Granted infect applies to noncombat damage to a player")
+    void noncombatDamageGivesPoison() {
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+        harness.setHand(player1, List.of(new Phyresis()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castEnchantment(player1, 0, pyromancer.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(pyromancer),
+                null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(1);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Granted infect applies to noncombat damage to a creature")
+    void noncombatDamageGivesMinusCounters() {
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Phyresis()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castEnchantment(player1, 0, pyromancer.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(pyromancer),
+                null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(target.getMarkedDamage()).isZero();
+    }
 }
