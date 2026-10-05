@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KrotiqNestguard.class, GrizzlyBears.class})
+@CardUsed({KrotiqNestguard.class})
 class KrotiqNestguardTest extends BaseCardTest {
 
     @Test
@@ -32,7 +31,7 @@ class KrotiqNestguardTest extends BaseCardTest {
     @DisplayName("Activation lets this creature attack this turn")
     void activationAllowsAttackingThisTurn() {
         Permanent nestguard = addCreatureReady(player1, new KrotiqNestguard());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new KrotiqNestguard());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -65,6 +64,50 @@ class KrotiqNestguardTest extends BaseCardTest {
     @DisplayName("The ability cannot be activated without enough mana")
     void cannotActivateWithoutEnoughMana() {
         addCreatureReady(player1, new KrotiqNestguard());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Activation grants permission only to its source")
+    void activationDoesNotAllowAnotherNestguardToAttack() {
+        addCreatureReady(player1, new KrotiqNestguard());
+        Permanent other = addCreatureReady(player1, new KrotiqNestguard());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+        assertThat(other.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Nestguard can activate but still cannot attack")
+    void activationDoesNotBypassSummoningSickness() {
+        Permanent nestguard = harness.addToBattlefieldAndReturn(player1, new KrotiqNestguard());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+        assertThat(nestguard.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Three colorless mana cannot pay the activation's green requirement")
+    void activationRequiresGreenMana() {
+        addCreatureReady(player1, new KrotiqNestguard());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
