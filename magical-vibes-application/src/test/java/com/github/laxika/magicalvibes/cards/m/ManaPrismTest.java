@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -64,5 +66,49 @@ class ManaPrismTest extends BaseCardTest {
 
         assertThat(prism.isTapped()).isFalse();
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+    @Test
+    @DisplayName("A newly entered noncreature prism can produce mana immediately")
+    void newlyEnteredPrismCanProduceMana() {
+        Permanent prism = harness.addToBattlefieldAndReturn(player1, new ManaPrism());
+        prism.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(prism.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    @DisplayName("Colored mana can pay the generic cost and every color can be produced immediately")
+    void secondAbilityCanProduceEveryColorWithColoredPayment(ManaColor color) {
+        Permanent prism = harness.addToBattlefieldAndReturn(player1, new ManaPrism());
+        harness.addMana(player1, color, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.handleListChoice(player1, color.name());
+
+        assertThat(prism.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The two abilities share a tap cost and cannot finance each other")
+    void cannotFilterManaAfterUsingColorlessAbility() {
+        harness.addToBattlefield(player1, new ManaPrism());
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 }
