@@ -48,6 +48,43 @@ class OgreRecluseTest extends BaseCardTest {
         assertThat(recluse.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Ogre Recluse taps when its trigger resolves, before the spell resolves")
+    void tapsOnTriggerResolutionBeforeSpellResolves() {
+        Permanent recluse = addReadyRecluse(player1);
+        harness.castFromHand(player1, new Frostling(), "{R}");
+
+        assertThat(recluse.isTapped()).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(recluse.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player1, "Frostling");
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Frostling");
+    }
+
+    @Test
+    @DisplayName("Ogre Recluse does not trigger from its own casting")
+    void doesNotTriggerFromItsOwnCasting() {
+        harness.castFromHand(player1, new OgreRecluse(), "{3}{R}");
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Ogre Recluse").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Activating Frostling does not tap Ogre Recluse")
+    void activatedAbilityDoesNotTapOgreRecluse() {
+        Permanent recluse = addReadyRecluse(player1);
+        addCreatureReady(player1, new Frostling());
+
+        harness.activateAbility(player1, 1, null, recluse.getId());
+        resolveAllTriggers();
+
+        assertThat(recluse.isTapped()).isFalse();
+        harness.assertInGraveyard(player1, "Frostling");
+    }
+
     private Permanent addReadyRecluse(Player player) {
         return addCreatureReady(player, new OgreRecluse());
     }
