@@ -48,6 +48,44 @@ class MawOfKozilekTest extends BaseCardTest {
         assertThat(maw.getEffectiveToughness()).isEqualTo(5);
     }
 
+    @Test
+    @DisplayName("Repeated activations accumulate and can kill Maw with negative toughness")
+    void repeatedActivationsCanKillMaw() {
+        Permanent maw = addReadyMaw();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(maw.getEffectivePower()).isEqualTo(6);
+        assertThat(maw.getEffectiveToughness()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Maw of Kozilek");
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Maw of Kozilek");
+        harness.assertInGraveyard(player1, "Maw of Kozilek");
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent maw = harness.addToBattlefieldAndReturn(player1, new MawOfKozilek());
+        maw.setSummoningSick(true);
+        maw.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(maw.getEffectivePower()).isEqualTo(4);
+        assertThat(maw.getEffectiveToughness()).isEqualTo(3);
+        assertThat(maw.isTapped()).isTrue();
+    }
+
     private Permanent addReadyMaw() {
         return addCreatureReady(player1, new MawOfKozilek());
     }
