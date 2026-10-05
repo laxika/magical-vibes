@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -25,8 +26,7 @@ class MechanAssemblerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Ornithopter(), new Ornithopter()));
 
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent robot = findPermanent(player1, "Robot");
         assertThat(robot.getCard().isToken()).isTrue();
@@ -38,8 +38,7 @@ class MechanAssemblerTest extends BaseCardTest {
         assertThat(robot.getCard().hasType(CardType.ARTIFACT)).isTrue();
 
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())
@@ -59,5 +58,73 @@ class MechanAssemblerTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not trigger for its own entry or consume its trigger allowance")
+    void ignoresItsOwnEntry() {
+        harness.setHand(player1, List.of(new MechanAssembler(), new Ornithopter()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).isEmpty();
+
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Opponent artifact entries do not trigger or consume the allowance")
+    void ignoresOpponentArtifacts() {
+        harness.addToBattlefield(player1, new MechanAssembler());
+        harness.enterBattlefieldAndReturn(player2, new Ornithopter());
+
+        assertThat(gd.stack).isEmpty();
+        harness.enterBattlefieldAndReturn(player1, new Ornithopter());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The allowance resets on the opponent's turn")
+    void triggersAgainOnOpponentsTurn() {
+        harness.addToBattlefield(player1, new MechanAssembler());
+        harness.enterBattlefieldAndReturn(player1, new Ornithopter());
+        resolveAllTriggers();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.enterBattlefieldAndReturn(player1, new Ornithopter());
+        resolveAllTriggers();
+        harness.enterBattlefieldAndReturn(player1, new Ornithopter());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Each assembler triggers independently and generated Robots do not retrigger it")
+    void multipleAssemblersHaveIndependentAllowances() {
+        harness.addToBattlefield(player1, new MechanAssembler());
+        harness.addToBattlefield(player1, new MechanAssembler());
+        harness.enterBattlefieldAndReturn(player1, new Ornithopter());
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(2);
     }
 }
