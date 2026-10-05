@@ -179,4 +179,36 @@ class MulchTest extends BaseCardTest {
                 .contains(basilisk, shock, secondBasilisk);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched);
     }
+
+    @Test
+    @DisplayName("Uses only the caster's library and puts cards into the caster's zones")
+    void usesOnlyCastersLibraryAndZones() {
+        Card land = new VolrathsStronghold();
+        Card creature = new LowlandBasilisk();
+        Card instant = new Shock();
+        Card secondLand = new VolrathsStronghold();
+        Card untouched = new LowlandBasilisk();
+        Card opponentLand = new VolrathsStronghold();
+        Card opponentCreature = new LowlandBasilisk();
+        Card opponentHand = new Shock();
+        Card opponentGraveyard = new LowlandBasilisk();
+        Card mulch = new Mulch();
+
+        harness.setLibrary(player1, List.of(opponentLand, opponentCreature));
+        harness.setHand(player1, List.of(opponentHand));
+        harness.setGraveyard(player1, List.of(opponentGraveyard));
+        harness.setLibrary(player2, List.of(land, creature, instant, secondLand, untouched));
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, mulch, "{1}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyInAnyOrder(land, secondLand);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .containsExactlyInAnyOrder(creature, instant, mulch);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(untouched);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(opponentHand);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(opponentGraveyard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(opponentLand, opponentCreature);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }
