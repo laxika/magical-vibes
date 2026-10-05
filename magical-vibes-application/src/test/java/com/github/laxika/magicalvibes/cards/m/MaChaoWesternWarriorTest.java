@@ -23,10 +23,10 @@ class MaChaoWesternWarriorTest extends BaseCardTest {
     void attacksAloneBecomesUnblockable() {
         Permanent maChao = addCreatureReady(player1, new MaChaoWesternWarrior());
 
-        gd.playerAutoStopSteps.put(player1.getId(),
-                new java.util.HashSet<>(java.util.Set.of(TurnStep.DECLARE_BLOCKERS)));
-        declareAttackers(player1, List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(player1, List.of(0));
+            resolveAllTriggers();
+        });
 
         assertThat(gqs.hasCantBeBlocked(gd, maChao)).isTrue();
     }
@@ -41,6 +41,42 @@ class MaChaoWesternWarriorTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gqs.hasCantBeBlocked(gd, maChao)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A lone attacking Ma Chao cannot be blocked even by horsemanship")
+    void loneAttackerCannotBeBlockedByHorsemanship() {
+        addCreatureReady(player1, new MaChaoWesternWarrior());
+        addCreatureReady(player2, new ShuCavalry());
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(player1, List.of(0));
+            resolveAllTriggers();
+        });
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("Becoming the only attacker after declaration does not trigger Ma Chao")
+    void becomingOnlyAttackerDoesNotGrantUnblockable() {
+        Permanent maChao = addCreatureReady(player1, new MaChaoWesternWarrior());
+        Permanent companion = addCreatureReady(player1, new ForestBear());
+        Permanent blocker = addCreatureReady(player2, new ShuCavalry());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0, 1)));
+        companion.setAttacking(false);
+        resolveAllTriggers();
+        prepareDeclareBlockers();
+
+        assertThat(gqs.hasCantBeBlocked(gd, maChao)).isFalse();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     @Test
@@ -81,10 +117,10 @@ class MaChaoWesternWarriorTest extends BaseCardTest {
     void unblockableResetsAtEndOfCombat() {
         Permanent maChao = addCreatureReady(player1, new MaChaoWesternWarrior());
 
-        gd.playerAutoStopSteps.put(player1.getId(),
-                new java.util.HashSet<>(java.util.Set.of(TurnStep.DECLARE_BLOCKERS)));
-        declareAttackers(player1, List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(player1, List.of(0));
+            resolveAllTriggers();
+        });
 
         assertThat(gqs.hasCantBeBlocked(gd, maChao)).isTrue();
 
@@ -100,10 +136,10 @@ class MaChaoWesternWarriorTest extends BaseCardTest {
     void unblockableResetsAtEndOfTurn() {
         Permanent maChao = addCreatureReady(player1, new MaChaoWesternWarrior());
 
-        gd.playerAutoStopSteps.put(player1.getId(),
-                new java.util.HashSet<>(java.util.Set.of(TurnStep.DECLARE_BLOCKERS)));
-        declareAttackers(player1, List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(player1, List.of(0));
+            resolveAllTriggers();
+        });
 
         assertThat(gqs.hasCantBeBlocked(gd, maChao)).isTrue();
 
