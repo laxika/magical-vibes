@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LightOfTheLegion.class, GrizzlyBears.class, Murder.class, SilvercoatLion.class})
 class LightOfTheLegionTest extends BaseCardTest {
 
     @Test
@@ -46,20 +48,73 @@ class LightOfTheLegionTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Murder()));
         harness.addMana(player2, ManaColor.BLACK, 3);
-        harness.castInstant(player2, 0, light.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, light.getId());
         harness.passBothPriorities();
 
         assertThat(whiteCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(greenCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
-    private void declareAttackers(Permanent first, Permanent second) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+    @Test
+    @DisplayName("Mentor excludes equal-power attackers and creatures that are not attacking")
+    void mentorExcludesIneligibleCreatures() {
+        Permanent light = addCreatureReady(player1, new LightOfTheLegion());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent equalPower = addCreatureReady(player1, new GrizzlyBears());
+        equalPower.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        Permanent nonattacker = addCreatureReady(player1, new SilvercoatLion());
+
+        declareAttackers(player1, List.of(0, 1, 2));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(attacker.getId());
+        harness.handlePermanentChosen(player1, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(equalPower.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(nonattacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(light.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Mentor rechecks the target's power when it resolves")
+    void mentorDoesNotCounterTargetThatNowHasEqualPower() {
+        Permanent light = addCreatureReady(player1, new LightOfTheLegion());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(light, attacker);
+        harness.handlePermanentChosen(player1, attacker.getId());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Death trigger counters every friendly white creature but no opposing creature")
+    void deathCountersMultipleCreaturesOnlyForItsController() {
+        Permanent light = addCreatureReady(player1, new LightOfTheLegion());
+        Permanent first = addCreatureReady(player1, new SilvercoatLion());
+        Permanent second = addCreatureReady(player1, new SilvercoatLion());
+        Permanent opposing = addCreatureReady(player2, new SilvercoatLion());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(
+        harness.setHand(player2, List.of(new Murder()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(player2, 0, light.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(light);
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opposing.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    private void declareAttackers(Permanent first, Permanent second) {
+        declareAttackers(player1, List.of(
                 gd.playerBattlefields.get(player1.getId()).indexOf(first),
                 gd.playerBattlefields.get(player1.getId()).indexOf(second)));
     }
