@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Food;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -51,5 +52,52 @@ class MotivatedPonyTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(5);
         assertThat(gqs.getEffectivePower(gd, nonAttacker)).isEqualTo(2);
+    }
+
+    @Test
+    void foodEnteringAfterAttackStillQualifiesAtResolution() {
+        Permanent pony = addCreatureReady(player1, new MotivatedPony());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.enterBattlefieldAndReturn(player1, new Food());
+        resolveAllTriggers();
+
+        assertThat(pony.isTapped()).isFalse();
+        assertThat(pony.isAttacking()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, pony)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, pony)).isEqualTo(6);
+    }
+
+    @Test
+    void opponentsFoodDoesNotQualify() {
+        Permanent pony = addCreatureReady(player1, new MotivatedPony());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player2, new Food());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(pony.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, pony)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, pony)).isEqualTo(4);
+    }
+
+    @Test
+    void sacrificedFoodStillQualifies() {
+        Permanent pony = addCreatureReady(player1, new MotivatedPony());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player1, new Food());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 1, null, null);
+        resolveAllTriggers();
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(pony.isTapped()).isFalse();
+        assertThat(pony.isAttacking()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, pony)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, pony)).isEqualTo(6);
     }
 }
