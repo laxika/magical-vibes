@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +15,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KusariGama.class, IsamaruHoundOfKonda.class, HumbleBudoka.class, SokenzanBruiser.class})
+@CardUsed({KusariGama.class, IsamaruHoundOfKonda.class, HumbleBudoka.class, SokenzanBruiser.class,
+        KumanoMasterYamabushi.class})
 class KusariGamaTest extends BaseCardTest {
 
     @Test
@@ -114,15 +116,89 @@ class KusariGamaTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Humble Budoka");
     }
 
+    @Test
+    @DisplayName("The Equipment still triggers when another player controls its equipped creature")
+    void triggersWithDifferentEquipmentController() {
+        Permanent attacker = addCreatureReady(player1, new IsamaruHoundOfKonda());
+        addKusariGama(player2).setAttachedTo(attacker.getId());
+        attacker.setAttacking(true);
+        blockAttacker(player2, new SokenzanBruiser(), 0);
+        addCreatureReady(player2, new HumbleBudoka());
+
+        resolveCombat();
+
+        assertThat(gd.stack).anySatisfy(entry -> {
+            assertThat(entry.getCard().getName()).isEqualTo("Kusari-Gama");
+            assertThat(entry.getControllerId()).isEqualTo(player2.getId());
+        });
+        resolveAllTriggers();
+        harness.assertInGraveyard(player2, "Humble Budoka");
+    }
+
+    @Test
+    @DisplayName("Splash damage hits only the defending player's other creatures")
+    void splashDoesNotDamageNoncreaturesOrAttackingPlayersCreatures() {
+        Permanent attacker = addCreatureReady(player1, new IsamaruHoundOfKonda());
+        addKusariGama(player1).setAttachedTo(attacker.getId());
+        Permanent friendlyCreature = addCreatureReady(player1, new HumbleBudoka());
+        Permanent defendingEquipment = addKusariGama(player2);
+        attacker.setAttacking(true);
+        blockAttacker(player2, new SokenzanBruiser(), 0);
+        addCreatureReady(player2, new HumbleBudoka());
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Humble Budoka");
+        assertThat(friendlyCreature.getMarkedDamage()).isZero();
+        assertThat(defendingEquipment.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Noncombat damage to a blocking creature triggers the Equipment")
+    void noncombatDamageToBlockingCreatureTriggers() {
+        Permanent kumano = addCreatureReady(player1, new KumanoMasterYamabushi());
+        addKusariGama(player1).setAttachedTo(kumano.getId());
+        kumano.setAttacking(true);
+        blockAttacker(player2, new SokenzanBruiser(), 0);
+        Permanent blocker = findPermanent(player2, "Sokenzan Bruiser");
+        Permanent bystander = addCreatureReady(player2, new HumbleBudoka());
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 0, null, blocker.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(blocker.getMarkedDamage()).isEqualTo(1);
+        assertThat(bystander.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Repeated pump activations stack and expire at end of turn")
+    void repeatedPumpExpiresAtEndOfTurn() {
+        Permanent creature = addCreatureReady(player1, new IsamaruHoundOfKonda());
+        addKusariGama(player1).setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+    }
+
     private Permanent addKusariGama(Player player) {
-        Permanent perm = harness.addToBattlefieldAndReturn(player, new KusariGama());
-        perm.setSummoningSick(false);
-        return perm;
+        return addCreatureReady(player, new KusariGama());
     }
 
     private void blockAttacker(Player blocker, Card blockerCard, int attackerIndex) {
-        Permanent perm = harness.addToBattlefieldAndReturn(blocker, blockerCard);
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(blocker, blockerCard);
         perm.setBlocking(true);
         perm.addBlockingTarget(attackerIndex);
     }
