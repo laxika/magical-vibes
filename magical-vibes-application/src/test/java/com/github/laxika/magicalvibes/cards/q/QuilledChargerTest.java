@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.q;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RevokePrivileges;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,9 +13,70 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({QuilledCharger.class, GrizzlyBears.class})
+@CardUsed({QuilledCharger.class, GrizzlyBears.class, RevokePrivileges.class})
 class QuilledChargerTest extends BaseCardTest {
+
+    @Test
+    void creatureThatCannotCrewCanStillSaddle() {
+        Permanent charger = addCreatureReady(player1, new QuilledCharger());
+        Permanent helper = addCreatureReady(player1, new QuilledCharger());
+        Permanent aura = new Permanent(new RevokePrivileges());
+        aura.setAttachedTo(helper.getId());
+        gd.playerBattlefields.get(player2.getId()).add(aura);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(helper.isTapped()).isTrue();
+        assertThat(charger.isSaddled()).isTrue();
+    }
+
+    @Test
+    void cannotSaddleUsingItself() {
+        Permanent charger = addCreatureReady(player1, new QuilledCharger());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(charger.isTapped()).isFalse();
+        assertThat(charger.isSaddled()).isFalse();
+    }
+
+    @Test
+    void summoningSickCreatureCanSaddleAndSaddledStatusExpires() {
+        Permanent charger = addCreatureReady(player1, new QuilledCharger());
+        Permanent helper = addCreatureReady(player1, new QuilledCharger());
+        helper.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(helper.isTapped()).isTrue();
+        assertThat(charger.isSaddled()).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(charger.isSaddled()).isTrue();
+        assertThat(charger.isTapped()).isFalse();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(charger.isSaddled()).isFalse();
+    }
+
+    @Test
+    void cannotSaddleDuringCombat() {
+        Permanent charger = addCreatureReady(player1, new QuilledCharger());
+        Permanent helper = addCreatureReady(player1, new QuilledCharger());
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(helper.isTapped()).isFalse();
+        assertThat(charger.isSaddled()).isFalse();
+    }
 
     @Test
     @DisplayName("Saddle 2 taps another creature and saddles Quilled Charger")
