@@ -28,10 +28,7 @@ class PetAvengersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(avengers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .findFirst()
-                .orElseThrow();
+        Permanent token = findPermanent(player1, "Hero");
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.HERO);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
@@ -65,5 +62,74 @@ class PetAvengersTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once");
+    }
+
+    @Test
+    @DisplayName("Entry-turn power-up costs exactly three generic mana with no green required")
+    void entryTurnDiscountRemovesColoredManaRequirement() {
+        Permanent avengers = harness.enterBattlefieldAndReturn(player1, new PetAvengers());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(avengers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Entry-turn mana is insufficient for a power-up on a creature from an earlier turn")
+    void discountedManaCannotPayFullCost() {
+        Permanent avengers = addCreatureReady(player1, new PetAvengers());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(avengers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Power-up cannot be activated again while its first activation is on the stack")
+    void activationLimitAppliesBeforeResolution() {
+        Permanent avengers = addCreatureReady(player1, new PetAvengers());
+        harness.addMana(player1, ManaColor.COLORLESS, 12);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(avengers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once");
+
+        harness.passBothPriorities();
+        assertThat(avengers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Each Pet Avengers copy can power up independently")
+    void separateCopiesHaveSeparateActivationLimits() {
+        Permanent first = addCreatureReady(player1, new PetAvengers());
+        Permanent second = addCreatureReady(player1, new PetAvengers());
+        harness.addMana(player1, ManaColor.COLORLESS, 12);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(2);
     }
 }
