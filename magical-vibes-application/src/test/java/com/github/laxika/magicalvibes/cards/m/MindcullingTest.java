@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Peek;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +17,45 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Mindculling.class, Forest.class, GrizzlyBears.class, Peek.class})
 class MindcullingTest extends BaseCardTest {
 
-    // ===== Targeting restriction =====
+    @Test
+    @DisplayName("Draws from caster's library before opponent chooses any two cards to discard")
+    void drawsBeforeOpponentChoosesDiscards() {
+        Mindculling spell = new Mindculling();
+        Forest keptByCaster = new Forest();
+        Forest firstDraw = new Forest();
+        Mindculling secondDraw = new Mindculling();
+        Forest firstDiscard = new Forest();
+        Mindculling keptByOpponent = new Mindculling();
+        Forest secondDiscard = new Forest();
+        harness.setHand(player1, List.of(spell, keptByCaster));
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.setHand(player2, List.of(firstDiscard, keptByOpponent, secondDiscard));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactly(keptByCaster, firstDraw, secondDraw);
+        assertThat(gd.playerHands.get(player2.getId()))
+                .containsExactly(firstDiscard, keptByOpponent, secondDiscard);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleCardChosen(player2, 2);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(keptByOpponent);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .containsExactlyInAnyOrder(firstDiscard, secondDiscard);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactly(keptByCaster, firstDraw, secondDraw);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+    }
 
     @Test
     @DisplayName("Cannot target yourself")
@@ -30,8 +67,6 @@ class MindcullingTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Resolving =====
-
     @Test
     @DisplayName("Caster draws two cards and target opponent is prompted to discard two")
     void drawsAndOpponentDiscards() {
@@ -41,8 +76,7 @@ class MindcullingTest extends BaseCardTest {
 
         int player1HandBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Caster should have drawn 2 cards (had 0 after casting, now 2)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(player1HandBefore - 1 + 2);
@@ -66,8 +100,7 @@ class MindcullingTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Caster still draws 2
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
@@ -82,8 +115,7 @@ class MindcullingTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Caster drew 2
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
@@ -104,8 +136,7 @@ class MindcullingTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Peek())));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
 
