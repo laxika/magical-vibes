@@ -5,9 +5,11 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
+import com.github.laxika.magicalvibes.cards.t.ThrunTheLastTroll;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +18,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PsychicBarrier.class, GrizzlyBears.class, LlanowarElves.class,
+        MightOfOaks.class, ThrunTheLastTroll.class})
 class PsychicBarrierTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Cannot target a non-creature spell")
@@ -40,20 +42,16 @@ class PsychicBarrierTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Resolving =====
-
     @Test
     @DisplayName("Counters creature spell and its controller loses 1 life")
     void countersCreatureSpellAndControllerLosesLife() {
         LlanowarElves elves = new LlanowarElves();
-        harness.setHand(player1, List.of(elves));
-        harness.addMana(player1, ManaColor.GREEN, 1);
         harness.setLife(player1, 20);
 
         harness.setHand(player2, List.of(new PsychicBarrier()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, elves, "{G}");
         harness.passPriority(player1);
         harness.castInstant(player2, 0, elves.getId());
         harness.passBothPriorities();
@@ -69,13 +67,11 @@ class PsychicBarrierTest extends BaseCardTest {
     @DisplayName("Psychic Barrier goes to caster's graveyard after resolving")
     void goesToGraveyardAfterResolving() {
         LlanowarElves elves = new LlanowarElves();
-        harness.setHand(player1, List.of(elves));
-        harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.setHand(player2, List.of(new PsychicBarrier()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, elves, "{G}");
         harness.passPriority(player1);
         harness.castInstant(player2, 0, elves.getId());
         harness.passBothPriorities();
@@ -86,17 +82,79 @@ class PsychicBarrierTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counters the creature before its controller loses life")
+    void countersBeforeLifeLoss() {
+        LlanowarElves elves = new LlanowarElves();
+        harness.setHand(player2, List.of(new PsychicBarrier()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castFromHand(player1, elves, "{G}");
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, elves.getId());
+        harness.passBothPriorities();
+
+        List<String> events = harness.getGameData().gameLog.stream()
+                .map(GameLogEntry::plainText)
+                .filter(log -> log.equals("Llanowar Elves is countered.")
+                        || log.contains("loses 1 life (Psychic Barrier)"))
+                .toList();
+        assertThat(events).hasSize(2);
+        assertThat(events.get(0)).isEqualTo("Llanowar Elves is countered.");
+        assertThat(events.get(1)).contains("loses 1 life (Psychic Barrier)");
+    }
+
+    @Test
+    @DisplayName("An uncounterable creature's controller still loses life")
+    void uncounterableCreatureStillCausesLifeLoss() {
+        ThrunTheLastTroll thrun = new ThrunTheLastTroll();
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player2, List.of(new PsychicBarrier()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castFromHand(player1, thrun, "{2}{G}{G}");
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, thrun.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player2, "Psychic Barrier");
+        assertThat(harness.getGameData().stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Thrun, the Last Troll");
+    }
+
+    @Test
+    @DisplayName("Can counter its caster's creature spell and make that player lose life")
+    void canCounterOwnCreatureSpell() {
+        LlanowarElves elves = new LlanowarElves();
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.castFromHand(player1, elves, "{G}");
+        harness.setHand(player1, List.of(new PsychicBarrier()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, elves.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
     @DisplayName("Caster of Psychic Barrier does not lose life")
     void casterDoesNotLoseLife() {
         LlanowarElves elves = new LlanowarElves();
-        harness.setHand(player1, List.of(elves));
-        harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.setHand(player2, List.of(new PsychicBarrier()));
         harness.addMana(player2, ManaColor.BLUE, 2);
         harness.setLife(player2, 20);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, elves, "{G}");
         harness.passPriority(player1);
         harness.castInstant(player2, 0, elves.getId());
         harness.passBothPriorities();
@@ -104,20 +162,16 @@ class PsychicBarrierTest extends BaseCardTest {
         harness.assertLife(player2, 20);
     }
 
-    // ===== Fizzle =====
-
     @Test
     @DisplayName("Fizzles if target spell is no longer on the stack — no life loss")
     void fizzlesIfTargetSpellRemoved() {
         LlanowarElves elves = new LlanowarElves();
-        harness.setHand(player1, List.of(elves));
-        harness.addMana(player1, ManaColor.GREEN, 1);
         harness.setLife(player1, 20);
 
         harness.setHand(player2, List.of(new PsychicBarrier()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, elves, "{G}");
         harness.passPriority(player1);
         harness.castInstant(player2, 0, elves.getId());
 
