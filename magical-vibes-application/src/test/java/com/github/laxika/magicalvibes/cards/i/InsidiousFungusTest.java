@@ -88,6 +88,85 @@ class InsidiousFungusTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void drawModeCanPutTheLandItJustDrewOntoTheBattlefield() {
+        addFungus();
+        Card drawnLand = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawnLand));
+
+        activate(2, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == drawnLand && permanent.isTapped());
+    }
+
+    @Test
+    void drawModeFinishesWithoutPuttingANonlandOntoTheBattlefield() {
+        addFungus();
+        Card drawnCard = new InsidiousFungus();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        activate(2, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        harness.assertNotOnBattlefield(player1, "Insidious Fungus");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void sacrificeIsPaidBeforeTheAbilityResolves() {
+        addFungus();
+        Card drawnCard = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        activate(2, null);
+
+        harness.assertInGraveyard(player1, "Insidious Fungus");
+        harness.assertNotOnBattlefield(player1, "Insidious Fungus");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    void enchantmentModeRejectsAnArtifactWithoutSacrificingTheFungus() {
+        addFungus();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new GildedLotus());
+
+        assertThatThrownBy(() -> activate(1, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Insidious Fungus");
+        harness.assertNotInGraveyard(player1, "Insidious Fungus");
+        harness.assertOnBattlefield(player2, "Gilded Lotus");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWithoutPayingTwoMana() {
+        harness.addToBattlefield(player1, new InsidiousFungus());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> activate(2, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Insidious Fungus");
+        harness.assertNotInGraveyard(player1, "Insidious Fungus");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void addFungus() {
         harness.addToBattlefield(player1, new InsidiousFungus());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
