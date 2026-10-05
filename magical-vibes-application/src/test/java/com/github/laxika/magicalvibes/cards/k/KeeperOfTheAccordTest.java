@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -34,7 +33,7 @@ class KeeperOfTheAccordTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
         assertThat(findPermanent(player1, "Plains").isTapped()).isTrue();
         harness.passBothPriorities();
 
@@ -104,11 +103,76 @@ class KeeperOfTheAccordTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
+    @Test
+    @DisplayName("Can decline the land search without suppressing the Soldier trigger")
+    void canDeclineSearch() {
+        harness.addToBattlefield(player1, new KeeperOfTheAccord());
+        harness.addToBattlefield(player2, new KeeperOfTheAccord());
+        harness.addToBattlefield(player2, new KeeperOfTheAccord());
+        harness.addToBattlefield(player2, new Plains());
+        var plains = new Plains();
+        harness.setLibrary(player1, List.of(plains));
+
+        advanceToEndStep(player2);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(soldierTokens(player1)).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Plains");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(plains);
+    }
+
+    @Test
+    @DisplayName("Creates a Soldier when only the creature condition is met")
+    void createsSoldierWithoutLandAdvantage() {
+        harness.addToBattlefield(player1, new KeeperOfTheAccord());
+        harness.addToBattlefield(player2, new KeeperOfTheAccord());
+        harness.addToBattlefield(player2, new KeeperOfTheAccord());
+
+        advanceToEndStep(player2);
+
+        assertThat(soldierTokens(player1)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Searches for a tapped Plains when only the land condition is met")
+    void searchesWithoutCreatureAdvantage() {
+        harness.addToBattlefield(player1, new KeeperOfTheAccord());
+        harness.addToBattlefield(player2, new Plains());
+        harness.setLibrary(player1, List.of(new Plains()));
+
+        advanceToEndStep(player2);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(findPermanent(player1, "Plains").isTapped()).isTrue();
+        assertThat(soldierTokens(player1)).isZero();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Accepting a search with no basic Plains does not put another card onto the battlefield")
+    void searchWithNoMatchingCard() {
+        harness.addToBattlefield(player1, new KeeperOfTheAccord());
+        harness.addToBattlefield(player2, new Plains());
+        var creature = new KeeperOfTheAccord();
+        harness.setLibrary(player1, List.of(creature));
+
+        advanceToEndStep(player2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+        assertThat(findPermanents(player1, "Keeper of the Accord")).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Plains");
+    }
+
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 
