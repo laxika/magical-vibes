@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({LyzoldaTheBloodWitch.class, EnemyOfTheGuildpact.class, GnatAlleyCreeper.class,
         RakdosGuildmage.class, SimicRagworm.class})
@@ -116,6 +117,67 @@ class LyzoldaTheBloodWitchTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         harness.assertInGraveyard(player1, "Simic Ragworm");
+    }
+
+    @Test
+    @DisplayName("Can sacrifice herself while tapped and summoning sick")
+    void sacrificesHerselfForDamageAndDraw() {
+        Permanent lyzolda = addCreatureReady(player1, new LyzoldaTheBloodWitch());
+        lyzolda.setSummoningSick(true);
+        lyzolda.setTapped(true);
+        addCreatureReady(player1, new SimicRagworm());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new SimicRagworm()));
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handlePermanentChosen(player1, lyzolda.getId());
+
+        harness.assertInGraveyard(player1, "Lyzolda, the Blood Witch");
+        harness.assertNotOnBattlefield(player1, "Lyzolda, the Blood Witch");
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertInHand(player1, "Simic Ragworm");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Does not draw if the sacrificed creature was also the only target")
+    void doesNotDrawWhenSacrificingTheTarget() {
+        addLyzolda();
+        Permanent fodder = addCreatureReady(player1, new RakdosGuildmage());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new SimicRagworm()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, fodder.getId());
+        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Rakdos Guildmage");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Requires a target even when a black creature can be sacrificed")
+    void requiresTargetForBlackCreature() {
+        addLyzolda();
+        addCreatureReady(player1, new EnemyOfTheGuildpact());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Enemy of the Guildpact");
+        harness.assertNotInGraveyard(player1, "Enemy of the Guildpact");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addLyzolda() {
