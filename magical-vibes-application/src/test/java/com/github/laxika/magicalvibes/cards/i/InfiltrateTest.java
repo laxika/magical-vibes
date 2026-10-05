@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.o.Oraxid;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -26,8 +27,7 @@ class InfiltrateTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player1, "Oraxid");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent oraxid = findPermanent(player1, "Oraxid");
         assertThat(oraxid.isCantBeBlocked()).isTrue();
@@ -41,8 +41,7 @@ class InfiltrateTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player1, "Oraxid");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent oraxid = findPermanent(player1, "Oraxid");
         assertThat(oraxid.isCantBeBlocked()).isTrue();
@@ -62,8 +61,7 @@ class InfiltrateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Infiltrate()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
 
         declareAttackers(List.of(0));
 
@@ -80,8 +78,7 @@ class InfiltrateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Infiltrate()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
 
         declareAttackers(player2, List.of(0));
 
@@ -96,5 +93,32 @@ class InfiltrateTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Only the targeted attacker cannot be blocked")
+    void onlyTargetedAttackerCannotBeBlocked() {
+        Permanent target = addCreatureReady(player1, new Oraxid());
+        Permanent other = addCreatureReady(player1, new Oraxid());
+        addCreatureReady(player2, new Oraxid());
+        harness.setHand(player1, List.of(new Infiltrate()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, other)).isFalse();
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player1, "Oraxid");
+        harness.assertOnBattlefield(player2, "Oraxid");
     }
 }
