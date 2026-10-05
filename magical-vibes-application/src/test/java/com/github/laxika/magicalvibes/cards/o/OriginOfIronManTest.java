@@ -83,6 +83,65 @@ class OriginOfIronManTest extends BaseCardTest {
                 .containsExactly(tooExpensiveArtifact, nonArtifact);
     }
 
+    @Test
+    void chapterILockPersistsAcrossUntapStepsAndEndsWhenSagaIsSacrificed() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent saga = addSagaWithLore(0);
+        harness.setHand(player1, List.of(new BarrinsCodex()));
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isTrue();
+
+        saga.setCounterCount(CounterType.LORE, 2);
+        triggerChapter();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Origin of Iron Man");
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void chapterIIICanBeDeclinedWithAnEligibleArtifactInHand() {
+        BarrinsCodex artifact = new BarrinsCodex();
+        harness.setHand(player1, List.of(artifact));
+        addSagaWithLore(2);
+
+        triggerChapter();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(artifact);
+        harness.assertNotOnBattlefield(player1, "Barrin's Codex");
+        harness.assertInGraveyard(player1, "Origin of Iron Man");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void chapterIIIWithNoEligibleArtifactCompletesWithoutPuttingACardOntoBattlefield() {
+        GrizzlyBears creature = new GrizzlyBears();
+        WurmcoilEngine expensiveArtifact = new WurmcoilEngine();
+        harness.setHand(player1, List.of(creature, expensiveArtifact));
+        addSagaWithLore(2);
+
+        triggerChapter();
+        harness.passBothPriorities();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature, expensiveArtifact);
+        harness.assertNotOnBattlefield(player1, "Wurmcoil Engine");
+        harness.assertInGraveyard(player1, "Origin of Iron Man");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
     private Permanent addSagaWithLore(int loreCounters) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new OriginOfIronMan());
         saga.setCounterCount(CounterType.LORE, loreCounters);
