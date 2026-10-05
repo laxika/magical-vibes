@@ -1,28 +1,33 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.c.CloudSprite;
+import com.github.laxika.magicalvibes.cards.e.ElendaSaintOfDusk;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({OdricLunarchMarshal.class, GrizzlyBears.class, CloudSprite.class})
 class OdricLunarchMarshalTest extends BaseCardTest {
 
     private void advanceToCombatAndResolve(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // BEGINNING_OF_COMBAT — Odric triggers
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
         harness.passBothPriorities(); // resolve trigger
     }
 
@@ -138,5 +143,78 @@ class OdricLunarchMarshalTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("(skulk)");
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = Keyword.class, names = {
+            "FIRST_STRIKE", "FLYING", "DEATHTOUCH", "DOUBLE_STRIKE", "HASTE", "HEXPROOF",
+            "INDESTRUCTIBLE", "LIFELINK", "MENACE", "REACH", "SKULK", "TRAMPLE", "VIGILANCE"
+    })
+    void sharesEachListedKeyword(Keyword keyword) {
+        Permanent odric = harness.addToBattlefieldAndReturn(player1, new OdricLunarchMarshal());
+        Permanent donor = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent recipient = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        donor.getGrantedKeywords().add(keyword);
+
+        advanceToCombatAndResolve(player1);
+
+        assertThat(gqs.hasKeyword(gd, odric, keyword)).isTrue();
+        assertThat(gqs.hasKeyword(gd, recipient, keyword)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponent, keyword)).isFalse();
+    }
+
+    @Test
+    void sharesKeywordGainedAfterTriggering() {
+        Permanent odric = harness.addToBattlefieldAndReturn(player1, new OdricLunarchMarshal());
+        Permanent donor = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        assertThat(gd.stack).hasSize(1);
+        donor.getGrantedKeywords().add(Keyword.FLYING);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, odric, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void doesNotShareKeywordLostBeforeResolution() {
+        Permanent odric = harness.addToBattlefieldAndReturn(player1, new OdricLunarchMarshal());
+        Permanent donor = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        donor.getGrantedKeywords().add(Keyword.FLYING);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        donor.getGrantedKeywords().remove(Keyword.FLYING);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, odric, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    void creaturesEnteringAfterResolutionDoNotGainKeywords() {
+        Permanent odric = harness.addToBattlefieldAndReturn(player1, new OdricLunarchMarshal());
+        harness.addToBattlefield(player1, new CloudSprite());
+        advanceToCombatAndResolve(player1);
+
+        Permanent lateCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, odric, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @CardUsed({ElendaSaintOfDusk.class})
+    void sharesHexproofFromInstantsWithoutGrantingUnrestrictedHexproof() {
+        Permanent odric = harness.addToBattlefieldAndReturn(player1, new OdricLunarchMarshal());
+        Permanent elenda = harness.addToBattlefieldAndReturn(player1, new ElendaSaintOfDusk());
+        assertThat(gqs.hasHexproofFromCardType(gd, elenda, CardType.INSTANT, player2.getId())).isTrue();
+
+        advanceToCombatAndResolve(player1);
+
+        assertThat(gqs.hasHexproofFromCardType(gd, odric, CardType.INSTANT, player2.getId())).isTrue();
+        assertThat(gqs.hasHexproofFromCardType(gd, odric, CardType.SORCERY, player2.getId())).isFalse();
+        assertThat(gqs.hasKeyword(gd, odric, Keyword.HEXPROOF)).isFalse();
     }
 }
