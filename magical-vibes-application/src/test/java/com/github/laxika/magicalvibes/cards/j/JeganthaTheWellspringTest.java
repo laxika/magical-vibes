@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.cards.a.AlmightyBrushwagg;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.Card;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({JeganthaTheWellspring.class, GrizzlyBears.class, LlanowarElves.class})
+@CardUsed({JeganthaTheWellspring.class, GrizzlyBears.class, LlanowarElves.class, AlmightyBrushwagg.class})
 class JeganthaTheWellspringTest extends BaseCardTest {
 
     @Test
@@ -86,8 +87,7 @@ class JeganthaTheWellspringTest extends BaseCardTest {
     }
 
     private void activateManaAbility() {
-        Permanent jegantha = harness.addToBattlefieldAndReturn(player1, new JeganthaTheWellspring());
-        jegantha.setSummoningSick(false);
+        addCreatureReady(player1, new JeganthaTheWellspring());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -96,5 +96,51 @@ class JeganthaTheWellspringTest extends BaseCardTest {
 
     private ManaPool pool() {
         return gd.playerManaPools.get(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Jegantha's mana ability resolves immediately and pays its tap cost")
+    void manaAbilityResolvesImmediatelyAndCannotBeRepeatedWhileTapped() {
+        activateManaAbility();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanent(player1, "Jegantha, the Wellspring").isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(pool().getColoredCostOnlyManaTotal()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents activating Jegantha's tap ability")
+    void summoningSicknessPreventsActivation() {
+        Permanent jegantha = harness.addToBattlefieldAndReturn(player1, new JeganthaTheWellspring());
+        jegantha.setSummoningSick(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(jegantha.isTapped()).isFalse();
+        assertThat(pool().getColoredCostOnlyManaTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Restricted mana pays the colored part of an activated ability but not its generic part")
+    void restrictedManaPaysColoredActivationCostAlongsideUnrestrictedMana() {
+        activateManaAbility();
+        harness.addToBattlefield(player1, new AlmightyBrushwagg());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(pool().getColoredCostOnlyManaTotal()).isEqualTo(5);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(pool().getColoredCostOnlyMana(ManaColor.GREEN)).isZero();
+        assertThat(pool().getColoredCostOnlyManaTotal()).isEqualTo(4);
+        assertThat(pool().get(ManaColor.COLORLESS)).isZero();
+        harness.passBothPriorities();
     }
 }
