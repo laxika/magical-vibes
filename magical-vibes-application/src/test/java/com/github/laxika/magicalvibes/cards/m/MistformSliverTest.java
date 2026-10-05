@@ -21,7 +21,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MistformSliver.class, FugitiveWizard.class, PlatedSliver.class})
+@CardUsed({MistformSliver.class, FugitiveWizard.class, PlatedSliver.class, AmoeboidChangeling.class})
 class MistformSliverTest extends BaseCardTest {
 
     @Test
@@ -100,15 +100,13 @@ class MistformSliverTest extends BaseCardTest {
                 .contains(CardSubtype.GOBLIN, CardSubtype.ELF, CardSubtype.SLIVER);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.effectiveCreatureSubtypes(gd, sliver))
                 .containsExactlyInAnyOrder(CardSubtype.ILLUSION, CardSubtype.SLIVER);
     }
 
     @Test
-    @CardUsed(AmoeboidChangeling.class)
     @DisplayName("A Sliver that loses all creature types no longer has Mistform Sliver's ability")
     void losingSliverTypeRemovesAbility() {
         Permanent mistformSliver = addCreatureReady(player1, new MistformSliver());
@@ -135,5 +133,61 @@ class MistformSliverTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(source);
 
         assertThat(gs.getEffectiveActivatedAbilities(gd, sliver)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The granted ability can be activated while tapped and summoning sick")
+    void tappedSummoningSickSliverCanActivateAbility() {
+        Permanent sliver = harness.addToBattlefieldAndReturn(player1, new MistformSliver());
+        sliver.setTapped(true);
+        sliver.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.ELF.name());
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, sliver))
+                .containsExactlyInAnyOrder(CardSubtype.ILLUSION, CardSubtype.SLIVER, CardSubtype.ELF);
+        assertThat(sliver.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A granted ability resolves on its activating Sliver after Mistform Sliver leaves")
+    void grantedAbilityResolvesAfterGrantingSourceLeaves() {
+        Permanent source = addCreatureReady(player1, new MistformSliver());
+        Permanent sliver = addCreatureReady(player1, new PlatedSliver());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.ELF.name());
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, sliver))
+                .containsExactlyInAnyOrder(CardSubtype.SLIVER, CardSubtype.ELF);
+        assertThat(gs.getEffectiveActivatedAbilities(gd, sliver)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A creature gaining the Sliver type gains Mistform Sliver's ability immediately")
+    void gainingSliverTypeGrantsAbility() {
+        addCreatureReady(player1, new MistformSliver());
+        Permanent wizard = addCreatureReady(player1, new FugitiveWizard());
+        addCreatureReady(player1, new AmoeboidChangeling());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 2, 0, null, wizard.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.ELF.name());
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, wizard))
+                .containsExactlyInAnyOrder(CardSubtype.HUMAN, CardSubtype.WIZARD);
+        assertThat(gs.getEffectiveActivatedAbilities(gd, wizard)).isEmpty();
     }
 }
