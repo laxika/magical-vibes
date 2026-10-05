@@ -3,10 +3,15 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LysAlanaScarblade;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.w.Wispmare;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +20,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ProwessOfTheFair.class, LysAlanaScarblade.class, GrizzlyBears.class, Shock.class, Wispmare.class})
 class ProwessOfTheFairTest extends BaseCardTest {
 
     // "Whenever another nontoken Elf is put into your graveyard from the battlefield,
@@ -31,8 +37,7 @@ class ProwessOfTheFairTest extends BaseCardTest {
         harness.setHand(caster, List.of(new Shock()));
         harness.addMana(caster, ManaColor.RED, 1);
         UUID targetId = harness.getPermanentId(targetController, targetName);
-        harness.castInstant(caster, 0, targetId);
-        harness.passBothPriorities(); // resolve Shock -> creature dies -> death trigger onto stack
+        harness.castAndResolveInstant(caster, 0, targetId);
         harness.passBothPriorities(); // resolve the death trigger (MayEffect prompt)
     }
 
@@ -50,6 +55,8 @@ class ProwessOfTheFairTest extends BaseCardTest {
         assertThat(tokens.getFirst().getCard().getPower()).isEqualTo(1);
         assertThat(tokens.getFirst().getCard().getToughness()).isEqualTo(1);
         assertThat(tokens.getFirst().getCard().isToken()).isTrue();
+        assertThat(tokens.getFirst().getCard().getColor()).isEqualTo(CardColor.GREEN);
+        assertThat(tokens.getFirst().getCard().getSubtypes()).containsExactlyInAnyOrder(CardSubtype.ELF, CardSubtype.WARRIOR);
     }
 
     @Test
@@ -103,6 +110,51 @@ class ProwessOfTheFairTest extends BaseCardTest {
         killWithShock(player1, player2, "Lys Alana Scarblade");
 
         assertThat(gd.stack).isEmpty();
+        assertThat(elfWarriorTokens(player1)).isEmpty();
+    }
+
+    @Test
+    void anotherNoncreatureElfGoingToGraveyardTriggers() {
+        harness.addToBattlefield(player1, new ProwessOfTheFair());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new ProwessOfTheFair());
+        harness.setHand(player1, List.of(new Wispmare()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castCreature(player1, 0, other.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Prowess of the Fair");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(elfWarriorTokens(player1)).hasSize(1);
+    }
+
+    @Test
+    void ownedElfDyingUnderOpponentControlTriggers() {
+        harness.addToBattlefield(player1, new ProwessOfTheFair());
+        Permanent elf = harness.addToBattlefieldAndReturn(player2, new LysAlanaScarblade());
+        gd.stolenCreatures.put(elf.getId(), player1.getId());
+
+        killWithShock(player1, player2, "Lys Alana Scarblade");
+
+        harness.assertInGraveyard(player1, "Lys Alana Scarblade");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(elfWarriorTokens(player1)).hasSize(1);
+    }
+
+    @Test
+    void opponentOwnedElfDyingUnderYourControlDoesNotTrigger() {
+        harness.addToBattlefield(player1, new ProwessOfTheFair());
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new LysAlanaScarblade());
+        gd.stolenCreatures.put(elf.getId(), player2.getId());
+
+        killWithShock(player1, player1, "Lys Alana Scarblade");
+
+        harness.assertInGraveyard(player2, "Lys Alana Scarblade");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(elfWarriorTokens(player1)).isEmpty();
     }
 }
