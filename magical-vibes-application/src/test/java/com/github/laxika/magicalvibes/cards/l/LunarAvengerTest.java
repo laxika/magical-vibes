@@ -85,6 +85,62 @@ class LunarAvengerTest extends BaseCardTest {
                 .hasMessageContaining("Not enough counters");
     }
 
+    @Test
+    @DisplayName("The counter is paid immediately and the keyword waits for resolution")
+    void paysCounterBeforeResolution() {
+        harness.addMana(player1, ManaColor.GREEN, 7);
+        Permanent avenger = castAndResolve();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(avenger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, avenger, Keyword.HASTE)).isFalse();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough counters");
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "HASTE");
+
+        assertThat(gqs.hasKeyword(gd, avenger, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Separate activations can grant all three abilities in the same turn")
+    void multipleKeywordGrantsAccumulateAndExpire() {
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        Permanent avenger = castAndResolve();
+
+        for (Keyword keyword : List.of(Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.HASTE)) {
+            harness.activateAbility(player1, 0, 0, null, null);
+            harness.passBothPriorities();
+            harness.handleListChoice(player1, keyword.name());
+        }
+
+        assertThat(avenger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        for (Keyword keyword : List.of(Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.HASTE)) {
+            assertThat(gqs.hasKeyword(gd, avenger, keyword)).isTrue();
+        }
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        for (Keyword keyword : List.of(Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.HASTE)) {
+            assertThat(gqs.hasKeyword(gd, avenger, keyword)).isFalse();
+        }
+    }
+
+    @Test
+    @DisplayName("Entering without being cast gives no sunburst counters")
+    void enteringWithoutCastingGivesNoCounters() {
+        Permanent avenger = harness.enterBattlefieldAndReturn(player1, new LunarAvenger());
+
+        assertThat(avenger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private Permanent castAndResolve() {
         harness.setHand(player1, List.of(new LunarAvenger()));
         harness.castCreature(player1, 0);
