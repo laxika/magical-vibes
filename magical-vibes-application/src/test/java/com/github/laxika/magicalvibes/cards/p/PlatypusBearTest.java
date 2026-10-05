@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.a.AirbendingLesson;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,17 +14,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PlatypusBear.class, AirbendingLesson.class, GrizzlyBears.class, Shock.class})
+@CardUsed({PlatypusBear.class, AirbendingLesson.class})
 class PlatypusBearTest extends BaseCardTest {
 
     @Test
     @DisplayName("When it enters, mills two cards from its controller's library")
     void entersAndMillsTwoCards() {
-        Card first = new GrizzlyBears();
-        Card second = new Shock();
+        Card first = new PlatypusBear();
+        Card second = new PlatypusBear();
         harness.setHand(player1, List.of(new PlatypusBear()));
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(first, second));
+        harness.setLibrary(player1, List.of(first, second));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
@@ -70,10 +67,54 @@ class PlatypusBearTest extends BaseCardTest {
                 .hasMessageContaining("Invalid attacker index");
     }
 
-    private Permanent addReadyPlatypusBear() {
-        Permanent bear = harness.addToBattlefieldAndReturn(player1, new PlatypusBear());
+    @Test
+    @DisplayName("A non-Lesson card in its controller's graveyard does not enable attacking")
+    void nonLessonDoesNotEnableAttacking() {
+        harness.setGraveyard(player1, List.of(new PlatypusBear()));
+        Permanent bear = addReadyPlatypusBear();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(battlefieldIndex(bear))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Removing the last Lesson before combat disables attacking")
+    void cannotAttackAfterLastLessonLeavesGraveyard() {
+        harness.setGraveyard(player1, List.of(new AirbendingLesson()));
+        Permanent bear = addReadyPlatypusBear();
+        harness.setGraveyard(player1, List.of());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(battlefieldIndex(bear))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("A Lesson milled by the enter trigger enables attacking")
+    void milledLessonEnablesAttacking() {
+        Card lesson = new AirbendingLesson();
+        Card other = new PlatypusBear();
+        harness.setHand(player1, List.of(new PlatypusBear()));
+        harness.setLibrary(player1, List.of(lesson, other));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(lesson, other);
+        Permanent bear = findPermanent(player1, "Platypus-Bear");
         bear.setSummoningSick(false);
-        return bear;
+        int lifeBefore = gd.getLife(player2.getId());
+
+        declareAttackers(List.of(battlefieldIndex(bear)));
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    private Permanent addReadyPlatypusBear() {
+        return addCreatureReady(player1, new PlatypusBear());
     }
 
     private int battlefieldIndex(Permanent permanent) {
