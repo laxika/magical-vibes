@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.PrismaticOmen;
+import com.github.laxika.magicalvibes.cards.p.PhantasmalTerrain;
+import java.util.List;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,9 +15,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LivingLands.class, Forest.class})
+@CardUsed({LivingLands.class, Forest.class, Bayou.class, Mountain.class,
+        GloriousAnthem.class, PrismaticOmen.class, PhantasmalTerrain.class, Lignify.class})
 class LivingLandsTest extends BaseCardTest {
 
     @Test
@@ -132,5 +137,58 @@ class LivingLandsTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, forest)).isFalse();
         assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(0);
+    }
+
+    @Test
+    void forestStopsBeingCreatureWhenItsLandTypeBecomesIsland() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new LivingLands());
+        harness.setHand(player1, List.of(new PhantasmalTerrain()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "ISLAND");
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.ISLAND);
+        assertThat(gqs.isCreature(gd, forest)).isFalse();
+        assertThat(gqs.isLand(gd, forest)).isTrue();
+    }
+
+    @Test
+    void mountainBecomesCreatureWhenItsLandTypeBecomesForest() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.addToBattlefield(player1, new LivingLands());
+        harness.setHand(player1, List.of(new PhantasmalTerrain()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castEnchantment(player1, 0, mountain.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "FOREST");
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, mountain)).containsExactly(CardSubtype.FOREST);
+        assertThat(gqs.isCreature(gd, mountain)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, mountain)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, mountain)).isEqualTo(1);
+        assertThat(gqs.isLand(gd, mountain)).isTrue();
+    }
+
+    @Test
+    void newerLivingLandsOverridesOlderLignifyBasePowerAndToughness() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new LivingLands());
+        harness.setHand(player1, List.of(new Lignify(), new LivingLands()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(4);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(1);
     }
 }
