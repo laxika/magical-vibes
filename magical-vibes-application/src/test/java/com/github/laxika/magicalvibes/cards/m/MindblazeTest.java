@@ -29,8 +29,7 @@ class MindblazeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Mindblaze()));
         giveMana();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 
     @Test
@@ -126,5 +125,46 @@ class MindblazeTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handleListChoice(player1, "Mountain"))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("Rejects a land name even when no card with that name is in the game")
+    void rejectsLandNameAbsentFromGame() {
+        castAt(new ArrayList<>(List.of(new DevotedRetainer())));
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "Mountain"))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("Offers a losing positive guess even when the named card is the only library card")
+    void canChooseLosingNumberForOneCardLibrary() {
+        castAt(new ArrayList<>(List.of(new DevotedRetainer())));
+        harness.handleListChoice(player1, "Devoted Retainer");
+
+        PendingInteraction.ColorChoice numberChoice =
+                (PendingInteraction.ColorChoice) gd.interaction.activeInteraction();
+        assertThat(numberChoice.options()).contains("2");
+
+        harness.handleListChoice(player1, "2");
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The caster may target their own library and takes the damage on an exact match")
+    void canTargetSelf() {
+        harness.setLibrary(player1, List.of(new DevotedRetainer(), new LanternKami()));
+        harness.setHand(player1, List.of(new Mindblaze()));
+        giveMana();
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.handleListChoice(player1, "Devoted Retainer");
+        harness.handleListChoice(player1, "1");
+
+        harness.assertLife(player1, 12);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        harness.assertInGraveyard(player1, "Mindblaze");
     }
 }
