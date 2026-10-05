@@ -6,19 +6,21 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({JinGitaxiasCoreAugur.class, GrizzlyBears.class, Forest.class, Mountain.class,
+        Plains.class, TurnToFrog.class})
 class JinGitaxiasCoreAugurTest extends BaseCardTest {
-
-    // ===== End step draw trigger =====
 
     @Test
     @DisplayName("Draws 7 cards at controller's end step")
@@ -59,8 +61,6 @@ class JinGitaxiasCoreAugurTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
     }
 
-    // ===== Opponent max hand size reduction =====
-
     @Test
     @DisplayName("Opponent must discard down to 0 during cleanup with Jin-Gitaxias on battlefield")
     void opponentDiscardsToZero() {
@@ -69,9 +69,9 @@ class JinGitaxiasCoreAugurTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
 
         // Give opponent 3 cards in hand
-        harness.setHand(player2, new ArrayList<>(List.of(
+        harness.setHand(player2, List.of(
                 new GrizzlyBears(), new Forest(), new Mountain()
-        )));
+        ));
 
         // Advance to cleanup
         gs.advanceStep(gd);
@@ -91,11 +91,11 @@ class JinGitaxiasCoreAugurTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
 
         // Give controller exactly 8 cards (normally must discard 1)
-        harness.setHand(player1, new ArrayList<>(List.of(
+        harness.setHand(player1, List.of(
                 new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
                 new Forest(), new Forest(), new Forest(),
                 new Mountain(), new Plains()
-        )));
+        ));
 
         // Advance to cleanup
         gs.advanceStep(gd);
@@ -114,7 +114,7 @@ class JinGitaxiasCoreAugurTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
 
         // Opponent has no cards
-        harness.setHand(player2, new ArrayList<>());
+        harness.setHand(player2, List.of());
 
         gs.advanceStep(gd);
 
@@ -130,9 +130,9 @@ class JinGitaxiasCoreAugurTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
 
         // Give opponent 3 cards
-        harness.setHand(player2, new ArrayList<>(List.of(
+        harness.setHand(player2, List.of(
                 new GrizzlyBears(), new Forest(), new Mountain()
-        )));
+        ));
 
         // Remove Jin-Gitaxias before cleanup
         gd.playerBattlefields.get(player1.getId()).clear();
@@ -140,6 +140,58 @@ class JinGitaxiasCoreAugurTest extends BaseCardTest {
         gs.advanceStep(gd);
 
         // No discard needed — max hand size is back to 7
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Can be cast during the opponent's end step without drawing immediately")
+    void flashAfterEndStepBeginsDoesNotTriggerDraw() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player1, List.of(new JinGitaxiasCoreAugur()));
+        harness.addMana(player1, ManaColor.BLUE, 10);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Jin-Gitaxias, Core Augur");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A queued draw trigger still resolves after Jin-Gitaxias leaves the battlefield")
+    void drawTriggerSurvivesSourceLeavingBattlefield() {
+        harness.addToBattlefield(player1, new JinGitaxiasCoreAugur());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest(), new Forest(), new Mountain()));
+
+        gs.advanceStep(gd);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Losing all abilities stops the hand-size reduction before cleanup discards")
+    void losingAbilitiesStopsHandSizeReduction() {
+        var jin = harness.addToBattlefieldAndReturn(player1, new JinGitaxiasCoreAugur());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player2, List.of(new TurnToFrog(), new Forest(), new Mountain(), new Plains()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player2, 0, jin.getId());
+        assertThat(gqs.hasLostAllAbilities(gd, jin)).isTrue();
+        gs.advanceStep(gd);
+
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
     }
