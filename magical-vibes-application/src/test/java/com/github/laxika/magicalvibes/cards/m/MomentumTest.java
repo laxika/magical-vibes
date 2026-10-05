@@ -130,4 +130,52 @@ class MomentumTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("Growth counters are counted on Momentum, not on the enchanted creature")
+    void ignoresCountersOnCreatureAndOtherCounterTypesOnAura() {
+        Permanent silverback = addEnchantedSilverback();
+        Permanent momentum = findPermanent(player1, "Momentum");
+        silverback.setCounterCount(CounterType.GROWTH, 4);
+        momentum.setCounterCount(CounterType.CHARGE, 3);
+        momentum.setCounterCount(CounterType.GROWTH, 2);
+
+        assertThat(gqs.getEffectivePower(gd, silverback)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, silverback)).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("Removing growth counters immediately reduces the enchanted creature's bonus")
+    void removingGrowthCountersUpdatesBonus() {
+        Permanent silverback = addEnchantedSilverback();
+        Permanent momentum = findPermanent(player1, "Momentum");
+        momentum.setCounterCount(CounterType.GROWTH, 2);
+        assertThat(gqs.getEffectivePower(gd, silverback)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, silverback)).isEqualTo(7);
+
+        momentum.setCounterCount(CounterType.GROWTH, 0);
+
+        assertThat(gqs.getEffectivePower(gd, silverback)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, silverback)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("The Aura's controller adds counters during their upkeep even on an opposing creature")
+    void controllersUpkeepBoostsOpposingCreature() {
+        Permanent creature = addCreatureReady(player2, new AncientSilverback());
+        harness.setHand(player1, List.of(new Momentum()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        Permanent momentum = findPermanent(player1, "Momentum");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(momentum.getCounterCount(CounterType.GROWTH)).isEqualTo(1);
+        assertThat(creature.getCounterCount(CounterType.GROWTH)).isZero();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
+    }
 }
