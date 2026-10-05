@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.c.CopperMyr;
+import com.github.laxika.magicalvibes.cards.g.GalvanicBlast;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,15 +15,14 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MoltenTailMasticore.class, Memnite.class, CopperMyr.class, GalvanicBlast.class})
 class MoltenTailMasticoreTest extends BaseCardTest {
 
-    // ===== Upkeep — sacrifice unless discard =====
-
     @Test
-    @DisplayName("Upkeep with card in hand — prompts may ability choice")
+    @DisplayName("Upkeep with card in hand prompts may ability choice")
     void upkeepWithCardInHandPromptsMayAbility() {
         harness.addToBattlefield(player1, new MoltenTailMasticore());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Memnite()));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve upkeep trigger
@@ -36,7 +34,7 @@ class MoltenTailMasticoreTest extends BaseCardTest {
     @DisplayName("Accepting upkeep discard keeps Masticore alive")
     void acceptingUpkeepDiscardKeepsMasticore() {
         harness.addToBattlefield(player1, new MoltenTailMasticore());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Memnite()));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -44,14 +42,14 @@ class MoltenTailMasticoreTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         harness.assertOnBattlefield(player1, "Molten-Tail Masticore");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Memnite");
     }
 
     @Test
     @DisplayName("Declining upkeep discard sacrifices Masticore")
     void decliningUpkeepDiscardSacrificesMasticore() {
         harness.addToBattlefield(player1, new MoltenTailMasticore());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Memnite()));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -74,19 +72,17 @@ class MoltenTailMasticoreTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Molten-Tail Masticore");
     }
 
-    // ===== Damage ability — exile creature from graveyard + deal 4 damage =====
-
     @Test
     @DisplayName("Damage ability prompts for graveyard exile cost choice when creature in graveyard")
     void damageAbilityPromptsForGraveyardExileCost() {
         harness.addToBattlefield(player1, new MoltenTailMasticore());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setGraveyard(player1, List.of(new LlanowarElves()));
+        harness.addToBattlefield(player2, new Memnite());
+        harness.setGraveyard(player1, List.of(new CopperMyr()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Memnite");
 
         // Masticore is at index 0 on player1's battlefield; ability 0 = damage ability
-        harness.activateAbility(player1, 0, 0, null, bearsId);
+        harness.activateAbility(player1, 0, 0, null, targetId);
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.GraveyardExileCostChoice.class);
@@ -96,12 +92,12 @@ class MoltenTailMasticoreTest extends BaseCardTest {
     @DisplayName("Damage ability deals 4 damage to target creature after exiling creature card from graveyard")
     void damageAbilityDeals4DamageAfterExilingCreature() {
         harness.addToBattlefield(player1, new MoltenTailMasticore());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setGraveyard(player1, List.of(new LlanowarElves()));
+        harness.addToBattlefield(player2, new Memnite());
+        harness.setGraveyard(player1, List.of(new CopperMyr()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Memnite");
 
-        harness.activateAbility(player1, 0, 0, null, bearsId);
+        harness.activateAbility(player1, 0, 0, null, targetId);
 
         // Choose the creature card from graveyard to exile
         harness.handleGraveyardCardChosen(player1, 0);
@@ -110,23 +106,23 @@ class MoltenTailMasticoreTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
 
         // Creature card should be exiled from graveyard
-        harness.assertNotInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotInGraveyard(player1, "Copper Myr");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+                .anyMatch(c -> c.getName().equals("Copper Myr"));
 
         // Resolve the ability
         harness.passBothPriorities();
 
-        // Grizzly Bears (2/2) should be destroyed by 4 damage
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        // Memnite is destroyed by 4 damage
+        harness.assertNotOnBattlefield(player2, "Memnite");
+        harness.assertInGraveyard(player2, "Memnite");
     }
 
     @Test
     @DisplayName("Damage ability can target a player")
     void damageAbilityCanTargetPlayer() {
         harness.addToBattlefield(player1, new MoltenTailMasticore());
-        harness.setGraveyard(player1, List.of(new LlanowarElves()));
+        harness.setGraveyard(player1, List.of(new CopperMyr()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, 0, null, player2.getId());
@@ -138,19 +134,19 @@ class MoltenTailMasticoreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Player 2 should have taken 4 damage (20 - 4 = 16)
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        harness.assertLife(player2, 16);
     }
 
     @Test
     @DisplayName("Damage ability fails without creature card in graveyard")
     void damageAbilityFailsWithoutCreatureInGraveyard() {
         harness.addToBattlefield(player1, new MoltenTailMasticore());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Memnite());
         harness.setGraveyard(player1, List.of()); // empty graveyard
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Memnite");
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bearsId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
     }
@@ -159,13 +155,12 @@ class MoltenTailMasticoreTest extends BaseCardTest {
     @DisplayName("Damage ability fails without enough mana")
     void damageAbilityFailsWithoutEnoughMana() {
         harness.addToBattlefield(player1, new MoltenTailMasticore());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setGraveyard(player1, List.of(new LlanowarElves()));
+        harness.addToBattlefield(player2, new Memnite());
+        harness.setGraveyard(player1, List.of(new CopperMyr()));
         harness.addMana(player1, ManaColor.COLORLESS, 3); // not enough mana
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Memnite");
 
-        // Mana is validated upfront before entering interactive cost choices (CR 602.2b)
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bearsId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("mana");
     }
@@ -174,13 +169,13 @@ class MoltenTailMasticoreTest extends BaseCardTest {
     @DisplayName("Damage ability only allows exiling creature cards, not non-creature cards")
     void damageAbilityOnlyExilesCreatureCards() {
         harness.addToBattlefield(player1, new MoltenTailMasticore());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Memnite());
         // Put a non-creature card in the graveyard
-        harness.setGraveyard(player1, List.of(new Shock()));
+        harness.setGraveyard(player1, List.of(new GalvanicBlast()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Memnite");
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bearsId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
     }
@@ -189,13 +184,13 @@ class MoltenTailMasticoreTest extends BaseCardTest {
     @DisplayName("Graveyard exile cost only shows creature indices when mixed card types in graveyard")
     void graveyardExileCostShowsOnlyCreatureIndices() {
         harness.addToBattlefield(player1, new MoltenTailMasticore());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Memnite());
         // Graveyard: non-creature at index 0, creature at index 1
-        harness.setGraveyard(player1, List.of(new Shock(), new LlanowarElves()));
+        harness.setGraveyard(player1, List.of(new GalvanicBlast(), new CopperMyr()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Memnite");
 
-        harness.activateAbility(player1, 0, 0, null, bearsId);
+        harness.activateAbility(player1, 0, 0, null, targetId);
 
         // Should prompt graveyard exile cost choice
         assertThat(gd.interaction.activeInteraction())
@@ -204,18 +199,18 @@ class MoltenTailMasticoreTest extends BaseCardTest {
         // Choose index 1 (creature card)
         harness.handleGraveyardCardChosen(player1, 1);
 
-        // Llanowar Elves should be exiled
+        // Copper Myr should be exiled
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
-        // Shock should remain in graveyard
-        harness.assertInGraveyard(player1, "Shock");
+                .anyMatch(c -> c.getName().equals("Copper Myr"));
+        // Galvanic Blast should remain in graveyard
+        harness.assertInGraveyard(player1, "Galvanic Blast");
     }
 
     @Test
     @DisplayName("Mana is consumed when damage ability is activated")
     void damageAbilityConsumesMana() {
         harness.addToBattlefield(player1, new MoltenTailMasticore());
-        harness.setGraveyard(player1, List.of(new LlanowarElves()));
+        harness.setGraveyard(player1, List.of(new CopperMyr()));
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         harness.activateAbility(player1, 0, 0, null, player2.getId());
@@ -224,8 +219,6 @@ class MoltenTailMasticoreTest extends BaseCardTest {
         // 5 - 4 = 1 mana remaining
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
-
-    // ===== Regenerate ability =====
 
     @Test
     @DisplayName("Regenerate ability grants regeneration shield")
@@ -262,5 +255,88 @@ class MoltenTailMasticoreTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("mana");
+    }
+
+    @Test
+    void upkeepCanDiscardANoncreatureCard() {
+        harness.addToBattlefield(player1, new MoltenTailMasticore());
+        harness.setHand(player1, List.of(new GalvanicBlast()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Molten-Tail Masticore");
+        harness.assertInGraveyard(player1, "Galvanic Blast");
+        harness.assertNotInHand(player1, "Galvanic Blast");
+    }
+
+    @Test
+    void regenerationDoesNotPreventUpkeepSacrifice() {
+        harness.addToBattlefield(player1, new MoltenTailMasticore());
+        harness.setHand(player1, List.of());
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        assertThat(findPermanent(player1, "Molten-Tail Masticore").getRegenerationShield()).isEqualTo(1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Molten-Tail Masticore");
+        harness.assertInGraveyard(player1, "Molten-Tail Masticore");
+    }
+
+    @Test
+    void regenerationPreventsLethalDamageAndTapsMasticore() {
+        harness.addToBattlefield(player1, new MoltenTailMasticore());
+        harness.setGraveyard(player1, List.of(new CopperMyr()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null,
+                harness.getPermanentId(player1, "Molten-Tail Masticore"));
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Molten-Tail Masticore");
+        harness.assertNotInGraveyard(player1, "Molten-Tail Masticore");
+        assertThat(findPermanent(player1, "Molten-Tail Masticore").isTapped()).isTrue();
+        assertThat(findPermanent(player1, "Molten-Tail Masticore").getRegenerationShield()).isZero();
+    }
+
+    @Test
+    void damageResolvesAfterMasticoreDies() {
+        harness.addToBattlefield(player1, new MoltenTailMasticore());
+        harness.setGraveyard(player1, List.of(new CopperMyr(), new Memnite()));
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.activateAbility(player1, 0, 0, null,
+                harness.getPermanentId(player1, "Molten-Tail Masticore"));
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Molten-Tail Masticore");
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void cannotPayExileCostFromOpponentsGraveyard() {
+        harness.addToBattlefield(player1, new MoltenTailMasticore());
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new CopperMyr()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature");
+
+        harness.assertInGraveyard(player2, "Copper Myr");
+        harness.assertLife(player2, 20);
     }
 }
