@@ -115,4 +115,44 @@ class PhyrexianMonitorTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Phyrexian Monitor");
         harness.assertInGraveyard(player1, "Phyrexian Monitor");
     }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Monitor can activate its regeneration ability")
+    void tappedSummoningSickMonitorCanRegenerate() {
+        Permanent monitor = harness.addToBattlefieldAndReturn(player1, new PhyrexianMonitor());
+        monitor.setSummoningSick(true);
+        monitor.tap();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(monitor.getRegenerationShield()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(monitor.getRegenerationShield()).isEqualTo(1);
+        assertThat(monitor.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An activated regeneration shield replaces lethal combat destruction")
+    void activatedShieldSavesMonitorAndRemovesItFromCombat() {
+        Permanent monitor = addCreatureReady(player1, new PhyrexianMonitor());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        monitor.setBlocking(true);
+        monitor.addBlockingTarget(0);
+        Permanent attacker = addCreatureReady(player2, new HulkingOgre());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Phyrexian Monitor");
+        harness.assertNotInGraveyard(player1, "Phyrexian Monitor");
+        assertThat(monitor.isTapped()).isTrue();
+        assertThat(monitor.isBlocking()).isFalse();
+        assertThat(monitor.getMarkedDamage()).isZero();
+        assertThat(monitor.getRegenerationShield()).isZero();
+    }
 }
