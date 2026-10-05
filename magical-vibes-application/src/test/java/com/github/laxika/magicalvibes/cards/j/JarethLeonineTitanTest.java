@@ -17,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({JarethLeonineTitan.class, ElvishWarrior.class})
+@CardUsed({JarethLeonineTitan.class, ElvishWarrior.class, HighGround.class})
 class JarethLeonineTitanTest extends BaseCardTest {
 
     @Test
@@ -58,7 +58,6 @@ class JarethLeonineTitanTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(HighGround.class)
     @DisplayName("Blocking multiple creatures gives Jareth +7/+7 only once")
     void blockingMultipleCreaturesBoostsJarethOnlyOnce() {
         harness.addToBattlefield(player1, new HighGround());
@@ -110,5 +109,47 @@ class JarethLeonineTitanTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(jareth.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.BLUE);
+    }
+
+    @Test
+    @DisplayName("Repeated activations retain protection from both chosen colors even while tapped and summoning sick")
+    void repeatedActivationsRetainBothProtections() {
+        Permanent jareth = addCreatureReady(player1, new JarethLeonineTitan());
+        jareth.setTapped(true);
+        jareth.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardColor.RED.name());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardColor.GREEN.name());
+
+        assertThat(jareth.getProtectionFromColorsUntilEndOfTurn())
+                .containsExactlyInAnyOrder(CardColor.RED, CardColor.GREEN);
+    }
+
+    @Test
+    @DisplayName("Protection from green prevents combat damage without stopping Jareth from blocking")
+    void protectionPreventsCombatDamageFromChosenColor() {
+        Permanent jareth = addCreatureReady(player1, new JarethLeonineTitan());
+        addCreatureReady(player2, new ElvishWarrior());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardColor.GREEN.name());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(jareth.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Jareth, Leonine Titan");
+        harness.assertInGraveyard(player2, "Elvish Warrior");
+        harness.assertLife(player1, 20);
     }
 }
