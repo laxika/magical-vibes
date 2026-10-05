@@ -83,6 +83,80 @@ class PulsatingIllusionTest extends BaseCardTest {
     }
 
     @Test
+    void discardIsPaidBeforeResolutionAndAlreadyConsumesTheTurnLimit() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent illusion = harness.addToBattlefieldAndReturn(player1, new PulsatingIllusion());
+        harness.setHand(player1, List.of(new AvenFlock(), new AvenFlock()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Aven Flock");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, illusion)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, illusion)).isEqualTo(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, illusion)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, illusion)).isEqualTo(5);
+    }
+
+    @Test
+    void canActivateWhileTappedOnAnOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent illusion = harness.addToBattlefieldAndReturn(player1, new PulsatingIllusion());
+        illusion.setTapped(true);
+        harness.setHand(player1, List.of(new AvenFlock()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, illusion)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, illusion)).isEqualTo(5);
+        assertThat(illusion.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Aven Flock");
+    }
+
+    @Test
+    void eachCopyCanActivateOnceInTheSameTurn() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new PulsatingIllusion());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new PulsatingIllusion());
+        harness.setHand(player1, List.of(new AvenFlock(), new AvenFlock()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isZero();
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(5);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
     void cannotActivateWithoutACardInHand() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
