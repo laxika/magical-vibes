@@ -86,4 +86,70 @@ class KeeperOfTheBeastsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         return keeper;
     }
+
+    @Test
+    @DisplayName("Creates a Beast even if its controller gains more creatures before resolution")
+    void controllerGainingCreaturesDoesNotPreventResolution() {
+        readyKeeper(2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        addCreatureReady(player1, new RagingGoblin());
+        addCreatureReady(player1, new RagingGoblin());
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Beast")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Creates a Beast even if the Keeper leaves the battlefield before resolution")
+    void abilityResolvesWithoutItsSource() {
+        Permanent keeper = readyKeeper(2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(keeper);
+        gd.playerGraveyards.get(player1.getId()).add(keeper.getCard());
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Beast")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cannot activate without choosing an opponent")
+    void requiresTargetOpponent() {
+        Permanent keeper = readyKeeper(2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(keeper.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent keeper = readyKeeper(2);
+        keeper.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent keeper = readyKeeper(2);
+        keeper.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(keeper.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
 }
