@@ -56,6 +56,77 @@ class LetheLakeTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(10);
     }
 
+    @Test
+    void upkeepMillsTheNewActivePlayerAndOnlyTheTopTenCards() {
+        List<Card> library = cards(13);
+        List<Card> otherLibrary = cards(12);
+        harness.setLibrary(player2, library);
+        harness.setLibrary(player1, otherLibrary);
+        harness.forceActivePlayer(player2);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
+                .handleUpkeepTriggers(gd));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(library.subList(10, 13));
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .containsExactlyInAnyOrderElementsOf(library.subList(0, 10));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(otherLibrary);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void chaosCanTargetItsControllerAndMillsOnlyTenCards() {
+        List<Card> library = cards(13);
+        List<Card> otherLibrary = cards(12);
+        harness.setLibrary(player1, library);
+        harness.setLibrary(player2, otherLibrary);
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(
+                com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService.class)
+                .processNextSpellTargetTrigger(gd));
+        harness.handlePermanentChosen(player1, player1.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(library.subList(10, 13));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrderElementsOf(library.subList(0, 10));
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(otherLibrary);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void chaosMillsAllRemainingCardsWhenTargetLibraryHasFewerThanTen() {
+        List<Card> library = cards(3);
+        harness.setLibrary(player2, library);
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(
+                com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService.class)
+                .processNextSpellTargetTrigger(gd));
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyInAnyOrderElementsOf(library);
+        assertThat(gd.status).isEqualTo(com.github.laxika.magicalvibes.model.GameStatus.RUNNING);
+    }
+
+    @Test
+    void upkeepWithEmptyLibraryDoesNotCauseALoss() {
+        harness.setLibrary(player1, List.of());
+        harness.forceActivePlayer(player1);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
+                .handleUpkeepTriggers(gd));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(com.github.laxika.magicalvibes.model.GameStatus.RUNNING);
+    }
+
     private List<Card> cards(int count) {
         List<Card> cards = new java.util.ArrayList<>();
         for (int index = 0; index < count; index++) {
