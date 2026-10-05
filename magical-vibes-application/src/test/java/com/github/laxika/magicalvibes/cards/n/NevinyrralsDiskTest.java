@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.b.BadMoon;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Meekstone;
@@ -11,10 +12,13 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NevinyrralsDisk.class, Meekstone.class, BadMoon.class, GrizzlyBears.class, Forest.class})
+@CardUsed({NevinyrralsDisk.class, Meekstone.class, BadMoon.class, GrizzlyBears.class, Forest.class,
+        Disenchant.class})
 class NevinyrralsDiskTest extends BaseCardTest {
 
     @Test
@@ -61,5 +65,53 @@ class NevinyrralsDiskTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
         harness.assertOnBattlefield(player1, "Nevinyrral's Disk");
+    }
+
+    @Test
+    @DisplayName("Activation requires one mana")
+    void cannotActivateWithoutMana() {
+        harness.addToBattlefield(player1, new NevinyrralsDisk());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanent(player1, "Nevinyrral's Disk").isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Nevinyrral's Disk");
+    }
+
+    @Test
+    @DisplayName("Activation taps the Disk without sacrificing it")
+    void tapsAsCostAndDestroysOnlyOnResolution() {
+        harness.addToBattlefield(player1, new NevinyrralsDisk());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(findPermanent(player1, "Nevinyrral's Disk").isTapped()).isTrue();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Nevinyrral's Disk");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The ability resolves even if the Disk is destroyed in response")
+    void resolvesAfterSourceIsDestroyed() {
+        harness.addToBattlefield(player1, new NevinyrralsDisk());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Nevinyrral's Disk"));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Nevinyrral's Disk");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 }
