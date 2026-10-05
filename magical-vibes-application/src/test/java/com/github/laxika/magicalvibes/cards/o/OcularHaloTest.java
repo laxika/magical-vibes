@@ -60,7 +60,6 @@ class OcularHaloTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
@@ -89,6 +88,87 @@ class OcularHaloTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Ocular Halo resolves attached to an opponent's creature")
+    void canCastOnOpponentCreature() {
+        Permanent creature = addCreatureReady(player2, new MistralCharger());
+        harness.setHand(player1, List.of(new OcularHalo()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Ocular Halo").getAttachedTo()).isEqualTo(creature.getId());
+        harness.setLibrary(player2, List.of(new MistralCharger()));
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertInHand(player2, "Mistral Charger");
+        harness.assertNotInHand(player1, "Mistral Charger");
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents activating the granted tap ability")
+    void summoningSicknessPreventsDraw() {
+        Permanent creature = addCreatureWithAura();
+        creature.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped enchanted creature cannot activate the draw ability")
+    void tappedCreatureCannotDraw() {
+        Permanent creature = addCreatureWithAura();
+        creature.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An activated draw ability still resolves after Ocular Halo leaves")
+    void drawResolvesAfterAuraLeaves() {
+        addCreatureWithAura();
+        harness.setLibrary(player1, List.of(new MistralCharger()));
+        harness.activateAbility(player1, 0, null, null);
+
+        findPermanent(player1, "Ocular Halo").setAttachedTo(null);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Ocular Halo");
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Mistral Charger");
+    }
+
+    @Test
+    @DisplayName("Aura controller can grant an opponent's creature vigilance that persists after the Aura leaves")
+    void vigilanceOnOpponentCreaturePersistsAfterAuraLeaves() {
+        Permanent creature = addCreatureReady(player2, new MistralCharger());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new OcularHalo());
+        aura.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
+
+        aura.setAttachedTo(null);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Ocular Halo");
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
     }
 
     private Permanent addCreatureWithAura() {
