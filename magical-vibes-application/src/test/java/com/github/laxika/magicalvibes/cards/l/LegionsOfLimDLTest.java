@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({LegionsOfLimDL.class, BalduvianBears.class, Swamp.class, SnowCoveredSwamp.class,
-        SnowCoveredForest.class})
+        SnowCoveredForest.class, StaffOfTheAges.class, DeepFreeze.class})
 class LegionsOfLimDLTest extends BaseCardTest {
 
     @Test
@@ -117,9 +117,8 @@ class LegionsOfLimDLTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new BalduvianBears());
         Permanent legions = readyAttacker(player1);
 
-        Permanent deepFreeze = new Permanent(new DeepFreeze());
+        Permanent deepFreeze = harness.addToBattlefieldAndReturn(player2, new DeepFreeze());
         deepFreeze.setAttachedTo(legions.getId());
-        gd.playerBattlefields.get(player2.getId()).add(deepFreeze);
         harness.setLife(player2, 20);
 
         prepareDeclareBlockers();
@@ -140,6 +139,41 @@ class LegionsOfLimDLTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Snow and Swamp must be on the same land")
+    void canBeBlockedWithSeparateSnowLandAndSwamp() {
+        harness.addToBattlefield(player2, new Swamp());
+        addSnowForest(player2);
+        Permanent blocker = addCreatureReady(player2, new BalduvianBears());
+        Permanent legions = readyAttacker(player1);
+        harness.setLife(player2, 20);
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(legions))));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("A tapped snow Swamp still prevents blocking")
+    void cantBeBlockedWithTappedSnowSwamp() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player2, new SnowCoveredSwamp());
+        swamp.setTapped(true);
+        Permanent blocker = addCreatureReady(player2, new BalduvianBears());
+        Permanent legions = readyAttacker(player1);
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(legions)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
     }
 
     private Permanent readyAttacker(Player player) {
