@@ -28,8 +28,7 @@ class OverwhelmingForcesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new OverwhelmingForces()));
         harness.addMana(player1, ManaColor.BLACK, 8);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(theirs1.getId()) || p.getId().equals(theirs2.getId()));
@@ -48,8 +47,7 @@ class OverwhelmingForcesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new OverwhelmingForces()));
         harness.addMana(player1, ManaColor.BLACK, 8);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
@@ -75,8 +73,7 @@ class OverwhelmingForcesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new OverwhelmingForces()));
         harness.addMana(player1, ManaColor.BLACK, 8);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getId().equals(land.getId()));
@@ -95,8 +92,7 @@ class OverwhelmingForcesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new OverwhelmingForces()));
         harness.addMana(player1, ManaColor.BLACK, 8);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(bears.getId()));
@@ -104,5 +100,38 @@ class OverwhelmingForcesTest extends BaseCardTest {
                 .anyMatch(p -> p.getId().equals(gargoyle.getId()));
         // Only the destroyed Wei Infantry counts: 1 card drawn, not 2
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Draws no cards when every opposing creature is indestructible")
+    void drawsNoCardsWhenNothingIsDestroyed() {
+        Permanent gargoyle = harness.addToBattlefieldAndReturn(player2, new ManorGargoyle());
+        harness.setHand(player1, List.of(new OverwhelmingForces()));
+        harness.addMana(player1, ManaColor.BLACK, 8);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getId().equals(gargoyle.getId()));
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Overwhelming Forces");
+    }
+
+    @Test
+    @DisplayName("Draws cards for the caster, not the targeted opponent")
+    void onlyCasterDrawsCards() {
+        harness.addToBattlefield(player2, new WeiInfantry());
+        harness.setHand(player2, List.of(new Swamp()));
+        harness.setLibrary(player1, List.of(new Swamp()));
+        harness.setHand(player1, List.of(new OverwhelmingForces()));
+        harness.addMana(player1, ManaColor.BLACK, 8);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.assertInGraveyard(player2, "Wei Infantry");
+        harness.assertInHand(player1, "Swamp");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 }
