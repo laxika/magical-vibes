@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.c.CaptivatingCave;
 import com.github.laxika.magicalvibes.cards.c.CopperMyr;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,12 +18,11 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OakenSiren.class, CopperMyr.class, IcyManipulator.class, GrizzlyBears.class})
+@CardUsed({OakenSiren.class, CopperMyr.class, IcyManipulator.class, GrizzlyBears.class, CaptivatingCave.class})
 class OakenSirenTest extends BaseCardTest {
 
     private void addReadySiren() {
-        Permanent siren = harness.addToBattlefieldAndReturn(player1, new OakenSiren());
-        siren.setSummoningSick(false);
+        addCreatureReady(player1, new OakenSiren());
     }
 
     private void activateForBlue() {
@@ -78,11 +79,95 @@ class OakenSirenTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
         activateForBlue();
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerManaPools.get(player1.getId()).getArtifactOnlyMana(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Restricted blue mana pays the blue symbol of an artifact spell")
+    void paysColoredArtifactSpellCost() {
+        addReadySiren();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new OakenSiren()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        activateForBlue();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Oaken Siren")).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactOnlyMana(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Restricted mana cannot pay for a nonartifact mana ability")
+    void cannotPayNonartifactActivatedAbility() {
+        addReadySiren();
+        Permanent cave = harness.addToBattlefieldAndReturn(player1, new CaptivatingCave());
+
+        activateForBlue();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(cave.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactOnlyMana(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The mana ability resolves immediately and cannot be used twice while tapped")
+    void tapsAsCostWithoutUsingStack() {
+        addReadySiren();
+
+        activateForBlue();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanent(player1, "Oaken Siren").isTapped()).isTrue();
+        assertThatThrownBy(this::activateForBlue).isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactOnlyMana(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Oaken Siren cannot activate its tap ability")
+    void cannotActivateWhileSummoningSick() {
+        Permanent siren = harness.addToBattlefieldAndReturn(player1, new OakenSiren());
+        siren.setSummoningSick(true);
+
+        assertThatThrownBy(this::activateForBlue).isInstanceOf(IllegalStateException.class);
+        assertThat(siren.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactOnlyMana(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Vigilance lets Oaken Siren attack and then tap for mana")
+    void canProduceManaAfterAttacking() {
+        Permanent siren = addCreatureReady(player1, new OakenSiren());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+
+        assertThat(siren.isTapped()).isFalse();
+        activateForBlue();
+        assertThat(siren.isTapped()).isTrue();
+        assertThat(siren.isAttacking()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactOnlyMana(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Flying prevents a ground creature from blocking Oaken Siren")
+    void cannotBeBlockedByGroundCreature() {
+        addReadySiren();
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("flying");
     }
 }
