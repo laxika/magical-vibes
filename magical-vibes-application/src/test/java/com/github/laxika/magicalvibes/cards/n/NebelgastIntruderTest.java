@@ -35,9 +35,7 @@ class NebelgastIntruderTest extends BaseCardTest {
     void etbTargetIsOptional() {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        harness.setHand(player1, List.of(new NebelgastIntruder()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new NebelgastIntruder(), "{2}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -72,6 +70,35 @@ class NebelgastIntruderTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, ownCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature an opponent controls");
+    }
+
+    @Test
+    @DisplayName("Intruder can enter when the opponent controls no creatures")
+    void entersWithoutAnyLegalTargets() {
+        harness.castFromHand(player1, new NebelgastIntruder(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Nebelgast Intruder");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ETB still resolves after Intruder leaves the battlefield")
+    void triggerResolvesAfterSourceLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castIntruder(target.getId());
+        harness.passBothPriorities();
+
+        Permanent source = gqs.findPermanentById(gd,
+                harness.getPermanentId(player1, "Nebelgast Intruder"));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, source));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Nebelgast Intruder");
+        assertThat(target.getEffectivePower()).isZero();
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
     }
 
     private void castIntruder(java.util.UUID targetId) {
