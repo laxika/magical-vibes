@@ -121,4 +121,59 @@ class MidnightCovenantTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("The opponent can activate the ability granted by your Aura to their creature")
+    void opponentsCreatureControlsGrantedAbility() {
+        Permanent creature = addCreatureReady(player2, new WanderingOnes());
+        harness.setHand(player1, List.of(new MidnightCovenant()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick creature can activate the granted ability")
+    void tappedSummoningSickCreatureCanActivate() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new WanderingOnes());
+        creature.setSummoningSick(true);
+        creature.setTapped(true);
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new MidnightCovenant());
+        aura.setAttachedTo(creature.getId());
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An activated boost still resolves after Midnight Covenant leaves the battlefield")
+    void activatedBoostSurvivesAuraRemoval() {
+        Permanent creature = addCreatureReady(player1, new WanderingOnes());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new MidnightCovenant());
+        aura.setAttachedTo(creature.getId());
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no activated ability");
+    }
 }
