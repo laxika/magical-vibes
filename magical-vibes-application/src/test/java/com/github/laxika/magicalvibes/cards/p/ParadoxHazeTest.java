@@ -102,6 +102,46 @@ class ParadoxHazeTest extends BaseCardTest {
         assertThat(clock.getCounterCount(CounterType.DOOM)).isZero();
     }
 
+    @Test
+    @DisplayName("Paradox Haze does not trigger at the beginning of the additional upkeep")
+    void doesNotTriggerDuringAdditionalUpkeep() {
+        placeHazeOnPlayer(player1, player2);
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            harness.passBothPriorities();
+            assertThat(gd.stack).isEmpty();
+            harness.passBothPriorities();
+        });
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.UPKEEP);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Removing Paradox Haze after it triggers does not prevent the additional upkeep")
+    void removingHazeDoesNotPreventAdditionalUpkeep() {
+        Permanent clock = placeClock(player1);
+        Permanent haze = placeHazeOnPlayer(player1, player1);
+        advanceToUpkeep(player1);
+        gd.playerBattlefields.get(player1.getId()).remove(haze);
+
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            for (int attempts = 0; !gd.stack.isEmpty() && attempts < 10; attempts++) {
+                harness.passBothPriorities();
+            }
+            assertThat(gd.stack).isEmpty();
+            harness.passBothPriorities();
+            for (int attempts = 0; !gd.stack.isEmpty() && attempts < 10; attempts++) {
+                harness.passBothPriorities();
+            }
+        });
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.UPKEEP);
+        assertThat(clock.getCounterCount(CounterType.DOOM)).isEqualTo(2);
+    }
+
     private Permanent placeClock(Player player) {
         return harness.addToBattlefieldAndReturn(player, new ArmageddonClock());
     }
