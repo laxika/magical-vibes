@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.c.CopperMyr;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.o.OverloadedMageRing;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -27,8 +26,7 @@ class InvasionOfVrynTest extends BaseCardTest {
 
     @Test
     void entersDrawsThreeThenRequiresDiscardingOne() {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(new Forest(), new Island(), new Mountain()));
+        harness.setLibrary(player1, List.of(new Forest(), new Island(), new Mountain()));
         harness.setHand(player1, List.of(new InvasionOfVryn(), new Island()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -54,6 +52,8 @@ class InvasionOfVrynTest extends BaseCardTest {
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
                 .checkAfterDefenseRemoved(gd, battle));
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         Permanent ring = gd.playerBattlefields.get(player1.getId()).stream()
@@ -122,5 +122,75 @@ class InvasionOfVrynTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, shock.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void mayDeclineCastingDefeatedBattle() {
+        InvasionOfVryn card = new InvasionOfVryn();
+        Permanent battle = harness.addToBattlefieldAndReturn(player1, card);
+        battle.setCounterCount(CounterType.DEFENSE, 0);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
+                .checkAfterDefenseRemoved(gd, battle));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void copyingTransformedSpellPreservesBackFace() {
+        Permanent ring = harness.addToBattlefieldAndReturn(player1, new InvasionOfVryn());
+        ring.setCard(new OverloadedMageRing());
+        ring.setTransformed(true);
+        InvasionOfVryn card = new InvasionOfVryn();
+        Permanent battle = harness.addToBattlefieldAndReturn(player1, card);
+        battle.setCounterCount(CounterType.DEFENSE, 0);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
+                .checkAfterDefenseRemoved(gd, battle));
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, card.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anySatisfy(permanent -> {
+                    assertThat(permanent.getCard().isToken()).isTrue();
+                    assertThat(permanent.getCard().getName()).isEqualTo("Overloaded Mage-Ring");
+                });
+    }
+
+    @Test
+    void copiedInstantCanDamageDifferentTarget() {
+        Permanent ring = harness.addToBattlefieldAndReturn(player1, new InvasionOfVryn());
+        ring.setCard(new OverloadedMageRing());
+        ring.setTransformed(true);
+        Permanent myr = harness.addToBattlefieldAndReturn(player2, new CopperMyr());
+        Shock shock = new Shock();
+        harness.setHand(player1, List.of(shock));
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.activateAbility(player1, 0, 0, null, shock.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, myr.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Copper Myr");
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+        harness.assertNotOnBattlefield(player1, "Overloaded Mage-Ring");
     }
 }
