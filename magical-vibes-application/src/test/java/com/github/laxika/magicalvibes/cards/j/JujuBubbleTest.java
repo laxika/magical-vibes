@@ -89,6 +89,67 @@ class JujuBubbleTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Casting Juju Bubble does not trigger its own sacrifice ability")
+    void castingBubbleDoesNotSacrificeItself() {
+        harness.castFromHand(player1, new JujuBubble(), "{1}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Juju Bubble");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Opponent playing a land does not sacrifice Juju Bubble")
+    void opponentLandDoesNotSacrifice() {
+        harness.addToBattlefield(player1, new JujuBubble());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new UndiscoveredParadise()));
+
+        harness.playLand(player2, 0);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Juju Bubble");
+        harness.assertOnBattlefield(player2, "Undiscovered Paradise");
+    }
+
+    @Test
+    @DisplayName("Life gain can be activated in response to the sacrifice trigger")
+    void gainLifeInResponseToSacrifice() {
+        harness.addToBattlefield(player1, new JujuBubble());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.castFromHand(player1, new Impulse(), "{1}{U}");
+        harness.assertOnBattlefield(player1, "Juju Bubble");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player1, "Juju Bubble");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Juju Bubble");
+        harness.assertNotOnBattlefield(player1, "Juju Bubble");
+    }
+
+    @Test
+    @DisplayName("Opponent upkeep does not add an age counter")
+    void opponentUpkeepDoesNotTrigger() {
+        var bubble = harness.addToBattlefieldAndReturn(player1, new JujuBubble());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(bubble.getCounterCount(CounterType.AGE)).isZero();
+        harness.assertOnBattlefield(player1, "Juju Bubble");
+    }
+
+    @Test
     @DisplayName("Declining cumulative upkeep sacrifices Juju Bubble")
     void decliningCumulativeUpkeepSacrifices() {
         harness.addToBattlefield(player1, new JujuBubble());
