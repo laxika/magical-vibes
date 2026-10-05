@@ -86,6 +86,42 @@ class RabidWolverinesTest extends BaseCardTest {
         assertThat(wolverines.getToughnessModifier()).isZero();
     }
 
+    @Test
+    @DisplayName("The boost resolves even if the blocker dies before the trigger resolves")
+    void blockerDyingDoesNotPreventBoost() {
+        Permanent wolverines = addWolverinesReady(player1);
+        wolverines.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new RagingGoblin());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(wolverines.getPowerModifier()).isZero();
+        blocker.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player2, "Raging Goblin");
+        resolveAllTriggers();
+
+        assertThat(wolverines.getPowerModifier()).isEqualTo(1);
+        assertThat(wolverines.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Blocking another creature does not trigger the boost")
+    void blockingDoesNotTriggerBoost() {
+        Permanent attacker = addCreatureReady(player1, new RagingGoblin());
+        attacker.setAttacking(true);
+        Permanent wolverines = addWolverinesReady(player2);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(wolverines.getPowerModifier()).isZero();
+        assertThat(wolverines.getToughnessModifier()).isZero();
+    }
+
     private Permanent addWolverinesReady(Player player) {
         return addCreatureReady(player, new RabidWolverines());
     }
