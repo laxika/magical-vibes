@@ -67,4 +67,79 @@ class NamoraTheSeaQueenTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once");
     }
+
+    @Test
+    @DisplayName("An unsuccessful payment does not consume the power-up activation")
+    void insufficientEntryTurnManaDoesNotConsumeActivation() {
+        Permanent namora = harness.enterBattlefieldAndReturn(player1, new NamoraTheSeaQueen());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(namora.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(countPermanents(player1, "Merfolk")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The full power-up cost requires blue mana after the entry turn")
+    void fullCostCannotBePaidWithOnlyColorlessMana() {
+        addCreatureReady(player1, new NamoraTheSeaQueen());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(countPermanents(player1, "Merfolk")).isZero();
+    }
+
+    @Test
+    @DisplayName("Power-up can be activated while Namora is tapped and summoning sick")
+    void powerUpDoesNotRequireTappingOrHaste() {
+        Permanent namora = harness.enterBattlefieldAndReturn(player1, new NamoraTheSeaQueen());
+        namora.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(namora.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(namora.isTapped()).isTrue();
+        assertThat(countPermanents(player1, "Merfolk")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Power-up cannot be activated again while its first activation is on the stack")
+    void powerUpLimitAppliesBeforeResolution() {
+        harness.enterBattlefieldAndReturn(player1, new NamoraTheSeaQueen());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once");
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Merfolk")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Power-up still creates Merfolk if Namora leaves before resolution")
+    void createsTokensWhenSourceHasLeftBattlefield() {
+        Permanent namora = harness.enterBattlefieldAndReturn(player1, new NamoraTheSeaQueen());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, null);
+
+        gd.playerBattlefields.get(player1.getId()).remove(namora);
+        gd.playerGraveyards.get(player1.getId()).add(namora.getCard());
+        harness.passBothPriorities();
+
+        assertThat(namora.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(countPermanents(player1, "Merfolk")).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
 }
