@@ -210,4 +210,62 @@ class MRtonStromgaldTest extends BaseCardTest {
         assertThat(reenteredMarton.getPowerModifier()).isEqualTo(2);
         assertThat(reenteredMarton.getToughnessModifier()).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("Blocking multiple attackers triggers the boost only once")
+    void blockingMultipleAttackersBoostsOnlyOnce() {
+        addCreatureReady(player1, new BalduvianBears()).setAttacking(true);
+        addCreatureReady(player1, new BalduvianBears()).setAttacking(true);
+        addCreatureReady(player1, new BalduvianBears()).setAttacking(true);
+        Permanent marton = addCreatureReady(player2, new MRtonStromgald());
+        marton.setAdditionalBlocksUntilEndOfTurn(1);
+        Permanent bear = addCreatureReady(player2, new BalduvianBears());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(0, 1),
+                new BlockerAssignment(1, 2)));
+        resolveAllTriggers();
+
+        assertThat(bear.getPowerModifier()).isEqualTo(1);
+        assertThat(bear.getToughnessModifier()).isEqualTo(1);
+        assertThat(marton.getPowerModifier()).isZero();
+        assertThat(marton.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Creatures removed from combat before resolution are neither counted nor boosted")
+    void removedAttackerIsNotCountedOrBoosted() {
+        addCreatureReady(player1, new MRtonStromgald());
+        Permanent remaining = addCreatureReady(player1, new BalduvianBears());
+        Permanent removed = addCreatureReady(player1, new BalduvianBears());
+
+        declareAttackers(player1, List.of(0, 1, 2));
+        removed.setAttacking(false);
+        resolveAllTriggers();
+
+        assertThat(remaining.getPowerModifier()).isEqualTo(1);
+        assertThat(remaining.getToughnessModifier()).isEqualTo(1);
+        assertThat(removed.getPowerModifier()).isZero();
+        assertThat(removed.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Resolved boosts stay fixed and do not apply to later attackers")
+    void resolvedBoostDoesNotTrackCombatChanges() {
+        addCreatureReady(player1, new MRtonStromgald());
+        Permanent bear = addCreatureReady(player1, new BalduvianBears());
+        declareAttackers(player1, List.of(0, 1));
+        resolveAllTriggers();
+
+        bear.setAttacking(false);
+        Permanent laterAttacker = addCreatureReady(player1, new BalduvianBears());
+        laterAttacker.setAttacking(true);
+
+        assertThat(bear.getPowerModifier()).isEqualTo(1);
+        assertThat(bear.getToughnessModifier()).isEqualTo(1);
+        assertThat(laterAttacker.getPowerModifier()).isZero();
+        assertThat(laterAttacker.getToughnessModifier()).isZero();
+    }
 }
