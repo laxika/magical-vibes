@@ -97,12 +97,70 @@ class PactOfTheTitanTest extends BaseCardTest {
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 
+    @Test
+    @DisplayName("Five mana without red cannot pay the upkeep obligation")
+    void wrongColorManaCausesLoss() {
+        castPact();
+        reachPactUpkeepPrompt();
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Colored mana can pay the generic portion and payment is consumed")
+    void coloredManaPaysGenericCost() {
+        castPact();
+        reachPactUpkeepPrompt();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The paid obligation does not trigger again at later upkeeps")
+    void paymentTriggersOnlyOnce() {
+        castPact();
+        reachPactUpkeepPrompt();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.handleMayAbilityChosen(player1, true);
+
+        advanceToUpkeep(player2);
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Removing the Giant does not remove the payment obligation")
+    void paymentSurvivesTokenRemoval() {
+        castPact();
+        Permanent giant = findPermanent(player1, "Giant");
+        giant.setMarkedDamage(4);
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player1, "Giant");
+
+        reachPactUpkeepPrompt();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
     private void castPact() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new PactOfTheTitan()));
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
     }
 
     private void reachPactUpkeepPrompt() {
