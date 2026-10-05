@@ -2,12 +2,17 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.z.ZuranOrb;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +22,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MasterfulReplication.class, Forest.class, GrizzlyBears.class, ZuranOrb.class,
+        MyrTurbine.class, ManifoldKey.class, MeteorGolem.class, Unsummon.class})
 class MasterfulReplicationTest extends BaseCardTest {
 
     @Test
@@ -82,13 +89,132 @@ class MasterfulReplicationTest extends BaseCardTest {
                 .hasMessageContaining("artifact you control");
     }
 
+    @Test
+    @DisplayName("The created tokens are untapped colorless 3/3 Golem artifact creatures")
+    void tokenModeCreatesCorrectTokenCharacteristics() {
+        castMasterfulReplication(0, List.of());
+
+        assertThat(findPermanents(player1, "Golem")).hasSize(2).allSatisfy(token -> {
+            assertThat(token.getCard().isToken()).isTrue();
+            assertThat(token.getCard().hasType(CardType.CREATURE)).isTrue();
+            assertThat(token.getCard().hasType(CardType.ARTIFACT)).isTrue();
+            assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.GOLEM);
+            assertThat(token.getCard().getColors()).isEmpty();
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
+            assertThat(token.isTapped()).isFalse();
+        });
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Copying affects only existing controlled artifacts and does not trigger entering abilities")
+    void copyModeLeavesOtherPermanentsAndLaterArtifactsUnchanged() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new MeteorGolem());
+        Permanent key = harness.addToBattlefieldAndReturn(player1, new ManifoldKey());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent opponentKey = harness.addToBattlefieldAndReturn(player2, new ManifoldKey());
+        key.setTapped(true);
+
+        castMasterfulReplication(1, List.of(target.getId()));
+
+        assertThat(key.getCard().getName()).isEqualTo("Meteor Golem");
+        assertThat(key.isTapped()).isTrue();
+        assertThat(forest.getCard().getName()).isEqualTo("Forest");
+        assertThat(opponentKey.getCard().getName()).isEqualTo("Manifold Key");
+        harness.assertOnBattlefield(player2, "Manifold Key");
+        assertThat(gd.stack).isEmpty();
+
+        harness.addToBattlefield(player1, new ManifoldKey());
+        assertThat(countPermanents(player1, "Manifold Key")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Copying an artifact creature onto Golem tokens preserves their token status")
+    void copyModePreservesTokenStatus() {
+        castMasterfulReplication(0, List.of());
+        List<Permanent> tokens = findPermanents(player1, "Golem");
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new MeteorGolem());
+
+        castMasterfulReplication(1, List.of(target.getId()));
+
+        assertThat(tokens).allSatisfy(token -> {
+            assertThat(token.getCard().getName()).isEqualTo("Meteor Golem");
+            assertThat(token.getCard().isToken()).isTrue();
+        });
+        assertThat(target.getCard().isToken()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Copies retain their own counters without copying the target's counters")
+    void copyModeDoesNotCopyCounters() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new MeteorGolem());
+        Permanent key = harness.addToBattlefieldAndReturn(player1, new ManifoldKey());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        key.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        castMasterfulReplication(1, List.of(target.getId()));
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, key)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, key)).isEqualTo(4);
+        assertThat(key.getPlusOnePlusOneCounters()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An artifact already copying another artifact supplies its copied characteristics")
+    void copyModeCopiesAnExistingCopy() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new MeteorGolem());
+        Permanent firstKey = harness.addToBattlefieldAndReturn(player1, new ManifoldKey());
+        castMasterfulReplication(1, List.of(original.getId()));
+        Permanent laterKey = harness.addToBattlefieldAndReturn(player1, new ManifoldKey());
+
+        castMasterfulReplication(1, List.of(firstKey.getId()));
+
+        assertThat(laterKey.getCard().getName()).isEqualTo("Meteor Golem");
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(firstKey.getCard().getName()).isEqualTo("Manifold Key");
+        assertThat(laterKey.getCard().getName()).isEqualTo("Manifold Key");
+        assertThat(original.getCard().getName()).isEqualTo("Meteor Golem");
+    }
+
+    @Test
+    @DisplayName("An opponent's artifact cannot be chosen for the copy mode")
+    void copyModeRejectsOpponentArtifact() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ManifoldKey());
+        giveMasterfulReplication();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The copy mode does not resolve when its target leaves the battlefield")
+    void copyModeDoesNotResolveAfterTargetIsReturned() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new MeteorGolem());
+        Permanent key = harness.addToBattlefieldAndReturn(player1, new ManifoldKey());
+        giveMasterfulReplication();
+        harness.castInstant(player1, 0, 1, target.getId());
+
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Meteor Golem");
+        assertThat(key.getCard().getName()).isEqualTo("Manifold Key");
+        harness.assertInGraveyard(player1, "Masterful Replication");
+    }
+
     private void castMasterfulReplication(int modeIndex, List<UUID> targetIds) {
         giveMasterfulReplication();
-        if (targetIds.isEmpty()) {
-            harness.castModalInstant(player1, 0, modeIndex, targetIds);
-        } else {
-            harness.castInstant(player1, 0, modeIndex, targetIds.getFirst());
-        }
+        harness.castInstant(player1, 0, modeIndex, targetIds.isEmpty() ? null : targetIds.getFirst());
         harness.passBothPriorities();
     }
 
