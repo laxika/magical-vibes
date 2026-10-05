@@ -140,6 +140,73 @@ class OsaiVulturesTest extends BaseCardTest {
         assertThat(vultures.getEffectiveToughness()).isEqualTo(1);
     }
 
+    @Test
+    void countersArePaidImmediatelyAndTappedSourceCanActivate() {
+        Permanent vultures = addReadyVultures(player1);
+        vultures.setTapped(true);
+        vultures.setCounterCount(CounterType.CARRION, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(vultures.getCounterCount(CounterType.CARRION)).isZero();
+        assertThat(vultures.getEffectivePower()).isEqualTo(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough counters");
+
+        harness.passBothPriorities();
+
+        assertThat(vultures.getEffectivePower()).isEqualTo(2);
+        assertThat(vultures.getEffectiveToughness()).isEqualTo(2);
+        assertThat(vultures.isTapped()).isTrue();
+    }
+
+    @Test
+    void cannotPayWithAnotherVulturesCarrionCounters() {
+        Permanent vultures = addReadyVultures(player1);
+        Permanent otherVultures = addReadyVultures(player1);
+        otherVultures.setCounterCount(CounterType.CARRION, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough counters");
+
+        assertThat(vultures.getCounterCount(CounterType.CARRION)).isZero();
+        assertThat(otherVultures.getCounterCount(CounterType.CARRION)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void deathAfterEndStepBeginsDoesNotTriggerRetroactively() {
+        Permanent vultures = addReadyVultures(player1);
+        Permanent dyingCreature = addReadyVultures(player2);
+        advanceToEndStepAndResolve(player1);
+
+        dyingCreature.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(dyingCreature.getCard());
+        assertThat(vultures.getCounterCount(CounterType.CARRION)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void countsDeathBeforeVulturesEnteredBattlefield() {
+        Permanent dyingCreature = addReadyVultures(player1);
+        dyingCreature.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        Permanent vultures = addReadyVultures(player1);
+
+        advanceToEndStepAndResolve(player1);
+
+        assertThat(vultures.getCounterCount(CounterType.CARRION)).isOne();
+    }
+
     private Permanent addReadyVultures(Player player) {
         return addCreatureReady(player, new OsaiVultures());
     }
