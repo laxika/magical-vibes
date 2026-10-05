@@ -109,8 +109,7 @@ class JaggedLightningTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, List.of(returnedMerfolk.getId(), survivingTreefolk.getId()));
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, returnedMerfolk.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, returnedMerfolk.getId());
         harness.passBothPriorities();
 
         harness.assertInHand(player2, "Coral Merfolk");
@@ -119,15 +118,58 @@ class JaggedLightningTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Still damages the first target when the second target leaves before resolution")
+    void stillResolvesWithSecondTargetIllegal() {
+        Permanent treefolk = harness.addToBattlefieldAndReturn(player2, new BlanchwoodTreefolk());
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player2, new CoralMerfolk());
+        harness.setHand(player1, List.of(new JaggedLightning()));
+        harness.setHand(player2, List.of(new Rescind()));
+        giveMana();
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castSorcery(player1, 0, List.of(treefolk.getId(), merfolk.getId()));
+        harness.castAndResolveInstant(player2, 0, merfolk.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Coral Merfolk");
+        harness.assertOnBattlefield(player2, "Blanchwood Treefolk");
+        assertThat(treefolk.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Does not resolve when both targets leave the battlefield")
+    void bothTargetsIllegal() {
+        Permanent treefolk = harness.addToBattlefieldAndReturn(player2, new BlanchwoodTreefolk());
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player2, new CoralMerfolk());
+        harness.setHand(player1, List.of(new JaggedLightning()));
+        harness.setHand(player2, List.of(new Rescind(), new Rescind()));
+        giveMana();
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0, List.of(treefolk.getId(), merfolk.getId()));
+        harness.castAndResolveInstant(player2, 0, treefolk.getId());
+        harness.castAndResolveInstant(player2, 0, merfolk.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Blanchwood Treefolk");
+        harness.assertInHand(player2, "Coral Merfolk");
+        harness.assertInGraveyard(player1, "Jagged Lightning");
+        assertThat(harness.getGameData().stack).isEmpty();
+        assertThat(treefolk.getMarkedDamage()).isZero();
+        assertThat(merfolk.getMarkedDamage()).isZero();
+    }
+
+    @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new CoralMerfolk());
-        harness.addToBattlefield(player1, new Mountain());
-        UUID mountainId = harness.getPermanentId(player1, "Mountain");
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
         harness.setHand(player1, List.of(new JaggedLightning()));
         giveMana();
 
-        List<UUID> targets = List.of(creature.getId(), mountainId);
+        List<UUID> targets = List.of(creature.getId(), mountain.getId());
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, targets))
                 .isInstanceOf(IllegalStateException.class);
     }
