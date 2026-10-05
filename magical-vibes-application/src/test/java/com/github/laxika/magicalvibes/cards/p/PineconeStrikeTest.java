@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.o.OrdinaryBear;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -17,7 +18,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PineconeStrike.class})
+@CardUsed({PineconeStrike.class, OrdinaryBear.class})
 class PineconeStrikeTest extends BaseCardTest {
 
     @Test
@@ -36,8 +37,8 @@ class PineconeStrikeTest extends BaseCardTest {
     @Test
     @DisplayName("Destroy mode destroys an artifact token")
     void destroyModeDestroysArtifactToken() {
-        harness.addToBattlefield(player2, createArtifactToken("Treasure Token", false));
-        Permanent token = findPermanent(player2, "Treasure Token");
+        Permanent token = harness.addToBattlefieldAndReturn(
+                player2, createArtifactToken("Treasure Token", false));
 
         cast(new int[]{1}, List.of(token.getId()));
 
@@ -70,6 +71,37 @@ class PineconeStrikeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castModalInstantWithModes(
                 player1, 0, 1, 2, new int[]{1}, List.of(artifact.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A surviving creature takes exactly 3 damage and is exiled if it dies later this turn")
+    void survivingCreatureIsExiledByLaterLethalDamage() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new OrdinaryBear());
+
+        cast(new int[]{0}, List.of(creature.getId()));
+
+        harness.assertOnBattlefield(player2, "Ordinary Bear");
+        assertThat(creature.getMarkedDamage()).isEqualTo(3);
+
+        cast(new int[]{0}, List.of(creature.getId()));
+
+        harness.assertNotOnBattlefield(player2, "Ordinary Bear");
+        harness.assertNotInGraveyard(player2, "Ordinary Bear");
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getName().equals("Ordinary Bear"));
+    }
+
+    @Test
+    @DisplayName("Both modes resolve against different targets")
+    void bothModesResolveAgainstDifferentTargets() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new OrdinaryBear());
+        Permanent token = harness.addToBattlefieldAndReturn(
+                player2, createArtifactToken("Treasure Token", false));
+
+        cast(new int[]{0, 1}, List.of(creature.getId(), token.getId()));
+
+        harness.assertOnBattlefield(player2, "Ordinary Bear");
+        assertThat(creature.getMarkedDamage()).isEqualTo(3);
+        harness.assertNotOnBattlefield(player2, "Treasure Token");
     }
 
     private void cast(int[] modes, List<java.util.UUID> targetIds) {
