@@ -171,4 +171,59 @@ class MalachiteTalismanTest extends BaseCardTest {
 
         assertThat(bears.isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("An untapped permanent is a legal target and payment still costs three mana")
+    void canPayForUntappedTarget() {
+        Permanent talisman = harness.addToBattlefieldAndReturn(player1, new MalachiteTalisman());
+        setUpOpponentTurn();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castFromHand(player2, new BalduvianBears(), "{1}{G}");
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(talisman.getId());
+        harness.handlePermanentChosen(player1, talisman.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(talisman.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The trigger still untaps its target after the Talisman leaves the battlefield")
+    void triggerResolvesWithoutSource() {
+        Permanent talisman = harness.addToBattlefieldAndReturn(player1, new MalachiteTalisman());
+        Permanent bears = addTappedBears(player1);
+        setUpOpponentTurn();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castFromHand(player2, new BalduvianBears(), "{1}{G}");
+        harness.handlePermanentChosen(player1, bears.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(talisman);
+        gd.playerGraveyards.get(player1.getId()).add(talisman.getCard());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bears.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("An illegal target prevents resolution and no payment choice is offered")
+    void missingTargetPreventsPayment() {
+        harness.addToBattlefield(player1, new MalachiteTalisman());
+        Permanent bears = addTappedBears(player1);
+        setUpOpponentTurn();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castFromHand(player2, new BalduvianBears(), "{1}{G}");
+        harness.handlePermanentChosen(player1, bears.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(bears);
+        gd.playerGraveyards.get(player1.getId()).add(bears.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+    }
 }
