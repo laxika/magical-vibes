@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Lhurgoyf.class, GrizzlyBears.class, Plains.class})
+@CardUsed({Lhurgoyf.class, BalduvianBears.class, Plains.class})
 class LhurgoyfTest extends BaseCardTest {
 
     @Test
@@ -64,8 +64,8 @@ class LhurgoyfTest extends BaseCardTest {
     @DisplayName("Lhurgoyf ignores noncreature cards in either graveyard")
     void ignoresNoncreatureCardsInEitherGraveyard() {
         Permanent perm = addCreatureReady(player1, new Lhurgoyf());
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Plains()));
-        harness.setGraveyard(player2, List.of(new Plains(), new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new BalduvianBears(), new Plains()));
+        harness.setGraveyard(player2, List.of(new Plains(), new BalduvianBears()));
 
         assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(3);
@@ -80,7 +80,7 @@ class LhurgoyfTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(2);
 
-        gd.playerGraveyards.get(player1.getId()).add(new GrizzlyBears());
+        gd.playerGraveyards.get(player1.getId()).add(new BalduvianBears());
 
         assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(3);
@@ -101,10 +101,46 @@ class LhurgoyfTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("Lhurgoyf counts itself while in a graveyard")
+    void countsItselfInGraveyard() {
+        Lhurgoyf lhurgoyf = new Lhurgoyf();
+        harness.setGraveyard(player1, List.of(lhurgoyf, new Plains()));
+        harness.setGraveyard(player2, createCreatureCards(2));
+
+        assertThat(gqs.getEffectiveCardPower(gd, lhurgoyf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveCardToughness(gd, lhurgoyf)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Lhurgoyf's characteristic ability works in hand")
+    void characteristicAbilityWorksInHand() {
+        Lhurgoyf lhurgoyf = new Lhurgoyf();
+        harness.setHand(player1, List.of(lhurgoyf));
+        harness.setGraveyard(player2, createCreatureCards(2));
+
+        assertThat(gqs.getEffectiveCardPower(gd, lhurgoyf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, lhurgoyf)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A cast Lhurgoyf enters with power and toughness from both graveyards")
+    void castCreatureUsesBothGraveyards() {
+        harness.setGraveyard(player1, List.of(new Lhurgoyf()));
+        harness.setGraveyard(player2, createCreatureCards(2));
+        harness.castFromHand(player1, new Lhurgoyf(), "{2}{G}{G}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Lhurgoyf");
+        Permanent perm = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(4);
+    }
+
     private List<Card> createCreatureCards(int count) {
         List<Card> creatures = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            creatures.add(new GrizzlyBears());
+            creatures.add(new BalduvianBears());
         }
         return creatures;
     }
