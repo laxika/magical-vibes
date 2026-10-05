@@ -88,9 +88,51 @@ class LightningCrafterTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, crafter));
 
         harness.assertNotOnBattlefield(player1, "Lightning Crafter");
+        harness.assertNotOnBattlefield(player1, "Prickly Boggart");
+        harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Prickly Boggart");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Prickly Boggart"));
+    }
+
+    @Test
+    @DisplayName("Controller may sacrifice Lightning Crafter instead of championing an eligible Goblin")
+    void mayDeclineChampionWithEligibleGoblin() {
+        harness.addToBattlefield(player1, new PricklyBoggart());
+        castLightningCrafter();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Lightning Crafter");
+        harness.assertInGraveyard(player1, "Lightning Crafter");
+        harness.assertOnBattlefield(player1, "Prickly Boggart");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's Goblin cannot satisfy champion")
+    void opponentsGoblinCannotBeChampioned() {
+        harness.addToBattlefield(player2, new PricklyBoggart());
+        castLightningCrafter();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Lightning Crafter");
+        harness.assertOnBattlefield(player2, "Prickly Boggart");
+    }
+
+    @Test
+    @DisplayName("Activated damage still resolves after Lightning Crafter leaves")
+    void damageResolvesAfterSourceLeaves() {
+        Permanent crafter = addCreatureReady(player1, new LightningCrafter());
+        harness.setLife(player2, 20);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, crafter));
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Lightning Crafter");
+        harness.assertLife(player2, 17);
     }
 
     @Test
