@@ -2,9 +2,12 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.a.ArabaMothrider;
 import com.github.laxika.magicalvibes.cards.o.OneWithNothing;
+import com.github.laxika.magicalvibes.cards.t.Twincast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NeverendingTorment.class, ArabaMothrider.class, OneWithNothing.class})
+@CardUsed({NeverendingTorment.class, ArabaMothrider.class, OneWithNothing.class, Twincast.class})
 class NeverendingTormentTest extends BaseCardTest {
 
     @Test
@@ -29,8 +32,7 @@ class NeverendingTormentTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NeverendingTorment(), new OneWithNothing(), new ArabaMothrider()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         chooseLibraryCard(0);
         chooseLibraryCard(0);
 
@@ -53,8 +55,7 @@ class NeverendingTormentTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NeverendingTorment(), new OneWithNothing()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         chooseLibraryCard(0);
 
         harness.setLibrary(player2, List.of(new ArabaMothrider(), new OneWithNothing()));
@@ -75,8 +76,7 @@ class NeverendingTormentTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NeverendingTorment(), new OneWithNothing()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
         chooseLibraryCard(0);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -92,8 +92,7 @@ class NeverendingTormentTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NeverendingTorment()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player2.getId())).containsExactlyInAnyOrder(mothrider, oneWithNothing);
@@ -110,8 +109,7 @@ class NeverendingTormentTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NeverendingTorment(), new OneWithNothing()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         chooseLibraryCard(0);
 
         harness.setLibrary(player1, List.of(newTargetCard));
@@ -124,6 +122,102 @@ class NeverendingTormentTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(originalTargetCard);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(newTargetCard);
+    }
+
+    @Test
+    @DisplayName("An unrestricted search cannot fail to find")
+    void mustFindCardsWhenAvailable() {
+        Card libraryCard = new ArabaMothrider();
+        harness.setLibrary(player2, List.of(libraryCard));
+        harness.setHand(player1, List.of(new NeverendingTorment(), new OneWithNothing()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        chooseLibraryCard(0);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(libraryCard);
+    }
+
+    @Test
+    @DisplayName("Exiles all available cards when the library is smaller than your hand")
+    void exilesAsManyAsPossible() {
+        Card libraryCard = new ArabaMothrider();
+        harness.setLibrary(player2, List.of(libraryCard));
+        harness.setHand(player1, List.of(new NeverendingTorment(), new OneWithNothing(), new ArabaMothrider()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        chooseLibraryCard(0);
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(libraryCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playersCantCastSpellsForRestOfGame).contains(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Epic applies even when the target library is empty")
+    void appliesEpicWithEmptyLibrary() {
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new NeverendingTorment(), new OneWithNothing()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playersCantCastSpellsForRestOfGame).contains(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Hand size is determined when the spell resolves")
+    void countsHandAtResolution() {
+        Card libraryCard = new ArabaMothrider();
+        harness.setLibrary(player2, List.of(libraryCard));
+        harness.setHand(player1, List.of(new NeverendingTorment(), new OneWithNothing(), new ArabaMothrider()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.playersCantCastSpellsForRestOfGame).contains(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Epic puts a delayed triggered ability on the stack before creating a copy")
+    void upkeepTriggerPrecedesCopy() {
+        harness.setLibrary(player2, List.of(new ArabaMothrider()));
+        harness.setHand(player1, List.of(new NeverendingTorment()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.withAutoStop(TurnStep.UPKEEP, () -> advanceToUpkeep(player1));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(gd.stack.getFirst().isCopy()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A copy made by Twincast retains Epic and restricts its controller")
+    void externallyCopiedSpellRetainsEpic() {
+        NeverendingTorment torment = new NeverendingTorment();
+        harness.setHand(player1, List.of(torment));
+        harness.setHand(player2, List.of(new Twincast()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, torment.getId());
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+
+        assertThat(gd.playersCantCastSpellsForRestOfGame).contains(player2.getId());
     }
 
     private void chooseLibraryCard(int index) {
