@@ -105,10 +105,71 @@ class JoltingMerfolkTest extends BaseCardTest {
     @Test
     @DisplayName("The tapping ability cannot target a land")
     void cannotTargetLand() {
-        addCreatureReady(player1, new JoltingMerfolk());
-        Permanent land = addCreatureReady(player2, new KorHaven());
+        Permanent merfolk = addCreatureReady(player1, new JoltingMerfolk());
+        merfolk.setCounterCount(CounterType.FADE, 1);
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new KorHaven());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
+        assertThat(merfolk.getCounterCount(CounterType.FADE)).isEqualTo(1);
+        assertThat(land.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Jolting Merfolk can pay a fade counter immediately to tap itself")
+    void activatesWhileTappedAndSummoningSick() {
+        harness.castFromHand(player1, new JoltingMerfolk(), "{2}{U}{U}");
+        harness.passBothPriorities();
+        Permanent merfolk = findPermanent(player1, "Jolting Merfolk");
+        merfolk.setTapped(true);
+
+        harness.activateAbility(player1, 0, null, merfolk.getId());
+
+        assertThat(merfolk.getCounterCount(CounterType.FADE)).isEqualTo(3);
+        harness.passBothPriorities();
+        assertThat(merfolk.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Jolting Merfolk");
+    }
+
+    @Test
+    @DisplayName("Spending the last fade counter in response to fading taps the target before sacrificing the source")
+    void spendsLastCounterInResponseToFading() {
+        Permanent merfolk = addCreatureReady(player1, new JoltingMerfolk());
+        merfolk.setCounterCount(CounterType.FADE, 1);
+        Permanent target = addCreatureReady(player2, new RootwaterCommando());
+        advanceToUpkeep(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(merfolk.getCounterCount(CounterType.FADE)).isZero();
+        assertThat(target.isTapped()).isFalse();
+        harness.passBothPriorities();
+        assertThat(target.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Jolting Merfolk");
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Jolting Merfolk");
+        harness.assertInGraveyard(player1, "Jolting Merfolk");
+    }
+
+    @Test
+    @DisplayName("Each activation pays a separate fade counter and can tap a friendly creature")
+    void activatesMultipleTimesBeforeResolution() {
+        Permanent merfolk = addCreatureReady(player1, new JoltingMerfolk());
+        merfolk.setCounterCount(CounterType.FADE, 2);
+        Permanent friendlyTarget = addCreatureReady(player1, new RootwaterCommando());
+        Permanent opposingTarget = addCreatureReady(player2, new RootwaterCommando());
+
+        harness.activateAbility(player1, 0, null, opposingTarget.getId());
+        harness.activateAbility(player1, 0, null, friendlyTarget.getId());
+
+        assertThat(merfolk.getCounterCount(CounterType.FADE)).isZero();
+        assertThat(friendlyTarget.isTapped()).isFalse();
+        assertThat(opposingTarget.isTapped()).isFalse();
+        harness.passBothPriorities();
+        assertThat(friendlyTarget.isTapped()).isTrue();
+        assertThat(opposingTarget.isTapped()).isFalse();
+        harness.passBothPriorities();
+        assertThat(opposingTarget.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Jolting Merfolk");
     }
 }
