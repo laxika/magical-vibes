@@ -91,6 +91,32 @@ class PrimalFrenzyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An unattached Primal Frenzy does not grant trample")
+    void unattachedAuraDoesNotGrantTrample() {
+        Permanent creature = addCreatureReady(player1, new LeafDancer());
+        harness.addToBattlefield(player1, new PrimalFrenzy());
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Primal Frenzy goes to the graveyard if its target leaves before resolution")
+    void targetLeavesBeforeResolution() {
+        Permanent creature = addCreatureReady(player2, new LeafDancer());
+        harness.setHand(player1, List.of(new PrimalFrenzy()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castEnchantment(player1, 0, creature.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        gd.playerGraveyards.get(player2.getId()).add(creature.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Primal Frenzy");
+        harness.assertInGraveyard(player1, "Primal Frenzy");
+    }
+
+    @Test
     @DisplayName("Cannot enchant a land")
     void cannotEnchantALand() {
         harness.addToBattlefield(player2, new LeafDancer());
