@@ -8,10 +8,26 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({OathswornGiant.class, Watchwolf.class})
 class OathswornGiantTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("The Giant and creatures granted vigilance remain untapped when attacking")
+    void vigilanceKeepsGiantAndOtherCreaturesUntappedWhenAttacking() {
+        Permanent giant = addCreatureReady(player1, new OathswornGiant());
+        Permanent watchwolf = addCreatureReady(player1, new Watchwolf());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+
+        assertThat(giant.isAttacking()).isTrue();
+        assertThat(watchwolf.isAttacking()).isTrue();
+        assertThat(giant.isTapped()).isFalse();
+        assertThat(watchwolf.isTapped()).isFalse();
+    }
 
     @Test
     @DisplayName("Other creatures you control get +0/+2 and vigilance")
