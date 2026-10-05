@@ -55,10 +55,53 @@ class MemorialTeamLeaderTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Memorial Team Leader");
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(leader.getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("A warped Team Leader can be cast on a later turn without another exile")
+    void castsWarpedLeaderOnLaterTurn() {
+        MemorialTeamLeader leader = new MemorialTeamLeader();
+        harness.setHand(player1, List.of(leader));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+        assertThat(gd.findExiledCard(leader.getId())).isNotNull();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castFromExile(player1, leader.getId());
+        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Memorial Team Leader");
+        assertThat(gd.findExiledCard(leader.getId())).isNull();
+    }
+
+    @Test
+    @DisplayName("Two Team Leaders boost each other only during their controller's turn")
+    void leadersBoostEachOtherWithoutBoostingThemselves() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new MemorialTeamLeader());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new MemorialTeamLeader());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new MemorialTeamLeader());
+
+        harness.forceActivePlayer(player1);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+
+        harness.forceActivePlayer(player2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(4);
     }
 }
