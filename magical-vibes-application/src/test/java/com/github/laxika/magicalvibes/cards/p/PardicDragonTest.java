@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,6 +26,75 @@ class PardicDragonTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(dragon);
         assertThat(gd.exiledCardTimeCounters).containsEntry(dragon.getId(), 2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the owner's upkeep removes a suspend counter")
+    void onlyOwnersUpkeepRemovesCounter() {
+        PardicDragon dragon = suspendCard();
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        assertThat(gd.exiledCardTimeCounters).containsEntry(dragon.getId(), 2);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(gd.exiledCardTimeCounters).containsEntry(dragon.getId(), 1);
+    }
+
+    @Test
+    @DisplayName("Removing the last counter allows casting Pardic Dragon for free with haste")
+    void suspendCastsForFreeWithHaste() {
+        PardicDragon dragon = suspendCard();
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(dragon.getId());
+        PendingInteraction.MayAbilityChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(dragon);
+        Permanent permanent = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getId().equals(dragon.getId()))
+                .findFirst().orElseThrow();
+        assertThat(permanent.hasKeyword(Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Declining the suspend cast leaves the dragon exiled and unable to trigger")
+    void decliningSuspendCastStopsOpponentSpellTrigger() {
+        PardicDragon dragon = suspendCard();
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+
+        castOpponentSpell();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(dragon);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(dragon.getId());
+        harness.assertNotOnBattlefield(player1, "Pardic Dragon");
+    }
+
+    @Test
+    @DisplayName("Pardic Dragon on the battlefield does not trigger for an opponent's spell")
+    void battlefieldDragonDoesNotTrigger() {
+        harness.addToBattlefield(player1, new PardicDragon());
+        castOpponentSpell();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.exiledCardTimeCounters).isEmpty();
     }
 
     @Test
