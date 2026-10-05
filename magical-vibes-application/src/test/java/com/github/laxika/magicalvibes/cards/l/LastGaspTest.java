@@ -33,8 +33,8 @@ class LastGaspTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Destroys a creature whose toughness is reduced to zero")
-    void destroysCreatureWithZeroToughness() {
+    @DisplayName("Puts a creature whose toughness is reduced to zero into the graveyard")
+    void creatureWithZeroToughnessDies() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Watchwolf());
 
         castLastGasp(target);
@@ -49,7 +49,6 @@ class LastGaspTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SiegeWurm());
         castLastGasp(target);
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isEqualTo(0);
@@ -82,6 +81,51 @@ class LastGaspTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Can target a creature controlled by the caster without affecting other creatures")
+    void canTargetOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SiegeWurm());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new SiegeWurm());
+
+        castLastGasp(target);
+
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Two Last Gasps cumulatively reduce toughness below zero")
+    void cumulativeReductionsKillLargerCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SiegeWurm());
+
+        castLastGasp(target);
+        harness.assertOnBattlefield(player2, "Siege Wurm");
+        castLastGasp(target);
+
+        harness.assertNotOnBattlefield(player2, "Siege Wurm");
+        harness.assertInGraveyard(player2, "Siege Wurm");
+    }
+
+    @Test
+    @DisplayName("The reduction remains during the end step and expires during cleanup")
+    void reductionPersistsThroughEndStep() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SiegeWurm());
+        harness.forceStep(TurnStep.END_STEP);
+
+        castLastGasp(target);
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+
+        harness.passUntil(TurnStep.UPKEEP);
+
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
     }
 
     private void castLastGasp(Permanent target) {
