@@ -37,8 +37,7 @@ class PoulticeSliverTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(target.getCard());
@@ -79,6 +78,90 @@ class PoulticeSliverTest extends BaseCardTest {
         addCreatureReady(player1, new SerraSphinx());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void opponentSliverCanRegenerateSliverAcrossControllers() {
+        Permanent target = addCreatureReady(player1, new PoulticeSliver());
+        Permanent source = addCreatureReady(player2, new SinewSliver());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player2, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(source.getRegenerationShield()).isZero();
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    void summoningSickSliverCannotPayTapCost() {
+        addCreatureReady(player1, new PoulticeSliver());
+        Permanent source = harness.enterBattlefieldAndReturn(player1, new SinewSliver());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, source.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(source.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    void tappedSliverCannotPayTapCost() {
+        Permanent source = addCreatureReady(player1, new PoulticeSliver());
+        source.setTapped(true);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, source.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(source.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    void cannotActivateWithOnlyOneMana() {
+        Permanent source = addCreatureReady(player1, new PoulticeSliver());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, source.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(source.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    void grantedAbilityResolvesAfterPoulticeSliverIsDestroyed() {
+        Permanent poultice = harness.enterBattlefieldAndReturn(player1, new PoulticeSliver());
+        Permanent source = addCreatureReady(player1, new SinewSliver());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 1, 0, null, source.getId());
+
+        harness.setHand(player2, List.of(new CradleToGrave()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, poultice.getId());
+        harness.assertInGraveyard(player1, "Poultice Sliver");
+        harness.passBothPriorities();
+
+        assertThat(source.getRegenerationShield()).isEqualTo(1);
+        source.setTapped(false);
+        harness.ensurePriority(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, source.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }
