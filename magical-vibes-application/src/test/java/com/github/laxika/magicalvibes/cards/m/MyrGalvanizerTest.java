@@ -1,22 +1,26 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.a.ArtificialEvolution;
+import com.github.laxika.magicalvibes.cards.b.Bitterblossom;
 import com.github.laxika.magicalvibes.cards.c.CopperMyr;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IronMyr;
+import com.github.laxika.magicalvibes.cards.s.SylvokReplica;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MyrGalvanizer.class, CopperMyr.class, IronMyr.class, SylvokReplica.class})
 class MyrGalvanizerTest extends BaseCardTest {
-
-    // ===== Static effect: Other Myr creatures you control get +1/+1 =====
 
     @Test
     @DisplayName("Other Myr creatures you control get +1/+1")
@@ -47,12 +51,12 @@ class MyrGalvanizerTest extends BaseCardTest {
     @DisplayName("Does not buff non-Myr creatures")
     void doesNotBuffNonMyr() {
         harness.addToBattlefield(player1, new MyrGalvanizer());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new SylvokReplica());
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent replica = findPermanent(player1, "Sylvok Replica");
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, replica)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, replica)).isEqualTo(3);
     }
 
     @Test
@@ -101,24 +105,16 @@ class MyrGalvanizerTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, copperMyr)).isEqualTo(1);
     }
 
-    // ===== Activated ability: {1}, {T}: Untap each other Myr you control =====
-
     @Test
     @DisplayName("Activating ability untaps other tapped Myr you control")
     void untapsOtherTappedMyr() {
-        Permanent galvanizer = new Permanent(new MyrGalvanizer());
-        galvanizer.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(galvanizer);
+        Permanent galvanizer = addCreatureReady(player1, new MyrGalvanizer());
 
-        Permanent copperMyr = new Permanent(new CopperMyr());
-        copperMyr.setSummoningSick(false);
+        Permanent copperMyr = addCreatureReady(player1, new CopperMyr());
         copperMyr.tap();
-        gd.playerBattlefields.get(player1.getId()).add(copperMyr);
 
-        Permanent ironMyr = new Permanent(new IronMyr());
-        ironMyr.setSummoningSick(false);
+        Permanent ironMyr = addCreatureReady(player1, new IronMyr());
         ironMyr.tap();
-        gd.playerBattlefields.get(player1.getId()).add(ironMyr);
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -133,14 +129,10 @@ class MyrGalvanizerTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability does not untap Galvanizer itself")
     void doesNotUntapSelf() {
-        Permanent galvanizer = new Permanent(new MyrGalvanizer());
-        galvanizer.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(galvanizer);
+        Permanent galvanizer = addCreatureReady(player1, new MyrGalvanizer());
 
-        Permanent copperMyr = new Permanent(new CopperMyr());
-        copperMyr.setSummoningSick(false);
+        Permanent copperMyr = addCreatureReady(player1, new CopperMyr());
         copperMyr.tap();
-        gd.playerBattlefields.get(player1.getId()).add(copperMyr);
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -156,14 +148,10 @@ class MyrGalvanizerTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability does not untap non-Myr creatures")
     void doesNotUntapNonMyr() {
-        Permanent galvanizer = new Permanent(new MyrGalvanizer());
-        galvanizer.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(galvanizer);
+        Permanent galvanizer = addCreatureReady(player1, new MyrGalvanizer());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        bears.tap();
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent replica = addCreatureReady(player1, new SylvokReplica());
+        replica.tap();
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -171,21 +159,17 @@ class MyrGalvanizerTest extends BaseCardTest {
         harness.activateAbility(player1, galvanizerIndex, null, null);
         harness.passBothPriorities();
 
-        // Bears are not Myr — should stay tapped
-        assertThat(bears.isTapped()).isTrue();
+        // Sylvok Replica is not a Myr — should stay tapped
+        assertThat(replica.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Activating ability does not untap opponent's Myr")
     void doesNotUntapOpponentMyr() {
-        Permanent galvanizer = new Permanent(new MyrGalvanizer());
-        galvanizer.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(galvanizer);
+        Permanent galvanizer = addCreatureReady(player1, new MyrGalvanizer());
 
-        Permanent opponentMyr = new Permanent(new CopperMyr());
-        opponentMyr.setSummoningSick(false);
+        Permanent opponentMyr = addCreatureReady(player2, new CopperMyr());
         opponentMyr.tap();
-        gd.playerBattlefields.get(player2.getId()).add(opponentMyr);
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -199,9 +183,7 @@ class MyrGalvanizerTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability puts entry on the stack")
     void abilityPutsEntryOnStack() {
-        Permanent galvanizer = new Permanent(new MyrGalvanizer());
-        galvanizer.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(galvanizer);
+        Permanent galvanizer = addCreatureReady(player1, new MyrGalvanizer());
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -211,5 +193,100 @@ class MyrGalvanizerTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Myr Galvanizer");
+    }
+
+    @Test
+    @DisplayName("Untaps another Galvanizer, but leaves the activating Galvanizer tapped")
+    void untapsAnotherGalvanizer() {
+        Permanent source = addCreatureReady(player1, new MyrGalvanizer());
+        Permanent other = addCreatureReady(player1, new MyrGalvanizer());
+        other.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(other.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Untaps a Myr that entered after activation, even with summoning sickness")
+    void checksMyrAtResolution() {
+        addCreatureReady(player1, new MyrGalvanizer());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        Permanent lateMyr = harness.addToBattlefieldAndReturn(player1, new CopperMyr());
+        lateMyr.setSummoningSick(true);
+        lateMyr.tap();
+        harness.passBothPriorities();
+
+        assertThat(lateMyr.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The activated ability resolves after its source leaves the battlefield")
+    void resolvesWithoutSource() {
+        Permanent source = addCreatureReady(player1, new MyrGalvanizer());
+        Permanent myr = addCreatureReady(player1, new CopperMyr());
+        myr.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+
+        assertThat(myr.isTapped()).isFalse();
+    }
+
+    @Test
+    @CardUsed({Bitterblossom.class, ArtificialEvolution.class})
+    @DisplayName("Untaps a noncreature kindred permanent with the Myr subtype")
+    void untapsNoncreatureMyrPermanent() {
+        Permanent source = addCreatureReady(player1, new MyrGalvanizer());
+        Permanent blossom = harness.addToBattlefieldAndReturn(player1, new Bitterblossom());
+        harness.setHand(player1, List.of(new ArtificialEvolution()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, blossom.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "FAERIE");
+        harness.handleListChoice(player1, "MYR");
+
+        assertThat(gqs.hasEffectiveSubtype(gd, blossom, CardSubtype.MYR)).isTrue();
+        assertThat(gqs.isCreature(gd, blossom)).isFalse();
+        blossom.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(blossom.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Galvanizer cannot pay its tap cost")
+    void cannotActivateWhileSummoningSick() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new MyrGalvanizer());
+        source.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(source.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Galvanizer cannot pay its tap cost")
+    void cannotActivateWhileTapped() {
+        Permanent source = addCreatureReady(player1, new MyrGalvanizer());
+        source.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
     }
 }
