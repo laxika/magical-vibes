@@ -149,4 +149,69 @@ class OrcishLibrarianTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
+
+    @Test
+    @DisplayName("A six-card library exiles four and lets its controller order both survivors")
+    void shortLibraryWithMultipleSurvivorsCanBeReordered() {
+        addLibrarianReady();
+        harness.addMana(player1, ManaColor.RED, 1);
+        List<Card> library = new ArrayList<>(eightCards().subList(0, 6));
+        List<Card> opponentLibrary = List.of(new Island(), new Plains());
+        harness.setLibrary(player1, library);
+        harness.setLibrary(player2, opponentLibrary);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder).isNotNull();
+        assertThat(reorder.cards()).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(4);
+        List<Card> accountedFor = new ArrayList<>(gd.getPlayerExiledCards(player1.getId()));
+        accountedFor.addAll(reorder.cards());
+        assertThat(accountedFor).containsExactlyInAnyOrderElementsOf(library);
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(reorder.cards().get(1), reorder.cards().get(0));
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(opponentLibrary);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability still resolves for its controller after the Librarian leaves the battlefield")
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent librarian = addCreatureReady(player2, new OrcishLibrarian());
+        harness.addMana(player2, ManaColor.RED, 1);
+        List<Card> library = eightCards();
+        harness.setLibrary(player2, library);
+        List<Card> opponentLibrary = List.of(new Island());
+        harness.setLibrary(player1, opponentLibrary);
+
+        harness.activateAbility(player2, 0, null, null);
+        gd.playerBattlefields.get(player2.getId()).remove(librarian);
+        gd.playerGraveyards.get(player2.getId()).add(librarian.getCard());
+        harness.passBothPriorities();
+
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder).isNotNull();
+        assertThat(reorder.deckOwnerId()).isEqualTo(player2.getId());
+        assertThat(reorder.cards()).hasSize(4);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(4);
+        List<Card> accountedFor = new ArrayList<>(gd.getPlayerExiledCards(player2.getId()));
+        accountedFor.addAll(reorder.cards());
+        assertThat(accountedFor).containsExactlyInAnyOrderElementsOf(library);
+
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.CardOrder(List.of(2, 1, 3, 0)));
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(
+                reorder.cards().get(2), reorder.cards().get(1), reorder.cards().get(3), reorder.cards().get(0));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(opponentLibrary);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 }
