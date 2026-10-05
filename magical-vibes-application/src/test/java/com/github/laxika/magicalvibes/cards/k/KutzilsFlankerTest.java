@@ -29,8 +29,7 @@ class KutzilsFlankerTest extends BaseCardTest {
         Permanent creature = gd.playerBattlefields.get(player1.getId()).getFirst();
         harness.setHand(player1, List.of(new Unsummon()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         harness.setHand(player1, List.of(new KutzilsFlanker()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -75,6 +74,85 @@ class KutzilsFlankerTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Chooses its entry-trigger mode after the creature resolves")
+    void choosesModeWhenEntryTriggerIsPutOnStack() {
+        harness.setLife(player1, 10);
+        harness.setHand(player1, List.of(new KutzilsFlanker()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        harness.handleListChoice(player1, "You gain 2 life and scry 2");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 12);
+        assertThat(findFlanker().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Adds no counters when no creatures have left this turn")
+    void noDeparturesGiveNoCounters() {
+        castFlanker(0);
+        resolveCreatureAndEtb();
+
+        assertThat(findFlanker().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Does not count creatures that left under the opponent's control")
+    void ignoresOpponentsDepartures() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player2, "Grizzly Bears"));
+
+        castFlanker(0);
+        resolveCreatureAndEtb();
+
+        assertThat(findFlanker().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Counts creatures that leave while its counter trigger is on the stack")
+    void countsDeparturesBeforeTriggerResolution() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        castFlanker(0);
+        harness.passBothPriorities();
+        Permanent flanker = findFlanker();
+        assertThat(flanker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.passBothPriorities();
+
+        assertThat(flanker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Can exile its controller's graveyard without touching the opponent's")
+    void canTargetOwnGraveyard() {
+        Card ownCard = new Forest();
+        Card opponentCard = new Shock();
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opponentCard));
+
+        castFlanker(2);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(ownCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }
 
     private void castFlanker(int mode) {
