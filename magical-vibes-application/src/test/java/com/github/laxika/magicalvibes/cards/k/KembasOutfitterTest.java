@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.c.ColossusHammer;
+import com.github.laxika.magicalvibes.cards.d.Disperse;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KembasOutfitter.class, ColossusHammer.class, GrizzlyBears.class})
+@CardUsed({KembasOutfitter.class, ColossusHammer.class, GrizzlyBears.class, Disperse.class})
 class KembasOutfitterTest extends BaseCardTest {
 
     @Test
@@ -71,5 +72,74 @@ class KembasOutfitterTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0, 1, opponentHammer.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void firstModeResolvesWithoutEquipmentInHand() {
+        harness.setHand(player1, List.of(new KembasOutfitter(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castCreature(player1, 0, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Kemba's Outfitter");
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void firstModeCannotChooseNonEquipmentCard() {
+        harness.setHand(player1, List.of(new KembasOutfitter(), new GrizzlyBears(), new ColossusHammer()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castCreature(player1, 0, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleCardChosen(player1, 1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void secondModeCannotTargetNonEquipment() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new KembasOutfitter()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 1, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void secondModeGrantedEquipSurvivesReturningToHandAndRecasting() {
+        Permanent hammer = harness.addToBattlefieldAndReturn(player1, new ColossusHammer());
+        harness.setHand(player1, List.of(new KembasOutfitter(), new Disperse()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castCreature(player1, 0, 1, hammer.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        Permanent outfitter = findPermanent(player1, "Kemba's Outfitter");
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, hammer.getId());
+        harness.assertInHand(player1, "Colossus Hammer");
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        Permanent recastHammer = findPermanent(player1, "Colossus Hammer");
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(recastHammer), 1,
+                null, outfitter.getId());
+        harness.passBothPriorities();
+
+        assertThat(recastHammer.getAttachedTo()).isEqualTo(outfitter.getId());
     }
 }
