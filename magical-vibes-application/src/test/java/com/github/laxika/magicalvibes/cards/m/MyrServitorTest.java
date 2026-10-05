@@ -95,11 +95,10 @@ class MyrServitorTest extends BaseCardTest {
         MyrServitor source = new MyrServitor();
         MyrServitor graveyardServitor = new MyrServitor();
 
-        harness.addToBattlefield(player1, source);
+        Permanent sourcePermanent = harness.addToBattlefieldAndReturn(player1, source);
         harness.setGraveyard(player1, List.of(graveyardServitor));
 
         advanceToUpkeep(player1);
-        Permanent sourcePermanent = findPermanent(player1, "Myr Servitor");
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, sourcePermanent));
 
@@ -110,5 +109,63 @@ class MyrServitorTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getId)
                 .contains(graveyardServitor.getId());
+    }
+
+    @Test
+    @DisplayName("A Myr Servitor does not trigger during its opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        MyrServitor graveyardServitor = new MyrServitor();
+        harness.addToBattlefield(player1, new MyrServitor());
+        harness.setGraveyard(player1, List.of(graveyardServitor));
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactly(graveyardServitor.getId());
+        assertThat(countPermanents(player1, "Myr Servitor")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Another Myr Servitor cannot satisfy the removed source's condition")
+    void anotherServitorDoesNotKeepRemovedSourcesTriggerActive() {
+        MyrServitor source = new MyrServitor();
+        MyrServitor graveyardServitor = new MyrServitor();
+        Permanent sourcePermanent = harness.addToBattlefieldAndReturn(player1, source);
+        harness.addToBattlefield(player2, new MyrServitor());
+        harness.setGraveyard(player1, List.of(graveyardServitor));
+
+        advanceToUpkeep(player1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, sourcePermanent));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactlyInAnyOrder(source.getId(), graveyardServitor.getId());
+        assertThat(countPermanents(player1, "Myr Servitor")).isZero();
+        assertThat(countPermanents(player2, "Myr Servitor")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Returning the same source card creates a new permanent and does not enable its old trigger")
+    void returnedSourceDoesNotEnableOldTrigger() {
+        MyrServitor source = new MyrServitor();
+        MyrServitor graveyardServitor = new MyrServitor();
+        Permanent sourcePermanent = harness.addToBattlefieldAndReturn(player1, source);
+        harness.setGraveyard(player1, List.of(graveyardServitor));
+
+        advanceToUpkeep(player1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, sourcePermanent));
+        gd.playerGraveyards.get(player1.getId()).remove(source);
+        harness.enterBattlefieldAndReturn(player1, source);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactly(graveyardServitor.getId());
+        assertThat(countPermanents(player1, "Myr Servitor")).isEqualTo(1);
     }
 }
