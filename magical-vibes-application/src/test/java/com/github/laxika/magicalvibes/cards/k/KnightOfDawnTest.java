@@ -91,8 +91,7 @@ class KnightOfDawnTest extends BaseCardTest {
         Permanent knight = addCreatureReady(player1, new KnightOfDawn());
         Permanent blocker = addCreatureReady(player2, new LightningElemental());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(knight))));
@@ -100,5 +99,59 @@ class KnightOfDawnTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Knight of Dawn");
         harness.assertInGraveyard(player2, "Lightning Elemental");
+    }
+
+    @Test
+    @DisplayName("Repeated activations retain protection from both chosen colors")
+    void repeatedActivationsAccumulateProtection() {
+        Permanent knight = addCreatureReady(player1, new KnightOfDawn());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gqs.hasProtectionFrom(gd, knight, CardColor.RED)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, knight, CardColor.WHITE)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, knight, CardColor.GREEN)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability works while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent knight = harness.addToBattlefieldAndReturn(player1, new KnightOfDawn());
+        knight.setSummoningSick(true);
+        knight.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThat(gqs.hasProtectionFrom(gd, knight, CardColor.BLACK)).isTrue();
+        assertThat(knight.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Protection gained in response makes red removal's target illegal")
+    void protectionInResponseStopsRemoval() {
+        Permanent knight = addCreatureReady(player1, new KnightOfDawn());
+        harness.setHand(player2, List.of(new LightningBlast()));
+        harness.addMana(player2, ManaColor.RED, 4);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castInstant(player2, 0, knight.getId());
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gqs.hasProtectionFrom(gd, knight, CardColor.RED)).isFalse();
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Knight of Dawn");
+        harness.assertInGraveyard(player2, "Lightning Blast");
+        assertThat(gd.stack).isEmpty();
     }
 }
