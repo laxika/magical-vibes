@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.f.FlowstoneCrusher;
+import com.github.laxika.magicalvibes.cards.s.SealOfCleansing;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KillSwitch.class, FlowstoneCrusher.class})
+@CardUsed({KillSwitch.class, FlowstoneCrusher.class, SealOfCleansing.class})
 class KillSwitchTest extends BaseCardTest {
 
     @Test
@@ -136,9 +137,48 @@ class KillSwitchTest extends BaseCardTest {
         assertThat(opposingArtifact.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("Owned artifacts stay tapped during the step in which Kill Switch untaps")
+    void ownedArtifactsStayTappedWhenSourceUntaps() {
+        Permanent killSwitch = addReadyKillSwitch(player1);
+        Permanent ownArtifact = addReadyKillSwitch(player1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player1);
+
+        assertThat(killSwitch.isTapped()).isFalse();
+        assertThat(ownArtifact.isTapped()).isTrue();
+
+        advanceToUpkeep(player1);
+
+        assertThat(ownArtifact.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Removing Kill Switch in response still taps artifacts without locking them")
+    void sourceRemovedBeforeResolutionStillTapsArtifacts() {
+        Permanent killSwitch = addReadyKillSwitch(player1);
+        Permanent opposingArtifact = addReadyKillSwitch(player2);
+        harness.addToBattlefield(player1, new SealOfCleansing());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 1, null, killSwitch.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(killSwitch);
+        harness.passBothPriorities();
+
+        assertThat(opposingArtifact.isTapped()).isTrue();
+
+        advanceToUpkeep(player2);
+
+        assertThat(opposingArtifact.isTapped()).isFalse();
+    }
+
     private Permanent addReadyKillSwitch(Player player) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, new KillSwitch());
-        permanent.setSummoningSick(false);
-        return permanent;
+        return addCreatureReady(player, new KillSwitch());
     }
 }
