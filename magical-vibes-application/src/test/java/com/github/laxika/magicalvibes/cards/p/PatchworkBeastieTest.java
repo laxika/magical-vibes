@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -50,8 +51,7 @@ class PatchworkBeastieTest extends BaseCardTest {
         addReadyBeastie(player1, List.of(new GrizzlyBears(), new Forest(), new Shock()));
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player1,
                 List.of(new BlockerAssignment(0, 0))))
@@ -64,8 +64,7 @@ class PatchworkBeastieTest extends BaseCardTest {
         Permanent beastie = addReadyBeastie(player1, fourCardTypes());
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(beastie.isBlocking()).isTrue();
@@ -102,6 +101,74 @@ class PatchworkBeastieTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void artifactCreatureCountsAsTwoTypes() {
+        addReadyBeastie(player1, List.of(new PatchworkBeastie(), new Forest(), new Shock()));
+        harness.setLife(player2, 20);
+        declareAttackers(player1, List.of(0));
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    void repeatedTypesDoNotEnableDelirium() {
+        addReadyBeastie(player1, List.of(new PatchworkBeastie(), new PatchworkBeastie(),
+                new Forest(), new Forest()));
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void opponentsGraveyardDoesNotEnableDelirium() {
+        addReadyBeastie(player1, List.of(new Forest(), new Shock()));
+        harness.setGraveyard(player2, fourCardTypes());
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void losingDeliriumAfterBlockingDoesNotRemoveBlocker() {
+        Permanent beastie = addReadyBeastie(player1,
+                List.of(new PatchworkBeastie(), new Forest(), new Shock()));
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0))));
+        assertThat(beastie.isBlocking()).isTrue();
+
+        harness.setGraveyard(player1, List.of());
+        resolveCombat(player2);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(beastie);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void doesNotTriggerOnOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new PatchworkBeastie());
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    void millsOnlyTopCard() {
+        Card topCard = new Forest();
+        Card nextCard = new PatchworkBeastie();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        harness.addToBattlefield(player1, new PatchworkBeastie());
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.withAutoStop(TurnStep.UPKEEP,
+                () -> harness.handleMayAbilityChosen(player1, true));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
     private Permanent addReadyBeastie(Player player, List<Card> graveyard) {
