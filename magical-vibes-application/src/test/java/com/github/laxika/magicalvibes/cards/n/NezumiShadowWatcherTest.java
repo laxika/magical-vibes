@@ -54,4 +54,39 @@ class NezumiShadowWatcherTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Higure, the Still Wind");
         harness.assertInGraveyard(player1, "Nezumi Shadow-Watcher");
     }
+
+    @Test
+    @DisplayName("Sacrifice is paid before the Ninja is destroyed")
+    void sacrificeIsPaidBeforeResolution() {
+        harness.addToBattlefield(player1, new NezumiShadowWatcher());
+        harness.addToBattlefield(player2, new HigureTheStillWind());
+        UUID target = harness.getPermanentId(player2, "Higure, the Still Wind");
+
+        harness.activateAbility(player1, 0, null, target);
+
+        harness.assertInGraveyard(player1, "Nezumi Shadow-Watcher");
+        harness.assertNotOnBattlefield(player1, "Nezumi Shadow-Watcher");
+        harness.assertOnBattlefield(player2, "Higure, the Still Wind");
+        harness.assertNotInGraveyard(player2, "Higure, the Still Wind");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Higure, the Still Wind");
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        var watcher = harness.addToBattlefieldAndReturn(player1, new NezumiShadowWatcher());
+        watcher.setTapped(true);
+        watcher.setSummoningSick(true);
+        harness.addToBattlefield(player2, new HigureTheStillWind());
+        UUID target = harness.getPermanentId(player2, "Higure, the Still Wind");
+
+        harness.activateAbility(player1, 0, null, target);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Nezumi Shadow-Watcher");
+        harness.assertInGraveyard(player2, "Higure, the Still Wind");
+    }
 }
