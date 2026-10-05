@@ -14,6 +14,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MengHuoBarbarianKingTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Green creatures entering after Meng Huo immediately receive the bonus")
+    void buffsGreenCreatureEnteringAfterMengHuo() {
+        harness.addToBattlefield(player1, new MengHuoBarbarianKing());
+
+        harness.castFromHand(player1, new ForestBear(), "{1}{G}");
+        harness.passBothPriorities();
+
+        Permanent forestBear = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof ForestBear)
+                .findFirst().orElseThrow();
+        assertThat(gqs.getEffectivePower(gd, forestBear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, forestBear)).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Other green creatures you control get +1/+1")
     void buffsOtherGreenCreatures() {
         Permanent forestBear = harness.addToBattlefieldAndReturn(player1, new ForestBear());
