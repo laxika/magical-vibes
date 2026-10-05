@@ -13,8 +13,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MonicaRambeau.class, GrizzlyBears.class, Shock.class})
+@CardUsed({MonicaRambeau.class, PhotonLivingLight.class, GrizzlyBears.class, Shock.class})
 class MonicaRambeauTest extends BaseCardTest {
 
     @Test
@@ -77,6 +78,125 @@ class MonicaRambeauTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, monica)).isEqualTo(photonPowerBefore);
         assertThat(bear.getPlusOnePlusOneCounters()).isZero();
         assertThat(monica.getPlusOnePlusOneCounters()).isZero();
+    }
+
+    @Test
+    void frontFaceDoesNotTriggerForCreatureSpells() {
+        Permanent monica = addMonica(player1, false);
+        int powerBefore = gqs.getEffectivePower(gd, monica);
+        int toughnessBefore = gqs.getEffectiveToughness(gd, monica);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, monica)).isEqualTo(powerBefore);
+        assertThat(gqs.getEffectiveToughness(gd, monica)).isEqualTo(toughnessBefore);
+    }
+
+    @Test
+    void neitherFaceTriggersForAnOpponentsNoncreatureSpell() {
+        Permanent monica = addMonica(player1, false);
+        Permanent photon = addMonica(player2, true);
+        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
+        int photonPowerBefore = gqs.getEffectivePower(gd, photon);
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, photon)).isEqualTo(photonPowerBefore);
+        assertThat(bear.getPlusOnePlusOneCounters()).isZero();
+
+        int monicaPowerAfterOwnSpell = gqs.getEffectivePower(gd, monica);
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, monica)).isEqualTo(monicaPowerAfterOwnSpell);
+        assertThat(monica.getPlusOnePlusOneCounters()).isZero();
+    }
+
+    @Test
+    void backFaceCountersAllOtherControlledCreaturesAndCountersSurviveCleanup() {
+        Permanent photon = addMonica(player1, true);
+        Permanent firstBear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondBear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingBear = addCreatureReady(player2, new GrizzlyBears());
+        int powerBefore = gqs.getEffectivePower(gd, photon);
+        int toughnessBefore = gqs.getEffectiveToughness(gd, photon);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(firstBear.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(secondBear.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(opposingBear.getPlusOnePlusOneCounters()).isZero();
+        assertThat(photon.getPlusOnePlusOneCounters()).isZero();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, photon)).isEqualTo(powerBefore);
+        assertThat(gqs.getEffectiveToughness(gd, photon)).isEqualTo(toughnessBefore);
+        assertThat(firstBear.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(secondBear.getPlusOnePlusOneCounters()).isEqualTo(1);
+    }
+
+    @Test
+    void frontFaceProwessExpiresAtEndOfTurn() {
+        Permanent monica = addMonica(player1, false);
+        int powerBefore = gqs.getEffectivePower(gd, monica);
+        int toughnessBefore = gqs.getEffectiveToughness(gd, monica);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, monica)).isEqualTo(powerBefore);
+        assertThat(gqs.getEffectiveToughness(gd, monica)).isEqualTo(toughnessBefore);
+    }
+
+    @Test
+    void cannotTransformOutsideItsControllersMainPhase() {
+        Permanent monica = addMonica(player1, false);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(monica.isTransformed()).isFalse();
+    }
+
+    @Test
+    void cannotTransformWhileASpellIsOnTheStack() {
+        Permanent monica = addMonica(player1, false);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(monica.isTransformed()).isFalse();
+        resolveAllTriggers();
     }
 
     private Permanent addMonica(Player player, boolean transformed) {
