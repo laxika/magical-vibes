@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({NoviceKnight.class, GrizzlyBears.class, HolyStrength.class, LeoninScimitar.class})
 class NoviceKnightTest extends BaseCardTest {
 
     @Test
@@ -82,18 +83,99 @@ class NoviceKnightTest extends BaseCardTest {
                 .hasMessageContaining("Invalid attacker index");
     }
 
+    @Test
+    @DisplayName("Cannot attack once its Equipment is detached")
+    void cannotAttackAfterEquipmentDetaches() {
+        Permanent knight = setupKnight();
+        Permanent equipment = attach(new LeoninScimitar(), knight);
+        equipment.setAttachedTo(null);
+
+        beginDeclareAttackers();
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(indexOf(knight))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Can still attack after losing its Aura if it remains equipped")
+    void canAttackWithEquipmentAfterAuraLeaves() {
+        Permanent knight = setupKnight();
+        Permanent aura = attach(new HolyStrength(), knight);
+        attach(new LeoninScimitar(), knight);
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+
+        beginDeclareAttackers();
+        gs.declareAttackers(gd, player1, List.of(indexOf(knight)));
+
+        assertThat(knight.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can still attack after Equipment detaches if it remains enchanted")
+    void canAttackWithAuraAfterEquipmentDetaches() {
+        Permanent knight = setupKnight();
+        attach(new HolyStrength(), knight);
+        Permanent equipment = attach(new LeoninScimitar(), knight);
+        equipment.setAttachedTo(null);
+
+        beginDeclareAttackers();
+        gs.declareAttackers(gd, player1, List.of(indexOf(knight)));
+
+        assertThat(knight.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent-controlled Aura also permits attacking")
+    void canAttackWithOpponentControlledAura() {
+        Permanent knight = setupKnight();
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new HolyStrength());
+        aura.setAttachedTo(knight.getId());
+
+        beginDeclareAttackers();
+        gs.declareAttackers(gd, player1, List.of(indexOf(knight)));
+
+        assertThat(knight.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Being equipped does not bypass summoning sickness")
+    void cannotAttackWhileSummoningSickAndEquipped() {
+        Permanent knight = setupKnight();
+        knight.setSummoningSick(true);
+        attach(new LeoninScimitar(), knight);
+
+        beginDeclareAttackers();
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(indexOf(knight))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Being enchanted does not permit attacking while tapped")
+    void cannotAttackWhileTappedAndEnchanted() {
+        Permanent knight = setupKnight();
+        knight.tap();
+        attach(new HolyStrength(), knight);
+
+        beginDeclareAttackers();
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(indexOf(knight))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
     private Permanent setupKnight() {
-        harness.addToBattlefield(player1, new NoviceKnight());
-        Permanent knight = findPermanent(player1, "Novice Knight");
+        Permanent knight = harness.addToBattlefieldAndReturn(player1, new NoviceKnight());
         knight.setSummoningSick(false);
         harness.addToBattlefield(player2, new GrizzlyBears());
         return knight;
     }
 
     private Permanent attach(com.github.laxika.magicalvibes.model.Card card, Permanent host) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, card);
         permanent.setAttachedTo(host.getId());
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
         return permanent;
     }
 
@@ -105,6 +187,6 @@ class NoviceKnightTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
+        harness.beginAttackerDeclarationInput();
     }
 }
