@@ -44,4 +44,59 @@ class JawsOfDefeatTest extends BaseCardTest {
 
         harness.assertLife(player2, 20);
     }
+
+    @Test
+    void opponentCreatureDoesNotTrigger() {
+        harness.addToBattlefield(player1, new JawsOfDefeat());
+        harness.enterBattlefieldAndReturn(player2, new GiantSpider());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void usesChangedPowerAtResolutionWhenPowerExceedsToughness() {
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new JawsOfDefeat());
+        var creature = harness.enterBattlefieldAndReturn(player1, new GiantSpider());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        creature.setPowerModifier(5);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    void negativePowerIsIncludedInDifference() {
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new JawsOfDefeat());
+        var creature = harness.enterBattlefieldAndReturn(player1, new GiantSpider());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        creature.setPowerModifier(-5);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 13);
+    }
+
+    @Test
+    void usesLastKnownNegativeToughnessAfterCreatureDies() {
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new JawsOfDefeat());
+        var creature = harness.enterBattlefieldAndReturn(player1, new GiantSpider());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        creature.setToughnessModifier(-5);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Giant Spider");
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+    }
 }
