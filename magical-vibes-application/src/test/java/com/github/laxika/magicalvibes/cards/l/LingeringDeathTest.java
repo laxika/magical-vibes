@@ -21,7 +21,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LingeringDeath.class, GoblinBrigand.class})
+@CardUsed({LingeringDeath.class, GoblinBrigand.class, Stabilizer.class, RayOfCommand.class,
+        SigardaHostOfHerons.class, Bloodbriar.class, ZurgoThundersDecree.class})
 class LingeringDeathTest extends BaseCardTest {
 
     @Test
@@ -89,8 +90,7 @@ class LingeringDeathTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RayOfCommand()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
         harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
@@ -145,6 +145,57 @@ class LingeringDeathTest extends BaseCardTest {
         runEndStep(player1);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(warrior);
+    }
+
+    @Test
+    @DisplayName("Sacrifices the Aura controller's own enchanted creature")
+    void sacrificesOwnEnchantedCreature() {
+        Permanent creature = addCreatureReady(player1, new GoblinBrigand());
+        harness.setHand(player1, List.of(new LingeringDeath()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        runEndStep(player1);
+
+        harness.assertInGraveyard(player1, "Goblin Brigand");
+        harness.assertInGraveyard(player1, "Lingering Death");
+    }
+
+    @Test
+    @DisplayName("Does not sacrifice another creature when the enchanted creature leaves")
+    void doesNotSubstituteAnotherCreature() {
+        Permanent creature = attachToOpponentCreature();
+        Permanent other = addCreatureReady(player2, new GoblinBrigand());
+
+        beginEndStep(player2);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(other);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .filteredOn(card -> card.getName().equals("Goblin Brigand")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An Aura entering during the end step waits for the next appropriate end step")
+    void doesNotTriggerAfterEndStepHasBegun() {
+        Permanent creature = addCreatureReady(player2, new GoblinBrigand());
+        beginEndStep(player2);
+        Permanent aura = new Permanent(new LingeringDeath());
+        aura.setAttachedTo(creature.getId());
+        gd.playerBattlefields.get(player1.getId()).add(aura);
+
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(gd.stack).isEmpty();
+
+        runEndStep(player2);
+
+        harness.assertInGraveyard(player2, "Goblin Brigand");
     }
 
     private Permanent attachToOpponentCreature() {
