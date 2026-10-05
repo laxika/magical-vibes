@@ -68,11 +68,106 @@ class QueenBrahneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, queen)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, queen)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Opponent's noncreature spells trigger neither prowess nor the Wizard")
+    void opponentsSpellDoesNotTriggerAbilities() {
+        createWizard();
+        Permanent queen = findPermanent(player1, "Queen Brahne");
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player2.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+        assertThat(gqs.getEffectivePower(gd, queen)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, queen)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Wizard's cast trigger still deals damage after its source dies")
+    void wizardTriggerResolvesAfterWizardDies() {
+        Permanent wizard = createWizard();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player1.getId());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, wizard.getId());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Wizard")).isZero();
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Prowess triggers once for each noncreature spell")
+    void prowessAccumulatesAcrossSpells() {
+        Permanent queen = addQueen();
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, queen)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, queen)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Creature spells boost neither Queen Brahne nor the Wizard's damage")
+    void creatureSpellTriggersNeitherAbility() {
+        createWizard();
+        Permanent queen = findPermanent(player1, "Queen Brahne");
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 20);
+        assertThat(gqs.getEffectivePower(gd, queen)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, queen)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Wizard keeps its ability after Queen Brahne dies")
+    void wizardAbilityIsIndependentOfQueen() {
+        createWizard();
+        Permanent queen = findPermanent(player1, "Queen Brahne");
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, queen.getId());
+        resolveAllTriggers();
+        harness.assertNotOnBattlefield(player1, "Queen Brahne");
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player1.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 18);
     }
 
     private Permanent createWizard() {
