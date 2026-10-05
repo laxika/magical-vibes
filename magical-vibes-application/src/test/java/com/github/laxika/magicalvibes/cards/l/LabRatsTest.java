@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.m.ManaLeak;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LabRats.class})
+@CardUsed({LabRats.class, ManaLeak.class})
 class LabRatsTest extends BaseCardTest {
 
     @Test
@@ -48,9 +49,7 @@ class LabRatsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(card -> card.getName())
                 .containsExactly("Lab Rats");
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .extracting(card -> card.getName())
-                .doesNotContain("Lab Rats");
+        harness.assertNotInGraveyard(player1, "Lab Rats");
     }
 
     @Test
@@ -66,5 +65,53 @@ class LabRatsTest extends BaseCardTest {
         harness.assertInHand(player1, "Lab Rats");
         harness.assertNotInGraveyard(player1, "Lab Rats");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Buyback can be paid again, then declined on a later cast")
+    void repeatedCastsCanPayOrDeclineBuyback() {
+        LabRats labRats = new LabRats();
+        harness.setHand(player1, List.of(labRats));
+
+        for (int i = 0; i < 2; i++) {
+            harness.addMana(player1, ManaColor.BLACK, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 4);
+            harness.castSorceryWithBuyback(player1, 0, null);
+            harness.passBothPriorities();
+
+            assertThat(gd.playerHands.get(player1.getId())).containsExactly(labRats);
+            harness.assertNotInGraveyard(player1, "Lab Rats");
+            assertThat(findPermanents(player1, "Rat")).hasSize(i + 1);
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        }
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Rat")).hasSize(3);
+        harness.assertNotInHand(player1, "Lab Rats");
+        harness.assertInGraveyard(player1, "Lab Rats");
+    }
+
+    @Test
+    @DisplayName("Countering Lab Rats with buyback creates no token and does not return it")
+    void counteredBuybackDoesNotReturnToHand() {
+        LabRats labRats = new LabRats();
+        harness.setHand(player1, List.of(labRats));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castSorceryWithBuyback(player1, 0, null);
+
+        harness.setHand(player2, List.of(new ManaLeak()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, labRats.getId());
+
+        harness.assertInGraveyard(player1, "Lab Rats");
+        harness.assertNotInHand(player1, "Lab Rats");
+        harness.assertNotOnBattlefield(player1, "Rat");
+        assertThat(gd.stack).isEmpty();
     }
 }
