@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.o.ObsidianGiant;
+import com.github.laxika.magicalvibes.cards.f.FurnaceStrider;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MeldwebStrider.class, ObsidianGiant.class})
+@CardUsed({MeldwebStrider.class, FurnaceStrider.class})
 class MeldwebStriderTest extends BaseCardTest {
 
     @Test
@@ -67,7 +67,7 @@ class MeldwebStriderTest extends BaseCardTest {
     @DisplayName("Crew 3 animates it and taps the crewing creature")
     void crewAnimatesIt() {
         Permanent strider = addReadyStrider(0);
-        Permanent giant = addCreatureReady(player1, new ObsidianGiant());
+        Permanent giant = addCreatureReady(player1, new FurnaceStrider());
 
         harness.activateAbility(player1, indexOf(strider), 1, null, null);
         harness.passBothPriorities();
@@ -78,11 +78,98 @@ class MeldwebStriderTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, strider)).isEqualTo(5);
     }
 
+    @Test
+    @DisplayName("Oil is paid immediately, but animation waits for resolution")
+    void oilIsPaidBeforeResolution() {
+        Permanent strider = addReadyStrider(1);
+
+        harness.activateAbility(player1, indexOf(strider), 0, null, null);
+
+        assertThat(strider.getCounterCount(CounterType.OIL)).isZero();
+        assertThat(gqs.isCreature(gd, strider)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, strider)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Vehicle can use its oil ability")
+    void tappedNewVehicleCanAnimate() {
+        Permanent strider = addReadyStrider(1);
+        strider.setSummoningSick(true);
+        strider.tap();
+
+        harness.activateAbility(player1, indexOf(strider), 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, strider)).isTrue();
+        assertThat(strider.isTapped()).isTrue();
+        assertThat(strider.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An animated Strider attacks without tapping")
+    void animatedStriderHasVigilance() {
+        Permanent strider = addReadyStrider(1);
+        harness.activateAbility(player1, indexOf(strider), 0, null, null);
+        harness.passBothPriorities();
+
+        declareAttackers(List.of(indexOf(strider)));
+
+        assertThat(strider.isTapped()).isFalse();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+    }
+
+    @Test
+    @DisplayName("Summoning-sick creatures can crew, and animation expires at end of turn")
+    void summoningSickCreatureCanCrew() {
+        Permanent strider = addReadyStrider(0);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new FurnaceStrider());
+        creature.setSummoningSick(true);
+
+        harness.activateAbility(player1, indexOf(strider), 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, strider)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, strider)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped creature cannot pay the crew cost")
+    void tappedCreatureCannotCrew() {
+        Permanent strider = addReadyStrider(0);
+        Permanent creature = addCreatureReady(player1, new FurnaceStrider());
+        creature.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(strider), 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gqs.isCreature(gd, strider)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An animated Vehicle cannot crew itself")
+    void animatedVehicleCannotCrewItself() {
+        Permanent strider = addReadyStrider(1);
+        harness.activateAbility(player1, indexOf(strider), 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(strider), 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(strider.isTapped()).isFalse();
+    }
+
     private Permanent addReadyStrider(int oilCounters) {
-        Permanent strider = new Permanent(new MeldwebStrider());
-        strider.setSummoningSick(false);
+        Permanent strider = addCreatureReady(player1, new MeldwebStrider());
         strider.setCounterCount(CounterType.OIL, oilCounters);
-        gd.playerBattlefields.get(player1.getId()).add(strider);
         return strider;
     }
 
