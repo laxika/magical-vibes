@@ -80,6 +80,49 @@ class JasconianIsleTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
     }
 
+    @Test
+    @DisplayName("Declining upkeep payment leaves both the Isle and available mana unchanged")
+    void decliningPaymentKeepsMana() {
+        Permanent isle = addReadyIsle();
+        isle.tap();
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(isle.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Does not trigger during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent isle = addReadyIsle();
+        isle.tap();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(isle.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An untapped Isle still offers upkeep payment")
+    void untappedIsleStillTriggers() {
+        Permanent isle = addReadyIsle();
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(isle.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
     private Permanent addReadyIsle() {
         return addCreatureReady(player1, new JasconianIsle());
     }
