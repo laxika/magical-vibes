@@ -111,4 +111,46 @@ class PyricSalamanderTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Pyric Salamander");
     }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Salamander can activate its ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent salamander = harness.addToBattlefieldAndReturn(player1, new PyricSalamander());
+        salamander.setTapped(true);
+        salamander.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, salamander)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, salamander)).isEqualTo(1);
+        assertThat(salamander.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An end-step activation's boost expires before its delayed sacrifice")
+    void endStepBoostExpiresBeforeDelayedSacrifice() {
+        Permanent salamander = addCreatureReady(player1, new PyricSalamander());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, salamander)).isEqualTo(2);
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        harness.assertOnBattlefield(player1, "Pyric Salamander");
+        assertThat(gqs.getEffectivePower(gd, salamander)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, salamander)).isEqualTo(1);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Pyric Salamander");
+        harness.assertInGraveyard(player1, "Pyric Salamander");
+    }
+
 }
