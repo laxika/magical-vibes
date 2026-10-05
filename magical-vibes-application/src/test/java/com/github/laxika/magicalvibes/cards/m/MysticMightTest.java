@@ -194,6 +194,55 @@ class MysticMightTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("A tapped enchanted land cannot pay the granted ability's tap cost")
+    void tappedLandCannotActivateGrantedAbility() {
+        Permanent forest = addAttachedMysticMight().forest();
+        Permanent warrior = harness.addToBattlefieldAndReturn(player1, new KjeldoranWarrior());
+        forest.tap();
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, 0, 0, null, warrior.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(warrior.getPowerModifier()).isZero();
+        assertThat(warrior.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("An activated granted ability resolves after Mystic Might leaves the battlefield")
+    void activatedAbilitySurvivesAuraRemoval() {
+        EnchantedForest enchanted = addAttachedMysticMight();
+        Permanent warrior = harness.addToBattlefieldAndReturn(player1, new KjeldoranWarrior());
+
+        harness.activateAbility(player1, 0, 0, null, warrior.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, enchanted.aura()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Mystic Might");
+        assertThat(enchanted.forest().isTapped()).isTrue();
+        assertThat(warrior.getPowerModifier()).isEqualTo(2);
+        assertThat(warrior.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Sacrificing Mystic Might to cumulative upkeep removes the granted ability")
+    void sacrificingAuraRemovesGrantedAbility() {
+        EnchantedForest enchanted = addAttachedMysticMight();
+        Permanent warrior = harness.addToBattlefieldAndReturn(player1, new KjeldoranWarrior());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Mystic Might");
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, 0, 0, null, warrior.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(enchanted.forest().isTapped()).isFalse();
+        assertThat(warrior.getPowerModifier()).isZero();
+        assertThat(warrior.getToughnessModifier()).isZero();
+    }
     private EnchantedForest addAttachedMysticMight() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new MysticMight());
