@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BearerOfMemory;
+import com.github.laxika.magicalvibes.cards.i.InvokeTheWinds;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.r.RoguesPassage;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,8 +19,86 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KotoseTheSilentSpider.class, GrizzlyBears.class, Plains.class, RoguesPassage.class})
+@CardUsed({KotoseTheSilentSpider.class, GrizzlyBears.class, Plains.class, RoguesPassage.class,
+        BearerOfMemory.class, InvokeTheWinds.class})
 class KotoseTheSilentSpiderTest extends BaseCardTest {
+
+    @Test
+    void exilesTargetEvenWhenNoAdditionalCopiesAreSelected() {
+        Card target = new BearerOfMemory();
+        Card handCopy = new BearerOfMemory();
+        Card libraryCopy = new BearerOfMemory();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setHand(player2, List.of(handCopy));
+        harness.setLibrary(player2, List.of(libraryCopy));
+        harness.castFromHand(player1, new KotoseTheSilentSpider(), "{3}{U}{B}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(target);
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        Permanent kotose = findPermanent(player1, "Kotose, the Silent Spider");
+        assertThat(gd.getCardsExiledByPermanent(kotose.getId())).containsExactly(target);
+        assertThat(gd.playerHands.get(player2.getId())).contains(handCopy);
+        assertThat(gd.playerDecks.get(player2.getId())).contains(libraryCopy);
+    }
+
+    @Test
+    void losingAndRegainingControlDoesNotRestorePlayPermission() {
+        Card target = new BearerOfMemory();
+        Permanent kotose = resolveKotose(target, List.of(), List.of());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new InvokeTheWinds()));
+        harness.addMana(player2, ManaColor.BLUE, 5);
+        harness.castAndResolveSorcery(player2, 0, kotose.getId());
+
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        assertThatThrownBy(() -> harness.castFromExile(player2, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("No permission to play this exiled card");
+
+        prepareMainPhase();
+        harness.setHand(player1, List.of(new InvokeTheWinds()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castAndResolveSorcery(player1, 0, kotose.getId());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        assertThatThrownBy(() -> harness.castFromExile(player1, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("No permission to play this exiled card");
+    }
+
+    @Test
+    void permissionDoesNotAllowCastingCreaturesDuringOpponentsTurn() {
+        Card target = new BearerOfMemory();
+        resolveKotose(target, List.of(), List.of());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getCardsExiledByPermanent(
+                findPermanent(player1, "Kotose, the Silent Spider").getId())).contains(target);
+        harness.assertNotOnBattlefield(player1, "Bearer of Memory");
+    }
+
+    @Test
+    void permissionStillRequiresPayingTheManaCost() {
+        Card target = new BearerOfMemory();
+        Permanent kotose = resolveKotose(target, List.of(), List.of());
+        prepareMainPhase();
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getCardsExiledByPermanent(kotose.getId())).contains(target);
+        harness.assertNotOnBattlefield(player1, "Bearer of Memory");
+    }
 
     @Test
     void exilesSelectedCardsWithTheSameNameAndTracksThemToKotose() {
@@ -78,10 +158,7 @@ class KotoseTheSilentSpiderTest extends BaseCardTest {
     void doesNotOfferBasicLandCardsAsTargets() {
         Card plains = new Plains();
         harness.setGraveyard(player2, new ArrayList<>(List.of(plains)));
-        harness.setHand(player1, List.of(new KotoseTheSilentSpider()));
-        addKotoseMana();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new KotoseTheSilentSpider(), "{3}{U}{B}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -92,10 +169,7 @@ class KotoseTheSilentSpiderTest extends BaseCardTest {
         harness.setGraveyard(player2, new ArrayList<>(List.of(target)));
         harness.setHand(player2, new ArrayList<>(handCopies));
         harness.setLibrary(player2, libraryCopies);
-        harness.setHand(player1, List.of(new KotoseTheSilentSpider()));
-        addKotoseMana();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new KotoseTheSilentSpider(), "{3}{U}{B}");
         harness.passBothPriorities();
 
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
@@ -108,12 +182,6 @@ class KotoseTheSilentSpiderTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, selected.stream().map(Card::getId).toList());
         harness.passBothPriorities();
         return findPermanent(player1, "Kotose, the Silent Spider");
-    }
-
-    private void addKotoseMana() {
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
     }
 
     private void prepareMainPhase() {
