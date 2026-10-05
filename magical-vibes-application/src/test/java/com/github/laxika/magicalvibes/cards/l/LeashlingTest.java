@@ -65,4 +65,50 @@ class LeashlingTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Leashling");
     }
+
+    @Test
+    @DisplayName("The chosen card is put on top as a cost before Leashling returns")
+    void paysChosenCardBeforeResolution() {
+        addCreatureReady(player1, new Leashling());
+        Card unchosenCard = new Forest();
+        Card chosenCard = new Leashling();
+        Card existingTopCard = new Forest();
+        harness.setHand(player1, List.of(unchosenCard, chosenCard));
+        harness.setLibrary(player1, List.of(existingTopCard));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(unchosenCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(chosenCard, existingTopCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Leashling");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Leashling");
+        harness.assertInHand(player1, "Leashling");
+        assertThat(gd.playerHands.get(player1.getId())).contains(unchosenCard).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(chosenCard, existingTopCard);
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Leashling can activate with an empty library")
+    void canActivateWhileTappedAndSummoningSickWithEmptyLibrary() {
+        Permanent leashling = harness.addToBattlefieldAndReturn(player1, new Leashling());
+        leashling.setSummoningSick(true);
+        leashling.setTapped(true);
+        Card chosenCard = new Forest();
+        harness.setHand(player1, List.of(chosenCard));
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Leashling");
+        harness.assertInHand(player1, "Leashling");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(chosenCard);
+    }
 }
