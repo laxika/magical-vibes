@@ -89,6 +89,82 @@ class JodahsAvengerTest extends BaseCardTest {
         assertThat(gqs.hasProtectionFrom(gd, avenger, CardColor.RED)).isFalse();
     }
 
+    @Test
+    void repeatedActivationsAccumulateDifferentAbilitiesAndExpireTogether() {
+        Permanent avenger = addCreatureReady(player1, new JodahsAvenger());
+        Permanent otherAvenger = addCreatureReady(player1, new JodahsAvenger());
+        int power = gqs.getEffectivePower(gd, avenger);
+        int toughness = gqs.getEffectiveToughness(gd, avenger);
+
+        activate(avenger, "Double strike");
+        activate(avenger, "Vigilance");
+        activate(avenger, "Shadow");
+
+        assertThat(gqs.getEffectivePower(gd, avenger)).isEqualTo(power - 3);
+        assertThat(gqs.getEffectiveToughness(gd, avenger)).isEqualTo(toughness - 3);
+        assertThat(gqs.hasKeyword(gd, avenger, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, avenger, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, avenger, Keyword.SHADOW)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, otherAvenger)).isEqualTo(power);
+        assertThat(gqs.getEffectiveToughness(gd, otherAvenger)).isEqualTo(toughness);
+        assertThat(gqs.hasKeyword(gd, otherAvenger, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherAvenger, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherAvenger, Keyword.SHADOW)).isFalse();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, avenger)).isEqualTo(power);
+        assertThat(gqs.getEffectiveToughness(gd, avenger)).isEqualTo(toughness);
+        assertThat(gqs.hasKeyword(gd, avenger, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, avenger, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, avenger, Keyword.SHADOW)).isFalse();
+    }
+
+    @Test
+    void choosingTheSameAbilityRepeatedlyStillReducesToughnessAndCanKillIt() {
+        Permanent avenger = addCreatureReady(player1, new JodahsAvenger());
+        int power = gqs.getEffectivePower(gd, avenger);
+        int toughness = gqs.getEffectiveToughness(gd, avenger);
+
+        for (int i = 1; i < toughness; i++) {
+            activate(avenger, "Protection from red");
+            assertThat(gqs.getEffectivePower(gd, avenger)).isEqualTo(power - i);
+            assertThat(gqs.getEffectiveToughness(gd, avenger)).isEqualTo(toughness - i);
+            assertThat(gqs.hasProtectionFrom(gd, avenger, CardColor.RED)).isTrue();
+            assertThat(gd.playerBattlefields.get(player1.getId())).contains(avenger);
+        }
+
+        activate(avenger, "Protection from red");
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(avenger);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(avenger.getCard());
+    }
+
+    @Test
+    void canActivateWhileTappedAndSummoningSickWithoutPayingMana() {
+        Permanent avenger = harness.addToBattlefieldAndReturn(player1, new JodahsAvenger());
+        avenger.setSummoningSick(true);
+        avenger.setTapped(true);
+        int power = gqs.getEffectivePower(gd, avenger);
+        int toughness = gqs.getEffectiveToughness(gd, avenger);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(avenger), 0, null, null);
+
+        assertThat(gqs.getEffectivePower(gd, avenger)).isEqualTo(power);
+        assertThat(gqs.getEffectiveToughness(gd, avenger)).isEqualTo(toughness);
+        assertThat(gqs.hasKeyword(gd, avenger, Keyword.VIGILANCE)).isFalse();
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Vigilance");
+
+        assertThat(gqs.getEffectivePower(gd, avenger)).isEqualTo(power - 1);
+        assertThat(gqs.getEffectiveToughness(gd, avenger)).isEqualTo(toughness - 1);
+        assertThat(gqs.hasKeyword(gd, avenger, Keyword.VIGILANCE)).isTrue();
+        assertThat(avenger.isTapped()).isTrue();
+    }
+
     private void activate(Permanent avenger, String mode) {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(avenger), 0, null, null);
         harness.passBothPriorities();
