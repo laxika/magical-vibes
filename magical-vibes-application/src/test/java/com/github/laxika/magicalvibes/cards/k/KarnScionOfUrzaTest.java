@@ -3,6 +3,9 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PullFromEternity;
+import com.github.laxika.magicalvibes.cards.s.SentinelTotem;
+import com.github.laxika.magicalvibes.cards.s.ShortSword;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -12,6 +15,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -21,31 +25,24 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({KarnScionOfUrza.class, GrizzlyBears.class, Forest.class, ShortSword.class,
+        PullFromEternity.class, SentinelTotem.class})
 class KarnScionOfUrzaTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting puts planeswalker spell on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new KarnScionOfUrza()));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castPlaneswalker(player1, 0);
+        harness.castFromHand(player1, new KarnScionOfUrza(), "{4}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.PLANESWALKER_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Karn, Scion of Urza");
     }
 
     @Test
     @DisplayName("Resolving puts Karn on battlefield with loyalty 5")
     void resolvingEntersBattlefieldWithLoyalty() {
-        harness.setHand(player1, List.of(new KarnScionOfUrza()));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castPlaneswalker(player1, 0);
+        harness.castFromHand(player1, new KarnScionOfUrza(), "{4}");
         harness.passBothPriorities();
 
         List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
@@ -55,10 +52,9 @@ class KarnScionOfUrzaTest extends BaseCardTest {
         assertThat(karn.isSummoningSick()).isFalse();
     }
 
-    // ===== +1 ability: Reveal two, opponent chooses =====
-
     @Nested
     @DisplayName("+1 ability")
+    @CardUsed({KarnScionOfUrza.class, GrizzlyBears.class, Forest.class})
     class PlusOneAbility {
 
         @Test
@@ -66,8 +62,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
         void plusOneIncreasesLoyaltyAndPresentsChoice() {
             Permanent karn = addReadyKarn(player1);
             // Put known cards on top of library
-            gd.playerDecks.get(player1.getId()).clear();
-            gd.playerDecks.get(player1.getId()).addAll(List.of(new GrizzlyBears(), new Forest()));
+            harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest()));
 
             harness.activateAbility(player1, 0, 0, null, null);
             harness.passBothPriorities();
@@ -79,11 +74,10 @@ class KarnScionOfUrzaTest extends BaseCardTest {
         @Test
         @DisplayName("Opponent chooses a card — chosen goes to controller's hand, other exiled with silver counter")
         void opponentChoosesCardForHand() {
-            Permanent karn = addReadyKarn(player1);
+            addReadyKarn(player1);
             Card bears = new GrizzlyBears();
             Card forest = new Forest();
-            gd.playerDecks.get(player1.getId()).clear();
-            gd.playerDecks.get(player1.getId()).addAll(List.of(bears, forest));
+            harness.setLibrary(player1, List.of(bears, forest));
 
             harness.activateAbility(player1, 0, 0, null, null);
             harness.passBothPriorities();
@@ -103,11 +97,10 @@ class KarnScionOfUrzaTest extends BaseCardTest {
         @Test
         @DisplayName("Opponent can choose the other card instead")
         void opponentChoosesOtherCard() {
-            Permanent karn = addReadyKarn(player1);
+            addReadyKarn(player1);
             Card bears = new GrizzlyBears();
             Card forest = new Forest();
-            gd.playerDecks.get(player1.getId()).clear();
-            gd.playerDecks.get(player1.getId()).addAll(List.of(bears, forest));
+            harness.setLibrary(player1, List.of(bears, forest));
 
             harness.activateAbility(player1, 0, 0, null, null);
             harness.passBothPriorities();
@@ -127,10 +120,9 @@ class KarnScionOfUrzaTest extends BaseCardTest {
         @Test
         @DisplayName("+1 with only one card in library puts it into hand")
         void plusOneWithOneCardInLibrary() {
-            Permanent karn = addReadyKarn(player1);
+            addReadyKarn(player1);
             Card bears = new GrizzlyBears();
-            gd.playerDecks.get(player1.getId()).clear();
-            gd.playerDecks.get(player1.getId()).add(bears);
+            harness.setLibrary(player1, List.of(bears));
 
             harness.activateAbility(player1, 0, 0, null, null);
             harness.passBothPriorities();
@@ -144,7 +136,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
         @DisplayName("+1 with empty library does nothing")
         void plusOneWithEmptyLibrary() {
             Permanent karn = addReadyKarn(player1);
-            gd.playerDecks.get(player1.getId()).clear();
+            harness.setLibrary(player1, List.of());
 
             harness.activateAbility(player1, 0, 0, null, null);
             harness.passBothPriorities();
@@ -154,10 +146,9 @@ class KarnScionOfUrzaTest extends BaseCardTest {
         }
     }
 
-    // ===== −1 ability: Return silver counter card from exile =====
-
     @Nested
     @DisplayName("−1 ability")
+    @CardUsed({KarnScionOfUrza.class, GrizzlyBears.class, Forest.class})
     class MinusOneAbility {
 
         @Test
@@ -186,7 +177,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
         @Test
         @DisplayName("−1 with multiple silver-counter cards presents choice")
         void minusOneWithMultipleCardsPresentsChoice() {
-            Permanent karn = addReadyKarn(player1);
+            addReadyKarn(player1);
             Card card1 = new GrizzlyBears();
             Card card2 = new Forest();
 
@@ -228,7 +219,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
         @Test
         @DisplayName("−1 ignores exiled cards without silver counters")
         void minusOneIgnoresNonSilverCards() {
-            Permanent karn = addReadyKarn(player1);
+            addReadyKarn(player1);
             Card noSilver = new GrizzlyBears();
             Card withSilver = new Forest();
 
@@ -248,10 +239,9 @@ class KarnScionOfUrzaTest extends BaseCardTest {
         }
     }
 
-    // ===== −2 ability: Create Construct token =====
-
     @Nested
     @DisplayName("−2 ability")
+    @CardUsed({KarnScionOfUrza.class, ShortSword.class})
     class MinusTwoAbility {
 
         @Test
@@ -280,7 +270,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
         @Test
         @DisplayName("Construct token gets +1/+1 for each artifact you control")
         void constructGetsBoostPerArtifact() {
-            Permanent karn = addReadyKarn(player1);
+            addReadyKarn(player1);
 
             harness.activateAbility(player1, 0, 2, null, null);
             harness.passBothPriorities();
@@ -297,11 +287,11 @@ class KarnScionOfUrzaTest extends BaseCardTest {
         @Test
         @DisplayName("Construct gets bigger with more artifacts on the battlefield")
         void constructScalesWithArtifacts() {
-            Permanent karn = addReadyKarn(player1);
+            addReadyKarn(player1);
 
             // Add some artifact permanents
-            harness.addToBattlefield(player1, createArtifactToken());
-            harness.addToBattlefield(player1, createArtifactToken());
+            harness.addToBattlefield(player1, new ShortSword());
+            harness.addToBattlefield(player1, new ShortSword());
 
             harness.activateAbility(player1, 0, 2, null, null);
             harness.passBothPriorities();
@@ -315,16 +305,13 @@ class KarnScionOfUrzaTest extends BaseCardTest {
         }
     }
 
-    // ===== +1 and −1 integration =====
-
     @Test
     @DisplayName("+1 exiles with silver counter, then −1 returns it")
     void plusOneThenMinusOneIntegration() {
         Permanent karn = addReadyKarn(player1);
         Card bears = new GrizzlyBears();
         Card forest = new Forest();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(bears, forest));
+        harness.setLibrary(player1, List.of(bears, forest));
 
         // +1: reveal Grizzly Bears and Forest, opponent chooses bears for hand
         harness.activateAbility(player1, 0, 0, null, null);
@@ -344,24 +331,95 @@ class KarnScionOfUrzaTest extends BaseCardTest {
         assertThat(gd.exiledCardsWithSilverCounters).doesNotContain(forest.getId());
     }
 
-    // ===== Helpers =====
+    @Test
+    void minusOneDoesNotReturnOpponentsSilverCounterCard() {
+        addReadyKarn(player1);
+        Card forest = new Forest();
+        gd.addToExile(player2.getId(), forest);
+        gd.exiledCardsWithSilverCounters.add(forest.getId());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(forest);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(forest);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void anotherKarnCanReturnPreviouslyExiledSilverCounterCard() {
+        addReadyKarn(player1);
+        Card forest = new Forest();
+        Card bears = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(forest, bears));
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player2, List.of(bears.getId()));
+
+        gd.playerBattlefields.get(player1.getId()).clear();
+        addReadyKarn(player1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(forest);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(forest);
+    }
+
+    @Test
+    void constructCountsOnlyItsControllersArtifactsAndUpdatesAsTheyLeave() {
+        addReadyKarn(player1);
+        Permanent sword = harness.addToBattlefieldAndReturn(player1, new ShortSword());
+        harness.addToBattlefield(player2, new ShortSword());
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        Permanent construct = findPermanent(player1, "Construct");
+
+        assertThat(gqs.getEffectivePower(gd, construct)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, construct)).isEqualTo(2);
+
+        gd.playerBattlefields.get(player1.getId()).remove(sword);
+        assertThat(gqs.getEffectivePower(gd, construct)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, construct)).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed({KarnScionOfUrza.class, Forest.class, PullFromEternity.class, SentinelTotem.class})
+    void silverCounterDoesNotSurviveLeavingExileAndBeingExiledAgain() {
+        Permanent karn = addReadyKarn(player1);
+        Card forest = new Forest();
+        Card otherForest = new Forest();
+        harness.setLibrary(player1, List.of(forest, otherForest));
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player2, List.of(otherForest.getId()));
+
+        harness.setHand(player1, List.of(new PullFromEternity()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, forest.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(forest);
+
+        harness.addToBattlefield(player1, new SentinelTotem());
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(forest);
+
+        karn.setLoyaltyActivationsThisTurn(0);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(forest);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(forest);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 
     private Permanent addReadyKarn(Player player) {
-        KarnScionOfUrza card = new KarnScionOfUrza();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new KarnScionOfUrza());
         perm.setCounterCount(CounterType.LOYALTY, 5);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
     }
 
-    private Card createArtifactToken() {
-        Card token = new Card() {};
-        token.setName("Test Artifact");
-        token.setToken(true);
-        token.setType(CardType.ARTIFACT);
-        return token;
-    }
 }
