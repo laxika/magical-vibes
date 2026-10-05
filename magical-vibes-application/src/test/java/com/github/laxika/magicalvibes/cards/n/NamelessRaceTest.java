@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.f.Fasting;
 import com.github.laxika.magicalvibes.cards.g.GoblinHero;
 import com.github.laxika.magicalvibes.cards.s.Squire;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -97,11 +99,75 @@ class NamelessRaceTest extends BaseCardTest {
         cast();
         harness.handleListChoice(player1, "0");
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Nameless Race"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Nameless Race"));
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertNotOnBattlefield(player1, "Nameless Race");
+        harness.assertInGraveyard(player1, "Nameless Race");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Choosing less than the cap fixes size to the life actually paid")
+    void sizeRemainsEqualToPaymentWhenOpposingObjectsChange() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player2, new Squire());
+        harness.setGraveyard(player2, List.of(new Squire()));
+
+        cast();
+        harness.handleListChoice(player1, "1");
+
+        Permanent race = findPermanent(player1, "Nameless Race");
+        harness.assertLife(player1, 19);
+        assertThat(gqs.getEffectivePower(gd, race)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, race)).isEqualTo(1);
+
+        harness.setGraveyard(player2, List.of(new Squire(), new Squire(), new Squire()));
+        harness.addToBattlefield(player2, new Squire());
+
+        assertThat(gqs.getEffectivePower(gd, race)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, race)).isEqualTo(1);
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Zero is allowed even when a positive payment is available")
+    void canChooseZeroBelowPositiveCap() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player2, new Squire());
+
+        cast();
+        harness.handleListChoice(player1, "0");
+
+        harness.assertNotOnBattlefield(player1, "Nameless Race");
+        harness.assertInGraveyard(player1, "Nameless Race");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Trample deals excess damage after lethal damage to a blocker")
+    void trampleDealsExcessDamage() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent blocker = addCreatureReady(player2, new Squire());
+        harness.setGraveyard(player2, List.of(new Squire(), new Squire()));
+
+        cast();
+        harness.handleListChoice(player1, "3");
+        Permanent race = findPermanent(player1, "Nameless Race");
+        race.setSummoningSick(false);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 2,
+                player2.getId(), 1));
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 19);
+        harness.assertNotOnBattlefield(player2, "Squire");
+        harness.assertInGraveyard(player2, "Squire");
+        harness.assertOnBattlefield(player1, "Nameless Race");
+        assertThat(gqs.getEffectivePower(gd, race)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, race)).isEqualTo(3);
     }
 
     private void cast() {
