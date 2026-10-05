@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MaskOfMemory.class, YotianSoldier.class, Forest.class})
+@CardUsed({MaskOfMemory.class, YotianSoldier.class, Forest.class, MarchOfTheMachines.class})
 class MaskOfMemoryTest extends BaseCardTest {
 
     @Test
@@ -86,10 +86,82 @@ class MaskOfMemoryTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("An unequipped Mask of Memory does not trigger from combat damage")
+    void unequippedMaskDoesNotTrigger() {
+        addMaskReady(player1);
+        Permanent creature = addCreatureReady(player1, new YotianSoldier());
+        creature.setAttacking(true);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.resolveCombatDamage();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+    }
+
+    @Test
+    @DisplayName("The Mask's controller draws and discards even when the opponent controls the equipped creature")
+    void maskControllerLootsWhenOpponentControlsCreature() {
+        Permanent creature = addCreatureReady(player1, new YotianSoldier());
+        Permanent mask = addMaskReady(player2);
+        mask.setAttachedTo(creature.getId());
+        creature.setAttacking(true);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+
+        harness.resolveCombatDamage();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Removing Mask of Memory after it triggers does not prevent drawing and discarding")
+    void triggerResolvesAfterMaskLeavesBattlefield() {
+        Permanent creature = addCreatureReady(player1, new YotianSoldier());
+        Permanent mask = addMaskReady(player1);
+        mask.setAttachedTo(creature.getId());
+        creature.setAttacking(true);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+
+        harness.resolveCombatDamage();
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(mask);
+        gd.playerGraveyards.get(player1.getId()).add(mask.getCard());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("An animated Mask of Memory does not trigger from its own combat damage")
+    void animatedMaskDoesNotTriggerFromItsOwnDamage() {
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+        Permanent mask = addMaskReady(player1);
+        mask.setAttacking(true);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.resolveCombatDamage();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private Permanent addMaskReady(Player player) {
-        Permanent permanent = new Permanent(new MaskOfMemory());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new MaskOfMemory());
     }
 }
