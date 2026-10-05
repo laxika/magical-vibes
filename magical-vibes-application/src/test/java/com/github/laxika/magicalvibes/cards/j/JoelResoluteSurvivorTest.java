@@ -61,6 +61,82 @@ class JoelResoluteSurvivorTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
 
+    @Test
+    @DisplayName("A nontoken death does not consume the trigger for an opponent's token")
+    void nontokenDeathDoesNotConsumeOpponentTokenTrigger() {
+        Permanent joel = harness.addToBattlefieldAndReturn(player1, new JoelResoluteSurvivor());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent token = addTokenCreature(player2);
+        harness.setLibrary(player1, List.of(new Forest()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        int opponentHandBefore = gd.playerHands.get(player2.getId()).size();
+
+        kill(creature);
+        kill(token);
+
+        assertThat(joel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandBefore);
+    }
+
+    @Test
+    @DisplayName("The turn limit applies before the first trigger resolves")
+    void pendingTriggerStillConsumesTurnLimit() {
+        Permanent joel = harness.addToBattlefieldAndReturn(player1, new JoelResoluteSurvivor());
+        Permanent firstToken = addTokenCreature(player1);
+        Permanent secondToken = addTokenCreature(player2);
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        firstToken.setMarkedDamage(firstToken.getEffectiveToughness());
+        harness.runStateBasedActions();
+        secondToken.setMarkedDamage(secondToken.getEffectiveToughness());
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(joel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Joel draws once when he and multiple tokens die simultaneously")
+    void simultaneousDeathStillDrawsOnce() {
+        Permanent joel = harness.addToBattlefieldAndReturn(player1, new JoelResoluteSurvivor());
+        Permanent firstToken = addTokenCreature(player1);
+        Permanent secondToken = addTokenCreature(player2);
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        joel.setMarkedDamage(joel.getEffectiveToughness());
+        firstToken.setMarkedDamage(firstToken.getEffectiveToughness());
+        secondToken.setMarkedDamage(secondToken.getEffectiveToughness());
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Joel, Resolute Survivor");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Joel can trigger again during the next player's turn")
+    void triggerLimitResetsOnOpponentsTurn() {
+        Permanent joel = harness.addToBattlefieldAndReturn(player1, new JoelResoluteSurvivor());
+        Permanent firstToken = addTokenCreature(player1);
+        Permanent secondToken = addTokenCreature(player2);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+
+        kill(firstToken);
+        harness.passUntil(player2, com.github.laxika.magicalvibes.model.TurnStep.UPKEEP);
+        kill(secondToken);
+
+        assertThat(joel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
     private Permanent addTokenCreature(com.github.laxika.magicalvibes.model.Player player) {
         GrizzlyBears tokenCard = new GrizzlyBears();
         tokenCard.setToken(true);
