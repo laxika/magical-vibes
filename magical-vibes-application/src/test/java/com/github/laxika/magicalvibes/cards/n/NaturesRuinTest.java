@@ -3,12 +3,13 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.l.Lure;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({NaturesRuin.class, Forest.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({NaturesRuin.class, Forest.class, GrizzlyBears.class, HillGiant.class, Lure.class})
 class NaturesRuinTest extends BaseCardTest {
 
     @Test
@@ -59,5 +60,32 @@ class NaturesRuinTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Leaves a green Aura attached to a non-green creature untouched")
+    void leavesGreenNoncreaturePermanent() {
+        var giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        harness.addToBattlefieldAndReturn(player1, new Lure()).setAttachedTo(giant.getId());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        harness.castFromHand(player1, new NaturesRuin(), "{2}{B}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Lure");
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Resolves with no creatures on the battlefield")
+    void resolvesWithNoCreatures() {
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.castFromHand(player1, new NaturesRuin(), "{2}{B}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Nature's Ruin");
     }
 }
