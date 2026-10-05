@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.cards.s.ShatterTheSky;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KlothysGodOfDestiny.class, Forest.class, GrizzlyBears.class, LlanowarElves.class, RagingGoblin.class})
+@CardUsed({KlothysGodOfDestiny.class, Forest.class, GrizzlyBears.class, LlanowarElves.class, RagingGoblin.class, ShatterTheSky.class})
 class KlothysGodOfDestinyTest extends BaseCardTest {
 
     @Test
@@ -94,6 +95,132 @@ class KlothysGodOfDestinyTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    void losesCreatureTypeWhenDevotionDropsFromSevenToSix() {
+        Permanent klothys = addKlothys();
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, new LlanowarElves());
+        }
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        assertThat(gqs.isCreature(gd, klothys)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(goblin);
+
+        assertThat(gqs.isCreature(gd, klothys)).isFalse();
+        assertThat(gqs.isEnchantment(gd, klothys)).isTrue();
+    }
+
+    @Test
+    void opponentsPermanentsDoNotContributeToDevotion() {
+        Permanent klothys = addKlothys();
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player2, new LlanowarElves());
+        }
+
+        assertThat(gqs.isCreature(gd, klothys)).isFalse();
+    }
+
+    @Test
+    void exiledOpponentsLandCanAddRedWithoutChangingLife() {
+        addKlothys();
+        Card land = new Forest();
+        harness.setGraveyard(player2, List.of(land));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToPrecombatMain(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(land.getId()));
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, ManaColor.RED.name());
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(land);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void missingTargetDoesNotGainLifeDealDamageOrAddMana() {
+        addKlothys();
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToPrecombatMain(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player2, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void nonlandTriggerResolvesAfterKlothysLeavesBattlefield() {
+        Permanent klothys = addKlothys();
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToPrecombatMain(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(klothys);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(target);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(22);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsFirstMainPhase() {
+        addKlothys();
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+
+        advanceToPrecombatMain(player2);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(target);
+    }
+
+    @Test
+    void doesNotTriggerDuringSecondMainPhase() {
+        addKlothys();
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void indestructibleKlothysSurvivesDestroyAllCreaturesAndLosesDevotion() {
+        Permanent klothys = addKlothys();
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player1, new LlanowarElves());
+        }
+        assertThat(gqs.isCreature(gd, klothys)).isTrue();
+
+        harness.castFromHand(player1, new ShatterTheSky(), "{2}{W}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(klothys);
+        assertThat(gqs.isCreature(gd, klothys)).isFalse();
+        assertThat(gqs.isEnchantment(gd, klothys)).isTrue();
+    }
+
     private Permanent addKlothys() {
         return harness.addToBattlefieldAndReturn(player1, new KlothysGodOfDestiny());
     }
@@ -101,7 +228,6 @@ class KlothysGodOfDestinyTest extends BaseCardTest {
     private void advanceToPrecombatMain(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.DRAW);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.PRECOMBAT_MAIN);
     }
 }
