@@ -75,6 +75,98 @@ class KrangShredderTest extends BaseCardTest {
         assertThat(gd.getCardsExiledByPermanent(source.getId())).isEmpty();
     }
 
+    @Test
+    void enteringTriggerStillExilesAfterSourceLeaves() {
+        GrizzlyBears nonland = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(nonland));
+        Permanent source = harness.enterBattlefieldAndReturn(player1, new KrangShredder());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, source));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.exiledCards).extracting(ExiledCardEntry::card).containsExactly(nonland);
+    }
+
+    @Test
+    void allLandLibraryIsExiledWithoutOfferingALandCast() {
+        Island first = new Island();
+        Island second = new Island();
+        harness.setLibrary(player2, List.of(first, second));
+        Permanent source = harness.enterBattlefieldAndReturn(player1, new KrangShredder());
+        harness.passBothPriorities();
+        Permanent leaving = addCreatureReady(player1, new GrizzlyBears());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, leaving));
+
+        advanceToEndStep();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.getCardsExiledByPermanent(source.getId())).containsExactly(first, second);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertNotOnBattlefield(player1, "Island");
+    }
+
+    @Test
+    void disappearDoesNotTriggerWithoutAControlledPermanentLeaving() {
+        GrizzlyBears nonland = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(nonland));
+        harness.enterBattlefieldAndReturn(player1, new KrangShredder());
+        harness.passBothPriorities();
+        Permanent opposingPermanent = addCreatureReady(player2, new GrizzlyBears());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, opposingPermanent));
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.findExiledCard(nonland.getId())).isNotNull();
+    }
+
+    @Test
+    void decliningFreeCastLeavesCardExiled() {
+        GrizzlyBears nonland = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(nonland));
+        harness.enterBattlefieldAndReturn(player1, new KrangShredder());
+        harness.passBothPriorities();
+        Permanent leaving = addCreatureReady(player1, new GrizzlyBears());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, leaving));
+        advanceToEndStep();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.findExiledCard(nonland.getId())).isNotNull();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void oneDisappearTriggerCastsOnlyOneOfMultipleExiledSpells() {
+        GrizzlyBears first = new GrizzlyBears();
+        GrizzlyBears second = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(first, second));
+        Permanent source = harness.enterBattlefieldAndReturn(player1, new KrangShredder());
+        harness.passBothPriorities();
+        source.setSummoningSick(false);
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        Permanent leaving = addCreatureReady(player1, new GrizzlyBears());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, leaving));
+        advanceToEndStep();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard() instanceof GrizzlyBears).hasSize(1);
+        assertThat(gd.getCardsExiledByPermanent(source.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private Permanent addReadySource() {
         return addCreatureReady(player1, new KrangShredder());
     }
@@ -82,8 +174,7 @@ class KrangShredderTest extends BaseCardTest {
     private void advanceToEndStep() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 }
