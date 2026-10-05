@@ -8,8 +8,11 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(LotusBlossom.class)
 class LotusBlossomTest extends BaseCardTest {
@@ -77,5 +80,65 @@ class LotusBlossomTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(3);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(blossom);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(blossom.getCard());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    @DisplayName("All petal-counter mana is added in the chosen color")
+    void addsAllManaInOneChosenColor(ManaColor color) {
+        Permanent blossom = harness.addToBattlefieldAndReturn(player1, new LotusBlossom());
+        blossom.setCounterCount(CounterType.PETAL, 4);
+        blossom.setCounterCount(CounterType.CHARGE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(blossom);
+        assertThat(gd.stack).isEmpty();
+        harness.handleListChoice(player1, color.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(4);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Lotus Blossom cannot pay its activation cost")
+    void cannotActivateWhileTapped() {
+        Permanent blossom = harness.addToBattlefieldAndReturn(player1, new LotusBlossom());
+        blossom.setCounterCount(CounterType.PETAL, 2);
+        blossom.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(blossom);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Sacrificing in response to upkeep uses the existing petal counters")
+    void sacrificeBeforeUpkeepTriggerResolves() {
+        Permanent blossom = harness.addToBattlefieldAndReturn(player1, new LotusBlossom());
+        blossom.setCounterCount(CounterType.PETAL, 2);
+
+        advanceToUpkeep(player1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(blossom.getCard());
+
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(blossom.getCounterCount(CounterType.PETAL)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
