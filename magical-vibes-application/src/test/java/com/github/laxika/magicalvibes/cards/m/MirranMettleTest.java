@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +19,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MirranMettle.class, GrizzlyBears.class, LeoninScimitar.class, Spellbook.class})
 class MirranMettleTest extends BaseCardTest {
-
-    // ===== Without metalcraft =====
 
     @Test
     @DisplayName("Gives +2/+2 to target creature without metalcraft")
@@ -30,15 +30,12 @@ class MirranMettleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getEffectivePower()).isEqualTo(4);
         assertThat(bear.getEffectiveToughness()).isEqualTo(4);
     }
-
-    // ===== With metalcraft =====
 
     @Test
     @DisplayName("Gives +4/+4 to target creature with metalcraft")
@@ -49,15 +46,12 @@ class MirranMettleTest extends BaseCardTest {
         addThreeArtifacts(player1);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getEffectivePower()).isEqualTo(6);
         assertThat(bear.getEffectiveToughness()).isEqualTo(6);
     }
-
-    // ===== Metalcraft lost before resolution =====
 
     @Test
     @DisplayName("Gives only +2/+2 if metalcraft lost before resolution")
@@ -81,8 +75,6 @@ class MirranMettleTest extends BaseCardTest {
         assertThat(bear.getEffectiveToughness()).isEqualTo(4);
     }
 
-    // ===== Boost wears off =====
-
     @Test
     @DisplayName("Boost wears off at cleanup step")
     void boostWearsOffAtCleanup() {
@@ -91,8 +83,7 @@ class MirranMettleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -102,8 +93,6 @@ class MirranMettleTest extends BaseCardTest {
         assertThat(bear.getEffectivePower()).isEqualTo(2);
         assertThat(bear.getEffectiveToughness()).isEqualTo(2);
     }
-
-    // ===== Fizzle =====
 
     @Test
     @DisplayName("Fizzles if target creature is removed before resolution")
@@ -121,8 +110,63 @@ class MirranMettleTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Gaining metalcraft before resolution gives +4/+4")
+    void gainsMetalcraftBeforeResolution() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new LeoninScimitar());
+        harness.setHand(player1, List.of(new MirranMettle()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.castInstant(player1, 0, bearId);
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.passBothPriorities();
+
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
+        assertThat(bear.getEffectivePower()).isEqualTo(6);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Opponent's artifacts do not enable the caster's metalcraft")
+    void opponentsArtifactsDoNotEnableMetalcraft() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        addThreeArtifacts(player2);
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new LeoninScimitar());
+        harness.setHand(player1, List.of(new MirranMettle()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+
+        Permanent bear = findPermanent(player2, "Grizzly Bears");
+        assertThat(bear.getEffectivePower()).isEqualTo(4);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Caster's metalcraft boosts an opponent's creature until cleanup")
+    void castersMetalcraftBoostsOpponentsCreatureUntilCleanup() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        addThreeArtifacts(player1);
+        harness.setHand(player1, List.of(new MirranMettle()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+
+        Permanent bear = findPermanent(player2, "Grizzly Bears");
+        assertThat(bear.getEffectivePower()).isEqualTo(6);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(6);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+    }
     private void addThreeArtifacts(Player player) {
         harness.addToBattlefield(player, new Spellbook());
         harness.addToBattlefield(player, new LeoninScimitar());
