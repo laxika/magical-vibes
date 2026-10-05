@@ -28,8 +28,7 @@ class PyromancersSwathTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
         harness.setLife(player2, 20);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
     }
@@ -43,8 +42,7 @@ class PyromancersSwathTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.forceActivePlayer(player2);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
     }
@@ -58,8 +56,7 @@ class PyromancersSwathTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
         harness.setLife(player2, 20);
 
-        harness.castSorcery(player1, 0, 2);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2);
 
         harness.assertInGraveyard(player2, "Nessian Courser");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
@@ -117,6 +114,67 @@ class PyromancersSwathTest extends BaseCardTest {
         advanceToEndStepTrigger(player2);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The opponent's end step also discards the controller's entire hand")
+    void opponentEndStepDiscardsControllerHand() {
+        harness.addToBattlefield(player1, new PyromancersSwath());
+        harness.setHand(player1, List.of(new NessianCourser(), new Ghostfire()));
+        harness.setHand(player2, List.of(new NessianCourser()));
+
+        advanceToEndStepTrigger(player2);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Nessian Courser");
+        harness.assertInGraveyard(player1, "Ghostfire");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Multiple Swaths each add two damage")
+    void multipleSwathsStackDamageBonus() {
+        harness.addToBattlefield(player1, new PyromancersSwath());
+        harness.addToBattlefield(player1, new PyromancersSwath());
+        harness.setHand(player1, List.of(new Ghostfire()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 13);
+    }
+
+    @Test
+    @DisplayName("A spell's damage to its own controller is also increased")
+    void selfDamageIsBoosted() {
+        harness.addToBattlefield(player1, new PyromancersSwath());
+        harness.setHand(player1, List.of(new MoltenDisaster()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveSorcery(player1, 0, 1);
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Zero damage is not increased")
+    void zeroDamageIsNotBoosted() {
+        harness.addToBattlefield(player1, new PyromancersSwath());
+        harness.addToBattlefield(player2, new NessianCourser());
+        harness.setHand(player1, List.of(new MoltenDisaster()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(findPermanent(player2, "Nessian Courser").getMarkedDamage()).isZero();
     }
 
     private void advanceToEndStepTrigger(Player activePlayer) {
