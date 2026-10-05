@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.b.BloodthirstyOgre;
 import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -9,10 +11,62 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
 
-@CardUsed({PainwrackerOni.class, BloodthirstyOgre.class, HumbleBudoka.class})
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed({PainwrackerOni.class, BloodthirstyOgre.class, HumbleBudoka.class, Ornithopter.class})
 class PainwrackerOniTest extends BaseCardTest {
+
+    @Test
+    void fearPreventsNonblackNonartifactBlockers() {
+        addCreatureReady(player1, new PainwrackerOni()).setAttacking(true);
+        addCreatureReady(player2, new HumbleBudoka());
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("(fear)");
+    }
+
+    @Test
+    void fearAllowsBlackBlockers() {
+        addCreatureReady(player1, new PainwrackerOni()).setAttacking(true);
+        addCreatureReady(player2, new BloodthirstyOgre());
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @CardUsed({PainwrackerOni.class, Ornithopter.class})
+    void fearAllowsColorlessArtifactBlockers() {
+        addCreatureReady(player1, new PainwrackerOni()).setAttacking(true);
+        addCreatureReady(player2, new Ornithopter());
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void upkeepStillSacrificesAfterOniLeavesBattlefield() {
+        Permanent oni = harness.addToBattlefieldAndReturn(player1, new PainwrackerOni());
+        harness.addToBattlefield(player1, new HumbleBudoka());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, oni));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Painwracker Oni");
+        harness.assertInGraveyard(player1, "Humble Budoka");
+        harness.assertNotOnBattlefield(player1, "Humble Budoka");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 
     @Test
     @DisplayName("Upkeep: without an Ogre, controller sacrifices a creature")
