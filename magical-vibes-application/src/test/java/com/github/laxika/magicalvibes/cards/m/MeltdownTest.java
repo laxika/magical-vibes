@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.c.ChimericStaff;
 import com.github.laxika.magicalvibes.cards.c.ClawsOfGix;
 import com.github.laxika.magicalvibes.cards.f.Fluctuator;
 import com.github.laxika.magicalvibes.cards.g.GoblinLackey;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-@CardUsed({Meltdown.class, ClawsOfGix.class, Fluctuator.class, GraftedSkullcap.class, GoblinLackey.class})
+@CardUsed({Meltdown.class, ClawsOfGix.class, Fluctuator.class, GraftedSkullcap.class, GoblinLackey.class, ChimericStaff.class})
 class MeltdownTest extends BaseCardTest {
 
     private void castMeltdown(int xValue) {
@@ -48,5 +49,44 @@ class MeltdownTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Claws of Gix");
         harness.assertOnBattlefield(player2, "Fluctuator");
+    }
+
+    @Test
+    @DisplayName("Animated artifacts are destroyed based on mana value, not their power")
+    void destroysAnimatedArtifactAtManaValueBoundary() {
+        harness.addToBattlefield(player2, new ChimericStaff());
+        harness.addMana(player2, ManaColor.COLORLESS, 7);
+        harness.activateAbility(player2, 0, 7, null);
+        harness.passBothPriorities();
+
+        castMeltdown(4);
+
+        harness.assertInGraveyard(player2, "Chimeric Staff");
+        harness.assertNotOnBattlefield(player2, "Chimeric Staff");
+    }
+
+    @Test
+    @DisplayName("A small animated artifact survives when its mana value exceeds X")
+    void sparesAnimatedArtifactAboveManaValueBoundary() {
+        harness.addToBattlefield(player2, new ChimericStaff());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, 0, 1, null);
+        harness.passBothPriorities();
+
+        castMeltdown(3);
+
+        harness.assertOnBattlefield(player2, "Chimeric Staff");
+        harness.assertNotInGraveyard(player2, "Chimeric Staff");
+    }
+
+    @Test
+    @DisplayName("Resolves without artifacts and leaves nonartifact creatures alone")
+    void resolvesWithoutArtifacts() {
+        harness.addToBattlefield(player2, new GoblinLackey());
+
+        castMeltdown(4);
+
+        harness.assertInGraveyard(player1, "Meltdown");
+        harness.assertOnBattlefield(player2, "Goblin Lackey");
     }
 }
