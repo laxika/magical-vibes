@@ -110,6 +110,68 @@ class PardicArsonistTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
 
+    @Test
+    @DisplayName("Threshold gained while the creature spell is on the stack grants its ETB ability")
+    void thresholdGainedBeforeEntryGrantsTrigger() {
+        harness.setGraveyard(player1, List.of(
+                new EnslavedDwarf(), new EnslavedDwarf(), new EnslavedDwarf(),
+                new EnslavedDwarf(), new EnslavedDwarf(), new EnslavedDwarf()));
+        harness.setLife(player2, 20);
+        castPardicArsonist();
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Threshold lost before the creature enters prevents its ETB ability")
+    void thresholdLostBeforeEntryDoesNotGrantTrigger() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        harness.setLife(player2, 20);
+        castPardicArsonist();
+        harness.setGraveyard(player1, List.of());
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player1, "Pardic Arsonist");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The threshold ETB ability can target Pardic Arsonist itself")
+    void thresholdAbilityCanTargetItself() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        castPardicArsonist();
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Pardic Arsonist"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Pardic Arsonist");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof PardicArsonist);
+    }
+
+    @Test
+    @DisplayName("The threshold ETB ability can damage its controller")
+    void thresholdAbilityCanTargetController() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        harness.setLife(player1, 20);
+        castPardicArsonist();
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+    }
+
     private void castPardicArsonist() {
         harness.castFromHand(player1, new PardicArsonist(), "{2}{R}{R}");
     }
