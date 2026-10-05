@@ -70,4 +70,64 @@ class KyrenNegotiationsTest extends BaseCardTest {
         assertThat(creature.isTapped()).isFalse();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
+
+    @Test
+    @DisplayName("A summoning-sick creature can pay the tap cost")
+    void summoningSickCreatureCanPay() {
+        harness.addToBattlefield(player1, new KyrenNegotiations());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+        creature.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("The controller can target themself")
+    void canTargetController() {
+        harness.addToBattlefield(player1, new KyrenNegotiations());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Creatures are not legal damage targets")
+    void cannotTargetCreature() {
+        harness.addToBattlefield(player1, new KyrenNegotiations());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An activated ability resolves after the enchantment leaves the battlefield")
+    void resolvesWithoutSource() {
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new KyrenNegotiations());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(enchantment);
+        gd.playerGraveyards.get(player1.getId()).add(enchantment.getCard());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
 }
