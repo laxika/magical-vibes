@@ -1,14 +1,13 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JestersCap;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,14 +18,14 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Panic.class, PaleBears.class, JestersCap.class})
+@CardUsed({Panic.class, GrizzlyBears.class, JestersCap.class})
 class PanicTest extends BaseCardTest {
 
     @Test
     @DisplayName("Cast during declare attackers: target can't block and a draw is scheduled")
     void targetCantBlockAndSchedulesDraw() {
         harness.forceActivePlayer(player1);
-        Permanent blocker = addCreatureReady(player2, new PaleBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Panic()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -45,7 +44,7 @@ class PanicTest extends BaseCardTest {
     @DisplayName("The scheduled draw resolves at the next upkeep")
     void drawResolvesAtNextUpkeep() {
         harness.forceActivePlayer(player1);
-        Permanent blocker = addCreatureReady(player2, new PaleBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Panic()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -55,9 +54,7 @@ class PanicTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        gd.activePlayerId = player2.getId();
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        advanceToUpkeep(player2);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
@@ -69,8 +66,8 @@ class PanicTest extends BaseCardTest {
     @DisplayName("Targeted creature actually cannot block")
     void targetedCreatureCannotBlock() {
         harness.forceActivePlayer(player1);
-        Permanent attacker = addCreatureReady(player1, new PaleBears());
-        Permanent blocker = addCreatureReady(player2, new PaleBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Panic()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -80,9 +77,7 @@ class PanicTest extends BaseCardTest {
         assertThat(blocker.isCantBlockThisTurn()).isTrue();
 
         attacker.setAttacking(true);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
@@ -92,7 +87,7 @@ class PanicTest extends BaseCardTest {
     @DisplayName("Cannot cast once blockers are declared")
     void cannotCastDuringDeclareBlockers() {
         harness.forceActivePlayer(player1);
-        Permanent blocker = addCreatureReady(player2, new PaleBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Panic()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -106,7 +101,7 @@ class PanicTest extends BaseCardTest {
     @DisplayName("Cannot cast outside combat")
     void cannotCastOutsideCombat() {
         harness.forceActivePlayer(player1);
-        Permanent blocker = addCreatureReady(player2, new PaleBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Panic()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -120,7 +115,7 @@ class PanicTest extends BaseCardTest {
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
         harness.forceActivePlayer(player1);
-        addCreatureReady(player2, new PaleBears()); // valid target so spell is playable
+        addCreatureReady(player2, new GrizzlyBears()); // valid target so spell is playable
         harness.addToBattlefield(player2, new JestersCap());
         harness.setHand(player1, List.of(new Panic()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -137,7 +132,7 @@ class PanicTest extends BaseCardTest {
     @DisplayName("Can be cast during beginning of combat by either player")
     void canBeCastDuringBeginningOfCombatByEitherPlayer() {
         harness.forceActivePlayer(player1);
-        Permanent target = addCreatureReady(player1, new PaleBears());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player2, List.of(new Panic()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
@@ -151,7 +146,7 @@ class PanicTest extends BaseCardTest {
     @DisplayName("The restriction ends during cleanup")
     void cantBlockRestrictionEndsDuringCleanup() {
         harness.forceActivePlayer(player1);
-        Permanent blocker = addCreatureReady(player2, new PaleBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Panic()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -168,10 +163,51 @@ class PanicTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An illegal target prevents the delayed draw from being created")
+    void missingTargetPreventsDelayedDraw() {
+        harness.forceActivePlayer(player1);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Panic()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        harness.assertInGraveyard(player1, "Panic");
+    }
+
+    @Test
+    @DisplayName("Removing the creature after resolution does not prevent the delayed draw")
+    void delayedDrawSurvivesTargetLeavingBattlefield() {
+        harness.forceActivePlayer(player1);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Panic()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToUpkeep(player2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
+
+    @Test
     @DisplayName("Does not draw during an additional upkeep in the same turn")
     void drawWaitsForNextTurnWhenAdditionalUpkeepOccurs() {
         harness.forceActivePlayer(player1);
-        Permanent blocker = addCreatureReady(player2, new PaleBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Panic()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
