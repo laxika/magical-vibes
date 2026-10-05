@@ -13,9 +13,46 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({MothriderSamurai.class, SoratamiCloudskater.class, WanderingOnes.class})
 class MothriderSamuraiTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("A creature without flying or reach cannot block Mothrider Samurai")
+    void cannotBeBlockedByGroundCreature() {
+        addCreatureReady(player1, new MothriderSamurai());
+        addCreatureReady(player2, new WanderingOnes());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Both Samurais receive their own Bushido bonus when one blocks the other")
+    void bothCombatantsReceiveBushidoBonusesAfterTriggersResolve() {
+        Permanent attacker = addCreatureReady(player1, new MothriderSamurai());
+        Permanent blocker = addCreatureReady(player2, new MothriderSamurai());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
+
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(3);
+    }
 
     @Test
     @DisplayName("When Mothrider Samurai becomes blocked, it gets +1/+1 until end of turn")
