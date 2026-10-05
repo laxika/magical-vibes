@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LawlessBroker.class, GrizzlyBears.class, WrathOfGod.class})
 class LawlessBrokerTest extends BaseCardTest {
 
     private void setupCombatWhereLawlessBrokerDies() {
@@ -27,20 +29,18 @@ class LawlessBrokerTest extends BaseCardTest {
         brokerPerm.setSummoningSick(false);
         brokerPerm.setAttacking(true);
 
-        GrizzlyBears bigBear = new GrizzlyBears();
-        bigBear.setPower(3);
-        bigBear.setToughness(3);
-        Permanent blockerPerm = new Permanent(bigBear);
+        Permanent blockerPerm = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        blockerPerm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         blockerPerm.setSummoningSick(false);
         blockerPerm.setBlocking(true);
         blockerPerm.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blockerPerm);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
     }
 
+    @CardUsed({LawlessBroker.class, GrizzlyBears.class, WrathOfGod.class})
     @Nested
     @DisplayName("Death trigger")
     class DeathTriggerTests {
@@ -78,9 +78,7 @@ class LawlessBrokerTest extends BaseCardTest {
 
             harness.passBothPriorities();
 
-            Permanent bearsPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getId().equals(bearId))
-                    .findFirst().orElseThrow();
+            Permanent bearsPerm = findPermanent(player1, "Grizzly Bears");
             assertThat(bearsPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
             assertThat(bearsPerm.getEffectivePower()).isEqualTo(3);
             assertThat(bearsPerm.getEffectiveToughness()).isEqualTo(3);
@@ -109,13 +107,33 @@ class LawlessBrokerTest extends BaseCardTest {
             harness.setHand(player1, List.of(new WrathOfGod()));
             harness.addMana(player1, ManaColor.WHITE, 4);
 
-            harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
-            harness.passBothPriorities();
+            harness.castAndResolveSorcery(player1, 0, 0);
 
             GameData gd = harness.getGameData();
             assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
             assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                     .anyMatch(log -> log.contains("no valid targets"));
         }
+
+        @Test
+        @DisplayName("A target leaving before resolution does not move its counter to another creature")
+        void targetLeavingBeforeResolutionDoesNotRetarget() {
+            harness.addToBattlefield(player1, new LawlessBroker());
+            Permanent chosen = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            setupCombatWhereLawlessBrokerDies();
+
+            harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, chosen.getId());
+
+            gd.playerBattlefields.get(player1.getId()).remove(chosen);
+            harness.setExile(player1, List.of(chosen.getCard()));
+            harness.passBothPriorities();
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(chosen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+            assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        }
+
     }
 }
