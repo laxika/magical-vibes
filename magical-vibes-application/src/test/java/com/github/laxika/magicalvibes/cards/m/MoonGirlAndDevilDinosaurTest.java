@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.p.Panharmonicon;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MoonGirlAndDevilDinosaur.class, GrizzlyBears.class, Ornithopter.class})
+@CardUsed({MoonGirlAndDevilDinosaur.class, GrizzlyBears.class, Ornithopter.class, Panharmonicon.class})
 class MoonGirlAndDevilDinosaurTest extends BaseCardTest {
 
     @Test
@@ -23,7 +24,6 @@ class MoonGirlAndDevilDinosaurTest extends BaseCardTest {
     void artifactEntryDrawsOnlyOnceEachTurn() {
         Permanent source = addCreatureReady(player1, new MoonGirlAndDevilDinosaur());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
-        harness.setHand(player1, List.of(new Ornithopter()));
 
         castArtifactFromHand();
 
@@ -31,7 +31,6 @@ class MoonGirlAndDevilDinosaurTest extends BaseCardTest {
                 .containsExactly("Grizzly Bears");
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(source);
 
-        harness.setHand(player1, List.of(new Ornithopter()));
         castArtifactFromHand();
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
@@ -66,9 +65,106 @@ class MoonGirlAndDevilDinosaurTest extends BaseCardTest {
     }
 
     private void castArtifactFromHand() {
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Ornithopter(), "{0}");
         harness.passBothPriorities();
         harness.passBothPriorities();
+    }
+
+    @Test
+    void artifactDrawCanBeTheSecondDrawAndBoostTheSource() {
+        Permanent source = addCreatureReady(player1, new MoonGirlAndDevilDinosaur());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        draw(player1);
+
+        harness.enterBattlefieldAndReturn(player1, new Ornithopter());
+        assertThat(gd.stack).hasSize(1);
+        resolveTopOfStack();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(2);
+        resolveTopOfStack();
+
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, source, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    void opponentsArtifactDoesNotTriggerOrConsumeTheTurnLimit() {
+        addCreatureReady(player1, new MoonGirlAndDevilDinosaur());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        harness.enterBattlefieldAndReturn(player2, new Ornithopter());
+        assertThat(gd.stack).isEmpty();
+        harness.enterBattlefieldAndReturn(player1, new Ornithopter());
+        assertThat(gd.stack).hasSize(1);
+        resolveTopOfStack();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void controllerSecondDrawTriggersOnOpponentsTurnButOpponentsDrawsDoNot() {
+        Permanent source = addCreatureReady(player1, new MoonGirlAndDevilDinosaur());
+        harness.forceActivePlayer(player2);
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+
+        draw(player2);
+        draw(player2);
+        assertThat(gd.stack).isEmpty();
+        draw(player1);
+        assertThat(gd.stack).isEmpty();
+        draw(player1);
+        assertThat(gd.stack).hasSize(1);
+        resolveTopOfStack();
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, source, Keyword.TRAMPLE)).isTrue();
+        draw(player1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void artifactTriggerLimitAppliesBeforeTheFirstTriggerResolves() {
+        addCreatureReady(player1, new MoonGirlAndDevilDinosaur());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        harness.enterBattlefieldAndReturn(player1, new Ornithopter());
+        harness.enterBattlefieldAndReturn(player1, new Ornithopter());
+        assertThat(gd.stack).hasSize(1);
+        resolveTopOfStack();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @CardUsed({MoonGirlAndDevilDinosaur.class, Panharmonicon.class, Ornithopter.class, GrizzlyBears.class})
+    void panharmoniconCannotMakeTheOncePerTurnArtifactAbilityTriggerTwice() {
+        addCreatureReady(player1, new MoonGirlAndDevilDinosaur());
+        harness.addToBattlefield(player1, new Panharmonicon());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        harness.enterBattlefieldAndReturn(player1, new Ornithopter());
+        assertThat(gd.stack).hasSize(1);
+        resolveTopOfStack();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void artifactAbilityCanTriggerAgainDuringTheNextPlayersTurn() {
+        addCreatureReady(player1, new MoonGirlAndDevilDinosaur());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.enterBattlefieldAndReturn(player1, new Ornithopter());
+        resolveTopOfStack();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        harness.enterBattlefieldAndReturn(player1, new Ornithopter());
+        assertThat(gd.stack).hasSize(1);
+        resolveTopOfStack();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void draw(Player player) {
