@@ -66,4 +66,52 @@ class MarshLurkerTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Swamp");
     }
+
+    @Test
+    @DisplayName("The Swamp is sacrificed as a cost before fear resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent lurker = addCreatureReady(player1, new MarshLurker());
+        harness.addToBattlefield(player1, new Swamp());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Swamp");
+        harness.assertNotOnBattlefield(player1, "Swamp");
+        assertThat(gqs.hasKeyword(gd, lurker, Keyword.FEAR)).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, lurker, Keyword.FEAR)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Lurker can sacrifice a tapped Swamp")
+    void tappedAndSummoningSickLurkerCanSacrificeTappedSwamp() {
+        Permanent lurker = harness.addToBattlefieldAndReturn(player1, new MarshLurker());
+        lurker.setTapped(true);
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        swamp.setTapped(true);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, lurker, Keyword.FEAR)).isTrue();
+        assertThat(lurker.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Swamp");
+    }
+
+    @Test
+    @DisplayName("Only the Lurker whose ability was activated gains fear")
+    void grantsFearOnlyToSource() {
+        Permanent source = addCreatureReady(player1, new MarshLurker());
+        Permanent other = addCreatureReady(player1, new MarshLurker());
+        harness.addToBattlefield(player1, new Swamp());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, source, Keyword.FEAR)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FEAR)).isFalse();
+    }
 }
