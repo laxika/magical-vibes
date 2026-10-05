@@ -12,7 +12,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -28,13 +27,10 @@ class OasisTest extends BaseCardTest {
     @DisplayName("Tap ability adds 1 damage prevention shield to target creature")
     void preventsOnTargetCreature() {
         Permanent oasis = addOasis();
-        harness.addToBattlefield(player2, new GrizzlyBears());
-
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.activateAbility(player1, 0, null, targetId);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.activateAbility(player1, 0, null, bears.getId());
         harness.passBothPriorities();
 
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getDamagePreventionShield()).isEqualTo(1);
         assertThat(oasis.isTapped()).isTrue();
     }
@@ -93,5 +89,62 @@ class OasisTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.getDamagePreventionShield()).isZero();
+    }
+
+    @Test
+    void multipleOasesPreventTwoDamageButDoNotProtectAgainstLaterDamage() {
+        addOasis();
+        addOasis();
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, bears.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
+        assertThat(bears.getDamagePreventionShield()).isZero();
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void tappedOasisCannotActivateAgain() {
+        addOasis();
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(bears.getDamagePreventionShield()).isEqualTo(1);
+    }
+
+    @Test
+    void preventsCombatDamageToOwnCreatureWithoutPreventingItsDamage() {
+        addOasis();
+        Permanent blocker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        attacker.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(blocker.getMarkedDamage()).isEqualTo(1);
+        assertThat(blocker.getDamagePreventionShield()).isZero();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 }
