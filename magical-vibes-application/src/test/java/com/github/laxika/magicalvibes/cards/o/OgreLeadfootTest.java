@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.g.GoblinStriker;
+import com.github.laxika.magicalvibes.cards.t.Terror;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OgreLeadfoot.class, Ornithopter.class, GoblinStriker.class})
+@CardUsed({OgreLeadfoot.class, Ornithopter.class, GoblinStriker.class, Terror.class})
 class OgreLeadfootTest extends BaseCardTest {
 
     @Test
@@ -109,5 +111,28 @@ class OgreLeadfootTest extends BaseCardTest {
 
     private Permanent addReadyOgre(Player player) {
         return addCreatureReady(player, new OgreLeadfoot());
+    }
+
+    @Test
+    @DisplayName("The blocker is destroyed even if Ogre Leadfoot dies before its trigger resolves")
+    void triggerResolvesAfterOgreDies() {
+        Permanent ogre = addReadyOgre(player1);
+        addCreatureReady(player2, new Ornithopter());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.setHand(player2, List.of(new Terror()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, ogre.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Ogre Leadfoot");
+        harness.assertOnBattlefield(player2, "Ornithopter");
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
+        harness.assertInGraveyard(player2, "Ornithopter");
     }
 }
