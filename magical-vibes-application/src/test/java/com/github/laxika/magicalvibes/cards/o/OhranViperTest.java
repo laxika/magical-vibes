@@ -112,4 +112,57 @@ class OhranViperTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
+
+    @Test
+    @DisplayName("Ohran Viper destroys an attacker it damages while blocking")
+    void blockingViperDestroysDamagedAttacker() {
+        Permanent attacker = addCreatureReady(player1, new BorealCentaur());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new OhranViper());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertInGraveyard(player1, "Boreal Centaur");
+        harness.assertOnBattlefield(player2, "Ohran Viper");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ohran Viper does not destroy creatures damaged by another creature")
+    void anotherCreaturesDamageDoesNotTriggerDestruction() {
+        addCreatureReady(player1, new OhranViper());
+        Permanent attacker = addCreatureReady(player1, new BorealCentaur());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new SimianBrawler());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertInGraveyard(player1, "Boreal Centaur");
+        harness.assertOnBattlefield(player1, "Ohran Viper");
+        harness.assertOnBattlefield(player2, "Simian Brawler");
+    }
+
+    @Test
+    @DisplayName("The delayed destruction ability retains Ohran Viper as its source and its controller")
+    void delayedDestructionRetainsSourceAndController() {
+        Permanent viper = addCreatureReady(player1, new OhranViper());
+        viper.setAttacking(true);
+        addCreatureReady(player2, new BorealCentaur());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(viper.getId());
+        harness.assertOnBattlefield(player2, "Boreal Centaur");
+
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        harness.assertInGraveyard(player2, "Boreal Centaur");
+    }
 }
