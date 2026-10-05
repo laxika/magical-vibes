@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GildedLotus;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
+import com.github.laxika.magicalvibes.cards.r.RunawayTrashBot;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KamiOfIndustry.class, MindStone.class, GildedLotus.class})
+@CardUsed({KamiOfIndustry.class, MindStone.class, GildedLotus.class, RunawayTrashBot.class})
 class KamiOfIndustryTest extends BaseCardTest {
 
     @Test
@@ -26,11 +26,7 @@ class KamiOfIndustryTest extends BaseCardTest {
     void returnsSmallArtifactWithHasteAndSacrificesItAtNextEndStep() {
         Card artifact = new MindStone();
         harness.setGraveyard(player1, List.of(artifact));
-        harness.setHand(player1, List.of(new KamiOfIndustry()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new KamiOfIndustry(), "{4}{R}");
         harness.passBothPriorities();
 
         PendingInteraction.MultiGraveyardChoice choice =
@@ -40,7 +36,7 @@ class KamiOfIndustryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent returned = findPermanent(player1, "Mind Stone");
-        assertThat(returned.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player1, "Mind Stone");
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -56,11 +52,7 @@ class KamiOfIndustryTest extends BaseCardTest {
     void cannotTargetArtifactWithManaValueGreaterThanThree() {
         Card artifact = new GildedLotus();
         harness.setGraveyard(player1, List.of(artifact));
-        harness.setHand(player1, List.of(new KamiOfIndustry()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new KamiOfIndustry(), "{4}{R}");
         harness.passBothPriorities();
 
         PendingInteraction.MultiGraveyardChoice choice =
@@ -68,5 +60,83 @@ class KamiOfIndustryTest extends BaseCardTest {
         assertThat(choice).isNull();
         harness.assertInGraveyard(player1, "Gilded Lotus");
         harness.assertNotOnBattlefield(player1, "Gilded Lotus");
+    }
+
+    @Test
+    void targetsOnlyArtifactsInYourGraveyardAndIncludesManaValueThree() {
+        Card artifact = new RunawayTrashBot();
+        Card nonartifact = new KamiOfIndustry();
+        Card opponentsArtifact = new RunawayTrashBot();
+        harness.setGraveyard(player1, List.of(artifact, nonartifact));
+        harness.setGraveyard(player2, List.of(opponentsArtifact));
+
+        harness.castFromHand(player1, new KamiOfIndustry(), "{4}{R}");
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(artifact.getId());
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
+        harness.passBothPriorities();
+
+        Permanent returned = findPermanent(player1, "Runaway Trash-Bot");
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
+        harness.assertInGraveyard(player1, "Kami of Industry");
+        harness.assertInGraveyard(player2, "Runaway Trash-Bot");
+    }
+
+    @Test
+    void doesNotReturnTargetThatLeavesGraveyardBeforeResolution() {
+        Card artifact = new RunawayTrashBot();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.castFromHand(player1, new KamiOfIndustry(), "{4}{R}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
+
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Runaway Trash-Bot");
+        harness.assertOnBattlefield(player1, "Kami of Industry");
+    }
+
+    @Test
+    void returnAndDelayedSacrificeDoNotDependOnKamiRemainingOnBattlefield() {
+        Card artifact = new RunawayTrashBot();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.castFromHand(player1, new KamiOfIndustry(), "{4}{R}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().sacrificePermanentToGraveyard(
+                gd, findPermanent(player1, "Kami of Industry")));
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Runaway Trash-Bot");
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Runaway Trash-Bot");
+        harness.assertInGraveyard(player1, "Runaway Trash-Bot");
+    }
+
+    @Test
+    void returningDuringEndStepWaitsUntilOpponentsEndStepToSacrifice() {
+        Card artifact = new RunawayTrashBot();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.forceStep(TurnStep.END_STEP);
+        harness.enterBattlefieldAndReturn(player1, new KamiOfIndustry());
+        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Runaway Trash-Bot");
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Runaway Trash-Bot");
+        harness.assertInGraveyard(player1, "Runaway Trash-Bot");
     }
 }
