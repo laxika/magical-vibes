@@ -56,8 +56,7 @@ class MonstrousHoundTest extends BaseCardTest {
         harness.addToBattlefield(player2, new CityOfTraitors());
         harness.addToBattlefield(player2, new CityOfTraitors());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
     }
 
@@ -69,8 +68,7 @@ class MonstrousHoundTest extends BaseCardTest {
         addCreatureReady(player2, new MonstrousHound());
         harness.addToBattlefield(player2, new CityOfTraitors());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
@@ -86,11 +84,61 @@ class MonstrousHoundTest extends BaseCardTest {
         addCreatureReady(player2, new MonstrousHound());
         harness.addToBattlefield(player2, new CityOfTraitors());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Monstrous Hound cannot attack when neither player controls lands")
+    void cannotAttackWithNoLandsOnEitherSide() {
+        addCreatureReady(player1, new MonstrousHound());
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Monstrous Hound cannot block when neither player controls lands")
+    void cannotBlockWithNoLandsOnEitherSide() {
+        addCreatureReady(player1, new RagingGoblin());
+        addCreatureReady(player2, new MonstrousHound());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Monstrous Hound checks current land counts when blockers are declared")
+    void cannotBlockAfterAttackerGainsEnoughLands() {
+        addCreatureReady(player1, new RagingGoblin());
+        addCreatureReady(player2, new MonstrousHound());
+        harness.addToBattlefield(player2, new CityOfTraitors());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        harness.addToBattlefield(player1, new CityOfTraitors());
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Monstrous Hound can block after its controller gains a land advantage")
+    void canBlockAfterControllerGainsMoreLands() {
+        addCreatureReady(player1, new RagingGoblin());
+        harness.addToBattlefield(player1, new CityOfTraitors());
+        addCreatureReady(player2, new MonstrousHound());
+        harness.addToBattlefield(player2, new CityOfTraitors());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        harness.addToBattlefield(player2, new CityOfTraitors());
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
     }
 }
