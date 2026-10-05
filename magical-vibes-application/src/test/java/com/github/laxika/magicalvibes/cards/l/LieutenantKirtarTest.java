@@ -103,6 +103,58 @@ class LieutenantKirtarTest extends BaseCardTest {
                 .hasMessageContaining("attacking creature");
     }
 
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent kirtar = addReadyKirtar(player1);
+        kirtar.setTapped(true);
+        kirtar.setSummoningSick(true);
+        Permanent attacker = addAttacker(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(kirtar);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(kirtar.getCard());
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(attacker.getCard());
+    }
+
+    @Test
+    @DisplayName("Cannot activate without white mana even with enough total mana")
+    void cannotActivateWithoutWhiteMana() {
+        Permanent kirtar = addReadyKirtar(player1);
+        Permanent attacker = addAttacker(player2);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(kirtar);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(kirtar.getCard());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can target itself while attacking, but the sacrificed target is not exiled")
+    void canTargetItselfWhileAttacking() {
+        Permanent kirtar = addReadyKirtar(player1);
+        kirtar.setAttacking(true);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, kirtar.getId());
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(kirtar.getCard());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(kirtar);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(kirtar.getCard());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(kirtar.getCard());
+        assertThat(gd.stack).isEmpty();
+    }
     private Permanent addReadyKirtar(Player player) {
         return addCreatureReady(player, new LieutenantKirtar());
     }
