@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.e.ElvishLyrist;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GlacialChasm;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.PriestOfTitania;
 import com.github.laxika.magicalvibes.cards.s.SavageSummoning;
 import com.github.laxika.magicalvibes.cards.s.Scragnoth;
@@ -19,7 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PowerSink.class, ElvishLyrist.class, Forest.class, GlacialChasm.class, PriestOfTitania.class})
+@CardUsed({PowerSink.class, ElvishLyrist.class, Forest.class, GlacialChasm.class,
+        PriestOfTitania.class, Scragnoth.class, SavageSummoning.class, LlanowarElves.class})
 class PowerSinkTest extends BaseCardTest {
 
     private ElvishLyrist prepareCounterTarget() {
@@ -37,19 +39,19 @@ class PowerSinkTest extends BaseCardTest {
         ElvishLyrist lyrist = prepareCounterTarget();
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Forest());
-        harness.addMana(player1, ManaColor.GREEN, 2); // 1 to cast Lyrist, 1 left over (< X)
+        harness.addMana(player1, ManaColor.GREEN, 2); // 1 to cast Lyrist, 1 left over; even both Forests cannot cover X=4
 
         harness.setHand(player2, List.of(new PowerSink()));
-        harness.addMana(player2, ManaColor.BLUE, 4); // {U} + X=3
+        harness.addMana(player2, ManaColor.BLUE, 5); // {U} + X=4
 
         List<Permanent> p1Battlefield = gd.playerBattlefields.get(player1.getId());
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, 3, lyrist.getId()); // X = 3
+        harness.castInstant(player2, 0, 4, lyrist.getId()); // X = 4
         harness.passBothPriorities();
 
-        // Spell countered (player1 could not pay {3}).
+        // Spell countered (player1 could not pay {4}).
         harness.assertInGraveyard(player1, "Elvish Lyrist");
         harness.assertNotOnBattlefield(player1, "Elvish Lyrist");
         // Rider: all of player1's lands are tapped and their mana pool is emptied.
@@ -129,13 +131,11 @@ class PowerSinkTest extends BaseCardTest {
     @DisplayName("Paying X keeps the spell and leaves lands untapped")
     void payingKeepsSpellAndSparesLands() {
         ElvishLyrist lyrist = prepareCounterTarget();
-        harness.addToBattlefield(player1, new Forest());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.addMana(player1, ManaColor.GREEN, 2); // 1 to cast Lyrist, 1 to pay X=1
 
         harness.setHand(player2, List.of(new PowerSink()));
         harness.addMana(player2, ManaColor.BLUE, 2); // {U} + X=1
-
-        Permanent land = gd.playerBattlefields.get(player1.getId()).getFirst();
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
@@ -294,4 +294,54 @@ class PowerSinkTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Scragnoth");
     }
+
+    @Test
+    @CardUsed({PowerSink.class, LlanowarElves.class, Forest.class})
+    @DisplayName("Allows the spell controller to generate mana for payment during resolution")
+    void allowsManaAbilitiesWhenPoolCannotYetPay() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        LlanowarElves elves = new LlanowarElves();
+        harness.setHand(player1, List.of(elves));
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player2, List.of(new PowerSink()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 1, elves.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
+        assertThat(land.isTapped()).isFalse();
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+    }
+
+    @Test
+    @CardUsed({PowerSink.class, LlanowarElves.class, Forest.class})
+    @DisplayName("Paying zero preserves the target, lands, and unspent mana")
+    void payingZeroPreservesManaAndLands() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        LlanowarElves elves = new LlanowarElves();
+        harness.setHand(player1, List.of(elves));
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.setHand(player2, List.of(new PowerSink()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 0, elves.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(land.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+    }
+
 }
