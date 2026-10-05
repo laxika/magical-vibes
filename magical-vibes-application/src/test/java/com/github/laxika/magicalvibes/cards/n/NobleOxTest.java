@@ -21,12 +21,14 @@ class NobleOxTest extends BaseCardTest {
     @Test
     @DisplayName("ETB blocks every unblocked creature attacking its controller")
     void entersAndBlocksAllUnblockedAttackers() {
-    Permanent groundAttacker = addCreatureReady(player1, new GrizzlyBears());
-    Permanent flyingAttacker = addCreatureReady(player1, new AirElemental());
-    addCreatureReady(player2, new GrizzlyBears());
-    declareAttackers(List.of(0, 1));
+        Permanent groundAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent flyingAttacker = addCreatureReady(player1, new AirElemental());
+        addCreatureReady(player2, new GrizzlyBears());
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of()));
 
-        castNobleOxDuringDeclareBlockers();
+        castNobleOxInCombat();
         Permanent nobleOx = findPermanent(player2, "Noble Ox");
 
         assertThat(nobleOx.getBlockingTargetIds())
@@ -55,15 +57,44 @@ class NobleOxTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(firstAttacker.getId(), secondAttacker.getId());
     }
 
-    private void castNobleOxDuringDeclareBlockers() {
+    @Test
+    @DisplayName("Attackers are not unblocked before blockers have been declared")
+    void enteringBeforeBlockersAreDeclaredDoesNotBlockAttackers() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0)));
+
+        castNobleOxInCombat();
+
+        Permanent nobleOx = findPermanent(player2, "Noble Ox");
+        assertThat(nobleOx.getBlockingTargetIds()).isEmpty();
+        assertThat(gqs.isBlockedByAnyCreature(gd, attacker)).isFalse();
+    }
+
+    @Test
+    @DisplayName("ETB leaves already blocked attackers with their existing blocker")
+    void entersAndBlocksOnlyUnblockedAttackers() {
+        Permanent blockedAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent unblockedAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent existingBlocker = addCreatureReady(player2, new GrizzlyBears());
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+
+        castNobleOxInCombat();
+
+        Permanent nobleOx = findPermanent(player2, "Noble Ox");
+        assertThat(nobleOx.getBlockingTargetIds()).containsExactly(unblockedAttacker.getId());
+        assertThat(existingBlocker.getBlockingTargetIds()).containsExactly(blockedAttacker.getId());
+    }
+
+    private void castNobleOxInCombat() {
         harness.setHand(player2, List.of(new NobleOx()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.castCreature(player2, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.withAutoStop(gd.currentStep, () -> {
+            harness.castCreature(player2, 0);
+            resolveAllTriggers();
+        });
     }
 }
