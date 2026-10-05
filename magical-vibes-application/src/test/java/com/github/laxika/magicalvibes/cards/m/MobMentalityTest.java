@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RollingStones;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.w.WallOfAir;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MobMentality.class, GrizzlyBears.class, WallOfAir.class, RollingStones.class})
+@CardUsed({MobMentality.class, GrizzlyBears.class, WallOfAir.class, RollingStones.class, Unsummon.class})
 class MobMentalityTest extends BaseCardTest {
 
     @Test
@@ -122,5 +123,67 @@ class MobMentalityTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Mob Mentality")
                         && p.isAttached()
                         && p.getAttachedTo().equals(bears.getId()));
+    }
+
+    @Test
+    @DisplayName("A summoning-sick non-Wall still prevents the attack trigger")
+    void summoningSickNonWallPreventsTrigger() {
+        Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new MobMentality());
+        aura.setAttachedTo(enchanted.getId());
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+        other.setSummoningSick(true);
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(enchanted.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The Aura controller's attack can boost an opponent's enchanted creature")
+    void boostsOpponentsEnchantedCreature() {
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent enchanted = addCreatureReady(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new MobMentality());
+        aura.setAttachedTo(enchanted.getId());
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(enchanted.getPowerModifier()).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, enchanted, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The enchanted creature controller's attack does not trigger an opponent's Aura")
+    void opponentsAttackDoesNotTriggerAura() {
+        Permanent enchanted = addCreatureReady(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new MobMentality());
+        aura.setAttachedTo(enchanted.getId());
+
+        declareAttackers(player2, List.of(0));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(enchanted.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("X counts creatures still attacking when the trigger resolves")
+    void countsAttackersAtResolution() {
+        Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new MobMentality());
+        aura.setAttachedTo(enchanted.getId());
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        declareAttackers(player1, List.of(0, 2));
+        harness.castAndResolveInstant(player2, 0, other.getId());
+        assertThat(gd.playerHands.get(player1.getId())).contains(other.getCard());
+        harness.passBothPriorities();
+
+        assertThat(enchanted.getPowerModifier()).isEqualTo(1);
+        assertThat(enchanted.getToughnessModifier()).isZero();
     }
 }
