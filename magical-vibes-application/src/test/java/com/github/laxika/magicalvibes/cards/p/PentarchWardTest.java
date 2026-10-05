@@ -64,4 +64,49 @@ class PentarchWardTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("Enchanting an opponent's creature draws for the Aura's controller")
+    void enchantingOpponentsCreatureDrawsForAuraController() {
+        Permanent bear = addCreatureReady(player2, new AshcoatBear());
+        harness.setHand(player1, List.of(new PentarchWard()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new PrismaticLens()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castEnchantment(player1, 0, bear.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GREEN");
+
+        harness.assertNotInHand(player1, "Prismatic Lens");
+        assertThat(gqs.hasProtectionFrom(gd, bear, CardColor.GREEN)).isTrue();
+        assertThat(findPermanent(player1, "Pentarch Ward").getAttachedTo()).isEqualTo(bear.getId());
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Prismatic Lens");
+        harness.assertNotInHand(player2, "Prismatic Lens");
+    }
+
+    @Test
+    @DisplayName("The Aura's exception does not allow another white Aura to target the creature")
+    void whiteProtectionPreventsAnotherWardFromTargeting() {
+        Permanent bear = addCreatureReady(player1, new AshcoatBear());
+        harness.setHand(player1, List.of(new PentarchWard()));
+        harness.setLibrary(player1, List.of(new PrismaticLens()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castEnchantment(player1, 0, bear.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WHITE");
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new PentarchWard()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, bear.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(countPermanents(player1, "Pentarch Ward")).isEqualTo(1);
+        assertThat(findPermanent(player1, "Pentarch Ward").getAttachedTo()).isEqualTo(bear.getId());
+    }
 }
