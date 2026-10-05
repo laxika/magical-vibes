@@ -34,7 +34,7 @@ class PestermiteTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting may prompts for target selection")
+    @DisplayName("Resolving the targeted trigger prompts for the optional action")
     void acceptingMayPromptsForTarget() {
         harness.addToBattlefield(player2, new HillcomberGiant());
         castPestermite();
@@ -144,5 +144,96 @@ class PestermiteTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Pestermite");
+    }
+
+    @Test
+    @DisplayName("Pestermite can target itself when it is the only permanent")
+    void canTargetItself() {
+        castPestermite();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Pestermite"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The action uses the target's state at resolution")
+    void targetTappedBeforeResolutionIsUntapped() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillcomberGiant());
+        castPestermite();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        target.tap();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Declining the optional action leaves a tapped target tapped")
+    void decliningLeavesTappedTargetUnchanged() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillcomberGiant());
+        target.tap();
+        castPestermite();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The trigger does not resolve when its target leaves the battlefield")
+    void removedTargetStopsResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillcomberGiant());
+        castPestermite();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The trigger still resolves after Pestermite leaves the battlefield")
+    void triggerSurvivesSourceLeaving() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillcomberGiant());
+        castPestermite();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        Permanent source = gd.playerBattlefields.get(player1.getId()).getFirst();
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flash allows casting Pestermite during the opponent's end step")
+    void canCastDuringOpponentsEndStep() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillcomberGiant());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.castFromHand(player1, new Pestermite(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Pestermite");
+        assertThat(target.isTapped()).isTrue();
     }
 }
