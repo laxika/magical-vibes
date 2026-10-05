@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.o.Opt;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.cards.s.SteadfastPaladin;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PaladinClass.class, Opt.class})
+@CardUsed({PaladinClass.class, Opt.class, SteadfastPaladin.class})
 class PaladinClassTest extends BaseCardTest {
 
     @Test
@@ -42,7 +40,7 @@ class PaladinClassTest extends BaseCardTest {
 
         levelUpToTwo(paladinClass);
 
-        assertThat(paladinClass.getCounterCount(CounterType.LEVEL)).isEqualTo(1);
+        assertThat(paladinClass.getClassLevel()).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
     }
@@ -73,6 +71,158 @@ class PaladinClassTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, anotherAttacker)).isEqualTo(3);
     }
 
+    @Test
+    void opponentCanCastForNormalCostOnTheirOwnTurn() {
+        harness.addToBattlefield(player1, new PaladinClass());
+        harness.setHand(player2, List.of(new Opt()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        prepareForSorcery(player2);
+
+        harness.castInstant(player2, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void controllerDoesNotPayTaxOnTheirOwnTurn() {
+        harness.addToBattlefield(player1, new PaladinClass());
+        harness.setHand(player1, List.of(new Opt()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        prepareForSorcery(player1);
+
+        harness.castInstant(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void opponentCanCastWhenTheyPayTheAdditionalMana() {
+        harness.addToBattlefield(player1, new PaladinClass());
+        harness.setHand(player2, List.of(new Opt()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        prepareForSorcery(player1);
+
+        harness.castInstant(player2, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void multipleClassesAddTheirSpellTaxes() {
+        harness.addToBattlefield(player1, new PaladinClass());
+        harness.addToBattlefield(player1, new PaladinClass());
+        harness.setHand(player2, List.of(new Opt()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        prepareForSorcery(player1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castInstant(player2, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void levelTwoDoesNotBoostOpponentsCreaturesOrTriggerWhenAttacking() {
+        Permanent paladinClass = harness.addToBattlefieldAndReturn(player1, new PaladinClass());
+        addReadyCreature(player1);
+        Permanent opponentCreature = addReadyCreature(player2);
+        int opponentPower = gqs.getEffectivePower(gd, opponentCreature);
+        int opponentToughness = gqs.getEffectiveToughness(gd, opponentCreature);
+        levelUpToTwo(paladinClass);
+
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(opponentPower);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(opponentToughness);
+        declareAttackers(List.of(1));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void loneAttackerGainsDoubleStrikeWithoutAdditionalBoost() {
+        Permanent paladinClass = harness.addToBattlefieldAndReturn(player1, new PaladinClass());
+        Permanent attacker = addReadyCreature(player1);
+        levelUpToTwo(paladinClass);
+        levelUpToThree(paladinClass);
+        int power = gqs.getEffectivePower(gd, attacker);
+        int toughness = gqs.getEffectiveToughness(gd, attacker);
+
+        declareAttackers(List.of(1));
+        harness.handlePermanentChosen(player1, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(power);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(toughness);
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    void countsOtherAttackersAtResolution() {
+        Permanent paladinClass = harness.addToBattlefieldAndReturn(player1, new PaladinClass());
+        Permanent attacker = addReadyCreature(player1);
+        Permanent other = addReadyCreature(player1);
+        levelUpToTwo(paladinClass);
+        levelUpToThree(paladinClass);
+        int power = gqs.getEffectivePower(gd, attacker);
+
+        declareAttackers(List.of(1, 2));
+        harness.handlePermanentChosen(player1, attacker.getId());
+        other.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(power);
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    void attackTriggerResolvesAfterClassLeavesBattlefield() {
+        Permanent paladinClass = harness.addToBattlefieldAndReturn(player1, new PaladinClass());
+        Permanent attacker = addReadyCreature(player1);
+        addReadyCreature(player1);
+        int basePower = gqs.getEffectivePower(gd, attacker);
+        levelUpToTwo(paladinClass);
+        levelUpToThree(paladinClass);
+
+        declareAttackers(List.of(1, 2));
+        harness.handlePermanentChosen(player1, attacker.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(paladinClass);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(basePower + 1);
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    void cannotSkipAClassLevelOrRepeatLevelTwo() {
+        Permanent paladinClass = harness.addToBattlefieldAndReturn(player1, new PaladinClass());
+        prepareForSorcery(player1);
+        harness.addMana(player1, ManaColor.WHITE, 10);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(paladinClass), 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        levelUpToTwo(paladinClass);
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(paladinClass), 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void levelingRequiresSorceryTiming() {
+        Permanent paladinClass = harness.addToBattlefieldAndReturn(player1, new PaladinClass());
+        prepareForSorcery(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(paladinClass), 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(paladinClass.getClassLevel()).isEqualTo(1);
+    }
+
     private void levelUpToTwo(Permanent paladinClass) {
         prepareForSorcery(player1);
         harness.addMana(player1, ManaColor.WHITE, 3);
@@ -98,18 +248,6 @@ class PaladinClassTest extends BaseCardTest {
     }
 
     private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player) {
-        Card creature = new Card();
-        creature.setName("Test Creature");
-        creature.setType(CardType.CREATURE);
-        creature.setPower(2);
-        creature.setToughness(2);
-        return addReadyPermanent(player, creature);
-    }
-
-    private Permanent addReadyPermanent(com.github.laxika.magicalvibes.model.Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new SteadfastPaladin());
     }
 }
