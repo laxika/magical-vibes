@@ -1,25 +1,25 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MerfolkSovereign.class, RuneclawBear.class})
 class MerfolkSovereignTest extends BaseCardTest {
-
-    // ===== Static effect: buffs other Merfolk you control =====
 
     @Test
     @DisplayName("Other Merfolk creatures you control get +1/+1")
     void buffsOtherMerfolk() {
-        Permanent sovereign = addSovereignReady(player1);
-        Permanent otherMerfolk = addMerfolkReady(player1);
+        addSovereignReady(player1);
+        Permanent otherMerfolk = addSovereignReady(player1);
 
         assertThat(gqs.getEffectivePower(gd, otherMerfolk)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, otherMerfolk)).isEqualTo(3);
@@ -38,9 +38,7 @@ class MerfolkSovereignTest extends BaseCardTest {
     @DisplayName("Does not buff non-Merfolk creatures")
     void doesNotBuffNonMerfolk() {
         addSovereignReady(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -50,7 +48,7 @@ class MerfolkSovereignTest extends BaseCardTest {
     @DisplayName("Does not buff opponent's Merfolk creatures")
     void doesNotBuffOpponentMerfolk() {
         addSovereignReady(player1);
-        Permanent opponentMerfolk = addMerfolkReady(player2);
+        Permanent opponentMerfolk = addSovereignReady(player2);
 
         assertThat(gqs.getEffectivePower(gd, opponentMerfolk)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentMerfolk)).isEqualTo(2);
@@ -72,7 +70,7 @@ class MerfolkSovereignTest extends BaseCardTest {
     @DisplayName("Bonus is removed when Merfolk Sovereign leaves the battlefield")
     void bonusRemovedWhenSovereignLeaves() {
         Permanent sovereign = addSovereignReady(player1);
-        Permanent otherMerfolk = addMerfolkReady(player1);
+        Permanent otherMerfolk = addSovereignReady(player1);
 
         assertThat(gqs.getEffectivePower(gd, otherMerfolk)).isEqualTo(3);
 
@@ -82,13 +80,11 @@ class MerfolkSovereignTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, otherMerfolk)).isEqualTo(2);
     }
 
-    // ===== Activated ability: make target Merfolk unblockable =====
-
     @Test
     @DisplayName("Activating ability makes target Merfolk creature unblockable this turn")
     void activatingAbilityMakesMerfolkUnblockable() {
-        Permanent sovereign = addSovereignReady(player1);
-        Permanent targetMerfolk = addMerfolkReady(player1);
+        addSovereignReady(player1);
+        Permanent targetMerfolk = addSovereignReady(player1);
 
         harness.activateAbility(player1, 0, null, targetMerfolk.getId());
         harness.passBothPriorities();
@@ -100,7 +96,7 @@ class MerfolkSovereignTest extends BaseCardTest {
     @DisplayName("Activating ability taps the Sovereign")
     void activatingAbilityTapsSovereign() {
         Permanent sovereign = addSovereignReady(player1);
-        Permanent targetMerfolk = addMerfolkReady(player1);
+        Permanent targetMerfolk = addSovereignReady(player1);
 
         harness.activateAbility(player1, 0, null, targetMerfolk.getId());
 
@@ -110,8 +106,8 @@ class MerfolkSovereignTest extends BaseCardTest {
     @Test
     @DisplayName("Unblockable resets at end of turn")
     void unblockableResetsAtEndOfTurn() {
-        Permanent sovereign = addSovereignReady(player1);
-        Permanent targetMerfolk = addMerfolkReady(player1);
+        addSovereignReady(player1);
+        Permanent targetMerfolk = addSovereignReady(player1);
 
         harness.activateAbility(player1, 0, null, targetMerfolk.getId());
         harness.passBothPriorities();
@@ -128,8 +124,8 @@ class MerfolkSovereignTest extends BaseCardTest {
     @Test
     @DisplayName("Can target opponent's Merfolk creature")
     void canTargetOpponentMerfolk() {
-        Permanent sovereign = addSovereignReady(player1);
-        Permanent opponentMerfolk = addMerfolkReady(player2);
+        addSovereignReady(player1);
+        Permanent opponentMerfolk = addSovereignReady(player2);
 
         harness.activateAbility(player1, 0, null, opponentMerfolk.getId());
         harness.passBothPriorities();
@@ -140,10 +136,8 @@ class MerfolkSovereignTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target non-Merfolk creature with activated ability")
     void cannotTargetNonMerfolk() {
-        Permanent sovereign = addSovereignReady(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        addSovereignReady(player1);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -152,8 +146,8 @@ class MerfolkSovereignTest extends BaseCardTest {
     @Test
     @DisplayName("Ability fizzles if target Merfolk is removed before resolution")
     void abilityFizzlesIfTargetRemoved() {
-        Permanent sovereign = addSovereignReady(player1);
-        Permanent targetMerfolk = addMerfolkReady(player1);
+        addSovereignReady(player1);
+        Permanent targetMerfolk = addSovereignReady(player1);
 
         harness.activateAbility(player1, 0, null, targetMerfolk.getId());
 
@@ -164,19 +158,62 @@ class MerfolkSovereignTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("The Sovereign can target itself")
+    void canTargetItself() {
+        Permanent sovereign = addSovereignReady(player1);
+
+        harness.activateAbility(player1, 0, null, sovereign.getId());
+        harness.passBothPriorities();
+
+        assertThat(sovereign.isTapped()).isTrue();
+        assertThat(sovereign.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents paying the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        Permanent sovereign = harness.addToBattlefieldAndReturn(player1, new MerfolkSovereign());
+        sovereign.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, sovereign.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(sovereign.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Sovereign cannot activate its tap ability")
+    void cannotActivateWhileTapped() {
+        Permanent sovereign = addSovereignReady(player1);
+        sovereign.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, sovereign.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability resolves independently after the Sovereign leaves")
+    void abilityResolvesAfterSourceLeaves() {
+        Permanent sovereign = addSovereignReady(player1);
+        Permanent target = addSovereignReady(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(sovereign);
+        harness.passBothPriorities();
+
+        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
 
     private Permanent addSovereignReady(Player player) {
-        Permanent perm = new Permanent(new MerfolkSovereign());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addMerfolkReady(Player player) {
-        Permanent perm = new Permanent(new MerfolkSovereign());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new MerfolkSovereign());
+        permanent.setSummoningSick(false);
+        return permanent;
     }
 }
+
