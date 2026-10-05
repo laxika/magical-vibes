@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Mindslicer.class, GrizzlyBears.class})
+@CardUsed({Mindslicer.class, GrizzlyBears.class, CrawWurm.class})
 class MindslicerTest extends BaseCardTest {
 
     @Test
@@ -58,6 +59,59 @@ class MindslicerTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gameLogContains("no cards to discard")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Hands remain intact until the death trigger resolves, including cards added in response")
+    void discardsHandsAsTheyExistAtResolution() {
+        GrizzlyBears originalCard = new GrizzlyBears();
+        GrizzlyBears addedCard = new GrizzlyBears();
+        GrizzlyBears opponentCard = new GrizzlyBears();
+        harness.setHand(player1, List.of(originalCard));
+        harness.setHand(player2, List.of());
+
+        setupCombatWithCrawWurm();
+        resolveCombat();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(originalCard);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player1, List.of(originalCard, addedCard));
+        harness.setHand(player2, List.of(opponentCard));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(originalCard, addedCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opponentCard);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The death trigger resolves with both hands empty after simultaneous combat deaths")
+    void resolvesWithBothHandsEmpty() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+
+        setupCombatWithCrawWurm();
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Mindslicer");
+        harness.assertInGraveyard(player2, "Craw Wurm");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void setupCombatWithCrawWurm() {
+        addCreatureReady(player1, new Mindslicer());
+        addCreatureReady(player2, new CrawWurm());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
     }
 
     private void setupCombatWhereMindslicerDies() {
