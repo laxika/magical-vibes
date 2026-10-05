@@ -23,6 +23,7 @@ class MinamoSchoolAtWatersEdgeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
         assertThat(findPermanent(player1, "Minamo, School at Water's Edge").isTapped()).isTrue();
     }
 
@@ -35,6 +36,9 @@ class MinamoSchoolAtWatersEdgeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, 1, null, konda.getId());
+        assertThat(konda.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
         harness.passBothPriorities();
 
         assertThat(konda.isTapped()).isFalse();
@@ -76,5 +80,52 @@ class MinamoSchoolAtWatersEdgeTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, elder.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can target an untapped legendary permanent")
+    void canTargetUntappedLegendaryPermanent() {
+        Permanent minamo = harness.addToBattlefieldAndReturn(player1, new MinamoSchoolAtWatersEdge());
+        Permanent konda = harness.addToBattlefieldAndReturn(player1, new KondaLordOfEiganjo());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, konda.getId());
+        harness.passBothPriorities();
+
+        assertThat(konda.isTapped()).isFalse();
+        assertThat(minamo.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Untap ability cannot be activated without blue mana")
+    void cannotActivateWithoutBlueMana() {
+        Permanent minamo = harness.addToBattlefieldAndReturn(player1, new MinamoSchoolAtWatersEdge());
+        Permanent konda = harness.addToBattlefieldAndReturn(player1, new KondaLordOfEiganjo());
+        konda.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, konda.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(minamo.isTapped()).isFalse();
+        assertThat(konda.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Both abilities require an untapped Minamo")
+    void cannotActivateWhileTapped() {
+        Permanent minamo = harness.addToBattlefieldAndReturn(player1, new MinamoSchoolAtWatersEdge());
+        minamo.tap();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, minamo.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(minamo.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 }
