@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NyxbornColossus;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OmenOfTheHunt.class, Plains.class, Forest.class, Island.class, GrizzlyBears.class})
+@CardUsed({OmenOfTheHunt.class, Plains.class, Forest.class, Island.class, NyxbornColossus.class})
 class OmenOfTheHuntTest extends BaseCardTest {
 
     @Test
@@ -25,11 +26,8 @@ class OmenOfTheHuntTest extends BaseCardTest {
         Card plains = new Plains();
         Card forest = new Forest();
         Card island = new Island();
-        harness.setLibrary(player1, List.of(plains, forest, island, new GrizzlyBears()));
-        harness.setHand(player1, List.of(new OmenOfTheHunt()));
-        addOmenMana();
-
-        harness.castEnchantment(player1, 0);
+        harness.setLibrary(player1, List.of(plains, forest, island, new NyxbornColossus()));
+        harness.castFromHand(player1, new OmenOfTheHunt(), "{2}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -49,10 +47,7 @@ class OmenOfTheHuntTest extends BaseCardTest {
 
     @Test
     void decliningEnterTheBattlefieldAbilityDoesNotSearch() {
-        harness.setHand(player1, List.of(new OmenOfTheHunt()));
-        addOmenMana();
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new OmenOfTheHunt(), "{2}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -63,8 +58,8 @@ class OmenOfTheHuntTest extends BaseCardTest {
 
     @Test
     void sacrificingOmenScriesTwo() {
-        Card firstCard = new GrizzlyBears();
-        Card secondCard = new GrizzlyBears();
+        Card firstCard = new NyxbornColossus();
+        Card secondCard = new NyxbornColossus();
         harness.setLibrary(player1, List.of(firstCard, secondCard));
         Permanent omen = harness.addToBattlefieldAndReturn(player1, new OmenOfTheHunt());
         addOmenMana();
@@ -81,6 +76,80 @@ class OmenOfTheHuntTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(1), List.of(0)));
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondCard, firstCard);
+    }
+
+    @Test
+    void mayFailToFindEvenWhenBasicLandIsAvailable() {
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+        harness.castFromHand(player1, new OmenOfTheHunt(), "{2}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        harness.assertNotOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    void searchingWithNoBasicLandsCompletesWithoutMovingCards() {
+        Card creature = new NyxbornColossus();
+        harness.setLibrary(player1, List.of(creature));
+        harness.castFromHand(player1, new OmenOfTheHunt(), "{2}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+        harness.assertNotOnBattlefield(player1, "Nyxborn Colossus");
+    }
+
+    @Test
+    void scryWithOneCardCanPutItOnTheBottom() {
+        Card card = new Forest();
+        harness.setLibrary(player1, List.of(card));
+        harness.addToBattlefield(player1, new OmenOfTheHunt());
+        addOmenMana();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(card);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(card);
+        harness.assertInGraveyard(player1, "Omen of the Hunt");
+    }
+
+    @Test
+    void scryWithEmptyLibraryCompletesAfterPayingSacrificeCost() {
+        harness.setLibrary(player1, List.of());
+        harness.addToBattlefield(player1, new OmenOfTheHunt());
+        addOmenMana();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Omen of the Hunt");
+        harness.assertInGraveyard(player1, "Omen of the Hunt");
+    }
+
+    @Test
+    void flashAllowsCastingDuringEndStep() {
+        harness.forceStep(TurnStep.END_STEP);
+        harness.castFromHand(player1, new OmenOfTheHunt(), "{2}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertOnBattlefield(player1, "Omen of the Hunt");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void addOmenMana() {
