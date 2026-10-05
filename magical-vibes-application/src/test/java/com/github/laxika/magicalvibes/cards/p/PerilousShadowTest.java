@@ -3,22 +3,23 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PerilousShadow.class})
 class PerilousShadowTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving the ability gives +2/+2")
     void resolvingAbilityBoosts() {
-        addShadow(player1);
+        addCreatureReady(player1, new PerilousShadow());
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -32,7 +33,7 @@ class PerilousShadowTest extends BaseCardTest {
     @Test
     @DisplayName("The ability can be activated repeatedly")
     void canActivateMultipleTimes() {
-        addShadow(player1);
+        addCreatureReady(player1, new PerilousShadow());
         harness.addMana(player1, ManaColor.BLACK, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -48,7 +49,7 @@ class PerilousShadowTest extends BaseCardTest {
     @Test
     @DisplayName("The boost wears off at end of turn")
     void boostWearsOff() {
-        addShadow(player1);
+        addCreatureReady(player1, new PerilousShadow());
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -66,7 +67,7 @@ class PerilousShadowTest extends BaseCardTest {
     @Test
     @DisplayName("The ability does not tap and works while tapped")
     void worksWhileTapped() {
-        Permanent shadow = addShadow(player1);
+        Permanent shadow = addCreatureReady(player1, new PerilousShadow());
         shadow.tap();
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -80,7 +81,7 @@ class PerilousShadowTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate the ability without enough mana")
     void cannotActivateWithoutMana() {
-        addShadow(player1);
+        addCreatureReady(player1, new PerilousShadow());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -88,11 +89,50 @@ class PerilousShadowTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
-    private Permanent addShadow(Player player) {
-        PerilousShadow card = new PerilousShadow();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Generic mana cannot replace the black part of the cost")
+    void requiresBlackMana() {
+        addCreatureReady(player1, new PerilousShadow());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Shadow can pay with black and another color")
+    void worksWithSummoningSicknessAndMixedMana() {
+        Permanent shadow = harness.addToBattlefieldAndReturn(player1, new PerilousShadow());
+        shadow.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(shadow.getEffectivePower()).isEqualTo(2);
+        assertThat(shadow.getEffectiveToughness()).isEqualTo(6);
+        assertThat(shadow.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The boost waits for resolution and affects only the source copy")
+    void boostsOnlySourceOnResolution() {
+        Permanent source = addCreatureReady(player1, new PerilousShadow());
+        Permanent other = addCreatureReady(player1, new PerilousShadow());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(source.getEffectivePower()).isEqualTo(0);
+        assertThat(source.getEffectiveToughness()).isEqualTo(4);
+
+        harness.passBothPriorities();
+
+        assertThat(source.getEffectivePower()).isEqualTo(2);
+        assertThat(source.getEffectiveToughness()).isEqualTo(6);
+        assertThat(other.getEffectivePower()).isEqualTo(0);
+        assertThat(other.getEffectiveToughness()).isEqualTo(4);
     }
 }
