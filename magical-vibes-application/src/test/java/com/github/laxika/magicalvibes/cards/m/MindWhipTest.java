@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.b.Betrayal;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MindWhip.class, BalduvianBears.class, Forest.class})
+@CardUsed({MindWhip.class, BalduvianBears.class, Forest.class, Betrayal.class})
 class MindWhipTest extends BaseCardTest {
 
     @Test
@@ -130,6 +131,62 @@ class MindWhipTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
         assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The penalty triggers abilities when the enchanted creature becomes tapped")
+    @CardUsed({Betrayal.class})
+    void penaltyTriggersBecomesTappedAbilities() {
+        Permanent creature = addCreatureReady(player2, new BalduvianBears());
+        attachMindWhip(creature);
+        Permanent betrayal = harness.addToBattlefieldAndReturn(player1, new Betrayal());
+        betrayal.setAttachedTo(creature.getId());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        resolveAllTriggers();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("The trigger still damages the upkeep player after the enchanted creature leaves")
+    void triggerStillDamagesAfterCreatureLeaves() {
+        Permanent creature = addCreatureReady(player2, new BalduvianBears());
+        attachMindWhip(creature);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, creature));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Mind Whip can enchant its controller's creature and penalizes that controller")
+    void ownCreatureControllerTakesPenalty() {
+        Permanent creature = addCreatureReady(player1, new BalduvianBears());
+        harness.setHand(player1, List.of(new MindWhip()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 2);
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
     private void attachMindWhip(Permanent creature) {
