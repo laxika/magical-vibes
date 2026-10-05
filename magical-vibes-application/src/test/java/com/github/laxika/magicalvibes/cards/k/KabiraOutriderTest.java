@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.b.BoggartBrute;
+import com.github.laxika.magicalvibes.cards.e.ExpeditionHealer;
 import com.github.laxika.magicalvibes.cards.f.FaerieMiscreant;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
@@ -24,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({KabiraOutrider.class, BoggartBrute.class, FaerieMiscreant.class, FountainOfYouth.class,
-        FugitiveWizard.class, GrizzlyBears.class, SoulWarden.class})
+        FugitiveWizard.class, GrizzlyBears.class, SoulWarden.class, ExpeditionHealer.class})
 class KabiraOutriderTest extends BaseCardTest {
 
     @Test
@@ -86,6 +87,59 @@ class KabiraOutriderTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Kabira counts itself but duplicate Warriors do not increase the party")
+    void countsItselfWithoutCountingDuplicateWarriors() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new KabiraOutrider());
+
+        castKabiraOutrider(target.getId());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Party size is counted at resolution and the boost then stays fixed")
+    void partySizeIsCountedAtResolutionAndThenStaysFixed() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ExpeditionHealer());
+        harness.setHand(player1, List.of(new KabiraOutrider()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0, List.of(target.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.addToBattlefield(player1, new ExpeditionHealer());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Removing Kabira before resolution leaves an empty party and no boost")
+    void emptyPartyAtResolutionDoesNotBoostOpponentCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ExpeditionHealer());
+        harness.setHand(player1, List.of(new KabiraOutrider()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0, List.of(target.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).clear();
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void addFullParty() {
         harness.addToBattlefield(player1, new SoulWarden());
         harness.addToBattlefield(player1, new FaerieMiscreant());
@@ -98,7 +152,6 @@ class KabiraOutriderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreature(player1, 0, List.of(targetId));
-        harness.passBothPriorities();
         resolveAllTriggers();
     }
 
