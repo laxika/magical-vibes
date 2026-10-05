@@ -30,8 +30,7 @@ class InvisibleWomanTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new BurstOfStrength()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
 
         advanceToBeginningOfCombat();
         harness.passBothPriorities();
@@ -77,9 +76,15 @@ class InvisibleWomanTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         declareAttackers(List.of(0));
-        harness.handlePermanentChosen(player1, target.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, target.getId());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
@@ -97,7 +102,7 @@ class InvisibleWomanTest extends BaseCardTest {
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(0));
-        harness.handlePermanentChosen(player1, target.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -105,10 +110,58 @@ class InvisibleWomanTest extends BaseCardTest {
         assertThat(target.isCantBeBlocked()).isFalse();
     }
 
+    @Test
+    void doesNotTriggerWithoutAnySpellCast() {
+        addCreatureReady(player1, new InvisibleWoman());
+
+        advanceToBeginningOfCombat();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Wall")).isEmpty();
+    }
+
+    @Test
+    void castingNoncreatureSpellAfterCombatBeginsDoesNotCreateWall() {
+        addCreatureReady(player1, new InvisibleWoman());
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        advanceToBeginningOfCombat();
+        harness.setHand(player1, List.of(new BurstOfStrength()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        assertThat(findPermanents(player1, "Wall")).isEmpty();
+    }
+
+    @Test
+    void multipleAttackersTriggerOnceAndCanBoostOpponentsCreature() {
+        addCreatureReady(player1, new InvisibleWoman());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        declareAttackers(List.of(1, 2));
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, target.getId());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(target.isCantBeBlocked()).isTrue();
+    }
+
     private void advanceToBeginningOfCombat() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
     }
 }
