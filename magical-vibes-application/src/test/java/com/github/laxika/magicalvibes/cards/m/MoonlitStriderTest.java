@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GodsEyeGateToTheReikai;
 import com.github.laxika.magicalvibes.cards.k.KamiOfFalseHope;
 import com.github.laxika.magicalvibes.cards.k.KamiOfTatteredShoji;
 import com.github.laxika.magicalvibes.cards.k.KitsunePalliator;
+import com.github.laxika.magicalvibes.cards.w.WaxmaneBaku;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({MoonlitStrider.class, KamiOfFalseHope.class, KamiOfTatteredShoji.class,
-        KitsunePalliator.class, GodsEyeGateToTheReikai.class})
+        KitsunePalliator.class, GodsEyeGateToTheReikai.class, WaxmaneBaku.class})
 class MoonlitStriderTest extends BaseCardTest {
 
     @Test
@@ -30,8 +31,7 @@ class MoonlitStriderTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KitsunePalliator());
 
         harness.activateAbility(player1, 0, null, harness.getPermanentId(player1, "Kitsune Palliator"));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleListChoice(player1, "RED");
 
         harness.assertInGraveyard(player1, "Moonlit Strider");
@@ -46,8 +46,7 @@ class MoonlitStriderTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KitsunePalliator());
 
         harness.activateAbility(player1, 0, null, harness.getPermanentId(player1, "Kitsune Palliator"));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleListChoice(player1, "BLACK");
 
         harness.forceActivePlayer(player1);
@@ -96,6 +95,8 @@ class MoonlitStriderTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(spirit.getId()));
@@ -122,6 +123,8 @@ class MoonlitStriderTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(eligible.getId()));
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInHand(player1, "Kami of False Hope");
         harness.assertInGraveyard(player1, "Kami of Tattered Shoji");
@@ -130,7 +133,7 @@ class MoonlitStriderTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Soulshift may be declined")
+    @DisplayName("Soulshift requires a target and may be declined on resolution")
     void soulshiftMayBeDeclined() {
         harness.addToBattlefield(player1, new MoonlitStrider());
         harness.addToBattlefield(player1, new KitsunePalliator());
@@ -139,9 +142,14 @@ class MoonlitStriderTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, harness.getPermanentId(player1, "Kitsune Palliator"));
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
-        harness.handleMultipleCardsChosen(player1, List.of());
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.minCount()).isEqualTo(1);
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Kami of False Hope");
         harness.assertNotInHand(player1, "Kami of False Hope");
@@ -159,5 +167,81 @@ class MoonlitStriderTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         harness.assertInGraveyard(player1, "Kitsune Palliator");
         harness.assertInGraveyard(player1, "Kami of Tattered Shoji");
+    }
+
+    @Test
+    @DisplayName("Soulshift can return a Spirit with mana value exactly three")
+    void soulshiftReturnsSpiritAtBoundary() {
+        harness.addToBattlefield(player1, new MoonlitStrider());
+        harness.addToBattlefield(player1, new KitsunePalliator());
+        Card spirit = new WaxmaneBaku();
+        harness.setGraveyard(player1, List.of(spirit));
+
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player1, "Kitsune Palliator"));
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Waxmane Baku");
+        harness.assertNotInGraveyard(player1, "Waxmane Baku");
+
+        resolveAllTriggers();
+        harness.handleListChoice(player1, "WHITE");
+        assertThat(findPermanent(player1, "Kitsune Palliator").getProtectionFromColorsUntilEndOfTurn())
+                .contains(CardColor.WHITE);
+    }
+
+    @Test
+    @DisplayName("Soulshift cannot return a target that leaves the graveyard before resolution")
+    void soulshiftTargetLeavesGraveyard() {
+        Card strider = new MoonlitStrider();
+        harness.addToBattlefield(player1, strider);
+        harness.addToBattlefield(player1, new KitsunePalliator());
+        Card spirit = new KamiOfFalseHope();
+        harness.setGraveyard(player1, List.of(spirit));
+
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player1, "Kitsune Palliator"));
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
+        harness.setGraveyard(player1, List.of(strider));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Kami of False Hope");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+
+        resolveAllTriggers();
+        harness.handleListChoice(player1, "BLUE");
+        assertThat(findPermanent(player1, "Kitsune Palliator").getProtectionFromColorsUntilEndOfTurn())
+                .contains(CardColor.BLUE);
+    }
+
+    @Test
+    @DisplayName("Sacrificing the protection target in response makes the ability fail to resolve")
+    void protectionTargetLeavesBattlefield() {
+        harness.addToBattlefield(player1, new MoonlitStrider());
+        harness.addToBattlefield(player1, new KamiOfFalseHope());
+
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player1, "Kami of False Hope"));
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Moonlit Strider");
+        harness.assertInGraveyard(player1, "Kami of False Hope");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Moonlit Strider can target itself but is sacrificed before receiving protection")
+    void canTargetItself() {
+        harness.addToBattlefield(player1, new MoonlitStrider());
+
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player1, "Moonlit Strider"));
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Moonlit Strider");
+        harness.assertNotOnBattlefield(player1, "Moonlit Strider");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
