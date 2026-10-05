@@ -74,15 +74,85 @@ class LuxiorIgnitedTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(luxior.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
+    @Test
+    void minusTwoStillAffectsEquippedCreatureWhenCostRemovesLastLoyaltyCounters() {
+        Permanent luxior = addLuxior(player1, 2);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        luxior.setAttachedTo(creature.getId());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(luxior);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    void minusTwoWithoutEquippedCreatureDoesNotBoostOtherCreatures() {
+        Permanent luxior = addLuxior(player1, 3);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(luxior.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    @Test
+    void plusOneWithoutTargetKeepsExistingAttachmentAndIncreasesItsBonus() {
+        Permanent luxior = addLuxior(player1, 1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        luxior.setAttachedTo(creature.getId());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(luxior.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+    }
+
+    @Test
+    void plusOneMovesAttachmentAndItsCounterBonusToNewCreature() {
+        Permanent luxior = addLuxior(player1, 1);
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        luxior.setAttachedTo(first.getId());
+
+        harness.activateAbility(player1, 0, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(luxior.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
+    }
+
+    @Test
+    void cannotActivateAnotherLoyaltyAbilityInSameTurn() {
+        Permanent luxior = addLuxior(player1, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(luxior.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+    }
     private Permanent addLuxior(Player player, int loyalty) {
         Permanent luxior = harness.addToBattlefieldAndReturn(player, new LuxiorIgnited());
         luxior.setCounterCount(CounterType.LOYALTY, loyalty);
