@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -13,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(MutantTown.class)
 class MutantTownTest extends BaseCardTest {
@@ -33,8 +32,7 @@ class MutantTownTest extends BaseCardTest {
     @Test
     @DisplayName("Mana ability prompts for green or blue")
     void manaAbilityPromptsForGreenOrBlue() {
-        addReadyTown(player1);
-        GameData gd = harness.getGameData();
+        harness.addToBattlefieldAndReturn(player1, new MutantTown());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -47,7 +45,7 @@ class MutantTownTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing green adds one green mana")
     void choosingGreenAddsMana() {
-        Permanent town = addReadyTown(player1);
+        Permanent town = harness.addToBattlefieldAndReturn(player1, new MutantTown());
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handleListChoice(player1, "GREEN");
@@ -59,7 +57,7 @@ class MutantTownTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing blue adds one blue mana")
     void choosingBlueAddsMana() {
-        Permanent town = addReadyTown(player1);
+        Permanent town = harness.addToBattlefieldAndReturn(player1, new MutantTown());
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handleListChoice(player1, "BLUE");
@@ -68,10 +66,51 @@ class MutantTownTest extends BaseCardTest {
         assertThat(town.isTapped()).isTrue();
     }
 
-    private Permanent addReadyTown(Player player) {
-        Permanent perm = new Permanent(new MutantTown());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Life gain waits for the enter trigger to resolve")
+    void lifeGainUsesTheStack() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new MutantTown()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An entering tapped town cannot activate its mana ability")
+    void enteringTappedTownCannotProduceMana() {
+        harness.setHand(player1, List.of(new MutantTown()));
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A newly controlled untapped land can produce mana only once")
+    void manaAbilityIgnoresSummoningSicknessButRequiresUntappedLand() {
+        Permanent town = harness.addToBattlefieldAndReturn(player1, new MutantTown());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(town.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 }
