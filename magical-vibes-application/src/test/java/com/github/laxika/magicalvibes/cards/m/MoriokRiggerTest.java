@@ -82,6 +82,41 @@ class MoriokRiggerTest extends BaseCardTest {
         assertThat(rigger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("Each Rigger gets its own optional counter from one artifact death")
+    void multipleRiggersTriggerIndependently() {
+        Permanent first = addRigger();
+        Permanent second = addRigger();
+        harness.addToBattlefield(player2, new ConjurersBauble());
+
+        destroyArtifact(player2, "Conjurer's Bauble");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A trigger cannot put a counter on a Rigger that has left the battlefield")
+    void departedRiggerDoesNotReceiveCounter() {
+        Permanent rigger = addRigger();
+        harness.addToBattlefield(player2, new ConjurersBauble());
+        destroyArtifact(player2, "Conjurer's Bauble");
+
+        harness.setHand(player1, List.of(new DevourInShadow()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, rigger.getId());
+        harness.assertInGraveyard(player1, "Moriok Rigger");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(rigger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertNotOnBattlefield(player1, "Moriok Rigger");
+    }
+
     private Permanent addRigger() {
         return harness.addToBattlefieldAndReturn(player1, new MoriokRigger());
     }
