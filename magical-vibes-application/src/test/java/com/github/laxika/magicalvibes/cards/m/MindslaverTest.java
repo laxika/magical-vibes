@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Mindslaver.class, Ornithopter.class})
 class MindslaverTest extends BaseCardTest {
@@ -194,5 +195,99 @@ class MindslaverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.pendingTurnControl).containsEntry(opponentId, player1.getId());
+    }
+
+    @Test
+    @DisplayName("Sacrifice and mana are paid before Mindslaver's ability resolves")
+    void activationPaysCostsImmediately() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new Mindslaver());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        harness.assertNotOnBattlefield(player1, "Mindslaver");
+        harness.assertInGraveyard(player1, "Mindslaver");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.pendingTurnControl).isEmpty();
+
+        harness.passBothPriorities();
+        assertThat(gd.pendingTurnControl).containsEntry(player2.getId(), player1.getId());
+    }
+
+    @Test
+    @DisplayName("Tapped Mindslaver cannot pay its tap cost")
+    void cannotActivateWhileTapped() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new Mindslaver());
+        findPermanent(player1, "Mindslaver").setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Mindslaver");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingTurnControl).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Mindslaver cannot activate with only three mana")
+    void cannotActivateWithoutEnoughMana() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new Mindslaver());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Mindslaver");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingTurnControl).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Activation during the target's turn controls their following turn")
+    void activationDuringTargetTurnWaitsForNextTurn() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new Mindslaver());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.mindControlledPlayerId).isNull();
+        assertThat(gd.pendingTurnControl).containsEntry(player2.getId(), player1.getId());
+        advanceTurn(player1);
+        assertThat(gd.mindControlledPlayerId).isNull();
+        assertThat(gd.pendingTurnControl).containsEntry(player2.getId(), player1.getId());
+        advanceTurn(player2);
+        assertThat(gd.mindControlledPlayerId).isEqualTo(player2.getId());
+        assertThat(gd.mindControllerPlayerId).isEqualTo(player1.getId());
+        assertThat(gd.pendingTurnControl).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Controlled player cannot choose to cast a spell themselves")
+    void controlledPlayerCannotCastIndependently() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new Mindslaver());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        advanceTurn(player2);
+        harness.setHand(player2, List.of(new Ornithopter()));
+
+        assertThatThrownBy(() -> gs.playCard(gd, player2, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
     }
 }
