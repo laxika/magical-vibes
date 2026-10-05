@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,13 +16,24 @@ class RagingMinotaurTest extends BaseCardTest {
     @DisplayName("Haste allows Raging Minotaur to attack the turn it enters")
     void hasteAllowsAttackingTheTurnItEnters() {
         harness.setLife(player2, 20);
-        harness.setHand(player1, List.of(new RagingMinotaur()));
-        harness.addMana(player1, ManaColor.RED, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RagingMinotaur(), "{2}{R}{R}");
         harness.passBothPriorities();
         declareAttackers(List.of(0));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Haste does not allow a tapped Raging Minotaur to attack")
+    void hasteDoesNotAllowAttackingWhileTapped() {
+        harness.castFromHand(player1, new RagingMinotaur(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        var minotaur = findPermanent(player1, "Raging Minotaur");
+        assertThat(als.canAttack(gd, minotaur, player1.getId())).isTrue();
+
+        minotaur.setTapped(true);
+
+        assertThat(als.canAttack(gd, minotaur, player1.getId())).isFalse();
     }
 }
