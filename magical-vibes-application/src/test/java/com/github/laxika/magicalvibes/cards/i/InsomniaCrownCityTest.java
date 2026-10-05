@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(InsomniaCrownCity.class)
 class InsomniaCrownCityTest extends BaseCardTest {
@@ -52,10 +53,45 @@ class InsomniaCrownCityTest extends BaseCardTest {
         assertThat(land.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Insomnia enters tapped when put directly onto the battlefield")
+    void entersTappedWithoutBeingPlayed() {
+        Permanent land = harness.enterBattlefieldAndReturn(player1, new InsomniaCrownCity());
+
+        assertThat(land.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An already tapped Insomnia cannot produce mana")
+    void cannotActivateWhileTapped() {
+        Permanent land = addLandReady(player1);
+        land.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An untapped Insomnia can produce mana on the turn it enters")
+    void canActivateOnTurnItEnters() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new InsomniaCrownCity());
+        land.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
     private Permanent addLandReady(Player player) {
-        Permanent land = new Permanent(new InsomniaCrownCity());
+        Permanent land = harness.addToBattlefieldAndReturn(player, new InsomniaCrownCity());
         land.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(land);
         return land;
     }
 }
