@@ -27,7 +27,7 @@ class PyromaticsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -57,7 +57,7 @@ class PyromaticsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player2, 17);
     }
 
     @Test
@@ -92,13 +92,52 @@ class PyromaticsTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a land")
     void cannotTargetLand() {
-        harness.addToBattlefield(player2, new GruulTurf());
-        UUID targetId = harness.getPermanentId(player2, "Gruul Turf");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GruulTurf()).getId();
         harness.setHand(player1, List.of(new Pyromatics()));
         harness.addMana(player1, ManaColor.RED, 2);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Replicate copies can independently keep or change their targets")
+    void replicateCopiesMayIndependentlyTargetCreatureAndPlayer() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GruulNodorog());
+        harness.setLife(player2, 20);
+        castPyromatics(player2.getId(), List.of("{1}{R}", "{1}{R}"));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player2, 18);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Pyromatics");
+    }
+
+    @Test
+    @DisplayName("Copies deal lethal damage before remaining spells lose their target")
+    void replicateCopiesKillCreatureBeforeOriginalResolves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GruulNodorog());
+        castPyromatics(target.getId(), List.of("{1}{R}", "{1}{R}", "{1}{R}", "{1}{R}", "{1}{R}"));
+
+        harness.passBothPriorities();
+        for (int i = 0; i < 5; i++) {
+            harness.handleMayAbilityChosen(player1, false);
+        }
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Gruul Nodorog");
+        harness.assertInGraveyard(player2, "Gruul Nodorog");
+        harness.assertInGraveyard(player1, "Pyromatics");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void castPyromatics(UUID targetId, List<String> replicatePayments) {
