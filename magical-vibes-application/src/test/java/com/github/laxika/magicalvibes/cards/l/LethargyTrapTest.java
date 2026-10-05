@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LethargyTrap.class, GrizzlyBears.class})
 class LethargyTrapTest extends BaseCardTest {
 
     @Test
@@ -26,8 +28,7 @@ class LethargyTrapTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gqs.getEffectivePower(gd, firstAttacker)).isEqualTo(-1);
         assertThat(gqs.getEffectivePower(gd, secondAttacker)).isEqualTo(-1);
@@ -71,8 +72,7 @@ class LethargyTrapTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(-1);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -80,6 +80,57 @@ class LethargyTrapTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Alternate cost remains paid when fewer creatures are attacking at resolution")
+    void alternateCostDoesNotRequireThreeAttackersAtResolution() {
+        Permanent firstAttacker = addAttacker(new GrizzlyBears());
+        Permanent secondAttacker = addAttacker(new GrizzlyBears());
+        Permanent removedFromCombat = addAttacker(new GrizzlyBears());
+        harness.setHand(player1, List.of(new LethargyTrap()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castWithAlternateCost(player1, 0, (UUID) null);
+        removedFromCombat.setAttacking(false);
+        removedFromCombat.setAttackTarget(null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, firstAttacker)).isEqualTo(-1);
+        assertThat(gqs.getEffectivePower(gd, secondAttacker)).isEqualTo(-1);
+        assertThat(gqs.getEffectivePower(gd, removedFromCombat)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("An affected creature keeps the reduction after leaving combat")
+    void reductionPersistsAfterCreatureStopsAttacking() {
+        Permanent attacker = addAttacker(new GrizzlyBears());
+        harness.setHand(player1, List.of(new LethargyTrap()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveInstant(player1, 0);
+        attacker.setAttacking(false);
+        attacker.setAttackTarget(null);
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Creatures entering attacking after resolution are not affected")
+    void laterAttackerIsNotAffected() {
+        Permanent attacker = addAttacker(new GrizzlyBears());
+        harness.setHand(player1, List.of(new LethargyTrap()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveInstant(player1, 0);
+        Permanent laterAttacker = addAttacker(new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(-1);
+        assertThat(gqs.getEffectivePower(gd, laterAttacker)).isEqualTo(2);
     }
 
     private Permanent addAttacker(com.github.laxika.magicalvibes.model.Card card) {
