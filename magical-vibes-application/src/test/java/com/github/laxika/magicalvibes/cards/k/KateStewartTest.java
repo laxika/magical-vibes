@@ -40,6 +40,61 @@ class KateStewartTest extends BaseCardTest {
     }
 
     @Test
+    void separateTimeCounterPlacementsEachCreateASoldier() {
+        harness.addToBattlefield(player1, new KateStewart());
+        harness.enterBattlefieldAndReturn(player1, new FourKnocks());
+        resolveAllTriggers();
+        harness.enterBattlefieldAndReturn(player1, new FourKnocks());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Soldier")).hasSize(2);
+    }
+
+    @Test
+    void decliningPaymentDoesNotBoostKate() {
+        Permanent kate = addCreatureReady(player1, new KateStewart());
+        kate.setCounterCount(CounterType.TIME, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+            harness.handleMayAbilityChosen(player1, false);
+            resolveAllTriggers();
+
+            assertThat(gqs.getEffectivePower(gd, kate)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, kate)).isEqualTo(3);
+        });
+    }
+
+    @Test
+    void boostCountsAllControlledPermanentsAtResolutionAndIgnoresOpponentsCounters() {
+        Permanent kate = addCreatureReady(player1, new KateStewart());
+        kate.setCounterCount(CounterType.TIME, 1);
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new FourKnocks());
+        enchantment.setCounterCount(CounterType.TIME, 2);
+        Permanent opposingEnchantment = harness.addToBattlefieldAndReturn(player2, new FourKnocks());
+        opposingEnchantment.setCounterCount(CounterType.TIME, 10);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            enchantment.setCounterCount(CounterType.TIME, 4);
+            resolveAllTriggers();
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+            harness.handleMayAbilityChosen(player1, true);
+            resolveAllTriggers();
+
+            assertThat(gqs.getEffectivePower(gd, kate)).isEqualTo(8);
+            assertThat(gqs.getEffectiveToughness(gd, kate)).isEqualTo(8);
+            enchantment.setCounterCount(CounterType.TIME, 1);
+            assertThat(gqs.getEffectivePower(gd, kate)).isEqualTo(8);
+            assertThat(gqs.getEffectiveToughness(gd, kate)).isEqualTo(8);
+        });
+    }
+
+    @Test
     @DisplayName("Paying eight mana boosts only attacking creatures by controlled time counters")
     void payingOnAttackBoostsAttackersByTimeCounterCount() {
         addCreatureReady(player1, new KateStewart());
