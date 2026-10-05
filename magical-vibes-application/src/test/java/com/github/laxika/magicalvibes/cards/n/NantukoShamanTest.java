@@ -23,8 +23,7 @@ class NantukoShamanTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
         castNantukoShaman();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertInHand(player1, "Forest");
     }
@@ -75,6 +74,45 @@ class NantukoShamanTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Opponent's tapped lands do not prevent drawing")
+    void drawsWithOpponentsTappedLand() {
+        harness.addToBattlefieldAndReturn(player2, new Forest()).tap();
+        harness.setLibrary(player1, List.of(new Forest()));
+        castNantukoShaman();
+
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Tapped nonland permanents do not prevent drawing")
+    void drawsWithTappedNonland() {
+        harness.addToBattlefieldAndReturn(player1, new NantukoShaman()).tap();
+        harness.setLibrary(player1, List.of(new Forest()));
+        castNantukoShaman();
+
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Untapping a land after entry does not create a missed trigger")
+    void doesNotTriggerRetroactivelyWhenLandUntaps() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.tap();
+        harness.setLibrary(player1, List.of(new Forest()));
+        castNantukoShaman();
+        harness.passBothPriorities();
+
+        forest.untap();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotInHand(player1, "Forest");
+    }
+
+    @Test
     @DisplayName("Suspend exiles Nantuko Shaman with one time counter")
     void suspendExilesWithOneTimeCounter() {
         NantukoShaman card = suspendNantukoShaman();
@@ -98,12 +136,27 @@ class NantukoShamanTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertInHand(player1, "Forest");
         Permanent permanent = findPermanent(player1, "Nantuko Shaman");
         assertThat(gqs.hasKeyword(gd, permanent, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Declining the suspend cast leaves Nantuko Shaman exiled without counters")
+    void mayDeclineSuspendCast() {
+        NantukoShaman card = suspendNantukoShaman();
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Nantuko Shaman");
     }
 
     private void castNantukoShaman() {
