@@ -123,10 +123,71 @@ class PsychicPossessionTest extends BaseCardTest {
                 .anyMatch(card -> card instanceof PsychicPossession);
     }
 
+    @Test
+    @DisplayName("Skipping the draw step proceeds directly to the precombat main phase")
+    void skipsEntireDrawStepIncludingPriority() {
+        attachPossession(player1, player2);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new GuardianOfTheGuildpact()));
+
+        harness.withAutoStop(TurnStep.DRAW, () ->
+                harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> advanceToDraw(player1)));
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.PRECOMBAT_MAIN);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Each card drawn by the enchanted opponent gives a separate optional draw")
+    void multipleDrawsAllowIndependentChoices() {
+        attachPossession(player1, player2);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new GuardianOfTheGuildpact(), new GuardianOfTheGuildpact()));
+        harness.setLibrary(player2, List.of(new GuardianOfTheGuildpact(), new GuardianOfTheGuildpact()));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player2.getId(), 2));
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The enchanted opponent keeps their normal draw step")
+    void enchantedOpponentStillDrawsNormally() {
+        attachPossession(player1, player2);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new GuardianOfTheGuildpact()));
+
+        harness.withAutoStop(TurnStep.DRAW, () -> advanceToDraw(player2));
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.DRAW);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
     private Permanent attachPossession(Player controller, Player enchantedPlayer) {
-        Permanent aura = new Permanent(new PsychicPossession());
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new PsychicPossession());
         aura.setAttachedTo(enchantedPlayer.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
         return aura;
     }
 
