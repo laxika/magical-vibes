@@ -69,7 +69,7 @@ class PetraSphinxTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Empty library does not crash or create a card choice")
+    @DisplayName("Empty library still allows naming a card but moves no cards")
     void emptyLibraryHandledGracefully() {
         harness.setLife(player2, 20);
         addReadySphinx(player1);
@@ -108,5 +108,27 @@ class PetraSphinxTest extends BaseCardTest {
 
     private void addReadySphinx(Player player) {
         addCreatureReady(player, new PetraSphinx());
+    }
+
+    @Test
+    @DisplayName("The ability taps its source and resolves after the source leaves the battlefield")
+    void resolvesWithoutSourceAndMovesOnlyTopCard() {
+        var sphinx = addCreatureReady(player1, new PetraSphinx());
+        ChainLightning topCard = new ChainLightning();
+        PetraSphinx nextCard = new PetraSphinx();
+        harness.setLibrary(player2, List.of(topCard, nextCard));
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        assertThat(sphinx.isTapped()).isTrue();
+        gd.playerBattlefields.get(player1.getId()).remove(sphinx);
+        gd.playerGraveyards.get(player1.getId()).add(sphinx.getCard());
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, "Chain Lightning");
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 1).contains(topCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(nextCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(topCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
