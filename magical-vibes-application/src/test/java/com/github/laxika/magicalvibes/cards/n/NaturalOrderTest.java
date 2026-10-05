@@ -20,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NaturalOrder.class, GrizzlyBears.class, ElvishRanger.class, HornedTurtle.class, Plains.class, NaturesLore.class})
+@CardUsed({NaturalOrder.class, GrizzlyBears.class, ElvishRanger.class, HornedTurtle.class, Plains.class, NaturesLore.class, AngelOfJubilation.class})
 class NaturalOrderTest extends BaseCardTest {
 
     // ===== Casting (additional cost: sacrifice a green creature) =====
@@ -173,7 +173,55 @@ class NaturalOrderTest extends BaseCardTest {
                 .containsExactlyInAnyOrder("Nature's Lore", "Horned Turtle", "Plains");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's green creature")
+    void cannotSacrificeOpponentsCreature() {
+        Permanent greenCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new NaturalOrder()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, greenCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player1, "Natural Order");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped green creature can pay the sacrifice cost")
+    void canSacrificeTappedCreature() {
+        Permanent greenCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        greenCreature.setTapped(true);
+        harness.setHand(player1, List.of(new NaturalOrder()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.setLibrary(player1, List.of(new ElvishRanger()));
+
+        harness.castSorceryWithSacrifice(player1, 0, greenCreature.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Elvish Ranger");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .allMatch(permanent -> !permanent.isTapped());
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent casting or completing resolution")
+    void resolvesWithEmptyLibrary() {
+        castNaturalOrder();
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Natural Order");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
 
     private void castNaturalOrder() {
         Permanent greenCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
