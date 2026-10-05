@@ -71,4 +71,52 @@ class LadyCaleriaTest extends BaseCardTest {
                 .hasMessageContaining("attacking or blocking creature");
         assertThat(lady.isTapped()).isFalse();
     }
+
+    @Test
+    void canDamageOwnAttackingCreature() {
+        addCreatureReady(player1, new LadyCaleria());
+        Permanent attacker = addCreatureReady(player1, new DurkwoodBoars());
+        attacker.setAttacking(true);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    void doesNotDamageCreatureThatStopsBlockingBeforeResolution() {
+        Permanent lady = addCreatureReady(player1, new LadyCaleria());
+        Permanent blocker = addCreatureReady(player1, new DurkwoodBoars());
+        blocker.setBlocking(true);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        blocker.setBlocking(false);
+        harness.passBothPriorities();
+
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(lady.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void abilityResolvesAfterLadyCaleriaLeavesBattlefield() {
+        Permanent lady = addCreatureReady(player1, new LadyCaleria());
+        Permanent attacker = addCreatureReady(player2, new DurkwoodBoars());
+        attacker.setAttacking(true);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(lady);
+        gd.playerGraveyards.get(player1.getId()).add(lady.getCard());
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
 }
