@@ -29,7 +29,6 @@ class InfernalCaretakerTest extends BaseCardTest {
 
         harness.castCreatureWithMorph(player1, 0);
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         Permanent caretaker = findPermanent(player1, "Infernal Caretaker");
@@ -57,7 +56,6 @@ class InfernalCaretakerTest extends BaseCardTest {
 
         harness.castCreatureWithMorph(player1, 0);
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         Permanent caretaker = findPermanent(player1, "Infernal Caretaker");
@@ -70,5 +68,67 @@ class InfernalCaretakerTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).doesNotContain(opponentNonZombie);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ownNonZombie);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentNonZombie);
+    }
+
+    @Test
+    void castingFaceUpDoesNotReturnZombies() {
+        Card ownZombie = new ZombieBrute();
+        Card opponentZombie = new ZombieBrute();
+        harness.setGraveyard(player1, List.of(ownZombie));
+        harness.setGraveyard(player2, List.of(opponentZombie));
+        harness.setHand(player1, List.of(new InfernalCaretaker()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Infernal Caretaker");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ownZombie);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentZombie);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(ownZombie);
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(opponentZombie);
+    }
+
+    @Test
+    void returnsEveryZombiePresentAtResolutionRatherThanAtTriggerTime() {
+        Card removedZombie = new ZombieBrute();
+        Card firstZombie = new ZombieBrute();
+        Card secondZombie = new ZombieBrute();
+        Card opponentZombie = new ZombieBrute();
+        Card nonZombie = new GoblinTurncoat();
+        harness.setGraveyard(player1, List.of(removedZombie));
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player1, List.of(new InfernalCaretaker()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(removedZombie);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(removedZombie);
+
+        Permanent caretaker = findPermanent(player1, "Infernal Caretaker");
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(caretaker));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(removedZombie);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(removedZombie);
+
+        harness.setGraveyard(player1, List.of(firstZombie, nonZombie, secondZombie));
+        harness.setExile(player1, List.of(removedZombie));
+        harness.setGraveyard(player2, List.of(opponentZombie));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(firstZombie, secondZombie)
+                .doesNotContain(removedZombie, nonZombie, opponentZombie);
+        assertThat(gd.playerHands.get(player2.getId())).contains(opponentZombie)
+                .doesNotContain(firstZombie, secondZombie);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(nonZombie);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 }
