@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @CardUsed({Pangosaur.class, Forest.class})
 class PangosaurTest extends BaseCardTest {
 
@@ -70,5 +72,31 @@ class PangosaurTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player2, new Forest());
 
         harness.assertOnBattlefield(player1, "Pangosaur");
+    }
+
+    @Test
+    @DisplayName("A land play triggers each player's Pangosaur before either creature returns")
+    void landPlayTriggersEachPangosaurIndependently() {
+        harness.addToBattlefield(player1, new Pangosaur());
+        harness.addToBattlefield(player2, new Pangosaur());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Pangosaur");
+        harness.assertOnBattlefield(player2, "Pangosaur");
+        assertThat(gd.stack).hasSize(2);
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Pangosaur");
+        harness.assertNotOnBattlefield(player2, "Pangosaur");
+        harness.assertInHand(player1, "Pangosaur");
+        harness.assertInHand(player2, "Pangosaur");
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.stack).isEmpty();
     }
 }
