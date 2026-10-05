@@ -90,4 +90,114 @@ class MagmaOpusTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Treasure")).isNotNull();
         harness.assertInGraveyard(player1, "Magma Opus");
     }
+    @Test
+    void resolvesRemainingEffectsWhenOneDamageTargetIsGone() {
+        Permanent removedTarget = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent remainingTarget = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        GrizzlyBears drawn1 = new GrizzlyBears();
+        GrizzlyBears drawn2 = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(drawn1, drawn2));
+        harness.setHand(player1, List.of(new MagmaOpus()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        gs.playCard(gd, player1, 0, 0, null,
+                Map.of(removedTarget.getId(), 2, remainingTarget.getId(), 2),
+                List.of(removedTarget.getId(), remainingTarget.getId()), List.of());
+        gd.playerBattlefields.get(player2.getId()).remove(removedTarget);
+        harness.passBothPriorities();
+
+        assertThat(remainingTarget.getMarkedDamage()).isEqualTo(2);
+        assertThat(remainingTarget.isTapped()).isTrue();
+        assertThat(findPermanents(player1, "Elemental")).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn1, drawn2);
+    }
+
+    @Test
+    void doesNothingWhenAllTargetsAreGone() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        GrizzlyBears drawn1 = new GrizzlyBears();
+        GrizzlyBears drawn2 = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(drawn1, drawn2));
+        harness.setHand(player1, List.of(new MagmaOpus()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        gs.playCard(gd, player1, 0, 0, null,
+                Map.of(first.getId(), 4), List.of(first.getId(), second.getId()), List.of());
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Elemental")).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn1, drawn2);
+        harness.assertInGraveyard(player1, "Magma Opus");
+    }
+
+    @Test
+    void dealsDamageToPlayerAndCanTapOwnAlreadyTappedPermanents() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        first.tap();
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new MagmaOpus()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.setLife(player2, 20);
+
+        gs.playCard(gd, player1, 0, 0, null,
+                Map.of(player2.getId(), 4), List.of(first.getId(), second.getId()), List.of());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(findPermanents(player1, "Elemental")).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void rejectsChoosingSamePermanentTwiceForTapping() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new MagmaOpus()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, null,
+                Map.of(player2.getId(), 4), List.of(target.getId(), target.getId()), List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void handAbilityCanUseMixedHybridPaymentAndDiscardsBeforeResolution() {
+        harness.setHand(player1, List.of(new MagmaOpus()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Magma Opus");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+    }
+
+    @Test
+    void handAbilityCanUseOnlyRedMana() {
+        harness.setHand(player1, List.of(new MagmaOpus()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        harness.assertInGraveyard(player1, "Magma Opus");
+    }
 }
