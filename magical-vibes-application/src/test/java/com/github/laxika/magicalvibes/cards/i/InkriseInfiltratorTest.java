@@ -74,9 +74,60 @@ class InkriseInfiltratorTest extends BaseCardTest {
     }
 
     private Permanent addReadyInkriseInfiltrator(Player player) {
-        Permanent permanent = new Permanent(new InkriseInfiltrator());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new InkriseInfiltrator());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
+    }
+
+    @Test
+    @DisplayName("The ability requires black mana even when enough total mana is available")
+    void cannotActivateWithoutBlackMana() {
+        addReadyInkriseInfiltrator(player1);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent infiltrator = harness.addToBattlefieldAndReturn(player1, new InkriseInfiltrator());
+        infiltrator.setSummoningSick(true);
+        infiltrator.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(infiltrator.getEffectivePower()).isEqualTo(3);
+        assertThat(infiltrator.getEffectiveToughness()).isEqualTo(4);
+        assertThat(infiltrator.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The boost applies only to its source and only when the ability resolves")
+    void boostsOnlySourceOnResolution() {
+        Permanent source = addReadyInkriseInfiltrator(player1);
+        Permanent other = addReadyInkriseInfiltrator(player1);
+        Permanent opposing = addReadyInkriseInfiltrator(player2);
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(source.getEffectivePower()).isEqualTo(1);
+        assertThat(source.getEffectiveToughness()).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(source.getEffectivePower()).isEqualTo(3);
+        assertThat(source.getEffectiveToughness()).isEqualTo(4);
+        assertThat(other.getEffectivePower()).isEqualTo(1);
+        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(opposing.getEffectivePower()).isEqualTo(1);
+        assertThat(opposing.getEffectiveToughness()).isEqualTo(2);
     }
 }
