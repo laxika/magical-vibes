@@ -1,27 +1,23 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Lictor.class, GrizzlyBears.class, Forest.class})
+@CardUsed({Lictor.class, Forest.class})
 class LictorTest extends BaseCardTest {
 
     @Test
     @DisplayName("Creates a trampling Tyranid Warrior when an opponent's creature entered this turn")
     void createsTokenAfterOpponentCreatureEnters() {
-        harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player2, new Lictor());
 
         castAndResolveLictor();
 
@@ -36,7 +32,7 @@ class LictorTest extends BaseCardTest {
     @Test
     @DisplayName("Does not create a token when only your creature entered this turn")
     void doesNotCreateTokenAfterOwnCreatureEnters() {
-        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player1, new Lictor());
 
         castAndResolveLictor();
 
@@ -54,11 +50,61 @@ class LictorTest extends BaseCardTest {
     }
 
     private void castAndResolveLictor() {
-        harness.setHand(player1, List.of(new Lictor()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Lictor(), "{3}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
+    }
+
+    @Test
+    void doesNotTriggerWithoutAnOpponentCreatureEntry() {
+        harness.castFromHand(player1, new Lictor(), "{3}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(countPermanents(player1, "Tyranid Warrior")).isZero();
+    }
+
+    @Test
+    void preExistingOpponentCreatureDoesNotQualify() {
+        harness.addToBattlefield(player2, new Lictor());
+
+        castAndResolveLictor();
+
+        assertThat(countPermanents(player1, "Tyranid Warrior")).isZero();
+    }
+
+    @Test
+    void opponentCreatureEnteringAfterLictorCannotEnableItsAbility() {
+        harness.castFromHand(player1, new Lictor(), "{3}{G}");
+        harness.passBothPriorities();
+        harness.enterBattlefieldAndReturn(player2, new Lictor());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Tyranid Warrior")).isZero();
+    }
+
+    @Test
+    void createsOnlyOneTokenAfterMultipleOpponentCreatureEntries() {
+        harness.enterBattlefieldAndReturn(player2, new Lictor());
+        harness.enterBattlefieldAndReturn(player2, new Lictor());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        castAndResolveLictor();
+
+        assertThat(countPermanents(player1, "Tyranid Warrior")).isEqualTo(1);
+    }
+
+    @Test
+    void opponentCreatureStillQualifiesAfterItDies() {
+        Permanent creature = harness.enterBattlefieldAndReturn(player2, new Lictor());
+        creature.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+
+        castAndResolveLictor();
+
+        assertThat(countPermanents(player1, "Tyranid Warrior")).isEqualTo(1);
     }
 }
