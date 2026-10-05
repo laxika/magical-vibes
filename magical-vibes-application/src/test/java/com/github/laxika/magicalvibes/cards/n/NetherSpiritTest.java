@@ -101,4 +101,62 @@ class NetherSpiritTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(spirit.getId()));
     }
+
+    @Test
+    @DisplayName("Does not trigger during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        harness.setGraveyard(player1, List.of(new NetherSpirit()));
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Two Nether Spirits prevent either ability from triggering")
+    void twoSpiritsDoNotTrigger() {
+        harness.setGraveyard(player1, List.of(new NetherSpirit(), new NetherSpirit()));
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Removing the other creature after upkeep begins does not create a trigger")
+    void becomingOnlyCreatureAfterUpkeepBeginsDoesNotTrigger() {
+        NetherSpirit spirit = new NetherSpirit();
+        harness.setGraveyard(player1, List.of(spirit, new ShockTroops()));
+
+        advanceToUpkeep(player1);
+        harness.setGraveyard(player1, List.of(spirit));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Nether Spirit");
+    }
+
+    @Test
+    @DisplayName("Does not return a new graveyard incarnation of Nether Spirit")
+    void doesNotReturnIfSpiritLeavesAndReentersGraveyard() {
+        NetherSpirit spirit = new NetherSpirit();
+        harness.setGraveyard(player1, List.of(spirit));
+        gd.markGraveyardEntry(spirit);
+
+        advanceToUpkeep(player1);
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(spirit));
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(spirit));
+        gd.markGraveyardEntry(spirit);
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        harness.assertNotOnBattlefield(player1, "Nether Spirit");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spirit);
+    }
 }
