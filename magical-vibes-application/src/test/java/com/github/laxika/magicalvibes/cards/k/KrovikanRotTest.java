@@ -30,8 +30,7 @@ class KrovikanRotTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new KjeldoranOutrider());
         giveKrovikanRot();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertInGraveyard(player2, "Kjeldoran Outrider");
     }
@@ -44,6 +43,54 @@ class KrovikanRotTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("power 2 or less");
+    }
+
+    @Test
+    void cannotTargetNoncreaturePermanent() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BorealShelf());
+        giveKrovikanRot();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotRecoverFromCreatureDestroyedDuringItsOwnResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BorealDruid());
+        giveKrovikanRot();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertInGraveyard(player1, "Boreal Druid");
+        harness.assertInGraveyard(player1, "Krovikan Rot");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void olderRecoverTriggerCannotExileCardAfterItIsReturnedAndRecast() {
+        Card rot = new KrovikanRot();
+        harness.setGraveyard(player1, List.of(rot));
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new BorealDruid());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new BorealDruid());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new KjeldoranOutrider());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, first);
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, second);
+        });
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertInHand(player1, "Krovikan Rot");
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(rot);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(rot);
     }
 
     @Test
