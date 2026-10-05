@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.e.EnduringRenewal;
 import com.github.laxika.magicalvibes.cards.y.YouthfulKnight;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PursuitOfKnowledge.class, YouthfulKnight.class})
+@CardUsed({PursuitOfKnowledge.class, YouthfulKnight.class, EnduringRenewal.class})
 class PursuitOfKnowledgeTest extends BaseCardTest {
 
     @Test
@@ -136,10 +137,40 @@ class PursuitOfKnowledgeTest extends BaseCardTest {
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 
+    @Test
+    void sacrificeAndCounterRemovalArePaidBeforeDrawing() {
+        Permanent pursuit = addPursuit();
+        pursuit.setCounterCount(CounterType.STUDY, 4);
+        YouthfulKnight card = new YouthfulKnight();
+        harness.setLibrary(player1, List.of(card));
+        int handSize = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(pursuit.getCounterCount(CounterType.STUDY)).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Pursuit of Knowledge");
+        harness.assertInGraveyard(player1, "Pursuit of Knowledge");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(card);
+    }
+
+    @Test
+    void controllerMustChooseReplacementBeforeEnduringRenewalMovesCreature() {
+        Permanent pursuit = addPursuit();
+        harness.addToBattlefield(player1, new EnduringRenewal());
+        YouthfulKnight card = new YouthfulKnight();
+        harness.setLibrary(player1, List.of(card));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(card);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
+        assertThat(pursuit.getCounterCount(CounterType.STUDY)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+    }
+
     private Permanent addPursuit() {
-        Permanent pursuit = new Permanent(new PursuitOfKnowledge());
-        pursuit.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(pursuit);
-        return pursuit;
+        return harness.addToBattlefieldAndReturn(player1, new PursuitOfKnowledge());
     }
 }
