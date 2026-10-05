@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.q;
 
+import com.github.laxika.magicalvibes.cards.c.Conversion;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.Scrubland;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({QuarumTrenchGnomes.class, Plains.class, Forest.class, LightningBolt.class})
+@CardUsed({QuarumTrenchGnomes.class, Plains.class, Forest.class, LightningBolt.class,
+        Conversion.class, Mountain.class, Scrubland.class})
 class QuarumTrenchGnomesTest extends BaseCardTest {
 
     @Test
@@ -94,6 +98,92 @@ class QuarumTrenchGnomesTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Replaces white mana from a Mountain made into a Plains by Conversion")
+    void replacesManaFromLandMadeIntoPlains() {
+        Permanent gnomes = addCreatureReady(player1, new QuarumTrenchGnomes());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.addToBattlefield(player1, new Conversion());
+
+        harness.activateAbility(player1, battlefieldIndex(gnomes), null, mountain.getId());
+        harness.passBothPriorities();
+        harness.tapPermanent(player1, battlefieldIndex(mountain));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent gnomes = harness.addToBattlefieldAndReturn(player1, new QuarumTrenchGnomes());
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(gnomes), null, plains.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gnomes.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Activation taps the Gnomes and prevents another activation before untapping")
+    void paysTapCost() {
+        Permanent gnomes = addCreatureReady(player1, new QuarumTrenchGnomes());
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+
+        harness.activateAbility(player1, battlefieldIndex(gnomes), null, plains.getId());
+        assertThat(gnomes.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(gnomes), null, plains.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.passBothPriorities();
+        harness.tapPermanent(player1, battlefieldIndex(plains));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Ability resolves after the Gnomes are destroyed in response")
+    void resolvesAfterSourceIsDestroyedInResponse() {
+        Permanent gnomes = addCreatureReady(player1, new QuarumTrenchGnomes());
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, battlefieldIndex(gnomes), null, plains.getId());
+        harness.castInstant(player1, 0, gnomes.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Quarum Trench Gnomes");
+        harness.passBothPriorities();
+        harness.tapPermanent(player1, battlefieldIndex(plains));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Replaces white mana from a nonbasic Plains while leaving its black mana unchanged")
+    void replacesOnlyWhiteManaFromDualLand() {
+        Permanent gnomes = addCreatureReady(player1, new QuarumTrenchGnomes());
+        Permanent scrubland = harness.addToBattlefieldAndReturn(player1, new Scrubland());
+
+        harness.activateAbility(player1, battlefieldIndex(gnomes), null, scrubland.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, battlefieldIndex(scrubland), 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+
+        harness.performUntapStep(player1);
+        harness.activateAbility(player1, battlefieldIndex(scrubland), 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
 
     private int battlefieldIndex(Permanent permanent) {
