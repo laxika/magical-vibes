@@ -158,4 +158,93 @@ class PhyrexianPlaguelordTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Aladdin's Ring");
     }
 
+    @Test
+    @DisplayName("Tap/sacrifice ability cannot be activated with summoning sickness")
+    void tapSacAbilityCannotActivateWithSummoningSickness() {
+        harness.addToBattlefield(player1, new PhyrexianPlaguelord());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BogImp());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Phyrexian Plaguelord");
+        harness.assertNotInGraveyard(player1, "Phyrexian Plaguelord");
+    }
+
+    @Test
+    @DisplayName("Sacrifice-a-creature ability works while tapped and summoning sick")
+    void sacCreatureAbilityWorksWhileTappedAndSummoningSick() {
+        Permanent plaguelord = harness.addToBattlefieldAndReturn(player1, new PhyrexianPlaguelord());
+        plaguelord.tap();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BogImp());
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+
+        harness.assertInGraveyard(player1, "Phyrexian Plaguelord");
+        harness.assertOnBattlefield(player2, "Bog Imp");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Bog Imp");
+    }
+
+    @Test
+    @DisplayName("Tap/sacrifice ability pays its cost before resolution and can target itself")
+    void tapSacAbilityCanTargetItself() {
+        Permanent plaguelord = addCreatureReady(player1, new PhyrexianPlaguelord());
+
+        harness.activateAbility(player1, 0, null, plaguelord.getId());
+
+        harness.assertNotOnBattlefield(player1, "Phyrexian Plaguelord");
+        harness.assertInGraveyard(player1, "Phyrexian Plaguelord");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Phyrexian Plaguelord");
+    }
+
+    @Test
+    @DisplayName("A targeted creature can also be sacrificed to pay the second ability's cost")
+    void sacCreatureAbilityCanSacrificeItsTarget() {
+        addCreatureReady(player1, new PhyrexianPlaguelord());
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new BogImp());
+
+        harness.activateAbility(player1, 0, 1, null, fodder.getId());
+        harness.handlePermanentChosen(player1, fodder.getId());
+
+        harness.assertInGraveyard(player1, "Bog Imp");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Phyrexian Plaguelord");
+        harness.assertInGraveyard(player1, "Bog Imp");
+    }
+
+    @Test
+    @DisplayName("The second ability can target a friendly creature and its -1/-1 expires")
+    void sacCreatureAbilityCanTargetSourceAndWearsOff() {
+        Permanent plaguelord = addCreatureReady(player1, new PhyrexianPlaguelord());
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new BogImp());
+
+        harness.activateAbility(player1, 0, 1, null, plaguelord.getId());
+        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.passBothPriorities();
+
+        assertThat(plaguelord.getPowerModifier()).isEqualTo(-1);
+        assertThat(plaguelord.getToughnessModifier()).isEqualTo(-1);
+        harness.assertOnBattlefield(player1, "Phyrexian Plaguelord");
+
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(plaguelord.getPowerModifier()).isZero();
+        assertThat(plaguelord.getToughnessModifier()).isZero();
+    }
+
 }
