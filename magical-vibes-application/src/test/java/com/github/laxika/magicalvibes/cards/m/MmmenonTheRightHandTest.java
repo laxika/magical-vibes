@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -38,8 +39,7 @@ class MmmenonTheRightHandTest extends BaseCardTest {
         Card artifact = new Bonesplitter();
         harness.setLibrary(player1, List.of(artifact));
 
-        harness.castFromLibraryTop(player1);
-        harness.passBothPriorities();
+        harness.castAndResolveFromLibraryTop(player1);
 
         harness.assertOnBattlefield(player1, "Bonesplitter");
         assertThat(gd.playerManaPools.get(player1.getId()).getNonHandSpellOnlyManaTotal()).isZero();
@@ -69,6 +69,96 @@ class MmmenonTheRightHandTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(creature);
+    }
+
+    @Test
+    void looksAtNonartifactTopCardPrivatelyDuringOpponentsTurn() {
+        harness.addToBattlefield(player1, new MmmenonTheRightHand());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearMessages();
+
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages()).anyMatch(message ->
+                message.contains("\"revealedLibraryTopCards\":[[{")
+                        && message.contains("Grizzly Bears") && message.contains("}],[]]"));
+        assertThat(harness.getConn2().getSentMessages()).anyMatch(message ->
+                message.contains("\"revealedLibraryTopCards\":[[],[]]"));
+    }
+
+    @Test
+    void canCastSuccessiveArtifactCreaturesFromLibraryTop() {
+        harness.addToBattlefield(player1, new MmmenonTheRightHand());
+        harness.setLibrary(player1, List.of(new Ornithopter(), new Ornithopter()));
+
+        harness.castAndResolveFromLibraryTop(player1);
+        harness.castAndResolveFromLibraryTop(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard() instanceof Ornithopter).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void libraryPermissionDoesNotGrantFlash() {
+        harness.addToBattlefield(player1, new MmmenonTheRightHand());
+        Card artifact = new Ornithopter();
+        harness.setLibrary(player1, List.of(artifact));
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(artifact);
+    }
+
+    @Test
+    void noncreatureArtifactsCanUseGrantedManaAbilityImmediately() {
+        harness.addToBattlefield(player1, new MmmenonTheRightHand());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
+
+        harness.activateAbility(player1, 1, 1, null, null);
+
+        assertThat(equipment.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getNonHandSpellOnlyMana(ManaColor.BLUE))
+                .isEqualTo(1);
+    }
+
+    @Test
+    void artifactCreaturesNeedToOvercomeSummoningSicknessForGrantedTapAbility() {
+        harness.addToBattlefield(player1, new MmmenonTheRightHand());
+        harness.addToBattlefield(player1, new Ornithopter());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getNonHandSpellOnlyManaTotal()).isZero();
+    }
+
+    @Test
+    void opponentsArtifactsDoNotGainManaAbility() {
+        harness.addToBattlefield(player1, new MmmenonTheRightHand());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        artifact.setSummoningSick(false);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player2.getId()).getNonHandSpellOnlyManaTotal()).isZero();
+    }
+
+    @Test
+    void restrictedManaCannotPayEquipCost() {
+        addMmmenonAndReadyOrnithopter();
+        harness.addToBattlefield(player1, new Bonesplitter());
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 2, 0, null,
+                harness.getPermanentId(player1, "Ornithopter")))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getNonHandSpellOnlyMana(ManaColor.BLUE))
+                .isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addMmmenonAndReadyOrnithopter() {
