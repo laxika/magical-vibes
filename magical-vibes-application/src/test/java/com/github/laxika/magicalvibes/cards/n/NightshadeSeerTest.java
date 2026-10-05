@@ -147,6 +147,52 @@ class NightshadeSeerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Revealing several black cards can reduce a creature to zero toughness")
+    void multipleRevealedCardsKillTarget() {
+        addReadySeer();
+        Permanent ogre = harness.addToBattlefieldAndReturn(player2, new HulkingOgre());
+        RavenousRats first = new RavenousRats();
+        RavenousRats second = new RavenousRats();
+        NightshadeSeer third = new NightshadeSeer();
+        harness.setHand(player1, List.of(first, second, third));
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, ogre.getId());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId(), third.getId()));
+
+        harness.assertNotOnBattlefield(player2, "Hulking Ogre");
+        harness.assertInGraveyard(player2, "Hulking Ogre");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second, third);
+    }
+
+    @Test
+    @DisplayName("Chooses cards from the hand at resolution rather than activation")
+    void usesHandAtResolution() {
+        addReadySeer();
+        Permanent ogre = harness.addToBattlefieldAndReturn(player2, new HulkingOgre());
+        RavenousRats original = new RavenousRats();
+        NightshadeSeer replacement = new NightshadeSeer();
+        harness.setHand(player1, List.of(original));
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, ogre.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.setHand(player1, List.of(replacement));
+        harness.passBothPriorities();
+
+        PendingInteraction.RevealAnyNumberOfCardsFromHandChoice choice =
+                (PendingInteraction.RevealAnyNumberOfCardsFromHandChoice)
+                        gd.interaction.activeInteraction();
+        assertThat(choice.validCardIds()).containsExactly(replacement.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(replacement.getId()));
+
+        assertThat(gqs.getEffectivePower(gd, ogre)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ogre)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(replacement);
+    }
+
     private Permanent addReadySeer() {
         return addCreatureReady(player1, new NightshadeSeer());
     }
