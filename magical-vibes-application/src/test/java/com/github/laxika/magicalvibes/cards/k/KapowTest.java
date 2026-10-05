@@ -30,8 +30,7 @@ class KapowTest extends BaseCardTest {
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID giantId = harness.getPermanentId(player2, "Hill Giant");
-        harness.castSorcery(player1, 0, List.of(bearId, giantId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(bearId, giantId));
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Hill Giant");
@@ -47,8 +46,7 @@ class KapowTest extends BaseCardTest {
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID elvesId = harness.getPermanentId(player2, "Llanowar Elves");
-        harness.castSorcery(player1, 0, List.of(bearId, elvesId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(bearId, elvesId));
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Llanowar Elves");
@@ -86,5 +84,40 @@ class KapowTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(bearId, elvesId)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Keeps the counter but does not fight when the opponent's target leaves")
+    void counterStillAddedWhenSecondTargetLeaves() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new Kapow()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castSorcery(player1, 0, List.of(bear.getId(), giant.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(giant);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(bear.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Kapow!");
+    }
+
+    @Test
+    @DisplayName("Does not damage the opponent's target when your target leaves")
+    void noFightWhenFirstTargetLeaves() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new Kapow()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castSorcery(player1, 0, List.of(bear.getId(), elves.getId()));
+
+        gd.playerBattlefields.get(player1.getId()).remove(bear);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Llanowar Elves");
+        assertThat(elves.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Kapow!");
     }
 }
