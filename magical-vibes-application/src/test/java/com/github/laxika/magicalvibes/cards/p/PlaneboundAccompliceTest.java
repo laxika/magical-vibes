@@ -7,8 +7,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -54,9 +52,13 @@ class PlaneboundAccompliceTest extends BaseCardTest {
 
         Permanent planeswalker = findPermanent(player1, "Garruk Wildspeaker");
         assertThat(planeswalker).isNotNull();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(action -> action.permanentId().equals(planeswalker.getId())
-                        && action.kind() == DelayedPermanentActionKind.SACRIFICE_AT_END_STEP);
+        harness.assertNotInHand(player1, "Garruk Wildspeaker");
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player1, "Garruk Wildspeaker");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Garruk Wildspeaker");
     }
 
     @Test
@@ -78,6 +80,9 @@ class PlaneboundAccompliceTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Garruk Wildspeaker");
 
         harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Garruk Wildspeaker");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Garruk Wildspeaker");
         harness.assertInGraveyard(player1, "Garruk Wildspeaker");
     }
@@ -95,13 +100,52 @@ class PlaneboundAccompliceTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Garruk Wildspeaker");
         harness.assertNotOnBattlefield(player1, "Garruk Wildspeaker");
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isEmpty();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Garruk Wildspeaker");
+    }
+
+    @Test
+    @DisplayName("Can activate while summoning sick and tapped")
+    void activatesWhileSummoningSickAndTapped() {
+        Permanent accomplice = harness.addToBattlefieldAndReturn(player1, new PlaneboundAccomplice());
+        accomplice.setSummoningSick(true);
+        accomplice.tap();
+        harness.setHand(player1, List.of(new GarrukWildspeaker()));
+        addRedMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Garruk Wildspeaker");
+        harness.assertNotInHand(player1, "Garruk Wildspeaker");
+    }
+
+    @Test
+    @DisplayName("Accepting with no planeswalker in hand completes without a card choice")
+    void acceptingWithNoPlaneswalkerCompletes() {
+        addReadyAccomplice();
+        harness.setHand(player1, List.of(new Mountain(), new GrizzlyBears()));
+        addRedMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Mountain");
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     private Permanent addReadyAccomplice() {
-        Permanent accomplice = new Permanent(new PlaneboundAccomplice());
+        Permanent accomplice = harness.addToBattlefieldAndReturn(player1, new PlaneboundAccomplice());
         accomplice.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(accomplice);
         return accomplice;
     }
 
