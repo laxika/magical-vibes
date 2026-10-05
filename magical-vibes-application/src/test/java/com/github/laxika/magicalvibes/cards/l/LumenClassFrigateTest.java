@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -60,6 +61,73 @@ class LumenClassFrigateTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Dropping below charge thresholds removes the corresponding abilities")
+    void droppingBelowThresholdsRemovesAbilities() {
+        Permanent frigate = harness.addToBattlefieldAndReturn(player1, new LumenClassFrigate());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingBears = addCreatureReady(player2, new GrizzlyBears());
+
+        frigate.setCounterCount(CounterType.CHARGE, 12);
+        assertThat(gqs.isCreature(gd, frigate)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, opposingBears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingBears)).isEqualTo(2);
+
+        frigate.setCounterCount(CounterType.CHARGE, 11);
+        assertThat(gqs.isCreature(gd, frigate)).isFalse();
+        assertThat(gqs.hasKeyword(gd, frigate, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, frigate, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+
+        frigate.setCounterCount(CounterType.CHARGE, 1);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick creature can station the Frigate")
+    void summoningSickCreatureCanStation() {
+        Permanent frigate = harness.addToBattlefieldAndReturn(player1, new LumenClassFrigate());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setSummoningSick(true);
+
+        harness.activateAbility(player1, battlefieldIndex(frigate), null, null);
+        harness.passBothPriorities();
+
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(frigate.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Station cannot tap the animated Frigate, a tapped creature, or an opposing creature")
+    void stationRejectsIneligibleCreatures() {
+        Permanent frigate = harness.addToBattlefieldAndReturn(player1, new LumenClassFrigate());
+        frigate.setCounterCount(CounterType.CHARGE, 12);
+        frigate.setSummoningSick(false);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.tap();
+        Permanent opposingBears = addCreatureReady(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(frigate), null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(frigate.isTapped()).isFalse();
+        assertThat(opposingBears.isTapped()).isFalse();
+        assertThat(frigate.getCounterCount(CounterType.CHARGE)).isEqualTo(12);
+    }
+    @Test
+    @DisplayName("Station cannot be activated outside a main phase")
+    void stationRequiresMainPhase() {
+        Permanent frigate = harness.addToBattlefieldAndReturn(player1, new LumenClassFrigate());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(frigate), null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(bears.isTapped()).isFalse();
+        assertThat(frigate.getCounterCount(CounterType.CHARGE)).isZero();
+    }
     private int battlefieldIndex(Permanent permanent) {
         return gd.playerBattlefields.get(player1.getId()).indexOf(permanent);
     }
