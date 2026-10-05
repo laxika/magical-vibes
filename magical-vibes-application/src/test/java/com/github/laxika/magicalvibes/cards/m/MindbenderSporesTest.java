@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.i.IronTuskElephant;
 import com.github.laxika.magicalvibes.cards.s.Solemnity;
+import com.github.laxika.magicalvibes.cards.s.SoulSculptor;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MindbenderSpores.class, IronTuskElephant.class})
+@CardUsed({MindbenderSpores.class, IronTuskElephant.class, Solemnity.class, SoulSculptor.class})
 class MindbenderSporesTest extends BaseCardTest {
 
     @Test
@@ -96,7 +98,6 @@ class MindbenderSporesTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Solemnity.class)
     @DisplayName("The granted abilities apply even when fungus counters cannot be placed")
     void grantsAbilitiesWhenCountersCannotBePlaced() {
         Permanent attacker = addCreatureReady(player1, new IronTuskElephant());
@@ -121,6 +122,70 @@ class MindbenderSporesTest extends BaseCardTest {
         assertThat(attacker.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("The block trigger still places counters after the blocked permanent becomes an enchantment")
+    void countersArePlacedAfterBlockedPermanentStopsBeingCreature() {
+        Permanent attacker = addCreatureReady(player1, new IronTuskElephant());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new MindbenderSpores());
+        addCreatureReady(player2, new SoulSculptor());
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.activateAbility(player2, 1, null, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, attacker)).isFalse();
+        resolveAllTriggers();
+
+        assertThat(attacker.getCounterCount(CounterType.FUNGUS)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Losing all abilities removes the granted untap restriction and upkeep ability")
+    void losingAbilitiesAllowsUntapWithoutRemovingCounters() {
+        Permanent attacker = blockWithSpores();
+        Permanent sculptor = addCreatureReady(player2, new SoulSculptor());
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(sculptor),
+                null, attacker.getId());
+        resolveAllTriggers();
+        attacker.tap();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(attacker.isTapped()).isFalse();
+        assertThat(attacker.getCounterCount(CounterType.FUNGUS)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The granted abilities remain after Mindbender Spores leaves the battlefield")
+    void grantedAbilitiesSurviveSporesLeavingBattlefield() {
+        Permanent attacker = blockWithSpores();
+        gd.playerBattlefields.get(player2.getId()).clear();
+        attacker.tap();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(attacker.isTapped()).isTrue();
+        assertThat(attacker.getCounterCount(CounterType.FUNGUS)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Fungus counters are removed only during the blocked creature controller's upkeep")
+    void opponentsUpkeepDoesNotRemoveFungusCounter() {
+        Permanent attacker = blockWithSpores();
+        attacker.tap();
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(attacker.isTapped()).isTrue();
+        assertThat(attacker.getCounterCount(CounterType.FUNGUS)).isEqualTo(4);
+    }
     /** Player 1's Iron Tusk Elephant attacks and is blocked by player 2's Mindbender Spores. */
     private Permanent blockWithSpores() {
         Permanent attacker = addCreatureReady(player1, new IronTuskElephant());
