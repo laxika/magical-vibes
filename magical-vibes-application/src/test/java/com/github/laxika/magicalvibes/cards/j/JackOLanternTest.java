@@ -61,14 +61,86 @@ class JackOLanternTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateGraveyardAbility(player1, 0);
-        harness.passBothPriorities();
 
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotInGraveyard(player1, "Jack-o'-Lantern");
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(lantern);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
 
         harness.handleListChoice(player1, "BLUE");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Losing the sole graveyard target prevents drawing")
+    void missingTargetPreventsDraw() {
+        Card target = new Forest();
+        Card draw = new Forest();
+        harness.addToBattlefield(player1, new JackOLantern());
+        harness.setGraveyard(player2, List.of(target));
+        harness.setLibrary(player1, List.of(draw));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
+        harness.setGraveyard(player2, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(draw);
+        harness.assertInGraveyard(player1, "Jack-o'-Lantern");
+    }
+
+    @Test
+    @DisplayName("Sacrifice ability can exile a land from its controller's graveyard")
+    void canExileOwnLandCard() {
+        Card target = new Forest();
+        Card draw = new Forest();
+        harness.addToBattlefield(player1, new JackOLantern());
+        harness.setGraveyard(player1, List.of(target));
+        harness.setLibrary(player1, List.of(draw));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
+        harness.assertInGraveyard(player1, "Jack-o'-Lantern");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(draw);
+    }
+
+    @Test
+    @DisplayName("Graveyard ability cannot exile its source without paying one mana")
+    void graveyardAbilityRequiresMana() {
+        JackOLantern lantern = new JackOLantern();
+        harness.setGraveyard(player1, List.of(lantern));
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Jack-o'-Lantern");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(lantern);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sacrifice ability rejects more than one graveyard target")
+    void sacrificeAbilityRejectsTwoTargets() {
+        Card first = new Forest();
+        Card second = new Forest();
+        harness.addToBattlefield(player1, new JackOLantern());
+        harness.setGraveyard(player2, List.of(first, second));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Jack-o'-Lantern");
     }
 
     @Test
