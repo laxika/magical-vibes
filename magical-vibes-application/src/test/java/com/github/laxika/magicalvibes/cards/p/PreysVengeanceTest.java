@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NemaSiltlurker;
+import com.github.laxika.magicalvibes.cards.v.Vendetta;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PreysVengeance.class, GrizzlyBears.class, NemaSiltlurker.class, Vendetta.class})
 class PreysVengeanceTest extends BaseCardTest {
 
     @Test
@@ -24,8 +28,7 @@ class PreysVengeanceTest extends BaseCardTest {
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
 
         assertThat(bear.getPowerModifier()).isEqualTo(2);
         assertThat(bear.getToughnessModifier()).isEqualTo(2);
@@ -39,8 +42,7 @@ class PreysVengeanceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PreysVengeance()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -56,8 +58,7 @@ class PreysVengeanceTest extends BaseCardTest {
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -85,5 +86,61 @@ class PreysVengeanceTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canBoostAnOpponentsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new NemaSiltlurker());
+        harness.setHand(player1, List.of(new PreysVengeance()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(creature.getPowerModifier()).isEqualTo(2);
+        assertThat(creature.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    void decliningReboundLeavesTheCardExiledWithoutAnotherOpportunity() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new NemaSiltlurker());
+        PreysVengeance card = new PreysVengeance();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(creature.getPowerModifier()).isZero();
+        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void losingTheTargetBeforeResolutionDoesNotRebound() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new NemaSiltlurker());
+        PreysVengeance card = new PreysVengeance();
+        harness.setHand(player1, List.of(card));
+        harness.setHand(player2, List.of(new Vendetta()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Nema Siltlurker");
+        harness.assertInGraveyard(player1, "Prey's Vengeance");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
     }
 }
