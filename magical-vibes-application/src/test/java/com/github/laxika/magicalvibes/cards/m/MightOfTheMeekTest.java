@@ -26,8 +26,7 @@ class MightOfTheMeekTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
@@ -41,8 +40,7 @@ class MightOfTheMeekTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
@@ -64,5 +62,91 @@ class MightOfTheMeekTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    void targetedMouseEnablesBoostAndBothEffectsExpire() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ManifoldMouse());
+        harness.setHand(player1, List.of(new MightOfTheMeek()));
+        harness.setLibrary(player1, List.of(new MightOfTheMeek()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+        harness.assertInHand(player1, "Might of the Meek");
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    void opponentsMouseIsLegalTargetButDoesNotEnableBoost() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ManifoldMouse());
+        harness.setHand(player1, List.of(new MightOfTheMeek()));
+        harness.setLibrary(player1, List.of(new MightOfTheMeek()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+        harness.assertInHand(player1, "Might of the Meek");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void mouseEnteringBeforeResolutionEnablesBoostOnOpponentsCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ManifoldMouse());
+        harness.setHand(player1, List.of(new MightOfTheMeek()));
+        harness.setLibrary(player1, List.of(new MightOfTheMeek()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.addToBattlefield(player1, new ManifoldMouse());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+        harness.assertInHand(player1, "Might of the Meek");
+    }
+
+    @Test
+    void mouseLeavingBeforeResolutionPreventsBoostButNotDraw() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ManifoldMouse());
+        Permanent mouse = harness.addToBattlefieldAndReturn(player1, new ManifoldMouse());
+        harness.setHand(player1, List.of(new MightOfTheMeek()));
+        harness.setLibrary(player1, List.of(new MightOfTheMeek()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(mouse);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+        harness.assertInHand(player1, "Might of the Meek");
+    }
+
+    @Test
+    void doesNotDrawWhenOnlyTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ManifoldMouse());
+        harness.setHand(player1, List.of(new MightOfTheMeek()));
+        harness.setLibrary(player1, List.of(new MightOfTheMeek()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Might of the Meek");
     }
 }
