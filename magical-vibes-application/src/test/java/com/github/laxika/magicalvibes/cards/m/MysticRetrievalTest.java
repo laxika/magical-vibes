@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,9 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MysticRetrieval.class, HolyDay.class, CounselOfTheSoratami.class, GrizzlyBears.class})
 class MysticRetrievalTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Returns target instant card from your graveyard to your hand")
@@ -34,9 +34,8 @@ class MysticRetrievalTest extends BaseCardTest {
         harness.castSorcery(player1, 0, instant.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(instant.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getId().equals(instant.getId()));
+        harness.assertInHand(player1, "Holy Day");
+        harness.assertNotInGraveyard(player1, "Holy Day");
         harness.assertInGraveyard(player1, "Mystic Retrieval");
     }
 
@@ -51,9 +50,8 @@ class MysticRetrievalTest extends BaseCardTest {
         harness.castSorcery(player1, 0, sorcery.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(sorcery.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getId().equals(sorcery.getId()));
+        harness.assertInHand(player1, "Counsel of the Soratami");
+        harness.assertNotInGraveyard(player1, "Counsel of the Soratami");
     }
 
     @Test
@@ -109,11 +107,10 @@ class MysticRetrievalTest extends BaseCardTest {
         harness.castFlashback(player1, 0, instant.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(instant.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getId().equals(instant.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getId().equals(retrieval.getId()));
-        assertThat(gd.getPlayerExiledCards(player1.getId())).anyMatch(c -> c.getId().equals(retrieval.getId()));
+        harness.assertInHand(player1, "Holy Day");
+        harness.assertNotInGraveyard(player1, "Holy Day");
+        harness.assertNotInGraveyard(player1, "Mystic Retrieval");
+        assertThat(harness.getGameData().getPlayerExiledCards(player1.getId())).anyMatch(c -> c.getId().equals(retrieval.getId()));
     }
 
     @Test
@@ -142,6 +139,64 @@ class MysticRetrievalTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         assertThatThrownBy(() -> harness.castFlashback(player1, 0, instant.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Flashback returns a sorcery using the red alternative cost")
+    void flashbackReturnsSorcery() {
+        Card retrieval = new MysticRetrieval();
+        Card sorcery = new CounselOfTheSoratami();
+        harness.setGraveyard(player1, List.of(retrieval, sorcery));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castFlashback(player1, 0, sorcery.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Counsel of the Soratami");
+        harness.assertNotInGraveyard(player1, "Counsel of the Soratami");
+        harness.assertNotInGraveyard(player1, "Mystic Retrieval");
+        assertThat(harness.getGameData().getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getId().equals(retrieval.getId()));
+    }
+
+    @Test
+    @DisplayName("Flashback exiles Mystic Retrieval when its target disappears")
+    void flashbackExilesSpellWhenTargetBecomesIllegal() {
+        Card retrieval = new MysticRetrieval();
+        Card instant = new HolyDay();
+        harness.setGraveyard(player1, List.of(retrieval, instant));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castFlashback(player1, 0, instant.getId());
+        harness.getGameData().playerGraveyards.get(player1.getId()).remove(instant);
+        harness.getGameData().addToExile(player1.getId(), instant);
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().playerHands.get(player1.getId())).isEmpty();
+        harness.assertNotInGraveyard(player1, "Mystic Retrieval");
+        assertThat(harness.getGameData().getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getId().equals(retrieval.getId()));
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot cast without a graveyard target")
+    void cannotCastWithoutTarget() {
+        harness.setHand(player1, List.of(new MysticRetrieval()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot flash back without a graveyard target")
+    void cannotFlashbackWithoutTarget() {
+        harness.setGraveyard(player1, List.of(new MysticRetrieval()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
 }
