@@ -28,8 +28,7 @@ class ProsperousPartnershipTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castEnchantment(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         List<Permanent> citizens = findPermanents(player1, "Citizen");
         assertThat(citizens).hasSize(2);
@@ -70,5 +69,61 @@ class ProsperousPartnershipTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Newly created Citizens can pay the cost and only the chosen three tap")
+    void summoningSickCitizensCanPayTheCost() {
+        harness.enterBattlefieldAndReturn(player1, new ProsperousPartnership());
+        harness.enterBattlefieldAndReturn(player1, new ProsperousPartnership());
+        resolveAllTriggers();
+        List<Permanent> citizens = findPermanents(player1, "Citizen");
+        assertThat(citizens).hasSize(4);
+        assertThat(citizens).allSatisfy(citizen -> assertThat(citizen.isSummoningSick()).isTrue());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handlePermanentChosen(player1, citizens.get(0).getId());
+        harness.handlePermanentChosen(player1, citizens.get(1).getId());
+        harness.handlePermanentChosen(player1, citizens.get(2).getId());
+
+        assertThat(citizens.subList(0, 3)).allSatisfy(citizen -> assertThat(citizen.isTapped()).isTrue());
+        assertThat(citizens.get(3).isTapped()).isFalse();
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        assertThat(findPermanents(player2, "Treasure")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An already tapped creature cannot pay the cost")
+    void tappedCreatureCannotPayTheCost() {
+        harness.addToBattlefield(player1, new ProsperousPartnership());
+        Permanent creatureA = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creatureB = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creatureC = addCreatureReady(player1, new GrizzlyBears());
+        creatureC.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(creatureA.isTapped()).isFalse();
+        assertThat(creatureB.isTapped()).isFalse();
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot pay the cost")
+    void opponentsCreatureCannotPayTheCost() {
+        harness.addToBattlefield(player1, new ProsperousPartnership());
+        Permanent creatureA = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creatureB = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentsCreature = addCreatureReady(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(creatureA.isTapped()).isFalse();
+        assertThat(creatureB.isTapped()).isFalse();
+        assertThat(opponentsCreature.isTapped()).isFalse();
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
     }
 }
