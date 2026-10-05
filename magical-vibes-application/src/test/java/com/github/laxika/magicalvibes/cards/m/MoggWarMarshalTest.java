@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.cards.t.Trickbind;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MoggWarMarshal.class, WrathOfGod.class})
+@CardUsed({MoggWarMarshal.class, WrathOfGod.class, Trickbind.class})
 class MoggWarMarshalTest extends BaseCardTest {
 
     @Test
@@ -87,19 +88,51 @@ class MoggWarMarshalTest extends BaseCardTest {
     void deathCreatesGoblin() {
         harness.addToBattlefield(player1, new MoggWarMarshal());
 
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        resolveAllTriggers();
 
+        assertThat(goblinTokens()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Countering the enters trigger does not remove echo")
+    void counteringEntersTriggerDoesNotRemoveEcho() {
+        harness.castFromHand(player1, new MoggWarMarshal(), "{1}{R}");
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player2, List.of(new Trickbind()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, gd.stack.getLast().getCard().getId());
+        resolveAllTriggers();
+
+        assertThat(goblinTokens()).isEmpty();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Mogg War Marshal");
+        assertThat(goblinTokens()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A simultaneous death of the Marshal and its Goblin still creates a new Goblin")
+    void simultaneousDeathsCreateNewGoblin() {
+        castAndResolveMoggWarMarshal();
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Mogg War Marshal");
         assertThat(goblinTokens()).hasSize(1);
     }
 
     private void castAndResolveMoggWarMarshal() {
         harness.castFromHand(player1, new MoggWarMarshal(), "{1}{R}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.assertOnBattlefield(player1, "Mogg War Marshal");
     }
 
