@@ -2,6 +2,9 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PhantasmalTerrain;
+import com.github.laxika.magicalvibes.cards.s.Stasis;
+import com.github.laxika.magicalvibes.cards.s.SulfurousSprings;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,12 +17,14 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OrcishFarmer.class, Forest.class, GrizzlyBears.class})
+@CardUsed({OrcishFarmer.class, Forest.class, GrizzlyBears.class, PhantasmalTerrain.class,
+        Stasis.class, SulfurousSprings.class})
 class OrcishFarmerTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability puts it on the stack targeting a land")
@@ -140,17 +145,92 @@ class OrcishFarmerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
     }
+    @Test
+    @DisplayName("The Swamp effect survives a skipped untap step")
+    void overrideSurvivesSkippedUntapStep() {
+        Permanent forest = becomeSwamp(player1);
+        harness.addToBattlefield(player2, new Stasis());
+
+        advanceToNextTurn(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.UPKEEP);
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.SWAMP);
+    }
+
+    @Test
+    @DisplayName("A later Phantasmal Terrain overrides the Swamp effect")
+    void laterLandTypeEffectWins() {
+        Permanent forest = becomeSwamp(player1);
+        harness.setHand(player1, List.of(new PhantasmalTerrain()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "ISLAND");
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.ISLAND);
+    }
+
+    @Test
+    @DisplayName("The Swamp effect overrides an earlier Phantasmal Terrain")
+    void laterFarmerEffectWins() {
+        addCreatureReady(player1, new OrcishFarmer());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new PhantasmalTerrain()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "ISLAND");
+
+        harness.activateAbility(player1, 0, null, forest.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.SWAMP);
+    }
+
+    @Test
+    @DisplayName("A nonbasic land loses its printed mana abilities while it is a Swamp")
+    void nonbasicLandProducesBlackWithoutDamage() {
+        addCreatureReady(player1, new OrcishFarmer());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new SulfurousSprings());
+        harness.forceActivePlayer(player1);
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Farmer cannot pay the tap cost")
+    void summoningSicknessPreventsActivation() {
+        Permanent farmer = harness.addToBattlefieldAndReturn(player1, new OrcishFarmer());
+        farmer.setSummoningSick(true);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.forceActivePlayer(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(farmer.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     /** Adds an Orcish Farmer + Forest for {@code player}, then makes the Forest become a Swamp. */
     private Permanent becomeSwamp(Player player) {
         addCreatureReady(player, new OrcishFarmer());
-        harness.addToBattlefield(player, new Forest());
+        Permanent forest = harness.addToBattlefieldAndReturn(player, new Forest());
         harness.forceActivePlayer(player);
-        UUID forestId = harness.getPermanentId(player, "Forest");
 
-        harness.activateAbility(player, 0, null, forestId);
+        harness.activateAbility(player, 0, null, forest.getId());
         harness.passBothPriorities();
 
-        return gqs.findPermanentById(gd, forestId);
+        return forest;
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
