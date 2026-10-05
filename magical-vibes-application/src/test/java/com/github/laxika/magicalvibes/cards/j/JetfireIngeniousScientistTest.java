@@ -72,6 +72,132 @@ class JetfireIngeniousScientistTest extends BaseCardTest {
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
+    @Test
+    void livingMetalOnlyMakesTheBackFaceACreatureDuringItsControllersTurn() {
+        Permanent jetfire = castConvertedJetfire();
+
+        harness.forceActivePlayer(player2);
+        assertThat(gqs.isCreature(gd, jetfire)).isFalse();
+
+        harness.forceActivePlayer(player1);
+        assertThat(gqs.isCreature(gd, jetfire)).isTrue();
+    }
+
+    @Test
+    void backFaceConvertsEvenWhenExistingCountersPreventAdapt() {
+        Permanent jetfire = castConvertedJetfire();
+        jetfire.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.activateAbility(player1, 0, 0, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(jetfire.isTransformed()).isFalse();
+        assertThat(jetfire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void canPayWithCountersOnJetfireAndTargetItsController() {
+        Permanent jetfire = harness.addToBattlefieldAndReturn(player1, new JetfireIngeniousScientist());
+        jetfire.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        harness.activateAbility(player1, 0, 0, 2, player1.getId());
+
+        assertThat(jetfire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(jetfire.isTransformed()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getPowerstoneOnlyColorless()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(jetfire.isTransformed()).isTrue();
+        assertThat(jetfire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getPowerstoneOnlyColorless()).isEqualTo(2);
+    }
+
+    @Test
+    void cannotPayZeroCounters() {
+        Permanent jetfire = harness.addToBattlefieldAndReturn(player1, new JetfireIngeniousScientist());
+        jetfire.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(jetfire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(jetfire.isTransformed()).isFalse();
+    }
+
+    @Test
+    void opponentsArtifactCountersCannotPayTheAbility() {
+        harness.addToBattlefield(player1, new JetfireIngeniousScientist());
+        Permanent opposingJetfire = harness.addToBattlefieldAndReturn(player2, new JetfireIngeniousScientist());
+        opposingJetfire.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, 1, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(opposingJetfire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void repeatedFrontFaceActivationsAwardManaButConvertOnlyOnce() {
+        Permanent jetfire = harness.addToBattlefieldAndReturn(player1, new JetfireIngeniousScientist());
+        jetfire.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        harness.activateAbility(player1, 0, 0, 1, player1.getId());
+        harness.activateAbility(player1, 0, 0, 1, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(jetfire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(jetfire.isTransformed()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getPowerstoneOnlyColorless()).isEqualTo(2);
+    }
+
+    @Test
+    void restrictedManaCannotCastANonartifactCreature() {
+        Permanent jetfire = harness.addToBattlefieldAndReturn(player1, new JetfireIngeniousScientist());
+        jetfire.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 0, 1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerManaPools.get(player1.getId()).getPowerstoneOnlyColorless()).isEqualTo(1);
+    }
+
+    @Test
+    void canRemoveCountersFromMultipleControlledArtifacts() {
+        Permanent jetfire = harness.addToBattlefieldAndReturn(player1, new JetfireIngeniousScientist());
+        Permanent bauble = harness.addToBattlefieldAndReturn(player1, new MishrasBauble());
+        jetfire.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        bauble.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        harness.activateAbility(player1, 0, 0, 3, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(jetfire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(bauble.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(jetfire.isTransformed()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getPowerstoneOnlyColorless()).isEqualTo(3);
+    }
+
+    @Test
+    void repeatedBackFaceActivationsConvertOnceAndDoNotAdaptAgain() {
+        Permanent jetfire = castConvertedJetfire();
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.activateAbility(player1, 0, 0, 0, null);
+        harness.activateAbility(player1, 0, 0, 0, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(jetfire.isTransformed()).isFalse();
+        assertThat(jetfire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
     private Permanent castConvertedJetfire() {
         harness.setHand(player1, List.of(new JetfireIngeniousScientist()));
         harness.addMana(player1, ManaColor.BLUE, 1);
