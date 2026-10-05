@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.a.AfiyaGrove;
+import com.github.laxika.magicalvibes.cards.b.BotanicalBrawler;
 import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -17,7 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OzolithTheShatteredSpire.class, AfiyaGrove.class, DarksteelCitadel.class, GrizzlyBears.class})
+@CardUsed({OzolithTheShatteredSpire.class, AfiyaGrove.class, DarksteelCitadel.class, GrizzlyBears.class,
+        BotanicalBrawler.class})
 class OzolithTheShatteredSpireTest extends BaseCardTest {
 
     @Test
@@ -96,6 +98,64 @@ class OzolithTheShatteredSpireTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sorcery");
+    }
+
+    @Test
+    @CardUsed({OzolithTheShatteredSpire.class, BotanicalBrawler.class})
+    void addsOnlyOneToMultipleCountersAsCreatureEnters() {
+        addOzolith(player1);
+        harness.setHand(player1, List.of(new BotanicalBrawler()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Botanical Brawler")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @CardUsed({OzolithTheShatteredSpire.class, BotanicalBrawler.class})
+    void doesNotModifyOpponentsEnteringCounters() {
+        addOzolith(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new BotanicalBrawler()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player2, "Botanical Brawler")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed({OzolithTheShatteredSpire.class})
+    void canTargetItselfAndPaysTapCost() {
+        Permanent ozolith = addOzolith(player1);
+        addOzolithMana();
+
+        harness.activateAbility(player1, 0, null, ozolith.getId());
+
+        assertThat(ozolith.isTapped()).isTrue();
+        assertThat(ozolith.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+        assertThat(ozolith.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed({OzolithTheShatteredSpire.class, AfiyaGrove.class})
+    void cannotTargetANonartifactNoncreaturePermanent() {
+        addOzolith(player1);
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new AfiyaGrove());
+        addOzolithMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, enchantment.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be an artifact or creature you control");
     }
 
     private Permanent addOzolith(com.github.laxika.magicalvibes.model.Player player) {
