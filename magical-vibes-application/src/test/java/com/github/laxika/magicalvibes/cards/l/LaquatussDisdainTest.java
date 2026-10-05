@@ -18,6 +18,31 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class LaquatussDisdainTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Can counter your own graveyard spell and draws exactly one card")
+    void countersOwnGraveyardSpellAndDrawsExactlyOneCard() {
+        FlaringPain spell = new FlaringPain();
+        BenevolentBodyguard drawnCard = new BenevolentBodyguard();
+        FlaringPain remainingCard = new FlaringPain();
+        harness.setGraveyard(player1, List.of(spell));
+        harness.setLibrary(player1, List.of(drawnCard, remainingCard));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castFlashback(player1, 0);
+
+        harness.setHand(player1, List.of(new LaquatussDisdain()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, spell.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof LaquatussDisdain);
+    }
+
+    @Test
     @DisplayName("Counters a spell cast from a graveyard and draws a card")
     void countersGraveyardCastAndDrawsCard() {
         PrismaticStrands spell = new PrismaticStrands();
