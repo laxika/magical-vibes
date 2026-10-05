@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -90,6 +89,43 @@ class OminousRoostTest extends BaseCardTest {
         assertThat(bird.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("An opponent casting from their graveyard does not create a Bird")
+    void opponentsGraveyardCastDoesNotCreateBird() {
+        harness.addToBattlefield(player1, new OminousRoost());
+        harness.forceActivePlayer(player2);
+        harness.setGraveyard(player2, List.of(new Firebolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+
+        harness.castFlashback(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Bird")).isZero();
+        assertThat(countPermanents(player2, "Bird")).isZero();
+    }
+
+    @Test
+    @DisplayName("Each Roost creates a Bird before the graveyard spell resolves")
+    void multipleRoostsTriggerBeforeSpellResolves() {
+        harness.addToBattlefield(player1, new OminousRoost());
+        harness.addToBattlefield(player1, new OminousRoost());
+        harness.setGraveyard(player1, List.of(new Firebolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castFlashback(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Bird")).isEqualTo(2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+
+        resolveAllTriggers();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+    }
+
     private void castRoost() {
         harness.setHand(player1, List.of(new OminousRoost()));
         harness.addMana(player1, ManaColor.BLUE, 3);
@@ -104,17 +140,12 @@ class OminousRoostTest extends BaseCardTest {
     }
 
     private Permanent addAttacker(Card card) {
-        Permanent attacker = new Permanent(card);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, card);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
         return attacker;
     }
 
     private void prepareBlockers() {
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player2);
     }
 }
