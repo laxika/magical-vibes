@@ -76,15 +76,11 @@ class ImpsTauntTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of()))
+        assertThatThrownBy(() -> declareAttackers(player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
 
-        gs.declareAttackers(gd, player2, List.of(0));
+        declareAttackers(player2, List.of(0));
 
         assertThat(target.isAttackedThisTurn()).isTrue();
     }
@@ -102,10 +98,7 @@ class ImpsTauntTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player2, List.of());
+        declareAttackers(player2, List.of());
 
         assertThat(target.isAttackedThisTurn()).isFalse();
     }
@@ -159,6 +152,59 @@ class ImpsTauntTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick target is not required to attack")
+    void doesNotRequireSummoningSickTargetToAttack() {
+        harness.addToBattlefield(player2, new TrainedArmodon());
+        Permanent target = findPermanent(player2, "Trained Armodon");
+        target.setSummoningSick(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.setHand(player1, List.of(new ImpsTaunt()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        declareAttackers(player2, List.of());
+
+        assertThat(target.isAttackedThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The attack requirement expires at the end of the turn")
+    void attackRequirementExpiresAtEndOfTurn() {
+        Permanent target = addCreatureReady(player2, new TrainedArmodon());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new ImpsTaunt()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        assertThat(target.isMustAttackThisTurn()).isTrue();
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(target.isMustAttackThisTurn()).isFalse();
+        declareAttackers(player2, List.of());
+        assertThat(target.isAttackedThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Buyback cannot be paid with less than the full additional cost")
+    void buybackRequiresFullAdditionalManaCost() {
+        harness.addToBattlefield(player2, new TrainedArmodon());
+        harness.setHand(player1, List.of(new ImpsTaunt()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castInstantWithBuyback(player1, 0,
+                harness.getPermanentId(player2, "Trained Armodon")))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(handNames(player1)).containsExactly("Imps' Taunt");
+        assertThat(gd.stack).isEmpty();
     }
 
     private List<String> handNames(Player player) {
