@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SarkhansRage;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MonasteryLoremaster.class, Shock.class, GrizzlyBears.class, Forest.class})
+@CardUsed({MonasteryLoremaster.class, Shock.class, GrizzlyBears.class, Forest.class, SarkhansRage.class})
 class MonasteryLoremasterTest extends BaseCardTest {
 
     @Test
@@ -30,7 +31,6 @@ class MonasteryLoremasterTest extends BaseCardTest {
 
         harness.castCreatureWithMorph(player1, 0);
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         Permanent loremaster = findPermanent(player1, "Monastery Loremaster");
@@ -57,7 +57,6 @@ class MonasteryLoremasterTest extends BaseCardTest {
 
         harness.castCreatureWithMorph(player1, 0);
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         Permanent loremaster = findPermanent(player1, "Monastery Loremaster");
@@ -68,5 +67,87 @@ class MonasteryLoremasterTest extends BaseCardTest {
         assertThat(loremaster.isFaceDown()).isFalse();
         assertThat(loremaster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void turningFaceUpWithoutPayingMegamorphReturnsCardButAddsNoCounter() {
+        Card spell = new SarkhansRage();
+        harness.setGraveyard(player1, List.of(spell));
+        Permanent loremaster = castFaceDown();
+
+        harness.inMutationScope(() -> gs.turnPermanentFaceUpWithoutPayingManaCost(gd, loremaster));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
+                .validCardIds()).containsExactly(spell.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(spell.getId()));
+        resolveAllTriggers();
+
+        assertThat(loremaster.isFaceDown()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).contains(spell);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(loremaster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void megamorphCannotReturnCardsFromOpponentsGraveyard() {
+        Card spell = new SarkhansRage();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(spell));
+        Permanent loremaster = castFaceDown();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(loremaster));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(spell);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(spell);
+        assertThat(loremaster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void castingFaceUpDoesNotReturnGraveyardCardOrAddCounter() {
+        Card spell = new SarkhansRage();
+        harness.setGraveyard(player1, List.of(spell));
+        harness.setHand(player1, List.of(new MonasteryLoremaster()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent loremaster = findPermanent(player1, "Monastery Loremaster");
+        assertThat(loremaster.isFaceDown()).isFalse();
+        assertThat(loremaster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(spell);
+    }
+
+    @Test
+    void targetLeavingGraveyardBeforeResolutionIsNotReturned() {
+        Card spell = new SarkhansRage();
+        harness.setGraveyard(player1, List.of(spell));
+        Permanent loremaster = castFaceDown();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(loremaster));
+
+        assertThat(loremaster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.handleMultipleCardsChosen(player1, List.of(spell.getId()));
+        harness.setGraveyard(player1, List.of());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(spell);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(loremaster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    private Permanent castFaceDown() {
+        harness.setHand(player1, List.of(new MonasteryLoremaster()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+        return findPermanent(player1, "Monastery Loremaster");
     }
 }
