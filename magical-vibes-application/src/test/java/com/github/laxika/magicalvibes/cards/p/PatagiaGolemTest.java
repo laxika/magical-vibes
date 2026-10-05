@@ -100,4 +100,51 @@ class PatagiaGolemTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
+
+    @Test
+    @DisplayName("Can activate on an opponent's turn using colored mana")
+    void canActivateOnOpponentsTurnWithColoredMana() {
+        Permanent golem = addCreatureReady(player1, new PatagiaGolem());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.FLYING)).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.FLYING)).isTrue();
+
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can activate repeatedly and both grants expire at cleanup")
+    void canActivateRepeatedly() {
+        Permanent golem = addCreatureReady(player1, new PatagiaGolem());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.FLYING)).isFalse();
+
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.FLYING)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.FLYING)).isFalse();
+    }
 }
