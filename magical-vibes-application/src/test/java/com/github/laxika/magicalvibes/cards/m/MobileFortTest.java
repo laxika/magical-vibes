@@ -13,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(MobileFort.class)
+@CardUsed({MobileFort.class})
 class MobileFortTest extends BaseCardTest {
 
     private Permanent addFortReady() {
@@ -120,5 +120,58 @@ class MobileFortTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Generic activation cost can be paid with colored mana")
+    void canPayWithColoredMana() {
+        Permanent fort = addFortReady();
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(fort.getEffectivePower()).isEqualTo(3);
+        assertThat(fort.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Each Mobile Fort has its own once-per-turn limit")
+    void separateCopiesCanEachActivate() {
+        Permanent first = addFortReady();
+        Permanent second = addFortReady();
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getEffectivePower()).isEqualTo(3);
+        assertThat(second.getEffectivePower()).isEqualTo(0);
+        assertThat(second.getEffectiveToughness()).isEqualTo(6);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getEffectivePower()).isEqualTo(3);
+        assertThat(first.getEffectiveToughness()).isEqualTo(5);
+        assertThat(second.getEffectivePower()).isEqualTo(3);
+        assertThat(second.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Ability can be activated while summoning sick but does not grant haste")
+    void activationDoesNotBypassSummoningSickness() {
+        Permanent fort = addFortReady();
+        fort.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(fort.getEffectivePower()).isEqualTo(3);
+        assertThat(fort.getEffectiveToughness()).isEqualTo(5);
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
     }
 }
