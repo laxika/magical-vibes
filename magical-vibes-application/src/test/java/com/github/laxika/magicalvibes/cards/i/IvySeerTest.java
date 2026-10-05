@@ -143,6 +143,57 @@ class IvySeerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Chooses cards from the hand at resolution and can target itself")
+    void revealsCardsAtResolutionAndCanTargetItself() {
+        Permanent seer = addReadySeer();
+        harness.setHand(player1, List.of(new BraidwoodCup()));
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, seer.getId());
+
+        assertThat(seer.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        YavimayaElder greenCard = new YavimayaElder();
+        harness.setHand(player1, List.of(greenCard));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(greenCard.getId()));
+
+        assertThat(gqs.getEffectivePower(gd, seer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, seer)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(greenCard);
+    }
+
+    @Test
+    @DisplayName("Does not reveal cards when the only target has left the battlefield")
+    void doesNotRevealWhenTargetLeavesBattlefield() {
+        addReadySeer();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PlatedSpider());
+        YavimayaElder greenCard = new YavimayaElder();
+        harness.setHand(player1, List.of(greenCard));
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(greenCard);
+    }
+
+    @Test
+    @DisplayName("Cannot activate the tap ability while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new IvySeer());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PlatedSpider());
+        addAbilityMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private Permanent addReadySeer() {
         return addCreatureReady(player1, new IvySeer());
     }
