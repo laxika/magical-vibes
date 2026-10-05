@@ -2,13 +2,12 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.a.Absorb;
 import com.github.laxika.magicalvibes.cards.a.AncientKavu;
-import com.github.laxika.magicalvibes.cards.c.ChromaticSphere;
-import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.ManaLeak;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianHulk;
 import com.github.laxika.magicalvibes.cards.u.UrborgSkeleton;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -19,7 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Obliterate.class, Forest.class, GrizzlyBears.class, GloriousAnthem.class, Millstone.class, ManaLeak.class, Absorb.class, AncientKavu.class, ChromaticSphere.class, DuelingGrounds.class, UrborgSkeleton.class})
+@CardUsed({Obliterate.class, Forest.class, GrizzlyBears.class, GloriousAnthem.class, Millstone.class, ManaLeak.class, Absorb.class, AncientKavu.class, UrborgSkeleton.class, PhyrexianHulk.class})
 class ObliterateTest extends BaseCardTest {
 
     @Test
@@ -68,8 +67,7 @@ class ObliterateTest extends BaseCardTest {
         harness.setHand(player2, List.of(new ManaLeak()));
         harness.addMana(player2, ManaColor.BLUE, 2);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, obliterate.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, obliterate.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Millstone");
@@ -111,8 +109,7 @@ class ObliterateTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Absorb()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.BLUE, 2);
-        harness.castInstant(player2, 0, obliterate.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, obliterate.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Ancient Kavu");
@@ -136,5 +133,46 @@ class ObliterateTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Urborg Skeleton");
         harness.assertInGraveyard(player2, "Urborg Skeleton");
+    }
+
+    @Test
+    @DisplayName("Destroys artifact creatures only once")
+    void destroysArtifactCreatureOnce() {
+        PhyrexianHulk hulk = new PhyrexianHulk();
+        harness.addToBattlefield(player2, hulk);
+
+        harness.castFromHand(player1, new Obliterate(), "{6}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Phyrexian Hulk");
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .filteredOn(card -> card.getId().equals(hulk.getId()))
+                .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Absorb still gains life when Obliterate cannot be countered")
+    void absorbStillGainsLife() {
+        harness.setLife(player2, 10);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Obliterate obliterate = new Obliterate();
+        harness.castFromHand(player1, obliterate, "{6}{R}{R}");
+
+        harness.passPriority(player1);
+        harness.setHand(player2, List.of(new Absorb()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player2, 0, obliterate.getId());
+
+        harness.assertLife(player2, 13);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Obliterate");
+        harness.assertInGraveyard(player2, "Absorb");
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 13);
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Obliterate");
     }
 }
