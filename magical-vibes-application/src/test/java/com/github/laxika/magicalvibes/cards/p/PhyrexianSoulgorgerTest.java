@@ -18,6 +18,59 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PhyrexianSoulgorgerTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Insufficient creatures cannot be sacrificed as a partial cumulative upkeep payment")
+    void insufficientCreaturesAreNotPartiallySacrificed() {
+        Permanent soulgorger = harness.addToBattlefieldAndReturn(player1, new PhyrexianSoulgorger());
+        Permanent centaur = harness.addToBattlefieldAndReturn(player1, new BorealCentaur());
+        soulgorger.setCounterCount(CounterType.AGE, 2);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(centaur).doesNotContain(soulgorger);
+        harness.assertInGraveyard(player1, "Phyrexian Soulgorger");
+        harness.assertNotInGraveyard(player1, "Boreal Centaur");
+    }
+
+    @Test
+    @DisplayName("Opponent's creatures cannot pay cumulative upkeep")
+    void opponentsCreaturesCannotPay() {
+        Permanent soulgorger = harness.addToBattlefieldAndReturn(player1, new PhyrexianSoulgorger());
+        Permanent centaur = harness.addToBattlefieldAndReturn(player1, new BorealCentaur());
+        Permanent opponentCentaur = harness.addToBattlefieldAndReturn(player2, new BorealCentaur());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(soulgorger.getId(), centaur.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(centaur.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(soulgorger).doesNotContain(centaur);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCentaur);
+    }
+
+    @Test
+    @DisplayName("A two-creature upkeep payment may include Phyrexian Soulgorger itself")
+    void twoCreaturePaymentCanIncludeSource() {
+        Permanent soulgorger = harness.addToBattlefieldAndReturn(player1, new PhyrexianSoulgorger());
+        Permanent centaur = harness.addToBattlefieldAndReturn(player1, new BorealCentaur());
+        soulgorger.setCounterCount(CounterType.AGE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(soulgorger, centaur);
+        harness.assertInGraveyard(player1, "Phyrexian Soulgorger");
+        harness.assertInGraveyard(player1, "Boreal Centaur");
+    }
+
+    @Test
     @DisplayName("Paying cumulative upkeep sacrifices a creature and keeps Phyrexian Soulgorger")
     void paysCumulativeUpkeep() {
         Permanent soulgorger = harness.addToBattlefieldAndReturn(player1, new PhyrexianSoulgorger());
