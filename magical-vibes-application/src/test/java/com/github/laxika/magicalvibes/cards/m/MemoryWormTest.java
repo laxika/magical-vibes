@@ -60,4 +60,69 @@ class MemoryWormTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
         assertThat(worm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
+
+    @Test
+    void paradoxCanTargetController() {
+        Permanent worm = harness.addToBattlefieldAndReturn(player1, new MemoryWorm());
+        MemoryWorm spell = new MemoryWorm();
+        MemoryWorm discarded = new MemoryWorm();
+        MemoryWorm drawn = new MemoryWorm();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.setExile(player1, List.of(spell));
+        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        harness.addMana(player1, ManaColor.RED, 2);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castFromExile(player1, spell.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 2);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(discarded);
+        assertThat(worm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(worm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void emptyHandStillDrawsAndAddsCounter() {
+        Permanent worm = harness.addToBattlefieldAndReturn(player1, new MemoryWorm());
+        MemoryWorm spell = new MemoryWorm();
+        MemoryWorm drawn = new MemoryWorm();
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(drawn));
+        harness.setExile(player1, List.of(spell));
+        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        harness.addMana(player1, ManaColor.RED, 2);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castFromExile(player1, spell.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawn);
+        assertThat(worm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void opponentCastingFromExileDoesNotTriggerParadox() {
+        Permanent worm = harness.addToBattlefieldAndReturn(player1, new MemoryWorm());
+        MemoryWorm spell = new MemoryWorm();
+        harness.forceActivePlayer(player2);
+        harness.setExile(player2, List.of(spell));
+        gd.exilePlayPermissions.put(spell.getId(), player2.getId());
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castFromExile(player2, spell.getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+
+        assertThat(worm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
 }
