@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BronzeSword;
+import com.github.laxika.magicalvibes.cards.n.NyxbornCourser;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,14 +16,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({IrreverentRevelers.class, FountainOfYouth.class, GrizzlyBears.class})
+@CardUsed({IrreverentRevelers.class, BronzeSword.class, NyxbornCourser.class})
 class IrreverentRevelersTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB mode destroys target artifact")
     void destroysArtifactMode() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
-        Permanent artifact = gd.playerBattlefields.get(player2.getId()).getLast();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new BronzeSword());
 
         castRevelers(0, artifact.getId());
         resolveCreatureAndEtb();
@@ -34,14 +33,13 @@ class IrreverentRevelersTest extends BaseCardTest {
     @Test
     @DisplayName("Destroy artifact mode rejects a creature target")
     void destroyModeRejectsCreatureTarget() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent creature = gd.playerBattlefields.get(player2.getId()).getLast();
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new NyxbornCourser());
+        harness.addToBattlefield(player2, new BronzeSword());
+        harness.enterBattlefieldAndReturn(player1, new IrreverentRevelers());
+        harness.handleListChoice(player1, "Destroy target artifact");
 
-        prepareRevelers();
-
-        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, creature.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("artifact");
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -54,10 +52,66 @@ class IrreverentRevelersTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, revelers, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, revelers, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Destroy mode can target an artifact you control")
+    void destroysOwnArtifact() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new BronzeSword());
+
+        castRevelers(0, artifact.getId());
+        resolveCreatureAndEtb();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(artifact);
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Irreverent Revelers"), Keyword.HASTE))
+                .isFalse();
+    }
+
+    @Test
+    @DisplayName("Haste mode leaves artifacts intact and grants haste only to its source")
+    void hasteModeWithArtifactPresent() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new BronzeSword());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new NyxbornCourser());
+
+        castRevelers(1, null);
+        resolveCreatureAndEtb();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Irreverent Revelers"), Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Entering without being cast still allows choosing haste")
+    void enteringWithoutCastingOffersHasteMode() {
+        harness.addToBattlefield(player2, new BronzeSword());
+        Permanent revelers = harness.enterBattlefieldAndReturn(player1, new IrreverentRevelers());
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleListChoice(player1, "Irreverent Revelers gains haste until end of turn");
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, revelers, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Casting needs no artifact target; the mode is chosen after the creature resolves")
+    void choosesModeAfterCreatureResolves() {
+        harness.addToBattlefield(player2, new BronzeSword());
+        prepareRevelers();
+
+        harness.castCreature(player1, 0);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleListChoice(player1, "Irreverent Revelers gains haste until end of turn");
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Irreverent Revelers"), Keyword.HASTE)).isTrue();
     }
 
     private void castRevelers(int mode, java.util.UUID targetId) {
