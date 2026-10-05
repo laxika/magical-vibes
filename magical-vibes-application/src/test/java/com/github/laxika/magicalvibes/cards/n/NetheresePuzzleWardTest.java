@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.c.ContactOtherPlane;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.effect.normalfx.D20RollService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.D4RollService;
@@ -22,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NetheresePuzzleWard.class, ContactOtherPlane.class, GrizzlyBears.class})
+@CardUsed({NetheresePuzzleWard.class, ContactOtherPlane.class})
 class NetheresePuzzleWardTest extends BaseCardTest {
 
     private RollD4EffectHandler rollD4EffectHandler;
@@ -51,13 +49,14 @@ class NetheresePuzzleWardTest extends BaseCardTest {
         setD4Roll(4);
         gd.playerHands.get(player1.getId()).clear();
         harness.addToBattlefield(player1, new NetheresePuzzleWard());
-        harness.setLibrary(player1, bears(5));
+        harness.setLibrary(player1, libraryCards(5));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
                 .hasSize(4);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         answerScry(4);
         resolveAllTriggers();
 
@@ -69,7 +68,7 @@ class NetheresePuzzleWardTest extends BaseCardTest {
         setD4Roll(3);
         gd.playerHands.get(player1.getId()).clear();
         harness.addToBattlefield(player1, new NetheresePuzzleWard());
-        harness.setLibrary(player1, bears(4));
+        harness.setLibrary(player1, libraryCards(4));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -86,12 +85,8 @@ class NetheresePuzzleWardTest extends BaseCardTest {
     void naturalTwentyAlsoDrawsFromAnotherDie() {
         setD20Roll(20);
         harness.addToBattlefield(player1, new NetheresePuzzleWard());
-        harness.setLibrary(player1, bears(8));
-        harness.setHand(player1, List.of(new ContactOtherPlane()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castInstant(player1, 0);
+        harness.setLibrary(player1, libraryCards(8));
+        harness.castFromHand(player1, new ContactOtherPlane(), "{3}{U}");
         resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
@@ -102,9 +97,62 @@ class NetheresePuzzleWardTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
     }
 
-    private List<Card> bears(int count) {
+    @Test
+    void opponentsUpkeepDoesNotRollOrScry() {
+        setD4Roll(4);
+        harness.setHand(player1, List.of());
+        harness.addToBattlefield(player1, new NetheresePuzzleWard());
+        harness.setLibrary(player1, libraryCards(5));
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
+    }
+
+    @Test
+    void opponentsHighestRollDoesNotDrawForWardController() {
+        setD20Roll(20);
+        harness.setHand(player1, List.of());
+        harness.addToBattlefield(player1, new NetheresePuzzleWard());
+        harness.setLibrary(player1, libraryCards(5));
+        harness.setLibrary(player2, libraryCards(5));
+
+        harness.castFromHand(player2, new ContactOtherPlane(), "{3}{U}");
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .hasSize(3);
+        gs.handleInteractionAnswer(gd, player2,
+                new InteractionAnswer.ScryOrder(List.of(0, 1, 2), List.of()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+    }
+
+    @Test
+    void eachWardDrawsForTheSameHighestRoll() {
+        setD20Roll(20);
+        harness.addToBattlefield(player1, new NetheresePuzzleWard());
+        harness.addToBattlefield(player1, new NetheresePuzzleWard());
+        harness.setLibrary(player1, libraryCards(8));
+
+        harness.castFromHand(player1, new ContactOtherPlane(), "{3}{U}");
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .hasSize(3);
+        answerScry(3);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(5);
+    }
+
+    private List<Card> libraryCards(int count) {
         return java.util.stream.IntStream.range(0, count)
-                .<Card>mapToObj(ignored -> new GrizzlyBears())
+                .<Card>mapToObj(ignored -> new NetheresePuzzleWard())
                 .toList();
     }
 
