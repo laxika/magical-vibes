@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({NimbusSwimmer.class})
 class NimbusSwimmerTest extends BaseCardTest {
 
     @Test
@@ -22,10 +23,9 @@ class NimbusSwimmerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        gs.playCard(gd, player1, 0, 4, null, null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 4);
 
-        Permanent swimmer = findSwimmer(player1);
+        Permanent swimmer = findPermanent(player1, "Nimbus Swimmer");
         assertThat(swimmer).isNotNull();
         assertThat(swimmer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
     }
@@ -37,17 +37,26 @@ class NimbusSwimmerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        gs.playCard(gd, player1, 0, 0, null, null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(findSwimmer(player1)).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Nimbus Swimmer"));
+        harness.assertNotOnBattlefield(player1, "Nimbus Swimmer");
+        harness.assertInGraveyard(player1, "Nimbus Swimmer");
     }
 
-    private Permanent findSwimmer(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Nimbus Swimmer"))
-                .findFirst().orElse(null);
+    @Test
+    @DisplayName("Casting with X=1 survives as a 1/1 with one counter")
+    void minimumPositiveXSurvives() {
+        harness.setHand(player1, List.of(new NimbusSwimmer()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 1);
+
+        Permanent swimmer = findPermanent(player1, "Nimbus Swimmer");
+        assertThat(swimmer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, swimmer)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, swimmer)).isEqualTo(1);
+        harness.assertNotInGraveyard(player1, "Nimbus Swimmer");
     }
 }
