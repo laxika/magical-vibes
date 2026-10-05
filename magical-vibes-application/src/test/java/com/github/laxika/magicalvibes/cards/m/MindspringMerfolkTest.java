@@ -62,6 +62,73 @@ class MindspringMerfolkTest extends BaseCardTest {
                 .hasMessageContaining("only once");
     }
 
+    @Test
+    @DisplayName("X zero still taps the source and puts counters on Merfolk")
+    void zeroXStillCountersMerfolk() {
+        Permanent merfolk = addCreatureReady(player1, new MindspringMerfolk());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        addExhaustMana(0);
+
+        harness.activateAbility(player1, 0, 0, 0, null);
+
+        assertThat(merfolk.isTapped()).isTrue();
+        assertThat(merfolk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(merfolk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Merfolk entering after activation receive counters at resolution")
+    void countersUseBattlefieldAtResolution() {
+        Permanent source = addCreatureReady(player1, new MindspringMerfolk());
+        addExhaustMana(0);
+
+        harness.activateAbility(player1, 0, 0, 0, null);
+        Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new MindspringMerfolk());
+        harness.passBothPriorities();
+
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(newcomer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Separate Mindspring Merfolk each have their own exhaust activation")
+    void exhaustLimitIsPerPermanent() {
+        Permanent first = addCreatureReady(player1, new MindspringMerfolk());
+        Permanent second = addCreatureReady(player1, new MindspringMerfolk());
+        addExhaustMana(0);
+
+        harness.activateAbility(player1, 0, 0, 0, null);
+        harness.passBothPriorities();
+        addExhaustMana(0);
+        harness.activateAbility(player1, 1, 0, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents paying the exhaust tap cost")
+    void summoningSicknessPreventsExhaust() {
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new MindspringMerfolk());
+        merfolk.setSummoningSick(true);
+        addExhaustMana(0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(merfolk.isTapped()).isFalse();
+        assertThat(merfolk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void addExhaustMana(int x) {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, x);
