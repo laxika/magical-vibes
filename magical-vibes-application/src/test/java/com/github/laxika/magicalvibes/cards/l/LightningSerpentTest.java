@@ -72,8 +72,7 @@ class LightningSerpentTest extends BaseCardTest {
 
         Permanent blocker = addCreatureReady(player2, new LightningSerpent());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -111,6 +110,25 @@ class LightningSerpentTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Lightning Serpent");
+        harness.assertInGraveyard(player1, "Lightning Serpent");
+    }
+
+    @Test
+    @DisplayName("End-step sacrifice uses the stack and waits for resolution")
+    void endStepSacrificeWaitsForResolution() {
+        harness.addToBattlefield(player1, new LightningSerpent());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Lightning Serpent");
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Lightning Serpent");
         harness.assertInGraveyard(player1, "Lightning Serpent");
