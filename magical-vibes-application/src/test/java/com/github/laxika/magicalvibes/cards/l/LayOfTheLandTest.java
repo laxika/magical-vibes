@@ -87,6 +87,38 @@ class LayOfTheLandTest extends BaseCardTest {
         assertThat(gameLogContains("Library is shuffled.")).isTrue();
     }
 
+    @Test
+    @DisplayName("Chosen land is revealed and only the caster's library is searched")
+    void chosenLandIsRevealedFromCastersLibrary() {
+        harness.setLibrary(player2, List.of(new Island()));
+        castLayOfTheLand(new Forest(), new ElvishMystic());
+
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getName).containsExactly("Elvish Mystic");
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .extracting(Card::getName).containsExactly("Island");
+        assertThat(gameLogContains("reveals Forest")).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Lay of the Land");
+    }
+
+    @Test
+    @DisplayName("An empty library resolves without a choice")
+    void emptyLibraryDoesNotPrompt() {
+        castLayOfTheLand(new Card[0]);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+        harness.assertInGraveyard(player1, "Lay of the Land");
+    }
+
     private void castLayOfTheLand() {
         castLayOfTheLand(new Plains(), new Forest(), new Island(), new ElvishMystic(), new EncroachingWastes());
     }
