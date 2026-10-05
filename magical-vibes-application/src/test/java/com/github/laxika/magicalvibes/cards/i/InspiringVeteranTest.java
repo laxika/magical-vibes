@@ -14,6 +14,35 @@ import static org.assertj.core.api.Assertions.assertThat;
 class InspiringVeteranTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Multiple Veterans boost each other and their bonuses stack")
+    void multipleVeteransBoostEachOther() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new InspiringVeteran());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new InspiringVeteran());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new InspiringVeteran());
+
+        for (Permanent veteran : new Permanent[]{first, second, third}) {
+            assertThat(gqs.getEffectivePower(gd, veteran)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, veteran)).isEqualTo(4);
+        }
+    }
+
+    @Test
+    @DisplayName("A Knight entering later immediately receives the bonus")
+    void boostsKnightsEnteringLater() {
+        Permanent first = harness.enterBattlefieldAndReturn(player1, new InspiringVeteran());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+
+        Permanent second = harness.enterBattlefieldAndReturn(player1, new InspiringVeteran());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Other Knights you control get +1/+1")
     void boostsOtherKnightsYouControl() {
         harness.addToBattlefield(player1, new InspiringVeteran());
