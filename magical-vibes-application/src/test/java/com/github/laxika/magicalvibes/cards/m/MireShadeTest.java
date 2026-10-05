@@ -19,6 +19,48 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class MireShadeTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Sacrifice is paid immediately and a summoning-sick Shade gets its counter on resolution")
+    void sacrificeIsCostAndDoesNotRequireHaste() {
+        Permanent shade = harness.addToBattlefieldAndReturn(player1, new MireShade());
+        shade.setSummoningSick(true);
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        swamp.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(swamp);
+        harness.assertInGraveyard(player1, "Swamp");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(shade.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(shade.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(shade.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot activate again while an earlier activation is on the stack")
+    void cannotActivateWithNonemptyStack() {
+        Permanent shade = addCreatureReady(player1, new MireShade());
+        harness.addToBattlefieldAndReturn(player1, new Swamp());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        Permanent remainingSwamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(remainingSwamp);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(shade.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("{B}, sacrificing a Swamp puts a +1/+1 counter on it")
     void sacrificeSwampAddsCounter() {
         Permanent shade = addCreatureReady(player1, new MireShade());
