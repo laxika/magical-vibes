@@ -5,14 +5,14 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
+import com.github.laxika.magicalvibes.cards.t.TerramorphicExpanse;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -21,10 +21,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PrimevalTitan.class, Forest.class, Island.class, Plains.class, RuneclawBear.class, TerramorphicExpanse.class})
 class PrimevalTitanTest extends BaseCardTest {
 
-    // ===== ETB trigger =====
 
+    @CardUsed({PrimevalTitan.class, Forest.class, Island.class, Plains.class, RuneclawBear.class, TerramorphicExpanse.class})
     @Nested
     @DisplayName("ETB trigger")
     class ETBTrigger {
@@ -84,7 +85,7 @@ class PrimevalTitanTest extends BaseCardTest {
         }
 
         @Test
-        @DisplayName("CR 608.2f: Lands enter battlefield simultaneously after all picks, not one at a time")
+        @DisplayName("Lands enter battlefield simultaneously after all picks, not one at a time")
         void landsEnterSimultaneously() {
             castPrimevalTitan();
             setupLibrary();
@@ -157,13 +158,70 @@ class PrimevalTitanTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("Can find two nonbasic lands with the same name")
+        void findsDuplicateNonbasicLands() {
+            castPrimevalTitan();
+            TerramorphicExpanse first = new TerramorphicExpanse();
+            TerramorphicExpanse second = new TerramorphicExpanse();
+            harness.setLibrary(player1, List.of(first, second, new RuneclawBear()));
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+
+            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+            assertThat(gd.playerBattlefields.get(player1.getId()))
+                    .filteredOn(p -> p.getCard().getId().equals(first.getId())
+                            || p.getCard().getId().equals(second.getId()))
+                    .hasSize(2)
+                    .allMatch(Permanent::isTapped);
+            assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+            assertThat(gd.interaction.activeInteraction()).isNull();
+        }
+
+        @Test
+        @DisplayName("A library with only one land completes the search after that pick")
+        void onlyOneLandAvailable() {
+            castPrimevalTitan();
+            Forest forest = new Forest();
+            harness.setLibrary(player1, List.of(forest, new RuneclawBear()));
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+
+            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+            assertThat(gd.playerBattlefields.get(player1.getId()))
+                    .filteredOn(p -> p.getCard().getId().equals(forest.getId()))
+                    .hasSize(1)
+                    .allMatch(Permanent::isTapped);
+            assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+            assertThat(gd.interaction.activeInteraction()).isNull();
+        }
+
+        @Test
+        @DisplayName("Accepting the ability with an empty library completes without a choice")
+        void emptyLibraryCompletesSearch() {
+            castPrimevalTitan();
+            harness.setLibrary(player1, List.of());
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+            int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
+
+            harness.handleMayAbilityChosen(player1, true);
+
+            assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore);
+            assertThat(gd.interaction.activeInteraction()).isNull();
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
         @DisplayName("Non-land cards are not offered in the search")
         void nonLandCardsExcluded() {
             castPrimevalTitan();
             // Library with only non-land cards
-            List<Card> deck = gd.playerDecks.get(player1.getId());
-            deck.clear();
-            deck.addAll(List.of(new GrizzlyBears(), new GrizzlyBears()));
+            harness.setLibrary(player1, List.of(new RuneclawBear(), new RuneclawBear()));
 
             harness.passBothPriorities(); // resolve creature spell → MayEffect on stack
             harness.passBothPriorities(); // resolve MayEffect → may prompt
@@ -175,8 +233,8 @@ class PrimevalTitanTest extends BaseCardTest {
         }
     }
 
-    // ===== Attack trigger =====
 
+    @CardUsed({PrimevalTitan.class, Forest.class, Island.class, Plains.class, RuneclawBear.class, TerramorphicExpanse.class})
     @Nested
     @DisplayName("Attack trigger")
     class AttackTrigger {
@@ -232,24 +290,18 @@ class PrimevalTitanTest extends BaseCardTest {
         }
     }
 
-    // ===== Helpers =====
 
     private void castPrimevalTitan() {
-        harness.setHand(player1, List.of(new PrimevalTitan()));
-        harness.addMana(player1, ManaColor.GREEN, 6);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PrimevalTitan(), "{4}{G}{G}");
     }
 
     private Permanent addReadyPrimevalTitan(Player player) {
-        Permanent perm = new Permanent(new PrimevalTitan());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new PrimevalTitan());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private void setupLibrary() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Forest(), new Island(), new Plains(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest(), new Island(), new Plains(), new RuneclawBear()));
     }
 }
