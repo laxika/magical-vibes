@@ -51,10 +51,7 @@ class OjerKaslemDeepestGrowthTest extends BaseCardTest {
         Permanent ojer = harness.addToBattlefieldAndReturn(player1, new OjerKaslemDeepestGrowth());
         destroyOjer(ojer);
 
-        Permanent temple = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof TempleOfCultivation)
-                .findFirst()
-                .orElseThrow();
+        Permanent temple = findPermanent(player1, "Temple of Cultivation");
         assertThat(temple.isTapped()).isTrue();
         assertThat(temple.isTransformed()).isTrue();
     }
@@ -90,6 +87,117 @@ class OjerKaslemDeepestGrowthTest extends BaseCardTest {
         assertThat(temple.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("May decline both the creature and the land")
+    void mayDeclineBothSelections() {
+        Permanent ojer = addCreatureReady(player1, new OjerKaslemDeepestGrowth());
+        ojer.setAttacking(true);
+        GrizzlyBears creature = new GrizzlyBears();
+        Forest land = new Forest();
+        harness.setLibrary(player1, List.of(creature, land));
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(ojer);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(creature, land);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A short library can yield just a land without requiring a creature")
+    void mayPutOnlyLandFromShortLibrary() {
+        Permanent ojer = addCreatureReady(player1, new OjerKaslemDeepestGrowth());
+        ojer.setAttacking(true);
+        Forest land = new Forest();
+        Shock unchosen = new Shock();
+        harness.setLibrary(player1, List.of(land, unchosen));
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unchosen);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A selected creature still enters when the land is declined")
+    void mayPutOnlyCreatureAndBottomTheRest() {
+        Permanent ojer = addCreatureReady(player1, new OjerKaslemDeepestGrowth());
+        ojer.setAttacking(true);
+        GrizzlyBears creature = new GrizzlyBears();
+        Forest land = new Forest();
+        Shock unchosen = new Shock();
+        harness.setLibrary(player1, List.of(creature, land, new Shock(), new Shock(), new Shock(), new Shock(), unchosen));
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(6).first().isSameAs(unchosen);
+        assertThat(gd.playerDecks.get(player1.getId())).contains(land);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Temple can tap for green without controlling ten permanents")
+    void templeAddsGreenMana() {
+        Permanent temple = returnOjerAsTemple();
+        temple.untap();
+        prepareSorcerySpeedActivation();
+
+        harness.activateAbility(player1, battlefieldIndex(temple), 0, null, null);
+
+        assertThat(temple.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Temple cannot transform outside a main phase even with ten permanents")
+    void cannotTransformDuringCombat() {
+        Permanent temple = returnOjerAsTemple();
+        temple.untap();
+        addForests(9);
+        prepareSorcerySpeedActivation();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        addTransformMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(temple), 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(temple.getCard()).isInstanceOf(TempleOfCultivation.class);
+        assertThat(temple.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ten-permanent restriction is checked on activation, not resolution")
+    void transformsEvenIfPermanentCountDropsBeforeResolution() {
+        Permanent temple = returnOjerAsTemple();
+        temple.untap();
+        addForests(8);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        prepareSorcerySpeedActivation();
+        addTransformMana();
+        harness.activateAbility(player1, battlefieldIndex(temple), 1, null, null);
+        harness.setHand(player2, List.of(new Murder()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(9);
+        harness.passBothPriorities();
+
+        assertThat(temple.getCard()).isInstanceOf(OjerKaslemDeepestGrowth.class);
+        assertThat(temple.isTapped()).isTrue();
+    }
     private void destroyOjer(Permanent ojer) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -97,18 +205,14 @@ class OjerKaslemDeepestGrowthTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Murder()));
         harness.addMana(player2, ManaColor.BLACK, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, ojer.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, ojer.getId());
         harness.passBothPriorities();
     }
 
     private Permanent returnOjerAsTemple() {
         Permanent ojer = harness.addToBattlefieldAndReturn(player1, new OjerKaslemDeepestGrowth());
         destroyOjer(ojer);
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof TempleOfCultivation)
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Temple of Cultivation");
     }
 
     private void addForests(int count) {
