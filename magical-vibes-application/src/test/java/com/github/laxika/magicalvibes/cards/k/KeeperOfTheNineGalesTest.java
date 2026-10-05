@@ -65,7 +65,7 @@ class KeeperOfTheNineGalesTest extends BaseCardTest {
     void requiresBirdsForTapCost() {
         Permanent keeper = addCreatureReady(player1, new KeeperOfTheNineGales());
         addCreatureReady(player1, new AvenEnvoy());
-        addCreatureReady(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
         Permanent target = addCreatureReady(player2, new AvenEnvoy());
 
         assertThatThrownBy(() -> harness.activateAbility(
@@ -144,6 +144,74 @@ class KeeperOfTheNineGalesTest extends BaseCardTest {
         assertThat(secondBird.isTapped()).isTrue();
         assertThat(thirdBird.isTapped()).isFalse();
         harness.assertInHand(player2, "Aven Envoy");
+    }
+
+    @Test
+    @DisplayName("Summoning-sick Birds can pay the additional tap cost")
+    void canTapSummoningSickBirds() {
+        Permanent keeper = addCreatureReady(player1, new KeeperOfTheNineGales());
+        Permanent bird1 = harness.addToBattlefieldAndReturn(player1, new AvenEnvoy());
+        Permanent bird2 = harness.addToBattlefieldAndReturn(player1, new AvenEnvoy());
+        Permanent target = addCreatureReady(player2, new AvenEnvoy());
+
+        harness.activateAbility(player1, battlefieldIndex(player1, keeper), 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(bird1.isTapped()).isTrue();
+        assertThat(bird2.isTapped()).isTrue();
+        harness.assertInHand(player2, "Aven Envoy");
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Keeper cannot activate its tap ability")
+    void cannotActivateSummoningSickKeeper() {
+        Permanent keeper = harness.addToBattlefieldAndReturn(player1, new KeeperOfTheNineGales());
+        Permanent bird1 = addCreatureReady(player1, new AvenEnvoy());
+        Permanent bird2 = addCreatureReady(player1, new AvenEnvoy());
+        Permanent target = addCreatureReady(player2, new AvenEnvoy());
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(player1, keeper), 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(keeper.isTapped()).isFalse();
+        assertThat(bird1.isTapped()).isFalse();
+        assertThat(bird2.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The Keeper can return itself after paying its costs")
+    void canReturnItself() {
+        Permanent keeper = addCreatureReady(player1, new KeeperOfTheNineGales());
+        Permanent bird1 = addCreatureReady(player1, new AvenEnvoy());
+        Permanent bird2 = addCreatureReady(player1, new AvenEnvoy());
+
+        harness.activateAbility(player1, battlefieldIndex(player1, keeper), 0, null, keeper.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Keeper of the Nine Gales");
+        harness.assertInHand(player1, "Keeper of the Nine Gales");
+        assertThat(bird1.isTapped()).isTrue();
+        assertThat(bird2.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Costs remain paid when the target leaves before resolution")
+    void targetLeavingDoesNotRefundCosts() {
+        Permanent keeper = addCreatureReady(player1, new KeeperOfTheNineGales());
+        Permanent bird1 = addCreatureReady(player1, new AvenEnvoy());
+        Permanent bird2 = addCreatureReady(player1, new AvenEnvoy());
+        Permanent target = addCreatureReady(player2, new AvenEnvoy());
+
+        harness.activateAbility(player1, battlefieldIndex(player1, keeper), 0, null, target.getId());
+        harness.getPermanentRemovalService().removePermanentToHand(gd, target);
+        harness.passBothPriorities();
+
+        assertThat(keeper.isTapped()).isTrue();
+        assertThat(bird1.isTapped()).isTrue();
+        assertThat(bird2.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(target.getCard());
+        assertThat(gd.stack).isEmpty();
     }
 
     private int battlefieldIndex(Player player, Permanent permanent) {
