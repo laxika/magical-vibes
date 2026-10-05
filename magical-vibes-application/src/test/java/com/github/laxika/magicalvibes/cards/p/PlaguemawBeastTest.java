@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +17,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({PlaguemawBeast.class, GrizzlyBears.class, LlanowarElves.class})
 class PlaguemawBeastTest extends BaseCardTest {
-
-    // ===== Sacrifice + Proliferate =====
 
     @Test
     @DisplayName("Sacrifices chosen creature and proliferates -1/-1 counters")
@@ -27,9 +27,8 @@ class PlaguemawBeastTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LlanowarElves());
         UUID elvesId = harness.getPermanentId(player1, "Llanowar Elves");
 
-        Permanent enemyBears = new Permanent(new GrizzlyBears());
+        Permanent enemyBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         enemyBears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        gd.playerBattlefields.get(player2.getId()).add(enemyBears);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -56,9 +55,8 @@ class PlaguemawBeastTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LlanowarElves());
         UUID elvesId = harness.getPermanentId(player1, "Llanowar Elves");
 
-        Permanent allyBears = new Permanent(new GrizzlyBears());
+        Permanent allyBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         allyBears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        gd.playerBattlefields.get(player1.getId()).add(allyBears);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -75,11 +73,10 @@ class PlaguemawBeastTest extends BaseCardTest {
     @Test
     @DisplayName("Can sacrifice itself to activate ability")
     void canSacrificeItself() {
-        Permanent beast = addReadyBeast(player1);
+        addReadyBeast(player1);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -110,10 +107,7 @@ class PlaguemawBeastTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate with summoning sickness")
     void cannotActivateWithSummoningSickness() {
-        PlaguemawBeast card = new PlaguemawBeast();
-        Permanent beast = new Permanent(card);
-        // summoning sick by default
-        gd.playerBattlefields.get(player1.getId()).add(beast);
+        harness.addToBattlefield(player1, new PlaguemawBeast());
         harness.addToBattlefield(player1, new LlanowarElves());
 
         harness.forceActivePlayer(player1);
@@ -130,9 +124,8 @@ class PlaguemawBeastTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LlanowarElves());
         UUID elvesId = harness.getPermanentId(player1, "Llanowar Elves");
 
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -153,9 +146,8 @@ class PlaguemawBeastTest extends BaseCardTest {
     void autoSacrificesWhenOnlyOneCreature() {
         addReadyBeast(player1);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -167,13 +159,69 @@ class PlaguemawBeastTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Proliferates selected players and all their existing counter kinds")
+    void proliferatesPlayerCounters() {
+        addReadyBeast(player1);
+        gd.playerPoisonCounters.put(player1.getId(), 1);
+        gd.playerPoisonCounters.put(player2.getId(), 2);
+        gd.playerEnergyCounters.put(player2.getId(), 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
+
+        assertThat(gd.playerPoisonCounters.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(3);
+        assertThat(gd.playerEnergyCounters.get(player2.getId())).isEqualTo(4);
+        harness.assertInGraveyard(player1, "Plaguemaw Beast");
+    }
+
+    @Test
+    @DisplayName("Adds one of each existing counter kind to every selected permanent")
+    void proliferatesMultiplePermanentsAndCounterKinds() {
+        addReadyBeast(player1);
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new PlaguemawBeast());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new PlaguemawBeast());
+        Permanent unselected = harness.addToBattlefieldAndReturn(player2, new PlaguemawBeast());
+        first.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        first.setCounterCount(CounterType.CHARGE, 3);
+        second.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        unselected.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(first.getCounterCount(CounterType.CHARGE)).isEqualTo(4);
+        assertThat(first.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(second.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(unselected.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Resolves normally when no permanents or players have counters")
+    void resolvesWithoutEligibleCounters() {
+        addReadyBeast(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Plaguemaw Beast");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+    }
 
     private Permanent addReadyBeast(Player player) {
-        PlaguemawBeast card = new PlaguemawBeast();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new PlaguemawBeast());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
