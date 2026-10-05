@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +21,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MarduCharm.class, Forest.class, FountainOfYouth.class, GrizzlyBears.class,
+        HillGiant.class, Peek.class})
 class MarduCharmTest extends BaseCardTest {
 
     @Test
@@ -90,12 +93,68 @@ class MarduCharmTest extends BaseCardTest {
                 .hasMessageContaining("opponent");
     }
 
+    @Test
+    @DisplayName("Mode 0 can damage a creature controlled by the caster")
+    void damagesOwnCreature() {
+        harness.addToBattlefield(player1, new HillGiant());
+        cast(0, harness.getPermanentId(player1, "Hill Giant"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Hill Giant");
+        harness.assertInGraveyard(player1, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Mode 2 resolves without a choice when the opponent's hand is empty")
+    void emptyHandDoesNotRequireChoice() {
+        harness.setHand(player2, List.of());
+        cast(2, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Mardu Charm");
+    }
+
+    @Test
+    @DisplayName("Mode 2 discards nothing when the opponent holds only creatures and lands")
+    void noEligibleCardDoesNotRequireChoice() {
+        harness.setHand(player2, List.of(new Forest(), new GrizzlyBears()));
+        cast(2, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInHand(player2, "Forest");
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Mardu Charm");
+    }
+
+    @Test
+    @DisplayName("Mode 2 lets the caster choose one artifact from multiple eligible cards")
+    void choosesExactlyOneEligibleCard() {
+        harness.setHand(player2, List.of(new Peek(), new FountainOfYouth(), new GrizzlyBears()));
+        cast(2, player2.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.RevealedHandChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+        assertThat(choice.validIndices()).containsExactly(0, 1);
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInGraveyard(player2, "Fountain of Youth");
+        harness.assertInHand(player2, "Peek");
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void cast(int modeIndex, java.util.UUID targetId) {
         harness.setHand(player1, List.of(new MarduCharm()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, modeIndex, targetId,
-                null, List.of(), List.of());
+        harness.castModalInstant(player1, 0, modeIndex,
+                targetId == null ? List.of() : List.of(targetId));
     }
 }
