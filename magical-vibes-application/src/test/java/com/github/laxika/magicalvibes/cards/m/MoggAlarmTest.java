@@ -94,10 +94,53 @@ class MoggAlarmTest extends BaseCardTest {
         harness.assertInHand(player1, "Mogg Alarm");
     }
 
+    @Test
+    @DisplayName("Tapped Mountains can pay the alternate cost before tokens are created")
+    void tappedMountainsAreSacrificedBeforeResolution() {
+        Permanent mountain1 = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent mountain2 = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        mountain1.tap();
+        mountain2.tap();
+        harness.setHand(player1, List.of(new MoggAlarm()));
+
+        harness.castWithAlternateCost(player1, 0, List.of(mountain1.getId(), mountain2.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Mountain");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Mountain"))
+                .hasSize(2);
+        assertThat(findGoblinTokens()).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotInHand(player1, "Mogg Alarm");
+
+        harness.passBothPriorities();
+
+        assertThat(findGoblinTokens()).hasSize(2);
+        assertThat(findPermanents(player2, "Goblin")).isEmpty();
+        harness.assertInGraveyard(player1, "Mogg Alarm");
+    }
+
+    @Test
+    @DisplayName("The same Mountain cannot be sacrificed twice for the alternate cost")
+    void alternateCostRejectsDuplicateMountain() {
+        Permanent mountain1 = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.setHand(player1, List.of(new MoggAlarm()));
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(
+                player1, 0, List.of(mountain1.getId(), mountain1.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(findPermanents(player1, "Mountain")).hasSize(2);
+        harness.assertNotInGraveyard(player1, "Mountain");
+        harness.assertInHand(player1, "Mogg Alarm");
+        assertThat(gd.stack).isEmpty();
+        assertThat(findGoblinTokens()).isEmpty();
+    }
+
     private List<Permanent> findGoblinTokens() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken()
-                        && permanent.getCard().getName().equals("Goblin"))
+        return findPermanents(player1, "Goblin").stream()
+                .filter(permanent -> permanent.getCard().isToken())
                 .toList();
     }
 }
