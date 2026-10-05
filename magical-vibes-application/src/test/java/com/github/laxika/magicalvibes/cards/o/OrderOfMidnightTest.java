@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.a.AlterFate;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.y.YouthfulKnight;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,12 +16,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OrderOfMidnight.class, AlterFate.class, GrizzlyBears.class, Plains.class})
+@CardUsed({OrderOfMidnight.class, AlterFate.class, YouthfulKnight.class, Plains.class})
 class OrderOfMidnightTest extends BaseCardTest {
 
     @Test
     void adventureReturnsTargetCreatureCardToHandAndExilesTheCard() {
-        GrizzlyBears target = new GrizzlyBears();
+        YouthfulKnight target = new YouthfulKnight();
         OrderOfMidnight card = new OrderOfMidnight();
         harness.setGraveyard(player1, List.of(target));
         harness.setHand(player1, List.of(card));
@@ -52,7 +52,7 @@ class OrderOfMidnightTest extends BaseCardTest {
 
     @Test
     void creatureFaceCanBeCastFromExileAfterAdventure() {
-        GrizzlyBears target = new GrizzlyBears();
+        YouthfulKnight target = new YouthfulKnight();
         OrderOfMidnight card = new OrderOfMidnight();
         harness.setGraveyard(player1, List.of(target));
         harness.setHand(player1, List.of(card));
@@ -73,14 +73,12 @@ class OrderOfMidnightTest extends BaseCardTest {
 
     @Test
     void creatureFaceCannotBeDeclaredAsBlocker() {
-        Permanent order = new Permanent(new OrderOfMidnight());
+        Permanent order = harness.addToBattlefieldAndReturn(player2, new OrderOfMidnight());
         order.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(order);
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new YouthfulKnight());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -91,5 +89,100 @@ class OrderOfMidnightTest extends BaseCardTest {
                 gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid blocker index");
+    }
+
+    @Test
+    void adventureCannotTargetOpponentsCreatureCard() {
+        YouthfulKnight target = new YouthfulKnight();
+        OrderOfMidnight card = new OrderOfMidnight();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castAdventure(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(target);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void adventureRequiresATargetEvenWhenCreatureCardIsAvailable() {
+        YouthfulKnight target = new YouthfulKnight();
+        OrderOfMidnight card = new OrderOfMidnight();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castAdventure(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void adventureGoesToGraveyardWithoutExilePermissionWhenTargetLeavesGraveyard() {
+        YouthfulKnight target = new YouthfulKnight();
+        OrderOfMidnight card = new OrderOfMidnight();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAdventure(player1, 0, target.getId());
+
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(card);
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+    }
+
+    @Test
+    void adventureCanReturnAnotherAdventurerAsACreatureCard() {
+        OrderOfMidnight target = new OrderOfMidnight();
+        OrderOfMidnight card = new OrderOfMidnight();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAdventure(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+    }
+
+    @Test
+    void creatureCanBeCastDirectlyWithoutReturningACardFromGraveyard() {
+        YouthfulKnight target = new YouthfulKnight();
+        harness.setGraveyard(player1, List.of(target));
+
+        harness.castFromHand(player1, new OrderOfMidnight(), "{1}{B}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Order of Midnight");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(target);
+    }
+
+    @Test
+    void adventureCannotBeCastOutsideMainPhase() {
+        YouthfulKnight target = new YouthfulKnight();
+        OrderOfMidnight card = new OrderOfMidnight();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.castAdventure(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+        assertThat(gd.stack).isEmpty();
     }
 }
