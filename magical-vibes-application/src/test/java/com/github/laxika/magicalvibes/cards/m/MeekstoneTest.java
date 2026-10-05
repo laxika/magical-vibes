@@ -3,11 +3,9 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.c.Crusade;
 import com.github.laxika.magicalvibes.cards.f.FleetwheelCruiser;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LongbowArcher;
 import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.cards.v.Vitalize;
-import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,7 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Crusade.class, GrizzlyBears.class, HillGiant.class, LongbowArcher.class, Meekstone.class, TrainedArmodon.class, Vitalize.class, WhiteKnight.class})
+@CardUsed({Crusade.class, FleetwheelCruiser.class, GrizzlyBears.class, LongbowArcher.class, Meekstone.class, TrainedArmodon.class, Vitalize.class})
 class MeekstoneTest extends BaseCardTest {
 
     @Test
@@ -30,7 +28,6 @@ class MeekstoneTest extends BaseCardTest {
         assertThat(giant.isTapped()).isTrue();
     }
 
-    @CardUsed(FleetwheelCruiser.class)
     @Test
     @DisplayName("A noncreature Vehicle with power 3+ untaps normally")
     void noncreatureVehicleWithPower3OrGreaterUntaps() {
@@ -118,5 +115,33 @@ class MeekstoneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(giant.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature untaps after its power drops below 3 while Meekstone remains")
+    void untapsAfterPowerBoostLeaves() {
+        harness.addToBattlefield(player1, new Meekstone());
+        Permanent crusade = harness.addToBattlefieldAndReturn(player1, new Crusade());
+        Permanent archer = addCreatureReady(player1, new LongbowArcher());
+        archer.tap();
+
+        advanceToUpkeep(player1);
+        assertThat(archer.isTapped()).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(crusade);
+        advanceToUpkeep(player1);
+
+        assertThat(archer.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Meekstone does not tap an untapped creature with power 3 or greater")
+    void untappedCreatureRemainsUntapped() {
+        harness.addToBattlefield(player1, new Meekstone());
+        Permanent armodon = addCreatureReady(player1, new TrainedArmodon());
+
+        advanceToUpkeep(player1);
+
+        assertThat(armodon.isTapped()).isFalse();
     }
 }
