@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -67,8 +69,7 @@ class MassDiminishTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castFlashback(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, player2.getId());
 
         assertThat(gqs.getEffectivePower(gd, targetBear)).isEqualTo(1);
         harness.assertNotInGraveyard(player1, "Mass Diminish");
@@ -89,11 +90,63 @@ class MassDiminishTest extends BaseCardTest {
                 .hasMessageContaining("only target players");
     }
 
+    @Test
+    @DisplayName("Can target the caster without affecting the opponent's creatures")
+    void canTargetCaster() {
+        Permanent ownBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castAndResolve(player1.getId());
+
+        assertThat(gqs.getEffectivePower(gd, ownBear)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownBear)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponentBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentBear)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution are not diminished")
+    void doesNotAffectLaterCreatures() {
+        Permanent originalBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castAndResolve(player2.getId());
+        Permanent laterBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, originalBear)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, originalBear)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, laterBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterBear)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Counters still modify the new base stats and abilities remain")
+    void preservesCountersAndAbilities() {
+        Permanent angel = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
+        angel.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        castAndResolve(player2.getId());
+
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A player without creatures remains a legal target")
+    void resolvesWithNoCreatures() {
+        castAndResolve(player2.getId());
+
+        harness.assertInGraveyard(player1, "Mass Diminish");
+        Permanent laterBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        assertThat(gqs.getEffectivePower(gd, laterBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterBear)).isEqualTo(2);
+    }
+
     private void castAndResolve(java.util.UUID targetPlayerId) {
         harness.setHand(player1, List.of(new MassDiminish()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, targetPlayerId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetPlayerId);
     }
 }
