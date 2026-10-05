@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -11,11 +12,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({InvokePrejudice.class, GrizzlyBears.class, LlanowarElves.class, SuntailHawk.class, Spellbook.class})
+@CardUsed({InvokePrejudice.class, GrizzlyBears.class, LlanowarElves.class, SuntailHawk.class, Spellbook.class, Ornithopter.class})
 class InvokePrejudiceTest extends BaseCardTest {
 
     @Test
@@ -49,11 +48,9 @@ class InvokePrejudiceTest extends BaseCardTest {
     void letsCreatureSpellResolveWhenCasterPaysManaValue() {
         harness.addToBattlefield(player1, new InvokePrejudice());
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setHand(player2, List.of(new SuntailHawk()));
-        harness.addMana(player2, ManaColor.WHITE, 2);
         harness.forceActivePlayer(player2);
-
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new SuntailHawk(), "{W}");
+        harness.addMana(player2, ManaColor.WHITE, 1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -109,5 +106,76 @@ class InvokePrejudiceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Triggers when its controller has no creatures")
+    void triggersWithoutControlledCreatures() {
+        harness.addToBattlefield(player1, new InvokePrejudice());
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new LlanowarElves(), "{G}");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("The caster may decline payment even with enough mana")
+    void countersWhenCasterDeclinesPayment() {
+        harness.addToBattlefield(player1, new InvokePrejudice());
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A shared color gained after casting does not cancel the trigger")
+    void doesNotRecheckSharedColorAtResolution() {
+        harness.addToBattlefield(player1, new InvokePrejudice());
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new LlanowarElves(), "{G}");
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("Removing Invoke Prejudice after triggering does not stop the counter")
+    void triggerSurvivesSourceRemoval() {
+        harness.addToBattlefield(player1, new InvokePrejudice());
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new LlanowarElves(), "{G}");
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("Colorless creatures share no color and their caster may pay zero")
+    void colorlessCreatureTriggersEvenWithColorlessControlledCreature() {
+        harness.addToBattlefield(player1, new InvokePrejudice());
+        harness.addToBattlefield(player1, new Ornithopter());
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new Ornithopter(), "{0}");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Ornithopter");
     }
 }
