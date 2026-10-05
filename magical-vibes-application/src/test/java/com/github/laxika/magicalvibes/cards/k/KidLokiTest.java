@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -75,12 +76,70 @@ class KidLokiTest extends BaseCardTest {
         assertThat(kidLoki.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("An opponent putting a counter on your creature does not grant hexproof")
+    void opponentPlacedCounterDoesNotGrantHexproof() {
+        harness.addToBattlefieldAndReturn(player1, new KidLoki());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new IronshellBeetle());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new IronshellBeetle()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.castCreature(player2, 0, target.getId());
+        resolveAllTriggers();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The second draw on an opponent's turn puts a counter on Kid Loki and grants hexproof")
+    void secondDrawOnOpponentsTurnGrantsHexproofToSelf() {
+        Permanent kidLoki = harness.addToBattlefieldAndReturn(player1, new KidLoki());
+        harness.forceActivePlayer(player2);
+        harness.setLibrary(player1, List.of(new IronshellBeetle(), new IronshellBeetle()));
+
+        drawAndResolveTrigger(player1);
+        assertThat(kidLoki.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, kidLoki, Keyword.HEXPROOF)).isFalse();
+        drawAndResolveTrigger(player1);
+
+        assertThat(kidLoki.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, kidLoki, Keyword.HEXPROOF)).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's second draw does not trigger Kid Loki")
+    void opponentsSecondDrawDoesNotTrigger() {
+        Permanent kidLoki = harness.addToBattlefieldAndReturn(player1, new KidLoki());
+        harness.setLibrary(player2, List.of(new IronshellBeetle(), new IronshellBeetle()));
+
+        drawAndResolveTrigger(player2);
+        drawAndResolveTrigger(player2);
+
+        assertThat(kidLoki.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, kidLoki, Keyword.HEXPROOF)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Hexproof expires on the next turn even though the counter remains")
+    void hexproofExpiresNextTurn() {
+        Permanent kidLoki = harness.addToBattlefieldAndReturn(player1, new KidLoki());
+        castCounterCreature(kidLoki);
+        assertThat(gqs.hasKeyword(gd, kidLoki, Keyword.HEXPROOF)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(kidLoki.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, kidLoki, Keyword.HEXPROOF)).isFalse();
+    }
+
     private void castCounterCreature(Permanent target) {
         harness.setHand(player1, List.of(new IronshellBeetle()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        gs.playCard(gd, player1, 0, 0, target.getId(), null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castCreature(player1, 0, target.getId());
+        resolveAllTriggers();
     }
 
     private void drawAndResolveTrigger(Player player) {
