@@ -1,37 +1,29 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.cards.d.DuskborneSkymarcher;
+import com.github.laxika.magicalvibes.cards.k.KinjallisCaller;
+import com.github.laxika.magicalvibes.cards.r.RangingRaptors;
+import com.github.laxika.magicalvibes.cards.s.SkymarchBloodletter;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PillarOfOrigins.class, KinjallisCaller.class, RangingRaptors.class,
+        SkymarchBloodletter.class, DuskborneSkymarcher.class})
 class PillarOfOriginsTest extends BaseCardTest {
-
-    private static Card createCreature(String name, String manaCost, CardColor color, CardSubtype... subtypes) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost(manaCost);
-        card.setColor(color);
-        card.setPower(2);
-        card.setToughness(2);
-        card.setSubtypes(List.of(subtypes));
-        return card;
-    }
-
-    // ===== Entering the battlefield =====
 
     @Test
     @DisplayName("Casting and resolving Pillar prompts for creature type choice")
@@ -60,13 +52,10 @@ class PillarOfOriginsTest extends BaseCardTest {
         assertThat(pillar.getChosenSubtype()).isEqualTo(CardSubtype.VAMPIRE);
     }
 
-    // ===== Mana ability =====
-
     @Test
     @DisplayName("Tapping Pillar prompts for mana color choice")
     void tappingPromptsForColorChoice() {
-        harness.addToBattlefield(player1, new PillarOfOrigins());
-        Permanent pillar = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent pillar = harness.addToBattlefieldAndReturn(player1, new PillarOfOrigins());
         pillar.setChosenSubtype(CardSubtype.DINOSAUR);
 
         harness.activateAbility(player1, 0, null, null);
@@ -79,8 +68,7 @@ class PillarOfOriginsTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing a color adds mana to the subtype creature mana pool")
     void choosingColorAddsRestrictedMana() {
-        harness.addToBattlefield(player1, new PillarOfOrigins());
-        Permanent pillar = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent pillar = harness.addToBattlefieldAndReturn(player1, new PillarOfOrigins());
         pillar.setChosenSubtype(CardSubtype.MERFOLK);
 
         harness.activateAbility(player1, 0, null, null);
@@ -93,105 +81,78 @@ class PillarOfOriginsTest extends BaseCardTest {
         assertThat(pool.getSubtypeCreatureManaForColor(java.util.Set.of(CardSubtype.MERFOLK), ManaColor.BLUE)).isEqualTo(1);
     }
 
-    // ===== Mana restriction: can cast creature of chosen type =====
-
     @Test
     @DisplayName("Mana from Pillar can be used to cast a creature spell of the chosen type")
     void manaCanCastCreatureOfChosenType() {
         // Set up Pillar with VAMPIRE chosen
-        harness.addToBattlefield(player1, new PillarOfOrigins());
-        Permanent pillar = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent pillar = harness.addToBattlefieldAndReturn(player1, new PillarOfOrigins());
         pillar.setChosenSubtype(CardSubtype.VAMPIRE);
 
-        // Add subtype creature mana (simulate tapping Pillar and choosing white)
+        // All three mana can be produced by Pillars choosing black.
         ManaPool pool = gd.playerManaPools.get(player1.getId());
-        pool.addSubtypeCreatureMana(CardSubtype.VAMPIRE, ManaColor.WHITE, 1);
-        pool.addSubtypeCreatureMana(CardSubtype.VAMPIRE, ManaColor.COLORLESS, 2);
+        pool.addSubtypeCreatureMana(CardSubtype.VAMPIRE, ManaColor.BLACK, 3);
 
-        // Create a Vampire creature that costs {2}{W}
-        Card vampire = createCreature("Test Vampire", "{2}{W}", CardColor.WHITE, CardSubtype.VAMPIRE);
-        harness.setHand(player1, List.of(vampire));
+        harness.setHand(player1, List.of(new SkymarchBloodletter()));
 
         // Should be able to cast it using only the restricted mana
-        harness.castCreature(player1, 0);
+        harness.castCreature(player1, 0, player2.getId());
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Test Vampire");
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Skymarch Bloodletter");
     }
-
-    // ===== Mana restriction: cannot cast creature of different type =====
 
     @Test
     @DisplayName("Mana from Pillar cannot be used to cast a creature spell of a different type")
     void manaCannotCastCreatureOfDifferentType() {
-        harness.addToBattlefield(player1, new PillarOfOrigins());
-        Permanent pillar = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent pillar = harness.addToBattlefieldAndReturn(player1, new PillarOfOrigins());
         pillar.setChosenSubtype(CardSubtype.VAMPIRE);
 
         // Add subtype creature mana (restricted to Vampire)
         ManaPool pool = gd.playerManaPools.get(player1.getId());
-        pool.addSubtypeCreatureMana(CardSubtype.VAMPIRE, ManaColor.GREEN, 1);
+        pool.addSubtypeCreatureMana(CardSubtype.VAMPIRE, ManaColor.WHITE, 1);
 
-        // Create a non-Vampire creature that costs {G}
-        Card elf = createCreature("Test Elf", "{G}", CardColor.GREEN, CardSubtype.ELF);
-        harness.setHand(player1, List.of(elf));
+        harness.setHand(player1, List.of(new KinjallisCaller()));
 
-        // Should NOT be able to cast — the only green mana available is restricted to Vampires
+        // Should NOT be able to cast — the only white mana available is restricted to Vampires
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Mana restriction: cannot cast non-creature spell =====
-
     @Test
     @DisplayName("Mana from Pillar cannot be used to cast a non-creature spell")
     void manaCannotCastNonCreatureSpell() {
-        harness.addToBattlefield(player1, new PillarOfOrigins());
-        Permanent pillar = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent pillar = harness.addToBattlefieldAndReturn(player1, new PillarOfOrigins());
         pillar.setChosenSubtype(CardSubtype.VAMPIRE);
 
         // Add subtype creature mana (restricted to Vampire creatures)
         ManaPool pool = gd.playerManaPools.get(player1.getId());
-        pool.addSubtypeCreatureMana(CardSubtype.VAMPIRE, ManaColor.RED, 1);
+        pool.addSubtypeCreatureMana(CardSubtype.VAMPIRE, ManaColor.RED, 2);
 
-        // Create an instant that costs {R}
-        Card instant = new Card();
-        instant.setName("Test Bolt");
-        instant.setType(CardType.INSTANT);
-        instant.setManaCost("{R}");
-        instant.setColor(CardColor.RED);
-        harness.setHand(player1, List.of(instant));
+        harness.setHand(player1, List.of(new PillarOfOrigins()));
 
         // Should NOT be able to cast — it's not a creature spell
-        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== Mana from Pillar works alongside regular mana =====
 
     @Test
     @DisplayName("Restricted mana supplements regular mana for casting creature of chosen type")
     void restrictedManaSupplementsRegularMana() {
-        harness.addToBattlefield(player1, new PillarOfOrigins());
-        Permanent pillar = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent pillar = harness.addToBattlefieldAndReturn(player1, new PillarOfOrigins());
         pillar.setChosenSubtype(CardSubtype.DINOSAUR);
 
         ManaPool pool = gd.playerManaPools.get(player1.getId());
-        // 1 regular green + 1 subtype-restricted colorless
+        // Green pays the colored symbol; restricted blue pays generic mana.
         pool.add(ManaColor.GREEN, 1);
-        pool.addSubtypeCreatureMana(CardSubtype.DINOSAUR, ManaColor.COLORLESS, 1);
+        pool.addSubtypeCreatureMana(CardSubtype.DINOSAUR, ManaColor.BLUE, 2);
 
-        // Create a Dinosaur that costs {1}{G}
-        Card dino = createCreature("Test Dinosaur", "{1}{G}", CardColor.GREEN, CardSubtype.DINOSAUR);
-        harness.setHand(player1, List.of(dino));
+        harness.setHand(player1, List.of(new RangingRaptors()));
 
         harness.castCreature(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Test Dinosaur");
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Ranging Raptors");
     }
-
-    // ===== Mana drains at step transitions =====
 
     @Test
     @DisplayName("Subtype creature mana drains at step/phase transitions")
@@ -204,5 +165,84 @@ class PillarOfOriginsTest extends BaseCardTest {
         pool.drainNonPersistent();
 
         assertThat(pool.getSubtypeCreatureManaForColor(java.util.Set.of(CardSubtype.VAMPIRE), ManaColor.WHITE)).isEqualTo(0);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    @DisplayName("Pillar produces exactly one restricted mana in each of the five colors")
+    void producesEachColor(ManaColor color) {
+        Permanent pillar = harness.addToBattlefieldAndReturn(player1, new PillarOfOrigins());
+        pillar.setChosenSubtype(CardSubtype.VAMPIRE);
+
+        harness.activateAbility(player1, 0, null, null);
+        PendingInteraction.ColorChoice choice = (PendingInteraction.ColorChoice) gd.interaction.activeInteraction();
+        assertThat(choice.options()).containsExactlyInAnyOrder("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+        harness.handleListChoice(player1, color.name());
+
+        ManaPool pool = gd.playerManaPools.get(player1.getId());
+        assertThat(pool.getSubtypeCreatureManaTotal(java.util.Set.of(CardSubtype.VAMPIRE))).isEqualTo(1);
+        assertThat(pool.getSubtypeCreatureManaForColor(java.util.Set.of(CardSubtype.VAMPIRE), color)).isEqualTo(1);
+        assertThat(pool.get(color)).isZero();
+        assertThat(pillar.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A newly resolved Pillar can immediately pay for a creature's second subtype")
+    void newlyResolvedPillarCastsCreatureMatchingSecondSubtype() {
+        harness.setHand(player1, List.of(new PillarOfOrigins(), new KinjallisCaller()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "CLERIC");
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "WHITE");
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Kinjalli's Caller");
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getSubtypeCreatureManaTotal(java.util.Set.of(CardSubtype.CLERIC))).isZero();
+        assertThat(findPermanent(player1, "Pillar of Origins").isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Pillar mana cannot pay for an activated ability even on a matching creature")
+    void cannotPayForMatchingCreatureAbility() {
+        Permanent pillar = harness.addToBattlefieldAndReturn(player1, new PillarOfOrigins());
+        pillar.setChosenSubtype(CardSubtype.VAMPIRE);
+        Permanent skymarcher = harness.addToBattlefieldAndReturn(player1, new DuskborneSkymarcher());
+        skymarcher.setSummoningSick(false);
+        skymarcher.setAttacking(true);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, skymarcher.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(skymarcher.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 1, null, skymarcher.getId());
+
+        assertThat(skymarcher.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getSubtypeCreatureManaTotal(java.util.Set.of(CardSubtype.VAMPIRE))).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An already tapped Pillar cannot produce more mana")
+    void cannotActivateTwiceWithoutUntapping() {
+        Permanent pillar = harness.addToBattlefieldAndReturn(player1, new PillarOfOrigins());
+        pillar.setChosenSubtype(CardSubtype.VAMPIRE);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getSubtypeCreatureManaTotal(java.util.Set.of(CardSubtype.VAMPIRE))).isEqualTo(1);
     }
 }
