@@ -85,6 +85,123 @@ class KravensLastHuntTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(creatureCard);
     }
 
+    @Test
+    @DisplayName("Chapter I includes newly milled creatures and mills a short library")
+    void chapterIUsesNewlyMilledCreature() {
+        HillGiant milledCreature = new HillGiant();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest(), milledCreature));
+        addSaga(0);
+
+        triggerChapter();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(milledCreature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+    }
+
+    @Test
+    @DisplayName("Chapter I deals no damage without creature cards in your graveyard")
+    void chapterIDealsZeroWithoutCreatureCards() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new HillGiant()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        addSaga(0);
+
+        triggerChapter();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Chapter I determines greatest power when its reflexive ability resolves")
+    void chapterIChecksGraveyardAtDamageResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setGraveyard(player1, List.of(new HillGiant()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        addSaga(0);
+
+        triggerChapter();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Chapter III targets only your creature cards and sacrifices the Saga after resolution")
+    void chapterIIIFiltersGraveyardAndSacrificesSaga() {
+        GrizzlyBears creature = new GrizzlyBears();
+        Forest land = new Forest();
+        HillGiant opponentCreature = new HillGiant();
+        harness.setGraveyard(player1, List.of(creature, land));
+        harness.setGraveyard(player2, List.of(opponentCreature));
+        Permanent saga = addSaga(2);
+
+        triggerChapter();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(creature.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(creature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(land, saga.getCard()).doesNotContain(creature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opponentCreature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
+    }
+
+    @Test
+    @DisplayName("Chapter I still mills when there are no creatures to target")
+    void chapterIMillsWithoutTargets() {
+        Forest first = new Forest();
+        Forest second = new Forest();
+        harness.setLibrary(player1, List.of(first, second));
+        addSaga(0);
+
+        triggerChapter();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Chapter II's boost expires at the end of the turn")
+    void chapterIIBoostExpires() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        addSaga(1);
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
     private Permanent addSaga(int loreCounters) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new KravensLastHunt());
         saga.setCounterCount(CounterType.LORE, loreCounters);
