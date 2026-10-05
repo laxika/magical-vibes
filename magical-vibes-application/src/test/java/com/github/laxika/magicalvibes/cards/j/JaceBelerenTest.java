@@ -139,8 +139,69 @@ class JaceBelerenTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard() instanceof JaceBeleren);
+        harness.assertNotOnBattlefield(player1, "Jace Beleren");
+    }
+
+    @Test
+    @DisplayName("+2 adds loyalty as a cost before either player draws")
+    void plusTwoPaysLoyaltyBeforeResolution() {
+        Permanent jace = addReadyJace(player1);
+        GameData gd = harness.getGameData();
+        int p1HandBefore = gd.playerHands.get(player1.getId()).size();
+        int p2HandBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(p1HandBefore);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(p2HandBefore);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(p1HandBefore + 1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(p2HandBefore + 1);
+    }
+
+    @Test
+    @DisplayName("-1 still draws after paying the last loyalty counter")
+    void minusOneResolvesAfterJaceDies() {
+        Permanent jace = addReadyJace(player1);
+        jace.setCounterCount(CounterType.LOYALTY, 1);
+        GameData gd = harness.getGameData();
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Jace Beleren");
+        harness.assertInGraveyard(player1, "Jace Beleren");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("-10 can mill its controller and leaves the opponent's library untouched")
+    void minusTenCanTargetSelf() {
+        Permanent jace = addReadyJace(player1);
+        jace.setCounterCount(CounterType.LOYALTY, 11);
+        List<Card> library = java.util.stream.IntStream.range(0, 21)
+                .mapToObj(i -> (Card) new JaceBeleren()).toList();
+        harness.setLibrary(player1, library);
+        GameData gd = harness.getGameData();
+        List<Card> opponentLibrary = List.copyOf(gd.playerDecks.get(player2.getId()));
+
+        harness.activateAbility(player1, 0, 2, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Jace Beleren");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(library.getLast());
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyElementsOf(library.subList(0, 20));
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(opponentLibrary);
     }
 
     @Test
