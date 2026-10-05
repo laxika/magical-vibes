@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.effect.entryfx.RollDiceAndEnterWithCountersEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DiceRollService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -77,6 +78,96 @@ class NeverwinterHydraTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Neverwinter Hydra");
     }
 
+    @Test
+    void zeroXRollsNoDiceAndDiesWithoutCounters() {
+        ReflectionTestUtils.setField(handler, "diceRollService", new FixedDiceRollService());
+        harness.setHand(player1, List.of(new NeverwinterHydra()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Neverwinter Hydra");
+        harness.assertInGraveyard(player1, "Neverwinter Hydra");
+        assertThat(gameLogContains("rolls 0 d6")).isFalse();
+    }
+
+    @Test
+    void wardDoesNotTriggerForItsControllersSpell() {
+        ReflectionTestUtils.setField(handler, "diceRollService", new FixedDiceRollService(1));
+        harness.setHand(player1, List.of(new NeverwinterHydra()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0, 1);
+        harness.passBothPriorities();
+
+        Permanent permanent = findPermanent(player1, "Neverwinter Hydra");
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, permanent.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Shock");
+        harness.assertInGraveyard(player1, "Neverwinter Hydra");
+        harness.assertNotOnBattlefield(player1, "Neverwinter Hydra");
+    }
+
+    @Test
+    void opponentCanPayFourToLetTheirSpellResolve() {
+        castHydraAndTargetWithShockWithWardMana();
+
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Shock");
+        harness.assertInGraveyard(player1, "Neverwinter Hydra");
+        harness.assertNotOnBattlefield(player1, "Neverwinter Hydra");
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void opponentCanDeclineWardEvenWhenTheyHaveEnoughMana() {
+        castHydraAndTargetWithShockWithWardMana();
+
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Shock");
+        harness.assertOnBattlefield(player1, "Neverwinter Hydra");
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(4);
+    }
+
+    @Test
+    void trampleDealsDamageBeyondALethallyDamagedBlocker() {
+        Permanent attacker = addCreatureReady(player1, new NeverwinterHydra());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 6);
+        Permanent blocker = addCreatureReady(player2, new NeverwinterHydra());
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertLife(player2, 15);
+        harness.assertInGraveyard(player2, "Neverwinter Hydra");
+        harness.assertOnBattlefield(player1, "Neverwinter Hydra");
+    }
+
+    private void castHydraAndTargetWithShockWithWardMana() {
+        ReflectionTestUtils.setField(handler, "diceRollService", new FixedDiceRollService(1));
+        harness.setHand(player1, List.of(new NeverwinterHydra()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0, 1);
+        harness.passBothPriorities();
+
+        Permanent permanent = findPermanent(player1, "Neverwinter Hydra");
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        harness.castInstant(player2, 0, permanent.getId());
+        harness.passBothPriorities();
+    }
     private static final class FixedDiceRollService extends DiceRollService {
 
         private final int[] results;
