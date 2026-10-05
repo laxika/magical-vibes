@@ -124,10 +124,87 @@ class LightningCoilsTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(countPermanents(player1, "Elemental")).isEqualTo(5);
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Elemental")).isZero();
+    }
+
+    @Test
+    @DisplayName("All Elementals from one upkeep are exiled by one delayed trigger")
+    void elementalsAreExiledTogether() {
+        harness.addToBattlefield(player1, new LightningCoils());
+        findPermanent(player1, "Lightning Coils").setCounterCount(CounterType.CHARGE, 5);
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+
+        assertThat(countPermanents(player1, "Elemental")).isEqualTo(5);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Elemental")).isZero();
+    }
+
+    @Test
+    @DisplayName("The charge counter threshold is checked again when the upkeep trigger resolves")
+    void fallingBelowThresholdStopsUpkeepEffect() {
+        harness.addToBattlefield(player1, new LightningCoils());
+        Permanent coils = findPermanent(player1, "Lightning Coils");
+        coils.setCounterCount(CounterType.CHARGE, 5);
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        coils.setCounterCount(CounterType.CHARGE, 4);
+        resolveAllTriggers();
+
+        assertThat(coils.getCounterCount(CounterType.CHARGE)).isEqualTo(4);
+        assertThat(countPermanents(player1, "Elemental")).isZero();
+    }
+
+    @Test
+    @DisplayName("Counters added before resolution are included in the token count")
+    void countsCountersAtResolution() {
+        harness.addToBattlefield(player1, new LightningCoils());
+        Permanent coils = findPermanent(player1, "Lightning Coils");
+        coils.setCounterCount(CounterType.CHARGE, 5);
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        coils.setCounterCount(CounterType.CHARGE, 7);
+        resolveAllTriggers();
+
+        assertThat(coils.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(countPermanents(player1, "Elemental")).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("Lightning Coils does not trigger during the opponent's upkeep")
+    void opponentUpkeepDoesNotCreateTokens() {
+        harness.addToBattlefield(player1, new LightningCoils());
+        Permanent coils = findPermanent(player1, "Lightning Coils");
+        coils.setCounterCount(CounterType.CHARGE, 5);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(coils.getCounterCount(CounterType.CHARGE)).isEqualTo(5);
+        assertThat(countPermanents(player1, "Elemental")).isZero();
+    }
+
+    @Test
+    @DisplayName("Two simultaneous nontoken creature deaths add two charge counters")
+    void simultaneousDeathsAddSeparateCounters() {
+        harness.addToBattlefield(player1, new LightningCoils());
+        harness.addToBattlefield(player1, new OmegaMyr());
+        harness.addToBattlefield(player1, new OmegaMyr());
+
+        harness.castFromHand(player1, new BarterInBlood(), "{2}{B}{B}");
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Lightning Coils").getCounterCount(CounterType.CHARGE))
+                .isEqualTo(2);
+        assertThat(countPermanents(player1, "Omega Myr")).isZero();
     }
 }
