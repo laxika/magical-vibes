@@ -21,4 +21,35 @@ class QuicksilverLapidaryTest extends BaseCardTest {
                     assertThat(card.isToken()).isFalse();
                 });
     }
+
+    @Test
+    void conjuresIntoTriggerControllersHandWithThatPlayerAsOwner() {
+        harness.enterBattlefieldAndReturn(player2, new QuicksilverLapidary());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).singleElement().satisfies(card -> {
+            assertThat(card).isInstanceOf(MoxOpal.class);
+            assertThat(card.getOwnerId()).isEqualTo(player2.getId());
+            assertThat(card.isToken()).isFalse();
+        });
+    }
+
+    @Test
+    void separateEntriesConjureDistinctCardsWithoutDrawingFromLibrary() {
+        int librarySize = gd.playerDecks.get(player1.getId()).size();
+        harness.enterBattlefieldAndReturn(player1, new QuicksilverLapidary());
+        resolveAllTriggers();
+        harness.enterBattlefieldAndReturn(player1, new QuicksilverLapidary());
+        resolveAllTriggers();
+
+        var hand = gd.playerHands.get(player1.getId());
+        assertThat(hand).hasSize(2).allSatisfy(card -> {
+            assertThat(card).isInstanceOf(MoxOpal.class);
+            assertThat(card.isToken()).isFalse();
+        });
+        assertThat(hand.get(0)).isNotSameAs(hand.get(1));
+        assertThat(hand.get(0).getId()).isNotEqualTo(hand.get(1).getId());
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(librarySize);
+    }
 }
