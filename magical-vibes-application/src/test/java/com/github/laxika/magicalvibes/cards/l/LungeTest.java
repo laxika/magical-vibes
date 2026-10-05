@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Lunge.class, JhovallRider.class})
+@CardUsed({Lunge.class, JhovallRider.class, ChandraNalaar.class})
 class LungeTest extends BaseCardTest {
 
     @Test
@@ -33,7 +33,6 @@ class LungeTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(ChandraNalaar.class)
     @DisplayName("Deals 2 damage to a target planeswalker")
     void damagesCreatureAndPlaneswalker() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new JhovallRider());
@@ -82,5 +81,55 @@ class LungeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(
                 player1, 0, List.of(firstCreature.getId(), secondCreature.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Still damages the player when the creature target leaves the battlefield")
+    void damagesPlayerWhenCreatureTargetLeaves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new JhovallRider());
+        harness.setHand(player1, List.of(new Lunge()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.setLife(player2, 20);
+
+        harness.castInstant(player1, 0, List.of(creature.getId(), player2.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player1, "Lunge");
+    }
+
+    @Test
+    @DisplayName("Still damages the creature when the planeswalker target leaves the battlefield")
+    void damagesCreatureWhenPlaneswalkerTargetLeaves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new JhovallRider());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        harness.setHand(player1, List.of(new Lunge()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castInstant(player1, 0, List.of(creature.getId(), planeswalker.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(planeswalker);
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Lunge");
+    }
+
+    @Test
+    @DisplayName("Does not resolve when both targets leave the battlefield")
+    void doesNotResolveWhenBothTargetsLeave() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new JhovallRider());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        harness.setHand(player1, List.of(new Lunge()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castInstant(player1, 0, List.of(creature.getId(), planeswalker.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        gd.playerBattlefields.get(player2.getId()).remove(planeswalker);
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Lunge");
+        assertThat(gd.stack).isEmpty();
     }
 }
