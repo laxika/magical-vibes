@@ -86,4 +86,52 @@ class MwonvuliOozeTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ooze);
     }
+
+    @Test
+    @DisplayName("An opponent's upkeep does not add age counters or require payment")
+    void opponentUpkeepDoesNotTrigger() {
+        Permanent ooze = harness.addToBattlefieldAndReturn(player1, new MwonvuliOoze());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(ooze.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ooze);
+    }
+
+    @Test
+    @DisplayName("Other counters do not count as age counters, and bonuses apply after the base P/T")
+    void otherCountersDoNotIncreaseAgeBasedPowerToughness() {
+        Permanent ooze = harness.addToBattlefieldAndReturn(player1, new MwonvuliOoze());
+        ooze.setCounterCount(CounterType.AGE, 2);
+        ooze.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        assertThat(gqs.getEffectivePower(gd, ooze)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, ooze)).isEqualTo(8);
+
+        ooze.setCounterCount(CounterType.AGE, 0);
+
+        assertThat(gqs.getEffectivePower(gd, ooze)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ooze)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Upkeep includes existing age counters but ignores other counters")
+    void upkeepCountsOnlyAgeCounters() {
+        Permanent ooze = harness.addToBattlefieldAndReturn(player1, new MwonvuliOoze());
+        ooze.setCounterCount(CounterType.AGE, 2);
+        ooze.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ooze);
+        assertThat(ooze.getCounterCount(CounterType.AGE)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gqs.getEffectivePower(gd, ooze)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, ooze)).isEqualTo(10);
+    }
 }
