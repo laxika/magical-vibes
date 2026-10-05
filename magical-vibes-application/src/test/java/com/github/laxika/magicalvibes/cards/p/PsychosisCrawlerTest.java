@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,9 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PsychosisCrawler.class, GrizzlyBears.class, CounselOfTheSoratami.class})
 class PsychosisCrawlerTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("P/T equals number of cards in controller's hand")
@@ -130,6 +131,68 @@ class PsychosisCrawlerTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
+    @Test
+    @DisplayName("Each Psychosis Crawler triggers separately for a draw")
+    void multipleCrawlersTriggerSeparately() {
+        harness.addToBattlefield(player1, new PsychosisCrawler());
+        harness.addToBattlefield(player1, new PsychosisCrawler());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToDraw(player1);
+        assertThat(gd.stack).hasSize(2);
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("A draw trigger still resolves after the Crawler dies")
+    void triggerResolvesAfterSourceDies() {
+        harness.addToBattlefield(player1, new PsychosisCrawler());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLife(player2, 20);
+
+        advanceToDraw(player1);
+        harness.setHand(player1, List.of());
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Psychosis Crawler");
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @CardUsed(TurnToFrog.class)
+    @DisplayName("Losing all abilities prevents the draw trigger")
+    void doesNotTriggerAfterLosingAbilities() {
+        Permanent crawler = harness.addToBattlefieldAndReturn(player1, new PsychosisCrawler());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new TurnToFrog()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        gd.turnNumber = 2;
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player2, 0, crawler.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, crawler)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, crawler)).isEqualTo(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
     private void advanceToDraw(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2; // avoid first-turn draw skip
@@ -139,10 +202,8 @@ class PsychosisCrawlerTest extends BaseCardTest {
     }
 
     private Permanent addCrawlerReady(Player player) {
-        PsychosisCrawler card = new PsychosisCrawler();
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new PsychosisCrawler());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
