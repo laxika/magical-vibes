@@ -73,4 +73,58 @@ class LadySpiderMaybelleReillyTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentSpider.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Lady Spider can put the discard counter on herself")
+    void discardCanTargetLadySpiderHerself() {
+        Permanent ladySpider = harness.addToBattlefieldAndReturn(player1, new LadySpiderMaybelleReilly());
+        harness.setHand(player1, List.of(new Censor()));
+        harness.setLibrary(player1, List.of(new Censor()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, ladySpider.getId());
+        harness.passBothPriorities();
+
+        assertThat(ladySpider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An opponent discarding a card does not trigger Lady Spider")
+    void opponentDiscardDoesNotTrigger() {
+        Permanent ladySpider = harness.addToBattlefieldAndReturn(player1, new LadySpiderMaybelleReilly());
+        harness.setHand(player2, List.of(new Censor()));
+        harness.setLibrary(player2, List.of(new Censor()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.activateHandAbility(player2, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(ladySpider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Each discard can put another counter on the same Spider")
+    void consecutiveDiscardsEachPutCounter() {
+        Permanent ladySpider = harness.addToBattlefieldAndReturn(player1, new LadySpiderMaybelleReilly());
+        harness.setHand(player1, List.of(new Censor(), new Censor()));
+        harness.setLibrary(player1, List.of(new Censor(), new Censor()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, ladySpider.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, ladySpider.getId());
+        harness.passBothPriorities();
+
+        assertThat(ladySpider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
 }
