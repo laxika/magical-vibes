@@ -1,21 +1,17 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.Emblem;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -24,6 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LilianaOfTheDarkRealms.class, Forest.class, WalkingCorpse.class, Swamp.class})
 class LilianaOfTheDarkRealmsTest extends BaseCardTest {
 
     private static final String PLUS_MODE = "Target creature gets +X/+X until end of turn.";
@@ -41,7 +38,7 @@ class LilianaOfTheDarkRealmsTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         var offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
         assertThat(offered).allMatch(card -> card.getName().equals("Swamp"));
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
         harness.assertInHand(player1, "Swamp");
@@ -54,7 +51,7 @@ class LilianaOfTheDarkRealmsTest extends BaseCardTest {
         liliana.setCounterCount(CounterType.LOYALTY, 4);
         addSwamp(player1);
         addSwamp(player1);
-        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
 
         harness.activateAbility(player1, 0, 1, null, bear.getId());
         harness.passBothPriorities();
@@ -71,13 +68,13 @@ class LilianaOfTheDarkRealmsTest extends BaseCardTest {
         addReadyLiliana(player1);
         addSwamp(player1);
         addSwamp(player1);
-        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
 
         harness.activateAbility(player1, 0, 1, null, bear.getId());
         harness.passBothPriorities();
         harness.handleListChoice(player1, MINUS_MODE);
 
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Walking Corpse");
     }
 
     @Test
@@ -87,7 +84,7 @@ class LilianaOfTheDarkRealmsTest extends BaseCardTest {
         addSwamp(player1);
         addSwamp(player2);
         addSwamp(player2);
-        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
 
         harness.activateAbility(player1, 0, 1, null, bear.getId());
         harness.passBothPriorities();
@@ -101,7 +98,7 @@ class LilianaOfTheDarkRealmsTest extends BaseCardTest {
     void minusThreePumpWearsOff() {
         addReadyLiliana(player1);
         addSwamp(player1);
-        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
 
         harness.activateAbility(player1, 0, 1, null, bear.getId());
         harness.passBothPriorities();
@@ -130,19 +127,28 @@ class LilianaOfTheDarkRealmsTest extends BaseCardTest {
     void minusSixCreatesEmblem() {
         Permanent liliana = addReadyLiliana(player1);
         liliana.setCounterCount(CounterType.LOYALTY, 6);
+        Permanent swamp = addSwamp(player1);
+        harness.addToBattlefield(player1, new Forest());
+        addSwamp(player2);
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.emblems).hasSize(1);
-        Emblem emblem = gd.emblems.getFirst();
-        assertThat(emblem.controllerId()).isEqualTo(player1.getId());
-        assertThat(emblem.staticEffects()).hasSize(1);
-        GrantActivatedAbilityEffect grant = (GrantActivatedAbilityEffect) emblem.staticEffects().getFirst();
-        assertThat(grant.scope()).isEqualTo(GrantScope.OWN_PERMANENTS);
-        assertThat(grant.filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.SWAMP));
-        assertThat(grant.ability().isRequiresTap()).isTrue();
+        harness.assertInGraveyard(player1, "Liliana of the Dark Realms");
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(swamp.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.forceActivePlayer(player2);
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.forceActivePlayer(player1);
+        Permanent laterSwamp = addSwamp(player1);
+        harness.activateAbility(player1, 2, 0, null, null);
+        assertThat(laterSwamp.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(8);
     }
 
     @Test
@@ -155,19 +161,81 @@ class LilianaOfTheDarkRealmsTest extends BaseCardTest {
                 .hasMessageContaining("Not enough loyalty");
     }
 
+    @Test
+    @DisplayName("+1 may fail to find even when a Swamp is available")
+    void plusOneMayFailToFind() {
+        addReadyLiliana(player1);
+        harness.setLibrary(player1, List.of(new Swamp()));
+        int handSize = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("+1 resolves with no matching Swamp")
+    void plusOneWithNoSwamp() {
+        addReadyLiliana(player1);
+        harness.setLibrary(player1, List.of(new Forest()));
+        int handSize = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("-3 determines X on resolution and fixes that value afterward")
+    void minusThreeCountsSwampsOnResolution() {
+        addReadyLiliana(player1);
+        addSwamp(player1);
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
+
+        harness.activateAbility(player1, 0, 1, null, bear.getId());
+        addSwamp(player1);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, PLUS_MODE);
+
+        assertThat(bear.getEffectivePower()).isEqualTo(4);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        addSwamp(player1);
+        assertThat(bear.getEffectivePower()).isEqualTo(4);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("-3 with no Swamps leaves the target unchanged")
+    void minusThreeWithZeroSwamps() {
+        addReadyLiliana(player1);
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
+
+        harness.activateAbility(player1, 0, 1, null, bear.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, MINUS_MODE);
+
+        harness.assertOnBattlefield(player2, "Walking Corpse");
+        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+    }
+
     private Permanent addReadyLiliana(Player player) {
-        Permanent perm = new Permanent(new LilianaOfTheDarkRealms());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new LilianaOfTheDarkRealms());
         perm.setCounterCount(CounterType.LOYALTY, 3);
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
     }
 
     private Permanent addSwamp(Player player) {
-        Permanent perm = new Permanent(new Swamp());
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Swamp());
     }
 }
