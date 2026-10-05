@@ -32,6 +32,45 @@ class KodamaOfTheNorthTreeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Shroud also prevents its controller from targeting Kodama")
+    void shroudPreventsControllerFromTargetingKodama() {
+        Permanent kodama = harness.addToBattlefieldAndReturn(player1, new KodamaOfTheNorthTree());
+        harness.setHand(player1, List.of(new RendSpirit()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, kodama.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("has shroud");
+    }
+
+    @Test
+    @DisplayName("Trample requires lethal damage to the blocker before damage to the player")
+    void trampleRequiresLethalDamageToBlocker() {
+        addCreatureReady(player1, new KodamaOfTheNorthTree());
+        Permanent blocker = addCreatureReady(player2, new MossKami());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 4,
+                player2.getId(), 2
+        )))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must assign at least 5 damage");
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 5,
+                player2.getId(), 1
+        ));
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("Trample deals excess combat damage to the defending player")
     void trampleDealsExcessCombatDamageToDefendingPlayer() {
         harness.setLife(player2, 20);
