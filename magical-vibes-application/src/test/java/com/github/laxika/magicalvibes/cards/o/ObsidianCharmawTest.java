@@ -74,4 +74,69 @@ class ObsidianCharmawTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("nonbasic land an opponent controls");
     }
+
+    @Test
+    @DisplayName("Tapped opponent lands still reduce the casting cost")
+    void tappedLandsStillReduceCost() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Wastes());
+        land.tap();
+        harness.setHand(player1, List.of(new ObsidianCharmaw()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Excess cost reduction leaves the two red mana requirement")
+    void excessReductionDoesNotReduceColoredCost() {
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player2, new Wastes());
+        }
+        harness.setHand(player1, List.of(new ObsidianCharmaw()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Can enter when the opponent controls only basic lands")
+    void entersWithoutLegalLandTarget() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Wastes());
+        harness.setHand(player1, List.of(new ObsidianCharmaw()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Obsidian Charmaw");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(land);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target a nonbasic land controlled by the caster")
+    void cannotTargetOwnNonbasicLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new GhostQuarter());
+        harness.setHand(player1, List.of(new ObsidianCharmaw()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, land.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("nonbasic land an opponent controls");
+    }
 }
