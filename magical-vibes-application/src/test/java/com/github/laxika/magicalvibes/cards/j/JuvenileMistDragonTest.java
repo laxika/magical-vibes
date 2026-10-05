@@ -17,7 +17,7 @@ class JuvenileMistDragonTest extends BaseCardTest {
 
     @Test
     void tapsAndSkipsNextUntapForOneCreatureAnOpponentControls() {
-        Permanent bear = addCreatureReady(player2);
+        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
 
         castJuvenileMistDragon(List.of(bear.getId()));
 
@@ -38,9 +38,21 @@ class JuvenileMistDragonTest extends BaseCardTest {
     }
 
     @Test
+    void canDeclineTargetEvenWhenAnOpponentControlsACreature() {
+        Permanent target = addCreatureReady(player2, new JuvenileMistDragon());
+
+        castJuvenileMistDragon(List.of());
+
+        assertThat(target.isTapped()).isFalse();
+        target.setTapped(true);
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
     void cannotChooseTwoCreaturesControlledByTheSameOpponent() {
-        Permanent firstBear = addCreatureReady(player2);
-        Permanent secondBear = addCreatureReady(player2);
+        Permanent firstBear = addCreatureReady(player2, new GrizzlyBears());
+        Permanent secondBear = addCreatureReady(player2, new GrizzlyBears());
         prepareCast();
 
         assertThatThrownBy(() -> harness.castCreature(
@@ -51,18 +63,56 @@ class JuvenileMistDragonTest extends BaseCardTest {
 
     @Test
     void cannotTargetOwnCreature() {
-        Permanent ownBear = addCreatureReady(player1);
+        Permanent ownBear = addCreatureReady(player1, new GrizzlyBears());
         prepareCast();
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0, List.of(ownBear.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addCreatureReady(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void alreadyTappedTargetSkipsOnlyItsNextUntapStep() {
+        Permanent target = addCreatureReady(player2, new JuvenileMistDragon());
+        target.setTapped(true);
+
+        castJuvenileMistDragon(List.of(target.getId()));
+
+        harness.performUntapStep(player1);
+        assertThat(target.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void overlappingTriggersDoNotSkipTwoUntapSteps() {
+        Permanent target = addCreatureReady(player2, new JuvenileMistDragon());
+
+        castJuvenileMistDragon(List.of(target.getId()));
+        castJuvenileMistDragon(List.of(target.getId()));
+
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void targetThatBecomesControlledByYouBeforeResolutionIsUnaffected() {
+        Permanent target = addCreatureReady(player2, new JuvenileMistDragon());
+        prepareCast();
+        harness.castCreature(player1, 0, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerBattlefields.get(player1.getId()).add(target);
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        target.setTapped(true);
+        harness.performUntapStep(player1);
+        assertThat(target.isTapped()).isFalse();
     }
 
     private void castJuvenileMistDragon(List<java.util.UUID> targetIds) {
