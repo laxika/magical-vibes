@@ -109,9 +109,60 @@ class MineLayerTest extends BaseCardTest {
     }
 
     private Permanent addReadyMineLayer() {
-        Permanent mineLayer = harness.addToBattlefieldAndReturn(player1, new MineLayer());
-        mineLayer.setSummoningSick(false);
-        return mineLayer;
+        return addCreatureReady(player1, new MineLayer());
+    }
+
+    @Test
+    @DisplayName("Putting a mine counter on an already tapped land does not destroy it")
+    void counterOnAlreadyTappedLandDoesNotDestroyIt() {
+        addReadyMineLayer();
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        harness.tapPermanent(player2, 0);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        resolveAllTriggers();
+
+        assertThat(land.getCounterCount(CounterType.MINE)).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Mountain");
+        harness.assertNotInGraveyard(player2, "Mountain");
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Mine Layer cannot activate its tap ability")
+    void summoningSicknessPreventsActivation() {
+        harness.addToBattlefield(player1, new MineLayer());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(land.getCounterCount(CounterType.MINE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A pending destruction trigger still destroys the land after Mine Layer leaves")
+    void pendingDestructionSurvivesSourceLeavingAndCounterRemoval() {
+        Permanent mineLayer = addReadyMineLayer();
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        land.setCounterCount(CounterType.MINE, 1);
+        harness.tapPermanent(player2, 0);
+        harness.setHand(player2, List.of(new DoomBlade()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, mineLayer.getId());
+        harness.passBothPriorities();
+
+        assertThat(land.getCounterCount(CounterType.MINE)).isZero();
+        harness.assertOnBattlefield(player2, "Mountain");
+
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Mine Layer");
+        harness.assertNotOnBattlefield(player2, "Mountain");
+        harness.assertInGraveyard(player2, "Mountain");
     }
 
 }
