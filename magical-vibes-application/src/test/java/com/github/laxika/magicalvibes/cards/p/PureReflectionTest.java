@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.e.Exclude;
 import com.github.laxika.magicalvibes.cards.k.KavuAggressor;
 import com.github.laxika.magicalvibes.cards.s.ShivanHarvest;
 import com.github.laxika.magicalvibes.model.Card;
@@ -18,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PureReflection.class, KavuAggressor.class, ShivanHarvest.class})
+@CardUsed({PureReflection.class, KavuAggressor.class, ShivanHarvest.class, Exclude.class})
 class PureReflectionTest extends BaseCardTest {
 
     @Test
@@ -87,6 +88,62 @@ class PureReflectionTest extends BaseCardTest {
         harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();
 
+        Permanent reflection = findPermanent(player1, "Reflection");
+        assertThat(gqs.getEffectivePower(gd, reflection)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, reflection)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A countered creature spell still creates its Reflection")
+    void counteredCreatureSpellStillCreatesReflection() {
+        harness.addToBattlefield(player1, new PureReflection());
+        KavuAggressor creature = new KavuAggressor();
+        harness.setHand(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.setHand(player2, List.of(new Exclude()));
+        harness.setLibrary(player2, List.of(new ShivanHarvest()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        harness.assertInGraveyard(player1, "Kavu Aggressor");
+        harness.passBothPriorities();
+
+        Permanent reflection = findPermanent(player1, "Reflection");
+        assertThat(countPermanents(player1, "Reflection")).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, reflection)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, reflection)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Entering the battlefield without being cast does not trigger Pure Reflection")
+    void creatureEnteringWithoutCastDoesNotTrigger() {
+        harness.addToBattlefield(player1, new PureReflection());
+        Permanent reflection = harness.addToBattlefieldAndReturn(player1, reflectionToken());
+
+        harness.addToBattlefield(player2, new KavuAggressor());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanent(player1, "Reflection")).isSameAs(reflection);
+        assertThat(countPermanents(player2, "Reflection")).isZero();
+    }
+
+    @Test
+    @DisplayName("Each Pure Reflection replaces the token made by the previous trigger")
+    void multipleReflectionsLeaveOneToken() {
+        harness.addToBattlefield(player1, new PureReflection());
+        harness.addToBattlefield(player2, new PureReflection());
+        harness.setHand(player1, List.of(new KavuAggressor()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent firstToken = findPermanent(player1, "Reflection");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firstToken);
+        assertThat(countPermanents(player1, "Reflection")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Reflection")).isZero();
         Permanent reflection = findPermanent(player1, "Reflection");
         assertThat(gqs.getEffectivePower(gd, reflection)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, reflection)).isEqualTo(3);
