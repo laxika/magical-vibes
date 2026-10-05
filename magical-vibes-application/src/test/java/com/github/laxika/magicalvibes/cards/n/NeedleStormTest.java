@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.l.Levitation;
 import com.github.laxika.magicalvibes.cards.r.RathiDragon;
 import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NeedleStorm.class, WindDrake.class, RathiDragon.class, TrainedArmodon.class})
+@CardUsed({NeedleStorm.class, WindDrake.class, RathiDragon.class, TrainedArmodon.class, Levitation.class})
 class NeedleStormTest extends BaseCardTest {
 
     @Test
@@ -51,6 +52,23 @@ class NeedleStormTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Damages creatures with granted flying and leaves opposing ground creatures unharmed")
+    void damagesCreaturesWithGrantedFlying() {
+        harness.addToBattlefield(player1, new Levitation());
+        harness.addToBattlefield(player1, new TrainedArmodon());
+        Permanent groundCreature = harness.addToBattlefieldAndReturn(player2, new TrainedArmodon());
+
+        harness.castFromHand(player1, new NeedleStorm(), "{2}{G}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Trained Armodon");
+        harness.assertInGraveyard(player1, "Trained Armodon");
+        harness.assertOnBattlefield(player1, "Levitation");
+        harness.assertOnBattlefield(player2, "Trained Armodon");
+        assertThat(groundCreature.getMarkedDamage()).isZero();
     }
 
     @Test
