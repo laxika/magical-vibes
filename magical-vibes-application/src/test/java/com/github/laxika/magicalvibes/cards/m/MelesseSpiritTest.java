@@ -82,8 +82,38 @@ class MelesseSpiritTest extends BaseCardTest {
 
         assertThat(blocker.getMarkedDamage()).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card instanceof SkulkingGhost);
+        harness.assertInGraveyard(player1, "Skulking Ghost");
+    }
+
+    @Test
+    @DisplayName("A creature without flying or reach cannot block Melesse Spirit")
+    void groundCreatureCannotBlock() {
+        Permanent attacker = addCreatureReady(player1, new MelesseSpirit());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new MtendaHerder());
+
+        prepareDeclareBlockers(player1);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("flying");
+    }
+
+    @Test
+    @DisplayName("A white flying creature can block and deal lethal damage to Melesse Spirit")
+    void whiteFlyingCreatureCanBlockAndDealDamage() {
+        Permanent attacker = addCreatureReady(player1, new MelesseSpirit());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new MelesseSpirit());
+
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Melesse Spirit");
+        harness.assertNotOnBattlefield(player2, "Melesse Spirit");
+        harness.assertInGraveyard(player1, "Melesse Spirit");
+        harness.assertInGraveyard(player2, "Melesse Spirit");
     }
 
     @Test
