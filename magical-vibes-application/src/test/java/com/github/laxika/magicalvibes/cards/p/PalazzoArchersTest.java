@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -36,10 +36,12 @@ class PalazzoArchersTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(JaceBeleren.class)
     @DisplayName("A flying creature attacking your planeswalker also triggers")
     void flyingCreatureAttackingPlaneswalkerTakesSourcePowerDamage() {
         addCreatureReady(player1, new PalazzoArchers());
-        Permanent planeswalker = addPlaneswalker(player1, 4);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 4);
         Permanent attacker = addCreatureReady(player2, new AirElemental());
 
         declareAttackers(player2, List.of(0), Map.of(0, planeswalker.getId()));
@@ -73,14 +75,59 @@ class PalazzoArchersTest extends BaseCardTest {
         gs.declareAttackers(gd, player, attackerIndices, attackTargets);
     }
 
-    private Permanent addPlaneswalker(Player player, int loyalty) {
-        Card card = new Card();
-        card.setName("Test Planeswalker");
-        card.setType(CardType.PLANESWALKER);
-        card.setLoyalty(loyalty);
-        Permanent permanent = new Permanent(card);
-        permanent.setCounterCount(CounterType.LOYALTY, loyalty);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void eachFlyingAttackerReceivesDamage() {
+        addCreatureReady(player1, new PalazzoArchers());
+        Permanent first = addCreatureReady(player2, new AirElemental());
+        Permanent second = addCreatureReady(player2, new AirElemental());
+
+        declareAttackers(player2, List.of(0, 1));
+        assertThat(gd.stack).hasSize(2);
+        resolveTrigger();
+        resolveTrigger();
+
+        assertThat(first.getMarkedDamage()).isEqualTo(2);
+        assertThat(second.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void removedSourceUsesPowerImmediatelyBeforeLeaving() {
+        Permanent archers = addCreatureReady(player1, new PalazzoArchers());
+        Permanent attacker = addCreatureReady(player2, new AirElemental());
+
+        declareAttackers(player2, List.of(0));
+        archers.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, archers));
+        resolveTrigger();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    void losingAllAbilitiesPreventsAttackTrigger() {
+        Permanent archers = addCreatureReady(player1, new PalazzoArchers());
+        archers.setLosesAllAbilitiesUntilEndOfTurn(true);
+        addCreatureReady(player2, new AirElemental());
+
+        declareAttackers(player2, List.of(0));
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed(InvasionOfZendikar.class)
+    void attackingBattleDoesNotTriggerItsControllersArchers() {
+        addCreatureReady(player2, new PalazzoArchers());
+        Permanent attacker = addCreatureReady(player2, new AirElemental());
+        Permanent battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfZendikar());
+        battle.setCounterCount(CounterType.DEFENSE, 3);
+        battle.setProtectorPlayerId(player1.getId());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player2, List.of(1), Map.of(1, battle.getId())));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(attacker.getMarkedDamage()).isZero();
     }
 }
