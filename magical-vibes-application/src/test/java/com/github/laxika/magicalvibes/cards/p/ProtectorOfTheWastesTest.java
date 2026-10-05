@@ -27,8 +27,7 @@ class ProtectorOfTheWastesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ProtectorOfTheWastes()));
         addCastingMana();
         harness.castCreature(player1, 0, List.of(ownArtifact.getId(), opposingEnchantment.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Bonesplitter");
         harness.assertNotOnBattlefield(player2, "Glorious Anthem");
@@ -53,14 +52,12 @@ class ProtectorOfTheWastesTest extends BaseCardTest {
     @DisplayName("Protector of the Wastes exiles targets when it becomes monstrous")
     void becomingMonstrousExilesTargets() {
         Permanent protector = harness.addToBattlefieldAndReturn(player1, new ProtectorOfTheWastes());
-        protector.setSummoningSick(false);
         Permanent ownArtifact = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
         Permanent opposingEnchantment = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
         addMonstrosityMana();
 
         harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handlePermanentChosen(player1, ownArtifact.getId());
         harness.handlePermanentChosen(player1, opposingEnchantment.getId());
         harness.passBothPriorities();
@@ -69,6 +66,122 @@ class ProtectorOfTheWastesTest extends BaseCardTest {
         assertThat(protector.isMonstrous()).isTrue();
         harness.assertNotOnBattlefield(player1, "Bonesplitter");
         harness.assertNotOnBattlefield(player2, "Glorious Anthem");
+    }
+
+    @Test
+    void canEnterWithoutChoosingTargetsDespiteLegalTargets() {
+        harness.addToBattlefield(player2, new Bonesplitter());
+        harness.setHand(player1, List.of(new ProtectorOfTheWastes()));
+        addCastingMana();
+
+        harness.castCreature(player1, 0, List.of());
+        resolveAllTriggers();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, player1.getId());
+            resolveAllTriggers();
+        }
+
+        harness.assertOnBattlefield(player1, "Protector of the Wastes");
+        harness.assertOnBattlefield(player2, "Bonesplitter");
+        assertThat(gd.exiledCards).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void canExileOnlyOneTargetAndLeavesTheOtherAvailableTarget() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
+        harness.addToBattlefield(player2, new GloriousAnthem());
+        harness.setHand(player1, List.of(new ProtectorOfTheWastes()));
+        addCastingMana();
+
+        harness.castCreature(player1, 0, List.of(artifact.getId()));
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Bonesplitter");
+        harness.assertOnBattlefield(player2, "Glorious Anthem");
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(artifact.getCard().getId()));
+        harness.assertNotInGraveyard(player1, "Bonesplitter");
+    }
+
+    @Test
+    void cannotTargetAnOrdinaryCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ProtectorOfTheWastes());
+        harness.setHand(player1, List.of(new ProtectorOfTheWastes()));
+        addCastingMana();
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canBecomeMonstrousWhileSummoningSickAndDeclineExiling() {
+        Permanent protector = harness.addToBattlefieldAndReturn(player1, new ProtectorOfTheWastes());
+        harness.addToBattlefield(player2, new Bonesplitter());
+        addMonstrosityMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(protector.isMonstrous()).isTrue();
+        assertThat(protector.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        harness.assertOnBattlefield(player2, "Bonesplitter");
+        assertThat(gd.exiledCards).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canActivateMonstrosityAgainButDoesNotAddCountersOrTriggerAgain() {
+        Permanent protector = harness.addToBattlefieldAndReturn(player1, new ProtectorOfTheWastes());
+        addMonstrosityMana();
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+        assertThat(protector.isMonstrous()).isTrue();
+        assertThat(protector.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+
+        harness.addToBattlefield(player2, new Bonesplitter());
+        addMonstrosityMana();
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(protector.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        harness.assertOnBattlefield(player2, "Bonesplitter");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void multiplePendingMonstrosityActivationsOnlyAddCountersOnce() {
+        Permanent protector = harness.addToBattlefieldAndReturn(player1, new ProtectorOfTheWastes());
+        addMonstrosityMana();
+        addMonstrosityMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(protector.isMonstrous()).isTrue();
+        assertThat(protector.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void canExileTwoArtifactsControlledByDifferentPlayers() {
+        Permanent ownArtifact = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
+        Permanent opposingArtifact = harness.addToBattlefieldAndReturn(player2, new Bonesplitter());
+        harness.setHand(player1, List.of(new ProtectorOfTheWastes()));
+        addCastingMana();
+
+        harness.castCreature(player1, 0, List.of(ownArtifact.getId(), opposingArtifact.getId()));
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Bonesplitter");
+        harness.assertNotOnBattlefield(player2, "Bonesplitter");
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(ownArtifact.getCard().getId()));
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(opposingArtifact.getCard().getId()));
     }
 
     private void addCastingMana() {
