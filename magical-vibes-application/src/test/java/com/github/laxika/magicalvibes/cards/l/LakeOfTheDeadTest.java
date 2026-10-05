@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.b.BloodMoon;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LakeOfTheDead.class, Swamp.class})
+@CardUsed({LakeOfTheDead.class, Swamp.class, BloodMoon.class})
 class LakeOfTheDeadTest extends BaseCardTest {
 
     @Test
@@ -163,5 +164,47 @@ class LakeOfTheDeadTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(lakeCard);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(4);
+    }
+
+    @Test
+    void bloodMoonRemovesEntrySacrificeRequirement() {
+        harness.addToBattlefield(player2, new BloodMoon());
+        harness.setHand(player1, List.of(new LakeOfTheDead()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Lake of the Dead");
+        harness.assertNotInGraveyard(player1, "Lake of the Dead");
+    }
+
+    @Test
+    void enteringSacrificesOnlyTheChosenSwamp() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        harness.setHand(player1, List.of(new LakeOfTheDead()));
+
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, second.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(first).doesNotContain(second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(second.getCard()).doesNotContain(first.getCard());
+        harness.assertOnBattlefield(player1, "Lake of the Dead");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void sacrificeManaAbilityCanSacrificeATappedSwamp() {
+        Permanent lake = harness.addToBattlefieldAndReturn(player1, new LakeOfTheDead());
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        swamp.tap();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(lake.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player1, "Swamp");
+        harness.assertInGraveyard(player1, "Swamp");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
     }
 }
