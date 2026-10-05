@@ -1,15 +1,14 @@
 package com.github.laxika.magicalvibes.cards.j;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DrudgeBeetle;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({JaradsOrders.class, DrudgeBeetle.class, Plains.class, Swamp.class})
 class JaradsOrdersTest extends BaseCardTest {
 
     @Test
@@ -30,7 +30,7 @@ class JaradsOrdersTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         var search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards()).hasSize(2);
-        assertThat(search.params().cards()).allMatch(c -> c.getName().equals("Grizzly Bears"));
+        assertThat(search.params().cards()).allMatch(c -> c.getName().equals("Drudge Beetle"));
         assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.HAND);
         assertThat(search.params().reveals()).isTrue();
         assertThat(search.params().canFailToFind()).isTrue();
@@ -48,9 +48,9 @@ class JaradsOrdersTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Drudge Beetle");
 
         var second = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(second.params().destination()).isEqualTo(LibrarySearchDestination.GRAVEYARD);
@@ -58,9 +58,9 @@ class JaradsOrdersTest extends BaseCardTest {
         assertThat(second.params().canFailToFind()).isTrue();
         assertThat(second.params().cards()).hasSize(1);
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Drudge Beetle");
         harness.assertInGraveyard(player1, "Jarad's Orders");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
@@ -76,14 +76,14 @@ class JaradsOrdersTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
         // Decline the graveyard pick
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Drudge Beetle");
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+                .noneMatch(c -> c.getName().equals("Drudge Beetle"));
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -98,7 +98,7 @@ class JaradsOrdersTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -109,13 +109,44 @@ class JaradsOrdersTest extends BaseCardTest {
     @DisplayName("No creatures in library shuffles without a prompt")
     void noCreatures() {
         setupAndCast();
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Swamp()));
+        harness.setLibrary(player1, List.of(new Plains(), new Swamp()));
 
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Jarad's Orders");
+    }
+
+    @Test
+    @DisplayName("The only creature in the library goes to hand without a second prompt")
+    void onlyCreatureGoesToHand() {
+        setupAndCast();
+        DrudgeBeetle creature = new DrudgeBeetle();
+        Plains land = new Plains();
+        harness.setLibrary(player1, List.of(land, creature));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(creature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(creature);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Jarad's Orders");
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("An empty library finishes resolution without a choice")
+    void emptyLibrary() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Jarad's Orders");
     }
@@ -128,8 +159,6 @@ class JaradsOrdersTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Swamp(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains(), new Swamp(), new DrudgeBeetle(), new DrudgeBeetle()));
     }
 }
