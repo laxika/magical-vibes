@@ -79,6 +79,79 @@ class OsseousSticktwisterTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    void decliningBothOptionsDealsDamageAndGainsLife() {
+        harness.addToBattlefield(player1, new OsseousSticktwister());
+        enableDelirium();
+        harness.setHand(player2, List.of(new Shock()));
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        resolveTrigger();
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(22);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+    }
+
+    @Test
+    void decliningDiscardStillAllowsSacrifice() {
+        harness.addToBattlefield(player1, new OsseousSticktwister());
+        enableDelirium();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        resolveTrigger();
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void losingDeliriumBeforeResolutionStopsTheAbility() {
+        harness.addToBattlefield(player1, new OsseousSticktwister());
+        enableDelirium();
+        harness.setHand(player2, List.of());
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.setGraveyard(player1, List.of(new Millstone(), new GrizzlyBears(), new Shock()));
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void artifactCreatureCountsAsTwoTypesForDelirium() {
+        harness.addToBattlefield(player1, new OsseousSticktwister());
+        harness.setGraveyard(player1, List.of(new OsseousSticktwister(), new Shock(), new Forest()));
+        harness.setHand(player2, List.of());
+
+        resolveTrigger();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(22);
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsEndStep() {
+        harness.addToBattlefield(player1, new OsseousSticktwister());
+        enableDelirium();
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void enableDelirium() {
         harness.setLibrary(player2, List.of());
         harness.setGraveyard(player1, List.of(
@@ -87,7 +160,7 @@ class OsseousSticktwisterTest extends BaseCardTest {
 
     private void resolveTrigger() {
         advanceToEndStep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void advanceToEndStep(Player activePlayer) {
