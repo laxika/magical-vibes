@@ -28,8 +28,7 @@ class PlowThroughReitoTest extends BaseCardTest {
         Permanent secondPlains = harness.addToBattlefieldAndReturn(player1, new Plains());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
 
-        castCard(player1, target.getId());
-        harness.passBothPriorities();
+        castAndResolveCard(player1, target.getId());
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -50,8 +49,7 @@ class PlowThroughReitoTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
 
-        castCard(player1, target.getId());
-        harness.passBothPriorities();
+        castAndResolveCard(player1, target.getId());
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(plains);
@@ -69,8 +67,7 @@ class PlowThroughReitoTest extends BaseCardTest {
         Permanent opponentPlains = harness.addToBattlefieldAndReturn(player2, new Plains());
         harness.setHand(player2, List.of());
 
-        castCard(player1, target.getId());
-        harness.passBothPriorities();
+        castAndResolveCard(player1, target.getId());
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -91,8 +88,7 @@ class PlowThroughReitoTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         Permanent opponentPlains = harness.addToBattlefieldAndReturn(player2, new Plains());
 
-        castCard(player1, target.getId());
-        harness.passBothPriorities();
+        castAndResolveCard(player1, target.getId());
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
@@ -107,8 +103,7 @@ class PlowThroughReitoTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
 
-        castCard(player1, target.getId());
-        harness.passBothPriorities();
+        castAndResolveCard(player1, target.getId());
         harness.handleMultiplePermanentsChosen(player1, List.of(plains.getId()));
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
@@ -132,11 +127,70 @@ class PlowThroughReitoTest extends BaseCardTest {
                 .hasMessage("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Returning a subset counts only the Plains actually returned")
+    void returningSubsetCountsOnlyReturnedPlains() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent returned = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent kept = harness.addToBattlefieldAndReturn(player1, new Plains());
+        harness.setHand(player1, List.of());
+
+        castAndResolveCard(player1, target.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(returned.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(kept).doesNotContain(returned);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(returned.getCard());
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An absent target prevents resolution, including the Plains return")
+    void absentTargetPreventsPlainsReturn() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+
+        castCard(player1, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(plains);
+    }
+
+    @Test
+    @DisplayName("Plains exiled instead of returned do not contribute to the boost")
+    void exiledPlainsDoNotContributeToBoost() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        plains.setExileIfLeavesBattlefield(true);
+
+        castAndResolveCard(player1, target.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(plains.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(plains);
+        assertThat(gd.findExiledCard(plains.getCard().getId())).isNotNull();
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(plains.getCard());
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    private void castAndResolveCard(Player player, java.util.UUID targetId) {
+        prepareSpell(player);
+        harness.castAndResolveInstant(player, 0, targetId);
+    }
+
     private void castCard(Player player, java.util.UUID targetId) {
+        prepareSpell(player);
+        harness.castInstant(player, 0, targetId);
+    }
+
+    private void prepareSpell(Player player) {
         harness.setHand(player, List.of(new PlowThroughReito()));
         harness.addMana(player, ManaColor.WHITE, 1);
         harness.addMana(player, ManaColor.COLORLESS, 1);
-        harness.castInstant(player, 0, targetId);
     }
 
 }
