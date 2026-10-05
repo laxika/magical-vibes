@@ -105,6 +105,56 @@ class MountainValleyTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("Mountain Valley is sacrificed as a cost before the search resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        activateSearch();
+
+        harness.assertNotOnBattlefield(player1, "Mountain Valley");
+        harness.assertInGraveyard(player1, "Mountain Valley");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+    }
+
+    @Test
+    @DisplayName("A chosen Forest moves from the library to the battlefield untapped")
+    void chosenForestMovesToBattlefield() {
+        activateSearch();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(findPermanent(player1, "Forest").isTapped()).isFalse();
+        harness.assertNotOnBattlefield(player1, "Mountain");
+        harness.assertNotOnBattlefield(player2, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .hasSize(3)
+                .noneMatch(c -> c.getName().equals("Forest"));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Searching an empty library finishes without a choice")
+    void searchEmptyLibrary() {
+        harness.addToBattlefield(player1, new MountainValley());
+        harness.setLibrary(player1, List.of());
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Mountain Valley");
+        harness.assertInGraveyard(player1, "Mountain Valley");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void activateSearch() {
         harness.addToBattlefield(player1, new MountainValley());
         setupLibrary();
