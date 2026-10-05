@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.e.ExpeditionEnvoy;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.g.GiantMantis;
 import com.github.laxika.magicalvibes.cards.t.TajuruStalwart;
 import com.github.laxika.magicalvibes.cards.t.TajuruWarcaller;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,14 +17,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({MarchFromTheTomb.class, ExpeditionEnvoy.class, TajuruStalwart.class, TajuruWarcaller.class,
-        HillGiant.class})
+        GiantMantis.class})
 class MarchFromTheTombTest extends BaseCardTest {
 
     @Test
     void targetsOnlyAllyCreaturesWithinTotalManaValueEight() {
         Card envoy = new ExpeditionEnvoy();
         Card stalwart = new TajuruStalwart();
-        Card nonAlly = new HillGiant();
+        Card nonAlly = new GiantMantis();
         harness.setGraveyard(player1, List.of(envoy, stalwart, nonAlly));
         harness.setHand(player1, List.of(new MarchFromTheTomb()));
         addMana();
@@ -42,7 +42,7 @@ class MarchFromTheTombTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Expedition Envoy");
         harness.assertOnBattlefield(player1, "Tajuru Stalwart");
-        harness.assertInGraveyard(player1, "Hill Giant");
+        harness.assertInGraveyard(player1, "Giant Mantis");
     }
 
     @Test
@@ -62,6 +62,100 @@ class MarchFromTheTombTest extends BaseCardTest {
                 .hasMessageContaining("total mana value");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class))
                 .isNotNull();
+    }
+
+    @Test
+    void canChooseZeroTargetsWithAlliesAvailable() {
+        Card envoy = new ExpeditionEnvoy();
+        harness.setGraveyard(player1, List.of(envoy));
+        harness.setHand(player1, List.of(new MarchFromTheTomb()));
+        addMana();
+
+        harness.castSorcery(player1, 0, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Expedition Envoy");
+        harness.assertNotOnBattlefield(player1, "Expedition Envoy");
+        harness.assertInGraveyard(player1, "March from the Tomb");
+    }
+
+    @Test
+    void canCastWithAnEmptyGraveyard() {
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new MarchFromTheTomb()));
+        addMana();
+
+        harness.castSorcery(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "March from the Tomb");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void returnsTargetsWithTotalManaValueExactlyEightSimultaneously() {
+        Card stalwart = new TajuruStalwart();
+        Card warcaller = new TajuruWarcaller();
+        harness.setGraveyard(player1, List.of(stalwart, warcaller));
+        harness.setHand(player1, List.of(new MarchFromTheTomb()));
+        addMana();
+
+        harness.castSorcery(player1, 0, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(stalwart.getId(), warcaller.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Tajuru Stalwart");
+        harness.assertOnBattlefield(player1, "Tajuru Warcaller");
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        var returnedStalwart = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(stalwart.getId()))
+                .findFirst().orElseThrow();
+        assertThat(returnedStalwart.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, returnedStalwart)).isEqualTo(4);
+    }
+
+    @Test
+    void cannotChooseAnAllyInOpponentsGraveyard() {
+        Card ownEnvoy = new ExpeditionEnvoy();
+        Card opponentsEnvoy = new ExpeditionEnvoy();
+        harness.setGraveyard(player1, List.of(ownEnvoy));
+        harness.setGraveyard(player2, List.of(opponentsEnvoy));
+        harness.setHand(player1, List.of(new MarchFromTheTomb()));
+        addMana();
+
+        harness.castSorcery(player1, 0, List.of());
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(
+                player1, List.of(opponentsEnvoy.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(ownEnvoy.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Expedition Envoy");
+        harness.assertInGraveyard(player2, "Expedition Envoy");
+        harness.assertNotOnBattlefield(player2, "Expedition Envoy");
+    }
+
+    @Test
+    void returnsRemainingLegalTargetWhenAnotherLeavesTheGraveyard() {
+        Card envoy = new ExpeditionEnvoy();
+        Card stalwart = new TajuruStalwart();
+        harness.setGraveyard(player1, List.of(envoy, stalwart));
+        harness.setHand(player1, List.of(new MarchFromTheTomb()));
+        addMana();
+
+        harness.castSorcery(player1, 0, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(envoy.getId(), stalwart.getId()));
+        harness.setGraveyard(player1, List.of(stalwart));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Expedition Envoy");
+        harness.assertOnBattlefield(player1, "Tajuru Stalwart");
+        harness.assertInGraveyard(player1, "March from the Tomb");
     }
 
     private void addMana() {
