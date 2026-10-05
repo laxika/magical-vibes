@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -48,10 +47,7 @@ class InnerSanctumTest extends BaseCardTest {
         Permanent blocker = addBlocker(player1, 0);
         addAttacker(player2);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         assertThat(blocker.getMarkedDamage()).isZero();
     }
@@ -74,10 +70,7 @@ class InnerSanctumTest extends BaseCardTest {
         addAttacker(player2);
         harness.setLife(player1, 20);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertLife(player1, 15);
     }
@@ -146,5 +139,40 @@ class InnerSanctumTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sanctum);
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Insufficient life cannot pay cumulative upkeep and sacrifices the enchantment")
+    void insufficientLifeSacrificesWithoutPartialPayment() {
+        Permanent sanctum = harness.addToBattlefieldAndReturn(player1, new InnerSanctum());
+        sanctum.setCounterCount(CounterType.AGE, 1);
+        harness.setLife(player1, 3);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sanctum);
+        harness.assertInGraveyard(player1, "Inner Sanctum");
+        harness.assertLife(player1, 3);
+    }
+
+    @Test
+    @DisplayName("Protection ends when Inner Sanctum is sacrificed")
+    void damageIsNotPreventedAfterSacrifice() {
+        harness.addToBattlefield(player1, new InnerSanctum());
+        harness.addToBattlefield(player1, new AetherFlash());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new CloudDjinn());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Inner Sanctum");
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
     }
 }
