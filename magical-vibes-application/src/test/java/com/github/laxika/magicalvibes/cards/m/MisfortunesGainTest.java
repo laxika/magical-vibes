@@ -37,6 +37,43 @@ class MisfortunesGainTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can destroy your own creature and give you 4 life")
+    void canTargetOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ForestBear());
+        harness.setHand(player1, List.of(new MisfortunesGain()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        int ownerLifeBefore = gd.getLife(player1.getId());
+        int opponentLifeBefore = gd.getLife(player2.getId());
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Forest Bear");
+        harness.assertInGraveyard(player1, "Forest Bear");
+        harness.assertLife(player1, ownerLifeBefore + 4);
+        harness.assertLife(player2, opponentLifeBefore);
+    }
+
+    @Test
+    @DisplayName("Its owner gains life even when the target creature regenerates")
+    void ownerGainsLifeWhenCreatureRegenerates() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ForestBear());
+        target.setRegenerationShield(1);
+        harness.setHand(player1, List.of(new MisfortunesGain()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        int ownerLifeBefore = gd.getLife(player2.getId());
+        int casterLifeBefore = gd.getLife(player1.getId());
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertOnBattlefield(player2, "Forest Bear");
+        harness.assertNotInGraveyard(player2, "Forest Bear");
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getRegenerationShield()).isZero();
+        harness.assertLife(player2, ownerLifeBefore + 4);
+        harness.assertLife(player1, casterLifeBefore);
+    }
+
+    @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Island());
