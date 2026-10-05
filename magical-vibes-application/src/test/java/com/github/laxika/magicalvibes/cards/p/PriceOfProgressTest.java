@@ -24,8 +24,7 @@ class PriceOfProgressTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new PriceOfProgress()));
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 16);
@@ -39,8 +38,7 @@ class PriceOfProgressTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new PriceOfProgress()));
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
@@ -59,5 +57,35 @@ class PriceOfProgressTest extends BaseCardTest {
 
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Nonbasic lands in hands and graveyards do not count")
+    void ignoresNonbasicLandsOutsideBattlefield() {
+        harness.setHand(player1, List.of(new PriceOfProgress(), new FieldOfRuin()));
+        harness.setHand(player2, List.of(new FieldOfRuin()));
+        harness.setGraveyard(player1, List.of(new FieldOfRuin()));
+        harness.setGraveyard(player2, List.of(new FieldOfRuin()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Price of Progress");
+    }
+
+    @Test
+    @DisplayName("Each player's own lands determine damage when the other player casts")
+    void damageDoesNotDependOnWhichPlayerCasts() {
+        harness.addToBattlefield(player1, new FieldOfRuin());
+        harness.addToBattlefield(player1, new FieldOfRuin());
+        harness.setHand(player2, List.of(new PriceOfProgress()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player2, 0);
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
     }
 }
