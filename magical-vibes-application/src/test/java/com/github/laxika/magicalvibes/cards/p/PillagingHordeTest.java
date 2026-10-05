@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WindsOfChange;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -11,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PillagingHorde.class, GrizzlyBears.class})
+@CardUsed({PillagingHorde.class, GrizzlyBears.class, WindsOfChange.class})
 class PillagingHordeTest extends BaseCardTest {
 
     // ===== ETB prompt =====
@@ -95,6 +96,41 @@ class PillagingHordeTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
+
+    @Test
+    @DisplayName("Accepting can discard a noncreature card and leaves the opponent's hand untouched")
+    void acceptingDiscardsNoncreatureFromControllersHand() {
+        harness.castFromHand(player1, new PillagingHorde(), "{2}{R}{R}");
+        harness.setHand(player1, List.of(new WindsOfChange()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Pillaging Horde");
+        harness.assertInGraveyard(player1, "Winds of Change");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An opponent's card cannot pay the discard when the controller's hand is empty")
+    void opponentsHandCannotPreventSacrifice() {
+        harness.castFromHand(player1, new PillagingHorde(), "{2}{R}{R}");
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Pillaging Horde");
+        harness.assertInGraveyard(player1, "Pillaging Horde");
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 
     /**
      * Casts Pillaging Horde with a single card (Grizzly Bears) in hand so the random
