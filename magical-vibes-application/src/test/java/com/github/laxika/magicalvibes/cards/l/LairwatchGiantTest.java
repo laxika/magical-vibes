@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({LairwatchGiant.class, AxegrinderGiant.class})
 class LairwatchGiantTest extends BaseCardTest {
@@ -82,5 +83,63 @@ class LairwatchGiantTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         assertThat(giant.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The additional block permits two attackers but not three")
+    void cannotBlockThreeCreatures() {
+        addCreatureReady(player2, new LairwatchGiant());
+        addCreatureReady(player1, new AxegrinderGiant());
+        addCreatureReady(player1, new AxegrinderGiant());
+        addCreatureReady(player1, new AxegrinderGiant());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1, 2));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(0, 1),
+                new BlockerAssignment(0, 2)
+        ))).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("assigned too many times");
+    }
+
+    @Test
+    @DisplayName("A multi-block trigger grants first strike only to its source")
+    void firstStrikeIsNotGrantedToOtherGiants() {
+        Permanent multiBlocker = addCreatureReady(player2, new LairwatchGiant());
+        Permanent singleBlocker = addCreatureReady(player2, new LairwatchGiant());
+        addCreatureReady(player1, new AxegrinderGiant());
+        addCreatureReady(player1, new AxegrinderGiant());
+        addCreatureReady(player1, new AxegrinderGiant());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1, 2));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(0, 1),
+                new BlockerAssignment(1, 2)
+        ));
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(multiBlocker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(singleBlocker.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The additional block does not apply to other creatures")
+    void otherCreaturesCannotBlockTwoAttackers() {
+        addCreatureReady(player2, new LairwatchGiant());
+        addCreatureReady(player2, new AxegrinderGiant());
+        addCreatureReady(player1, new AxegrinderGiant());
+        addCreatureReady(player1, new AxegrinderGiant());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(1, 0),
+                new BlockerAssignment(1, 1)
+        ))).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("assigned too many times");
     }
 }
