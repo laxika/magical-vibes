@@ -142,8 +142,7 @@ class OrderOfTheWhiteShieldTest extends BaseCardTest {
         addCreatureReady(player1, new ScatheZombies());
         Permanent order = addOrderReady(player2);
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -162,8 +161,7 @@ class OrderOfTheWhiteShieldTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -185,6 +183,57 @@ class OrderOfTheWhiteShieldTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, order.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from black");
+    }
+
+    @Test
+    @DisplayName("Repeated power activations accumulate only on their source")
+    void repeatedBoostsAccumulateOnlyOnSource() {
+        Permanent order = addOrderReady(player1);
+        Permanent otherOrder = addOrderReady(player1);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, order)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, order)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, otherOrder)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Both abilities can be activated while tapped and summoning sick")
+    void abilitiesWorkWhileTappedAndSummoningSick() {
+        Permanent order = harness.addToBattlefieldAndReturn(player1, new OrderOfTheWhiteShield());
+        order.setSummoningSick(true);
+        order.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(order.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, order, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, order)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, order)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("First strike activation grants the keyword only to its source")
+    void firstStrikeDoesNotAffectOtherCopies() {
+        Permanent order = addOrderReady(player1);
+        Permanent otherOrder = addOrderReady(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, order, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherOrder, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     private Permanent addOrderReady(Player player) {
