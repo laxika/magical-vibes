@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.ImprisonedInTheMoon;
+import com.github.laxika.magicalvibes.cards.w.WitchbaneOrb;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OathOfLieges.class, Forest.class, GrizzlyBears.class, ImprisonedInTheMoon.class})
+@CardUsed({OathOfLieges.class, Forest.class, GrizzlyBears.class, ImprisonedInTheMoon.class, WitchbaneOrb.class})
 class OathOfLiegesTest extends BaseCardTest {
 
     @Test
@@ -168,5 +169,82 @@ class OathOfLiegesTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard().getName())
                 .containsExactly("Oath of Lieges");
+    }
+    @Test
+    @DisplayName("Hexproof does not stop an opponent from choosing the Oath's controller as its target")
+    void opponentCanChooseHexproofAbilityController() {
+        harness.addToBattlefield(player1, new OathOfLieges());
+        harness.addToBattlefield(player1, new WitchbaneOrb());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        advanceToUpkeep(player2);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(player1.getId());
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertOnBattlefield(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("A restricted search may fail to find even when a basic land is available")
+    void mayFailToFindAnAvailableBasicLand() {
+        harness.addToBattlefield(player1, new OathOfLieges());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("The search puts exactly one basic land onto the battlefield untapped")
+    void putsOnlyOneLandOntoBattlefieldUntapped() {
+        harness.addToBattlefield(player1, new OathOfLieges());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Forest"))
+                .singleElement().satisfies(permanent -> assertThat(permanent.isTapped()).isFalse());
+    }
+
+    @Test
+    @DisplayName("Searching an empty library completes without putting a land onto the battlefield")
+    void searchingEmptyLibraryCompletes() {
+        harness.addToBattlefield(player1, new OathOfLieges());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setLibrary(player1, List.of());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
     }
 }
