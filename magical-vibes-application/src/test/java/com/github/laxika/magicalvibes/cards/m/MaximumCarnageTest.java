@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LurkingLizards;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,14 +15,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MaximumCarnage.class, GrizzlyBears.class})
+@CardUsed({MaximumCarnage.class, LurkingLizards.class})
 class MaximumCarnageTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Chapter I goads a creature controlled by the Saga's controller")
-    void chapterIGoadsControllerCreature() {
+    @DisplayName("Chapter I requires the Saga controller's creature to attack")
+    void chapterIRequiresControllerCreatureToAttack() {
         castAndResolveChapterI();
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new LurkingLizards());
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class)
@@ -30,10 +30,10 @@ class MaximumCarnageTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Chapter I goads opposing creatures that enter later")
-    void chapterIGoadsLaterOpposingCreature() {
+    @DisplayName("Chapter I requires opposing creatures that enter later to attack")
+    void chapterIRequiresLaterOpposingCreatureToAttack() {
         castAndResolveChapterI();
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new LurkingLizards());
 
         assertThatThrownBy(() -> declareAttackers(player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)
@@ -41,23 +41,63 @@ class MaximumCarnageTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Chapter I goad expires at the beginning of the controller's next turn")
-    void chapterIGoadExpiresAtNextTurn() {
+    @DisplayName("Chapter I attack requirements expire at the beginning of the controller's next turn")
+    void chapterIAttackRequirementsExpireAtNextTurn() {
         castAndResolveChapterI();
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new LurkingLizards());
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player2, List.of());
+        declareAttackers(player2, List.of());
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Chapter I does not make creatures goaded")
+    void chapterIDoesNotMakeCreaturesGoaded() {
+        Permanent existingCreature = addCreatureReady(player2, new LurkingLizards());
+        castAndResolveChapterI();
+        Permanent laterCreature = addCreatureReady(player1, new LurkingLizards());
+
+        assertThat(harness.getGameQueryService().isGoaded(gd, existingCreature)).isFalse();
+        assertThat(harness.getGameQueryService().isGoaded(gd, laterCreature)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Chapter I does not force a tapped creature to attack")
+    void chapterIDoesNotForceTappedCreatureToAttack() {
+        castAndResolveChapterI();
+        Permanent creature = addCreatureReady(player2, new LurkingLizards());
+        creature.setTapped(true);
+
+        declareAttackers(player2, List.of());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Chapter I does not let a creature with summoning sickness attack")
+    void chapterIRespectsSummoningSickness() {
+        castAndResolveChapterI();
+        harness.addToBattlefield(player2, new LurkingLizards());
+
+        declareAttackers(player2, List.of());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("In a two-player game an opposing creature may attack the Saga's controller")
+    void chapterIAllowsOpponentToAttackController() {
+        castAndResolveChapterI();
+        Permanent creature = addCreatureReady(player2, new LurkingLizards());
+
+        declareAttackers(player2, List.of(0));
+
+        assertThat(creature.isAttacking()).isTrue();
     }
 
     @Test
@@ -79,6 +119,19 @@ class MaximumCarnageTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
     }
 
+    @Test
+    @DisplayName("Chapter III leaves the controller unharmed and sacrifices the Saga after resolution")
+    void chapterIIISacrificesSagaWithoutDamagingController() {
+        addSagaWithLore(2);
+        harness.setLife(player1, 20);
+
+        advanceToNextChapter();
+
+        harness.assertLife(player1, 20);
+        harness.assertNotOnBattlefield(player1, "Maximum Carnage");
+        harness.assertInGraveyard(player1, "Maximum Carnage");
+    }
+
     private void castAndResolveChapterI() {
         harness.setHand(player1, List.of(new MaximumCarnage()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -89,11 +142,9 @@ class MaximumCarnageTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private Permanent addSagaWithLore(int loreCounters) {
-        harness.addToBattlefield(player1, new MaximumCarnage());
-        Permanent saga = findPermanent(player1, "Maximum Carnage");
+    private void addSagaWithLore(int loreCounters) {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new MaximumCarnage());
         saga.setCounterCount(CounterType.LORE, loreCounters);
-        return saga;
     }
 
     private void advanceToNextChapter() {
