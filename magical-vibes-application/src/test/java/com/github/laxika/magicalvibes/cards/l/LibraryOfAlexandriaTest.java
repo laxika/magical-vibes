@@ -64,4 +64,42 @@ class LibraryOfAlexandriaTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Multiple Libraries check hand size only at activation")
+    void multipleLibrariesCheckHandSizeOnlyAtActivation() {
+        harness.addToBattlefield(player1, new LibraryOfAlexandria());
+        harness.addToBattlefield(player1, new LibraryOfAlexandria());
+        harness.setHand(player1, List.of(
+                new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 1, 1, null, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(9);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Producing mana prevents activating the draw ability until the Library untaps")
+    void manaAndDrawAbilitiesShareTapCost() {
+        harness.addToBattlefield(player1, new LibraryOfAlexandria());
+        harness.setHand(player1, List.of(
+                new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
+    }
 }
