@@ -87,4 +87,52 @@ class PardicMinerTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Pardic Miner");
         harness.assertNotInGraveyard(player1, "Pardic Miner");
     }
+
+    @Test
+    @DisplayName("Pardic Miner is sacrificed before its ability resolves")
+    void sacrificeIsPaidImmediately() {
+        harness.addToBattlefield(player1, new PardicMiner());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        harness.assertNotOnBattlefield(player1, "Pardic Miner");
+        harness.assertInGraveyard(player1, "Pardic Miner");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The targeted player cannot bypass the restriction by attempting a land play")
+    void rejectsLandPlayAfterResolution() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new PardicMiner());
+        harness.setHand(player2, List.of(new Forest()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.playLand(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player2, "Forest");
+        harness.assertNotOnBattlefield(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Pardic Miner does not restrict the untargeted player's land plays")
+    void untargetedPlayerCanStillPlayLand() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new PardicMiner());
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.playLand(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertNotInHand(player1, "Forest");
+    }
 }
