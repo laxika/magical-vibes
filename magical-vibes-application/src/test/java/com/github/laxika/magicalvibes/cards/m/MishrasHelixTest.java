@@ -18,6 +18,74 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class MishrasHelixTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Targets may include your own lands and already-tapped lands")
+    void tapsLandsAcrossControllersIncludingTappedLands() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new MishrasHelix());
+        Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent opposingLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent tappedLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+        tappedLand.setTapped(true);
+        Permanent unchosenLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, 3,
+                List.of(ownLand.getId(), opposingLand.getId(), tappedLand.getId()));
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(ownLand.isTapped()).isFalse();
+        assertThat(opposingLand.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(ownLand.isTapped()).isTrue();
+        assertThat(opposingLand.isTapped()).isTrue();
+        assertThat(tappedLand.isTapped()).isTrue();
+        assertThat(unchosenLand.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The same land cannot be chosen twice for X=2")
+    void rejectsDuplicateTargets() {
+        harness.addToBattlefield(player1, new MishrasHelix());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, 2, List.of(land.getId(), land.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped Helix cannot pay the tap cost")
+    void rejectsActivationWhileTapped() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new MishrasHelix());
+        source.setTapped(true);
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, 1, List.of(land.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(land.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Activating with X=2 requires two mana")
+    void rejectsInsufficientMana() {
+        harness.addToBattlefield(player1, new MishrasHelix());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, 2, List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("X=2 taps two target lands")
     void tapsXTargetLands() {
         harness.addToBattlefield(player1, new MishrasHelix());
