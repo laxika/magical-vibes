@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.b.BallynockCohort;
 import com.github.laxika.magicalvibes.cards.d.DevotedDruid;
+import com.github.laxika.magicalvibes.cards.d.DroveOfElves;
 import com.github.laxika.magicalvibes.cards.e.ElsewhereFlask;
+import com.github.laxika.magicalvibes.cards.m.MistmeadowSkulk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PrisonTerm.class, BallynockCohort.class, DevotedDruid.class, ElsewhereFlask.class})
+@CardUsed({PrisonTerm.class, BallynockCohort.class, DevotedDruid.class, ElsewhereFlask.class, MistmeadowSkulk.class, DroveOfElves.class})
 class PrisonTermTest extends BaseCardTest {
 
     // ===== Enchant + lockdown =====
@@ -32,7 +34,7 @@ class PrisonTermTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PrisonTerm()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        gs.playCard(gd, player1, 0, 0, creature.getId(), null);
+        harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -47,12 +49,7 @@ class PrisonTermTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new BallynockCohort());
         attachedPrisonTerm(player1, creature);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -174,6 +171,63 @@ class PrisonTermTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Protection prevents moving Prison Term and leaves its original attachment intact")
+    void cannotMoveToCreatureWithProtection() {
+        Permanent original = addCreatureReady(player1, new BallynockCohort());
+        Permanent prison = attachedPrisonTerm(player1, original);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new MistmeadowSkulk()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(prison);
+        assertThat(prison.getAttachedTo()).isEqualTo(original.getId());
+    }
+
+    @Test
+    @DisplayName("Enchanted creature cannot activate its untap ability")
+    void enchantedCreatureCannotActivateNonManaAbility() {
+        Permanent druid = addCreatureReady(player1, new DevotedDruid());
+        druid.setTapped(true);
+        attachedPrisonTerm(player2, druid);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
+        assertThat(druid.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Prison Term can move onto an entering opponent creature with hexproof")
+    void movesToEnteringCreatureWithHexproof() {
+        Permanent original = addCreatureReady(player1, new BallynockCohort());
+        Permanent prison = attachedPrisonTerm(player1, original);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new DroveOfElves()));
+        harness.addMana(player2, ManaColor.GREEN, 4);
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(prison.getAttachedTo()).isEqualTo(findPermanent(player2, "Drove of Elves").getId());
+    }
     private Permanent attachedPrisonTerm(Player controller, Permanent creature) {
         Permanent prison = harness.addToBattlefieldAndReturn(controller, new PrisonTerm());
         prison.setAttachedTo(creature.getId());
