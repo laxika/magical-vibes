@@ -23,8 +23,7 @@ class MadameHydraTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -59,6 +58,40 @@ class MadameHydraTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .toList()).isEmpty();
+    }
+
+    @Test
+    void createsAnUntappedTokenBeforeTheVillainSpellResolves() {
+        harness.addToBattlefield(player1, new MadameHydra());
+        harness.setHand(player1, List.of(new DocOcksHenchmen()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Doc Ock's Henchmen");
+        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .toList();
+        assertThat(tokens).hasSize(1);
+        assertThat(tokens.getFirst().isTapped()).isFalse();
+        assertThat(tokens.getFirst().isAttacking()).isFalse();
+    }
+
+    @Test
+    void doesNotTriggerWhenMadameHydraItselfIsCast() {
+        harness.setHand(player1, List.of(new MadameHydra()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Madame Hydra");
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList()).isEmpty();
