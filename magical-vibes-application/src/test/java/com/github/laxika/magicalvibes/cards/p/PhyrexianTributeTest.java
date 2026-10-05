@@ -18,6 +18,58 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class PhyrexianTributeTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Sacrifices tapped creatures during casting while leaving unchosen creatures alive")
+    void paysSacrificesBeforeResolution() {
+        Permanent firstSacrifice = harness.addToBattlefieldAndReturn(player1, new FeralShadow());
+        Permanent secondSacrifice = harness.addToBattlefieldAndReturn(player1, new FeralShadow());
+        Permanent survivor = harness.addToBattlefieldAndReturn(player1, new FeralShadow());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new CursedTotem());
+        firstSacrifice.setTapped(true);
+        secondSacrifice.setTapped(true);
+
+        harness.setHand(player1, List.of(new PhyrexianTribute()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorceryWithSacrifices(player1, 0, artifact.getId(),
+                List.of(firstSacrifice.getId(), secondSacrifice.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(survivor);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(
+                firstSacrifice.getCard(), secondSacrifice.getCard());
+        harness.assertOnBattlefield(player2, "Cursed Totem");
+        harness.assertNotInGraveyard(player1, "Phyrexian Tribute");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(survivor);
+        harness.assertInGraveyard(player2, "Cursed Totem");
+        harness.assertInGraveyard(player1, "Phyrexian Tribute");
+    }
+
+    @Test
+    @DisplayName("Cannot pay the additional cost with three creatures")
+    void cannotSacrificeMoreThanTwoCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new FeralShadow());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new FeralShadow());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new FeralShadow());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new CursedTotem());
+
+        harness.setHand(player1, List.of(new PhyrexianTribute()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifices(player1, 0, artifact.getId(),
+                List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(first, second, third);
+        harness.assertNotInGraveyard(player1, "Feral Shadow");
+        harness.assertInHand(player1, "Phyrexian Tribute");
+        harness.assertOnBattlefield(player2, "Cursed Totem");
+    }
+
+    @Test
     @DisplayName("Sacrifices two creatures and destroys the target artifact")
     void sacrificesTwoCreaturesAndDestroysArtifact() {
         Permanent firstSacrifice = harness.addToBattlefieldAndReturn(player1, new FeralShadow());
