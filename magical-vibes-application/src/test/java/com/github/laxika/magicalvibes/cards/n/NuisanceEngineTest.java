@@ -8,11 +8,47 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(NuisanceEngine.class)
 class NuisanceEngineTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Nuisance Engine can activate immediately after entering from a spell")
+    void canActivateImmediatelyAfterCasting() {
+        harness.setHand(player1, List.of(new NuisanceEngine()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(countPermanents(player1, "Pest")).isZero();
+        assertThat(findPermanent(player1, "Nuisance Engine").isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Pest")).isEqualTo(1);
+        assertThat(findPermanent(player1, "Pest").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The player activating Nuisance Engine receives the Pest")
+    void createsTokenForOtherPlayer() {
+        harness.addToBattlefield(player2, new NuisanceEngine());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player2, "Pest")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Pest")).isZero();
+    }
 
     @Test
     @DisplayName("{2}, {T} creates a 0/1 colorless Pest artifact creature token")
