@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.c.CrookshankKobolds;
 import com.github.laxika.magicalvibes.cards.d.DurkwoodBoars;
 import com.github.laxika.magicalvibes.cards.w.WallOfDust;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 
-@CardUsed({InfernalMedusa.class, DurkwoodBoars.class, CrookshankKobolds.class, WallOfDust.class})
+@CardUsed({InfernalMedusa.class, DurkwoodBoars.class, WallOfDust.class})
 class InfernalMedusaTest extends BaseCardTest {
 
     @Test
@@ -53,27 +53,28 @@ class InfernalMedusaTest extends BaseCardTest {
     @Test
     @DisplayName("A non-Wall attacker blocked by Infernal Medusa is destroyed at end of combat")
     void blockedNonWallAttackerDestroyedAtEndOfCombat() {
-        addCreatureReady(player1, new CrookshankKobolds());
+        addCreatureReady(player1, new DurkwoodBoars());
         addCreatureReady(player2, new InfernalMedusa());
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Durkwood Boars");
         resolveCombat();
 
-        harness.assertNotOnBattlefield(player1, "Crookshank Kobolds");
-        harness.assertInGraveyard(player1, "Crookshank Kobolds");
+        harness.assertNotOnBattlefield(player1, "Durkwood Boars");
+        harness.assertInGraveyard(player1, "Durkwood Boars");
     }
 
     @Test
     @DisplayName("A Wall is destroyed when Infernal Medusa blocks it")
     void wallBlockedByMedusaIsDestroyedAtEndOfCombat() {
         Permanent wall = addCreatureReady(player1, new WallOfDust());
-        wall.setAttacking(true);
+        wall.getRemovedKeywords().add(Keyword.DEFENDER);
         addCreatureReady(player2, new InfernalMedusa());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         resolveAllTriggers();
@@ -105,5 +106,31 @@ class InfernalMedusaTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Durkwood Boars");
         harness.assertInGraveyard(player2, "Durkwood Boars");
+    }
+
+    @Test
+    @DisplayName("Only the non-Wall blocker is destroyed in a mixed block")
+    void mixedBlockPreservesWall() {
+        addCreatureReady(player1, new InfernalMedusa());
+        Permanent boars = addCreatureReady(player2, new DurkwoodBoars());
+        Permanent wall = addCreatureReady(player2, new WallOfDust());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+
+        resolveAllTriggers();
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                boars.getId(), 1,
+                wall.getId(), 1));
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertInGraveyard(player1, "Infernal Medusa");
+        harness.assertNotOnBattlefield(player2, "Durkwood Boars");
+        harness.assertInGraveyard(player2, "Durkwood Boars");
+        harness.assertOnBattlefield(player2, "Wall of Dust");
+        harness.assertNotInGraveyard(player2, "Wall of Dust");
     }
 }
