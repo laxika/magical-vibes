@@ -35,10 +35,12 @@ class OutfittedJousterTest extends BaseCardTest {
         Permanent jouster = castJouster();
 
         castShock(jouster);
+        resolveEquipmentSacrifice("Brawler's Plate");
         assertThat(attachedEquipmentCount(jouster)).isEqualTo(1);
         assertThat(jouster.getMarkedDamage()).isZero();
 
         castShock(jouster);
+        resolveEquipmentSacrifice("Steelclaw Lance");
         assertThat(attachedEquipmentCount(jouster)).isZero();
         assertThat(jouster.getMarkedDamage()).isZero();
 
@@ -46,12 +48,55 @@ class OutfittedJousterTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Outfitted Jouster");
     }
 
+    @Test
+    void equipmentSacrificeWaitsForTriggeredAbilityToResolve() {
+        Permanent jouster = castJouster();
+
+        castShock(jouster);
+
+        assertThat(jouster.getMarkedDamage()).isZero();
+        assertThat(attachedEquipmentCount(jouster)).isEqualTo(2);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void controllerCanChooseWhichEquipmentToSacrifice() {
+        Permanent jouster = castJouster();
+
+        castShock(jouster);
+        resolveEquipmentSacrifice("Brawler's Plate");
+
+        harness.assertInGraveyard(player1, "Brawler's Plate");
+        harness.assertOnBattlefield(player1, "Steelclaw Lance");
+        assertThat(attachedEquipmentCount(jouster)).isEqualTo(1);
+    }
+
+    @Test
+    void stillConjuresEquipmentWhenJousterLeavesBeforeEnterTriggerResolves() {
+        harness.castFromHand(player1, new OutfittedJouster(), "{2}{B}{R}");
+        harness.passBothPriorities();
+        Permanent jouster = findPermanent(player1, "Outfitted Jouster");
+
+        castShock(jouster);
+        harness.assertInGraveyard(player1, "Outfitted Jouster");
+        resolveAllTriggers();
+
+        Permanent lance = findPermanent(player1, "Steelclaw Lance");
+        Permanent plate = findPermanent(player1, "Brawler's Plate");
+        assertThat(lance.getAttachedTo()).isNull();
+        assertThat(plate.getAttachedTo()).isNull();
+    }
+
+    private void resolveEquipmentSacrifice(String equipmentName) {
+        Permanent equipment = findPermanent(player1, equipmentName);
+        harness.passBothPriorities();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, equipment.getId());
+        }
+    }
+
     private Permanent castJouster() {
-        harness.setHand(player1, List.of(new OutfittedJouster()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new OutfittedJouster(), "{2}{B}{R}");
         harness.passBothPriorities();
         resolveAllTriggers();
         return findPermanent(player1, "Outfitted Jouster");
@@ -63,8 +108,7 @@ class OutfittedJousterTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
     }
 
     private long attachedEquipmentCount(Permanent jouster) {
