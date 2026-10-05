@@ -25,8 +25,7 @@ class ImpulseTest extends BaseCardTest {
         Card top2 = new Foreshadow();
         Card top3 = new JamuraanLion();
         Card top4 = new Warthog();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(top1, top2, top3, top4));
+        harness.setLibrary(player1, List.of(top1, top2, top3, top4));
         return new Card[]{top1, top2, top3, top4};
     }
 
@@ -52,6 +51,33 @@ class ImpulseTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top[3], top[2], top[1]);
+        harness.assertInGraveyard(player1, "Impulse");
+    }
+
+    @Test
+    @DisplayName("Only the top four are considered and the rest go beneath the untouched library")
+    void preservesUnseenLibraryOrder() {
+        Card[] top = stackFourOnTop();
+        Card unseenFirst = new Foreshadow();
+        Card unseenSecond = new CloudElemental();
+        harness.setLibrary(player1, List.of(top[0], top[1], top[2], top[3], unseenFirst, unseenSecond));
+        harness.castFromHand(player1, new Impulse(), "{1}{U}");
+        harness.passBothPriorities();
+
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice.allCards()).containsExactly(top);
+        harness.handleMultipleCardsChosen(player1, List.of(top[3].getId()));
+
+        List<Card> reorder = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(
+                List.of(reorder.indexOf(top[1]), reorder.indexOf(top[0]), reorder.indexOf(top[2]))));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(top[3])
+                .doesNotContain(top[0], top[1], top[2], unseenFirst, unseenSecond);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(unseenFirst, unseenSecond, top[1], top[0], top[2]);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Impulse");
     }
 
