@@ -99,6 +99,22 @@ class KarooMeerkatTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot be targeted by its controller's blue instant")
+    void cannotBeTargetedByOwnBlueInstant() {
+        Permanent meerkat = addCreatureReady(player1, new KarooMeerkat());
+        addCreatureReady(player1, new Foratog());
+
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, meerkat.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from blue");
+
+        harness.assertOnBattlefield(player1, "Karoo Meerkat");
+    }
+
+    @Test
     @DisplayName("Can be targeted by a red instant")
     void canBeTargetedByRedInstant() {
         Permanent meerkat = addCreatureReady(player2, new KarooMeerkat());
@@ -114,6 +130,20 @@ class KarooMeerkatTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Karoo Meerkat");
+    }
+
+    @Test
+    @DisplayName("An attached blue Aura is put into its owner's graveyard")
+    void attachedBlueAuraIsRemovedByStateBasedActions() {
+        Permanent meerkat = addCreatureReady(player2, new KarooMeerkat());
+        Permanent cloak = harness.addToBattlefieldAndReturn(player1, new CloakOfInvisibility());
+        cloak.setAttachedTo(meerkat.getId());
+
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Cloak of Invisibility");
+        harness.assertNotOnBattlefield(player1, "Cloak of Invisibility");
+        harness.assertOnBattlefield(player2, "Karoo Meerkat");
     }
 
     @Test
