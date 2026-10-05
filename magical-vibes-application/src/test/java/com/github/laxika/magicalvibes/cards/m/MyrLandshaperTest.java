@@ -35,6 +35,48 @@ class MyrLandshaperTest extends BaseCardTest {
     }
 
     @Test
+    void canTargetOwnLandAndDoesNotChangeItsTypeBeforeResolution() {
+        addCreatureReady(player1, new MyrLandshaper());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BlinkmothNexus());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(gqs.isArtifact(gd, target)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
+        assertThat(gqs.isLand(gd, target)).isTrue();
+        assertThat(gqs.isCreature(gd, target)).isFalse();
+    }
+
+    @Test
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent source = addCreatureReady(player1, new MyrLandshaper());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BlinkmothNexus());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, source));
+        harness.passBothPriorities();
+
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
+        assertThat(gqs.isLand(gd, target)).isTrue();
+    }
+
+    @Test
+    void summoningSicknessPreventsActivation() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new MyrLandshaper());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BlinkmothNexus());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(source.isTapped()).isFalse();
+        assertThat(gqs.isArtifact(gd, target)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     void onlyTargetsLands() {
         Permanent source = addCreatureReady(player1, new MyrLandshaper());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new MyrLandshaper());
