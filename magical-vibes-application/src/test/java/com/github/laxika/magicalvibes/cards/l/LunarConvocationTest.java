@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -50,6 +51,10 @@ class LunarConvocationTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(findPermanents(player1, "Bat")).hasSize(1);
+        var bat = findPermanents(player1, "Bat").getFirst();
+        assertThat(bat.getCard().getPower()).isEqualTo(1);
+        assertThat(bat.getCard().getToughness()).isEqualTo(1);
+        assertThat(bat.hasKeyword(Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -74,6 +79,73 @@ class LunarConvocationTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Bat")).isEmpty();
     }
 
+    @Test
+    void paysLifeImmediatelyAndDrawsOnlyOnResolution() {
+        harness.addToBattlefield(player1, new LunarConvocation());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertLife(player1, 18);
+        harness.assertNotInHand(player1, "Forest");
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    void losingLifeAfterEndStepBeginsDoesNotCreateBat() {
+        harness.addToBattlefield(player1, new LunarConvocation());
+        harness.setLibrary(player1, List.of(new Forest()));
+        castLifeBurstAtController();
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 19);
+        assertThat(findPermanents(player1, "Bat")).isEmpty();
+    }
+
+    @Test
+    void gainingLifeAfterEndStepBeginsDoesNotTrigger() {
+        harness.addToBattlefield(player1, new LunarConvocation());
+        advanceToEndStep(player1);
+        assertThat(gd.stack).isEmpty();
+
+        castLifeBurstAtController();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+        assertThat(findPermanents(player1, "Bat")).isEmpty();
+    }
+
+    @Test
+    void doesNotTriggerOnOpponentsEndStep() {
+        harness.addToBattlefield(player1, new LunarConvocation());
+        harness.forceActivePlayer(player2);
+        harness.setLibrary(player1, List.of(new Forest()));
+        castLifeBurstAtController();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+        assertThat(findPermanents(player1, "Bat")).isEmpty();
+    }
+
     private void castLifeBurstAtController() {
         harness.setHand(player1, List.of(new LifeBurst()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -87,6 +159,6 @@ class LunarConvocationTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
     }
 }
