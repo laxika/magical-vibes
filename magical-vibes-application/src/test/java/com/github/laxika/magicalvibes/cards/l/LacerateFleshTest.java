@@ -45,6 +45,66 @@ class LacerateFleshTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void countsDamageAlreadyMarkedWhenDeterminingExcess() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        target.setMarkedDamage(2);
+
+        cast(target);
+
+        harness.assertInGraveyard(player2, "Air Elemental");
+        assertThat(countPermanents(player1, "Blood")).isEqualTo(2);
+        assertThat(countPermanents(player2, "Blood")).isZero();
+    }
+
+    @Test
+    void canTargetOwnCreatureAndCreatesTokensForCaster() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        cast(target);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(countPermanents(player1, "Blood")).isEqualTo(2);
+        assertThat(countPermanents(player2, "Blood")).isZero();
+    }
+
+    @Test
+    void createsNoBloodWhenTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new LacerateFlesh()));
+        addMana();
+        harness.castSorcery(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Lacerate Flesh");
+        assertThat(countPermanents(player1, "Blood")).isZero();
+    }
+
+    @Test
+    void createdBloodCanDiscardAndSacrificeToDrawImmediately() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        cast(target);
+        Permanent blood = findPermanent(player1, "Blood");
+        LacerateFlesh discarded = new LacerateFlesh();
+        LacerateFlesh drawn = new LacerateFlesh();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(blood), null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(blood);
+        assertThat(countPermanents(player1, "Blood")).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+    }
+
     private void cast(Permanent target) {
         harness.setHand(player1, List.of(new LacerateFlesh()));
         addMana();
