@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SpeakSecrets;
@@ -15,8 +16,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MostDecrepitOldBird.class, SpeakSecrets.class, Shock.class, GrizzlyBears.class})
+@CardUsed({MostDecrepitOldBird.class, SpeakSecrets.class, Shock.class, GrizzlyBears.class, CounselOfTheSoratami.class})
 class MostDecrepitOldBirdTest extends BaseCardTest {
 
     @Test
@@ -73,6 +75,82 @@ class MostDecrepitOldBirdTest extends BaseCardTest {
         harness.setGraveyard(player1, graveyardCards(6));
         Permanent bird = harness.addToBattlefieldAndReturn(player1, new MostDecrepitOldBird());
 
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(1);
+    }
+
+    @Test
+    void adventureReturnsASorceryFromAShortLibrary() {
+        MostDecrepitOldBird card = new MostDecrepitOldBird();
+        CounselOfTheSoratami sorcery = new CounselOfTheSoratami();
+        harness.setHand(player1, List.of(card));
+        harness.setLibrary(player1, List.of(sorcery, new MostDecrepitOldBird()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAdventure(player1, 0, List.of());
+        harness.passBothPriorities();
+        harness.handleGraveyardCardChosen(player1, gd.playerGraveyards.get(player1.getId()).indexOf(sorcery));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(sorcery);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+    }
+
+    @Test
+    void adventureCannotReturnAnOlderGraveyardCardOrDeclineTheChoice() {
+        MostDecrepitOldBird card = new MostDecrepitOldBird();
+        Shock older = new Shock();
+        Shock milled = new Shock();
+        harness.setGraveyard(player1, List.of(older));
+        harness.setHand(player1, List.of(card));
+        harness.setLibrary(player1, List.of(milled, new MostDecrepitOldBird()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAdventure(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleGraveyardCardChosen(player1, gd.playerGraveyards.get(player1.getId()).indexOf(milled));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(milled);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(older);
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+    }
+
+    @Test
+    void creatureCanBeCastFromExileAfterAdventureWithAnEmptyLibrary() {
+        MostDecrepitOldBird card = new MostDecrepitOldBird();
+        harness.setHand(player1, List.of(card));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAdventure(player1, 0, List.of());
+        harness.passBothPriorities();
+        harness.castFromExile(player1, card.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Most Decrepit Old Bird");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void thresholdTracksOnlyItsControllersGraveyardAndUpdatesWhenCardsLeave() {
+        Permanent bird = harness.addToBattlefieldAndReturn(player1, new MostDecrepitOldBird());
+        harness.setGraveyard(player2, graveyardCards(7));
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(1);
+
+        harness.setGraveyard(player1, graveyardCards(8));
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(2);
+
+        harness.setGraveyard(player1, graveyardCards(6));
         assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(1);
     }
