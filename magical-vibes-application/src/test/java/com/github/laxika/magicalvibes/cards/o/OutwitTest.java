@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Outwit.class, LightningBolt.class, GrizzlyBears.class})
 class OutwitTest extends BaseCardTest {
 
     @Test
@@ -26,13 +28,29 @@ class OutwitTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 1);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.castInstant(player2, 0, bolt.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bolt.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Lightning Bolt");
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Can counter its controller's own spell targeting themselves")
+    void countersOwnSpellTargetingSelf() {
+        LightningBolt bolt = new LightningBolt();
+        harness.setHand(player1, List.of(bolt, new Outwit()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, player1.getId());
+        harness.castAndResolveInstant(player1, 0, bolt.getId());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Lightning Bolt");
+        harness.assertInGraveyard(player1, "Outwit");
+        harness.assertLife(player1, 20);
     }
 
     @Test
