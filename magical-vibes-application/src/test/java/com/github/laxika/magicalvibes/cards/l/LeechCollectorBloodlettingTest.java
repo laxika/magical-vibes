@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -10,6 +12,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LeechCollectorBloodletting.class})
 class LeechCollectorBloodlettingTest extends BaseCardTest {
 
     @Test
@@ -51,6 +54,77 @@ class LeechCollectorBloodlettingTest extends BaseCardTest {
         assertThat(collector.getPreparedSpellCardId()).isNull();
         harness.assertLife(player2, 18);
         assertThat(gd.findExiledCard(copyId)).isNull();
+    }
+
+    @Test
+    @DisplayName("Life gained before Leech Collector enters counts as the first gain of the turn")
+    void lifeGainBeforeEntryPreventsPreparingOnLaterGain() {
+        gainLife(1);
+        Permanent collector = harness.addToBattlefieldAndReturn(player1, new LeechCollectorBloodletting());
+
+        gainLife(2);
+        harness.passBothPriorities();
+
+        assertThat(collector.isPrepared()).isFalse();
+        assertThat(collector.getPreparedSpellCardId()).isNull();
+    }
+
+    @Test
+    @DisplayName("A later life gain cannot prepare Leech Collector again after Bloodletting is cast")
+    void laterLifeGainDoesNotReprepareAfterCasting() {
+        Permanent collector = harness.addToBattlefieldAndReturn(player1, new LeechCollectorBloodletting());
+        gainLife(1);
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castFromExile(player1, collector.getPreparedSpellCardId());
+        assertThat(collector.isPrepared()).isFalse();
+        assertThat(collector.getPreparedSpellCardId()).isNull();
+        harness.passBothPriorities();
+
+        gainLife(1);
+        harness.passBothPriorities();
+
+        assertThat(collector.isPrepared()).isFalse();
+        assertThat(collector.getPreparedSpellCardId()).isNull();
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Opponent life gain and gaining zero life do not prepare Leech Collector")
+    void onlyPositiveControllerLifeGainPrepares() {
+        Permanent collector = harness.addToBattlefieldAndReturn(player1, new LeechCollectorBloodletting());
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player2.getId(), 1));
+        gainLife(0);
+        harness.passBothPriorities();
+
+        assertThat(collector.isPrepared()).isFalse();
+        assertThat(collector.getPreparedSpellCardId()).isNull();
+
+        gainLife(1);
+        harness.passBothPriorities();
+
+        assertThat(collector.isPrepared()).isTrue();
+        assertThat(collector.getPreparedSpellCardId()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("The first life gain on an opponent's turn prepares Leech Collector again")
+    void firstLifeGainOnNextTurnPreparesAgain() {
+        Permanent collector = harness.addToBattlefieldAndReturn(player1, new LeechCollectorBloodletting());
+        gainLife(1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castFromExile(player1, collector.getPreparedSpellCardId());
+        harness.passBothPriorities();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        gainLife(1);
+        harness.passBothPriorities();
+
+        assertThat(collector.isPrepared()).isTrue();
+        assertThat(collector.getPreparedSpellCardId()).isNotNull();
     }
 
     private void gainLife(int amount) {
