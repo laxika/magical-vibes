@@ -68,10 +68,75 @@ class MurkStriderTest extends BaseCardTest {
     }
 
     private void castMurkStrider() {
-        harness.setHand(player1, List.of(new MurkStrider()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MurkStrider(), "{3}{U}");
         harness.passBothPriorities();
+    }
+
+    @Test
+    @CardUsed(MurkStrider.class)
+    void canReturnItselfAfterProcessing() {
+        MurkStrider exiledCard = new MurkStrider();
+        harness.setExile(player2, List.of(exiledCard));
+
+        castMurkStrider();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Murk Strider"));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(exiledCard.getId()));
+
+        harness.assertInGraveyard(player2, "Murk Strider");
+        harness.assertInHand(player1, "Murk Strider");
+        harness.assertNotOnBattlefield(player1, "Murk Strider");
+    }
+
+    @Test
+    @CardUsed(MurkStrider.class)
+    void doesNothingWhenThereAreNoExiledCards() {
+        castMurkStrider();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Murk Strider"));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Murk Strider");
+        harness.assertNotInHand(player1, "Murk Strider");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @CardUsed(MurkStrider.class)
+    void canProcessASingleFaceDownOpponentOwnedCard() {
+        MurkStrider exiledCard = new MurkStrider();
+        gd.addToExile(player2.getId(), exiledCard, null, true);
+
+        castMurkStrider();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Murk Strider"));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.OpponentOwnedExiledCardToGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(exiledCard.getId()));
+
+        harness.assertInGraveyard(player2, "Murk Strider");
+        harness.assertInHand(player1, "Murk Strider");
+        assertThat(gd.findExiledCard(exiledCard.getId())).isNull();
+    }
+
+    @Test
+    void doesNotProcessWhenTheTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        PathToExile exiledCard = new PathToExile();
+        harness.setExile(player2, List.of(exiledCard));
+        harness.setLibrary(player2, List.of());
+
+        castMurkStrider();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.setHand(player1, List.of(new PathToExile()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(exiledCard.getId())).isNotNull();
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Grizzly Bears");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
