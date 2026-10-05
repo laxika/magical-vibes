@@ -15,6 +15,69 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class PhyrexianBattlefliesTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Pending activations count toward the twice-per-turn limit")
+    void pendingActivationsCountTowardLimit() {
+        Permanent battleflies = addCreatureReady(player1, new PhyrexianBattleflies());
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.getEffectivePower(gd, battleflies)).isEqualTo(0);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no more than 2 times each turn");
+
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, battleflies)).isEqualTo(1);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, battleflies)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each copy has its own activation limit and boosts only itself")
+    void separateCopiesHaveIndependentLimits() {
+        Permanent first = addCreatureReady(player1, new PhyrexianBattleflies());
+        Permanent second = addCreatureReady(player1, new PhyrexianBattleflies());
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(0);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The ability can be activated twice during the opponent's turn")
+    void canActivateDuringOpponentsTurn() {
+        Permanent battleflies = addCreatureReady(player1, new PhyrexianBattleflies());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, battleflies)).isEqualTo(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no more than 2 times each turn");
+    }
+
+    @Test
     @DisplayName("Pump ability grants +1/+0 until end of turn")
     void pumpAbilityGrantsBoost() {
         Permanent battleflies = addCreatureReady(player1, new PhyrexianBattleflies());
