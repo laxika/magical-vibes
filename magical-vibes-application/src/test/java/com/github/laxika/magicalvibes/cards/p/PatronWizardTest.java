@@ -112,4 +112,67 @@ class PatronWizardTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, spell.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+    @Test
+    @DisplayName("The spell's controller may decline payment even with mana available")
+    void spellControllerMayDeclinePayment() {
+        harness.addToBattlefield(player2, new PatronWizard());
+        AvenFlock spell = new AvenFlock();
+        harness.castFromHand(player1, spell, "{4}{W}");
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.passPriority(player1);
+
+        harness.activateAbility(player2, 0, null, spell.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Aven Flock");
+        harness.assertNotOnBattlefield(player1, "Aven Flock");
+        assertThat(harness.getGameData().playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Patron Wizard may tap itself to counter a spell")
+    void summoningSickWizardMayPayCost() {
+        Permanent patron = harness.addToBattlefieldAndReturn(player2, new PatronWizard());
+        patron.setSummoningSick(true);
+        AvenFlock spell = new AvenFlock();
+        harness.castFromHand(player1, spell, "{4}{W}");
+        harness.passPriority(player1);
+
+        harness.activateAbility(player2, 0, null, spell.getId());
+        assertThat(patron.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Aven Flock");
+    }
+
+    @Test
+    @DisplayName("An opponent's untapped Wizard cannot pay the cost")
+    void opposingWizardCannotPayCost() {
+        Permanent patron = harness.addToBattlefieldAndReturn(player2, new PatronWizard());
+        patron.tap();
+        Permanent opposingWizard = harness.addToBattlefieldAndReturn(player1, new PatronWizard());
+        AvenFlock spell = new AvenFlock();
+        harness.castFromHand(player1, spell, "{4}{W}");
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, spell.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(opposingWizard.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Patron Wizard may counter its controller's own spell")
+    void mayCounterOwnSpell() {
+        Permanent patron = harness.addToBattlefieldAndReturn(player1, new PatronWizard());
+        AvenFlock spell = new AvenFlock();
+        harness.castFromHand(player1, spell, "{4}{W}");
+
+        harness.activateAbility(player1, 0, null, spell.getId());
+        assertThat(patron.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Aven Flock");
+        harness.assertNotOnBattlefield(player1, "Aven Flock");
+    }
 }
