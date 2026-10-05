@@ -60,6 +60,35 @@ class KelsinkoRangerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Ability can be activated while tapped and summoning sick")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent ranger = harness.addToBattlefieldAndReturn(player1, new KelsinkoRanger());
+        ranger.setTapped(true);
+        ranger.setSummoningSick(true);
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(ranger.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability cannot be activated without white mana")
+    void requiresWhiteMana() {
+        addCreatureReady(player1, new KelsinkoRanger());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+    @Test
     @DisplayName("{1}{W} ability targeting a non-green creature is rejected")
     void nonGreenCreatureRejected() {
         addCreatureReady(player1, new KelsinkoRanger());
