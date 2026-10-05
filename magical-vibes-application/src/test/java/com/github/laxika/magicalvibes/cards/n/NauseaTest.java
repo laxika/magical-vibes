@@ -45,6 +45,43 @@ class NauseaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only creatures present at resolution receive the reduction")
+    void existingCreaturesRemainAffectedWhenAnotherEnters() {
+        Permanent existingBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.castFromHand(player1, new Nausea(), "{1}{B}");
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        Permanent newBears = findPermanent(player1, "Grizzly Bears");
+        assertThat(newBears.getEffectivePower()).isEqualTo(2);
+        assertThat(newBears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(existingBears.getEffectivePower()).isEqualTo(1);
+        assertThat(existingBears.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Two casts cumulatively reduce toughness and kill creatures on both battlefields")
+    void multipleCastsAccumulate() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        harness.castFromHand(player1, new Nausea(), "{1}{B}");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+
+        harness.castFromHand(player1, new Nausea(), "{1}{B}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
     @DisplayName("Kills 1-toughness creatures")
     void killsOneToughnessCreatures() {
         harness.addToBattlefield(player2, new SuntailHawk()); // 1/1
