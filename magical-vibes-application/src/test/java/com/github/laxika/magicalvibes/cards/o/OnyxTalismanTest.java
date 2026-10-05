@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,9 +14,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OnyxTalisman.class, DarkRitual.class, BalduvianBears.class})
+@CardUsed({OnyxTalisman.class, DarkRitual.class, BalduvianBears.class, Disenchant.class})
 class OnyxTalismanTest extends BaseCardTest {
 
     private void setUpOpponentTurn() {
@@ -136,5 +139,68 @@ class OnyxTalismanTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(bears.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The Talisman can untap itself by paying three colored mana")
+    void untapsItselfWithColoredMana() {
+        Permanent talisman = harness.addToBattlefieldAndReturn(player1, new OnyxTalisman());
+        talisman.tap();
+        setUpOpponentTurn();
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        castBlackSpell(player2);
+        harness.handlePermanentChosen(player1, talisman.getId());
+        harness.passBothPriorities();
+
+        assertThat(talisman.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(4);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(talisman.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Removing the Talisman does not stop its already triggered ability")
+    void resolvesAfterSourceDestroyed() {
+        Permanent talisman = harness.addToBattlefieldAndReturn(player1, new OnyxTalisman());
+        Permanent bears = addTappedBears(player1);
+        setUpOpponentTurn();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        castBlackSpell(player2);
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, talisman.getId());
+        harness.assertInGraveyard(player1, "Onyx Talisman");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bears.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An ability with a destroyed target does not offer payment")
+    void destroyedTargetPreventsPayment() {
+        Permanent talisman = harness.addToBattlefieldAndReturn(player1, new OnyxTalisman());
+        talisman.tap();
+        setUpOpponentTurn();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        castBlackSpell(player2);
+        harness.handlePermanentChosen(player1, talisman.getId());
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, talisman.getId());
+        harness.assertInGraveyard(player1, "Onyx Talisman");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+        assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
     }
 }
