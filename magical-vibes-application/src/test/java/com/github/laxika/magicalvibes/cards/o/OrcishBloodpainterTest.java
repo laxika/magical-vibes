@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({OrcishBloodpainter.class, GrizzlyBears.class, LlanowarElves.class})
 class OrcishBloodpainterTest extends BaseCardTest {
@@ -56,6 +57,53 @@ class OrcishBloodpainterTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Orcish Bloodpainter");
         harness.assertLife(player2, 19);
         assertThat(bloodpainter.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped Bloodpainter cannot activate its ability")
+    void cannotActivateWhileTapped() {
+        Permanent bloodpainter = addReadyBloodpainter(player1);
+        bloodpainter.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Orcish Bloodpainter");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Bloodpainter cannot activate its tap ability")
+    void cannotActivateWhileSummoningSick() {
+        Permanent bloodpainter = addReadyBloodpainter(player1);
+        bloodpainter.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Orcish Bloodpainter");
+        assertThat(bloodpainter.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Bloodpainter may target itself and sacrifice itself, leaving an illegal target")
+    void canTargetAndSacrificeItself() {
+        Permanent bloodpainter = addReadyBloodpainter(player1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, bloodpainter.getId());
+
+        harness.assertInGraveyard(player1, "Orcish Bloodpainter");
+        harness.assertNotOnBattlefield(player1, "Orcish Bloodpainter");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
     private Permanent addReadyBloodpainter(Player player) {
