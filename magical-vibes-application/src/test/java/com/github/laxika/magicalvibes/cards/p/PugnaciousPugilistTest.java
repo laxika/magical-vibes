@@ -54,8 +54,7 @@ class PugnaciousPugilistTest extends BaseCardTest {
         harness.setHand(player2, List.of(new DoomBlade()));
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, devil.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, devil.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, bears.getId());
@@ -87,5 +86,82 @@ class PugnaciousPugilistTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Pugnacious Pugilist");
         harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Blitz grants haste immediately when the creature spell resolves")
+    void blitzHasHasteWithoutResolvingAnEtbTrigger() {
+        harness.setHand(player1, List.of(new PugnaciousPugilist()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        Permanent pugilist = findPermanent(player1, "Pugnacious Pugilist");
+        assertThat(gqs.hasKeyword(gd, pugilist, Keyword.HASTE)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Casting for the normal cost neither grants haste nor sacrifices at the end step")
+    void normalCastDoesNotApplyBlitz() {
+        harness.setHand(player1, List.of(new PugnaciousPugilist()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent pugilist = findPermanent(player1, "Pugnacious Pugilist");
+        assertThat(gqs.hasKeyword(gd, pugilist, Keyword.HASTE)).isFalse();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Pugnacious Pugilist");
+        harness.assertNotInGraveyard(player1, "Pugnacious Pugilist");
+    }
+
+    @Test
+    @DisplayName("A blitzed creature draws when destroyed before the end step")
+    void blitzDrawsWhenDestroyedEarly() {
+        harness.setHand(player1, List.of(new PugnaciousPugilist(), new DoomBlade()));
+        harness.setLibrary(player1, List.of(new PugnaciousPugilist()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        resolveAllTriggers();
+
+        Permanent pugilist = findPermanent(player1, "Pugnacious Pugilist");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAndResolveInstant(player1, 0, pugilist.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Pugnacious Pugilist");
+        harness.assertInHand(player1, "Pugnacious Pugilist");
+    }
+
+    @Test
+    @DisplayName("A normally cast creature does not draw when it dies")
+    void normalCastDoesNotDrawOnDeath() {
+        harness.setHand(player1, List.of(new PugnaciousPugilist(), new DoomBlade()));
+        harness.setLibrary(player1, List.of(new PugnaciousPugilist()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent pugilist = findPermanent(player1, "Pugnacious Pugilist");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAndResolveInstant(player1, 0, pugilist.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Pugnacious Pugilist");
+        harness.assertNotInHand(player1, "Pugnacious Pugilist");
     }
 }
