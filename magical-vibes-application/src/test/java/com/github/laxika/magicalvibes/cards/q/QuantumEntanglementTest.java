@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.q;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WarriorsOfWakanda;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,80 +14,171 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({QuantumEntanglement.class, GrizzlyBears.class})
+@CardUsed({QuantumEntanglement.class, WarriorsOfWakanda.class})
 class QuantumEntanglementTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Pays to flicker the targeted creature when Quantum Entanglement enters")
+    @DisplayName("Pays first, then flickers the targeted creature through a separate entry trigger")
     void flickersTargetOnEntry() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new WarriorsOfWakanda());
+        creature.tap();
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         castQuantumEntanglement(2);
+        beginEntryPayment();
+        payAndChooseCreature(creature);
 
+        assertThat(findPermanent(player1, "Warriors of Wakanda").getId()).isEqualTo(creature.getId());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, bears.getId());
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
-        Permanent returned = findPermanent(player1, "Grizzly Bears");
-        assertThat(returned.getId()).isNotEqualTo(bears.getId());
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
+        Permanent returned = findPermanent(player1, "Warriors of Wakanda");
+        assertThat(returned.getId()).isNotEqualTo(creature.getId());
+        assertThat(returned.isTapped()).isFalse();
+        assertThat(returned.getPlusOnePlusOneCounters()).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test
-    @DisplayName("Declining the entry payment leaves the targeted creature unchanged")
+    @DisplayName("Declining the entry payment needs no target and leaves the creature unchanged")
     void decliningEntryPaymentDoesNothing() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new WarriorsOfWakanda());
         castQuantumEntanglement(2);
-
-        harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, bears.getId());
-        harness.passBothPriorities();
+        beginEntryPayment();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(findPermanent(player1, "Grizzly Bears").getId()).isEqualTo(bears.getId());
+        assertThat(findPermanent(player1, "Warriors of Wakanda").getId()).isEqualTo(creature.getId());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
     }
 
     @Test
-    @DisplayName("Pays to flicker a targeted creature at the beginning of the controller's end step")
+    @DisplayName("Pays to flicker a creature at the beginning of the controller's end step")
     void flickersTargetAtEndStep() {
         harness.addToBattlefield(player1, new QuantumEntanglement());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new WarriorsOfWakanda());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, bears.getId());
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getLast().getTargetId()).isEqualTo(bears.getId());
+        harness.passUntil(player1, TurnStep.END_STEP);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        payAndChooseCreature(creature);
+
+        assertThat(findPermanent(player1, "Warriors of Wakanda").getId()).isEqualTo(creature.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
-        assertThat(findPermanent(player1, "Grizzly Bears").getId()).isNotEqualTo(bears.getId());
+        assertThat(findPermanent(player1, "Warriors of Wakanda").getId()).isNotEqualTo(creature.getId());
     }
 
     @Test
-    @DisplayName("Cannot target a creature an opponent controls")
+    @DisplayName("The paid reflexive ability cannot target an opponent's creature")
     void cannotTargetOpponentCreature() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        harness.setHand(player1, java.util.List.of(new QuantumEntanglement()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new WarriorsOfWakanda());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new WarriorsOfWakanda());
+        castQuantumEntanglement(2);
+        beginEntryPayment();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, bears.getId()))
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponent.getId()))
                 .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, own.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player2, "Warriors of Wakanda").getId()).isEqualTo(opponent.getId());
+        assertThat(findPermanent(player1, "Warriors of Wakanda").getId()).isNotEqualTo(own.getId());
     }
 
-    private void castQuantumEntanglement(int triggerMana) {
-        harness.setHand(player1, java.util.List.of(new QuantumEntanglement()));
-        harness.addMana(player1, ManaColor.WHITE, triggerMana);
-        harness.addMana(player1, ManaColor.COLORLESS, triggerMana);
-        harness.castEnchantment(player1, 0);
+    @Test
+    @DisplayName("The entry payment is offered even without a creature to target")
+    void canPayWithoutCreatures() {
+        castQuantumEntanglement(2);
+        beginEntryPayment();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Quantum Entanglement");
+    }
+
+    @Test
+    @DisplayName("Declining the end-step payment creates no targeted ability")
+    void decliningEndStepPaymentDoesNothing() {
+        harness.addToBattlefield(player1, new QuantumEntanglement());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new WarriorsOfWakanda());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(findPermanent(player1, "Warriors of Wakanda").getId()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Does not trigger during an opponent's end step")
+    void doesNotTriggerAtOpponentEndStep() {
+        harness.addToBattlefield(player1, new QuantumEntanglement());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new WarriorsOfWakanda());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(findPermanent(player1, "Warriors of Wakanda").getId()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("A creature controlled by the enchantment's controller returns to its owner")
+    void returnsStolenCreatureToOwner() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new WarriorsOfWakanda());
+        gd.stolenCreatures.put(creature.getId(), player2.getId());
+        castQuantumEntanglement(2);
+        beginEntryPayment();
+        payAndChooseCreature(creature);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Warriors of Wakanda");
+        assertThat(findPermanent(player2, "Warriors of Wakanda").getId()).isNotEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Flash allows entry during an opponent's turn")
+    void canEnterDuringOpponentTurn() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        castQuantumEntanglement(1);
+        beginEntryPayment();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertOnBattlefield(player1, "Quantum Entanglement");
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+    }
+
+    private void beginEntryPayment() {
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+    }
+
+    private void payAndChooseCreature(Permanent creature) {
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, creature.getId());
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getTargetId()).isEqualTo(creature.getId());
+    }
+
+    private void castQuantumEntanglement(int manaOfEachColor) {
+        harness.addMana(player1, ManaColor.WHITE, manaOfEachColor - 1);
+        harness.addMana(player1, ManaColor.COLORLESS, manaOfEachColor - 1);
+        harness.castFromHand(player1, new QuantumEntanglement(), "{1}{W}");
     }
 }
