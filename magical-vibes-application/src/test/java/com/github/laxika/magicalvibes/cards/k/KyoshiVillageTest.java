@@ -12,8 +12,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(KyoshiVillage.class)
+@CardUsed({KyoshiVillage.class})
 class KyoshiVillageTest extends BaseCardTest {
 
     @Test
@@ -66,6 +67,48 @@ class KyoshiVillageTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 1);
     }
 
+    @Test
+    void tappedVillageCannotActivateEitherAbility() {
+        playVillage();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Kyoshi Village");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(4);
+    }
+
+    @Test
+    void insufficientManaDoesNotSacrificeOrTapVillage() {
+        Permanent village = addReadyVillage(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(village.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Kyoshi Village");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+    }
+
+    @Test
+    void newlyControlledLandCanProduceManaWithoutUsingStack() {
+        Permanent village = harness.addToBattlefieldAndReturn(player1, new KyoshiVillage());
+        village.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(village.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
     private void playVillage() {
         harness.setHand(player1, List.of(new KyoshiVillage()));
         harness.forceActivePlayer(player1);
@@ -75,9 +118,6 @@ class KyoshiVillageTest extends BaseCardTest {
     }
 
     private Permanent addReadyVillage(Player player) {
-        Permanent village = new Permanent(new KyoshiVillage());
-        village.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(village);
-        return village;
+        return addCreatureReady(player, new KyoshiVillage());
     }
 }
