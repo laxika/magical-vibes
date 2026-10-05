@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(RadiantGrove.class)
 class RadiantGroveTest extends BaseCardTest {
@@ -67,10 +68,33 @@ class RadiantGroveTest extends BaseCardTest {
         }
     }
 
+    @Test
+    @DisplayName("Radiant Grove enters tapped when put directly onto the battlefield")
+    void entersTappedWithoutBeingPlayed() {
+        Permanent grove = harness.enterBattlefieldAndReturn(player1, new RadiantGrove());
+
+        assertThat(grove.isTapped()).isTrue();
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Radiant Grove cannot produce mana again")
+    void cannotActivateAgainWhileTapped() {
+        addGroveReady(player1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(harness.getGameData().playerManaPools.get(player1.getId()).get(ManaColor.GREEN))
+                .isEqualTo(1);
+        assertThat(harness.getGameData().interaction.activeInteraction()).isNull();
+    }
+
     private Permanent addGroveReady(Player player) {
-        Permanent permanent = new Permanent(new RadiantGrove());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new RadiantGrove());
         permanent.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
