@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({MidnightMayhem.class, RuinousGremlin.class, GrizzlyBears.class})
 class MidnightMayhemTest extends BaseCardTest {
@@ -63,13 +65,54 @@ class MidnightMayhemTest extends BaseCardTest {
         });
     }
 
+    @Test
+    @DisplayName("Gremlins entering after resolution do not gain the keywords")
+    void laterGremlinsDoNotGainKeywords() {
+        castMidnightMayhem();
+
+        Permanent laterGremlin = addCreatureReady(player1, new RuinousGremlin());
+
+        assertThat(gqs.hasKeyword(gd, laterGremlin, Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterGremlin, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterGremlin, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("New tokens can attack immediately and gain life from combat damage")
+    void tokensAttackImmediatelyAndGainLife() {
+        castMidnightMayhem();
+        int controllerLife = gd.playerLifeTotals.get(player1.getId());
+        int opponentLife = gd.playerLifeTotals.get(player2.getId());
+
+        declareAttackers(List.of(0, 1, 2));
+        resolveCombat();
+
+        harness.assertLife(player1, controllerLife + 3);
+        harness.assertLife(player2, opponentLife - 3);
+    }
+
+    @Test
+    @DisplayName("A Gremlin requires at least two blockers")
+    void menaceRequiresTwoBlockers() {
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        castMidnightMayhem();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+    }
+
     private void castMidnightMayhem() {
         harness.setHand(player1, List.of(new MidnightMayhem()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     private void assertHasMidnightMayhemKeywords(Permanent permanent) {
