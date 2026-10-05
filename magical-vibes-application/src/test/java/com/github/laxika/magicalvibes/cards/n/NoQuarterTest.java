@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NoQuarter.class, FlowstoneGiant.class, Rootwalla.class, ElvishFury.class})
+@CardUsed({NoQuarter.class, FlowstoneGiant.class, Rootwalla.class, ElvishFury.class, NurturingLicid.class})
 class NoQuarterTest extends BaseCardTest {
 
     @Test
@@ -126,5 +126,72 @@ class NoQuarterTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Rootwalla");
         harness.assertInGraveyard(player2, "Rootwalla");
+    }
+
+    @Test
+    @DisplayName("Power increases before blocking are included in the comparison")
+    void powerIncreaseBeforeBlockDeclarationChangesWhichCreatureIsDestroyed() {
+        Permanent attacker = addCreatureReady(player1, new FlowstoneGiant());
+        Permanent blocker = addCreatureReady(player2, new Rootwalla());
+        addCreatureReady(player1, new NoQuarter());
+        harness.setHand(player2, List.of(new ElvishFury()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.castInstant(player2, 0, blocker.getId());
+        harness.passBothPriorities();
+
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Flowstone Giant");
+        harness.assertOnBattlefield(player2, "Rootwalla");
+    }
+
+    @Test
+    @DisplayName("A weaker blocker is destroyed even if it becomes an Aura in response")
+    void blockerBecomingAuraStillDestroyed() {
+        Permanent attacker = addCreatureReady(player1, new FlowstoneGiant());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new NurturingLicid());
+        addCreatureReady(player1, new NoQuarter());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.passPriority(player1);
+        harness.activateAbility(player2, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(blocker.getAttachedTo()).isEqualTo(attacker.getId());
+        assertThat(gqs.isCreature(gd, blocker)).isFalse();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Nurturing Licid");
+        harness.assertInGraveyard(player2, "Nurturing Licid");
+        harness.assertOnBattlefield(player1, "Flowstone Giant");
+    }
+
+    @Test
+    @DisplayName("A weaker attacker is destroyed even if it becomes an Aura in response")
+    void attackerBecomingAuraStillDestroyed() {
+        Permanent attacker = addCreatureReady(player1, new NurturingLicid());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new FlowstoneGiant());
+        addCreatureReady(player1, new NoQuarter());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        assertThat(attacker.getAttachedTo()).isEqualTo(blocker.getId());
+        assertThat(gqs.isCreature(gd, attacker)).isFalse();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Nurturing Licid");
+        harness.assertInGraveyard(player1, "Nurturing Licid");
+        harness.assertOnBattlefield(player2, "Flowstone Giant");
     }
 }
