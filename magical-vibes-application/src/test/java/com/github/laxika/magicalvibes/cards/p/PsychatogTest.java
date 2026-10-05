@@ -115,4 +115,58 @@ class PsychatogTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
     }
+
+    @Test
+    void discardedCardsCanPayExileCostBeforeDiscardAbilitiesResolve() {
+        Permanent psychatog = harness.addToBattlefieldAndReturn(player1, new Psychatog());
+        AvenFisher first = new AvenFisher();
+        Firebolt second = new Firebolt();
+        harness.setHand(player1, List.of(first, second));
+        harness.setGraveyard(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, second);
+        assertThat(psychatog.getPowerModifier()).isZero();
+        assertThat(psychatog.getToughnessModifier()).isZero();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(psychatog.getPowerModifier()).isZero();
+        assertThat(psychatog.getToughnessModifier()).isZero();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(psychatog.getPowerModifier()).isEqualTo(3);
+        assertThat(psychatog.getToughnessModifier()).isEqualTo(3);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(psychatog.getPowerModifier()).isZero();
+        assertThat(psychatog.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void boostAppliesOnlyToThePsychatogWhoseAbilityWasActivated() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new Psychatog());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new Psychatog());
+        harness.setGraveyard(player1, List.of(new AvenFisher(), new Firebolt()));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(source.getToughnessModifier()).isEqualTo(1);
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+    }
 }
