@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -27,7 +28,7 @@ class ImposingVisageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ImposingVisage()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -108,6 +109,47 @@ class ImposingVisageTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("two or more creatures");
+    }
+
+    @Test
+    @DisplayName("Menace from multiple Imposing Visages still allows two blockers")
+    void multipleVisagesAllowTwoBlockers() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ImposingVisage(), new ImposingVisage()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castEnchantment(player1, 0, attacker.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, attacker.getId());
+        harness.passBothPriorities();
+        Permanent firstBlocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent secondBlocker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2,
+                        List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0))));
+
+        assertThat(firstBlocker.isBlocking()).isTrue();
+        assertThat(secondBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Menace allows the defender to leave the enchanted creature unblocked")
+    void menaceAllowsNoBlockers() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ImposingVisage()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castEnchantment(player1, 0, attacker.getId());
+        harness.passBothPriorities();
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        int lifeBeforeCombat = gd.playerLifeTotals.get(player2.getId());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBeforeCombat - 2);
     }
 
     @Test
