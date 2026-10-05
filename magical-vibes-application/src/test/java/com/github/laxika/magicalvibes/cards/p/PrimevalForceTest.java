@@ -153,4 +153,36 @@ class PrimevalForceTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Forest")).isEqualTo(2);
         harness.assertOnBattlefield(player1, "Island");
     }
+
+    @Test
+    @DisplayName("Forests present when the trigger resolves can pay even if absent on entry")
+    void checksForestsAtResolution() {
+        harness.enterBattlefieldAndReturn(player1, new PrimevalForce());
+        harness.assertOnBattlefield(player1, "Primeval Force");
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(countPermanents(player1, "Forest")).isZero();
+        harness.assertOnBattlefield(player1, "Primeval Force");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(card -> card.getName()).containsExactly("Forest", "Forest", "Forest");
+    }
+
+    @Test
+    @DisplayName("Failing to pay sacrifices only the Force that generated the trigger")
+    void sacrificesOnlyTheEnteringForce() {
+        UUID existingForceId = harness.addToBattlefieldAndReturn(player1, new PrimevalForce()).getId();
+
+        castPrimevalForce();
+
+        assertThat(countPermanents(player1, "Primeval Force")).isEqualTo(1);
+        assertThat(harness.getPermanentId(player1, "Primeval Force")).isEqualTo(existingForceId);
+        harness.assertInGraveyard(player1, "Primeval Force");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }
