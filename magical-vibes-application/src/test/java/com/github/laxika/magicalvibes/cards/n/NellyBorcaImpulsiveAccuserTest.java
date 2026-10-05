@@ -54,4 +54,51 @@ class NellyBorcaImpulsiveAccuserTest extends BaseCardTest {
                 nelly.getId(), creature.getId(), otherCreature.getId());
         assertThat(choice.validIds()).doesNotContain(land.getId());
     }
+    @Test
+    @DisplayName("Creatures suspected after the attack ability resolves are not goaded")
+    void laterSuspectedCreaturesAreNotGoaded() {
+        addCreatureReady(player1, new NellyBorcaImpulsiveAccuser());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent laterSuspected = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        laterSuspected.setSuspected(true);
+
+        assertThat(gqs.isGoaded(gd, target)).isTrue();
+        assertThat(gqs.isGoaded(gd, laterSuspected)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature remains goaded when it is no longer suspected")
+    void noLongerSuspectedCreatureRemainsGoaded() {
+        addCreatureReady(player1, new NellyBorcaImpulsiveAccuser());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        target.setSuspected(false);
+
+        assertThat(gqs.isGoaded(gd, target)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Suspected creatures entering after resolution are not goaded")
+    void laterEnteringSuspectedCreatureIsNotGoaded() {
+        addCreatureReady(player1, new NellyBorcaImpulsiveAccuser());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        Permanent newcomer = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        newcomer.setSuspected(true);
+
+        assertThat(gqs.isGoaded(gd, newcomer)).isFalse();
+    }
 }
