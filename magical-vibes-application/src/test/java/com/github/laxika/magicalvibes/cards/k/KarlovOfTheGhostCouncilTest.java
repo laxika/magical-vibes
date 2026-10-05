@@ -23,9 +23,7 @@ class KarlovOfTheGhostCouncilTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KarlovOfTheGhostCouncil());
         Permanent karlov = findPermanent(player1, "Karlov of the Ghost Council");
 
-        harness.setHand(player1, java.util.List.of(new AngelOfMercy()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AngelOfMercy(), "{4}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -77,5 +75,55 @@ class KarlovOfTheGhostCouncilTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Separate life gain events each add two counters in the same turn")
+    void triggersForEachLifeGainEvent() {
+        Permanent karlov = harness.addToBattlefieldAndReturn(player1, new KarlovOfTheGhostCouncil());
+
+        for (int event = 0; event < 2; event++) {
+            harness.castFromHand(player1, new AngelOfMercy(), "{4}{W}");
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            assertThat(karlov.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2 * (event + 1));
+        }
+    }
+
+    @Test
+    @DisplayName("An opponent gaining life does not put counters on Karlov")
+    void ignoresOpponentLifeGain() {
+        Permanent karlov = harness.addToBattlefieldAndReturn(player2, new KarlovOfTheGhostCouncil());
+
+        harness.castFromHand(player1, new AngelOfMercy(), "{4}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(karlov.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Karlov can exile itself while summoning sick and tapped")
+    void canExileItselfWhileSummoningSickAndTapped() {
+        Permanent karlov = harness.addToBattlefieldAndReturn(player1, new KarlovOfTheGhostCouncil());
+        karlov.setSummoningSick(true);
+        karlov.setTapped(true);
+        karlov.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 6);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, karlov.getId());
+
+        assertThat(karlov.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(findPermanents(player1, "Karlov of the Ghost Council")).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Karlov of the Ghost Council")).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Karlov of the Ghost Council"));
     }
 }
