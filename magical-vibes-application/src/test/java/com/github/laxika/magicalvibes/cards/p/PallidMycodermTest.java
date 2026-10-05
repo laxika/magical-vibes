@@ -128,4 +128,71 @@ class PallidMycodermTest extends BaseCardTest {
     private Permanent addMycoderm() {
         return addCreatureReady(player1, new PallidMycoderm());
     }
+
+    @Test
+    @DisplayName("An opponent's upkeep does not add a spore counter")
+    void opponentUpkeepDoesNotAddCounter() {
+        Permanent mycoderm = addMycoderm();
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(mycoderm.getCounterCount(CounterType.FUNGUS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Fewer than three spore counters cannot pay the token ability's cost")
+    void tokenAbilityRequiresThreeCounters() {
+        Permanent mycoderm = addMycoderm();
+        mycoderm.setCounterCount(CounterType.FUNGUS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(mycoderm.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Mycoderm pays counters before its token ability resolves")
+    void tokenAbilityPaysCountersImmediatelyWithoutTapping() {
+        Permanent mycoderm = addMycoderm();
+        mycoderm.setSummoningSick(true);
+        mycoderm.setTapped(true);
+        mycoderm.setCounterCount(CounterType.FUNGUS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(mycoderm.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Saproling")).hasSize(1);
+        assertThat(mycoderm.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid before resolution and later Saprolings do not receive the boost")
+    void sacrificeIsImmediateAndBoostDoesNotAffectLaterTokens() {
+        Permanent mycoderm = addMycoderm();
+        mycoderm.setCounterCount(CounterType.FUNGUS, 6);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+        assertThat(mycoderm.getPowerModifier()).isZero();
+        assertThat(mycoderm.getToughnessModifier()).isZero();
+        harness.passBothPriorities();
+        assertThat(mycoderm.getPowerModifier()).isOne();
+        assertThat(mycoderm.getToughnessModifier()).isOne();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        Permanent laterSaproling = findPermanent(player1, "Saproling");
+        assertThat(gqs.getEffectivePower(gd, laterSaproling)).isOne();
+        assertThat(gqs.getEffectiveToughness(gd, laterSaproling)).isOne();
+    }
 }
