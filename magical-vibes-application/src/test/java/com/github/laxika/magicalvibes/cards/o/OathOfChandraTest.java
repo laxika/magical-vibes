@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.g.GideonOfTheTrials;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.n.NissaVoiceOfZendikar;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -11,11 +12,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OathOfChandra.class, GideonOfTheTrials.class, GrizzlyBears.class})
+@CardUsed({OathOfChandra.class, GideonOfTheTrials.class, GrizzlyBears.class, NissaVoiceOfZendikar.class})
 class OathOfChandraTest extends BaseCardTest {
 
     @Test
@@ -67,21 +66,83 @@ class OathOfChandraTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
     }
 
+    @Test
+    @DisplayName("An opponent's planeswalker entry does not enable the end-step ability")
+    void opponentPlaneswalkerEntryDoesNotTrigger() {
+        harness.addToBattlefield(player1, new OathOfChandra());
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new NissaVoiceOfZendikar(), "{1}{G}{G}");
+        harness.passBothPriorities();
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A planeswalker entering before Oath still enables its end-step ability")
+    void planeswalkerCanEnterBeforeOath() {
+        harness.castFromHand(player1, new NissaVoiceOfZendikar(), "{1}{G}{G}");
+        harness.passBothPriorities();
+        castOathOfChandra();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Oath of Chandra");
+        assertThat(gd.stack).isEmpty();
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("A planeswalker already on the battlefield does not count as entering this turn")
+    void existingPlaneswalkerDoesNotTrigger() {
+        harness.addToBattlefield(player1, new OathOfChandra());
+        harness.addToBattlefield(player1, new NissaVoiceOfZendikar());
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Multiple planeswalker entries deal only 2 damage even after those planeswalkers leave")
+    void multipleDepartedPlaneswalkersStillDealOnlyTwoDamage() {
+        harness.addToBattlefield(player1, new OathOfChandra());
+        for (int i = 0; i < 2; i++) {
+            harness.castFromHand(player1, new NissaVoiceOfZendikar(), "{1}{G}{G}");
+            harness.passBothPriorities();
+            var nissa = gd.playerBattlefields.get(player1.getId()).stream()
+                    .filter(permanent -> permanent.getCard().getName().equals("Nissa, Voice of Zendikar"))
+                    .findFirst().orElseThrow();
+            nissa.setCounterCount(CounterType.LOYALTY, 0);
+            harness.runStateBasedActions();
+        }
+        harness.assertNotOnBattlefield(player1, "Nissa, Voice of Zendikar");
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
     private void castOathOfChandra() {
-        harness.setHand(player1, List.of(new OathOfChandra()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new OathOfChandra(), "{1}{R}");
     }
 
     private void castGideonOfTheTrials(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player, List.of(new GideonOfTheTrials()));
-        harness.addMana(player, ManaColor.WHITE, 2);
-        harness.addMana(player, ManaColor.COLORLESS, 3);
-        harness.castPlaneswalker(player, 0);
+        harness.castFromHand(player, new GideonOfTheTrials(), "{1}{W}{W}");
         harness.passBothPriorities();
     }
 
