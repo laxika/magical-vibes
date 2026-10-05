@@ -20,8 +20,7 @@ class LeechesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
         gd.playerPoisonCounters.put(player2.getId(), 1);
-        castLeechesTargeting(player2.getId());
-        harness.passBothPriorities();
+        castAndResolveLeechesTargeting(player2.getId());
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
@@ -31,8 +30,7 @@ class LeechesTest extends BaseCardTest {
     void removesPoisonAndDealsDamage() {
         gd.playerPoisonCounters.put(player2.getId(), 4);
 
-        castLeechesTargeting(player2.getId());
-        harness.passBothPriorities();
+        castAndResolveLeechesTargeting(player2.getId());
 
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
@@ -41,8 +39,7 @@ class LeechesTest extends BaseCardTest {
     @Test
     @DisplayName("Deals no damage when the target has no poison counters")
     void noPoisonNoDamage() {
-        castLeechesTargeting(player2.getId());
-        harness.passBothPriorities();
+        castAndResolveLeechesTargeting(player2.getId());
 
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -54,8 +51,7 @@ class LeechesTest extends BaseCardTest {
     void canTargetSelf() {
         gd.playerPoisonCounters.put(player1.getId(), 2);
 
-        castLeechesTargeting(player1.getId());
-        harness.passBothPriorities();
+        castAndResolveLeechesTargeting(player1.getId());
 
         assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isZero();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
@@ -67,8 +63,7 @@ class LeechesTest extends BaseCardTest {
         gd.playerPoisonCounters.put(player1.getId(), 3);
         gd.playerPoisonCounters.put(player2.getId(), 1);
 
-        castLeechesTargeting(player2.getId());
-        harness.passBothPriorities();
+        castAndResolveLeechesTargeting(player2.getId());
 
         assertThat(gd.playerPoisonCounters.get(player1.getId())).isEqualTo(3);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -78,16 +73,42 @@ class LeechesTest extends BaseCardTest {
     @Test
     @DisplayName("Goes to graveyard after resolution")
     void goesToGraveyardAfterResolution() {
-        castLeechesTargeting(player2.getId());
-        harness.passBothPriorities();
+        castAndResolveLeechesTargeting(player2.getId());
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Leeches");
     }
 
-    private void castLeechesTargeting(UUID targetPlayerId) {
+    @Test
+    void usesPoisonCountAtResolution() {
+        gd.playerPoisonCounters.put(player2.getId(), 2);
         harness.setHand(player1, List.of(new Leeches()));
         harness.addMana(player1, ManaColor.WHITE, 3);
-        harness.castSorcery(player1, 0, targetPlayerId);
+        harness.castSorcery(player1, 0, player2.getId());
+
+        gd.playerPoisonCounters.put(player2.getId(), 5);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    void partialDamagePreventionDoesNotReducePoisonRemoval() {
+        harness.addToBattlefieldAndReturn(player1, new SerraPaladin()).setSummoningSick(false);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        gd.playerPoisonCounters.put(player2.getId(), 4);
+
+        castAndResolveLeechesTargeting(player2.getId());
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
+        harness.assertLife(player2, 17);
+    }
+
+    private void castAndResolveLeechesTargeting(UUID targetPlayerId) {
+        harness.setHand(player1, List.of(new Leeches()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castAndResolveSorcery(player1, 0, targetPlayerId);
     }
 }
