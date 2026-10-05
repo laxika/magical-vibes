@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrimclawBats;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LagacLizard;
-import com.github.laxika.magicalvibes.cards.o.Opt;
-import com.github.laxika.magicalvibes.cards.r.RuinRat;
-import com.github.laxika.magicalvibes.cards.s.SquirrelMob;
+import com.github.laxika.magicalvibes.cards.b.BushyBodyguard;
+import com.github.laxika.magicalvibes.cards.f.FlamecacheGecko;
+import com.github.laxika.magicalvibes.cards.p.PawpatchRecruit;
+import com.github.laxika.magicalvibes.cards.p.PersistentMarshstalker;
+import com.github.laxika.magicalvibes.cards.s.Savor;
+import com.github.laxika.magicalvibes.cards.s.StarscapeCleric;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -19,8 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MudflatVillage.class, GrimclawBats.class, LagacLizard.class, RuinRat.class,
-        SquirrelMob.class, GrizzlyBears.class, Opt.class})
+@CardUsed({MudflatVillage.class, StarscapeCleric.class, FlamecacheGecko.class,
+        PersistentMarshstalker.class, BushyBodyguard.class, PawpatchRecruit.class, Savor.class})
 class MudflatVillageTest extends BaseCardTest {
 
     @Test
@@ -46,9 +46,12 @@ class MudflatVillageTest extends BaseCardTest {
     void creatureOnlyBlackManaCannotCastNoncreatureSpells() {
         addVillage();
         harness.activateAbility(player1, 0, 1, null, null);
-        harness.setHand(player1, List.of(new Opt()));
+        harness.setHand(player1, List.of(new Savor()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addToBattlefield(player2, new PawpatchRecruit());
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                gd.playerBattlefields.get(player2.getId()).getFirst().getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
@@ -56,7 +59,7 @@ class MudflatVillageTest extends BaseCardTest {
     @Test
     void returnsTargetedKindredCardFromGraveyardToHandAndSacrificesItself() {
         addVillage();
-        Card bat = new GrimclawBats();
+        Card bat = new StarscapeCleric();
         harness.setGraveyard(player1, List.of(bat));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -78,7 +81,7 @@ class MudflatVillageTest extends BaseCardTest {
     @Test
     void cannotTargetNonKindredCardInGraveyard() {
         addVillage();
-        Card bear = new GrizzlyBears();
+        Card bear = new PawpatchRecruit();
         harness.setGraveyard(player1, List.of(bear));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -88,6 +91,131 @@ class MudflatVillageTest extends BaseCardTest {
         assertThatThrownBy(() ->
                 harness.activateAbility(player1, 0, 2, null, bear.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void restrictedBlackManaPaysForCreatureSpell() {
+        addVillage();
+        harness.setHand(player1, List.of(new StarscapeCleric()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Starscape Cleric");
+        assertThat(gd.playerManaPools.get(player1.getId()).getCreatureSpellOnlyMana(ManaColor.BLACK))
+                .isZero();
+    }
+
+    @Test
+    void returnsLizardCard() {
+        assertReturnsToHand(new FlamecacheGecko());
+    }
+
+    @Test
+    void returnsRatCard() {
+        assertReturnsToHand(new PersistentMarshstalker());
+    }
+
+    @Test
+    void returnsSquirrelCard() {
+        assertReturnsToHand(new BushyBodyguard());
+    }
+
+    @Test
+    void cannotTargetOpponentsEligibleCard() {
+        addVillage();
+        Card bat = new StarscapeCleric();
+        harness.setGraveyard(player2, List.of(bat));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, 0, 2, null, bat.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Mudflat Village");
+        harness.assertInGraveyard(player2, "Starscape Cleric");
+    }
+
+    @Test
+    void missingTargetDoesNotReturnAnotherEligibleCard() {
+        addVillage();
+        Card bat = new StarscapeCleric();
+        Card rat = new PersistentMarshstalker();
+        harness.setGraveyard(player1, List.of(bat, rat));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, 2, null, bat.getId(), Zone.GRAVEYARD);
+        gd.playerGraveyards.get(player1.getId()).remove(bat);
+        harness.setExile(player1, List.of(bat));
+
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Starscape Cleric");
+        harness.assertNotInHand(player1, "Persistent Marshstalker");
+        harness.assertInGraveyard(player1, "Persistent Marshstalker");
+        harness.assertInGraveyard(player1, "Mudflat Village");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void creatureOnlyManaCannotPayForReturnAbility() {
+        addVillage();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.addToBattlefield(player1, new MudflatVillage());
+        Card bat = new StarscapeCleric();
+        harness.setGraveyard(player1, List.of(bat));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, 1, 2, null, bat.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        harness.assertInGraveyard(player1, "Starscape Cleric");
+    }
+
+    @Test
+    void tappedVillageCannotActivateReturnAbility() {
+        addVillage();
+        harness.activateAbility(player1, 0, 0, null, null);
+        Card bat = new StarscapeCleric();
+        harness.setGraveyard(player1, List.of(bat));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, 0, 2, null, bat.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Mudflat Village");
+        harness.assertInGraveyard(player1, "Starscape Cleric");
+    }
+
+    @Test
+    void returnAbilityRequiresATarget() {
+        addVillage();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, 0, 2, null, null, Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Mudflat Village");
+    }
+
+    private void assertReturnsToHand(Card target) {
+        addVillage();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 2, null, target.getId(), Zone.GRAVEYARD);
+        harness.assertNotOnBattlefield(player1, "Mudflat Village");
+        harness.assertInGraveyard(player1, "Mudflat Village");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, target.getName());
+        harness.assertNotInGraveyard(player1, target.getName());
     }
 
     private void addVillage() {
