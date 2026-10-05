@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.k.Karoo;
+import com.github.laxika.magicalvibes.cards.u.UndiscoveredParadise;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +18,8 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({PygmyHippo.class, Forest.class, Island.class, GrizzlyBears.class})
+@CardUsed({PygmyHippo.class, Forest.class, Island.class, GrizzlyBears.class,
+        Karoo.class, UndiscoveredParadise.class})
 class PygmyHippoTest extends BaseCardTest {
 
     private Permanent addAttacker() {
@@ -34,10 +37,8 @@ class PygmyHippoTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting drains defending lands, prevents combat damage, and adds equal {C} at next main")
     void unblockedAcceptDrainsAndAddsColorlessAtNextMain() {
-        harness.addToBattlefield(player2, new Forest());
-        harness.addToBattlefield(player2, new Island());
-        Permanent forest = gd.playerBattlefields.get(player2.getId()).get(0);
-        Permanent island = gd.playerBattlefields.get(player2.getId()).get(1);
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
         Permanent attacker = addAttacker();
 
@@ -80,8 +81,7 @@ class PygmyHippoTest extends BaseCardTest {
     @Test
     @DisplayName("Declining leaves lands untapped and the Hippo deals combat damage")
     void unblockedDeclineKeepsDamage() {
-        harness.addToBattlefield(player2, new Forest());
-        Permanent forest = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
         Permanent attacker = addAttacker();
 
         attackUnblocked(attacker);
@@ -102,7 +102,7 @@ class PygmyHippoTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent attacker = addAttacker();
 
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
         gs.declareBlockers(
                 gd,
                 player2,
@@ -112,5 +112,65 @@ class PygmyHippoTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Accepting with no defending mana still prevents combat damage")
+    void acceptingWithNoManaPreventsDamage() {
+        Permanent attacker = addAttacker();
+        attackUnblocked(attacker);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("Tapped lands are not activated and a two-mana land contributes two mana")
+    void tappedLandSkippedAndMultipleManaCounted() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        forest.setTapped(true);
+        Permanent karoo = harness.addToBattlefieldAndReturn(player2, new Karoo());
+        karoo.setTapped(false);
+        Permanent attacker = addAttacker();
+        attackUnblocked(attacker);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(karoo.isTapped()).isTrue();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        resolveAllTriggers();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Mana from a land requiring a color choice is included in the delayed reward")
+    void chosenColorManaIsDrained() {
+        harness.addToBattlefield(player2, new UndiscoveredParadise());
+        Permanent attacker = addAttacker();
+        attackUnblocked(attacker);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> harness.handleListChoice(player2, "GREEN"));
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        resolveAllTriggers();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Forcing Undiscovered Paradise's mana ability also schedules its return")
+    void forcedManaAbilityResolvesItsOtherEffects() {
+        harness.addToBattlefield(player2, new UndiscoveredParadise());
+        Permanent attacker = addAttacker();
+        attackUnblocked(attacker);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player2, "BLUE");
+
+        harness.performUntapStep(player2);
+        harness.assertInHand(player2, "Undiscovered Paradise");
     }
 }
