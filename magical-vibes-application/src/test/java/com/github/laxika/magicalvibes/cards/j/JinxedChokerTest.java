@@ -81,15 +81,57 @@ class JinxedChokerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Choosing to remove a charge counter with none present does nothing")
-    void removingCounterWithNonePresentIsNoOp() {
+    @DisplayName("Removing a charge counter cannot be chosen when none are present")
+    void removingCounterWithNonePresentCannotBeChosen() {
         Permanent choker = harness.addToBattlefieldAndReturn(player1, new JinxedChoker());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "Remove a charge counter from Jinxed Choker");
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.options().stream()
+                .filter(option -> !choice.disabledOptions().contains(option)))
+                .doesNotContain("Remove a charge counter from Jinxed Choker");
+        harness.handleListChoice(player1, "Put a charge counter on Jinxed Choker");
 
-        assertThat(choker.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(choker.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The activating player chooses the counter action during an opponent's turn")
+    void controllerChoosesCounterActionOnOpponentsTurn() {
+        Permanent choker = harness.addToBattlefieldAndReturn(player1, new JinxedChoker());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        harness.handleListChoice(player1, "Put a charge counter on Jinxed Choker");
+        assertThat(choker.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Upkeep damage counts counters after a responding activation resolves")
+    void upkeepDamageUsesCounterCountAtResolution() {
+        Permanent choker = harness.addToBattlefieldAndReturn(player1, new JinxedChoker());
+        choker.setCounterCount(CounterType.CHARGE, 3);
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Remove a charge counter from Jinxed Choker");
+        resolveAllTriggers();
+
+        assertThat(choker.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
     }
 }
