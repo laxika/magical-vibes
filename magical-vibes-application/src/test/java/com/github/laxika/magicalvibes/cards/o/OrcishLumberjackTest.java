@@ -96,4 +96,35 @@ class OrcishLumberjackTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Orcish Lumberjack");
     }
+
+    @Test
+    @DisplayName("Summoning sickness prevents activating the tap ability")
+    void cannotActivateWhileSummoningSick() {
+        Permanent lumberjack = harness.addToBattlefieldAndReturn(player1, new OrcishLumberjack());
+        lumberjack.setSummoningSick(true);
+        harness.addToBattlefield(player1, new Forest());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(lumberjack.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's Forest cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsForest() {
+        Permanent lumberjack = addCreatureReady(player1, new OrcishLumberjack());
+        harness.addToBattlefield(player2, new Forest());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(lumberjack.isTapped()).isFalse();
+        harness.assertOnBattlefield(player2, "Forest");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
 }
