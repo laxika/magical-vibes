@@ -21,6 +21,62 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MichikoKondaTruthSeekerTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Each attacking source that deals damage triggers a separate sacrifice")
+    void simultaneousCombatDamageTriggersForEachSource() {
+        harness.addToBattlefield(player1, new MichikoKondaTruthSeeker());
+        Permanent first = addCreatureReady(player2, new ArabaMothrider());
+        Permanent second = addCreatureReady(player2, new ArabaMothrider());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new MirenTheMoaningWell());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0, 1));
+        gs.declareBlockers(gd, player1, List.of());
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        PendingInteraction.MultiPermanentChoice firstChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(firstChoice).isNotNull();
+        assertThat(firstChoice.playerId()).isEqualTo(player2.getId());
+        assertThat(firstChoice.validIds()).containsExactly(first.getId(), second.getId(), land.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(land.getId()));
+        resolveAllTriggers();
+
+        PendingInteraction.MultiPermanentChoice secondChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(secondChoice).isNotNull();
+        assertThat(secondChoice.playerId()).isEqualTo(player2.getId());
+        assertThat(secondChoice.validIds()).containsExactly(first.getId(), second.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(first.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
+                .containsExactly(second.getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Zero damage does not cause a sacrifice")
+    void zeroDamageDoesNotTrigger() {
+        harness.addToBattlefield(player1, new MichikoKondaTruthSeeker());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new MirenTheMoaningWell());
+        harness.setHand(player2, List.of(new SpiralingEmbers()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveSorcery(player2, 0, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
+                .containsExactly(land.getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
     @DisplayName("An opponent's noncombat damage makes that opponent sacrifice a permanent")
     void opponentSpellDamageCausesControllerToSacrifice() {
         harness.addToBattlefield(player1, new MichikoKondaTruthSeeker());
@@ -48,6 +104,30 @@ class MichikoKondaTruthSeekerTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
         assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
                 .containsExactly(guard.getId());
+    }
+
+    @Test
+    @DisplayName("Damage to Michiko instead of its controller does not cause a sacrifice")
+    void damageToMichikoDoesNotTrigger() {
+        Permanent michiko = harness.addToBattlefieldAndReturn(player1, new MichikoKondaTruthSeeker());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new MirenTheMoaningWell());
+        harness.setHand(player2, List.of(
+                new SpiralingEmbers(), new SpiralingEmbers(), new SpiralingEmbers(), new SpiralingEmbers()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveSorcery(player2, 0, 0, michiko.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(michiko.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
+                .containsExactly(land.getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
