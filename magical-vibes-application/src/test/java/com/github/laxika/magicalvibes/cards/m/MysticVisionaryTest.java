@@ -65,13 +65,36 @@ class MysticVisionaryTest extends BaseCardTest {
     @DisplayName("Loses flying when its controller's graveyard drops below seven cards")
     void losesFlyingWhenGraveyardShrinks() {
         harness.setGraveyard(player1, graveyardCards(7));
-        harness.addToBattlefield(player1, new MysticVisionary());
-        Permanent visionary = findVisionary();
+        Permanent visionary = harness.addToBattlefieldAndReturn(player1, new MysticVisionary());
         assertThat(gqs.hasKeyword(gd, visionary, Keyword.FLYING)).isTrue();
 
         gd.playerGraveyards.get(player1.getId()).removeFirst();
 
         assertThat(gqs.hasKeyword(gd, visionary, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Gains flying immediately when its controller reaches threshold after entry")
+    void gainsFlyingWhenGraveyardGrows() {
+        harness.setGraveyard(player1, graveyardCards(6));
+        Permanent visionary = harness.addToBattlefieldAndReturn(player1, new MysticVisionary());
+        assertThat(gqs.hasKeyword(gd, visionary, Keyword.FLYING)).isFalse();
+
+        harness.setGraveyard(player1, graveyardCards(7));
+
+        assertThat(gqs.hasKeyword(gd, visionary, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Each Visionary uses its own controller's graveyard")
+    void thresholdDoesNotGrantFlyingToOpposingVisionary() {
+        harness.setGraveyard(player1, graveyardCards(7));
+        harness.setGraveyard(player2, graveyardCards(6));
+        Permanent ownVisionary = harness.addToBattlefieldAndReturn(player1, new MysticVisionary());
+        Permanent opposingVisionary = harness.addToBattlefieldAndReturn(player2, new MysticVisionary());
+
+        assertThat(gqs.hasKeyword(gd, ownVisionary, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingVisionary, Keyword.FLYING)).isFalse();
     }
 
     private List<Card> graveyardCards(int count) {
