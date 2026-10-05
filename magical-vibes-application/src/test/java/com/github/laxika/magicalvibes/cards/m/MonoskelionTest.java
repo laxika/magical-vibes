@@ -18,9 +18,7 @@ class MonoskelionTest extends BaseCardTest {
     @Test
     @DisplayName("Enters with a +1/+1 counter")
     void entersWithCounter() {
-        harness.setHand(player1, java.util.List.of(new Monoskelion()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Monoskelion(), "{2}");
         harness.passBothPriorities();
 
         Permanent monoskelion = findPermanent(player1, "Monoskelion");
@@ -64,5 +62,62 @@ class MonoskelionTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Counter is paid immediately and damage waits for resolution")
+    void paysCounterBeforeResolution() {
+        Permanent monoskelion = harness.enterBattlefieldAndReturn(player1, new Monoskelion());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(monoskelion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent monoskelion = harness.enterBattlefieldAndReturn(player1, new Monoskelion());
+        monoskelion.setSummoningSick(true);
+        monoskelion.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        assertThat(monoskelion.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can target itself and dies after its counter is spent")
+    void canTargetItself() {
+        Permanent monoskelion = harness.enterBattlefieldAndReturn(player1, new Monoskelion());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, monoskelion.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(monoskelion);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(monoskelion.getCard());
+    }
+
+    @Test
+    @DisplayName("Cannot activate without mana and retains its counter")
+    void cannotActivateWithoutMana() {
+        Permanent monoskelion = harness.enterBattlefieldAndReturn(player1, new Monoskelion());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(monoskelion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
     }
 }
