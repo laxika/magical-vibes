@@ -42,8 +42,7 @@ class LeadPipeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, creature.getId());
         harness.passBothPriorities();
 
         harness.assertLife(player2, 19);
@@ -70,10 +69,90 @@ class LeadPipeTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard);
     }
 
+    @Test
+    @DisplayName("Equip resolves for two mana and moves the boost to the new creature")
+    void equipMovesBoostToNewCreature() {
+        Permanent pipe = addPipeReady(player1);
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, first.getId());
+        harness.passBothPriorities();
+        assertThat(pipe.getAttachedTo()).isEqualTo(first.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+
+        harness.activateAbility(player1, 0, 0, null, second.getId());
+        harness.passBothPriorities();
+        assertThat(pipe.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The Equipment controller's opponent loses life even when they control the equipped creature")
+    void opponentControlledEquippedCreatureDies() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent pipe = addPipeReady(player1);
+        pipe.setAttachedTo(creature.getId());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(creature.getCard());
+    }
+
+    @Test
+    @DisplayName("An unequipped creature dying does not cause life loss")
+    void unequippedCreatureDeathDoesNotTrigger() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        addPipeReady(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature.getCard());
+    }
+
+    @Test
+    @DisplayName("Sacrificing an attached tapped Pipe draws on the opponent's turn without killing the creature")
+    void sacrificingAttachedTappedPipeOnOpponentsTurn() {
+        Permanent pipe = addPipeReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        pipe.setAttachedTo(creature.getId());
+        pipe.setTapped(true);
+        Card drawnCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(pipe).contains(creature);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawnCard);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
     private Permanent addPipeReady(Player player) {
-        Permanent pipe = new Permanent(new LeadPipe());
-        pipe.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(pipe);
-        return pipe;
+        return addCreatureReady(player, new LeadPipe());
     }
 }
