@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.d.DefiantThundermaw;
-import com.github.laxika.magicalvibes.cards.d.DragonEgg;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
+import com.github.laxika.magicalvibes.cards.r.RavenousSailback;
+import com.github.laxika.magicalvibes.cards.z.ZurgoAndOjutai;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,21 +17,20 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DefiantThundermaw.class, DragonEgg.class, Forest.class, GrizzlyBears.class, ShivanDragon.class,
+@CardUsed({DefiantThundermaw.class, ZurgoAndOjutai.class, Forest.class, RavenousSailback.class,
         InvasionOfTarkir.class})
 class InvasionOfTarkirTest extends BaseCardTest {
 
     @Test
     void etbRevealsDragonsBeforeChoosingAnOtherTarget() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        DragonEgg dragon = new DragonEgg();
+        Permanent targetCreature = harness.addToBattlefieldAndReturn(player2, new RavenousSailback());
+        ZurgoAndOjutai dragon = new ZurgoAndOjutai();
         Forest forest = new Forest();
         harness.setHand(player1, List.of(new InvasionOfTarkir(), dragon, forest));
         addManaToCast();
 
         gs.playCard(gd, player1, 0, 0, null, null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.RevealAnyNumberOfCardsFromHandChoice reveal =
                 gd.interaction.activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class);
@@ -43,27 +41,23 @@ class InvasionOfTarkirTest extends BaseCardTest {
         PendingInteraction.PermanentChoice target =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         Permanent battle = findPermanent(player1, "Invasion of Tarkir");
-        assertThat(target.validIds()).contains(bears.getId()).doesNotContain(battle.getId());
-        harness.handlePermanentChosen(player1, bears.getId());
+        assertThat(target.validIds()).contains(targetCreature.getId()).doesNotContain(battle.getId());
+        harness.handlePermanentChosen(player1, targetCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getMarkedDamage()).isEqualTo(3);
+        assertThat(targetCreature.getMarkedDamage()).isEqualTo(3);
     }
 
     @Test
     void etbDealsTwoDamageWhenNoDragonIsRevealed() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new InvasionOfTarkir()));
-        addManaToCast();
+        Permanent targetCreature = harness.addToBattlefieldAndReturn(player2, new RavenousSailback());
+        harness.castFromHand(player1, new InvasionOfTarkir(), "{1}{R}");
+        resolveAllTriggers();
 
-        gs.playCard(gd, player1, 0, 0, null, null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-
-        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handlePermanentChosen(player1, targetCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getMarkedDamage()).isEqualTo(2);
+        assertThat(targetCreature.getMarkedDamage()).isEqualTo(2);
     }
 
     @Test
@@ -72,26 +66,121 @@ class InvasionOfTarkirTest extends BaseCardTest {
         battle.setCounterCount(CounterType.DEFENSE, 0);
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
                 .checkAfterDefenseRemoved(gd, battle));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(findPermanent(player1, "Defiant Thundermaw")).isNotNull();
-        Permanent dragon = harness.addToBattlefieldAndReturn(player1, new ShivanDragon());
-        dragon.setSummoningSick(false);
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent dragon = addCreatureReady(player1, new ZurgoAndOjutai());
+        Permanent targetCreature = harness.addToBattlefieldAndReturn(player2, new RavenousSailback());
 
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(dragon)));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handlePermanentChosen(player1, targetCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getMarkedDamage()).isEqualTo(2);
+        assertThat(targetCreature.getMarkedDamage()).isEqualTo(2);
     }
 
     private void addManaToCast() {
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.RED, 1);
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 1);
+    }
+
+    @Test
+    void revealingMultipleDragonsCountsCardsAndLeavesThemInHand() {
+        ZurgoAndOjutai first = new ZurgoAndOjutai();
+        ZurgoAndOjutai second = new ZurgoAndOjutai();
+        ZurgoAndOjutai unrevealed = new ZurgoAndOjutai();
+        harness.setHand(player1, List.of(new InvasionOfTarkir(), first, second, unrevealed));
+        addManaToCast();
+        gs.playCard(gd, player1, 0, 0, null, null);
+        resolveAllTriggers();
+
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second, unrevealed);
+    }
+
+    @Test
+    void mayRevealZeroEvenWithADragonInHandAndTargetYourself() {
+        ZurgoAndOjutai dragon = new ZurgoAndOjutai();
+        harness.setHand(player1, List.of(new InvasionOfTarkir(), dragon));
+        addManaToCast();
+        gs.playCard(gd, player1, 0, 0, null, null);
+        resolveAllTriggers();
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(dragon);
+    }
+
+    @Test
+    void attackingDragonIsTheDamageSource() {
+        Permanent thundermaw = harness.addToBattlefieldAndReturn(player1, new DefiantThundermaw());
+        Permanent dragon = addCreatureReady(player1, new ZurgoAndOjutai());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RavenousSailback());
+        harness.addToBattlefield(player2, new DefiantThundermaw());
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(dragon)));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.damageDealtThisTurnBySource.getOrDefault(dragon.getId(), 0)).isEqualTo(2);
+        assertThat(gd.damageDealtThisTurnBySource.getOrDefault(thundermaw.getId(), 0)).isZero();
+    }
+
+    @Test
+    void thundermawTriggersForItsOwnAttack() {
+        Permanent thundermaw = addCreatureReady(player1, new DefiantThundermaw());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RavenousSailback());
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(thundermaw)));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void nonDragonAttackDoesNotTriggerThundermaw() {
+        harness.addToBattlefield(player1, new DefiantThundermaw());
+        Permanent attacker = addCreatureReady(player1, new RavenousSailback());
+        harness.addToBattlefield(player2, new RavenousSailback());
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void defeatedSiegeMayBeLeftInExileWithoutCastingItsBackFace() {
+        Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfTarkir());
+        battle.setCounterCount(CounterType.DEFENSE, 0);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
+                .checkAfterDefenseRemoved(gd, battle));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Invasion of Tarkir");
+        harness.assertNotOnBattlefield(player1, "Defiant Thundermaw");
+        assertThat(gd.findExiledCard(battle.getOriginalCard().getId())).isNotNull();
+        assertThat(gd.stack).isEmpty();
     }
 
 }
