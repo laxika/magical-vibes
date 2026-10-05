@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.EtaliPrimalConqueror;
+import com.github.laxika.magicalvibes.cards.e.EtaliPrimalSickness;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PhyrexianCensor.class, GrizzlyBears.class})
+@CardUsed({PhyrexianCensor.class, GrizzlyBears.class, TurnToFrog.class,
+        EtaliPrimalConqueror.class, EtaliPrimalSickness.class})
 class PhyrexianCensorTest extends BaseCardTest {
 
     @Test
@@ -55,10 +59,7 @@ class PhyrexianCensorTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent enteringCensor = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof PhyrexianCensor)
-                .reduce((first, second) -> second)
-                .orElseThrow();
+        Permanent enteringCensor = findPermanents(player1, "Phyrexian Censor").get(1);
         assertThat(enteringCensor.isTapped()).isFalse();
     }
 
@@ -66,17 +67,105 @@ class PhyrexianCensorTest extends BaseCardTest {
     @DisplayName("Makes an opponent's non-Phyrexian creature enter tapped")
     void appliesToOpponentsCreatures() {
         harness.addToBattlefield(player1, new PhyrexianCensor());
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(findPermanent(player2, "Grizzly Bears").isTapped()).isTrue();
+    }
+
+    @Test
+    void countsSpellsCastBeforeCensorEntered() {
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new PhyrexianCensor(), "{2}{W}");
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+        assertThat(findPermanent(player1, "Grizzly Bears").isTapped()).isFalse();
+    }
+
+    @Test
+    void castingCensorDoesNotConsumeNonPhyrexianAllowance() {
+        harness.castFromHand(player1, new PhyrexianCensor(), "{2}{W}");
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Grizzly Bears").isTapped()).isTrue();
+    }
+
+    @Test
+    void noncastCreaturesAlsoEnterTapped() {
+        harness.addToBattlefield(player1, new PhyrexianCensor());
+
+        Permanent bear = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent censor = harness.enterBattlefieldAndReturn(player2, new PhyrexianCensor());
+
+        assertThat(bear.isTapped()).isTrue();
+        assertThat(censor.isTapped()).isFalse();
+    }
+
+    @Test
+    void eachPlayerHasIndependentAllowanceIncludingInstants() {
+        harness.addToBattlefield(player1, new PhyrexianCensor());
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
+        harness.setHand(player2, List.of(new TurnToFrog(), new TurnToFrog()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.ensurePriority(player2);
+        harness.castInstant(player2, 0, bear.getId());
+        harness.passBothPriorities();
+        harness.ensurePriority(player2);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, bear.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    void losingAbilitiesRemovesBothRestrictions() {
+        Permanent censor = harness.addToBattlefieldAndReturn(player1, new PhyrexianCensor());
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0, censor.getId());
+        harness.passBothPriorities();
+
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Grizzly Bears").isTapped()).isFalse();
+    }
+
+    @Test
+    void spellLimitAlsoAppliesToFreeCastsDuringResolution() {
+        harness.addToBattlefield(player1, new PhyrexianCensor());
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+        GrizzlyBears exiledSpell = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(exiledSpell));
+        harness.setLibrary(player2, List.of());
+        harness.enterBattlefieldAndReturn(player1, new EtaliPrimalConqueror());
+        resolveAllTriggers();
+
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleMultipleCardsChosen(player1, List.of(exiledSpell.getId()));
+            resolveAllTriggers();
+        }
+
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getId())
+                .contains(exiledSpell.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .doesNotContain(exiledSpell.getId());
     }
 }
