@@ -40,9 +40,8 @@ class PhyrexianHarvesterTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(extra, soughtCreature, soughtSpell);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(extra);
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -65,5 +64,98 @@ class PhyrexianHarvesterTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void waitsForControllersEndStepAfterDamageOnOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        Permanent harvester = harness.addToBattlefieldAndReturn(player1, new PhyrexianHarvester());
+        Card sought = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(sought));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, harvester.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(sought);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.END_STEP);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(sought);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(sought);
+    }
+
+    @Test
+    void createsOneDelayedDiscardAbilityForAllCardsFromOneSeek() {
+        Permanent harvester = harness.addToBattlefieldAndReturn(player1, new PhyrexianHarvester());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Shock()));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, harvester.getId());
+        resolveAllTriggers();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void doesNotDiscardOtherCardsWhenASoughtCardHasBeenCast() {
+        Permanent harvester = harness.addToBattlefieldAndReturn(player1, new PhyrexianHarvester());
+        Card extra = new Forest();
+        Card sought = new Shock();
+        harness.setHand(player1, List.of(extra));
+        harness.setLibrary(player1, List.of(sought));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, harvester.getId());
+        resolveAllTriggers();
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 1, player2.getId());
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(extra);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(sought);
+    }
+
+    @Test
+    void lethalDamageStillSeeksAndSchedulesDiscardAfterHarvesterDies() {
+        Permanent harvester = harness.addToBattlefieldAndReturn(player1, new PhyrexianHarvester());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new Shock(), new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 3);
+
+        for (int i = 0; i < 3; i++) {
+            harness.castAndResolveInstant(player2, 0, harvester.getId());
+            resolveAllTriggers();
+        }
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(harvester);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(6);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(7);
     }
 }
