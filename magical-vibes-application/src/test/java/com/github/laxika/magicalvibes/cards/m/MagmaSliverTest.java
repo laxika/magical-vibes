@@ -16,6 +16,56 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class MagmaSliverTest extends BaseCardTest {
 
     @Test
+    void canTargetItself() {
+        Permanent sliver = addCreatureReady(player1, new MagmaSliver());
+        int basePower = gqs.getEffectivePower(gd, sliver);
+
+        harness.activateAbility(player1, 0, null, sliver.getId());
+        harness.passBothPriorities();
+
+        assertThat(sliver.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, sliver)).isEqualTo(basePower + 1);
+    }
+
+    @Test
+    void countsSliversAtResolutionAndKeepsResolvedBoostFixed() {
+        Permanent target = addCreatureReady(player1, new MagmaSliver());
+        int basePower = gqs.getEffectivePower(gd, target);
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        Permanent newcomer = addCreatureReady(player2, new MagmaSliver());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower + 2);
+
+        gd.playerBattlefields.get(player2.getId()).remove(newcomer);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower + 2);
+    }
+
+    @Test
+    void abilityStillResolvesAfterGrantingSliverLeaves() {
+        Permanent grantingSliver = addCreatureReady(player1, new MagmaSliver());
+        Permanent target = addCreatureReady(player2, new BladeSliver());
+        int basePower = gqs.getEffectivePower(gd, target);
+        harness.activateAbility(player2, 0, null, target.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(grantingSliver);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower + 1);
+    }
+
+    @Test
+    void summoningSickSliverCannotPayTapCost() {
+        Permanent sliver = addCreatureReady(player1, new MagmaSliver());
+        sliver.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, sliver.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(sliver.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Slivers can tap to give a target Sliver +X/+0 based on all Slivers on the battlefield")
     void boostsTargetByNumberOfSlivers() {
         Permanent source = addCreatureReady(player1, new MagmaSliver());
