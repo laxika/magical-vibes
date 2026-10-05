@@ -55,8 +55,7 @@ class MarshalOfTheLostTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
 
         gd.interaction.clearAwaitingInput();
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
@@ -72,5 +71,88 @@ class MarshalOfTheLostTest extends BaseCardTest {
         declareAttackers(player1, List.of());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Marshal can attack alone and target itself")
+    void canBoostItselfWhenAttackingAlone() {
+        Permanent marshal = addCreatureReady(player1, new MarshalOfTheLost());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, marshal.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, marshal)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, marshal)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An opponent attacking does not trigger Marshal")
+    void doesNotTriggerForOpponentAttack() {
+        Permanent marshal = addCreatureReady(player1, new MarshalOfTheLost());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gqs.getEffectivePower(gd, marshal)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, marshal)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An attacker that leaves before resolution is excluded from X")
+    void countsRemainingAttackersAtResolution() {
+        addCreatureReady(player1, new MarshalOfTheLost());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, attacker));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The ability resolves with X zero when its sole attacker leaves")
+    void resolvesAfterMarshalLeavesWithNoAttackersRemaining() {
+        Permanent marshal = addCreatureReady(player1, new MarshalOfTheLost());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, marshal));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("X stays fixed after resolution even if the attacker leaves")
+    void boostDoesNotShrinkAfterResolution() {
+        Permanent marshal = addCreatureReady(player1, new MarshalOfTheLost());
+        Permanent target = addCreatureReady(player2, new MarshalOfTheLost());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, marshal));
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }
 }
