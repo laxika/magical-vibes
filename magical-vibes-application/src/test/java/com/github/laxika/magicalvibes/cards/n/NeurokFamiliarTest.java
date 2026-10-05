@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.a.AetherSpellbomb;
 import com.github.laxika.magicalvibes.cards.a.Annul;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -62,6 +63,58 @@ class NeurokFamiliarTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Trigger uses the top card at resolution and leaves the rest of the library untouched")
+    void revealsCurrentTopCardAtResolution() {
+        AetherSpellbomb originalTop = new AetherSpellbomb();
+        Annul currentTop = new Annul();
+        Ornithopter remainingCard = new Ornithopter();
+        harness.setLibrary(player1, List.of(originalTop, remainingCard));
+        harness.setLibrary(player2, List.of(new AetherSpellbomb()));
+
+        harness.castFromHand(player1, new NeurokFamiliar(), "{1}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(originalTop, remainingCard);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+
+        harness.setLibrary(player1, List.of(currentTop, originalTop, remainingCard));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(currentTop);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(originalTop, remainingCard);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Trigger still resolves after Familiar returns to hand")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        AetherSpellbomb revealedCard = new AetherSpellbomb();
+        NeurokFamiliar familiar = new NeurokFamiliar();
+        harness.setLibrary(player1, List.of(revealedCard));
+        harness.addToBattlefield(player1, new AetherSpellbomb());
+        harness.castFromHand(player1, familiar, "{1}{U}");
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, 0, null,
+                harness.getPermanentId(player1, "Neurok Familiar"));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(familiar);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(revealedCard);
+        harness.assertNotOnBattlefield(player1, "Neurok Familiar");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(familiar, revealedCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     private void castNeurokFamiliar() {
