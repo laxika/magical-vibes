@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PatientNaturalist;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,13 +16,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MournersSurprise.class, GrizzlyBears.class})
+@CardUsed({MournersSurprise.class, PatientNaturalist.class})
 class MournersSurpriseTest extends BaseCardTest {
 
     @Test
     @DisplayName("Returns up to one creature card and creates a Mercenary token")
     void returnsCreatureAndCreatesMercenary() {
-        Card creature = new GrizzlyBears();
+        Card creature = new PatientNaturalist();
         harness.setGraveyard(player1, List.of(creature));
         harness.setHand(player1, List.of(new MournersSurprise()));
         castMournersSurprise(creature.getId());
@@ -48,7 +48,7 @@ class MournersSurpriseTest extends BaseCardTest {
     @Test
     @DisplayName("The created Mercenary can boost a creature you control")
     void mercenaryBoostsCreatureYouControl() {
-        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bear = addCreatureReady(player1, new PatientNaturalist());
         harness.setHand(player1, List.of(new MournersSurprise()));
         castMournersSurprise();
 
@@ -79,6 +79,121 @@ class MournersSurpriseTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void canDeclineAnAvailableGraveyardTarget() {
+        Card creature = new PatientNaturalist();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new MournersSurprise()));
+        castMournersSurprise();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(creature);
+        assertThat(findPermanents(player1, "Mercenary")).hasSize(1);
+    }
+
+    @Test
+    void cannotTargetOpponentsGraveyard() {
+        Card creature = new PatientNaturalist();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.setHand(player1, List.of(new MournersSurprise()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void illegalGraveyardTargetPreventsTokenCreation() {
+        Card creature = new PatientNaturalist();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new MournersSurprise()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castSorcery(player1, 0, creature.getId());
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Mercenary")).isEmpty();
+        harness.assertInGraveyard(player1, "Mourner's Surprise");
+    }
+
+    @Test
+    void newMercenaryCannotActivateTapAbility() {
+        harness.setHand(player1, List.of(new MournersSurprise()));
+        castMournersSurprise();
+        Permanent mercenary = findPermanent(player1, "Mercenary");
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, mercenary.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(mercenary.isTapped()).isFalse();
+    }
+
+    @Test
+    void mercenaryCannotBoostOpponentsCreature() {
+        Permanent opponentCreature = addCreatureReady(player2, new PatientNaturalist());
+        harness.setHand(player1, List.of(new MournersSurprise()));
+        castMournersSurprise();
+        Permanent mercenary = findPermanent(player1, "Mercenary");
+        mercenary.setSummoningSick(false);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, opponentCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void mercenaryCannotActivateOutsideMainPhase() {
+        harness.setHand(player1, List.of(new MournersSurprise()));
+        castMournersSurprise();
+        Permanent mercenary = findPermanent(player1, "Mercenary");
+        mercenary.setSummoningSick(false);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, mercenary.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void mercenaryCannotActivateWhileStackIsNotEmpty() {
+        harness.setHand(player1, List.of(new MournersSurprise()));
+        castMournersSurprise();
+        Permanent mercenary = findPermanent(player1, "Mercenary");
+        mercenary.setSummoningSick(false);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new MournersSurprise()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castSorcery(player1, 0, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, mercenary.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void mercenaryCanBoostItselfAndBoostExpiresAtEndOfTurn() {
+        harness.setHand(player1, List.of(new MournersSurprise()));
+        castMournersSurprise();
+        Permanent mercenary = findPermanent(player1, "Mercenary");
+        mercenary.setSummoningSick(false);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, 0, null, mercenary.getId());
+        harness.passBothPriorities();
+
+        assertThat(mercenary.getPowerModifier()).isEqualTo(1);
+        assertThat(mercenary.getToughnessModifier()).isZero();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(mercenary.getPowerModifier()).isZero();
+        assertThat(mercenary.getToughnessModifier()).isZero();
+    }
+
     private void castMournersSurprise() {
         castMournersSurprise(null);
     }
@@ -88,10 +203,9 @@ class MournersSurpriseTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         if (graveyardTargetId == null) {
-            harness.castSorcery(player1, 0, 0);
+            harness.castAndResolveSorcery(player1, 0, 0);
         } else {
-            harness.castSorcery(player1, 0, graveyardTargetId);
+            harness.castAndResolveSorcery(player1, 0, graveyardTargetId);
         }
-        harness.passBothPriorities();
     }
 }
