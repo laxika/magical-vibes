@@ -40,7 +40,7 @@ class MyTendrilsRunDeepTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(scheme);
-        assertThat(gd.playerGraveyards.get(player1.getId())).contains(scheme.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(scheme.getCard());
     }
 
     @Test
@@ -57,6 +57,54 @@ class MyTendrilsRunDeepTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(scheme.getCard());
     }
 
+    @Test
+    void doesNotTriggerDuringOpponentsEndStep() {
+        Permanent scheme = harness.addToBattlefieldAndReturn(player1, new MyTendrilsRunDeep());
+        addLands(player1, 6);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(scheme);
+    }
+
+    @Test
+    void rechecksLandCountWhenEndStepAbilityResolves() {
+        Permanent scheme = harness.addToBattlefieldAndReturn(player1, new MyTendrilsRunDeep());
+        addLands(player1, 6);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).removeLast();
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(scheme);
+    }
+
+    @Test
+    void opponentsLandsDoNotCountTowardThreshold() {
+        Permanent scheme = harness.addToBattlefieldAndReturn(player1, new MyTendrilsRunDeep());
+        addLands(player1, 5);
+        addLands(player2, 6);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+
+        resolveControllerEndStep();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(scheme);
+    }
+
     private void addLands(com.github.laxika.magicalvibes.model.Player player, int count) {
         for (int i = 0; i < count; i++) {
             harness.addToBattlefield(player, new Forest());
@@ -66,8 +114,7 @@ class MyTendrilsRunDeepTest extends BaseCardTest {
     private void resolveControllerEndStep() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
     }
 }
