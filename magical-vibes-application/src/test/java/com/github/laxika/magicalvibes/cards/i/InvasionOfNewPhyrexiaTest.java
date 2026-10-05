@@ -28,14 +28,7 @@ class InvasionOfNewPhyrexiaTest extends BaseCardTest {
     @Test
     @DisplayName("Enters with X 2/2 Knight tokens")
     void entersWithXKnightTokens() {
-        harness.setHand(player1, List.of(new InvasionOfNewPhyrexia()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        gs.playCard(gd, player1, 0, 2, null, null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        castSiege(player1, 2);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().hasType(CardType.CREATURE))
@@ -122,12 +115,201 @@ class InvasionOfNewPhyrexiaTest extends BaseCardTest {
     }
 
     private Permanent addReadyTeferi(Player player, int loyalty) {
-        Permanent perm = new Permanent(new TeferiAkosaOfZhalfir());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new TeferiAkosaOfZhalfir());
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
+    }
+
+    @Test
+    void zeroXCreatesNoKnights() {
+        castSiege(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().hasType(CardType.CREATURE))
+                .isEmpty();
+        assertThat(findPermanent(player1, "Invasion of New Phyrexia")
+                .getCounterCount(CounterType.DEFENSE)).isEqualTo(6);
+    }
+
+    @Test
+    void plusOneDiscardsTwoWhenThereIsNoCreature() {
+        addReadyTeferi(player1, 4);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.setLibrary(player1, List.of(new Forest(), new Shock()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void plusOneCanDeclineCreatureDiscardAndDiscardTwoOthers() {
+        addReadyTeferi(player1, 4);
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void minusThreeWithNoCreaturesStillShufflesAnOpposingToken() {
+        castSiege(player2, 1);
+        Permanent target = findPermanent(player2, "Knight");
+        addReadyTeferi(player1, 4);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+    }
+
+    @Test
+    void minusThreeChoosingZeroCreaturesStillShufflesAnOpposingToken() {
+        castSiege(player2, 1);
+        Permanent target = findPermanent(player2, "Knight");
+        addReadyTeferi(player1, 4);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+    }
+
+    @Test
+    void emblemSurvivesTeferiAndOnlyBoostsYourKnights() {
+        addReadyTeferi(player1, 2);
+        Permanent ownKnight = addCreatureReady(player1, new YouthfulKnight());
+        Permanent ownBear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingKnight = addCreatureReady(player2, new YouthfulKnight());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Teferi Akosa of Zhalfir");
+        assertThat(gqs.getEffectivePower(gd, ownKnight)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownKnight)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownBear)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingKnight)).isEqualTo(2);
+        Permanent laterKnight = harness.addToBattlefieldAndReturn(player1, new YouthfulKnight());
+        assertThat(gqs.getEffectivePower(gd, laterKnight)).isEqualTo(3);
+    }
+
+    private void castSiege(Player player, int x) {
+        harness.forceActivePlayer(player);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player, List.of(new InvasionOfNewPhyrexia()));
+        harness.addMana(player, ManaColor.WHITE, 1);
+        harness.addMana(player, ManaColor.BLUE, 1);
+        harness.addMana(player, ManaColor.COLORLESS, x);
+        gs.playCard(gd, player, 0, x, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void defeatingSiegeCastsTeferiWithFourLoyalty() {
+        castSiege(player1, 0);
+        Permanent siege = findPermanent(player1, "Invasion of New Phyrexia");
+        assertThat(siege.getProtectorPlayerId()).isEqualTo(player2.getId());
+        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        for (int i = 0; i < 3; i++) {
+            harness.castInstant(player1, 0, siege.getId());
+            harness.passBothPriorities();
+        }
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Invasion of New Phyrexia");
+        assertThat(findPermanent(player1, "Teferi Akosa of Zhalfir")
+                .getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().hasType(CardType.CREATURE))
+                .isEmpty();
+    }
+
+    @Test
+    void payingWardAllowsOpposingSpellToResolve() {
+        addReadyTeferi(player1, 4);
+        Permanent knight = addCreatureReady(player1, new YouthfulKnight());
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castInstant(player2, 0, knight.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Youthful Knight");
+        harness.assertInGraveyard(player2, "Shock");
+    }
+
+    @Test
+    void minusThreeOnlyOffersUntappedOwnCreaturesAndTargetsWithinCount() {
+        castSiege(player2, 1);
+        Permanent token = findPermanent(player2, "Knight");
+        Permanent expensiveTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        addReadyTeferi(player1, 4);
+        Permanent untapped = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent tapped = harness.addToBattlefieldAndReturn(player1, new YouthfulKnight());
+        tapped.tap();
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        PendingInteraction.MultiPermanentChoice tapChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(tapChoice).isNotNull();
+        assertThat(tapChoice.validIds()).containsExactly(untapped.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(untapped.getId()));
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice).isNotNull();
+        assertThat(targetChoice.validIds()).containsExactly(token.getId())
+                .doesNotContain(expensiveTarget.getId(), land.getId(), untapped.getId(), tapped.getId());
+        harness.handlePermanentChosen(player1, token.getId());
+        harness.passBothPriorities();
+
+        assertThat(untapped.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(token);
     }
 }
