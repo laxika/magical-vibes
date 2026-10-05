@@ -3,10 +3,12 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AvatarOfHope;
+import com.github.laxika.magicalvibes.cards.d.DaggerbackBasilisk;
+import com.github.laxika.magicalvibes.cards.p.PropheticPrism;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LuminousWake.class, DaggerbackBasilisk.class, PropheticPrism.class, AvatarOfHope.class})
 class LuminousWakeTest extends BaseCardTest {
 
     @Test
@@ -68,13 +71,13 @@ class LuminousWakeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.f.FountainOfYouth());
+        harness.addToBattlefield(player2, new DaggerbackBasilisk());
+        harness.addToBattlefield(player1, new PropheticPrism());
         harness.setHand(player1, List.of(new LuminousWake()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
+        Permanent artifact = findPermanent(player1, "Prophetic Prism");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -82,7 +85,7 @@ class LuminousWakeTest extends BaseCardTest {
     }
 
     private Permanent addReadyCreature(Player player) {
-        return addCreatureReady(player, new GrizzlyBears());
+        return addCreatureReady(player, new DaggerbackBasilisk());
     }
 
     private Permanent attachWake(Player controller, Permanent target) {
@@ -93,10 +96,38 @@ class LuminousWakeTest extends BaseCardTest {
     }
 
     private void declareBlockers(List<BlockerAssignment> assignments) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, assignments);
+    }
+
+    @Test
+    @DisplayName("Blocking multiple creatures gains life only once")
+    void blockingMultipleCreaturesGainsLifeOnce() {
+        harness.setLife(player2, 20);
+        Permanent blocker = addCreatureReady(player2, new AvatarOfHope());
+        addReadyCreature(player1).setAttacking(true);
+        addReadyCreature(player1).setAttacking(true);
+        attachWake(player2, blocker);
+
+        declareBlockers(List.of(new BlockerAssignment(0, 0), new BlockerAssignment(0, 1)));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(24);
+    }
+
+    @Test
+    @DisplayName("An opponent's enchanted attacker gains life for the Aura's controller")
+    void opponentAttackingGainsLifeForAuraController() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent attacker = addReadyCreature(player2);
+        addReadyCreature(player1);
+        attachWake(player1, attacker);
+
+        declareAttackers(player2, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(24);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 }
