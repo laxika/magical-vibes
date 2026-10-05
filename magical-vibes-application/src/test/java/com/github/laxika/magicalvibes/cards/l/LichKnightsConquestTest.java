@@ -2,10 +2,12 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.c.ChildOfNight;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
+import com.github.laxika.magicalvibes.cards.g.Gingerbrute;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.j.JunglePatrol;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.s.SlumberingKeepguard;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -21,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({LichKnightsConquest.class, JunglePatrol.class, Ornithopter.class, GloriousAnthem.class,
-        GrizzlyBears.class, HillGiant.class, ChildOfNight.class})
+        GrizzlyBears.class, HillGiant.class, ChildOfNight.class, Gingerbrute.class, SlumberingKeepguard.class})
 class LichKnightsConquestTest extends BaseCardTest {
 
     @Test
@@ -39,11 +41,7 @@ class LichKnightsConquestTest extends BaseCardTest {
         Permanent wood = findPermanent(player1, "Wood");
         List<Card> creatureCards = List.of(new GrizzlyBears(), new HillGiant());
         harness.setGraveyard(player1, creatureCards);
-        harness.setHand(player1, List.of(new LichKnightsConquest()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new LichKnightsConquest(), "{4}{B}");
         harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1,
                 List.of(ornithopter.getId(), anthem.getId(), wood.getId()));
@@ -61,11 +59,7 @@ class LichKnightsConquestTest extends BaseCardTest {
     void choosingZeroSacrificesReturnsNothing() {
         Permanent ornithopter = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-        harness.setHand(player1, List.of(new LichKnightsConquest()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new LichKnightsConquest(), "{4}{B}");
         harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
@@ -82,11 +76,7 @@ class LichKnightsConquestTest extends BaseCardTest {
         List<Card> creatureCards = List.of(
                 new GrizzlyBears(), new HillGiant(), new ChildOfNight());
         harness.setGraveyard(player1, creatureCards);
-        harness.setHand(player1, List.of(new LichKnightsConquest()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new LichKnightsConquest(), "{4}{B}");
         harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, List.of(ornithopter.getId(), anthem.getId()));
 
@@ -103,5 +93,86 @@ class LichKnightsConquestTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Hill Giant")).isEqualTo(1);
         assertThat(countPermanents(player1, "Child of Night")).isZero();
         harness.assertInGraveyard(player1, "Child of Night");
+    }
+
+    @Test
+    @DisplayName("Sacrificed creature tokens are not creature cards that can be returned")
+    void cannotReturnASacrificedCreatureToken() {
+        Permanent patrol = harness.addToBattlefieldAndReturn(player1, new JunglePatrol());
+        patrol.setSummoningSick(false);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        Permanent wood = findPermanent(player1, "Wood");
+
+        harness.castFromHand(player1, new LichKnightsConquest(), "{4}{B}");
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(wood.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Wood");
+        harness.assertOnBattlefield(player1, "Jungle Patrol");
+        harness.assertInGraveyard(player1, "Lich-Knights' Conquest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Resolves without returning creatures when no eligible permanents are controlled")
+    void noEligiblePermanentsReturnsNothing() {
+        harness.addToBattlefield(player1, new SlumberingKeepguard());
+        harness.addToBattlefield(player2, new Gingerbrute());
+        harness.setGraveyard(player1, List.of(new SlumberingKeepguard()));
+
+        harness.castFromHand(player1, new LichKnightsConquest(), "{4}{B}");
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Slumbering Keepguard")).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Slumbering Keepguard");
+        harness.assertOnBattlefield(player2, "Gingerbrute");
+        harness.assertInGraveyard(player1, "Lich-Knights' Conquest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's artifact or a nontoken ordinary creature")
+    void rejectsIneligibleSacrificesAndAllowsAnotherAnswer() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Gingerbrute());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new SlumberingKeepguard());
+        Permanent opposingArtifact = harness.addToBattlefieldAndReturn(player2, new Gingerbrute());
+
+        harness.castFromHand(player1, new LichKnightsConquest(), "{4}{B}");
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("Invalid selection");
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(opposingArtifact.getId())))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("Invalid selection");
+        harness.handleMultiplePermanentsChosen(player1, List.of(artifact.getId()));
+
+        assertThat(countPermanents(player1, "Gingerbrute")).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Slumbering Keepguard");
+        harness.assertOnBattlefield(player2, "Gingerbrute");
+        harness.assertInGraveyard(player1, "Lich-Knights' Conquest");
+    }
+
+    @Test
+    @DisplayName("Returns only one own creature for one artifact creature sacrificed")
+    void oneSacrificeReturnsOneCreatureFromOnlyYourGraveyard() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Gingerbrute());
+        harness.setGraveyard(player1, List.of(new SlumberingKeepguard(), new LichKnightsConquest()));
+        harness.setGraveyard(player2, List.of(new SlumberingKeepguard()));
+
+        harness.castFromHand(player1, new LichKnightsConquest(), "{4}{B}");
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(artifact.getId()));
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(countPermanents(player1, "Slumbering Keepguard")).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Gingerbrute");
+        harness.assertInGraveyard(player1, "Gingerbrute");
+        harness.assertInGraveyard(player1, "Lich-Knights' Conquest");
+        harness.assertInGraveyard(player2, "Slumbering Keepguard");
+        harness.assertNotOnBattlefield(player2, "Slumbering Keepguard");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
