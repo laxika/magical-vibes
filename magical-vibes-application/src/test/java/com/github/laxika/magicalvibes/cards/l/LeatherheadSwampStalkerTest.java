@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -14,11 +13,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LeatherheadSwampStalker.class, FountainOfYouth.class, GrizzlyBears.class, Spellbook.class})
+@CardUsed({LeatherheadSwampStalker.class, GloriousAnthem.class, GrizzlyBears.class, Spellbook.class})
 class LeatherheadSwampStalkerTest extends BaseCardTest {
 
     @Test
@@ -119,12 +116,94 @@ class LeatherheadSwampStalkerTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Spellbook");
     }
 
+    @Test
+    void destroysAnEnchantment() {
+        Permanent leatherhead = addLeatherhead(player1);
+        leatherhead.setAttacking(true);
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
+
+        resolveCombat();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, enchantment.getId());
+        resolveAllTriggers();
+
+        assertThat(leatherhead.getCounterCount(CounterType.HEXPROOF)).isZero();
+        harness.assertInGraveyard(player2, "Glorious Anthem");
+    }
+
+    @Test
+    void cannotDestroyWithoutRemovingACounter() {
+        Permanent leatherhead = addLeatherhead(player1);
+        leatherhead.setCounterCount(CounterType.HEXPROOF, 0);
+        leatherhead.setAttacking(true);
+        harness.addToBattlefield(player2, new Spellbook());
+
+        resolveCombat();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Spellbook");
+    }
+
+    @Test
+    void mayRemoveACounterEvenWithoutALegalTarget() {
+        Permanent leatherhead = addLeatherhead(player1);
+        leatherhead.setAttacking(true);
+        harness.addToBattlefield(player1, new Spellbook());
+
+        resolveCombat();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(leatherhead.getCounterCount(CounterType.HEXPROOF)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Spellbook");
+    }
+
+    @Test
+    void reflexiveTriggerSurvivesLeatherheadLeavingTheBattlefield() {
+        Permanent leatherhead = addLeatherhead(player1);
+        leatherhead.setAttacking(true);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Spellbook());
+
+        resolveCombat();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, artifact.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(leatherhead);
+        gd.playerGraveyards.get(player1.getId()).add(leatherhead.getCard());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Spellbook");
+    }
+
+    @Test
+    void targetMustStillBeControlledByTheDamagedPlayerAtResolution() {
+        Permanent leatherhead = addLeatherhead(player1);
+        leatherhead.setAttacking(true);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Spellbook());
+
+        resolveCombat();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, artifact.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(artifact);
+        gd.playerBattlefields.get(player1.getId()).add(artifact);
+        resolveAllTriggers();
+
+        assertThat(leatherhead.getCounterCount(CounterType.HEXPROOF)).isZero();
+        harness.assertOnBattlefield(player1, "Spellbook");
+        harness.assertNotInGraveyard(player2, "Spellbook");
+    }
+
     private Permanent castLeatherhead() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new LeatherheadSwampStalker()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new LeatherheadSwampStalker(), "{2}{G}{G}");
         harness.passBothPriorities();
         return findPermanent(player1, "Leatherhead, Swamp Stalker");
     }
