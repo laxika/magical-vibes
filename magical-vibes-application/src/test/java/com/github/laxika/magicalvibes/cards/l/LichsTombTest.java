@@ -116,6 +116,70 @@ class LichsTombTest extends BaseCardTest {
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 
+    @Test
+    @DisplayName("Life loss below zero still triggers sacrifices while the Tomb protects its controller")
+    void lifeLossBelowZeroStillTriggers() {
+        harness.addToBattlefield(player1, new LichsTomb());
+        Permanent gargoyle = harness.addToBattlefieldAndReturn(player1, new DarksteelGargoyle());
+        Permanent ingot = harness.addToBattlefieldAndReturn(player1, new DarksteelIngot());
+        harness.setLife(player1, 1);
+
+        loseLife(2);
+        harness.handleMultiplePermanentsChosen(player1, List.of(gargoyle.getId(), ingot.getId()));
+        harness.runStateBasedActions();
+
+        harness.assertLife(player1, -1);
+        harness.assertOnBattlefield(player1, "Lich's Tomb");
+        harness.assertNotOnBattlefield(player1, "Darksteel Gargoyle");
+        harness.assertNotOnBattlefield(player1, "Darksteel Ingot");
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("Insufficient permanents are all sacrificed without affecting the opponent")
+    void sacrificesAllAvailablePermanents() {
+        harness.addToBattlefield(player1, new LichsTomb());
+        harness.addToBattlefield(player1, new DarksteelGargoyle());
+        harness.addToBattlefield(player2, new DarksteelIngot());
+        harness.setLife(player1, 20);
+
+        loseLife(3);
+
+        harness.assertNotOnBattlefield(player1, "Lich's Tomb");
+        harness.assertNotOnBattlefield(player1, "Darksteel Gargoyle");
+        harness.assertOnBattlefield(player2, "Darksteel Ingot");
+        harness.assertLife(player1, 17);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("Sacrificing the Tomb at zero life ends its protection")
+    void sacrificingTombAtZeroEndsProtection() {
+        harness.addToBattlefield(player1, new LichsTomb());
+        harness.setLife(player1, 1);
+
+        loseLife(1);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Lich's Tomb");
+        harness.assertLife(player1, 0);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Opponent life loss does not trigger the Tomb")
+    void opponentLifeLossDoesNotTrigger() {
+        harness.addToBattlefield(player1, new LichsTomb());
+        harness.setLife(player2, 20);
+        harness.inMutationScope(() -> harness.getLifeSupport()
+                .applyLifeLoss(gd, player2.getId(), 2, "test"));
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Lich's Tomb");
+    }
+
     private void loseLife(int amount) {
         harness.inMutationScope(() -> harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), amount, "test"));
         assertThat(gd.stack).isNotEmpty();
