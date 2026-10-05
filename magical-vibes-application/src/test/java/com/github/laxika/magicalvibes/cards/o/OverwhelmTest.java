@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Overwhelm.class, NullmageShepherd.class})
 class OverwhelmTest extends BaseCardTest {
@@ -82,7 +83,7 @@ class OverwhelmTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Overwhelm()));
         harness.addMana(player1, ManaColor.GREEN, 5);
 
-        gs.playCard(gd, player1, 0, 0, null, null, List.of(),
+        harness.castInstantWithConvoke(player1, 0, List.of(),
                 List.of(firstCreature.getId(), secondCreature.getId()));
 
         assertThat(firstCreature.isTapped()).isTrue();
@@ -92,5 +93,57 @@ class OverwhelmTest extends BaseCardTest {
 
         assertThat(firstCreature.getEffectivePower()).isEqualTo(5);
         assertThat(secondCreature.getEffectivePower()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Seven summoning-sick green creatures can pay the entire cost with convoke")
+    void castsEntirelyWithConvokeUsingSummoningSickCreatures() {
+        List<Permanent> creatures = java.util.stream.IntStream.range(0, 7)
+                .mapToObj(i -> harness.addToBattlefieldAndReturn(player1, new NullmageShepherd()))
+                .toList();
+        creatures.forEach(creature -> creature.setSummoningSick(true));
+        harness.setHand(player1, List.of(new Overwhelm()));
+
+        harness.castInstantWithConvoke(player1, 0, List.of(),
+                creatures.stream().map(Permanent::getId).toList());
+
+        assertThat(creatures).allSatisfy(creature -> assertThat(creature.isTapped()).isTrue());
+        harness.passBothPriorities();
+
+        assertThat(creatures).allSatisfy(creature -> {
+            assertThat(creature.getEffectivePower()).isEqualTo(5);
+            assertThat(creature.getEffectiveToughness()).isEqualTo(7);
+        });
+        harness.assertInGraveyard(player1, "Overwhelm");
+    }
+
+    @Test
+    @DisplayName("Creatures entering while Overwhelm is on the stack receive the boost")
+    void boostsCreaturesEnteringBeforeResolution() {
+        harness.castFromHand(player1, new Overwhelm(), "{5}{G}{G}");
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new NullmageShepherd());
+
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(5);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("A tapped creature cannot convoke Overwhelm")
+    void cannotConvokeWithTappedCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new NullmageShepherd());
+        creature.tap();
+        harness.setHand(player1, List.of(new Overwhelm()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        assertThatThrownBy(() -> harness.castInstantWithConvoke(player1, 0, List.of(),
+                List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
     }
 }
