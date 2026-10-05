@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.a.AjaniGoldmane;
 import com.github.laxika.magicalvibes.cards.d.DeathSpark;
+import com.github.laxika.magicalvibes.cards.g.GuerrillaTactics;
+import com.github.laxika.magicalvibes.cards.s.SongOfTheDryads;
 import com.github.laxika.magicalvibes.cards.s.StormCrow;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -22,7 +24,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Martyrdom.class, DeathSpark.class, StormCrow.class})
+@CardUsed({Martyrdom.class, DeathSpark.class, StormCrow.class, AjaniGoldmane.class,
+        SongOfTheDryads.class, GuerrillaTactics.class})
 class MartyrdomTest extends BaseCardTest {
 
     private Permanent addProtectedCreature() {
@@ -163,5 +166,119 @@ class MartyrdomTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void redirectedDamageCanBeRedirectedAgainByAnotherMartyrdomAbility() {
+        Permanent firstCreature = addProtectedCreature();
+        Permanent secondCreature = addProtectedCreature();
+        castMartyrdom(firstCreature);
+        castMartyrdom(secondCreature);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, firstCreature.getId());
+        harness.passBothPriorities();
+
+        castDeathSpark(player1.getId());
+
+        harness.assertLife(player1, 20);
+        assertThat(firstCreature.getMarkedDamage()).isZero();
+        assertThat(secondCreature.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed(SongOfTheDryads.class)
+    void doesNotRedirectDamageToACreatureThatHasBecomeOnlyALand() {
+        Permanent protectedCreature = addProtectedCreature();
+        castMartyrdom(protectedCreature);
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new SongOfTheDryads()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castEnchantment(player1, 0, protectedCreature.getId());
+        harness.passBothPriorities();
+
+        castDeathSpark(player1.getId());
+
+        harness.assertLife(player1, 19);
+        assertThat(protectedCreature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void multipleActivationsCreateSeparateOneDamageShields() {
+        Permanent protectedCreature = addProtectedCreature();
+        castMartyrdom(protectedCreature);
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        castDeathSpark(player1.getId());
+        castDeathSpark(player1.getId());
+
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Storm Crow");
+        harness.assertNotOnBattlefield(player1, "Storm Crow");
+
+        castDeathSpark(player1.getId());
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    void doesNotRedirectDamageAfterTheReceivingCreatureDies() {
+        Permanent protectedCreature = addProtectedCreature();
+        castMartyrdom(protectedCreature);
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        castDeathSpark(protectedCreature.getId());
+        castDeathSpark(protectedCreature.getId());
+        harness.assertInGraveyard(player1, "Storm Crow");
+
+        castDeathSpark(player1.getId());
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @CardUsed(GuerrillaTactics.class)
+    void redirectsOnlyOneDamageFromALargerDamageEvent() {
+        Permanent protectedCreature = addProtectedCreature();
+        castMartyrdom(protectedCreature);
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new GuerrillaTactics()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 19);
+        assertThat(protectedCreature.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    void casterCanStillActivateTheGrantedAbilityAfterLosingControl() {
+        Permanent protectedCreature = addProtectedCreature();
+        castMartyrdom(protectedCreature);
+
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(
+                        gd,
+                        player2.getId(),
+                        protectedCreature,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                        EffectDuration.PERMANENT,
+                        null,
+                        "Test setup"));
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        castDeathSpark(player1.getId());
+
+        harness.assertLife(player1, 20);
+        assertThat(protectedCreature.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(protectedCreature);
     }
 }
