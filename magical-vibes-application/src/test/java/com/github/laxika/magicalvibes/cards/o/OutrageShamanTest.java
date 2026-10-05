@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.a.AltarOfThePantheon;
 import com.github.laxika.magicalvibes.cards.h.HeartlashCinder;
+import com.github.laxika.magicalvibes.cards.r.RiseOfTheHobgoblins;
 import com.github.laxika.magicalvibes.cards.s.SpringjackShepherd;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OutrageShaman.class, HeartlashCinder.class, SpringjackShepherd.class})
+@CardUsed({OutrageShaman.class, HeartlashCinder.class, SpringjackShepherd.class,
+        AltarOfThePantheon.class, RiseOfTheHobgoblins.class})
 class OutrageShamanTest extends BaseCardTest {
 
     private Permanent addTarget(Card targetCard) {
@@ -106,5 +108,62 @@ class OutrageShamanTest extends BaseCardTest {
         castAndResolveShaman(target);
 
         assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed(RiseOfTheHobgoblins.class)
+    @DisplayName("Hybrid red symbols on noncreature permanents contribute once each")
+    void etbCountsHybridSymbolsOnEnchantments() {
+        harness.addToBattlefield(player1, new RiseOfTheHobgoblins());
+        Permanent target = addTarget(new SpringjackShepherd());
+
+        castAndResolveShaman(target);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The trigger can damage a creature controlled by its controller")
+    void etbCanTargetOwnCreature() {
+        SpringjackShepherd shepherd = new SpringjackShepherd();
+        shepherd.setToughness(5);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, shepherd);
+
+        castAndResolveShaman(target);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A Shaman that leaves before resolution contributes no symbols")
+    void etbDealsZeroWhenSourceLeavesAndNoRedSymbolsRemain() {
+        Permanent target = addTarget(new SpringjackShepherd());
+        castShaman(target);
+        harness.passBothPriorities();
+        Permanent shaman = gd.playerBattlefields.get(player1.getId()).getFirst();
+        gd.playerBattlefields.get(player1.getId()).remove(shaman);
+        gd.playerGraveyards.get(player1.getId()).add(shaman.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("A departed Shaman's trigger still deals damage from remaining red symbols")
+    void etbResolvesAfterSourceLeaves() {
+        Permanent target = addTarget(new SpringjackShepherd());
+        castShaman(target);
+        harness.passBothPriorities();
+        Permanent shaman = gd.playerBattlefields.get(player1.getId()).getFirst();
+        gd.playerBattlefields.get(player1.getId()).remove(shaman);
+        gd.playerGraveyards.get(player1.getId()).add(shaman.getCard());
+        harness.addToBattlefield(player1, new HeartlashCinder());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
     }
 }
