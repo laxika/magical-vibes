@@ -1,18 +1,19 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.g.GlacialWall;
+import com.github.laxika.magicalvibes.cards.a.AbbeyGargoyles;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.m.MahamotiDjinn;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianColossus;
 import com.github.laxika.magicalvibes.cards.s.SeaMonster;
 import com.github.laxika.magicalvibes.cards.w.WallOfStone;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GlacialWall.class, HowlingMine.class, Inferno.class, MahamotiDjinn.class, PhyrexianColossus.class, SeaMonster.class, WallOfStone.class})
+@CardUsed({AbbeyGargoyles.class, HowlingMine.class, Inferno.class, MahamotiDjinn.class, PhyrexianColossus.class, SeaMonster.class, WallOfStone.class})
 class InfernoTest extends BaseCardTest {
 
     @Test
@@ -85,5 +86,35 @@ class InfernoTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Sea Monster");
+    }
+
+    @Test
+    @DisplayName("Protection from red prevents Inferno's creature damage but not player damage")
+    void protectionFromRedPreventsCreatureDamage() {
+        var gargoyles = harness.addToBattlefieldAndReturn(player2, new AbbeyGargoyles());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castFromHand(player1, new Inferno(), "{5}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Abbey Gargoyles");
+        assertThat(gargoyles.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    @DisplayName("Inferno draws the game when both players take lethal damage")
+    void simultaneousLethalPlayerDamageDrawsGame() {
+        harness.setLife(player1, 6);
+        harness.setLife(player2, 6);
+
+        harness.castFromHand(player1, new Inferno(), "{5}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 0);
+        harness.assertLife(player2, 0);
+        assertThat(gd.gameResult).isEqualTo(GameEventFact.GameResult.DRAW);
     }
 }
