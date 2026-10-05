@@ -69,6 +69,49 @@ class LongTermPlansTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can search for a noncreature card in the controller's library")
+    void searchesForNoncreatureWithoutChangingOpponentsLibrary() {
+        Card chosenCard = new WipeClean();
+        Card firstCard = new AvenFarseer();
+        Card secondCard = new ZealousInquisitor();
+        Card opponentCard = new BrainFreeze();
+        harness.setLibrary(player1, List.of(chosenCard, firstCard, secondCard));
+        harness.setLibrary(player2, List.of(opponentCard));
+        harness.castFromHand(player1, new LongTermPlans(), "{2}{U}");
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        harness.handleCardChosen(player1, search.params().cards().indexOf(chosenCard));
+
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
+                .containsExactlyInAnyOrder(chosenCard.getId(), firstCard.getId(), secondCard.getId());
+        assertThat(gd.playerDecks.get(player1.getId()).get(2).getId()).isEqualTo(chosenCard.getId());
+        assertThat(gd.playerDecks.get(player2.getId())).extracting(Card::getId)
+                .containsExactly(opponentCard.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Keeps the chosen card as the only card in a one-card library")
+    void searchesOneCardLibrary() {
+        Card chosenCard = new WipeClean();
+        harness.setLibrary(player1, List.of(chosenCard));
+        harness.castFromHand(player1, new LongTermPlans(), "{2}{U}");
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        harness.handleCardChosen(player1, search.params().cards().indexOf(chosenCard));
+
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(chosenCard.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+    }
+
+    @Test
     @DisplayName("Completes without a choice when the library is empty")
     void completesWithoutChoiceWhenLibraryIsEmpty() {
         harness.setLibrary(player1, List.of());
