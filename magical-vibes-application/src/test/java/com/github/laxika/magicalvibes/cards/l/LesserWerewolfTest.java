@@ -118,6 +118,47 @@ class LesserWerewolfTest extends BaseCardTest {
                 .hasMessageContaining("declare blockers");
     }
 
+    @Test
+    @DisplayName("Stacked activations check power separately as each resolves")
+    void stackedActivationsStopApplyingAtZeroPower() {
+        Permanent werewolf = addCreatureReady(player1, new LesserWerewolf());
+        Permanent blocker = addCreatureReady(player2, new LesserWerewolf());
+
+        declareAttackersAndPrepareBlockers(List.of(indexOf(player1, werewolf)));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                indexOf(player2, blocker), indexOf(player1, werewolf))));
+
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        for (int i = 0; i < 3; i++) {
+            harness.activateAbility(player1, indexOf(player1, werewolf), null, blocker.getId());
+        }
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, werewolf)).isZero();
+        assertThat(blocker.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An ability with a departed target does not reduce the source's power")
+    void doesNotWeakenSelfWhenTargetLeavesBeforeResolution() {
+        Permanent werewolf = addCreatureReady(player1, new LesserWerewolf());
+        Permanent blocker = addCreatureReady(player2, new RagingBull());
+
+        declareAttackersAndPrepareBlockers(List.of(indexOf(player1, werewolf)));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                indexOf(player2, blocker), indexOf(player1, werewolf))));
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, indexOf(player1, werewolf), null, blocker.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(blocker);
+        gd.playerGraveyards.get(player2.getId()).add(blocker.getCard());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, werewolf)).isEqualTo(2);
+        assertThat(blocker.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isZero();
+    }
+
     private void activate(Permanent werewolf, Permanent target) {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.activateAbility(player1, indexOf(player1, werewolf), null, target.getId());
