@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.p.Peek;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,13 +16,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Monomania.class, GrizzlyBears.class, Peek.class, Forest.class})
 class MonomaniaTest extends BaseCardTest {
 
     private void castMonomania(com.github.laxika.magicalvibes.model.Player targetPlayer) {
         harness.setHand(player1, List.of(new Monomania()));
         harness.addMana(player1, ManaColor.BLACK, 5);
-        harness.castSorcery(player1, 0, targetPlayer.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetPlayer.getId());
     }
 
     @Test
@@ -80,8 +81,7 @@ class MonomaniaTest extends BaseCardTest {
     void canTargetSelf() {
         harness.setHand(player1, new ArrayList<>(List.of(new Monomania(), new GrizzlyBears(), new Peek(), new Forest())));
         harness.addMana(player1, ManaColor.BLACK, 5);
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         // Monomania has left the hand, so three cards remain and two must be discarded.
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(2);
@@ -91,5 +91,38 @@ class MonomaniaTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Forest");
+    }
+
+    @Test
+    @DisplayName("Discard count uses the target's hand at resolution")
+    void countsHandAtResolution() {
+        harness.setHand(player1, List.of(new Monomania()));
+        harness.setHand(player2, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.castSorcery(player1, 0, player2.getId());
+
+        Forest keptCard = new Forest();
+        harness.setHand(player2, List.of(new Forest(), keptCard, new Forest(), new Forest()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
+                .isEqualTo(3);
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 1);
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(keptCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Targeting yourself with Monomania as your only card leaves an empty hand")
+    void canTargetSelfWithNoCardsRemaining() {
+        castMonomania(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Monomania");
     }
 }
