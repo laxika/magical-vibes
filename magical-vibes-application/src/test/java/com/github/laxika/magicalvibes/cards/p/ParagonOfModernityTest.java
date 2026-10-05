@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -55,12 +56,48 @@ class ParagonOfModernityTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(paragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(paragon.getPowerModifier()).isEqualTo(1);
         assertThat(paragon.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Colorless mana does not count as a third color")
+    void colorlessManaDoesNotCountAsAColor() {
+        Permanent paragon = addCreatureReady(player1, new ParagonOfModernity());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        activateAndResolve();
+
+        assertThat(paragon.getPowerModifier()).isEqualTo(1);
+        assertThat(paragon.getToughnessModifier()).isEqualTo(1);
+        assertThat(paragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Temporary boosts expire while three-color counters remain")
+    void temporaryBoostExpiresButCounterRemains() {
+        Permanent paragon = addCreatureReady(player1, new ParagonOfModernity());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        activateAndResolve();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        activateAndResolve();
+
+        assertThat(paragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(paragon.getPowerModifier()).isEqualTo(1);
+        assertThat(paragon.getToughnessModifier()).isEqualTo(1);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(paragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(paragon.getPowerModifier()).isZero();
+        assertThat(paragon.getToughnessModifier()).isZero();
     }
 
     private void activateAndResolve() {
