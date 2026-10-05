@@ -234,5 +234,34 @@ class ManabarbsTest extends BaseCardTest {
         // Should not take damage — MindStone is an artifact, not a land
         harness.assertLife(player1, 20);
     }
-}
+    @Test
+    @DisplayName("A triggered Manabarbs ability still deals damage after its source leaves")
+    void triggerResolvesAfterManabarbsLeaves() {
+        Permanent manabarbs = harness.addToBattlefieldAndReturn(player1, new Manabarbs());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setLife(player2, 20);
 
+        harness.tapPermanent(player2, 0);
+        harness.assertLife(player2, 20);
+        gd.playerBattlefields.get(player1.getId()).remove(manabarbs);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Damage doubling is checked when the Manabarbs trigger resolves")
+    void damageDoublingUsesBattlefieldAtResolution() {
+        harness.addToBattlefield(player1, new Manabarbs());
+        Permanent furnace = harness.addToBattlefieldAndReturn(player1, new FurnaceOfRath());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setLife(player2, 20);
+
+        harness.tapPermanent(player2, 0);
+        harness.assertLife(player2, 20);
+        gd.playerBattlefields.get(player1.getId()).remove(furnace);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 19);
+    }
+}
