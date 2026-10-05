@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.f.FlaringPain;
 import com.github.laxika.magicalvibes.cards.s.SkyshroudBehemoth;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LaccolithTitan.class, SkyshroudBehemoth.class})
+@CardUsed({LaccolithTitan.class, SkyshroudBehemoth.class, FlaringPain.class})
 class LaccolithTitanTest extends BaseCardTest {
 
     private Permanent addAttacker() {
@@ -55,7 +56,7 @@ class LaccolithTitanTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(blocker.getMarkedDamage()).isEqualTo(6);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(gd.creaturesAssigningNoCombatDamageThisTurn).contains(attacker.getId());
 
         resolveCombat();
 
@@ -75,7 +76,7 @@ class LaccolithTitanTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(blocker.getMarkedDamage()).isZero();
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(gd.creaturesAssigningNoCombatDamageThisTurn).doesNotContain(attacker.getId());
     }
 
     @Test
@@ -92,7 +93,7 @@ class LaccolithTitanTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(blocker.getMarkedDamage()).isEqualTo(5);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(gd.creaturesAssigningNoCombatDamageThisTurn).contains(attacker.getId());
     }
 
     @Test
@@ -111,7 +112,7 @@ class LaccolithTitanTest extends BaseCardTest {
 
         assertThat(firstBlocker.getMarkedDamage()).isEqualTo(6);
         assertThat(secondBlocker.getMarkedDamage()).isZero();
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).containsExactly(attacker.getId());
+        assertThat(gd.creaturesAssigningNoCombatDamageThisTurn).containsExactly(attacker.getId());
     }
 
     @Test
@@ -137,12 +138,67 @@ class LaccolithTitanTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(gd.creaturesAssigningNoCombatDamageThisTurn).contains(attacker.getId());
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).isEmpty();
+        assertThat(gd.creaturesAssigningNoCombatDamageThisTurn).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The target can be a friendly creature outside combat")
+    void canTargetFriendlyCreatureOutsideCombat() {
+        Permanent attacker = addAttacker();
+        Permanent blocker = addBlocker();
+        Permanent target = addCreatureReady(player1, new SkyshroudBehemoth());
+
+        declareBlock(attacker, blocker);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(6);
+        assertThat(blocker.getMarkedDamage()).isZero();
+        resolveCombat();
+        assertThat(blocker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Accepting at zero power still stops combat damage assignment")
+    void acceptingAtZeroPowerStillStopsCombatDamage() {
+        Permanent attacker = addAttacker();
+        Permanent blocker = addBlocker();
+        attacker.setPowerModifier(-6);
+
+        declareBlock(attacker, blocker);
+        harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(blocker.getMarkedDamage()).isZero();
+        attacker.setPowerModifier(0);
+        resolveCombat();
+        assertThat(blocker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Accepting assigns no combat damage even when damage cannot be prevented")
+    void acceptingAssignsNoCombatDamageWhenDamageCannotBePrevented() {
+        harness.castFromHand(player1, new FlaringPain(), "{1}{R}");
+        harness.passBothPriorities();
+        Permanent attacker = addAttacker();
+        Permanent blocker = addBlocker();
+
+        declareBlock(attacker, blocker);
+        harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(blocker.getMarkedDamage()).isEqualTo(6);
+        resolveCombat();
+        harness.assertOnBattlefield(player2, "Skyshroud Behemoth");
+        assertThat(blocker.getMarkedDamage()).isEqualTo(6);
     }
 }
