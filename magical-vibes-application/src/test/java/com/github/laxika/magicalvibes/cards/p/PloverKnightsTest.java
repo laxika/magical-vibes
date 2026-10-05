@@ -54,4 +54,38 @@ class PloverKnightsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ploverKnights);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
     }
+
+    @Test
+    @DisplayName("First strike also destroys an equal attacker before it damages Plover Knights")
+    void firstStrikeWorksWhileBlocking() {
+        Permanent attacker = addCreatureReady(player1, new HillcomberGiant());
+        Permanent ploverKnights = addCreatureReady(player2, new PloverKnights());
+
+        declareAttackersAndPrepareBlockers(player1,
+                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(ploverKnights),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+
+        resolveCombat(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(ploverKnights);
+        harness.assertInGraveyard(player1, "Hillcomber Giant");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An unblocked Plover Knights deals damage only once despite first strike")
+    void unblockedFirstStrikeDealsDamageOnlyOnce() {
+        Permanent ploverKnights = addCreatureReady(player1, new PloverKnights());
+
+        declareAttackersAndPrepareBlockers(player1,
+                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(ploverKnights)));
+        gs.declareBlockers(gd, player2, List.of());
+
+        resolveCombat(player1);
+
+        harness.assertLife(player2, 17);
+    }
 }
