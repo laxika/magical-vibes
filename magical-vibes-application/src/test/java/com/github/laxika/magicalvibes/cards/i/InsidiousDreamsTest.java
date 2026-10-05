@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({InsidiousDreams.class, CabalRitual.class, KamahlsSledge.class})
+@CardUsed({InsidiousDreams.class, CabalRitual.class, KamahlsSledge.class, PsychogenicProbe.class})
 class InsidiousDreamsTest extends BaseCardTest {
 
     @Test
@@ -129,7 +129,6 @@ class InsidiousDreamsTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(PsychogenicProbe.class)
     @DisplayName("An empty library still causes shuffle-triggered abilities to trigger")
     void emptyLibraryStillTriggersShuffleAbilities() {
         harness.addToBattlefield(player2, new PsychogenicProbe());
@@ -142,5 +141,49 @@ class InsidiousDreamsTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("A library smaller than X requires finding every remaining card")
+    void searchesForAsManyCardsAsPossible() {
+        Card remainingCard = new CabalRitual();
+        harness.setLibrary(player1, List.of(remainingCard));
+        harness.setHand(player1, List.of(new InsidiousDreams(), new CabalRitual(), new KamahlsSledge()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castInstantForXWithDiscards(player1, 0, 2, List.of(), List.of(1, 2));
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Must choose 1 cards");
+        harness.handleMultipleCardsChosen(player1, List.of(remainingCard.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+    }
+
+    @Test
+    @DisplayName("Discard payment happens while casting, before the library search resolves")
+    void paysDiscardCostBeforeResolution() {
+        Card discard = new KamahlsSledge();
+        Card libraryCard = new CabalRitual();
+        Card retainedCard = new CabalRitual();
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setHand(player1, List.of(discard, new InsidiousDreams(), retainedCard));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castInstantForXWithDiscards(player1, 1, 1, List.of(), List.of(0));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discard);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(retainedCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(libraryCard.getId()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2).contains(discard);
     }
 }
