@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.b.BoggartBrute;
 import com.github.laxika.magicalvibes.cards.f.FaerieMiscreant;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.i.InspiringCleric;
+import com.github.laxika.magicalvibes.cards.t.TajuruParagon;
+import com.github.laxika.magicalvibes.cards.v.VanquishTheWeak;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,11 +14,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({MalakirBloodPriest.class, BoggartBrute.class, FaerieMiscreant.class,
-        FugitiveWizard.class, InspiringCleric.class})
+        FugitiveWizard.class, InspiringCleric.class, TajuruParagon.class, VanquishTheWeak.class})
 class MalakirBloodPriestTest extends BaseCardTest {
 
     @Test
@@ -46,6 +49,93 @@ class MalakirBloodPriestTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(8);
     }
 
+    @Test
+    void countsItselfAsTheOnlyPartyMember() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+
+        castBloodPriest();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(11);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(9);
+    }
+
+    @Test
+    void duplicateClericsDoNotIncreasePartySize() {
+        harness.addToBattlefield(player1, new MalakirBloodPriest());
+        harness.addToBattlefield(player1, new MalakirBloodPriest());
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+
+        castBloodPriest();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(11);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(9);
+    }
+
+    @Test
+    void creatureWithAllPartyTypesFillsOnlyOneAvailableRole() {
+        harness.addToBattlefield(player1, new TajuruParagon());
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+
+        castBloodPriest();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(12);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(8);
+    }
+
+    @Test
+    void removingAnotherPartyMemberBeforeResolutionReducesTheDrain() {
+        UUID paragonId = harness.addToBattlefieldAndReturn(player1, new TajuruParagon()).getId();
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+        harness.castFromHand(player1, new MalakirBloodPriest(), "{1}{B}");
+        harness.passBothPriorities();
+
+        destroyBeforeTriggerResolves(paragonId);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(11);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(9);
+    }
+
+    @Test
+    void triggerStillResolvesAfterPriestLeavesUsingTheRemainingParty() {
+        harness.addToBattlefield(player1, new TajuruParagon());
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+        harness.castFromHand(player1, new MalakirBloodPriest(), "{1}{B}");
+        harness.passBothPriorities();
+
+        destroyBeforeTriggerResolves(harness.getPermanentId(player1, "Malakir Blood-Priest"));
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(11);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(9);
+    }
+
+    @Test
+    void emptyPartyAtResolutionDoesNotChangeLifeTotals() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+        harness.castFromHand(player1, new MalakirBloodPriest(), "{1}{B}");
+        harness.passBothPriorities();
+
+        destroyBeforeTriggerResolves(harness.getPermanentId(player1, "Malakir Blood-Priest"));
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(10);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(10);
+    }
+
+    private void destroyBeforeTriggerResolves(UUID permanentId) {
+        harness.setHand(player2, List.of(new VanquishTheWeak()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player2, 0, permanentId);
+    }
+
     private void addFullParty(Player player) {
         harness.addToBattlefield(player, new InspiringCleric());
         harness.addToBattlefield(player, new FaerieMiscreant());
@@ -54,10 +144,7 @@ class MalakirBloodPriestTest extends BaseCardTest {
     }
 
     private void castBloodPriest() {
-        harness.setHand(player1, List.of(new MalakirBloodPriest()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MalakirBloodPriest(), "{1}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
