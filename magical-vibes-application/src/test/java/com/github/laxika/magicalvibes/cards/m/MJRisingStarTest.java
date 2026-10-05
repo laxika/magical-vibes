@@ -18,6 +18,47 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MJRisingStarTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Life gain queues the counter instead of placing it immediately")
+    void counterWaitsForTriggerResolution() {
+        Permanent mj = harness.addToBattlefieldAndReturn(player1, new MJRisingStar());
+        harness.setHand(player1, List.of(new AngelOfMercy()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(mj.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, 23);
+        assertThat(mj.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+        assertThat(mj.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Separate life gains each put one counter on MJ in the same turn")
+    void triggersForEachLifeGainInSameTurn() {
+        Permanent mj = harness.addToBattlefieldAndReturn(player1, new MJRisingStar());
+        harness.setHand(player1, List.of(new AngelOfMercy(), new AngelOfMercy()));
+        harness.addMana(player1, ManaColor.WHITE, 10);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 26);
+        assertThat(mj.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+
+    @Test
     @DisplayName("Gets a +1/+1 counter when its controller gains life")
     void getsCounterOnLifeGain() {
         Permanent mj = harness.addToBattlefieldAndReturn(player1, new MJRisingStar());
