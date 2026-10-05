@@ -108,9 +108,50 @@ class NantukoMonasteryTest extends BaseCardTest {
     }
 
     private Permanent addMonasteryReady(Player player) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, new NantukoMonastery());
-        permanent.setSummoningSick(false);
-        return permanent;
+        return addCreatureReady(player, new NantukoMonastery());
+    }
+
+    @Test
+    @DisplayName("Losing threshold after activation does not prevent or end animation")
+    void losingThresholdDoesNotPreventAnimation() {
+        Permanent monastery = addMonasteryReady(player1);
+        setThresholdGraveyard(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, monastery)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, monastery)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, monastery, Keyword.FIRST_STRIKE)).isTrue();
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("cards in your graveyard");
+        assertThat(gqs.isCreature(gd, monastery)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped Nantuko Monastery can animate and remains tapped")
+    void tappedMonasteryCanAnimate() {
+        Permanent monastery = addMonasteryReady(player1);
+        setThresholdGraveyard(player1);
+        harness.tapPermanent(player1, 0);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, monastery)).isTrue();
+        assertThat(gqs.isLand(gd, monastery)).isTrue();
+        assertThat(monastery.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, monastery)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, monastery)).isEqualTo(4);
     }
 
     private void setThresholdGraveyard(Player player) {
