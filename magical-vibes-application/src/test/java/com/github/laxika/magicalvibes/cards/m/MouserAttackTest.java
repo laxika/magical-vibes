@@ -71,4 +71,45 @@ class MouserAttackTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, targetId))
                 .hasMessageContaining("creature");
     }
+
+    @Test
+    @CardUsed(MouserAttack.class)
+    void secondModeCanTargetAnOpponentsRobotWithoutCreatingAnotherToken() {
+        harness.setHand(player2, List.of(new MouserAttack()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castInstant(player2, 0, 0, null);
+        harness.passBothPriorities();
+        Permanent robot = findPermanent(player2, "Robot");
+
+        harness.setHand(player1, List.of(new MouserAttack()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castInstant(player1, 0, 1, robot.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, robot)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, robot)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, robot, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(robot);
+    }
+
+    @Test
+    @CardUsed(MouserAttack.class)
+    void secondModeDoesNotCreateTokenWhenItsTargetLeavesBeforeResolution() {
+        harness.setHand(player1, List.of(new MouserAttack(), new MouserAttack()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castInstant(player1, 0, 0, null);
+        harness.passBothPriorities();
+        Permanent robot = findPermanent(player1, "Robot");
+
+        harness.castInstant(player1, 0, 1, robot.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(robot);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .hasSize(2)
+                .allMatch(card -> card instanceof MouserAttack);
+    }
 }
