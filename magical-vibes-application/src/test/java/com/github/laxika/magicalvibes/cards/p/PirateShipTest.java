@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.p.PhantasmalTerrain;
 import com.github.laxika.magicalvibes.cards.s.StoneRain;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -78,8 +77,7 @@ class PirateShipTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
 
         UUID islandId = harness.getPermanentId(player1, "Island");
-        harness.castSorcery(player1, 0, islandId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, islandId);
 
         harness.assertOnBattlefield(player1, "Pirate Ship");
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
@@ -157,6 +155,129 @@ class PirateShipTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Regaining an Island does not stop an already-triggered sacrifice")
+    void sacrificesEvenIfIslandIsRegainedBeforeResolution() {
+        harness.setHand(player1, List.of(new PirateShip()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.addToBattlefield(player1, new Island());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Pirate Ship");
+        harness.assertInGraveyard(player1, "Pirate Ship");
+    }
+
+    @Test
+    @DisplayName("Sacrifices when the last Island becomes a Forest")
+    void sacrificesWhenLastIslandLosesIslandType() {
+        addReadyPirateShip(player1);
+        harness.setHand(player1, List.of(new PhantasmalTerrain()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castEnchantment(player1, 0, harness.getPermanentId(player1, "Island"));
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "FOREST");
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player1, "Pirate Ship");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Pirate Ship");
+        harness.assertInGraveyard(player1, "Pirate Ship");
+    }
+
+    @Test
+    @DisplayName("Destroying one of two Islands does not cause a sacrifice")
+    void survivesWhileAnotherIslandRemains() {
+        addReadyPirateShip(player1);
+        harness.addToBattlefield(player1, new Island());
+        harness.setHand(player1, List.of(new StoneRain()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player1, "Island"));
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Pirate Ship");
+    }
+
+    @Test
+    @DisplayName("Tap ability cannot be activated with summoning sickness")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new PirateShip());
+        harness.addToBattlefield(player1, new Island());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Activating the damage ability taps the ship and prevents another activation")
+    void tapCostPreventsSecondActivation() {
+        addReadyPirateShip(player1);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        assertThat(findPermanent(player1, "Pirate Ship").isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can target its controller with the damage ability")
+    void canDamageItsController() {
+        addReadyPirateShip(player1);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Can attack when a defending Forest has become an Island")
+    void canAttackWhenDefendingLandGainsIslandType() {
+        addReadyPirateShip(player1);
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new PhantasmalTerrain()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "ISLAND");
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Cannot target an ordinary land with the damage ability")
+    void cannotTargetOrdinaryLand() {
+        addReadyPirateShip(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null,
+                harness.getPermanentId(player1, "Island")))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can target itself and marks one damage")
+    void canDamageItself() {
+        addReadyPirateShip(player1);
+        UUID shipId = harness.getPermanentId(player1, "Pirate Ship");
+
+        harness.activateAbility(player1, 0, null, shipId);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Pirate Ship").getMarkedDamage()).isEqualTo(1);
     }
 
     private void addReadyPirateShip(Player player) {
