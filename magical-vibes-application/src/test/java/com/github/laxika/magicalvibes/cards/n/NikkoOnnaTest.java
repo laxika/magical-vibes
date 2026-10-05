@@ -23,17 +23,58 @@ class NikkoOnnaTest extends BaseCardTest {
     @Test
     @DisplayName("Enters by destroying a target enchantment")
     void entersByDestroyingTargetEnchantment() {
+        Permanent enchantedCreature = harness.addToBattlefieldAndReturn(player2, new InnerChamberGuard());
         Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new KagemarosClutch());
+        enchantment.setAttachedTo(enchantedCreature.getId());
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new NikkoOnna()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0, 0, enchantment.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Kagemaro's Clutch");
         harness.assertOnBattlefield(player1, "Nikko-Onna");
+        harness.assertOnBattlefield(player2, "Inner-Chamber Guard");
+    }
+
+    @Test
+    @DisplayName("The mandatory ETB ability can destroy your own enchantment")
+    void destroysOwnEnchantment() {
+        Permanent enchantedCreature = harness.addToBattlefieldAndReturn(player1, new InnerChamberGuard());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new KagemarosClutch());
+        enchantment.setAttachedTo(enchantedCreature.getId());
+        harness.setHand(player1, List.of(new NikkoOnna()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0, 0, enchantment.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Kagemaro's Clutch");
+        harness.assertOnBattlefield(player1, "Nikko-Onna");
+        harness.assertOnBattlefield(player1, "Inner-Chamber Guard");
+    }
+
+    @Test
+    @DisplayName("Casting another Nikko-Onna returns only the existing permanent")
+    void anotherNikkoOnnaTriggersExistingPermanent() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new NikkoOnna());
+        harness.castFromHand(player1, new NikkoOnna(), "{2}{W}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Nikko-Onna");
+        harness.assertNotOnBattlefield(player1, "Nikko-Onna");
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Nikko-Onna");
+        assertThat(harness.getPermanentId(player1, "Nikko-Onna")).isNotEqualTo(original.getId());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test
