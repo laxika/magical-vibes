@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MoseoVeinsNewDean.class, GrizzlyBears.class})
 class MoseoVeinsNewDeanTest extends BaseCardTest {
-
-    // ===== ETB: create the Pest token =====
 
     @Test
     @DisplayName("Casting Moseo creates a 1/1 black-green Pest token on the battlefield")
@@ -27,8 +27,7 @@ class MoseoVeinsNewDeanTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         Permanent pest = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().isToken() && p.getCard().getName().equals("Pest"))
@@ -37,8 +36,6 @@ class MoseoVeinsNewDeanTest extends BaseCardTest {
         assertThat(pest.getCard().getPower()).isEqualTo(1);
         assertThat(pest.getCard().getToughness()).isEqualTo(1);
     }
-
-    // ===== Infusion end-step: graveyard reanimation =====
 
     @Test
     @DisplayName("If you gained life, returns a creature with MV <= life gained from your graveyard")
@@ -110,12 +107,90 @@ class MoseoVeinsNewDeanTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
-    // ===== Helpers =====
+    @Test
+    void pestAttackGainsLifeBeforeCombatDamage() {
+        harness.enterBattlefieldAndReturn(player1, new MoseoVeinsNewDean());
+        resolveAllTriggers();
+        Permanent pest = findPermanent(player1, "Pest");
+        pest.setSummoningSick(false);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(pest)));
+            resolveAllTriggers();
+        });
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+        assertThat(gd.getLifeGainedThisTurn(player1.getId())).isEqualTo(1);
+    }
+
+    @Test
+    void infusionDoesNotTriggerOnOpponentsEndStep() {
+        harness.addToBattlefield(player1, new MoseoVeinsNewDean());
+        harness.setGraveyard(player1, List.of(new MoseoVeinsNewDean()));
+        gd.lifeGainedThisTurn.put(player1.getId(), 3);
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Moseo, Vein's New Dean");
+    }
+
+    @Test
+    void opponentsLifeGainDoesNotEnableInfusion() {
+        harness.addToBattlefield(player1, new MoseoVeinsNewDean());
+        harness.setGraveyard(player1, List.of(new MoseoVeinsNewDean()));
+        gd.lifeGainedThisTurn.put(player2.getId(), 3);
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Moseo, Vein's New Dean");
+    }
+
+    @Test
+    void infusionUsesTotalLifeGainedDespiteSubsequentLifeLoss() {
+        harness.addToBattlefield(player1, new MoseoVeinsNewDean());
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+        harness.inMutationScope(() -> {
+            harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1);
+            harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1);
+            harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 5, "Life loss");
+        });
+
+        advanceToEndStep(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void infusionCannotReturnACardRemovedInResponse() {
+        harness.addToBattlefield(player1, new MoseoVeinsNewDean());
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+        gd.lifeGainedThisTurn.put(player1.getId(), 2);
+
+        advanceToEndStep(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(bears));
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.findExiledCard(bears.getId())).isNotNull();
+    }
 
     private void advanceToEndStep(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance POSTCOMBAT_MAIN → END_STEP, triggers fire
+        harness.passUntil(player, TurnStep.END_STEP);
     }
 }
