@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.Card;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LilianasTalent.class, GrizzlyBears.class, HolyDay.class, ProdigalPyromancer.class})
+@CardUsed({LilianasTalent.class, GrizzlyBears.class, HolyDay.class, ProdigalPyromancer.class, ChandraNalaar.class})
 class LilianasTalentTest extends BaseCardTest {
 
     @Test
@@ -75,6 +76,62 @@ class LilianasTalentTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(pyromancer);
     }
 
+    @Test
+    void damageToAnotherPlaneswalkerDoesNotTriggerDestruction() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
+        enchanted.setCounterCount(CounterType.LOYALTY, 6);
+        attachTalent(enchanted);
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        other.setCounterCount(CounterType.LOYALTY, 6);
+        Permanent pyromancer = addCreatureReady(player2, new ProdigalPyromancer());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player2,
+                gd.playerBattlefields.get(player2.getId()).indexOf(pyromancer), null, other.getId());
+        resolveAllTriggers();
+
+        assertThat(other.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(pyromancer);
+    }
+
+    @Test
+    void auraControllerControlsDestructionTriggerOnOpposingPlaneswalker() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        enchanted.setCounterCount(CounterType.LOYALTY, 6);
+        Permanent talent = harness.addToBattlefieldAndReturn(player1, new LilianasTalent());
+        talent.setAttachedTo(enchanted.getId());
+        Permanent pyromancer = addCreatureReady(player2, new ProdigalPyromancer());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player2,
+                gd.playerBattlefields.get(player2.getId()).indexOf(pyromancer), null, enchanted.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(talent.getId());
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(pyromancer);
+    }
+
+    @Test
+    void lethalDamageStillTriggersDestruction() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
+        enchanted.setCounterCount(CounterType.LOYALTY, 1);
+        attachTalent(enchanted);
+        Permanent pyromancer = addCreatureReady(player2, new ProdigalPyromancer());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player2,
+                gd.playerBattlefields.get(player2.getId()).indexOf(pyromancer), null, enchanted.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(enchanted);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(pyromancer);
+    }
     private void attachTalent(Permanent planeswalker) {
         Permanent talent = harness.addToBattlefieldAndReturn(player1, new LilianasTalent());
         talent.setAttachedTo(planeswalker.getId());
@@ -84,9 +141,8 @@ class LilianasTalentTest extends BaseCardTest {
         Card card = new Card();
         card.setName("Test Planeswalker");
         card.setType(CardType.PLANESWALKER);
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setCounterCount(CounterType.LOYALTY, loyalty);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
