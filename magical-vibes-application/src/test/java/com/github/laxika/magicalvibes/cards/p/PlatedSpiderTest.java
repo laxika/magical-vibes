@@ -19,9 +19,18 @@ class PlatedSpiderTest extends BaseCardTest {
     void canBlockFlyingCreature() {
         addCreatureReady(player2, new PlatedSpider());
         addCreatureReady(player1, new AirElemental());
-        declareAttackers(List.of(0));
+        declareAttackersAndPrepareBlockers(List.of(0));
 
-        prepareDeclareBlockers();
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Plated Spider can block a creature without flying")
+    void canBlockNonFlyingCreature() {
+        addCreatureReady(player2, new PlatedSpider());
+        addCreatureReady(player1, new PlatedSpider());
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .doesNotThrowAnyException();
