@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({NivMizzetTheFiremind.class, GhostWarden.class, Gristleback.class})
 class NivMizzetTheFiremindTest extends BaseCardTest {
@@ -33,7 +34,7 @@ class NivMizzetTheFiremindTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -71,7 +72,7 @@ class NivMizzetTheFiremindTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -87,6 +88,71 @@ class NivMizzetTheFiremindTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Each controller draw triggers even while Niv-Mizzet is tapped")
+    void repeatedDrawsWhileTappedTriggerSeparately() {
+        var niv = addCreatureReady(player1, new NivMizzetTheFiremind());
+        niv.setTapped(true);
+        harness.setLibrary(player1, List.of(new GhostWarden(), new Gristleback()));
+        harness.setLife(player2, 20);
+
+        for (int i = 0; i < 2; i++) {
+            draw(player1);
+            harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, player2.getId());
+            harness.passBothPriorities();
+        }
+
+        harness.assertInHand(player1, "Ghost Warden");
+        harness.assertInHand(player1, "Gristleback");
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Niv-Mizzet can target itself with its draw trigger")
+    void drawTriggerCanTargetItself() {
+        var niv = addCreatureReady(player1, new NivMizzetTheFiremind());
+        harness.setLibrary(player1, List.of(new GhostWarden()));
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(niv.isTapped()).isTrue();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, niv.getId());
+        harness.passBothPriorities();
+
+        assertThat(niv.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Niv-Mizzet, the Firemind");
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents activating the tap ability")
+    void summoningSicknessPreventsActivation() {
+        harness.addToBattlefield(player1, new NivMizzetTheFiremind());
+        harness.setLibrary(player1, List.of(new GhostWarden()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        harness.assertNotInHand(player1, "Ghost Warden");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Niv-Mizzet cannot activate its draw ability")
+    void tappedSourceCannotActivate() {
+        var niv = addCreatureReady(player1, new NivMizzetTheFiremind());
+        niv.setTapped(true);
+        harness.setLibrary(player1, List.of(new GhostWarden()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+
+        harness.assertNotInHand(player1, "Ghost Warden");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void draw(Player player) {
