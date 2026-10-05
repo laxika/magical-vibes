@@ -14,7 +14,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(IngeniousThief.class)
+@CardUsed({IngeniousThief.class, GrizzlyBears.class})
 class IngeniousThiefTest extends BaseCardTest {
 
     @Test
@@ -70,6 +70,24 @@ class IngeniousThiefTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("looks at") && log.contains("hand"));
+    }
+
+    @Test
+    @DisplayName("Looks at the hand as it exists when the trigger resolves")
+    void looksAtCurrentHandOnResolution() {
+        harness.setHand(player2, List.of());
+        castIngeniousThief(player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND")).isEmpty();
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player2, List.of(bears));
+        harness.passBothPriorities();
+
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND"))
+                .anyMatch(message -> message.contains("Grizzly Bears"));
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(bears);
     }
 
     private void castIngeniousThief(UUID targetPlayerId) {
