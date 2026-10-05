@@ -26,8 +26,7 @@ class LavaBurstTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4); // X=3 + {R}
         harness.setLife(player2, 20);
 
-        harness.castSorcery(player1, 0, 3, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
@@ -40,8 +39,7 @@ class LavaBurstTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3); // X=2 + {R}
 
         UUID targetId = harness.getPermanentId(player2, "Balduvian Bears");
-        harness.castSorcery(player1, 0, 2, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2, targetId);
 
         harness.assertInGraveyard(player2, "Balduvian Bears");
     }
@@ -102,10 +100,46 @@ class LavaBurstTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new LavaBurst()));
         harness.addMana(player1, ManaColor.RED, 2); // X=1 + {R}
-        harness.castSorcery(player1, 0, 1, inquisitor.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1, inquisitor.getId());
 
         assertThat(inquisitor.getMarkedDamage()).isEqualTo(1);
         assertThat(destination.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("X can be zero without dealing damage")
+    void zeroXDealsNoDamage() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        harness.setHand(player1, List.of(new LavaBurst()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0, bears.getId());
+
+        assertThat(bears.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Balduvian Bears");
+        harness.assertInGraveyard(player1, "Lava Burst");
+    }
+
+    @Test
+    @DisplayName("Unpreventable creature damage does not make later player damage unpreventable")
+    void creatureDamageDoesNotDisableLaterPlayerPrevention() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        Permanent circle = harness.addToBattlefieldAndReturn(player2, new CircleOfProtectionRed());
+        LavaBurst secondBurst = new LavaBurst();
+        harness.setHand(player1, List.of(new LavaBurst(), secondBurst));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveSorcery(player1, 0, 1, bears.getId());
+        harness.castSorcery(player1, 0, 3, player2.getId());
+        harness.passPriority(player1);
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(circle), null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, secondBurst.getId());
+        harness.passBothPriorities();
+
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player2, 20);
     }
 }
