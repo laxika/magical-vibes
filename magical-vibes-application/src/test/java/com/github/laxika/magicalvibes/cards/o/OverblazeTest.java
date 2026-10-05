@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.f.FlamesOfTheBloodHand;
 import com.github.laxika.magicalvibes.cards.f.FirstVolley;
+import com.github.laxika.magicalvibes.cards.f.ForkedBranchGarami;
 import com.github.laxika.magicalvibes.cards.g.GnarledMass;
 import com.github.laxika.magicalvibes.cards.h.HeartlessHidetsugu;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,8 +20,69 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Overblaze.class, HeartlessHidetsugu.class, GnarledMass.class,
-        FirstVolley.class, FlamesOfTheBloodHand.class})
+        FirstVolley.class, FlamesOfTheBloodHand.class, ForkedBranchGarami.class})
 class OverblazeTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Two Overblazes quadruple the same permanent's damage")
+    void multipleOverblazesStack() {
+        Permanent creature = addCreatureReady(player1, new GnarledMass());
+        harness.setHand(player1, List.of(new Overblaze(), new Overblaze()));
+        harness.addMana(player1, ManaColor.RED, 8);
+        harness.setLife(player2, 20);
+
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("Doubles damage dealt to creatures as well as players")
+    void doublesCombatDamageToCreature() {
+        Permanent attacker = addCreatureReady(player1, new GnarledMass());
+        addCreatureReady(player2, new ForkedBranchGarami());
+        harness.setHand(player1, List.of(new Overblaze()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.setLife(player2, 20);
+
+        harness.castInstant(player1, 0, attacker.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player2, "Forked-Branch Garami");
+        harness.assertInGraveyard(player1, "Gnarled Mass");
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Does not double damage received by the target or dealt by spells")
+    void doesNotDoubleIncomingSpellDamage() {
+        Permanent creature = addCreatureReady(player1, new GnarledMass());
+        harness.setHand(player1, List.of(new Overblaze()));
+        harness.setHand(player2, List.of(new FirstVolley(), new FirstVolley()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.addMana(player2, ManaColor.RED, 4);
+        harness.setLife(player1, 20);
+
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.castInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.castInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Gnarled Mass");
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
 
     @Test
     @DisplayName("Doubles damage from the targeted permanent's noncombat ability")
