@@ -33,9 +33,7 @@ class PristineSkywiseTest extends BaseCardTest {
         assertThat(skywise.isTapped()).isFalse();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
         harness.handleListChoice(player1, "BLUE");
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         assertThat(gqs.hasProtectionFrom(gd, skywise, CardColor.BLUE)).isTrue();
 
@@ -59,5 +57,67 @@ class PristineSkywiseTest extends BaseCardTest {
 
         assertThat(skywise.isTapped()).isTrue();
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An opponent's noncreature spell does not trigger Pristine Skywise")
+    void opponentNoncreatureSpellDoesNotTrigger() {
+        Permanent skywise = addCreatureReady(player1, new PristineSkywise());
+        skywise.tap();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(skywise.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Protection chosen before the triggering spell resolves makes its target illegal")
+    void protectionMakesTriggeringSpellTargetIllegal() {
+        Permanent skywise = addCreatureReady(player1, new PristineSkywise());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, skywise.getId());
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+        harness.handleListChoice(player1, "RED");
+        resolveAllTriggers();
+
+        assertThat(gqs.hasProtectionFrom(gd, skywise, CardColor.RED)).isTrue();
+        assertThat(skywise.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Repeated triggers add protection colors and affect only their source")
+    void repeatedTriggersAccumulateProtectionOnlyOnSource() {
+        Permanent skywise = addCreatureReady(player1, new PristineSkywise());
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+        other.tap();
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.handleListChoice(player1, "BLUE");
+        resolveAllTriggers();
+        skywise.tap();
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.handleListChoice(player1, "WHITE");
+        resolveAllTriggers();
+
+        assertThat(skywise.isTapped()).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, skywise, CardColor.BLUE)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, skywise, CardColor.WHITE)).isTrue();
+        assertThat(other.isTapped()).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, other, CardColor.BLUE)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, other, CardColor.WHITE)).isFalse();
     }
 }
