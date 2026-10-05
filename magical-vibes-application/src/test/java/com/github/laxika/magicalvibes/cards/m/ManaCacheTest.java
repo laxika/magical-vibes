@@ -104,6 +104,81 @@ class ManaCacheTest extends BaseCardTest {
                 .hasMessageContaining("before the end step");
     }
 
+    @Test
+    @DisplayName("The end-step trigger does not ask for a player target")
+    void endStepTriggerDoesNotTarget() {
+        Permanent cache = addCache(player1);
+        addLand(player2);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(cache.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Counts untapped lands when the end-step trigger resolves")
+    void countsLandsAtResolution() {
+        Permanent cache = addCache(player1);
+        cache.setCounterCount(CounterType.CHARGE, 2);
+        Permanent land = addLand(player1);
+        addLand(player1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(land));
+        harness.passBothPriorities();
+
+        assertThat(cache.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An end step with no untapped lands leaves existing counters unchanged")
+    void noUntappedLandsAddsNoCounters() {
+        Permanent cache = addCache(player1);
+        cache.setCounterCount(CounterType.CHARGE, 2);
+        addLand(player1);
+        addLand(player2).tap();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.END_STEP);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(cache.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The controller can repeatedly activate during upkeep without tapping Mana Cache")
+    void controllerCanActivateRepeatedlyDuringUpkeep() {
+        Permanent cache = addCache(player1);
+        cache.setCounterCount(CounterType.CHARGE, 2);
+        cache.tap();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(cache.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(cache.isTapped()).isTrue();
+    }
+
     private Permanent addCache(Player player) {
         Permanent cache = harness.addToBattlefieldAndReturn(player, new ManaCache());
         cache.setSummoningSick(false);
