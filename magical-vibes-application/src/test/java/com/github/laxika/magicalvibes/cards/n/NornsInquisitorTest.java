@@ -19,8 +19,7 @@ class NornsInquisitorTest extends BaseCardTest {
     @DisplayName("Enters with an Incubator token with two +1/+1 counters")
     void entersWithIncubatorToken() {
         castNornsInquisitor();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent incubator = findPermanent(player1, "Incubator");
         assertThat(incubator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -30,19 +29,75 @@ class NornsInquisitorTest extends BaseCardTest {
     @DisplayName("Puts a +1/+1 counter on the transformed Incubator")
     void putsCounterOnTransformedIncubator() {
         castNornsInquisitor();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent incubator = findPermanent(player1, "Incubator");
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(incubator), null, null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(incubator.isTransformed()).isTrue();
         assertThat(incubator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(findPermanent(player1, "Norn's Inquisitor")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each allied Inquisitor adds its own counter to the transformed permanent")
+    void multipleInquisitorsEachAddCounter() {
+        castNornsInquisitor();
+        resolveAllTriggers();
+        harness.addToBattlefield(player1, new NornsInquisitor());
+
+        Permanent incubator = findPermanent(player1, "Incubator");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(incubator), null, null);
+        harness.passBothPriorities();
+
+        assertThat(incubator.isTransformed()).isTrue();
+        assertThat(incubator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(incubator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(findPermanents(player1, "Norn's Inquisitor"))
+                .allSatisfy(inquisitor -> assertThat(inquisitor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero());
+    }
+
+    @Test
+    @DisplayName("An opponent's Inquisitor does not trigger for your transformation")
+    void opposingInquisitorDoesNotAddCounter() {
+        castNornsInquisitor();
+        resolveAllTriggers();
+        Permanent opposingInquisitor = harness.addToBattlefieldAndReturn(player2, new NornsInquisitor());
+
+        Permanent incubator = findPermanent(player1, "Incubator");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(incubator), null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(incubator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(opposingInquisitor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Two pending transform activations transform the Incubator only once")
+    void pendingTransformActivationsOnlyTriggerOnce() {
+        castNornsInquisitor();
+        resolveAllTriggers();
+
+        Permanent incubator = findPermanent(player1, "Incubator");
+        int incubatorIndex = gd.playerBattlefields.get(player1.getId()).indexOf(incubator);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, incubatorIndex, null, null);
+        harness.activateAbility(player1, incubatorIndex, null, null);
+        resolveAllTriggers();
+
+        assertThat(incubator.isTransformed()).isTrue();
+        assertThat(incubator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
     private void castNornsInquisitor() {
