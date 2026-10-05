@@ -118,4 +118,47 @@ class NaturalEmergenceTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Dralnu's Crusade");
         harness.assertNotOnBattlefield(player1, "Natural Emergence");
     }
+
+    @Test
+    @DisplayName("Must return itself when no other red or green enchantment is controlled")
+    void etbMustReturnItselfWhenOnlyEligibleEnchantment() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new ForsakenCity());
+        harness.addToBattlefield(player1, new CloudCover());
+
+        harness.castFromHand(player1, new NaturalEmergence(), "{2}{R}{G}");
+        resolveAllTriggers();
+
+        UUID emergenceId = harness.getPermanentId(player1, "Natural Emergence");
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).containsExactly(emergenceId);
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+
+        harness.handlePermanentChosen(player1, emergenceId);
+
+        harness.assertInHand(player1, "Natural Emergence");
+        harness.assertOnBattlefield(player1, "Cloud Cover");
+        assertThat(gqs.isCreature(gd, land)).isFalse();
+        assertThat(gqs.hasKeyword(gd, land, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The enters trigger still returns an enchantment after Natural Emergence leaves")
+    void etbResolvesAfterSourceLeaves() {
+        Permanent eligible = harness.addToBattlefieldAndReturn(player1, new DralnusCrusade());
+        Permanent emergence = harness.enterBattlefieldAndReturn(player1, new NaturalEmergence());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, emergence));
+
+        resolveAllTriggers();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).containsExactly(eligible.getId());
+        harness.handlePermanentChosen(player1, eligible.getId());
+
+        harness.assertInHand(player1, "Dralnu's Crusade");
+        harness.assertInGraveyard(player1, "Natural Emergence");
+        harness.assertNotOnBattlefield(player1, "Dralnu's Crusade");
+    }
 }
