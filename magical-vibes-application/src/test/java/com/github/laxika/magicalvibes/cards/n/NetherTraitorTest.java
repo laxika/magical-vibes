@@ -31,10 +31,7 @@ class NetherTraitorTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        Permanent returnedTraitor = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(traitor.getId()))
-                .findFirst()
-                .orElseThrow();
+        Permanent returnedTraitor = findPermanent(player1, "Nether Traitor");
         assertThat(returnedTraitor.isTapped()).isFalse();
         harness.assertNotInGraveyard(player1, "Nether Traitor");
     }
@@ -121,5 +118,45 @@ class NetherTraitorTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Nether Traitor");
         harness.assertNotInGraveyard(player1, "Nether Traitor");
+    }
+
+    @Test
+    @DisplayName("An old trigger cannot return Nether Traitor after it returns and dies again")
+    void oldTriggerCannotReturnNewGraveyardObject() {
+        harness.setGraveyard(player1, List.of(new NetherTraitor()));
+        Permanent firstBear = harness.addToBattlefieldAndReturn(player1, new AshcoatBear());
+        Permanent secondBear = harness.addToBattlefieldAndReturn(player1, new AshcoatBear());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        firstBear.setMarkedDamage(2);
+        secondBear.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertOnBattlefield(player1, "Nether Traitor");
+
+        Permanent returnedTraitor = findPermanent(player1, "Nether Traitor");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, returnedTraitor));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Nether Traitor");
+        harness.assertNotOnBattlefield(player1, "Nether Traitor");
+    }
+
+    @Test
+    @DisplayName("Nether Traitor on the battlefield does not trigger when another creature dies")
+    void abilityOnlyFunctionsInGraveyard() {
+        harness.addToBattlefield(player1, new NetherTraitor());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new AshcoatBear());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bear));
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Nether Traitor");
     }
 }
