@@ -83,6 +83,51 @@ class IronfistCrusherTest extends BaseCardTest {
                 .hasMessageContaining("assigned too many times");
     }
 
+    @Test
+    @DisplayName("Turning Ironfist Crusher face up restores its unlimited blocking ability")
+    void turningFaceUpRestoresUnlimitedBlocking() {
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new IronfistCrusher()));
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player2, 0);
+        harness.passBothPriorities();
+
+        Permanent crusher = findPermanent(player2, "Ironfist Crusher");
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.turnFaceUp(player2, 0);
+
+        addReadyAttacker(player1);
+        addReadyAttacker(player1);
+        addReadyAttacker(player1);
+        prepareDeclareBlockers(player1);
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(0, 1),
+                new BlockerAssignment(0, 2)));
+
+        assertThat(crusher.isFaceDown()).isFalse();
+        assertThat(crusher.getBlockingTargets()).containsExactlyInAnyOrder(0, 1, 2);
+    }
+
+    @Test
+    @DisplayName("Ironfist Crusher's morph cost cannot be paid with only colorless mana")
+    void morphRequiresWhiteMana() {
+        harness.setHand(player1, List.of(new IronfistCrusher()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent crusher = findPermanent(player1, "Ironfist Crusher");
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.turnFaceUp(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(crusher.isFaceDown()).isTrue();
+    }
+
     private void addReadyAttacker(Player player) {
         Permanent permanent = addCreatureReady(player, new GlorySeeker());
         permanent.setAttacking(true);
