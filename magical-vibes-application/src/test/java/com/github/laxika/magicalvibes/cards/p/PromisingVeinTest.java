@@ -17,9 +17,82 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({PromisingVein.class, Plains.class, Forest.class, GrizzlyBears.class})
 class PromisingVeinTest extends BaseCardTest {
+
+    @Test
+    void cannotSearchWithoutPayingMana() {
+        harness.addToBattlefield(player1, new PromisingVein());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Promising Vein");
+        harness.assertNotInGraveyard(player1, "Promising Vein");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isFalse();
+    }
+
+    @Test
+    void cannotSearchAfterTappingForMana() {
+        harness.addToBattlefield(player1, new PromisingVein());
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Promising Vein");
+        harness.assertNotInGraveyard(player1, "Promising Vein");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    void mayFailToFindEvenWhenBasicLandExists() {
+        harness.addToBattlefield(player1, new PromisingVein());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setLibrary(player1, List.of(new Plains()));
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Promising Vein");
+    }
+
+    @Test
+    void nonbasicLandCannotBeFound() {
+        harness.addToBattlefield(player1, new PromisingVein());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setLibrary(player1, List.of(new PromisingVein()));
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void emptyLibraryDoesNotPreventActivationOrResolution() {
+        harness.addToBattlefield(player1, new PromisingVein());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setLibrary(player1, List.of());
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Promising Vein");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Mana ability adds colorless mana")
