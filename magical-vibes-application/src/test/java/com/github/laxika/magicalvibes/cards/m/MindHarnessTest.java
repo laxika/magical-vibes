@@ -72,8 +72,7 @@ class MindHarnessTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player2, 0, aura.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, aura.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getId().equals(creature.getId()));
@@ -145,6 +144,74 @@ class MindHarnessTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, wizard.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a red or green creature");
+    }
+
+    @Test
+    @DisplayName("Declining upkeep after stealing a creature restores its previous controller")
+    void decliningUpkeepReturnsStolenCreature() {
+        Permanent creature = addCreatureReady(player2, new JungleWurm());
+        harness.setHand(player1, List.of(new MindHarness()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Mind Harness");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+    }
+
+    @Test
+    @DisplayName("Mind Harness does not trigger cumulative upkeep during the opponent's upkeep")
+    void opponentUpkeepDoesNotAddAgeCounter() {
+        Permanent creature = addCreatureReady(player2, new JungleWurm());
+        Permanent aura = attach(player1, creature);
+
+        advanceToUpkeep(player2);
+
+        assertThat(aura.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
+    }
+
+    @Test
+    @DisplayName("Mind Harness goes to its owner's graveyard when the enchanted creature dies")
+    void enchantedCreatureDyingRemovesAura() {
+        Permanent creature = addCreatureReady(player2, new JungleWurm());
+        harness.setHand(player1, List.of(new MindHarness()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        creature.setMarkedDamage(5);
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Mind Harness");
+        harness.assertInGraveyard(player2, "Jungle Wurm");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+    }
+
+    @Test
+    @DisplayName("Mind Harness does not resolve when its target leaves the battlefield")
+    void targetDyingBeforeResolutionPreventsAttachment() {
+        Permanent creature = addCreatureReady(player2, new JungleWurm());
+        harness.setHand(player1, List.of(new MindHarness()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castEnchantment(player1, 0, creature.getId());
+
+        creature.setMarkedDamage(5);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Mind Harness");
+        harness.assertInGraveyard(player2, "Jungle Wurm");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
     }
 
     private Permanent attach(Player controller, Permanent enchanted) {
