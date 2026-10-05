@@ -31,7 +31,7 @@ class KaysaTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, ranger)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, ranger)).isEqualTo(2);
 
-        gd.playerBattlefields.get(player1.getId()).remove(kaysa);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, kaysa));
 
         assertThat(gqs.getEffectivePower(gd, ranger)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, ranger)).isEqualTo(1);
@@ -58,16 +58,28 @@ class KaysaTest extends BaseCardTest {
     }
 
     @Test
-    void bonusesStack() {
+    void opposingKaysasOnlyBoostTheirOwnControllersCreatures() {
         Permanent firstKaysa = addCreatureReady(player1, new Kaysa());
-        Permanent secondKaysa = addCreatureReady(player1, new Kaysa());
+        Permanent secondKaysa = addCreatureReady(player2, new Kaysa());
         Permanent ranger = addCreatureReady(player1, new ElvishRanger());
+        Permanent opposingRanger = addCreatureReady(player2, new ElvishRanger());
 
-        assertThat(gqs.getEffectivePower(gd, firstKaysa)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, firstKaysa)).isEqualTo(5);
-        assertThat(gqs.getEffectivePower(gd, secondKaysa)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, secondKaysa)).isEqualTo(5);
-        assertThat(gqs.getEffectivePower(gd, ranger)).isEqualTo(6);
-        assertThat(gqs.getEffectiveToughness(gd, ranger)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, firstKaysa)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, firstKaysa)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, secondKaysa)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, secondKaysa)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ranger)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ranger)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingRanger)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, opposingRanger)).isEqualTo(2);
+    }
+
+    @Test
+    void boostsGreenCreatureEnteringAfterKaysa() {
+        harness.enterBattlefieldAndReturn(player1, new Kaysa());
+        Permanent ranger = harness.enterBattlefieldAndReturn(player1, new ElvishRanger());
+
+        assertThat(gqs.getEffectivePower(gd, ranger)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ranger)).isEqualTo(2);
     }
 }
