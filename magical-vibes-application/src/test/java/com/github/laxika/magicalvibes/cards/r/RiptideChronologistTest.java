@@ -51,4 +51,43 @@ class RiptideChronologistTest extends BaseCardTest {
 
         assertThat(changeling.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Chronologist can activate and is sacrificed before resolution")
+    void tappedSummoningSickSourcePaysSacrificeImmediately() {
+        Permanent chronologist = harness.addToBattlefieldAndReturn(player1, new RiptideChronologist());
+        chronologist.setSummoningSick(true);
+        chronologist.tap();
+        Permanent wizard = addCreatureReady(player2, new AphettoAlchemist());
+        wizard.tap();
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(chronologist);
+        harness.assertInGraveyard(player1, "Riptide Chronologist");
+        assertThat(wizard.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WIZARD");
+
+        assertThat(wizard.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature type with no matching creatures can be chosen")
+    void canChooseAbsentCreatureType() {
+        addCreatureReady(player1, new RiptideChronologist());
+        Permanent wizard = addCreatureReady(player2, new AphettoAlchemist());
+        wizard.tap();
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "DRAGON");
+
+        assertThat(wizard.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Riptide Chronologist");
+        assertThat(gd.stack).isEmpty();
+    }
 }
