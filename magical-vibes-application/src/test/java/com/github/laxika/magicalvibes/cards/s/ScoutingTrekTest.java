@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.Addle;
+import com.github.laxika.magicalvibes.cards.e.ElfhamePalace;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ScoutingTrek.class, Addle.class, Forest.class, Plains.class})
+@CardUsed({ScoutingTrek.class, Addle.class, ElfhamePalace.class, Forest.class, Plains.class})
 class ScoutingTrekTest extends BaseCardTest {
 
     @Test
@@ -89,6 +90,57 @@ class ScoutingTrekTest extends BaseCardTest {
         cast();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.SearchLibraryToTopChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Nonbasic lands are excluded and the opponent's library is untouched")
+    void excludesNonbasicLandsAndSearchesOnlyControllersLibrary() {
+        Card basic = new Forest();
+        Card nonbasic = new ElfhamePalace();
+        Card opponentsLand = new Plains();
+        harness.setLibrary(player1, List.of(nonbasic, basic));
+        harness.setLibrary(player2, List.of(opponentsLand));
+
+        cast();
+
+        PendingInteraction.SearchLibraryToTopChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SearchLibraryToTopChoice.class);
+        assertThat(choice.pool()).containsExactly(basic);
+        harness.handleMultipleCardsChosen(player1, List.of(basic.getId()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(basic, nonbasic);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentsLand);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library finishes resolution without a choice")
+    void emptyLibraryFinishesResolution() {
+        harness.setLibrary(player1, List.of());
+
+        cast();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+    }
+
+    @Test
+    @DisplayName("All basic lands may be chosen, including multiple copies of the same name")
+    void choosesAllBasicLandsIncludingSameNamedCopies() {
+        Card first = new Forest();
+        Card second = new Forest();
+        Card third = new Plains();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        cast();
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId(), third.getId()));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third, second, first);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("reveals " + first.getName() + ", " + second.getName()
+                + ", " + third.getName())).isTrue();
     }
 
     private void cast() {
