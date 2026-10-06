@@ -96,4 +96,61 @@ class SenseisDiviningTopTest extends BaseCardTest {
                 .containsExactly(source, ownerLibraryCard);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(top);
     }
+
+    @Test
+    @DisplayName("First ability reorders all available cards in a library with fewer than three cards")
+    void reordersShortLibrary() {
+        harness.addToBattlefield(player1, new SenseisDiviningTop());
+        Card first = new SenseisDiviningTop();
+        Card second = new SenseisDiviningTop();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards())
+                .containsExactly(first, second);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first);
+    }
+
+    @Test
+    @DisplayName("First ability resolves without a choice when the library is empty")
+    void emptyLibraryHasNothingToReorder() {
+        harness.addToBattlefield(player1, new SenseisDiviningTop());
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Reorder ability can be activated while tapped in response to the draw ability")
+    void reordersBeforePendingDrawWhileTapped() {
+        Permanent top = harness.addToBattlefieldAndReturn(player1, new SenseisDiviningTop());
+        Card first = new SenseisDiviningTop();
+        Card second = new SenseisDiviningTop();
+        Card third = new SenseisDiviningTop();
+        harness.setLibrary(player1, List.of(first, second, third));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(top.isTapped()).isTrue();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 0, 1)));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(third);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top.getCard(), first, second);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(top);
+    }
 }
