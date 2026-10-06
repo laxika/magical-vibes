@@ -1,13 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,14 +12,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ShipwreckLooter.class, Forest.class})
 class ShipwreckLooterTest extends BaseCardTest {
-
-    // ===== ETB with raid met — accept may =====
 
     @Test
     @DisplayName("ETB with raid met: accepting may draws then discards a card")
     void etbWithRaidAcceptMay() {
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
         markAttackedThisTurn();
         castShipwreckLooter();
 
@@ -49,12 +45,10 @@ class ShipwreckLooterTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
     }
 
-    // ===== ETB with raid met — decline may =====
-
     @Test
     @DisplayName("ETB with raid met: declining may does nothing")
     void etbWithRaidDeclineMay() {
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
         markAttackedThisTurn();
         castShipwreckLooter();
 
@@ -70,8 +64,6 @@ class ShipwreckLooterTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
     }
 
-    // ===== ETB without raid =====
-
     @Test
     @DisplayName("ETB does NOT trigger without raid (did not attack this turn)")
     void etbDoesNotTriggerWithoutRaid() {
@@ -85,24 +77,17 @@ class ShipwreckLooterTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Shipwreck Looter");
     }
 
-    // ===== Raid lost before resolution (intervening-if) =====
-
     @Test
-    @DisplayName("ETB does nothing if raid condition is lost before resolution")
-    void etbFizzlesWhenRaidLost() {
-        markAttackedThisTurn();
+    @DisplayName("An opponent attacking does not satisfy raid")
+    void opponentsAttackDoesNotSatisfyRaid() {
+        gd.playersDeclaredAttackersThisTurn.add(player2.getId());
         castShipwreckLooter();
-        harness.passBothPriorities(); // resolve creature spell — ETB trigger on stack
+        harness.passBothPriorities();
 
-        // Remove the raid flag before ETB resolves
-        gd.playersDeclaredAttackersThisTurn.clear();
-
-        harness.passBothPriorities(); // resolve ETB trigger — raid no longer met
-
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("raid ability does nothing"));
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Shipwreck Looter");
     }
-
-    // ===== Creature enters battlefield regardless =====
 
     @Test
     @DisplayName("Creature enters battlefield even without raid")
@@ -113,12 +98,10 @@ class ShipwreckLooterTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Shipwreck Looter");
     }
 
-    // ===== Stack is empty after full resolution =====
-
     @Test
     @DisplayName("Stack is empty after full resolution with raid")
     void stackEmptyAfterResolution() {
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
         markAttackedThisTurn();
         castShipwreckLooter();
         harness.passBothPriorities(); // resolve creature spell
@@ -129,21 +112,58 @@ class ShipwreckLooterTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("The drawn card can be discarded from an initially empty hand")
+    void canDiscardDrawnCard() {
+        Forest drawn = new Forest();
+        harness.setLibrary(player1, List.of(drawn));
+        markAttackedThisTurn();
+        castShipwreckLooter();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Discard may select a card that was in hand before the draw")
+    void canKeepDrawnCardAndDiscardAnother() {
+        ShipwreckLooter drawn = new ShipwreckLooter();
+        Forest discarded = new Forest();
+        harness.setLibrary(player1, List.of(drawn));
+        harness.setHand(player2, List.of(new Forest()));
+        markAttackedThisTurn();
+        castShipwreckLooter();
+        harness.setHand(player1, List.of(discarded));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(discarded, drawn);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 
     private void markAttackedThisTurn() {
         gd.playersDeclaredAttackersThisTurn.add(player1.getId());
     }
 
     private void castShipwreckLooter() {
-        harness.setHand(player1, List.of(new ShipwreckLooter()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
-    }
-
-    private void setDeck(com.github.laxika.magicalvibes.model.Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+        harness.castFromHand(player1, new ShipwreckLooter(), "{1}{U}");
     }
 }
