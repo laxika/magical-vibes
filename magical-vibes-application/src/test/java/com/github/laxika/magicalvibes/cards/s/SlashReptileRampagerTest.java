@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,11 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayName("Slash, Reptile Rampager")
 @CardUsed({SlashReptileRampager.class, GrizzlyBears.class})
 class SlashReptileRampagerTest extends BaseCardTest {
-
-    @org.junit.jupiter.api.BeforeEach
-    void stopBeforeCombatDamage() {
-        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_BLOCKERS));
-    }
 
     @Test
     @DisplayName("Does not trigger when Slash itself enters the battlefield")
@@ -54,8 +50,10 @@ class SlashReptileRampagerTest extends BaseCardTest {
     void attackingCreatesMutantToken() {
         addCreatureReady(player1, new SlashReptileRampager());
 
-        declareAttackers(List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
 
         List<Permanent> tokens = findPermanents(player1, "Mutant").stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -65,6 +63,24 @@ class SlashReptileRampagerTest extends BaseCardTest {
         assertThat(tokens.getFirst().getEffectiveToughness()).isEqualTo(2);
         assertThat(tokens.getFirst().getCard().getColor()).isEqualTo(CardColor.RED);
         assertThat(tokens.getFirst().getCard().getSubtypes()).containsExactly(CardSubtype.MUTANT);
+        assertThat(tokens.getFirst().isTapped()).isFalse();
+        assertThat(tokens.getFirst().isAttacking()).isFalse();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Does not trigger for an opponent's creature entering")
+    void opponentCreatureDoesNotTriggerAlliance() {
+        harness.addToBattlefield(player1, new SlashReptileRampager());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.castCreature(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
     }
 }
