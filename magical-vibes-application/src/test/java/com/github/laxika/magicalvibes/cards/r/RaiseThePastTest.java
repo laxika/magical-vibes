@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RaiseThePast.class, GrizzlyBears.class, HillGiant.class, LlanowarElves.class, Plains.class})
 class RaiseThePastTest extends BaseCardTest {
 
     @Test
@@ -31,8 +33,7 @@ class RaiseThePastTest extends BaseCardTest {
         harness.setHand(player1, List.of(raiseThePast));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(Permanent::getCard)
@@ -53,11 +54,42 @@ class RaiseThePastTest extends BaseCardTest {
         harness.setHand(player1, List.of(raiseThePast));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .containsExactlyInAnyOrder(hillGiant, plains, raiseThePast);
+    }
+
+    @Test
+    @DisplayName("Returns every copy of a creature without requiring a choice")
+    void returnsDuplicateCreaturesWithoutChoice() {
+        Card firstElves = new LlanowarElves();
+        Card secondElves = new LlanowarElves();
+        Card raiseThePast = new RaiseThePast();
+        harness.setGraveyard(player1, List.of(firstElves, secondElves));
+        harness.setHand(player1, List.of(raiseThePast));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard)
+                .containsExactlyInAnyOrder(firstElves, secondElves);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(raiseThePast);
+    }
+
+    @Test
+    @DisplayName("Resolves normally with an empty graveyard")
+    void resolvesWithEmptyGraveyard() {
+        Card raiseThePast = new RaiseThePast();
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(raiseThePast));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(raiseThePast);
     }
 }
