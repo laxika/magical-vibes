@@ -1,15 +1,15 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.a.AbbeyGriffin;
+import com.github.laxika.magicalvibes.cards.a.AltarsReap;
+import com.github.laxika.magicalvibes.cards.d.DiregrafGhoul;
+import com.github.laxika.magicalvibes.cards.v.VampireInterloper;
+import com.github.laxika.magicalvibes.cards.v.VillagersOfEstwald;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,77 +18,48 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SlayerOfTheWicked.class, DiregrafGhoul.class, VampireInterloper.class,
+        VillagersOfEstwald.class, AbbeyGriffin.class, AltarsReap.class})
 class SlayerOfTheWickedTest extends BaseCardTest {
-
-    private static Card createCreatureWithSubtype(String name, int power, int toughness,
-                                                  CardColor color, CardSubtype subtype) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        card.setSubtypes(List.of(subtype));
-        return card;
-    }
 
     /**
      * Casts Slayer of the Wicked and resolves it onto the battlefield, then accepts the may ability
-     * and chooses the target so the ETB triggered ability is placed on the stack.
+     * after choosing the target and resolving the ETB triggered ability.
      */
     private void castAndAcceptMay(UUID targetId) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new SlayerOfTheWicked()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SlayerOfTheWicked(), "{3}{W}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
     }
 
-    // ===== Casting =====
-
     @Test
     @DisplayName("Casting Slayer of the Wicked puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new SlayerOfTheWicked()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SlayerOfTheWicked(), "{3}{W}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Slayer of the Wicked");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(SlayerOfTheWicked.class);
     }
 
     @Test
     @DisplayName("Resolving puts Slayer of the Wicked on the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new SlayerOfTheWicked()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SlayerOfTheWicked(), "{3}{W}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Slayer of the Wicked");
     }
 
-    // ===== ETB may ability =====
-
     @Test
     @DisplayName("Resolving Slayer triggers may ability prompt when valid target exists")
     void resolvingTriggersMayPrompt() {
-        harness.addToBattlefield(player2, new ScatheZombies());
-        harness.setHand(player1, List.of(new SlayerOfTheWicked()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castCreature(player1, 0);
+        harness.addToBattlefield(player2, new DiregrafGhoul());
+        harness.castFromHand(player1, new SlayerOfTheWicked(), "{3}{W}");
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Scathe Zombies"));
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Diregraf Ghoul"));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -97,37 +68,30 @@ class SlayerOfTheWickedTest extends BaseCardTest {
     @Test
     @DisplayName("Putting the ETB ability on the stack prompts for target selection")
     void puttingEtbAbilityOnStackPromptsForTarget() {
-        harness.addToBattlefield(player2, new ScatheZombies());
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new SlayerOfTheWicked()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castCreature(player1, 0);
+        harness.addToBattlefield(player2, new DiregrafGhoul());
+        harness.castFromHand(player1, new SlayerOfTheWicked(), "{3}{W}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
     }
 
-    // ===== Destroys each valid subtype =====
-
     @Test
     @DisplayName("ETB destroys target Zombie")
     void etbDestroysTargetZombie() {
-        harness.addToBattlefield(player2, new ScatheZombies());
-        UUID zombieId = harness.getPermanentId(player2, "Scathe Zombies");
+        harness.addToBattlefield(player2, new DiregrafGhoul());
+        UUID zombieId = harness.getPermanentId(player2, "Diregraf Ghoul");
         castAndAcceptMay(zombieId);
 
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Scathe Zombies");
-        harness.assertInGraveyard(player2, "Scathe Zombies");
+        harness.assertNotOnBattlefield(player2, "Diregraf Ghoul");
+        harness.assertInGraveyard(player2, "Diregraf Ghoul");
     }
 
     @Test
     @DisplayName("ETB destroys target Vampire")
     void etbDestroysTargetVampire() {
-        Card vampire = createCreatureWithSubtype("Vampire Interloper", 2, 1, CardColor.BLACK, CardSubtype.VAMPIRE);
+        VampireInterloper vampire = new VampireInterloper();
         harness.addToBattlefield(player2, vampire);
         UUID vampireId = harness.getPermanentId(player2, "Vampire Interloper");
         castAndAcceptMay(vampireId);
@@ -141,52 +105,37 @@ class SlayerOfTheWickedTest extends BaseCardTest {
     @Test
     @DisplayName("ETB destroys target Werewolf")
     void etbDestroysTargetWerewolf() {
-        Card werewolf = createCreatureWithSubtype("Reckless Waif", 3, 2, CardColor.RED, CardSubtype.WEREWOLF);
+        VillagersOfEstwald werewolf = new VillagersOfEstwald();
         harness.addToBattlefield(player2, werewolf);
-        UUID werewolfId = harness.getPermanentId(player2, "Reckless Waif");
+        UUID werewolfId = harness.getPermanentId(player2, "Villagers of Estwald");
         castAndAcceptMay(werewolfId);
 
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Reckless Waif");
-        harness.assertInGraveyard(player2, "Reckless Waif");
+        harness.assertNotOnBattlefield(player2, "Villagers of Estwald");
+        harness.assertInGraveyard(player2, "Villagers of Estwald");
     }
-
-    // ===== Declining may =====
 
     @Test
     @DisplayName("Declining may ability does not destroy target")
     void decliningMaySkipsDestruction() {
-        harness.addToBattlefield(player2, new ScatheZombies());
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new SlayerOfTheWicked()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castCreature(player1, 0);
+        harness.addToBattlefield(player2, new DiregrafGhoul());
+        harness.castFromHand(player1, new SlayerOfTheWicked(), "{3}{W}");
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Scathe Zombies"));
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Diregraf Ghoul"));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Slayer of the Wicked");
-        harness.assertOnBattlefield(player2, "Scathe Zombies");
+        harness.assertOnBattlefield(player2, "Diregraf Ghoul");
     }
-
-    // ===== No valid targets =====
 
     @Test
     @DisplayName("May prompt does not fire when no valid targets on battlefield")
     void noMayPromptWithoutValidTargets() {
-        // A "you may destroy target black or red creature" trigger requires a legal target. With
-        // only an ineligible creature (green Grizzly Bears) present the ability is never put on the
-        // stack (CR 601.2c / 603.3b), so the controller is never prompted to make the "may" choice.
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new SlayerOfTheWicked()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castCreature(player1, 0);
+        harness.addToBattlefield(player2, new AbbeyGriffin());
+        harness.castFromHand(player1, new SlayerOfTheWicked(), "{3}{W}");
         harness.passBothPriorities(); // resolve creature spell -> enters battlefield
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -194,28 +143,24 @@ class SlayerOfTheWickedTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Slayer of the Wicked");
     }
 
-    // ===== Can target own creatures =====
-
     @Test
     @DisplayName("Can target own Zombie creature")
     void canTargetOwnCreature() {
-        harness.addToBattlefield(player1, new ScatheZombies());
-        UUID zombieId = harness.getPermanentId(player1, "Scathe Zombies");
+        harness.addToBattlefield(player1, new DiregrafGhoul());
+        UUID zombieId = harness.getPermanentId(player1, "Diregraf Ghoul");
         castAndAcceptMay(zombieId);
 
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Scathe Zombies");
-        harness.assertInGraveyard(player1, "Scathe Zombies");
+        harness.assertNotOnBattlefield(player1, "Diregraf Ghoul");
+        harness.assertInGraveyard(player1, "Diregraf Ghoul");
     }
-
-    // ===== Slayer remains on battlefield =====
 
     @Test
     @DisplayName("Slayer of the Wicked remains on battlefield after destroying target")
     void slayerRemainsOnBattlefield() {
-        harness.addToBattlefield(player2, new ScatheZombies());
-        UUID zombieId = harness.getPermanentId(player2, "Scathe Zombies");
+        harness.addToBattlefield(player2, new DiregrafGhoul());
+        UUID zombieId = harness.getPermanentId(player2, "Diregraf Ghoul");
         castAndAcceptMay(zombieId);
 
         harness.passBothPriorities();
@@ -223,17 +168,48 @@ class SlayerOfTheWickedTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Slayer of the Wicked");
     }
 
-    // ===== Stack is empty after full resolution =====
-
     @Test
     @DisplayName("Stack is empty after full resolution")
     void stackIsEmptyAfterFullResolution() {
-        harness.addToBattlefield(player2, new ScatheZombies());
-        UUID zombieId = harness.getPermanentId(player2, "Scathe Zombies");
+        harness.addToBattlefield(player2, new DiregrafGhoul());
+        UUID zombieId = harness.getPermanentId(player2, "Diregraf Ghoul");
         castAndAcceptMay(zombieId);
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB destroys only the chosen eligible permanent")
+    void destroysOnlyChosenPermanent() {
+        harness.addToBattlefield(player2, new DiregrafGhoul());
+        harness.addToBattlefield(player2, new VampireInterloper());
+        harness.addToBattlefield(player2, new AbbeyGriffin());
+        castAndAcceptMay(harness.getPermanentId(player2, "Vampire Interloper"));
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Vampire Interloper");
+        harness.assertOnBattlefield(player2, "Diregraf Ghoul");
+        harness.assertOnBattlefield(player2, "Abbey Griffin");
+    }
+
+    @Test
+    @DisplayName("A target sacrificed in response makes the ETB ability fail without a may prompt")
+    void targetLeavingBeforeResolutionSkipsMayChoice() {
+        harness.addToBattlefield(player2, new DiregrafGhoul());
+        UUID targetId = harness.getPermanentId(player2, "Diregraf Ghoul");
+        harness.setHand(player2, List.of(new AltarsReap()));
+        harness.setLibrary(player2, List.of(new AbbeyGriffin(), new AbbeyGriffin()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castFromHand(player1, new SlayerOfTheWicked(), "{3}{W}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
+        harness.castInstantWithSacrifice(player2, 0, null, targetId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player2, "Diregraf Ghoul");
+        harness.assertOnBattlefield(player1, "Slayer of the Wicked");
     }
 }
