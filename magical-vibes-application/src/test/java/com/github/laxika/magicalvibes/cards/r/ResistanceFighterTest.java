@@ -142,7 +142,36 @@ class ResistanceFighterTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Only the targeted attacker has its combat damage prevented")
+    void otherAttackerStillDealsCombatDamage() {
+        harness.setLife(player1, 20);
+        addReadyFighter();
+        Permanent preventedAttacker = addAttacker(player2, new Warthog());
+        addAttacker(player2, new Warthog());
+
+        activateFighter(preventedAttacker);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Fighter can activate its sacrifice ability")
+    void tappedSummoningSickFighterCanActivate() {
+        harness.setLife(player1, 20);
+        Permanent fighter = harness.addToBattlefieldAndReturn(player1, new ResistanceFighter());
+        fighter.setSummoningSick(true);
+        fighter.setTapped(true);
+        Permanent attacker = addAttacker(player2, new Warthog());
+
+        activateFighter(attacker);
+        resolveCombat(player2);
+
+        harness.assertInGraveyard(player1, "Resistance Fighter");
+        harness.assertNotOnBattlefield(player1, "Resistance Fighter");
+        harness.assertLife(player1, 20);
+    }
 
     private void addReadyFighter() {
         addCreatureReady(player1, new ResistanceFighter());
@@ -154,8 +183,7 @@ class ResistanceFighterTest extends BaseCardTest {
     }
 
     private Permanent addAttacker(Player owner, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent attacker = harness.addToBattlefieldAndReturn(owner, card);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(owner, card);
         attacker.setAttacking(true);
         attacker.setAttackTarget(player1.getId());
         return attacker;
