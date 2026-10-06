@@ -8,8 +8,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.cards.t.ThrabenHeretic;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -22,6 +24,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ScorchTheFields.class, Forest.class, GrizzlyBears.class, ThrabenHeretic.class})
 class ScorchTheFieldsTest extends BaseCardTest {
 
     
@@ -77,8 +80,8 @@ class ScorchTheFieldsTest extends BaseCardTest {
     @DisplayName("Deals 1 damage to each Human creature on both sides")
     void deals1DamageToEachHumanCreature() {
         harness.addToBattlefield(player2, new Forest());
-        addCreature(player1, createCreature("Human One", CardSubtype.HUMAN));
-        addCreature(player2, createCreature("Human Two", CardSubtype.HUMAN));
+        harness.addToBattlefield(player1, createCreature("Human One", CardSubtype.HUMAN));
+        harness.addToBattlefield(player2, createCreature("Human Two", CardSubtype.HUMAN));
         harness.setHand(player1, List.of(new ScorchTheFields()));
         harness.addMana(player1, ManaColor.RED, 5);
 
@@ -95,7 +98,7 @@ class ScorchTheFieldsTest extends BaseCardTest {
     void doesNotDamageNonHumanCreatures() {
         harness.addToBattlefield(player2, new Forest());
         harness.addToBattlefield(player1, new GrizzlyBears());
-        addCreature(player2, createCreature("Human", CardSubtype.HUMAN));
+        harness.addToBattlefield(player2, createCreature("Human", CardSubtype.HUMAN));
         harness.setHand(player1, List.of(new ScorchTheFields()));
         harness.addMana(player1, ManaColor.RED, 5);
 
@@ -118,16 +121,15 @@ class ScorchTheFieldsTest extends BaseCardTest {
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
     @Test
     @DisplayName("Fizzles if target land is removed — no damage dealt")
     void fizzlesIfTargetLandRemoved() {
         harness.addToBattlefield(player2, new Forest());
-        addCreature(player2, createCreature("Human", CardSubtype.HUMAN));
+        harness.addToBattlefield(player2, createCreature("Human", CardSubtype.HUMAN));
         harness.setHand(player1, List.of(new ScorchTheFields()));
         harness.addMana(player1, ManaColor.RED, 5);
 
@@ -142,13 +144,37 @@ class ScorchTheFieldsTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Human");
     }
 
-    private Permanent addCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Surviving Humans have exactly one damage marked")
+    void survivingHumansHaveOneDamageMarked() {
+        harness.addToBattlefield(player2, new Forest());
+        Permanent human = harness.addToBattlefieldAndReturn(player2, new ThrabenHeretic());
+        harness.setHand(player1, List.of(new ScorchTheFields()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castSorcery(player1, 0, harness.getPermanentId(player2, "Forest"));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Thraben Heretic");
+        assertThat(human.getMarkedDamage()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("An indestructible land remains but Humans still take damage")
+    void indestructibleLandDoesNotPreventHumanDamage() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        land.getPersistentGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        Permanent human = harness.addToBattlefieldAndReturn(player2, new ThrabenHeretic());
+        harness.setHand(player1, List.of(new ScorchTheFields()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castSorcery(player1, 0, land.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertNotInGraveyard(player2, "Forest");
+        assertThat(human.getMarkedDamage()).isEqualTo(1);
+    }
     private Card createCreature(String name, CardSubtype subtype) {
         Card card = new Card();
         card.setName(name);
