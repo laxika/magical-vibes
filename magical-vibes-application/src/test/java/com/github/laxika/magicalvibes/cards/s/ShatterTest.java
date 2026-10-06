@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.Cloudpost;
-import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
+import com.github.laxika.magicalvibes.cards.g.GreatFurnace;
 import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
-import com.github.laxika.magicalvibes.cards.k.KrarkClanGrunt;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianHulk;
-import com.github.laxika.magicalvibes.cards.y.YotianSoldier;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -24,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 
-@CardUsed({Cloudpost.class, IcyManipulator.class, KrarkClanGrunt.class, Shatter.class, YotianSoldier.class, GrizzlyBears.class, JayemdaeTome.class, PhyrexianHulk.class})
+@CardUsed({Cloudpost.class, GreatFurnace.class, Shatter.class, GrizzlyBears.class, JayemdaeTome.class, PhyrexianHulk.class})
 class ShatterTest extends BaseCardTest {
 
     @Test
@@ -153,5 +151,35 @@ class ShatterTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Shatter destroys an artifact land")
+    void destroysArtifactLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new GreatFurnace());
+        harness.setHand(player1, List.of(new Shatter()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, land.getId());
+
+        harness.assertNotOnBattlefield(player2, "Great Furnace");
+        harness.assertInGraveyard(player2, "Great Furnace");
+    }
+
+    @Test
+    @DisplayName("Shatter allows an artifact creature to regenerate")
+    void regenerationSavesArtifactCreature() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new PhyrexianHulk());
+        artifact.setRegenerationShield(1);
+        harness.setHand(player1, List.of(new Shatter()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, artifact.getId());
+
+        harness.assertOnBattlefield(player2, "Phyrexian Hulk");
+        harness.assertNotInGraveyard(player2, "Phyrexian Hulk");
+        assertThat(artifact.isTapped()).isTrue();
+        assertThat(artifact.getRegenerationShield()).isZero();
+        harness.assertInGraveyard(player1, "Shatter");
     }
 }
