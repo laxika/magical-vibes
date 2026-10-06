@@ -70,4 +70,49 @@ class SanctumOfSerraTest extends BaseCardTest {
 
         harness.assertLife(player1, 10);
     }
+
+    @Test
+    void chaosCanLowerLifeToTwenty() {
+        harness.setLife(player1, 30);
+        harness.setLife(player2, 12);
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 12);
+    }
+
+    @Test
+    void chaosUsesTheCurrentPlanarController() {
+        gd.planechase.controllerId = player2.getId();
+        gd.activePlayerId = player2.getId();
+        harness.setLife(player1, 8);
+        harness.setLife(player2, 14);
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player1, 8);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void departingTriggerDestroysPermanentsPresentAtResolution() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        harness.inMutationScope(() -> planar.planeswalk(gd));
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.addToBattlefield(player2, new ZuranOrb());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Zuran Orb");
+    }
 }
