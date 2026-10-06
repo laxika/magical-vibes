@@ -81,4 +81,73 @@ class RishadanPortTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
     }
+
+    @Test
+    @DisplayName("Target land can produce mana in response")
+    void targetLandCanProduceManaInResponse() {
+        harness.addToBattlefield(player1, new RishadanPort());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, forest.getId());
+
+        assertThat(forest.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        harness.tapPermanent(player2, 0);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can target itself despite tapping to pay the cost")
+    void canTargetItself() {
+        Permanent port = harness.addToBattlefieldAndReturn(player1, new RishadanPort());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, port.getId());
+        assertThat(port.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(port.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Cannot activate land tapping ability without mana")
+    void cannotActivateWithoutMana() {
+        Permanent port = harness.addToBattlefieldAndReturn(player1, new RishadanPort());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(port.isTapped()).isFalse();
+        assertThat(forest.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Producing mana prevents using the Port again without untapping")
+    void cannotActivateAfterProducingMana() {
+        harness.addToBattlefield(player1, new RishadanPort());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(forest.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
 }
