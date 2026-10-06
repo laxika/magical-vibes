@@ -106,8 +106,7 @@ class RogueElephantTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, elephantId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -119,6 +118,49 @@ class RogueElephantTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Rogue Elephant");
         harness.assertInGraveyard(player1, "Rogue Elephant");
         harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("A tapped Forest may be sacrificed, and only the chosen Forest is lost")
+    void maySacrificeTappedForestAmongMultipleForests() {
+        harness.addToBattlefield(player1, new Forest());
+        UUID tappedForestId = harness.getPermanentId(player1, "Forest");
+        harness.tapPermanent(player1, 0);
+        harness.addToBattlefield(player1, new Forest());
+
+        castElephant();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+                .hasSize(2)
+                .contains(tappedForestId);
+        harness.handlePermanentChosen(player1, tappedForestId);
+
+        harness.assertOnBattlefield(player1, "Rogue Elephant");
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(tappedForestId));
+    }
+
+    @Test
+    @DisplayName("Losing the last Forest before the trigger resolves sacrifices the Elephant")
+    void lastForestSacrificedBeforeTriggerResolves() {
+        harness.addToBattlefield(player1, new InfernalTribute());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setLibrary(player1, List.of(new WindingCanyons()));
+
+        castElephantSpell();
+        UUID forestId = harness.getPermanentId(player1, "Forest");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, forestId);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Rogue Elephant");
+        harness.assertInGraveyard(player1, "Rogue Elephant");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Infernal Tribute");
     }
 
     private void castElephant() {
