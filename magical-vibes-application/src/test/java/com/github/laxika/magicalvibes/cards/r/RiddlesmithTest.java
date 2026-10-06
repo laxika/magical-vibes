@@ -4,12 +4,13 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.m.Memnite;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,42 +18,39 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Riddlesmith.class, Forest.class, GrizzlyBears.class, Spellbook.class, Memnite.class})
 class RiddlesmithTest extends BaseCardTest {
 
-    // ===== Trigger fires on artifact cast =====
-
     @Test
-    @DisplayName("Casting an artifact spell triggers may ability prompt")
-    void artifactCastTriggersMayPrompt() {
+    @DisplayName("Artifact cast puts the trigger on the stack before the draw choice")
+    void artifactCastQueuesTriggerBeforeMayPrompt() {
         harness.addToBattlefield(player1, new Riddlesmith());
         harness.setHand(player1, List.of(new Spellbook()));
 
         harness.castArtifact(player1, 0);
 
         GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+
+        harness.passBothPriorities();
+
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
-
-    // ===== Accept: draws a card, then prompts discard =====
 
     @Test
     @DisplayName("Accepting draws a card then prompts for discard")
     void acceptDrawsThenPromptsDiscard() {
         harness.addToBattlefield(player1, new Riddlesmith());
         harness.setHand(player1, List.of(new Spellbook()));
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        // Triggered ability should be on the stack
         GameData gd = harness.getGameData();
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getCard().getName().equals("Riddlesmith"));
-
-        // Resolve triggered ability
-        harness.passBothPriorities();
-
         // Draw happened, now awaiting discard choice
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player1.getId());
@@ -64,16 +62,11 @@ class RiddlesmithTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Riddlesmith());
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(new Spellbook(), bears));
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
-        // Cast artifact (Spellbook at index 0) — hand becomes [GrizzlyBears]
         harness.castArtifact(player1, 0);
-
-        // Accept loot
-        harness.handleMayAbilityChosen(player1, true);
-
-        // Resolve triggered ability — draws Forest, hand becomes [GrizzlyBears, Forest]
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         // Discard the bears at index 0
         harness.handleCardChosen(player1, 0);
@@ -86,30 +79,27 @@ class RiddlesmithTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
-    // ===== Decline =====
-
     @Test
     @DisplayName("Declining may ability does not draw or discard")
     void declineDoesNothing() {
         harness.addToBattlefield(player1, new Riddlesmith());
         harness.setHand(player1, List.of(new Spellbook()));
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
         harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         GameData gd = harness.getGameData();
-        // No triggered ability on stack
+        // The resolved trigger is no longer on the stack
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getCard().getName().equals("Riddlesmith"));
 
         // Deck size unchanged (no draw happened)
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
     }
-
-    // ===== Non-artifact does not trigger =====
 
     @Test
     @DisplayName("Non-artifact spell does not trigger Riddlesmith")
@@ -126,8 +116,6 @@ class RiddlesmithTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
     }
-
-    // ===== Opponent's artifact does not trigger =====
 
     @Test
     @DisplayName("Opponent casting artifact does not trigger Riddlesmith")
@@ -148,10 +136,49 @@ class RiddlesmithTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("An artifact creature spell triggers Riddlesmith before entering the battlefield")
+    void artifactCreatureTriggersBeforeEntering() {
+        harness.addToBattlefield(player1, new Riddlesmith());
+        harness.setHand(player1, List.of(new Memnite()));
 
-    private void setDeck(com.github.laxika.magicalvibes.model.Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+        harness.castCreature(player1, 0);
+
+        harness.assertNotOnBattlefield(player1, "Memnite");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+    }
+
+    @Test
+    @DisplayName("The newly drawn card may be discarded instead of a card already in hand")
+    void canDiscardNewlyDrawnCard() {
+        harness.addToBattlefield(player1, new Riddlesmith());
+        GrizzlyBears bears = new GrizzlyBears();
+        Forest forest = new Forest();
+        harness.setHand(player1, List.of(new Spellbook(), bears));
+        harness.setLibrary(player1, List.of(forest));
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bears, forest);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bears);
+        harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Putting an artifact directly onto the battlefield does not trigger Riddlesmith")
+    void artifactEnteringWithoutBeingCastDoesNotTrigger() {
+        harness.addToBattlefield(player1, new Riddlesmith());
+
+        harness.addToBattlefield(player1, new Memnite());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
