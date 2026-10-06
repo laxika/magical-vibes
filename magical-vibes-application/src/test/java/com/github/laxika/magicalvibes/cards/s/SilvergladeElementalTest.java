@@ -25,8 +25,7 @@ class SilvergladeElementalTest extends BaseCardTest {
     void etbOffersOptionalForestSearch() {
         setupAndCast();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(harness.getGameData().interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -38,8 +37,7 @@ class SilvergladeElementalTest extends BaseCardTest {
         setupAndCast();
         setupLibrary();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
@@ -56,8 +54,7 @@ class SilvergladeElementalTest extends BaseCardTest {
         setupAndCast();
         setupLibrary();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
@@ -77,8 +74,7 @@ class SilvergladeElementalTest extends BaseCardTest {
         setupAndCast();
         harness.setLibrary(player1, List.of(new Plains(), new Island(), new FreshVolunteers()));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -94,11 +90,85 @@ class SilvergladeElementalTest extends BaseCardTest {
         setupAndCast();
         setupLibrary();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(harness.getGameData().interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The search may fail to find even when a Forest is available")
+    void mayFailToFindAvailableForest() {
+        setupAndCast();
+        Forest forest = new Forest();
+        Plains plains = new Plains();
+        harness.setLibrary(player1, List.of(forest, plains));
+
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(forest, plains);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Accepting the search with an empty library finishes normally")
+    void acceptingSearchWithEmptyLibrary() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("The search takes exactly one Forest from the controller's library")
+    void searchesOnlyControllersLibraryForOneForest() {
+        setupAndCast();
+        Forest firstForest = new Forest();
+        Forest secondForest = new Forest();
+        Forest opponentForest = new Forest();
+        harness.setLibrary(player1, List.of(firstForest, secondForest));
+        harness.setLibrary(player2, List.of(opponentForest));
+
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondForest);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentForest);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2)
+                .anyMatch(permanent -> permanent.getCard().getId().equals(firstForest.getId())
+                        && !permanent.isTapped());
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Declining the search preserves the library and does not shuffle")
+    void decliningSearchPreservesLibraryOrder() {
+        setupAndCast();
+        Plains plains = new Plains();
+        Forest forest = new Forest();
+        Island island = new Island();
+        harness.setLibrary(player1, List.of(plains, forest, island));
+
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(plains, forest, island);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("Library is shuffled.")).isFalse();
     }
 
     private void setupAndCast() {
