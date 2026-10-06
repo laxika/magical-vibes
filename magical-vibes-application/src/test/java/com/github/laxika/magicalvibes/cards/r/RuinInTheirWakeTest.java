@@ -63,12 +63,72 @@ class RuinInTheirWakeTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getCard() == forest);
     }
 
+    @Test
+    @DisplayName("An opponent's Wastes does not enable the battlefield option")
+    void opponentsWastesDoesNotEnableBattlefieldOption() {
+        harness.addToBattlefield(player2, new Wastes());
+        Card wastes = new Wastes();
+        castRuin(wastes);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(wastes);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Wastes");
+    }
+
+    @Test
+    @DisplayName("Finding Wastes does not itself enable the battlefield option")
+    void findingWastesWithoutControllingOnePutsItIntoHand() {
+        Card wastes = new Wastes();
+        castRuin(wastes);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(wastes);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Wastes");
+    }
+
+    @Test
+    @DisplayName("A filtered search may fail to find even with a basic land available")
+    void mayFailToFindWithWastesAndBasicLandAvailable() {
+        harness.addToBattlefield(player1, new Wastes());
+        Card wastes = new Wastes();
+        castRuin(wastes);
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(wastes);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The revealed land does not enter hand before the battlefield decision")
+    void selectedLandDoesNotEnterHandBeforeDestinationIsChosen() {
+        harness.addToBattlefield(player1, new Wastes());
+        Card wastes = new Wastes();
+        castRuin(wastes);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(wastes);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == wastes && permanent.isTapped());
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(wastes);
+    }
+
     private void castRuin(Card forest) {
         harness.setLibrary(player1, List.of(forest));
         harness.setHand(player1, List.of(new RuinInTheirWake()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
     }
