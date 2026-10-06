@@ -5,20 +5,24 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RuptureSpire.class})
 class RuptureSpireTest extends BaseCardTest {
 
     private void playRuptureSpire() {
         harness.setHand(player1, List.of(new RuptureSpire()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
     }
 
     private void resolveEnterTrigger() {
@@ -27,9 +31,7 @@ class RuptureSpireTest extends BaseCardTest {
     }
 
     private Permanent ruptureSpire() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Rupture Spire"))
-                .findFirst().orElse(null);
+        return findPermanents(player1, "Rupture Spire").stream().findFirst().orElse(null);
     }
 
     @Test
@@ -82,5 +84,62 @@ class RuptureSpireTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Accepting payment without mana still sacrifices Rupture Spire")
+    void cannotKeepSpireWithoutPaying() {
+        playRuptureSpire();
+        resolveEnterTrigger();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Rupture Spire");
+        harness.assertInGraveyard(player1, "Rupture Spire");
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    @DisplayName("Any colored mana can pay the generic entry cost and exactly one mana is spent")
+    void coloredManaPaysEntryCost(ManaColor color) {
+        harness.addMana(player1, color, 2);
+        playRuptureSpire();
+        resolveEnterTrigger();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Rupture Spire");
+        assertThat(ruptureSpire().isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
+        harness.assertNotInGraveyard(player1, "Rupture Spire");
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "GREEN"})
+    @DisplayName("The mana ability produces each other color immediately")
+    void tapAddsOtherColors(ManaColor color) {
+        harness.addToBattlefield(player1, new RuptureSpire());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, color.name());
+
+        assertThat(ruptureSpire().isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Declining payment with mana available leaves that mana unspent")
+    void decliningDoesNotSpendMana() {
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        playRuptureSpire();
+        resolveEnterTrigger();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Rupture Spire");
+        harness.assertInGraveyard(player1, "Rupture Spire");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
 }
