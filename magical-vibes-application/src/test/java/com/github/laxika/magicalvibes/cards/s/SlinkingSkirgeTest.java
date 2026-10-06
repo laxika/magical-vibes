@@ -47,4 +47,48 @@ class SlinkingSkirgeTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Draws exactly one card on resolution, not when paying the sacrifice cost")
+    void drawsExactlyOneCardOnlyOnResolution() {
+        harness.addToBattlefield(player1, new SlinkingSkirge());
+        harness.setHand(player1, List.of());
+        GoliathBeetle topCard = new GoliathBeetle();
+        GoliathBeetle secondCard = new GoliathBeetle();
+        harness.setLibrary(player1, List.of(topCard, secondCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, secondCard);
+        harness.assertInGraveyard(player1, "Slinking Skirge");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondCard);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick during the opponent's turn")
+    void activatesWhileTappedAndSummoningSickOnOpponentsTurn() {
+        var skirge = harness.addToBattlefieldAndReturn(player1, new SlinkingSkirge());
+        skirge.tap();
+        skirge.setSummoningSick(true);
+        harness.forceActivePlayer(player2);
+        harness.setLibrary(player1, List.of(new GoliathBeetle()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Slinking Skirge");
+        harness.assertInGraveyard(player1, "Slinking Skirge");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Goliath Beetle");
+        assertThat(gd.stack).isEmpty();
+    }
 }
