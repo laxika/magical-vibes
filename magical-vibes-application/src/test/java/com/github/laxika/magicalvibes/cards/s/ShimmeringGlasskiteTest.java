@@ -86,8 +86,7 @@ class ShimmeringGlasskiteTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player2, 0, kiteId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, kiteId);
         harness.assertOnBattlefield(player1, "Shimmering Glasskite");
 
         // Second spell the same turn: the trigger does not fire again.
@@ -132,8 +131,7 @@ class ShimmeringGlasskiteTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player2, 0, kiteId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, kiteId);
 
         declareAttackers(List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
@@ -147,5 +145,47 @@ class ShimmeringGlasskiteTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "First Volley");
         assertThat(findPermanent(player1, "Shimmering Glasskite").getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Countering the first activated ability removes it without dealing damage")
+    void firstActivatedAbilityDoesNotResolve() {
+        UUID kiteId = addGlasskite();
+        Permanent sniper = addCreatureReady(player2, new MatsuTribeSniper());
+
+        harness.activateAbility(player2,
+                gd.playerBattlefields.get(player2.getId()).indexOf(sniper), null, kiteId);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(sniper.isTapped()).isTrue();
+        resolveAllTriggers();
+        assertThat(findPermanent(player1, "Shimmering Glasskite").getMarkedDamage()).isZero();
+        assertThat(findPermanent(player1, "Shimmering Glasskite").isTapped()).isFalse();
+        harness.assertOnBattlefield(player2, "Matsu-Tribe Sniper");
+    }
+
+    @Test
+    @DisplayName("A second targeting spell can resolve before the first spell is countered")
+    void secondSpellInResponseToCounterTriggerResolves() {
+        UUID kiteId = addGlasskite();
+        harness.setHand(player2, List.of(new FirstVolley(), new FirstVolley()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player2, 0, kiteId);
+        assertThat(gd.stack).hasSize(2);
+        harness.castAndResolveInstant(player2, 0, kiteId);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(findPermanent(player1, "Shimmering Glasskite").getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player1, 19);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanent(player1, "Shimmering Glasskite").getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player1, 19);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
     }
 }
