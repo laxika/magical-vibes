@@ -84,6 +84,59 @@ class SarythTheVipersFangTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void sarythDoesNotGrantKeywordsToHerself() {
+        Permanent saryth = addSaryth();
+
+        assertThat(gqs.hasKeyword(gd, saryth, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, saryth, Keyword.DEATHTOUCH)).isFalse();
+
+        saryth.tap();
+
+        assertThat(gqs.hasKeyword(gd, saryth, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, saryth, Keyword.DEATHTOUCH)).isFalse();
+    }
+
+    @Test
+    void abilityCanTargetAnUntappedCreatureAndPaysTapCost() {
+        Permanent saryth = addSaryth();
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, bear.getId());
+
+        assertThat(saryth.isTapped()).isTrue();
+        harness.passBothPriorities();
+        assertThat(bear.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.HEXPROOF)).isTrue();
+    }
+
+    @Test
+    void abilityDoesNotUntapCreatureThatChangesControllerBeforeResolution() {
+        addSaryth();
+        Permanent bear = addTappedBear(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, bear.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(bear);
+        gd.playerBattlefields.get(player2.getId()).add(bear);
+        harness.passBothPriorities();
+
+        assertThat(bear.isTapped()).isTrue();
+    }
+
+    @Test
+    void keywordsDisappearWhenSarythLeavesTheBattlefield() {
+        Permanent saryth = addSaryth();
+        Permanent tappedBear = addTappedBear(player1);
+        Permanent untappedBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        gd.playerBattlefields.get(player1.getId()).remove(saryth);
+
+        assertThat(gqs.hasKeyword(gd, tappedBear, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, untappedBear, Keyword.HEXPROOF)).isFalse();
+    }
+
     private Permanent addSaryth() {
         Permanent saryth = harness.addToBattlefieldAndReturn(player1, new SarythTheVipersFang());
         saryth.setSummoningSick(false);
